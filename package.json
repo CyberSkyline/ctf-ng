@@ -1,0 +1,20 @@
+{
+  "name": "placeholder",
+  "version": "1.0.0",
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CyberSkyline/placeholder.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "scripts": {
+    "start": "docker compose --profile full up --build",
+    "restart": "docker exec -it placeholder-ctfd supervisorctl restart ctfd",
+    "restart-nginx" : "docker exec -it placeholder-nginx service nginx restart",
+    "logs-nginx" : "docker compose logs -f nginx",
+    "logs-vite" : "docker compose logs -f vite",
+    "logs-ctfd" : "docker compose logs -f ctfd"
+  }
+}

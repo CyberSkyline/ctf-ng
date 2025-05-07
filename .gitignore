@@ -1,0 +1,16 @@
+# Linux Files
+*.swo
+*.swp
+*.module-cache
+*.DS_Store
+
+# Node / Vite Files
+node_modules/*
+node_modules/
+.vite/
+
+# AI Files
+.context.md
+
+# Data files
+.data/
