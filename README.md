@@ -3,6 +3,8 @@
 ## Installation
 Run `./install.sh`
 
+Make sure to complete the initial setup for CTFd on the webportal
+
 ## Development
 
 ### Running the server

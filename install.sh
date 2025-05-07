@@ -49,7 +49,6 @@ if ! id -nG "$USER" | grep -qw "docker"; then
   prompt_user "Would you like to allow non-root users to run Docker commands?" && {
     sudo groupadd docker
     sudo usermod -aG docker $USER
-    newgrp docker
   } || {
     echo "Non-root user access to Docker commands not granted."
   }
@@ -78,4 +77,9 @@ if ! command -v vite &> /dev/null; then
   }
 fi
 
-echo "Installation completed successfully."
+# Install vite deps
+cd ./frontend
+yarn install
+cd -
+
+echo "Installation completed successfully. Please restart your terminal session before attempting to start the server."
