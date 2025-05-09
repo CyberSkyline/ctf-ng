@@ -3,8 +3,8 @@
 from flask import render_template
 
 def load(app):
-  print("Plugin loaded")
+    print("Plugin loaded")
   
-  @app.route('/hello', methods=['GET'])
-  def hello():
-    return render_template('entrypoint.html')
+    @app.route('/hello', methods=['GET'])
+    def hello():
+        return render_template('entrypoint.html')
