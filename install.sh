@@ -1,5 +1,11 @@
 #!/bin/bash
 
+set -o pipefail
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PYTHON_DIR="$SCRIPT_DIR/backend/"
+
 prompt_user() {
   local message="$1"
   read -p "$message (y/n): " response
@@ -9,6 +15,8 @@ prompt_user() {
     return 1
   fi
 }
+
+sudo apt-get update
 
 # Docker
 if ! command -v docker &> /dev/null; then
@@ -83,3 +91,30 @@ yarn install
 cd -
 
 echo "Installation completed successfully. Please restart your terminal session before attempting to start the server."
+
+# Install pip
+if ! command -v pip3 &> /dev/null; then
+  prompt_user "Would you like to install pip?" && {
+    sudo apt-get install python3-pip -y
+  } || {
+    echo "pip installation aborted. Exiting."
+    exit 1
+  }
+fi
+
+# Install python3-venv
+sudo apt-get install python3-venv -y
+
+# Install backend deps
+cd "$PYTHON_DIR"
+
+# Create virtual environment if not already present
+if [ ! -d "venv" ]; then
+  echo "Creating virtual environment in $PROJECT_DIR/venv..."
+  python3 -m venv venv
+fi
+
+# Install deps
+source "$PYTHON_DIR"venv/bin/activate
+pip install --upgrade pip
+pip install -r "$PYTHON_DIR"ctfd/plugin/requirements.txt
