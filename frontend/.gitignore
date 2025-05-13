@@ -1,0 +1,4 @@
+# Node / Vite Files
+node_modules/*
+node_modules/
+.vite/

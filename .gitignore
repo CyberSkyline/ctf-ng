@@ -3,14 +3,17 @@
 *.swp
 *.module-cache
 *.DS_Store
+Thumbs.db
 
-# Node / Vite Files
-node_modules/*
-node_modules/
-.vite/
+# dotenv files
+.env
+.env.*
 
 # AI Files
 .context.md
 
 # Data files
 .data/
+
+# VSCODE
+.vscode/

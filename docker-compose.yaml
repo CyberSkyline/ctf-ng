@@ -24,7 +24,6 @@ services:
       - .data/CTFd/uploads:/var/uploads
       - ./backend/ctfd/plugin:/opt/CTFd/CTFd/plugins/placeholder/:ro
       - ./backend/ctfd/entrypoint.html:/opt/CTFd/CTFd/themes/core/templates/entrypoint.html:ro
-      # - ./backend/ctfd/theme:/opt/CTFd/CTFd/themes/placeholder/:ro
     depends_on:
       - db
     networks:
@@ -61,6 +60,7 @@ services:
       - .data/mysql:/var/lib/mysql
     networks:
         internal:
+        default:
     # This command is required to set important mariadb defaults
     command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --wait_timeout=28800, --log-warnings=0]
     profiles : [ full ]
@@ -82,8 +82,6 @@ services:
     container_name: placeholder-vite
     restart: always
     tty: true
-    # ports:
-    #   - 5173:5173
     volumes:
       - ./frontend:/app
     profiles : [ frontend, full ]
