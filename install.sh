@@ -82,4 +82,7 @@ cd ./frontend
 yarn install
 cd -
 
+# install ruff
+curl -LsSf https://astral.sh/ruff/install.sh | sh
+
 echo "Installation completed successfully. Please restart your terminal session before attempting to start the server."
