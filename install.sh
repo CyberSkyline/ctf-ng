@@ -90,8 +90,6 @@ cd ./frontend
 yarn install
 cd -
 
-echo "Installation completed successfully. Please restart your terminal session before attempting to start the server."
-
 # Install pip
 if ! command -v pip3 &> /dev/null; then
   prompt_user "Would you like to install pip?" && {
@@ -118,3 +116,8 @@ fi
 source "$PYTHON_DIR"venv/bin/activate
 pip install --upgrade pip
 pip install -r "$PYTHON_DIR"ctfd/plugin/requirements.txt
+
+# install ruff
+curl -LsSf https://astral.sh/ruff/install.sh | sh
+
+echo "Installation completed successfully. Please restart your terminal session before attempting to start the server."

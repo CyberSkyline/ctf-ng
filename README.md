@@ -15,6 +15,9 @@ Use `CTRL + C` to stop the server.
 ### Backend Development
 After making any changes to the backend, you need to run `npm reload` to restart CTFd with your changes.
 
+For linting locally you can install ruff with the following `curl -LsSf https://astral.sh/ruff/install.sh | sh`
+Then run `ruff check .`
+
 ### Frontend Development
 Vite provides hot module reloading. Most changes will be reflected on the page in real-time. If not, you can refresh the page. 
 
