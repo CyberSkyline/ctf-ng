@@ -10,11 +10,15 @@
   "author": "",
   "type": "module",
   "scripts": {
-    "start": "docker compose --profile full up --build",
-    "restart": "docker exec -it placeholder-ctfd supervisorctl restart ctfd",
+    "start" : "docker compose --profile full up --build",
+    "stop" : "docker compose --profile full down",
+    "reload" : "docker exec -it placeholder-ctfd supervisorctl restart ctfd",
+    "restart" : "docker exec -it placeholder-ctfd supervisorctl restart ctfd",
     "restart-nginx" : "docker exec -it placeholder-nginx service nginx restart",
     "logs-nginx" : "docker compose logs -f nginx",
     "logs-vite" : "docker compose logs -f vite",
-    "logs-ctfd" : "docker compose logs -f ctfd"
-  }
+    "logs-ctfd" : "docker compose logs -f ctfd",
+    "nuke" : "rm -rf ./frontend/node_modules && cd ./frontend && yarn install"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
