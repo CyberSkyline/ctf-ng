@@ -1,10 +1,19 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+
+import { BrowserRouter } from 'react-router'
+import Routes from './Routes'
+import NavBar from 'components/NavBar'
+import FooterBar from 'components/Footer'
+
 import './index.css'
-import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <BrowserRouter>
+      <NavBar/>
+      <Routes />
+      <FooterBar/>
+    </BrowserRouter>
   </StrictMode>,
 )
