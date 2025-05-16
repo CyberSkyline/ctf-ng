@@ -1,10 +1,8 @@
-#!/usr/bin/env python3
 import docker
-from .dockerutils import get_client
 from CTFd.models import db
 
-from flask import render_template, Response
-
+# This will probably end up being apart of
+# The ORM object
 class IndividualContainer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user = db.Column(db.Integer, db.ForeignKey('users.id'))
@@ -35,19 +33,3 @@ class IndividualContainer(db.Model):
     def disconnect_network(self, target_network):
         network = self.client.networks.get(target_network)
         network.disconnect(self.user)
-
-def load(app):
-    app.db.create_all()
-
-    @app.route('/hello', defaults={'subpath':''}, methods=['GET'], strict_slashes=False)
-    @app.route('/hello/<path:subpath>', methods=['GET'])
-    def hello(subpath):
-        return render_template('entrypoint.html')
-
-    @app.route('/containers', methods=['GET'])
-    def ctrs():
-        client = get_client('10.100.20.246')
-        ctrs = client.containers.list()
-        headers = { 'Content-Type': 'text/plain' }
-        return Response(f'Containers {len(ctrs)}', status=200, headers=headers)
-    print("Plugin loaded")

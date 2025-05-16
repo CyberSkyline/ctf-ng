@@ -24,6 +24,7 @@ services:
       - .data/CTFd/uploads:/var/uploads
       - ./backend/ctfd/plugin:/opt/CTFd/CTFd/plugins/placeholder/:ro
       - ./backend/ctfd/entrypoint.html:/opt/CTFd/CTFd/themes/core/templates/entrypoint.html:ro
+      - ./ssl/:/var/lib/certs/ssl/:ro
     depends_on:
       - db
     networks:
