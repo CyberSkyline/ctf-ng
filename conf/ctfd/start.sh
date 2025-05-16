@@ -10,10 +10,10 @@ SECRET_KEY=${SECRET_KEY:-}
 SKIP_DB_PING=${SKIP_DB_PING:-false}
 
 ## Install plugins deps on load
-for d in CTFd/plugins/*; do \
-    if [ -f "$d/requirements.txt" ]; then \
+for d in CTFd/plugins/*; do
+    if [ -f "$d/requirements.txt" ]; then
         pip install --no-cache-dir -r "$d/requirements.txt";\
-    fi; \
+    fi;
 done;
 
 # Check that a .ctfd_secret_key file or SECRET_KEY envvar is set
