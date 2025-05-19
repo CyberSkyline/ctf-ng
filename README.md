@@ -1,11 +1,18 @@
 # placeholder
 
 ## Installation
-Run `./install.sh`
+Run `./install.sh` from the project root folder
 
 Make sure to complete the initial setup for CTFd on the webportal
 
 ## Development
+
+### Submodules
+
+To initialize the submodules, run this command after cloning the repo: `git submodule update --init --recursive`
+To ensure that your submodules do not get out of sync, please set run `git config --local submodule.recurse true`.
+
+Both of these steps are done for you when you run `install.sh`.
 
 ### Running the server
 `npm start`

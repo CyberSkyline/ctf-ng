@@ -18,6 +18,18 @@ prompt_user() {
 
 sudo apt-get update
 
+# Configure submodules
+git submodule update --init --recursive # Initialize submodules
+git config --local submodule.recurse true # Configures git to automatically update submodules when pulling or switching branches
+
+# Add CTFd to the pythonpath via .env file
+PYTHONPATH_LINE="PYTHONPATH=./external/CTFd"
+if [ ! -f ".env" ]; then
+  echo "$PYTHONPATH_LINE" > ".env"
+elif ! grep -Fxq "$PYTHONPATH_LINE" ".env"; then
+  echo "$PYTHONPATH_LINE" >> ".env"
+fi
+
 # Docker
 if ! command -v docker &> /dev/null; then
   echo "Docker is not installed."
@@ -117,7 +129,7 @@ source "$PYTHON_DIR"venv/bin/activate
 pip install --upgrade pip
 pip install -r "$PYTHON_DIR"ctfd/plugin/requirements.txt
 
-# install ruff
+# Install ruff
 curl -LsSf https://astral.sh/ruff/install.sh | sh
 
 echo "Installation completed successfully. Please restart your terminal session before attempting to start the server."
