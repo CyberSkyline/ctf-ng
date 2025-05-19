@@ -1,19 +1,19 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 
-import { BrowserRouter } from 'react-router'
-import Routes from './Routes'
-import NavBar from 'components/NavBar'
-import FooterBar from 'components/Footer'
+import { BrowserRouter } from 'react-router';
+import NavBar from 'components/NavBar';
+import FooterBar from 'components/Footer';
+import Routes from './Routes';
 
-import './index.css'
+import './index.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <NavBar/>
+      <NavBar />
       <Routes />
-      <FooterBar/>
+      <FooterBar />
     </BrowserRouter>
   </StrictMode>,
-)
+);

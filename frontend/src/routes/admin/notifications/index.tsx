@@ -1,3 +1,3 @@
-export default function AdminNotifications(){
-    return <div>admin temp route notif</div>
+export default function AdminNotifications() {
+  return <div>admin temp route notif</div>;
 }

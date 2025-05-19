@@ -1,3 +1,3 @@
-export default function Challenge(){
-    return <div>temp route2</div>
+export default function Challenge() {
+  return <div>temp route2</div>;
 }
