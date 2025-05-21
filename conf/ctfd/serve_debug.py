@@ -20,13 +20,13 @@ if args.disable_gevent:
     monkey.patch_all()
 
 # Import not at top of file to allow gevent to monkey patch uninterrupted
-from CTFd import create_app
+from CTFd import create_app # noqa
 
 app = create_app()
 
 if args.profile:
-    from flask_debugtoolbar import DebugToolbarExtension
-    import flask_profiler
+    from flask_debugtoolbar import DebugToolbarExtension # noqa
+    import flask_profiler # noqa
 
     app.config["flask_profiler"] = {
         "enabled": app.config["DEBUG"],
