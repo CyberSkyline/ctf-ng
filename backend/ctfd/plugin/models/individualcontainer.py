@@ -4,6 +4,7 @@ from CTFd.models import db
 # This will probably end up being apart of
 # The ORM object
 class IndividualContainer(db.Model):
+    __tablename__ = 'individualcontainer'
     id = db.Column(db.Integer, primary_key=True)
     user = db.Column(db.Integer, db.ForeignKey('users.id'))
 
