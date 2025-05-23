@@ -1,11 +1,11 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from 'flowbite-react';
-import { baseTheme } from './theme/base';
 
 import { BrowserRouter } from 'react-router';
 import NavBar from 'components/NavBar';
 import FooterBar from 'components/Footer';
+import baseTheme from './theme/base';
 import Routes from './Routes';
 
 import './index.css';
