@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '24'
 
       - name: Install dependencies
         run: npm install
@@ -34,6 +34,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Sync dist/ to S3 bucket
+      - name: Sync dist to S3 bucket
         run: |
           aws s3 sync ./frontend/dist s3://assets.development.ctf-ng.com --delete
