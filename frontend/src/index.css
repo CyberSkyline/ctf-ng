@@ -1,6 +1,5 @@
 @import 'tailwindcss';
-@plugin 'flowbite-react/plugin/tailwindcss';
-@source '../.flowbite-react/class-list.json';
+@import "@radix-ui/themes/styles.css";
 
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
