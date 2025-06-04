@@ -12,7 +12,6 @@ export default function EventHeader({
     name: string;
     description: string;
 }) {
-  // TODO: extend props once we have a well-defined event model
   return (
     <Container size="2" px="4" py="8" mb="4" className="bg-[var(--gray-2)]">
       <Flex direction="row" gap="6" align="start">

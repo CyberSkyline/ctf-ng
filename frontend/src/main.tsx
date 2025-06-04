@@ -12,7 +12,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <Theme
-        appearance="dark" // TODO: use system preference & allow user to toggle
+        appearance="dark"
         panelBackground="solid" // disable blur effect on surfaces for performance
         grayColor="olive"
         accentColor="lime"
