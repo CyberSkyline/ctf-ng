@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 """
-
-usage: cd external/CTFd && flask shell
->>> exec(open('../../backend/ctfd/plugin/seed_data.py').read())
->>> demo_seed()
+test data
 """
 
 import random
@@ -33,11 +30,11 @@ class SeedDataGenerator:
         }
 
     def generate_invite_code(self, length=6):
-        """Generate random invite code"""
+        """Generating random invite code"""
         return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
     def create_ctfd_users(self, count=6):
-        """ CTFd users"""
+        """CTFd users"""
         print(f"Creating {count} CTFd users...")
 
         # mario
@@ -133,7 +130,7 @@ class SeedDataGenerator:
         """team memberships"""
         print("Creating team memberships...")
 
-        # Assign users to teams
+        # assigning users to teams
         user_index = 0
         total_memberships = 0
         
