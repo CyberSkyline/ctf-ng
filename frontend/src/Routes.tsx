@@ -1,3 +1,4 @@
+import { ROUTEPREFIX } from './constants';
 import { useRoutes } from 'react-router';
 import NotFound from 'components/NotFound';
 
@@ -19,28 +20,28 @@ import AdminUsers from 'routes/admin/users';
 import AdminTickets from 'routes/admin/tickets';
 
 function Routes() {
-  const prefix = 'hello';
+  const ROUTEPREFIX = 'hello';
   const routes = useRoutes([
     {
       path: '*',
       element: <NotFound />, // Catch-all route for 404 page
     },
-    { path: `/${prefix}`, element: <Dashboard /> },
+    { path: `/${ROUTEPREFIX}`, element: <Dashboard /> },
     {
-      path: `/${prefix}/events/:idEvent`,
+      path: `/${ROUTEPREFIX}/events/:idEvent`,
       children: [
         { index: true, element: <Overview /> },
         { path: 'registration', element: <Registration /> },
         { path: 'challenge/:idChallenge', element: <Challenge /> },
       ],
     },
-    { path: `/${prefix}/notifications/:idNotif`, element: <Notifications /> },
-    { path: `/${prefix}/profile`, element: <Profile /> },
-    { path: `/${prefix}/scoreboard/:idEvent`, element: <Scoreboard /> },
-    { path: `/${prefix}/support`, element: <Support /> },
+    { path: `/${ROUTEPREFIX}/notifications/:idNotif`, element: <Notifications /> },
+    { path: `/${ROUTEPREFIX}/profile`, element: <Profile /> },
+    { path: `/${ROUTEPREFIX}/scoreboard/:idEvent`, element: <Scoreboard /> },
+    { path: `/${ROUTEPREFIX}/support`, element: <Support /> },
 
     {
-      path: `/${prefix}/admin`,
+      path: `/${ROUTEPREFIX}/admin`,
       children: [
         { path: 'dashboard', element: <AdminDashboard /> },
         { path: 'notifications', element: <AdminNotifications /> },
@@ -51,7 +52,11 @@ function Routes() {
 
   ]);
 
-  return routes;
+  return (
+    <div className='p-4 min-h-[calc(100vh-var(--NavBarHeight)-var(--FooterBarHeight))]'>
+      {routes}
+    </div>
+  )
 }
 
 export default Routes;
