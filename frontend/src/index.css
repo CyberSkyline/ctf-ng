@@ -2,6 +2,9 @@
 @import "tailwindcss";
 
 :root {
+  --NavBarHeight: 48px;
+  --FooterBarHeight: 24px;
+
   color-scheme: light dark;
 
   font-synthesis: none;
