@@ -5,6 +5,9 @@ from .routes.views import plugin_views
 from .controllers import api as plugin_api
 from CTFd.models import db
 
+# importing all models
+from .models import World, Team, User, TeamMember
+
 def load(app):
     try:
         delete_unwanted_ctfd_routes(app)
