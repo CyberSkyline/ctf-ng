@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 @import "@radix-ui/themes/styles.css";
 @import "tailwindcss";
 
@@ -12,5 +11,5 @@
 }
 
 .radix-themes {
-  --default-font-family: 'Inter', sans-serif;
+  --default-font-family: sans-serif;
 }
