@@ -1,15 +1,9 @@
-@import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 @import "@radix-ui/themes/styles.css";
+@import "tailwindcss";
 
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
-  font-weight: 400;
-
   color-scheme: light dark;
-  color: theme('colors.gray.400');
-  background-color: theme('colors.gray.900');
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -17,9 +11,6 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: theme('colors.gray.600');
-    background-color: theme('colors.white');
-  }
+.radix-themes {
+  --default-font-family: 'Inter', sans-serif;
 }
