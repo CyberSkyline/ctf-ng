@@ -1,4 +1,3 @@
-import { ROUTEPREFIX } from './constants';
 import { useRoutes } from 'react-router';
 import NotFound from 'components/NotFound';
 
@@ -18,9 +17,9 @@ import AdminDashboard from 'routes/admin/dashboard';
 import AdminNotifications from 'routes/admin/notifications';
 import AdminUsers from 'routes/admin/users';
 import AdminTickets from 'routes/admin/tickets';
+import { ROUTEPREFIX } from './constants';
 
 function Routes() {
-  const ROUTEPREFIX = 'hello';
   const routes = useRoutes([
     {
       path: '*',
@@ -53,10 +52,10 @@ function Routes() {
   ]);
 
   return (
-    <div className='p-4 min-h-[calc(100vh-var(--NavBarHeight)-var(--FooterBarHeight))]'>
+    <div className="p-4 min-h-[calc(100vh-var(--NavBarHeight)-var(--FooterBarHeight))]">
       {routes}
     </div>
-  )
+  );
 }
 
 export default Routes;

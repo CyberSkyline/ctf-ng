@@ -1,36 +1,36 @@
-import * as NavigationMenu from "@radix-ui/react-navigation-menu";
-import { DropdownMenu } from "@radix-ui/themes";
-import { ROUTEPREFIX } from "../constants";
-import { NavLink } from "react-router";
+import { NavigationMenu } from 'radix-ui';
+import { DropdownMenu } from '@radix-ui/themes';
+import { NavLink } from 'react-router';
+import { ROUTEPREFIX } from '../constants';
 
 export default function NavBar() {
   return (
     <NavigationMenu.Root className="h-[var(--NavBarHeight)]">
-			<NavigationMenu.List className='flex p-1 shadow-md pr-4'>
-        <div className='flex'>
-          <NavigationMenu.Item className='p-2'>
+      <NavigationMenu.List className="flex p-1 shadow-md pr-4">
+        <div className="flex">
+          <NavigationMenu.Item className="p-2">
             <NavLink to={`/${ROUTEPREFIX}`}>
               Dashboard
             </NavLink>
           </NavigationMenu.Item>
-          <NavigationMenu.Item className='p-2'>
+          <NavigationMenu.Item className="p-2">
             <NavLink to={`/${ROUTEPREFIX}/events`}>
               Events*
             </NavLink>
           </NavigationMenu.Item>
-          <NavigationMenu.Item className='p-2'>
+          <NavigationMenu.Item className="p-2">
             <NavLink to={`/${ROUTEPREFIX}`}>
               Practice*
             </NavLink>
           </NavigationMenu.Item>
         </div>
-        <div className='flex ml-auto'>
-          <NavigationMenu.Item className='p-2'>
+        <div className="flex ml-auto">
+          <NavigationMenu.Item className="p-2">
             <NavLink to={`/${ROUTEPREFIX}/support`}>
               Support
             </NavLink>
           </NavigationMenu.Item>
-          <NavigationMenu.Item className='p-2'>
+          <NavigationMenu.Item className="p-2">
             <NavLink to={`/${ROUTEPREFIX}`}>
               Notifications*
             </NavLink>
@@ -38,7 +38,7 @@ export default function NavBar() {
 
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
-              <button className='p-2'>
+              <button type="button" className="p-2">
                 Profile
               </button>
             </DropdownMenu.Trigger>
@@ -65,7 +65,8 @@ export default function NavBar() {
               <DropdownMenu.Separator className="h-px bg-gray-200 my-1" />
               <DropdownMenu.Item asChild>
                 <button
-                  onClick={() => alert("Logged out")}
+                  type="button"
+                  onClick={() => alert('Logged out')}
                   className="w-full flex items-center gap-2 px-2 py-1.5 rounded"
                 >
                   Log Out
@@ -74,7 +75,7 @@ export default function NavBar() {
             </DropdownMenu.Content>
           </DropdownMenu.Root>
         </div>
-			</NavigationMenu.List>
-		</NavigationMenu.Root>
+      </NavigationMenu.List>
+    </NavigationMenu.Root>
   );
 }
