@@ -13,7 +13,7 @@ export default function EventHeader({
     description: string;
 }) {
   return (
-    <Container size="2" px="4" py="8" mb="4" className="bg-[var(--gray-2)]">
+    <Container size="2" px="4" py="8" mx="-4" mt="-4" mb="4" className="bg-[var(--gray-2)]">
       <Flex direction="row" gap="6" align="start">
         <Box className="w-32">
           <AspectRatio ratio={10 / 16}>
