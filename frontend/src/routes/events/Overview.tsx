@@ -1,11 +1,11 @@
 import {
-  Container, Tabs
-  ,
+  Container, Tabs,
 } from '@radix-ui/themes';
-import ChallengesTab from 'components/event/ChallengesTab';
+import ChallengesTab from 'routes/events/OverviewTabs/ChallengesTab';
 import EventHeader from 'components/event/EventHeader';
-import LeaderboardTab from 'components/event/LeaderboardTab';
-import TeamTab from 'components/event/TeamTab';
+import LeaderboardTab from 'routes/events/OverviewTabs/LeaderboardTab';
+import TeamTab from 'routes/events/OverviewTabs/TeamTab';
+
 import {
   FaRankingStar, FaTrophy, FaUserGroup,
 } from 'react-icons/fa6';
