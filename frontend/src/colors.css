@@ -1,0 +1,151 @@
+/*
+Generated from https://www.radix-ui.com/colors/custom (Accent=#cdff00)
+Note that the generator deems #cdff00 too bright for light mode, so it darkens it to #c3f500 to maintain contrast.
+*/
+:root,
+.light,
+.light-theme {
+    --lime-1: #fcfdf9;
+    --lime-2: #f7fcef;
+    --lime-3: #eafcc8;
+    --lime-4: #def7a9;
+    --lime-5: #d0ee8c;
+    --lime-6: #c2e07a;
+    --lime-7: #b0cf67;
+    --lime-8: #98ba36;
+    --lime-9: #c3f500;
+    --lime-10: #baea00;
+    --lime-11: #647f00;
+    --lime-12: #364119;
+
+    --lime-a1: #80aa0006;
+    --lime-a2: #80d00010;
+    --lime-a3: #9ef20037;
+    --lime-a4: #9ee80056;
+    --lime-a5: #97da0073;
+    --lime-a6: #8bc40085;
+    --lime-a7: #7baf0098;
+    --lime-a8: #7ca800c9;
+    --lime-a9: #c3f500;
+    --lime-a10: #baea00;
+    --lime-a11: #647f00;
+    --lime-a12: #202c00e6;
+
+    --lime-contrast: #1e250e;
+    --lime-surface: #f5fbebcc;
+    --lime-indicator: #c3f500;
+    --lime-track: #c3f500;
+}
+
+@supports (color: color(display-p3 1 1 1)) {
+    @media (color-gamut: p3) {
+
+        :root,
+        .light,
+        .light-theme {
+            --lime-1: oklch(99.3% 0.0055 122.9);
+            --lime-2: oklch(98.4% 0.0183 122.9);
+            --lime-3: oklch(96.4% 0.0701 122.9);
+            --lime-4: oklch(93.9% 0.1038 122.9);
+            --lime-5: oklch(90.7% 0.128 122.9);
+            --lime-6: oklch(86.2% 0.1335 122.9);
+            --lime-7: oklch(80.9% 0.1352 122.9);
+            --lime-8: oklch(73.8% 0.1591 122.9);
+            --lime-9: oklch(90.1% 0.2281 122.9);
+            --lime-10: oklch(87.1% 0.2241 122.9);
+            --lime-11: oklch(55.4% 0.1423 122.9);
+            --lime-12: oklch(35.5% 0.0633 122.9);
+
+            --lime-a1: color(display-p3 0.5137 0.6745 0.0235 / 0.024);
+            --lime-a2: color(display-p3 0.5373 0.8039 0.0039 / 0.059);
+            --lime-a3: color(display-p3 0.6431 0.9216 0.0078 / 0.197);
+            --lime-a4: color(display-p3 0.6431 0.8863 0.0039 / 0.306);
+            --lime-a5: color(display-p3 0.6078 0.8275 0.0039 / 0.408);
+            --lime-a6: color(display-p3 0.5451 0.7333 0.0039 / 0.471);
+            --lime-a7: color(display-p3 0.4745 0.6471 0 / 0.546);
+            --lime-a8: color(display-p3 0.4627 0.6078 0 / 0.699);
+            --lime-a9: color(display-p3 0.7176 0.9373 0 / 0.695);
+            --lime-a10: color(display-p3 0.6745 0.8784 0 / 0.71);
+            --lime-a11: color(display-p3 0.3137 0.4118 0 / 0.859);
+            --lime-a12: color(display-p3 0.1176 0.1569 0 / 0.883);
+
+            --lime-contrast: #1e250e;
+            --lime-surface: color(display-p3 0.9647 0.9843 0.9255 / 0.8);
+            --lime-indicator: oklch(90.1% 0.2281 122.9);
+            --lime-track: oklch(90.1% 0.2281 122.9);
+        }
+    }
+}
+
+.dark,
+.dark-theme {
+    --lime-1: #0f1209;
+    --lime-2: #161a0d;
+    --lime-3: #21290f;
+    --lime-4: #2c3710;
+    --lime-5: #374411;
+    --lime-6: #425212;
+    --lime-7: #4f6213;
+    --lime-8: #5d750e;
+    --lime-9: #cdff00;
+    --lime-10: #c4f500;
+    --lime-11: #bce82a;
+    --lime-12: #e0faa9;
+
+    --lime-a1: #00910002;
+    --lime-a2: #91f7000a;
+    --lime-a3: #aefd001a;
+    --lime-a4: #b9fe0b29;
+    --lime-a5: #c2fe1137;
+    --lime-a6: #c4fe1546;
+    --lime-a7: #c7ff1757;
+    --lime-a8: #c5fd0a6c;
+    --lime-a9: #cdff00;
+    --lime-a10: #cbfe00f5;
+    --lime-a11: #cdfe2ce7;
+    --lime-a12: #e4ffacfa;
+
+    --lime-contrast: #1e250e;
+    --lime-surface: #1b230a80;
+    --lime-indicator: #cdff00;
+    --lime-track: #cdff00;
+}
+
+@supports (color: color(display-p3 1 1 1)) {
+    @media (color-gamut: p3) {
+
+        .dark,
+        .dark-theme {
+            --lime-1: oklch(17.8% 0.0187 122.9);
+            --lime-2: oklch(20.8% 0.0252 122.9);
+            --lime-3: oklch(26.6% 0.0446 122.9);
+            --lime-4: oklch(31.6% 0.0611 122.9);
+            --lime-5: oklch(36.3% 0.0753 122.9);
+            --lime-6: oklch(41.2% 0.0892 122.9);
+            --lime-7: oklch(46.4% 0.1041 122.9);
+            --lime-8: oklch(52.4% 0.1229 122.9);
+            --lime-9: oklch(93.1% 0.2281 122.9);
+            --lime-10: oklch(90.2% 0.2281 122.9);
+            --lime-11: oklch(86.8% 0.2025 122.9);
+            --lime-12: oklch(94.6% 0.1065 122.9);
+
+            --lime-a1: color(display-p3 0 0.8549 0 / 0.005);
+            --lime-a2: color(display-p3 0.6863 0.9961 0 / 0.038);
+            --lime-a3: color(display-p3 0.7686 1 0.1059 / 0.101);
+            --lime-a4: color(display-p3 0.7804 1 0.1922 / 0.16);
+            --lime-a5: color(display-p3 0.8157 1 0.2157 / 0.215);
+            --lime-a6: color(display-p3 0.8118 1 0.2392 / 0.274);
+            --lime-a7: color(display-p3 0.8353 1 0.2667 / 0.337);
+            --lime-a8: color(display-p3 0.8314 1 0.2588 / 0.416);
+            --lime-a9: color(display-p3 0.8471 1 0.3176 / 0.996);
+            --lime-a10: color(display-p3 0.8431 1 0.3176 / 0.954);
+            --lime-a11: color(display-p3 0.851 0.9961 0.3569 / 0.9);
+            --lime-a12: color(display-p3 0.9216 1 0.7176 / 0.975);
+
+            --lime-contrast: #1e250e;
+            --lime-surface: color(display-p3 0.102 0.1333 0.0431 / 0.5);
+            --lime-indicator: oklch(93.1% 0.2281 122.9);
+            --lime-track: oklch(93.1% 0.2281 122.9);
+        }
+    }
+}
