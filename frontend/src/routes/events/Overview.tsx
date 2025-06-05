@@ -23,7 +23,6 @@ export default function Overview() {
       />
 
       <Tabs.Root
-        mx="4"
         value={currentTab}
         onValueChange={(tab) => {
           setSearchParams((prev) => {
