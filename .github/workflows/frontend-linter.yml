@@ -1,4 +1,4 @@
-name: eslint
+name: frontend-linter
 on: [ pull_request ]
 jobs:
  linter-test:

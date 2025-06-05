@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - development
+      - staging
+      - production
 
 jobs:
   build-and-deploy:
@@ -34,6 +36,20 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      - name: Determine S3 bucket
+        id: s3_bucket
+        run: |
+          if [ "${{ github.ref_name }}" == "development" ]; then
+            echo "bucket=assets.development.ctf-ng" >> $GITHUB_ENV
+          elif [ "${{ github.ref_name }}" == "staging" ]; then
+            echo "bucket=assets.staging.ctf-ng" >> $GITHUB_ENV
+          elif [ "${{ github.ref_name }}" == "production" ]; then
+            echo "bucket=assets.production.ctf-ng" >> $GITHUB_ENV
+          else
+            echo "Unsupported branch: ${{ github.ref_name }}"
+            exit 1
+          fi
+
       - name: Sync dist to S3 bucket
         run: |
-          aws s3 sync ./frontend/dist s3://assets.development.ctf-ng.com --delete
+          aws s3 sync ./frontend/dist s3://$bucket --delete
