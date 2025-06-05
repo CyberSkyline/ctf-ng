@@ -1,7 +1,7 @@
 import { Container, TextField, Grid } from '@radix-ui/themes';
 import { FaSearch } from 'react-icons/fa';
 import { FaCode } from 'react-icons/fa6';
-import ChallengeCard from './ChallengeCard';
+import ChallengeCard from 'components/event/ChallengeCard';
 
 export default function ChallengesTab() {
   return (
