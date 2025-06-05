@@ -5,6 +5,7 @@ on:
     branches:
       - development
       - staging
+      - production
 
 jobs:
   build-and-deploy:
@@ -42,6 +43,8 @@ jobs:
             echo "bucket=assets.development.ctf-ng.com" >> $GITHUB_ENV
           elif [ "${{ github.ref_name }}" == "staging" ]; then
             echo "bucket=assets.staging.ctf-ng.com" >> $GITHUB_ENV
+          elif [ "${{ github.ref_name }}" == "production" ]; then
+            echo "bucket=assets.production.ctf-ng.com" >> $GITHUB_ENV
           else
             echo "Unsupported branch: ${{ github.ref_name }}"
             exit 1
