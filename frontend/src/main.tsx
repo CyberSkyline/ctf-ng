@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router';
 import { Theme } from '@radix-ui/themes';
 import NavBar from 'components/NavBar';
 import FooterBar from 'components/Footer';
+import { SWRConfig } from 'swr';
 import Routes from './Routes';
 
 import './index.css';
@@ -17,9 +18,15 @@ createRoot(document.getElementById('root')!).render(
         grayColor="olive"
         accentColor="lime"
       >
-        <NavBar />
-        <Routes />
-        <FooterBar />
+        <SWRConfig
+          value={{
+            fetcher: (resource, init) => fetch(resource, init).then((res) => res.json()),
+          }}
+        >
+          <NavBar />
+          <Routes />
+          <FooterBar />
+        </SWRConfig>
       </Theme>
     </BrowserRouter>
   </StrictMode>,
