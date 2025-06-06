@@ -1,9 +1,10 @@
 import {
-  Container, Heading, Text, Button,
+  Heading, Text, Button,
   Flex,
   Box,
   AspectRatio,
 } from '@radix-ui/themes';
+import HeaderContainer from 'components/HeaderContainer';
 
 export default function EventHeader({
   name,
@@ -13,7 +14,7 @@ export default function EventHeader({
     description: string;
 }) {
   return (
-    <Container size="2" px="4" py="8" mx="-4" mt="-4" mb="4" className="bg-[var(--gray-2)]">
+    <HeaderContainer>
       <Flex direction="row" gap="6" align="start">
         <Box className="w-32">
           <AspectRatio ratio={10 / 16}>
@@ -30,6 +31,6 @@ export default function EventHeader({
           </Flex>
         </Box>
       </Flex>
-    </Container>
+    </HeaderContainer>
   );
 }

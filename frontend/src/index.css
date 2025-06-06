@@ -1,5 +1,7 @@
 @import "@radix-ui/themes/styles.css";
 @import "tailwindcss";
+@import "assets/fonts/inter/inter.css";
+@import "./colors.css";
 
 :root {
   --NavBarHeight: 48px;
@@ -7,6 +9,7 @@
 
   color-scheme: light dark;
 
+  --default-font-feature-settings: 'liga' 1, 'calt' 1;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -14,5 +17,11 @@
 }
 
 .radix-themes {
-  --default-font-family: sans-serif;
+  --default-font-family: Inter, sans-serif;
+}
+
+@supports (font-variation-settings: normal) {
+  .radix-themes {
+    --default-font-family: InterVariable, sans-serif;
+  }
 }
