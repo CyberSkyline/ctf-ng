@@ -11,7 +11,7 @@ export default function HeaderContainer({ children }: {
       mx="-4"
       mt="-4"
       mb="4"
-      className="bg-[var(--gray-2)] bg-radial from-[var(--gray-3)] from-[1px] to-transparent to-0% bg-size-[16px_16px] bg-repeat-space"
+      className="bg-[var(--gray-2)] bg-radial from-[var(--gray-3)] from-[1px] to-transparent to-0% bg-size-[4px_4px] bg-repeat-space"
     >
       {children}
     </Container>
