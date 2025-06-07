@@ -1,4 +1,4 @@
-#!/bin/bash
+and #!/bin/bash
 
 set -o pipefail
 set -e
@@ -128,7 +128,7 @@ fi
 source "$PYTHON_DIR"venv/bin/activate
 pip install --upgrade pip
 pip install -r "$SCRIPT_DIR/external/CTFd/requirements.txt" # Install CTFd requirements
-pip install -r "$PYTHON_DIR"ctfd/plugin/requirements.txt #Install our additional requirements
+pip install -r "$PYTHON_DIR"ctfd/plugin/requirements.txt # Install our additional requirements
 
 # Install ruff
 curl -LsSf https://astral.sh/ruff/install.sh | sh

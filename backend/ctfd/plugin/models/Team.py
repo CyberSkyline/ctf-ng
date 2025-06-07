@@ -1,43 +1,36 @@
-from CTFd.models import db
+# /plugin/models/Team.py
 
-"""
-This is a custom team model because the native CTFd team model does not support a user to be in multiple teams.
-Our model allows users to be in different teams across different worlds.
-"""
+from CTFd.models import db
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy import select, func
+
 
 class Team(db.Model):
-    __tablename__ = 'ng_teams'
+    __tablename__ = "ng_teams"
 
-    # changed to 'id'
     id = db.Column(db.Integer, primary_key=True)
-
-    # team name
-    name = db.Column(db.String(128), nullable=False)  # Added length limit
-
-    # Max allowed on team
-    limit = db.Column(db.Integer, nullable=False, default=4) # (flexible)
-
-    # if team appears on public scoreboards (yes or no)
+    name = db.Column(db.String(128), nullable=False)
+    limit = db.Column(db.Integer, nullable=False, default=4)
     ranked = db.Column(db.Boolean, default=False, nullable=False)
+    invite_code = db.Column(db.String(32), nullable=False, unique=True)
+    world_id = db.Column(db.Integer, db.ForeignKey("ng_worlds.id"), nullable=False)
 
-    # invite code
-    invite_code = db.Column(db.String(32), nullable=False, unique=True)  # changed to snake_case
-
-    # world this team exists in
-    world_id = db.Column(db.Integer, db.ForeignKey('ng_worlds.id'), nullable=False)
-
-    members = db.relationship('TeamMember', back_populates='team', cascade='all, delete-orphan')
+    members = db.relationship("TeamMember", back_populates="team", cascade="all, delete-orphan")
 
     def __repr__(self):
-        """for debugging"""
-        return f'<Team {self.name} in World {self.world_id}>'
+        return f"<Team {self.name}>"
 
-    @property
+    # Avoids a separate query for every team's member count
+    @hybrid_property
     def member_count(self):
-        """number of members"""
         return len(self.members)
+
+    @member_count.expression
+    def member_count(cls):
+        from ..models.TeamMember import TeamMember
+
+        return select(func.count(TeamMember.id)).where(TeamMember.team_id == cls.id).scalar_subquery()
 
     @property
     def is_full(self):
-        """if team is at capacity"""
         return self.member_count >= self.limit

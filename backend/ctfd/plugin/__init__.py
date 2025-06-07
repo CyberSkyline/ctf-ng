@@ -1,24 +1,36 @@
 #!/usr/bin/env python3
 
-from .routes import delete_unwanted_ctfd_routes
+from .routes import delete_unwanted_ctfd_routes, api_blueprint
 from .routes.views import plugin_views
-from .controllers import api as plugin_api
 from CTFd.models import db
+from typing import Tuple, Any
 
-# importing all models
-from .models import World, Team, User, TeamMember
 
-def load(app):
+def _create_tables() -> Tuple[Any, Any, Any, Any]:
+    from .models.World import World
+    from .models.Team import Team
+    from .models.User import User
+    from .models.TeamMember import TeamMember
+
+    return (
+        World,
+        Team,
+        User,
+        TeamMember,
+    )
+
+
+def load(app: Any) -> None:
     try:
         delete_unwanted_ctfd_routes(app)
 
         print("Loading plugin...", flush=True)
 
+        _create_tables()
         db.create_all()
 
         app.register_blueprint(plugin_views)
-        app.register_blueprint(plugin_api, url_prefix="/plugin/api/")
+        app.register_blueprint(api_blueprint, url_prefix="/plugin/api")
         print("Plugin loaded successfully", flush=True)
     except Exception as e:
         print("Error loading plugin:", e, flush=True)
-

@@ -1,12 +1,8 @@
-"""
-- Super Mario Bros (worlds)
-- Users being in different teams across different worlds
-- Invite codes and member limits
-"""
+# /plugin/models/__init__.py
 
 from .World import World
-from .Team import Team  
 from .User import User
 from .TeamMember import TeamMember
+from .Team import Team
 
-__all__ = ['World', 'Team', 'User', 'TeamMember']
+__all__ = ["World", "Team", "User", "TeamMember"]
