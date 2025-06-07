@@ -3,15 +3,13 @@
 Tests controller business logic
 """
 
-import pytest
 from CTFd.models import db
 from tests.helpers import gen_user
 
-from ..helpers import create_ctfd, destroy_ctfd, get_models
+from ..helpers import create_ctfd, destroy_ctfd
 
 
 class TestControllers:
-
     def test_team_creation_with_invite_codes(self):
         """Check that team creation generates unique invite codes."""
         app = create_ctfd()
@@ -21,13 +19,13 @@ class TestControllers:
             from ...controllers.world_controller import WorldController
 
             world_result = WorldController.create_world("Test World")
-            assert world_result["success"] == True
+            assert world_result["success"]
             world_id = world_result["world"].id
 
             creator = gen_user(db, name="creator", email="creator@test.com")
             result = TeamController.create_team("Test Team", world_id, creator.id)
 
-            assert result["success"] == True
+            assert result["success"]
             assert result["team"].name == "Test Team"
             assert result["invite_code"] is not None
             assert len(result["invite_code"]) == 8
@@ -53,10 +51,10 @@ class TestControllers:
             user2 = gen_user(db, name="user2", email="user2@test.com")
 
             join1 = TeamController.join_team(user1.id, team_id, world_id)
-            assert join1["success"] == True
+            assert join1["success"]
 
             join2 = TeamController.join_team(user2.id, team_id, world_id)
-            assert join2["success"] == False
+            assert not join2["success"]
             assert "full" in join2["error"].lower()
 
         destroy_ctfd(app)
@@ -79,8 +77,8 @@ class TestControllers:
             user = gen_user(db, name="user1", email="user1@test.com")
             result = TeamController.join_team_by_invite_code(user.id, invite_code)
 
-            assert result["success"] == True
-            assert result["joined_via_invite"] == True
+            assert result["success"]
+            assert result["joined_via_invite"]
             assert result["invite_code"] == invite_code
             assert result["team"].name == "Secret Team"
 
@@ -100,7 +98,7 @@ class TestControllers:
             creator = gen_user(db, name="creator", email="creator@test.com")
             team_result = TeamController.create_team("Auto Team", world_id, creator.id)
 
-            assert team_result["success"] == True
+            assert team_result["success"]
             assert team_result["team"].limit == 6
 
         destroy_ctfd(app)
@@ -126,23 +124,23 @@ class TestControllers:
             join1 = TeamController.join_team(user1.id, team_id, world_id)
             join2 = TeamController.join_team(user2.id, team_id, world_id)
 
-            assert join1["success"] == True
-            assert join2["success"] == True
+            assert join1["success"]
+            assert join2["success"]
 
             assign_result = TeamController.transfer_captaincy(team_id, user2.id, creator.id)
-            assert assign_result["success"] == True
+            assert assign_result["success"]
 
             captain_result = TeamController.get_team_captain(team_id)
-            assert captain_result["success"] == True
-            assert captain_result["has_captain"] == True
+            assert captain_result["success"]
+            assert captain_result["has_captain"]
             assert captain_result["captain_id"] == user2.id
 
             remove_result = TeamController.remove_captain(team_id)
-            assert remove_result["success"] == True
+            assert remove_result["success"]
 
             captain_check = TeamController.get_team_captain(team_id)
-            assert captain_check["success"] == True
-            assert captain_check["has_captain"] == False
+            assert captain_check["success"]
+            assert not captain_check["has_captain"]
 
         destroy_ctfd(app)
 
@@ -163,17 +161,17 @@ class TestControllers:
             team_id = team_result["team"].id
 
             captain_result = TeamController.get_team_captain(team_id)
-            assert captain_result["success"] == True
-            assert captain_result["has_captain"] == True
+            assert captain_result["success"]
+            assert captain_result["has_captain"]
             assert captain_result["captain_id"] == creator.id
 
             user2 = gen_user(db, name="user2", email="user2@test.com")
             join2 = TeamController.join_team(user2.id, team_id, world_id)
-            assert join2["success"] == True
+            assert join2["success"]
 
             captain_result = TeamController.get_team_captain(team_id)
-            assert captain_result["success"] == True
-            assert captain_result["has_captain"] == True
+            assert captain_result["success"]
+            assert captain_result["has_captain"]
             assert captain_result["captain_id"] == creator.id
 
         destroy_ctfd(app)
@@ -204,11 +202,11 @@ class TestControllers:
             join_red = TeamController.join_team(user.id, red_team["team"].id, basic_world_id)
             join_blue = TeamController.join_team(user.id, blue_team["team"].id, advanced_world_id)
 
-            assert join_red["success"] == True
-            assert join_blue["success"] == True
+            assert join_red["success"]
+            assert join_blue["success"]
 
             user_teams = UserController.get_user_teams(user.id)
-            assert user_teams["success"] == True
+            assert user_teams["success"]
             assert len(user_teams["teams"]) == 2
 
             world_names = [team["world_name"] for team in user_teams["teams"]]
@@ -234,14 +232,14 @@ class TestControllers:
 
             member = gen_user(db, name="member", email="member@test.com")
             join_result = TeamController.join_team(member.id, team_id, world_id)
-            assert join_result["success"] == True
+            assert join_result["success"]
 
             update_result = TeamController.update_team(team_id, member.id, new_name="Hacked Name")
-            assert update_result["success"] == False
+            assert not update_result["success"]
             assert "not authorized" in update_result["error"].lower()
 
             update_result = TeamController.update_team(team_id, captain.id, new_name="New Name")
-            assert update_result["success"] == True
+            assert update_result["success"]
             assert update_result["team"].name == "New Name"
 
         destroy_ctfd(app)
@@ -263,14 +261,14 @@ class TestControllers:
 
             member = gen_user(db, name="member", email="member@test.com")
             join_result = TeamController.join_team(member.id, team_id, world_id)
-            assert join_result["success"] == True
+            assert join_result["success"]
 
             disband_result = TeamController.disband_team(team_id, member.id)
-            assert disband_result["success"] == False
+            assert not disband_result["success"]
             assert "not authorized" in disband_result["error"].lower()
 
             disband_result = TeamController.disband_team(team_id, captain.id)
-            assert disband_result["success"] == True
+            assert disband_result["success"]
             assert "disbanded" in disband_result["message"]
 
             from ...models.Team import Team
@@ -287,6 +285,8 @@ class TestControllers:
         with app.app_context():
             from ...controllers.team_controller import TeamController
             from ...controllers.world_controller import WorldController
+            from ...models.TeamMember import TeamMember
+            from CTFd.models import db
 
             world_result = WorldController.create_world("Test World")
             world_id = world_result["world"].id
@@ -299,25 +299,30 @@ class TestControllers:
             member2 = gen_user(db, name="member2", email="member2@test.com")
 
             join1 = TeamController.join_team(member1.id, team_id, world_id)
+            assert join1["success"]
+
             join2 = TeamController.join_team(member2.id, team_id, world_id)
-            assert join1["success"] == True
-            assert join2["success"] == True
+            assert join2["success"]
+
+            db.session.expire_all()
 
             remove_result = TeamController.remove_member(team_id, member2.id, member1.id)
-            assert remove_result["success"] == False
+            assert not remove_result["success"]
             assert "not authorized" in remove_result["error"].lower()
 
-            remove_result = TeamController.remove_member(team_id, member2.id, captain.id)
-            assert remove_result["success"] == True
-            assert "removed successfully" in remove_result["message"]
+            db.session.expire_all()
 
-            from ...models.TeamMember import TeamMember
+            remove_result = TeamController.remove_member(team_id, member2.id, captain.id)
+            assert remove_result["success"]
+            assert "removed successfully" in remove_result["message"]
 
             membership = TeamMember.query.filter_by(user_id=member2.id, team_id=team_id).first()
             assert membership is None
 
+            db.session.expire_all()
+
             remove_result = TeamController.remove_member(team_id, captain.id, captain.id)
-            assert remove_result["success"] == False
+            assert not remove_result["success"]
             assert "cannot remove themselves" in remove_result["error"].lower()
 
         destroy_ctfd(app)
@@ -335,10 +340,10 @@ class TestControllers:
 
             creator = gen_user(db, name="creator", email="creator@test.com")
             team1_result = TeamController.create_team("First Team", world_id, creator.id)
-            assert team1_result["success"] == True
+            assert team1_result["success"]
 
             team2_result = TeamController.create_team("Second Team", world_id, creator.id)
-            assert team2_result["success"] == False
+            assert not team2_result["success"]
             assert "already in a team" in team2_result["error"]
 
         destroy_ctfd(app)

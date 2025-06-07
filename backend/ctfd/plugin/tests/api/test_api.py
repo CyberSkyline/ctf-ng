@@ -3,8 +3,6 @@ plugin/tests/test_api.py
 API Tests
 """
 
-import pytest
-import json
 from CTFd.models import db
 from tests.helpers import gen_user
 
@@ -12,7 +10,6 @@ from ..helpers import create_ctfd, destroy_ctfd, get_models
 
 
 class TestAPI:
-
     def test_teams_endpoint_requires_authentication(self):
         """Check that teams endpoint requires authentication."""
         app = create_ctfd()
@@ -50,7 +47,9 @@ class TestAPI:
 
                 data = response.get_json()
                 assert "success" in data
-                assert data["success"] == True
+                assert data["success"]
+                assert "data" in data
+                assert "teams" in data["data"]
 
         destroy_ctfd(app)
 
@@ -73,7 +72,13 @@ class TestAPI:
 
                 data = response.get_json()
                 assert "success" in data
-                assert data["success"] == True
+                assert data["success"]
+
+                assert "data" in data
+                assert "worlds" in data["data"]
+                assert "total_worlds" in data["data"]
+
+                assert "success" not in data["data"]
 
         destroy_ctfd(app)
 
@@ -103,7 +108,10 @@ class TestAPI:
 
                 data = response.get_json()
                 assert "success" in data
-                assert data["success"] == True
+                assert data["success"]
+
+                assert "data" in data
+                assert "teams" in data["data"]
 
         destroy_ctfd(app)
 
@@ -145,7 +153,9 @@ class TestAPI:
 
                 data = response.get_json()
                 assert "success" in data
-                assert data["success"] == True
+                assert data["success"]
+
+                assert "data" in data
 
         destroy_ctfd(app)
 
@@ -168,7 +178,8 @@ class TestAPI:
 
                 data = response.get_json()
                 assert "success" in data
-                assert data["success"] == False
+                assert not data["success"]
+                assert "errors" in data
 
         destroy_ctfd(app)
 
@@ -243,6 +254,12 @@ class TestAPI:
                     assert isinstance(data, dict)
                     assert "success" in data
 
+                    if data["success"]:
+                        assert "data" in data
+
+                        if isinstance(data["data"], dict):
+                            assert "success" not in data["data"]
+
         destroy_ctfd(app)
 
     def test_captain_assignment_security(self):
@@ -291,7 +308,6 @@ class TestAPI:
             db.session.commit()
 
             with app.test_client() as client:
-
                 with client.session_transaction() as sess:
                     sess["id"] = member_user.id
                     sess["name"] = member_user.name
@@ -304,8 +320,10 @@ class TestAPI:
                 )
                 assert response.status_code == 403
                 data = response.get_json()
-                assert data["success"] == False
-                assert "You are not authorized to assign captain" in data["errors"]["captain"]
+                assert not data["success"]
+
+                assert "errors" in data
+                assert "captain" in data["errors"]
 
                 with client.session_transaction() as sess:
                     sess["id"] = other_user.id
@@ -331,13 +349,14 @@ class TestAPI:
                 )
                 assert response.status_code == 200
                 data = response.get_json()
-                assert data["success"] == True
+                assert data["success"]
+
+                assert "data" in data
                 assert data["data"]["captain_id"] == member_user.id
 
                 updated_captain = TeamMember.query.filter_by(team_id=team.id, role="captain").first()
                 assert updated_captain.user_id == member_user.id
 
-                # Admin can assign captain even if not in team
                 with client.session_transaction() as sess:
                     sess["id"] = admin_user.id
                     sess["name"] = admin_user.name
@@ -350,7 +369,9 @@ class TestAPI:
                 )
                 assert response.status_code == 200
                 data = response.get_json()
-                assert data["success"] == True
+                assert data["success"]
+
+                assert "data" in data
                 assert data["data"]["captain_id"] == captain_user.id
 
         destroy_ctfd(app)
@@ -385,10 +406,11 @@ class TestAPI:
                 response = client.post("/plugin/api/teams", json=team_data)
                 assert response.status_code == 201
                 data = response.get_json()
-                assert data["success"] == True
+                assert data["success"]
+
+                assert "data" in data
                 team_id = data["data"]["team"]["id"]
 
-                # Verify creator is captain
                 captain = TeamMember.query.filter_by(team_id=team_id, role="captain").first()
                 assert captain is not None
                 assert captain.user_id == user.id
@@ -437,7 +459,6 @@ class TestAPI:
             db.session.commit()
 
             with app.test_client() as client:
-
                 with client.session_transaction() as sess:
                     sess["id"] = member_user.id
                     sess["name"] = member_user.name
@@ -456,7 +477,8 @@ class TestAPI:
                 response = client.patch(f"/plugin/api/teams/{team.id}", json={"name": "New Name"})
                 assert response.status_code == 200
                 data = response.get_json()
-                assert data["success"] == True
+                assert data["success"]
+                assert "data" in data
 
                 updated_team = Team.query.get(team.id)
                 assert updated_team.name == "New Name"

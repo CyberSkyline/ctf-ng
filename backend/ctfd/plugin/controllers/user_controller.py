@@ -1,12 +1,10 @@
 # /plugin/controllers/user_controller.py
 
-from CTFd.models import db
 from sqlalchemy.exc import IntegrityError
 from typing import Dict, Any
 
 
 class UserController:
-
     @staticmethod
     def get_user_teams(user_id: int) -> Dict[str, Any]:
         """Gets all team memberships for a user across all worlds.

@@ -12,7 +12,6 @@ from ..helpers import create_ctfd, destroy_ctfd, get_models
 
 
 class TestConstraints:
-
     def test_unique_user_world_constraint(self):
         """Check that users can only be in one team per world."""
         app = create_ctfd()
@@ -72,7 +71,7 @@ class TestConstraints:
             db.session.commit()
 
             assert team.member_count == 0
-            assert team.is_full == False
+            assert not team.is_full
 
             user1 = gen_user(db, name="user1", email="user1@example.com")
             user2 = gen_user(db, name="user2", email="user2@example.com")
@@ -86,8 +85,23 @@ class TestConstraints:
             db.session.add_all([membership1, membership2])
             db.session.commit()
 
+            db.session.refresh(team)
+
             assert team.member_count == 2
-            assert team.is_full == False
+            assert not team.is_full
+
+            user3 = gen_user(db, name="user3", email="user3@example.com")
+            ng_user3 = User(id=user3.id)
+            db.session.add(ng_user3)
+
+            membership3 = TeamMember(user_id=user3.id, team_id=team.id, world_id=world.id)
+            db.session.add(membership3)
+            db.session.commit()
+
+            db.session.refresh(team)
+
+            assert team.member_count == 3
+            assert team.is_full
 
         destroy_ctfd(app)
 

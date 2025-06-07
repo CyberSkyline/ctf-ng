@@ -16,7 +16,7 @@ import os
 plugin_path = os.path.join(os.path.dirname(__file__), "..", "..")
 sys.path.insert(0, plugin_path)
 
-from models import World, Team, User, TeamMember
+from models import World, Team, User, TeamMember  # noqa: E402
 
 
 db.create_all()
@@ -171,7 +171,7 @@ class SeedDataGenerator:
         print(" Seed data generation completed")
 
         # Summary
-        print(f" Created:")
+        print(" Created:")
         print(f"   • {len(self.created_data['ctfd_users'])} CTFd users")
         print(f"   • {len(self.created_data['ng_users'])} ng_user extensions")
         print(f"   • {len(self.created_data['worlds'])} worlds")

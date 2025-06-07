@@ -1,19 +1,18 @@
 # /plugin/routes/api/teams.py
 
-from flask import request, session
+from flask import request
 from flask_restx import Namespace, Resource
-from CTFd.utils.decorators import authed_only, admins_only
+from CTFd.utils.decorators import authed_only
 from CTFd.utils.user import get_current_user, is_admin
 
 from ...controllers.team_controller import TeamController
-from ...controllers.world_controller import WorldController
+from ...utils.api_responses import controller_response, error_response
 
 teams_namespace = Namespace("teams", description="team management operations")
 
 
 @teams_namespace.route("")
 class TeamList(Resource):
-
     @authed_only
     @teams_namespace.doc(
         description="Get teams in a specific world",
@@ -36,25 +35,16 @@ class TeamList(Resource):
         world_id = request.args.get("world_id")
 
         if not world_id:
-            return {
-                "success": False,
-                "errors": {"world_id": "World ID is required"},
-            }, 400
+            return error_response("World ID is required", "world_id", 400)
 
         try:
             world_id = int(world_id)
         except ValueError:
-            return {
-                "success": False,
-                "errors": {"world_id": "World ID must be a number"},
-            }, 400
+            return error_response("World ID must be a number", "world_id", 400)
 
         result = TeamController.list_teams_in_world(world_id)
 
-        if result["success"]:
-            return {"success": True, "data": result}, 200
-        else:
-            return {"success": False, "errors": {"world": result["error"]}}, 400
+        return controller_response(result, error_field="world")
 
     @authed_only
     @teams_namespace.doc(
@@ -81,7 +71,7 @@ class TeamList(Resource):
         data = request.get_json()
 
         if not data:
-            return {"success": False, "errors": {"body": "JSON body is required"}}, 400
+            return error_response("JSON body is required", "body", 400)
 
         required_fields = ["name", "world_id"]
         errors = {}
@@ -95,13 +85,9 @@ class TeamList(Resource):
 
         current_user = get_current_user()
         if not current_user:
-            return {
-                "success": False,
-                "errors": {"auth": "User not found in session"},
-            }, 403
+            return error_response("User not found in session", "auth", 403)
 
-        # optional fields
-        limit = data.get("limit")  # none if not specified, controller will use world default
+        limit = data.get("limit")
         ranked = data.get("ranked", False)
 
         result = TeamController.create_team(
@@ -130,13 +116,12 @@ class TeamList(Resource):
                 },
             }, 201
         else:
-            return {"success": False, "errors": {"team": result["error"]}}, 400
+            return error_response(result["error"], "team", 400)
 
 
 @teams_namespace.route("/<int:team_id>")
 @teams_namespace.param("team_id", "Team ID")
 class TeamDetail(Resource):
-
     @authed_only
     @teams_namespace.doc(
         description="Get detailed information about a specific team",
@@ -158,9 +143,11 @@ class TeamDetail(Resource):
         result = TeamController.get_team_info(team_id)
 
         if result["success"]:
-            return {"success": True, "data": result}, 200
+            from ...utils.api_responses import success_response
+
+            return success_response(result)
         else:
-            return {"success": False, "errors": {"team": result["error"]}}, 404
+            return error_response(result["error"], "team", 404)
 
     @authed_only
     @teams_namespace.doc(
@@ -186,13 +173,13 @@ class TeamDetail(Resource):
         """
         current_user = get_current_user()
         if not current_user:
-            return {"success": False, "errors": {"auth": "User not found"}}, 403
+            return error_response("User not found", "auth", 403)
 
         data = request.get_json() or {}
         new_name = data.get("name")
 
         if not new_name:
-            return {"success": False, "errors": {"name": "New name is required"}}, 400
+            return error_response("New name is required", "name", 400)
 
         result = TeamController.update_team(
             team_id=team_id,
@@ -202,13 +189,12 @@ class TeamDetail(Resource):
         )
 
         if result["success"]:
-            return {"success": True, "data": {"message": result["message"]}}, 200
+            from ...utils.api_responses import success_response
+
+            return success_response({"message": result["message"]})
         else:
             status_code = 403 if "not authorized" in result["error"].lower() else 400
-            return {
-                "success": False,
-                "errors": {"update": result["error"]},
-            }, status_code
+            return error_response(result["error"], "update", status_code)
 
     @authed_only
     @teams_namespace.doc(
@@ -231,26 +217,24 @@ class TeamDetail(Resource):
         """
         current_user = get_current_user()
         if not current_user:
-            return {"success": False, "errors": {"auth": "User not found"}}, 403
+            return error_response("User not found", "auth", 403)
 
         user_is_admin = is_admin()
 
         result = TeamController.disband_team(team_id=team_id, actor_id=current_user.id, is_admin=user_is_admin)
 
         if result["success"]:
-            return {"success": True, "data": {"message": result["message"]}}, 200
+            from ...utils.api_responses import success_response
+
+            return success_response({"message": result["message"]})
         else:
             status_code = 403 if "not authorized" in result["error"].lower() else 400
-            return {
-                "success": False,
-                "errors": {"delete": result["error"]},
-            }, status_code
+            return error_response(result["error"], "delete", status_code)
 
 
 @teams_namespace.route("/<int:team_id>/join")
 @teams_namespace.param("team_id", "Team ID")
 class TeamJoin(Resource):
-
     @authed_only
     @teams_namespace.doc(
         description="Join a specific team in a world",
@@ -278,17 +262,11 @@ class TeamJoin(Resource):
         world_id = data.get("world_id")
 
         if not world_id:
-            return {
-                "success": False,
-                "errors": {"world_id": "World ID is required"},
-            }, 400
+            return error_response("World ID is required", "world_id", 400)
 
         current_user = get_current_user()
         if not current_user:
-            return {
-                "success": False,
-                "errors": {"auth": "User not found in session"},
-            }, 403
+            return error_response("User not found in session", "auth", 403)
 
         result = TeamController.join_team(user_id=current_user.id, team_id=team_id, world_id=world_id)
 
@@ -306,12 +284,11 @@ class TeamJoin(Resource):
                 },
             }, 200
         else:
-            return {"success": False, "errors": {"join": result["error"]}}, 400
+            return error_response(result["error"], "join", 400)
 
 
 @teams_namespace.route("/leave")
 class TeamLeave(Resource):
-
     @authed_only
     @teams_namespace.doc(
         description="Leave current team in a specific world",
@@ -335,17 +312,11 @@ class TeamLeave(Resource):
         world_id = data.get("world_id")
 
         if not world_id:
-            return {
-                "success": False,
-                "errors": {"world_id": "World ID is required"},
-            }, 400
+            return error_response("World ID is required", "world_id", 400)
 
         current_user = get_current_user()
         if not current_user:
-            return {
-                "success": False,
-                "errors": {"auth": "User not found in session"},
-            }, 403
+            return error_response("User not found in session", "auth", 403)
 
         result = TeamController.leave_team(user_id=current_user.id, world_id=world_id)
 
@@ -358,12 +329,11 @@ class TeamLeave(Resource):
                 },
             }, 200
         else:
-            return {"success": False, "errors": {"leave": result["error"]}}, 400
+            return error_response(result["error"], "leave", 400)
 
 
 @teams_namespace.route("/join-by-code")
 class TeamJoinByCode(Resource):
-
     @authed_only
     @teams_namespace.doc(
         description="Join a team using an invite code",
@@ -387,17 +357,11 @@ class TeamJoinByCode(Resource):
         invite_code = data.get("invite_code")
 
         if not invite_code:
-            return {
-                "success": False,
-                "errors": {"invite_code": "Invite code is required"},
-            }, 400
+            return error_response("Invite code is required", "invite_code", 400)
 
         current_user = get_current_user()
         if not current_user:
-            return {
-                "success": False,
-                "errors": {"auth": "User not found in session"},
-            }, 403
+            return error_response("User not found in session", "auth", 403)
 
         result = TeamController.join_team_by_invite_code(user_id=current_user.id, invite_code=invite_code)
 
@@ -417,13 +381,12 @@ class TeamJoinByCode(Resource):
                 },
             }, 200
         else:
-            return {"success": False, "errors": {"invite": result["error"]}}, 400
+            return error_response(result["error"], "invite", 400)
 
 
 @teams_namespace.route("/<int:team_id>/captain")
 @teams_namespace.param("team_id", "Team ID")
 class TeamCaptain(Resource):
-
     @authed_only
     @teams_namespace.doc(
         description="Get the current captain of a team",
@@ -445,9 +408,11 @@ class TeamCaptain(Resource):
         result = TeamController.get_team_captain(team_id)
 
         if result["success"]:
-            return {"success": True, "data": result}, 200
+            from ...utils.api_responses import success_response
+
+            return success_response(result)
         else:
-            return {"success": False, "errors": {"captain": result["error"]}}, 404
+            return error_response(result["error"], "captain", 404)
 
     @authed_only
     @teams_namespace.doc(
@@ -475,24 +440,18 @@ class TeamCaptain(Resource):
 
         current_user = get_current_user()
         if not current_user:
-            return {
-                "success": False,
-                "errors": {"auth": "User not found in session"},
-            }, 403
+            return error_response("User not found in session", "auth", 403)
 
         data = request.get_json() or {}
         new_captain_user_id = data.get("user_id")
 
         if not new_captain_user_id:
-            return {"success": False, "errors": {"user_id": "User ID is required"}}, 400
+            return error_response("User ID is required", "user_id", 400)
 
         try:
             new_captain_user_id = int(new_captain_user_id)
         except (ValueError, TypeError):
-            return {
-                "success": False,
-                "errors": {"user_id": "User ID must be a number"},
-            }, 400
+            return error_response("User ID must be a number", "user_id", 400)
 
         result = TeamController.transfer_captaincy(
             team_id=team_id,
@@ -502,17 +461,18 @@ class TeamCaptain(Resource):
         )
 
         if result["success"]:
-            return {"success": True, "data": result}, 200
+            from ...utils.api_responses import success_response
+
+            return success_response(result)
         else:
             status_code = (
                 403
                 if "not authorized" in result["error"].lower()
-                else 404 if "does not exist" in result["error"] else 400
+                else 404
+                if "does not exist" in result["error"]
+                else 400
             )
-            return {
-                "success": False,
-                "errors": {"captain": result["error"]},
-            }, status_code
+            return error_response(result["error"], "captain", status_code)
 
     @authed_only
     @teams_namespace.doc(
@@ -541,14 +501,13 @@ class TeamCaptain(Resource):
                 "data": {"message": result["message"], "team_id": team_id},
             }, 200
         else:
-            return {"success": False, "errors": {"captain": result["error"]}}, 400
+            return error_response(result["error"], "captain", 400)
 
 
 @teams_namespace.route("/<int:team_id>/members/<int:user_id>")
 @teams_namespace.param("team_id", "Team ID")
 @teams_namespace.param("user_id", "User ID of the member")
 class TeamMemberManager(Resource):
-
     @authed_only
     @teams_namespace.doc(
         description="Remove a member from a team (Captain/Admin only)",
@@ -571,7 +530,7 @@ class TeamMemberManager(Resource):
         """
         current_user = get_current_user()
         if not current_user:
-            return {"success": False, "errors": {"auth": "User not found"}}, 403
+            return error_response("User not found", "auth", 403)
 
         result = TeamController.remove_member(
             team_id=team_id,
@@ -581,10 +540,9 @@ class TeamMemberManager(Resource):
         )
 
         if result["success"]:
-            return {"success": True, "data": {"message": result["message"]}}, 200
+            from ...utils.api_responses import success_response
+
+            return success_response({"message": result["message"]})
         else:
             status_code = 403 if "not authorized" in result["error"].lower() else 400
-            return {
-                "success": False,
-                "errors": {"remove": result["error"]},
-            }, status_code
+            return error_response(result["error"], "remove", status_code)

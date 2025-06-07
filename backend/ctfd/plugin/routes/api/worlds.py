@@ -3,16 +3,15 @@
 from flask import request
 from flask_restx import Namespace, Resource
 from CTFd.utils.decorators import authed_only, admins_only
-from CTFd.utils.user import get_current_user
 
 from ...controllers.world_controller import WorldController
+from ...utils.api_responses import controller_response, error_response
 
 worlds_namespace = Namespace("worlds", description="world management operations")
 
 
 @worlds_namespace.route("")
 class WorldList(Resource):
-
     @authed_only
     @worlds_namespace.doc(
         description="Get list of all training worlds with statistics",
@@ -29,10 +28,7 @@ class WorldList(Resource):
         """
         result = WorldController.list_worlds()
 
-        if result["success"]:
-            return {"success": True, "data": result}, 200
-        else:
-            return {"success": False, "errors": {"worlds": result["error"]}}, 400
+        return controller_response(result, error_field="worlds")
 
     @admins_only
     @worlds_namespace.doc(
@@ -61,11 +57,11 @@ class WorldList(Resource):
         data = request.get_json()
 
         if not data:
-            return {"success": False, "errors": {"body": "JSON body is required"}}, 400
+            return error_response("JSON body is required", "body", 400)
 
         name = data.get("name")
         if not name:
-            return {"success": False, "errors": {"name": "World name is required"}}, 400
+            return error_response("World name is required", "name", 400)
 
         description = data.get("description", "")
         default_team_size = data.get("default_team_size", 4)
@@ -73,15 +69,9 @@ class WorldList(Resource):
         try:
             default_team_size = int(default_team_size)
             if default_team_size < 1 or default_team_size > 20:
-                return {
-                    "success": False,
-                    "errors": {"default_team_size": "Team size must be between 1 and 20"},
-                }, 400
+                return error_response("Team size must be between 1 and 20", "default_team_size", 400)
         except (ValueError, TypeError):
-            return {
-                "success": False,
-                "errors": {"default_team_size": "Team size must be a valid number"},
-            }, 400
+            return error_response("Team size must be a valid number", "default_team_size", 400)
 
         result = WorldController.create_world(name=name, description=description, default_team_size=default_team_size)
 
@@ -98,13 +88,12 @@ class WorldList(Resource):
                 },
             }, 201
         else:
-            return {"success": False, "errors": {"world": result["error"]}}, 400
+            return error_response(result["error"], "world", 400)
 
 
 @worlds_namespace.route("/<int:world_id>")
 @worlds_namespace.param("world_id", "World ID")
 class WorldDetail(Resource):
-
     @authed_only
     @worlds_namespace.doc(
         description="Get detailed information about a specific world including teams",
@@ -126,9 +115,11 @@ class WorldDetail(Resource):
         result = WorldController.get_world_info(world_id)
 
         if result["success"]:
-            return {"success": True, "data": result}, 200
+            from ...utils.api_responses import success_response
+
+            return success_response(result)
         else:
-            return {"success": False, "errors": {"world": result["error"]}}, 404
+            return error_response(result["error"], "world", 404)
 
     @admins_only
     @worlds_namespace.doc(
@@ -160,16 +151,17 @@ class WorldDetail(Resource):
         data = request.get_json()
 
         if not data:
-            return {"success": False, "errors": {"body": "JSON body is required"}}, 400
+            return error_response("JSON body is required", "body", 400)
 
         name = data.get("name")
         description = data.get("description")
 
         if name is None and description is None:
-            return {
-                "success": False,
-                "errors": {"fields": "At least one field (name or description) must be provided"},
-            }, 400
+            return error_response(
+                "At least one field (name or description) must be provided",
+                "fields",
+                400,
+            )
 
         result = WorldController.update_world(world_id=world_id, name=name, description=description)
 
@@ -186,13 +178,12 @@ class WorldDetail(Resource):
                 },
             }, 200
         else:
-            return {"success": False, "errors": {"world": result["error"]}}, 400
+            return error_response(result["error"], "world", 400)
 
 
 @worlds_namespace.route("/<int:world_id>/teams")
 @worlds_namespace.param("world_id", "World ID")
 class WorldTeams(Resource):
-
     @authed_only
     @worlds_namespace.doc(
         description="Get all teams in a specific world",
@@ -216,7 +207,4 @@ class WorldTeams(Resource):
 
         result = TeamController.list_teams_in_world(world_id)
 
-        if result["success"]:
-            return {"success": True, "data": result}, 200
-        else:
-            return {"success": False, "errors": {"world": result["error"]}}, 400
+        return controller_response(result, error_field="world")

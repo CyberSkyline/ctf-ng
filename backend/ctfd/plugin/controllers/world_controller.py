@@ -6,7 +6,6 @@ from typing import Dict, Any, Optional
 
 
 class WorldController:
-
     @staticmethod
     def create_world(name: str, description: Optional[str] = None, default_team_size: int = 4) -> Dict[str, Any]:
         """Creates a new training world with the given config.
@@ -169,7 +168,7 @@ class WorldController:
             return {
                 "success": True,
                 "world": world,
-                "message": f"World updated successfully",
+                "message": "World updated successfully",
             }
 
         except IntegrityError:

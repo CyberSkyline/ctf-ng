@@ -9,7 +9,6 @@ from typing import Dict, Any, Optional
 
 
 class TeamController:
-
     @staticmethod
     def create_team(
         name: str,
@@ -383,7 +382,6 @@ class TeamController:
                 }
 
             if new_name:
-
                 existing_team = Team.query.filter(
                     Team.world_id == team.world_id,
                     Team.name == new_name,

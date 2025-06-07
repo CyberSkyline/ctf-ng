@@ -3,7 +3,6 @@
 Tests database models
 """
 
-import pytest
 from CTFd.models import db
 from tests.helpers import gen_user
 
@@ -11,7 +10,6 @@ from ..helpers import create_ctfd, destroy_ctfd, get_models
 
 
 class TestModels:
-
     def test_create_world(self):
         """Check that worlds can be created."""
         app = create_ctfd()
