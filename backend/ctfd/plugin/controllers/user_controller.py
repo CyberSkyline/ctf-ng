@@ -1,7 +1,7 @@
 # /plugin/controllers/user_controller.py
 
 from sqlalchemy.exc import IntegrityError
-from typing import Dict, Any
+from typing import Any
 
 from ..utils.logger import get_logger
 
@@ -10,7 +10,7 @@ logger = get_logger(__name__)
 
 class UserController:
     @staticmethod
-    def get_user_teams(user_id: int) -> Dict[str, Any]:
+    def get_user_teams(user_id: int) -> dict[str, Any]:
         """Gets all team memberships for a user across all worlds.
 
         Args:
@@ -81,7 +81,7 @@ class UserController:
             }
 
     @staticmethod
-    def get_user_teams_in_world(user_id: int, world_id: int) -> Dict[str, Any]:
+    def get_user_teams_in_world(user_id: int, world_id: int) -> dict[str, Any]:
         """Gets a user's team membership in a world.
 
         Args:
@@ -170,7 +170,7 @@ class UserController:
             }
 
     @staticmethod
-    def can_join_team_in_world(user_id: int, world_id: int) -> Dict[str, Any]:
+    def can_join_team_in_world(user_id: int, world_id: int) -> dict[str, Any]:
         """Checks if a user can join a team in the world.
 
         Args:
@@ -208,7 +208,7 @@ class UserController:
             }
 
     @staticmethod
-    def get_user_stats(user_id: int) -> Dict[str, Any]:
+    def get_user_stats(user_id: int) -> dict[str, Any]:
         """Gets participation stats for a user across all worlds.
 
         Args:

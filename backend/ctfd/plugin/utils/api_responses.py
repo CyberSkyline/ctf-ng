@@ -1,6 +1,6 @@
 # /plugin/utils/api_responses.py
 
-from typing import Dict, Any, Tuple
+from typing import Any
 
 
 def serialize_model_for_api(obj):
@@ -33,7 +33,7 @@ def serialize_model_for_api(obj):
     return obj
 
 
-def success_response(data: Dict[str, Any], status_code: int = 200) -> Tuple[Dict[str, Any], int]:
+def success_response(data: dict[str, Any], status_code: int = 200) -> tuple[dict[str, Any], int]:
     clean_data = {k: v for k, v in data.items() if k not in ["success", "error"]}
 
     serialized_data = {}
@@ -43,13 +43,13 @@ def success_response(data: Dict[str, Any], status_code: int = 200) -> Tuple[Dict
     return {"success": True, "data": serialized_data}, status_code
 
 
-def error_response(error_message: str, field: str = "general", status_code: int = 400) -> Tuple[Dict[str, Any], int]:
+def error_response(error_message: str, field: str = "general", status_code: int = 400) -> tuple[dict[str, Any], int]:
     return {"success": False, "errors": {field: error_message}}, status_code
 
 
 def controller_response(
-    result: Dict[str, Any], success_status: int = 200, error_field: str = "general"
-) -> Tuple[Dict[str, Any], int]:
+    result: dict[str, Any], success_status: int = 200, error_field: str = "general"
+) -> tuple[dict[str, Any], int]:
     if result.get("success"):
         return success_response(result, success_status)
     else:

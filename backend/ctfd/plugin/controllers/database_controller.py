@@ -2,7 +2,7 @@
 
 from CTFd.models import db
 from sqlalchemy.exc import IntegrityError
-from typing import Dict, Any
+from typing import Any
 
 from ..utils.logger import get_logger
 
@@ -13,7 +13,7 @@ class DatabaseController:
     """db utilities"""
 
     @staticmethod
-    def reset_all_plugin_data() -> Dict[str, Any]:
+    def reset_all_plugin_data() -> dict[str, Any]:
         """Deletes all plugin data from the database.
 
         Returns:
@@ -62,7 +62,7 @@ class DatabaseController:
             }
 
     @staticmethod
-    def get_data_counts() -> Dict[str, Any]:
+    def get_data_counts() -> dict[str, Any]:
         """Gets count stats for all plugin data.
 
         Returns:
@@ -88,7 +88,7 @@ class DatabaseController:
             return {"error": "Database constraint error while retrieving data counts."}
 
     @staticmethod
-    def get_detailed_stats() -> Dict[str, Any]:
+    def get_detailed_stats() -> dict[str, Any]:
         """Gets detailed stats including per world breakdowns and empty teams.
 
         Returns:
@@ -140,7 +140,7 @@ class DatabaseController:
             }
 
     @staticmethod
-    def reset_world_data(world_id: int) -> Dict[str, Any]:
+    def reset_world_data(world_id: int) -> dict[str, Any]:
         """Deletes all teams and memberships for a world.
 
         Args:
@@ -213,7 +213,7 @@ class DatabaseController:
             }
 
     @staticmethod
-    def cleanup_orphaned_data() -> Dict[str, Any]:
+    def cleanup_orphaned_data() -> dict[str, Any]:
         """Removes user records that have no team memberships."""
         try:
             from ..models.TeamMember import TeamMember

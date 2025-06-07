@@ -6,7 +6,7 @@ import secrets
 import string
 import uuid
 from sqlalchemy.exc import IntegrityError
-from typing import Dict, Any, Optional
+from typing import Any
 
 from .. import config
 from ..utils.logger import get_logger
@@ -21,9 +21,9 @@ class TeamController:
         name: str,
         world_id: int,
         creator_id: int,
-        limit: Optional[int] = None,
+        limit: int | None = None,
         ranked: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Creates a new team in the world with the creator as captain.
 
         Args:
@@ -163,7 +163,7 @@ class TeamController:
             }
 
     @staticmethod
-    def join_team(user_id: int, team_id: int, world_id: int) -> Dict[str, Any]:
+    def join_team(user_id: int, team_id: int, world_id: int) -> dict[str, Any]:
         """Adds a user to a team as a member.
 
         Args:
@@ -310,7 +310,7 @@ class TeamController:
             }
 
     @staticmethod
-    def leave_team(user_id: int, world_id: int) -> Dict[str, Any]:
+    def leave_team(user_id: int, world_id: int) -> dict[str, Any]:
         """Removes a user from their current team in the world.
 
         Args:
@@ -378,7 +378,7 @@ class TeamController:
             }
 
     @staticmethod
-    def list_teams_in_world(world_id: int) -> Dict[str, Any]:
+    def list_teams_in_world(world_id: int) -> dict[str, Any]:
         """Gets all teams in a world with their basic info.
 
         Args:
@@ -429,7 +429,7 @@ class TeamController:
             }
 
     @staticmethod
-    def get_team_info(team_id: int) -> Dict[str, Any]:
+    def get_team_info(team_id: int) -> dict[str, Any]:
         """Gets detailed info about a team.
 
         Args:
@@ -478,7 +478,7 @@ class TeamController:
             }
 
     @staticmethod
-    def join_team_by_invite_code(user_id: int, invite_code: str) -> Dict[str, Any]:
+    def join_team_by_invite_code(user_id: int, invite_code: str) -> dict[str, Any]:
         """Lets a user join a team using its invite code.
 
         Args:
@@ -514,9 +514,9 @@ class TeamController:
     def update_team(
         team_id: int,
         actor_id: int,
-        new_name: Optional[str] = None,
+        new_name: str | None = None,
         is_admin: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Updates team info with proper auth checks.
 
         Args:
@@ -637,7 +637,7 @@ class TeamController:
             }
 
     @staticmethod
-    def disband_team(team_id: int, actor_id: int, is_admin: bool = False) -> Dict[str, Any]:
+    def disband_team(team_id: int, actor_id: int, is_admin: bool = False) -> dict[str, Any]:
         """Deletes a team and all its memberships.
 
         Args:
@@ -725,7 +725,7 @@ class TeamController:
             }
 
     @staticmethod
-    def remove_member(team_id: int, member_to_remove_id: int, actor_id: int, is_admin: bool = False) -> Dict[str, Any]:
+    def remove_member(team_id: int, member_to_remove_id: int, actor_id: int, is_admin: bool = False) -> dict[str, Any]:
         """Removes a member from a team with auth checks.
 
         Args:
@@ -802,7 +802,7 @@ class TeamController:
                 raise RuntimeError(f"Unable to generate unique invite code (tried up to {length} characters)")
 
     @staticmethod
-    def transfer_captaincy(team_id: int, new_captain_id: int, actor_id: int, is_admin: bool = False) -> Dict[str, Any]:
+    def transfer_captaincy(team_id: int, new_captain_id: int, actor_id: int, is_admin: bool = False) -> dict[str, Any]:
         """Transfers captain role from current captain to another member.
 
         Args:
@@ -921,7 +921,7 @@ class TeamController:
             }
 
     @staticmethod
-    def remove_captain(team_id: int) -> Dict[str, Any]:
+    def remove_captain(team_id: int) -> dict[str, Any]:
         """Demotes the current captain to a regular member.
 
         Args:
@@ -960,7 +960,7 @@ class TeamController:
             }
 
     @staticmethod
-    def get_team_captain(team_id: int) -> Dict[str, Any]:
+    def get_team_captain(team_id: int) -> dict[str, Any]:
         """Gets the current captain info for a team.
 
         Args:

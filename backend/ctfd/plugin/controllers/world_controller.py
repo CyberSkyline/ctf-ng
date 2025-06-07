@@ -2,7 +2,7 @@
 
 from CTFd.models import db
 from sqlalchemy.exc import IntegrityError
-from typing import Dict, Any, Optional
+from typing import Any
 
 from .. import config
 from ..utils.logger import get_logger
@@ -14,9 +14,9 @@ class WorldController:
     @staticmethod
     def create_world(
         name: str,
-        description: Optional[str] = None,
-        default_team_size: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        description: str | None = None,
+        default_team_size: int | None = None,
+    ) -> dict[str, Any]:
         """Creates a new training world with the given config.
 
         Args:
@@ -90,7 +90,7 @@ class WorldController:
             return {"success": False, "error": "A world with this name already exists."}
 
     @staticmethod
-    def list_worlds() -> Dict[str, Any]:
+    def list_worlds() -> dict[str, Any]:
         """Gets all worlds with their team and member stats.
 
         Returns:
@@ -140,7 +140,7 @@ class WorldController:
             }
 
     @staticmethod
-    def get_world_info(world_id: int) -> Dict[str, Any]:
+    def get_world_info(world_id: int) -> dict[str, Any]:
         """Gets detailed info about a world including all its teams.
 
         Args:
@@ -211,7 +211,7 @@ class WorldController:
             }
 
     @staticmethod
-    def update_world(world_id: int, name: Optional[str] = None, description: Optional[str] = None) -> Dict[str, Any]:
+    def update_world(world_id: int, name: str | None = None, description: str | None = None) -> dict[str, Any]:
         """Updates world info with the provided fields.
 
         Args:
