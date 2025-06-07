@@ -4,130 +4,87 @@ Tests database constraints
 """
 
 import pytest
-from CTFd.models import db
 from tests.helpers import gen_user
 from sqlalchemy.exc import IntegrityError
+from plugin.models import Team, User, TeamMember
+from CTFd.models import db as _db
 
-from ..helpers import create_ctfd, destroy_ctfd, get_models
 
-
+@pytest.mark.db
 class TestConstraints:
-    def test_unique_user_world_constraint(self):
+    def test_unique_user_world_constraint(self, db_session, world):
         """Check that users can only be in one team per world."""
-        app = create_ctfd()
+        ctfd_user = gen_user(_db, name="testuser", email="test@example.com")
 
-        with app.app_context():
-            models = get_models()
-            World = models["World"]
-            Team = models["Team"]
-            User = models["User"]
-            TeamMember = models["TeamMember"]
+        ng_user = User(id=ctfd_user.id)
+        db_session.add(ng_user)
 
-            ctfd_user = gen_user(db, name="testuser", email="test@example.com")
+        team1 = Team(name="Team 1", world_id=world.id, limit=4, invite_code="TEAM1ABC")
+        team2 = Team(name="Team 2", world_id=world.id, limit=4, invite_code="TEAM2DEF")
+        db_session.add_all([team1, team2])
+        db_session.commit()
 
-            world = World(name="Test World")
-            db.session.add(world)
-            db.session.commit()
+        membership1 = TeamMember(user_id=ctfd_user.id, team_id=team1.id, world_id=world.id)
+        db_session.add(membership1)
+        db_session.commit()
 
-            ng_user = User(id=ctfd_user.id)
-            db.session.add(ng_user)
+        membership2 = TeamMember(user_id=ctfd_user.id, team_id=team2.id, world_id=world.id)
+        db_session.add(membership2)
 
-            team1 = Team(name="Team 1", world_id=world.id, limit=4, invite_code="TEAM1ABC")
-            team2 = Team(name="Team 2", world_id=world.id, limit=4, invite_code="TEAM2DEF")
-            db.session.add_all([team1, team2])
-            db.session.commit()
+        with pytest.raises(IntegrityError):
+            db_session.commit()
 
-            membership1 = TeamMember(user_id=ctfd_user.id, team_id=team1.id, world_id=world.id)
-            db.session.add(membership1)
-            db.session.commit()
+        db_session.rollback()
 
-            membership2 = TeamMember(user_id=ctfd_user.id, team_id=team2.id, world_id=world.id)
-            db.session.add(membership2)
-
-            with pytest.raises(IntegrityError):
-                db.session.commit()
-
-            db.session.rollback()
-
-        destroy_ctfd(app)
-
-    def test_team_member_count_property(self):
+    def test_team_member_count_property(self, db_session, world):
         """Check that team member count property works correctly."""
-        app = create_ctfd()
+        team = Team(name="Test Team", world_id=world.id, limit=3, invite_code="TESTTEAM")
+        db_session.add(team)
+        db_session.commit()
 
-        with app.app_context():
-            models = get_models()
-            World = models["World"]
-            Team = models["Team"]
-            User = models["User"]
-            TeamMember = models["TeamMember"]
+        assert team.member_count == 0
+        assert not team.is_full
 
-            world = World(name="Test World")
-            db.session.add(world)
-            db.session.commit()
+        user1 = gen_user(_db, name="user1", email="user1@example.com")
+        user2 = gen_user(_db, name="user2", email="user2@example.com")
 
-            team = Team(name="Test Team", world_id=world.id, limit=3, invite_code="TESTTEAM")
-            db.session.add(team)
-            db.session.commit()
+        ng_user1 = User(id=user1.id)
+        ng_user2 = User(id=user2.id)
+        db_session.add_all([ng_user1, ng_user2])
 
-            assert team.member_count == 0
-            assert not team.is_full
+        membership1 = TeamMember(user_id=user1.id, team_id=team.id, world_id=world.id)
+        membership2 = TeamMember(user_id=user2.id, team_id=team.id, world_id=world.id)
+        db_session.add_all([membership1, membership2])
+        db_session.commit()
 
-            user1 = gen_user(db, name="user1", email="user1@example.com")
-            user2 = gen_user(db, name="user2", email="user2@example.com")
+        db_session.refresh(team)
 
-            ng_user1 = User(id=user1.id)
-            ng_user2 = User(id=user2.id)
-            db.session.add_all([ng_user1, ng_user2])
+        assert team.member_count == 2
+        assert not team.is_full
 
-            membership1 = TeamMember(user_id=user1.id, team_id=team.id, world_id=world.id)
-            membership2 = TeamMember(user_id=user2.id, team_id=team.id, world_id=world.id)
-            db.session.add_all([membership1, membership2])
-            db.session.commit()
+        user3 = gen_user(_db, name="user3", email="user3@example.com")
+        ng_user3 = User(id=user3.id)
+        db_session.add(ng_user3)
 
-            db.session.refresh(team)
+        membership3 = TeamMember(user_id=user3.id, team_id=team.id, world_id=world.id)
+        db_session.add(membership3)
+        db_session.commit()
 
-            assert team.member_count == 2
-            assert not team.is_full
+        db_session.refresh(team)
 
-            user3 = gen_user(db, name="user3", email="user3@example.com")
-            ng_user3 = User(id=user3.id)
-            db.session.add(ng_user3)
+        assert team.member_count == 3
+        assert team.is_full
 
-            membership3 = TeamMember(user_id=user3.id, team_id=team.id, world_id=world.id)
-            db.session.add(membership3)
-            db.session.commit()
-
-            db.session.refresh(team)
-
-            assert team.member_count == 3
-            assert team.is_full
-
-        destroy_ctfd(app)
-
-    def test_unique_invite_codes(self):
+    def test_unique_invite_codes(self, db_session, world):
         """Check that invite codes must be unique."""
-        app = create_ctfd()
+        team1 = Team(name="Team 1", world_id=world.id, limit=4, invite_code="SAMECODE")
+        db_session.add(team1)
+        db_session.commit()
 
-        with app.app_context():
-            models = get_models()
-            World = models["World"]
-            Team = models["Team"]
+        team2 = Team(name="Team 2", world_id=world.id, limit=4, invite_code="SAMECODE")
+        db_session.add(team2)
 
-            world = World(name="Test World")
-            db.session.add(world)
-            db.session.commit()
+        with pytest.raises(IntegrityError):
+            db_session.commit()
 
-            team1 = Team(name="Team 1", world_id=world.id, limit=4, invite_code="SAMECODE")
-            db.session.add(team1)
-            db.session.commit()
-
-            team2 = Team(name="Team 2", world_id=world.id, limit=4, invite_code="SAMECODE")
-            db.session.add(team2)
-
-            with pytest.raises(IntegrityError):
-                db.session.commit()
-
-            db.session.rollback()
-
-        destroy_ctfd(app)
+        db_session.rollback()

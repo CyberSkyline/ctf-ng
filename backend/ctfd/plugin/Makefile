@@ -8,34 +8,29 @@ default: test-all
 test-all:
 	$(PYTHON_EXEC) -m pytest -s
 
-
 # Unit tests
 test-unit:
-	$(PYTHON_EXEC) -m pytest tests/unit/ -s
+	$(PYTHON_EXEC) -m pytest -m "not db" -s
 
-# Model tests
+# Integration and API tests
+test-integration:
+	$(PYTHON_EXEC) -m pytest -m "db" -s
+
+# Models Test
 test-models:
 	$(PYTHON_EXEC) -m pytest tests/integration/test_models.py -s
 
-# Controller tests
+# Controllers Tests
 test-controllers:
 	$(PYTHON_EXEC) -m pytest tests/integration/test_controllers.py -s
 
-# Database constraint tests
+# Constraints Test
 test-constraints:
 	$(PYTHON_EXEC) -m pytest tests/integration/test_constraints.py -s
 
-# API tests
+# Endpoint Tests
 test-api:
 	$(PYTHON_EXEC) -m pytest tests/api/ -s
 
 
-# Reset the plugin's database tables
-reset-db:
-	$(PYTHON_EXEC) tests/fixtures/reset_database.py
-
-# Seed the database with test data
-seed-db:
-	cd ../../../../external/CTFd && flask shell -c "import sys; sys.path.append('../../backend/ctfd/plugin/tests/fixtures'); from seed_data import demo_seed; demo_seed()"
-
-.PHONY: default test-all test-unit test-models test-controllers test-constraints test-api reset-db seed-db
+.PHONY: default test-all test-unit test-integration test-models test-controllers test-constraints test-api

@@ -8,3 +8,4 @@ This directory contains the SQLAlchemy models for our plugin. These define the s
 -   `Team.py`: A team that exists *within* a `World`. Has a `world_id`.
 -   `User.py`: Extension of CTFd's core `users` table, linking a CTFd user to our plugin's features.
 -   `TeamMember.py`: The critical junction table that connects a `User` to a `Team` in a specific `World`.
+-   `enums.py`: Enumerations to ensure type safety and prevent magic string bugs

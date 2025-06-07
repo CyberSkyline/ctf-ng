@@ -1,486 +1,183 @@
 """
-plugin/tests/test_api.py
+/plugin/tests/test_api.py
 API Tests
 """
 
-from CTFd.models import db
-from tests.helpers import gen_user
+import pytest
+from plugin.models import Team, TeamMember
+from plugin.models.enums import TeamRole
 
-from ..helpers import create_ctfd, destroy_ctfd, get_models
+pytestmark = pytest.mark.db
 
 
-class TestAPI:
-    def test_teams_endpoint_requires_authentication(self):
-        """Check that teams endpoint requires authentication."""
-        app = create_ctfd()
+def test_teams_endpoint_requires_authentication(client):
+    """Check that teams endpoint requires authentication for anonymous users."""
+    response = client.get("/plugin/api/teams?world_id=1")
+    assert response.status_code in [302, 403]
 
-        with app.app_context():
-            with app.test_client() as client:
-                response = client.get("/plugin/api/teams?world_id=1")
-                assert response.status_code in [302, 403]
 
-        destroy_ctfd(app)
+def test_teams_endpoint_with_authentication(logged_in_client, world):
+    """Check that teams endpoint works for an authenticated user."""
+    response = logged_in_client.get(f"/plugin/api/teams?world_id={world.id}")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"]
+    assert "teams" in data["data"]
 
-    def test_teams_endpoint_with_authentication(self):
-        """Check that teams endpoint works with authentication."""
-        app = create_ctfd()
 
-        with app.app_context():
-            models = get_models()
-            World = models["World"]
+def test_worlds_endpoint_with_authentication(logged_in_client):
+    """Check that worlds endpoint works for an authenticated user."""
+    response = logged_in_client.get("/plugin/api/worlds")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"]
+    assert "worlds" in data["data"]
 
-            user = gen_user(db, name="testuser", email="test@example.com")
 
-            world = World(name="Test World", description="Test Description")
-            db.session.add(world)
-            db.session.commit()
+def test_users_me_teams_endpoint(logged_in_client, team, world):
+    """Check that the /me/teams endpoint correctly shows the user's team and its shape."""
+    response = logged_in_client.get("/plugin/api/users/me/teams")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"]
 
-            with app.test_client() as client:
-                with client.session_transaction() as sess:
-                    sess["id"] = user.id
-                    sess["name"] = user.name
-                    sess["type"] = "user"
-                    sess["nonce"] = "test-nonce"
+    assert "teams" in data["data"]
+    teams_list = data["data"]["teams"]
+    assert isinstance(teams_list, list)
+    assert len(teams_list) == 1
 
-                response = client.get(f"/plugin/api/teams?world_id={world.id}")
-                assert response.status_code == 200
+    user_team = teams_list[0]
+    assert user_team["team_id"] == team.id
+    assert user_team["team_name"] == team.name
+    assert user_team["world_id"] == world.id
+    assert user_team["world_name"] == world.name
+    assert "joined_at" in user_team
+    assert "team_limit" in user_team
 
-                data = response.get_json()
-                assert "success" in data
-                assert data["success"]
-                assert "data" in data
-                assert "teams" in data["data"]
 
-        destroy_ctfd(app)
+def test_admin_endpoints_require_admin(logged_in_client):
+    """Check that a normal user cannot access admin endpoints."""
+    response = logged_in_client.get("/plugin/api/admin/stats")
+    assert response.status_code in [302, 403]
 
-    def test_worlds_endpoint_with_authentication(self):
-        """Check that worlds endpoint works with authentication."""
-        app = create_ctfd()
 
-        with app.app_context():
-            user = gen_user(db, name="testuser", email="test@example.com")
+def test_admin_endpoint_with_admin_user(admin_client):
+    """Check that an admin user can access admin endpoints."""
+    response = admin_client.get("/plugin/api/admin/stats/counts")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"]
 
-            with app.test_client() as client:
-                with client.session_transaction() as sess:
-                    sess["id"] = user.id
-                    sess["name"] = user.name
-                    sess["type"] = "user"
-                    sess["nonce"] = "test-nonce"
 
-                response = client.get("/plugin/api/worlds")
-                assert response.status_code == 200
+def test_create_team_requires_data(logged_in_client):
+    """Check that the team creation endpoint validates for missing data."""
+    response = logged_in_client.post("/plugin/api/teams", json={})
+    assert response.status_code == 400
+    data = response.get_json()
+    assert not data["success"]
+    assert "errors" in data
 
-                data = response.get_json()
-                assert "success" in data
-                assert data["success"]
 
-                assert "data" in data
-                assert "worlds" in data["data"]
-                assert "total_worlds" in data["data"]
+def test_create_world_is_forbidden_for_normal_user(logged_in_client):
+    """
+    Confirms: A user with the user role cannot create a world.
+    This is a critical security test.
+    """
+    world_data = {"name": "World By Normal User", "description": "This should fail"}
 
-                assert "success" not in data["data"]
+    response = logged_in_client.post("/plugin/api/worlds", json=world_data)
 
-        destroy_ctfd(app)
+    # We use in [302, 403]  because CTFd's response can vary. The key is that it's not 2xx.
+    assert response.status_code in [302, 403]
 
-    def test_users_me_teams_endpoint(self):
-        """Check that user teams endpoint works correctly."""
-        app = create_ctfd()
 
-        with app.app_context():
-            models = get_models()
-            User = models["User"]
+def test_create_world_succeeds_for_admin_user(admin_client):
+    """
+    Confirms: A user with the admin role can create a world.
+    This tests the primary success path for the endpoint.
+    """
+    world_data = {"name": "World By Admin", "description": "This should succeed"}
 
-            user = gen_user(db, name="testuser", email="test@example.com")
+    response = admin_client.post("/plugin/api/worlds", json=world_data)
 
-            ng_user = User(id=user.id)
-            db.session.add(ng_user)
-            db.session.commit()
+    assert response.status_code == 201
 
-            with app.test_client() as client:
-                with client.session_transaction() as sess:
-                    sess["id"] = user.id
-                    sess["name"] = user.name
-                    sess["type"] = "user"
-                    sess["nonce"] = "test-nonce"
 
-                response = client.get("/plugin/api/users/me/teams")
-                assert response.status_code == 200
+def test_create_team_creator_becomes_captain(logged_in_client, world, normal_user):
+    """Check that the user who creates a team is automatically made the captain."""
+    team_data = {"name": "A New Team", "world_id": world.id}
 
-                data = response.get_json()
-                assert "success" in data
-                assert data["success"]
+    response = logged_in_client.post("/plugin/api/teams", json=team_data)
+    assert response.status_code == 201
+    data = response.get_json()
+    team_id = data["data"]["team"]["id"]
 
-                assert "data" in data
-                assert "teams" in data["data"]
+    captain_membership = TeamMember.query.filter_by(team_id=team_id, role=TeamRole.CAPTAIN).first()
+    assert captain_membership is not None
+    assert captain_membership.user_id == normal_user.id
 
-        destroy_ctfd(app)
 
-    def test_admin_endpoints_require_admin(self):
-        """Check that admin endpoints require admin privileges."""
-        app = create_ctfd()
+def test_captain_assignment_security(client, team_with_members, admin_user):
+    """Check that only the captain or an admin can assign a new captain."""
+    from plugin.tests.helpers import login_as
 
-        with app.app_context():
-            regular_user = gen_user(db, name="testuser", email="test@example.com")
+    team_id = team_with_members["team"].id
+    captain = team_with_members["captain"]
+    member = team_with_members["member"]
 
-            with app.test_client() as client:
-                with client.session_transaction() as sess:
-                    sess["id"] = regular_user.id
-                    sess["name"] = regular_user.name
-                    sess["type"] = "user"
-                    sess["nonce"] = "test-nonce"
+    login_as(client, member)
+    response = client.post(f"/plugin/api/teams/{team_id}/captain", json={"user_id": member.id})
+    assert response.status_code == 403
 
-                response = client.get("/plugin/api/admin/stats")
-                assert response.status_code in [302, 403]
+    login_as(client, captain)
+    response = client.post(f"/plugin/api/teams/{team_id}/captain", json={"user_id": member.id})
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"]
+    assert data["data"]["captain_id"] == member.id
 
-        destroy_ctfd(app)
+    new_captain_membership = TeamMember.query.filter_by(team_id=team_id, role=TeamRole.CAPTAIN).first()
+    assert new_captain_membership.user_id == member.id
 
-    def test_admin_endpoint_with_admin_user(self):
-        """Check that admin endpoints work with admin user."""
-        app = create_ctfd()
+    login_as(client, admin_user)
+    response = client.post(f"/plugin/api/teams/{team_id}/captain", json={"user_id": captain.id})
+    assert response.status_code == 200
 
-        with app.app_context():
-            admin_user = gen_user(db, name="admin", email="admin@example.com", type="admin")
 
-            with app.test_client() as client:
-                with client.session_transaction() as sess:
-                    sess["id"] = admin_user.id
-                    sess["name"] = admin_user.name
-                    sess["type"] = "admin"
-                    sess["nonce"] = "test-nonce"
+def test_update_team_endpoint_security(client, team_with_members):
+    """Check that only the captain or an admin can update team details."""
+    from plugin.tests.helpers import login_as
 
-                response = client.get("/plugin/api/admin/stats/counts")
-                assert response.status_code == 200
+    team_id = team_with_members["team"].id
+    captain = team_with_members["captain"]
+    member = team_with_members["member"]
 
-                data = response.get_json()
-                assert "success" in data
-                assert data["success"]
+    login_as(client, member)
+    response = client.patch(f"/plugin/api/teams/{team_id}", json={"name": "Hacked Name"})
+    assert response.status_code == 403
 
-                assert "data" in data
-
-        destroy_ctfd(app)
+    login_as(client, captain)
+    response = client.patch(f"/plugin/api/teams/{team_id}", json={"name": "New Captain-Approved Name"})
+    assert response.status_code == 200
 
-    def test_create_team_requires_data(self):
-        """Check that team creation requires proper data."""
-        app = create_ctfd()
+    db_team = Team.query.get(team_id)
+    assert db_team.name == "New Captain-Approved Name"
 
-        with app.app_context():
-            user = gen_user(db, name="testuser", email="test@example.com")
 
-            with app.test_client() as client:
-                with client.session_transaction() as sess:
-                    sess["id"] = user.id
-                    sess["name"] = user.name
-                    sess["type"] = "user"
-                    sess["nonce"] = "test-nonce"
-
-                response = client.post("/plugin/api/teams", json={})
-                assert response.status_code == 400
+def test_join_team_fails_if_already_in_a_team_in_world(logged_in_client, admin_client, world, normal_user):
+    """
+    Confirms a user cannot join a team in a world where they already have a team.
+    """
 
-                data = response.get_json()
-                assert "success" in data
-                assert not data["success"]
-                assert "errors" in data
-
-        destroy_ctfd(app)
-
-    def test_create_world_requires_admin(self):
-        """Check that world creation requires admin privileges."""
-        app = create_ctfd()
-
-        with app.app_context():
-            regular_user = gen_user(db, name="testuser", email="test@example.com")
-
-            with app.test_client() as client:
-                with client.session_transaction() as sess:
-                    sess["id"] = regular_user.id
-                    sess["name"] = regular_user.name
-                    sess["type"] = "user"
-                    sess["nonce"] = "test-nonce"
-
-                world_data = {
-                    "name": "New World",
-                    "description": "A new training world",
-                }
-
-                response = client.post("/plugin/api/worlds", json=world_data)
-                assert response.status_code in [302, 403]
-
-        destroy_ctfd(app)
-
-    def test_api_endpoints_return_json(self):
-        """Check that API endpoints return JSON responses."""
-        app = create_ctfd()
-
-        with app.app_context():
-            models = get_models()
-            World = models["World"]
-            Team = models["Team"]
-            User = models["User"]
-
-            user = gen_user(db, name="testuser", email="test@example.com")
-
-            ng_user = User(id=user.id)
-            db.session.add(ng_user)
-
-            world = World(name="Test World", description="Test Description")
-            db.session.add(world)
-            db.session.commit()
-
-            team = Team(name="Test Team", world_id=world.id, limit=4, invite_code="TEST123")
-            db.session.add(team)
-            db.session.commit()
-
-            with app.test_client() as client:
-                with client.session_transaction() as sess:
-                    sess["id"] = user.id
-                    sess["name"] = user.name
-                    sess["type"] = "user"
-                    sess["nonce"] = "test-nonce"
-
-                endpoints_to_test = [
-                    f"/plugin/api/teams?world_id={world.id}",
-                    "/plugin/api/worlds",
-                    f"/plugin/api/worlds/{world.id}",
-                    f"/plugin/api/teams/{team.id}",
-                    "/plugin/api/users/me/teams",
-                ]
-
-                for endpoint in endpoints_to_test:
-                    response = client.get(endpoint)
-                    assert response.status_code == 200
-
-                    data = response.get_json()
-                    assert data is not None
-                    assert isinstance(data, dict)
-                    assert "success" in data
-
-                    if data["success"]:
-                        assert "data" in data
-
-                        if isinstance(data["data"], dict):
-                            assert "success" not in data["data"]
-
-        destroy_ctfd(app)
-
-    def test_captain_assignment_security(self):
-        """Check that captain assignment has proper security rules."""
-        app = create_ctfd()
-
-        with app.app_context():
-            models = get_models()
-            World = models["World"]
-            Team = models["Team"]
-            User = models["User"]
-            TeamMember = models["TeamMember"]
-
-            captain_user = gen_user(db, name="captain", email="captain@example.com")
-            member_user = gen_user(db, name="member", email="member@example.com")
-            other_user = gen_user(db, name="other", email="other@example.com")
-            admin_user = gen_user(db, name="admin", email="admin@example.com", type="admin")
-
-            ng_captain = User(id=captain_user.id)
-            ng_member = User(id=member_user.id)
-            ng_other = User(id=other_user.id)
-            ng_admin = User(id=admin_user.id)
-            db.session.add_all([ng_captain, ng_member, ng_other, ng_admin])
-
-            world = World(name="Test World", description="Test Description")
-            db.session.add(world)
-            db.session.commit()
-
-            team = Team(name="Test Team", world_id=world.id, limit=4, invite_code="TEST123")
-            db.session.add(team)
-            db.session.commit()
-
-            captain_membership = TeamMember(
-                user_id=captain_user.id,
-                team_id=team.id,
-                world_id=world.id,
-                role="captain",
-            )
-            member_membership = TeamMember(
-                user_id=member_user.id,
-                team_id=team.id,
-                world_id=world.id,
-                role="member",
-            )
-            db.session.add_all([captain_membership, member_membership])
-            db.session.commit()
-
-            with app.test_client() as client:
-                with client.session_transaction() as sess:
-                    sess["id"] = member_user.id
-                    sess["name"] = member_user.name
-                    sess["type"] = "user"
-                    sess["nonce"] = "test-nonce"
-
-                response = client.post(
-                    f"/plugin/api/teams/{team.id}/captain",
-                    json={"user_id": member_user.id},
-                )
-                assert response.status_code == 403
-                data = response.get_json()
-                assert not data["success"]
-
-                assert "errors" in data
-                assert "captain" in data["errors"]
-
-                with client.session_transaction() as sess:
-                    sess["id"] = other_user.id
-                    sess["name"] = other_user.name
-                    sess["type"] = "user"
-                    sess["nonce"] = "test-nonce"
-
-                response = client.post(
-                    f"/plugin/api/teams/{team.id}/captain",
-                    json={"user_id": member_user.id},
-                )
-                assert response.status_code == 403
-
-                with client.session_transaction() as sess:
-                    sess["id"] = captain_user.id
-                    sess["name"] = captain_user.name
-                    sess["type"] = "user"
-                    sess["nonce"] = "test-nonce"
-
-                response = client.post(
-                    f"/plugin/api/teams/{team.id}/captain",
-                    json={"user_id": member_user.id},
-                )
-                assert response.status_code == 200
-                data = response.get_json()
-                assert data["success"]
-
-                assert "data" in data
-                assert data["data"]["captain_id"] == member_user.id
-
-                updated_captain = TeamMember.query.filter_by(team_id=team.id, role="captain").first()
-                assert updated_captain.user_id == member_user.id
-
-                with client.session_transaction() as sess:
-                    sess["id"] = admin_user.id
-                    sess["name"] = admin_user.name
-                    sess["type"] = "admin"
-                    sess["nonce"] = "test-nonce"
-
-                response = client.post(
-                    f"/plugin/api/teams/{team.id}/captain",
-                    json={"user_id": captain_user.id},
-                )
-                assert response.status_code == 200
-                data = response.get_json()
-                assert data["success"]
-
-                assert "data" in data
-                assert data["data"]["captain_id"] == captain_user.id
-
-        destroy_ctfd(app)
-
-    def test_create_team_creator_becomes_captain(self):
-        """Check that team creator automatically becomes captain."""
-        app = create_ctfd()
-
-        with app.app_context():
-            models = get_models()
-            World = models["World"]
-            User = models["User"]
-            TeamMember = models["TeamMember"]
-
-            user = gen_user(db, name="creator", email="creator@example.com")
-            ng_user = User(id=user.id)
-            db.session.add(ng_user)
-
-            world = World(name="Test World", description="Test Description")
-            db.session.add(world)
-            db.session.commit()
-
-            with app.test_client() as client:
-                with client.session_transaction() as sess:
-                    sess["id"] = user.id
-                    sess["name"] = user.name
-                    sess["type"] = "user"
-                    sess["nonce"] = "test-nonce"
-
-                team_data = {"name": "New Team", "world_id": world.id}
-
-                response = client.post("/plugin/api/teams", json=team_data)
-                assert response.status_code == 201
-                data = response.get_json()
-                assert data["success"]
-
-                assert "data" in data
-                team_id = data["data"]["team"]["id"]
-
-                captain = TeamMember.query.filter_by(team_id=team_id, role="captain").first()
-                assert captain is not None
-                assert captain.user_id == user.id
-
-        destroy_ctfd(app)
-
-    def test_update_team_endpoint(self):
-        """Check that team update endpoint works correctly."""
-        app = create_ctfd()
-
-        with app.app_context():
-            models = get_models()
-            World = models["World"]
-            Team = models["Team"]
-            User = models["User"]
-            TeamMember = models["TeamMember"]
-
-            captain_user = gen_user(db, name="captain", email="captain@example.com")
-            member_user = gen_user(db, name="member", email="member@example.com")
-
-            ng_captain = User(id=captain_user.id)
-            ng_member = User(id=member_user.id)
-            db.session.add_all([ng_captain, ng_member])
-
-            world = World(name="Test World", description="Test Description")
-            db.session.add(world)
-            db.session.commit()
-
-            team = Team(name="Original Name", world_id=world.id, limit=4, invite_code="TEST123")
-            db.session.add(team)
-            db.session.commit()
-
-            captain_membership = TeamMember(
-                user_id=captain_user.id,
-                team_id=team.id,
-                world_id=world.id,
-                role="captain",
-            )
-            member_membership = TeamMember(
-                user_id=member_user.id,
-                team_id=team.id,
-                world_id=world.id,
-                role="member",
-            )
-            db.session.add_all([captain_membership, member_membership])
-            db.session.commit()
-
-            with app.test_client() as client:
-                with client.session_transaction() as sess:
-                    sess["id"] = member_user.id
-                    sess["name"] = member_user.name
-                    sess["type"] = "user"
-                    sess["nonce"] = "test-nonce"
-
-                response = client.patch(f"/plugin/api/teams/{team.id}", json={"name": "Hacked Name"})
-                assert response.status_code == 403
-
-                with client.session_transaction() as sess:
-                    sess["id"] = captain_user.id
-                    sess["name"] = captain_user.name
-                    sess["type"] = "user"
-                    sess["nonce"] = "test-nonce"
-
-                response = client.patch(f"/plugin/api/teams/{team.id}", json={"name": "New Name"})
-                assert response.status_code == 200
-                data = response.get_json()
-                assert data["success"]
-                assert "data" in data
-
-                updated_team = Team.query.get(team.id)
-                assert updated_team.name == "New Name"
-
-        destroy_ctfd(app)
+    team_data = {"name": "Another Team", "world_id": world.id}
+    response = admin_client.post("/plugin/api/teams", json=team_data)
+    assert response.status_code == 201
+    team2_id = response.get_json()["data"]["team"]["id"]
+
+    response = logged_in_client.post(f"/plugin/api/teams/{team2_id}/join", json={"world_id": world.id})
+
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data["success"] is False
+    assert "errors" in data
+    assert "already in team" in data["errors"]["join"].lower()

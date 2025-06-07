@@ -4,6 +4,10 @@ from CTFd.models import db
 from sqlalchemy.exc import IntegrityError
 from typing import Dict, Any
 
+from ..utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 class DatabaseController:
     """db utilities"""
@@ -23,6 +27,11 @@ class DatabaseController:
 
             initial_counts = DatabaseController.get_data_counts()
 
+            logger.warning(
+                "Initiating full plugin data reset",
+                extra={"context": {"initial_counts": initial_counts}},
+            )
+
             TeamMember.query.delete()
             Team.query.delete()
             User.query.delete()
@@ -30,14 +39,23 @@ class DatabaseController:
 
             db.session.commit()
 
+            logger.info(
+                "All plugin data reset successfully",
+                extra={"context": {"deleted_counts": initial_counts}},
+            )
+
             return {
                 "success": True,
                 "message": "All plugin data reset successfully",
                 "deleted": initial_counts,
             }
 
-        except IntegrityError:
+        except IntegrityError as e:
             db.session.rollback()
+            logger.error(
+                "Failed to reset all plugin data due to database constraints",
+                extra={"context": {"error": str(e)}},
+            )
             return {
                 "success": False,
                 "error": "Unable to reset data due to database constraints.",
@@ -62,7 +80,11 @@ class DatabaseController:
                 "users": User.query.count(),
                 "memberships": TeamMember.query.count(),
             }
-        except IntegrityError:
+        except IntegrityError as e:
+            logger.error(
+                "Failed to get data counts due to database error",
+                extra={"context": {"error": str(e)}},
+            )
             return {"error": "Database constraint error while retrieving data counts."}
 
     @staticmethod
@@ -107,7 +129,11 @@ class DatabaseController:
                 "total_empty_teams": len(empty_teams),
             }
 
-        except IntegrityError:
+        except IntegrityError as e:
+            logger.error(
+                "Failed to get detailed stats due to database error",
+                extra={"context": {"error": str(e)}},
+            )
             return {
                 "success": False,
                 "error": "Database constraint error while retrieving detailed statistics.",
@@ -130,15 +156,43 @@ class DatabaseController:
 
             world = World.query.get(world_id)
             if not world:
+                logger.warning(
+                    "World reset failed - world not found",
+                    extra={"context": {"world_id": world_id}},
+                )
                 return {"success": False, "error": "World not found."}
 
             memberships_count = TeamMember.query.filter_by(world_id=world_id).count()
             teams_count = Team.query.filter_by(world_id=world_id).count()
 
+            logger.warning(
+                "Initiating world data reset",
+                extra={
+                    "context": {
+                        "world_id": world_id,
+                        "world_name": world.name,
+                        "teams_to_delete": teams_count,
+                        "memberships_to_delete": memberships_count,
+                    }
+                },
+            )
+
             TeamMember.query.filter_by(world_id=world_id).delete()
             Team.query.filter_by(world_id=world_id).delete()
 
             db.session.commit()
+
+            logger.info(
+                "World data reset successfully",
+                extra={
+                    "context": {
+                        "world_id": world_id,
+                        "world_name": world.name,
+                        "deleted_teams": teams_count,
+                        "deleted_memberships": memberships_count,
+                    }
+                },
+            )
 
             return {
                 "success": True,
@@ -147,8 +201,12 @@ class DatabaseController:
                 "world": {"id": world.id, "name": world.name},
             }
 
-        except IntegrityError:
+        except IntegrityError as e:
             db.session.rollback()
+            logger.error(
+                "Failed to reset world data due to database constraints",
+                extra={"context": {"world_id": world_id, "error": str(e)}},
+            )
             return {
                 "success": False,
                 "error": "Unable to reset world data due to database constraints.",
@@ -156,25 +214,33 @@ class DatabaseController:
 
     @staticmethod
     def cleanup_orphaned_data() -> Dict[str, Any]:
-        """Removes user records that have no team memberships.
-
-        Returns:
-            dict: Success status and count of cleaned up users.
-        """
+        """Removes user records that have no team memberships."""
         try:
             from ..models.TeamMember import TeamMember
             from ..models.User import User
 
-            users_with_memberships = db.session.query(TeamMember.user_id).distinct().all()
-            user_ids_with_memberships = [row[0] for row in users_with_memberships]
+            orphaned_users_query = User.query.outerjoin(TeamMember, User.id == TeamMember.user_id).filter(
+                TeamMember.id.is_(None)
+            )
 
-            orphaned_users = User.query.filter(~User.id.in_(user_ids_with_memberships)).all()
+            orphaned_users = orphaned_users_query.all()
             orphaned_count = len(orphaned_users)
 
-            for user in orphaned_users:
-                db.session.delete(user)
+            if orphaned_count > 0:
+                logger.info(
+                    "Starting orphaned data cleanup",
+                    extra={"context": {"orphaned_users_count": orphaned_count}},
+                )
 
-            db.session.commit()
+                orphaned_users_query.delete(synchronize_session=False)
+                db.session.commit()
+
+                logger.info(
+                    "Orphaned data cleanup completed successfully",
+                    extra={"context": {"cleaned_up_users": orphaned_count}},
+                )
+            else:
+                logger.info("No orphaned data found to cleanup")
 
             return {
                 "success": True,
@@ -182,8 +248,12 @@ class DatabaseController:
                 "cleaned_up": {"orphaned_users": orphaned_count},
             }
 
-        except IntegrityError:
+        except IntegrityError as e:
             db.session.rollback()
+            logger.error(
+                "Failed to cleanup orphaned data due to database constraints",
+                extra={"context": {"error": str(e)}},
+            )
             return {
                 "success": False,
                 "error": "Unable to cleanup data due to database constraints.",

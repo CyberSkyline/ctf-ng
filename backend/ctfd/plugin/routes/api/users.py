@@ -1,18 +1,23 @@
-# plugin/routes/api/users.py
+# /plugin/routes/api/users.py
 
+from flask import g
 from flask_restx import Namespace, Resource
 from CTFd.utils.decorators import authed_only, admins_only
-from CTFd.utils.user import get_current_user
 
 from ...controllers.user_controller import UserController
-from ...utils.api_responses import controller_response, error_response
+from ...utils.api_responses import controller_response
+from ...utils.decorators import authed_user_required
+from ...utils.logger import get_logger
+from ...utils import get_current_user_id
 
 users_namespace = Namespace("users", description="user team operations")
+logger = get_logger(__name__)
 
 
 @users_namespace.route("/me/teams")
 class UserTeams(Resource):
     @authed_only
+    @authed_user_required
     @users_namespace.doc(
         description="Get current user's team memberships across all worlds",
         responses={
@@ -26,11 +31,18 @@ class UserTeams(Resource):
         Returns:
             JSON response with list of user's teams and world info.
         """
-        current_user = get_current_user()
-        if not current_user:
-            return error_response("User not found in session", "auth", 403)
+        result = UserController.get_user_teams(g.user.id)
 
-        result = UserController.get_user_teams(current_user.id)
+        if result["success"]:
+            logger.info(
+                "User teams retrieved",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "team_count": len(result.get("teams", [])),
+                    }
+                },
+            )
 
         return controller_response(result, error_field="user")
 
@@ -39,6 +51,7 @@ class UserTeams(Resource):
 @users_namespace.param("world_id", "World ID")
 class UserWorldTeams(Resource):
     @authed_only
+    @authed_user_required
     @users_namespace.doc(
         description="Get current user's team in a specific world",
         responses={
@@ -56,11 +69,21 @@ class UserWorldTeams(Resource):
         Returns:
             JSON response with team info if user is in a team, or None if not.
         """
-        current_user = get_current_user()
-        if not current_user:
-            return error_response("User not found in session", "auth", 403)
+        result = UserController.get_user_teams_in_world(g.user.id, world_id)
 
-        result = UserController.get_user_teams_in_world(current_user.id, world_id)
+        if result["success"]:
+            team_info = result.get("team")
+            logger.info(
+                "User world team membership retrieved",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "world_id": world_id,
+                        "has_team": team_info is not None,
+                        "team_id": team_info.get("id") if team_info else None,
+                    }
+                },
+            )
 
         return controller_response(result, error_field="user")
 
@@ -69,6 +92,7 @@ class UserWorldTeams(Resource):
 @users_namespace.param("world_id", "World ID")
 class UserWorldEligibility(Resource):
     @authed_only
+    @authed_user_required
     @users_namespace.doc(
         description="Check if current user can join a team in the specified world",
         responses={
@@ -85,11 +109,19 @@ class UserWorldEligibility(Resource):
         Returns:
             JSON response with eligibility status and reason if not eligible.
         """
-        current_user = get_current_user()
-        if not current_user:
-            return error_response("User not found in session", "auth", 403)
+        result = UserController.can_join_team_in_world(g.user.id, world_id)
 
-        result = UserController.can_join_team_in_world(current_user.id, world_id)
+        if result["success"]:
+            logger.info(
+                "User eligibility checked",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "world_id": world_id,
+                        "can_join": result.get("can_join", False),
+                    }
+                },
+            )
 
         return controller_response(result, error_field="eligibility")
 
@@ -97,6 +129,7 @@ class UserWorldEligibility(Resource):
 @users_namespace.route("/me/stats")
 class UserStats(Resource):
     @authed_only
+    @authed_user_required
     @users_namespace.doc(
         description="Get current user's participation statistics across all worlds",
         responses={
@@ -110,11 +143,20 @@ class UserStats(Resource):
         Returns:
             JSON response with participation stats and metrics.
         """
-        current_user = get_current_user()
-        if not current_user:
-            return error_response("User not found in session", "auth", 403)
+        result = UserController.get_user_stats(g.user.id)
 
-        result = UserController.get_user_stats(current_user.id)
+        if result["success"]:
+            stats = result.get("stats", {})
+            logger.info(
+                "User stats retrieved",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "worlds_participated": stats.get("worlds_participated", 0),
+                        "teams_joined": stats.get("teams_joined", 0),
+                    }
+                },
+            )
 
         return controller_response(result, error_field="stats")
 
@@ -143,6 +185,29 @@ class AdminUserTeams(Resource):
         """
         result = UserController.get_user_teams(user_id)
 
+        if result["success"]:
+            logger.info(
+                "Admin accessed user teams",
+                extra={
+                    "context": {
+                        "admin_id": get_current_user_id(),
+                        "target_user_id": user_id,
+                        "team_count": len(result.get("teams", [])),
+                    }
+                },
+            )
+        else:
+            logger.warning(
+                "Admin user teams access failed",
+                extra={
+                    "context": {
+                        "admin_id": get_current_user_id(),
+                        "target_user_id": user_id,
+                        "error": result.get("error"),
+                    }
+                },
+            )
+
         return controller_response(result, error_field="user")
 
 
@@ -168,5 +233,30 @@ class AdminUserStats(Resource):
             JSON response with participation stats and metrics.
         """
         result = UserController.get_user_stats(user_id)
+
+        if result["success"]:
+            stats = result.get("stats", {})
+            logger.info(
+                "Admin accessed user stats",
+                extra={
+                    "context": {
+                        "admin_id": get_current_user_id(),
+                        "target_user_id": user_id,
+                        "worlds_participated": stats.get("worlds_participated", 0),
+                        "teams_joined": stats.get("teams_joined", 0),
+                    }
+                },
+            )
+        else:
+            logger.warning(
+                "Admin user stats access failed",
+                extra={
+                    "context": {
+                        "admin_id": get_current_user_id(),
+                        "target_user_id": user_id,
+                        "error": result.get("error"),
+                    }
+                },
+            )
 
         return controller_response(result, error_field="stats")

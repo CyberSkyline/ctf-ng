@@ -40,7 +40,7 @@ def reset_plugin_data():
             TeamMember.query.delete()
             print(f"    Deleted {memberships_count} team memberships")
         else:
-            print("    No team memberships to delete")
+            print("   No team memberships to delete")
 
         teams_count = Team.query.count()
         if teams_count > 0:
@@ -117,13 +117,13 @@ def show_current_data():
         print()
 
         if worlds_count == 0 and teams_count == 0 and users_count == 0 and memberships_count == 0:
-            print("✨ Database is already empty!")
+            print(" Database is already empty!")
             return False
 
         return True
 
     except Exception as e:
-        print(f"❌ Error checking current data: {str(e)}")
+        print(f" Error checking current data: {str(e)}")
         return False
 
 

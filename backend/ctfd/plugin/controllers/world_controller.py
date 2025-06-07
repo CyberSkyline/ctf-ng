@@ -4,16 +4,25 @@ from CTFd.models import db
 from sqlalchemy.exc import IntegrityError
 from typing import Dict, Any, Optional
 
+from .. import config
+from ..utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 class WorldController:
     @staticmethod
-    def create_world(name: str, description: Optional[str] = None, default_team_size: int = 4) -> Dict[str, Any]:
+    def create_world(
+        name: str,
+        description: Optional[str] = None,
+        default_team_size: Optional[int] = None,
+    ) -> Dict[str, Any]:
         """Creates a new training world with the given config.
 
         Args:
             name (str): The unique name for the world.
             description (str, optional): A description of the world's purpose. Defaults to None.
-            default_team_size (int, optional): Default max team size for teams in this world. Defaults to 4.
+            default_team_size (int, optional): Default max team size for teams in this world. Defaults to config.DEFAULT_TEAM_SIZE.
 
         Returns:
             dict: Success status, world object, and confirmation message or error info.
@@ -23,21 +32,61 @@ class WorldController:
 
             existing_world = World.query.filter_by(name=name).first()
             if existing_world:
+                logger.warning(
+                    "World creation failed - name already exists",
+                    extra={
+                        "context": {
+                            "world_name": name,
+                            "existing_world_id": existing_world.id,
+                        }
+                    },
+                )
                 return {"success": False, "error": f"World '{name}' already exists"}
+
+            if default_team_size is None:
+                default_team_size = config.DEFAULT_TEAM_SIZE
 
             world = World(name=name, description=description, default_team_size=default_team_size)
 
             db.session.add(world)
             db.session.commit()
 
+            logger.info(
+                "World created successfully",
+                extra={
+                    "context": {
+                        "world_id": world.id,
+                        "world_name": name,
+                        "description": description,
+                        "default_team_size": default_team_size,
+                    }
+                },
+            )
+
             return {
                 "success": True,
-                "world": world,
+                "world": {
+                    "id": world.id,
+                    "name": world.name,
+                    "description": world.description,
+                    "default_team_size": world.default_team_size,
+                },
                 "message": f"World '{name}' created successfully",
             }
 
-        except IntegrityError:
+        except IntegrityError as e:
             db.session.rollback()
+            logger.error(
+                "Failed to create world due to database conflict",
+                extra={
+                    "context": {
+                        "world_name": name,
+                        "description": description,
+                        "default_team_size": default_team_size,
+                        "error": str(e),
+                    }
+                },
+            )
             return {"success": False, "error": "A world with this name already exists."}
 
     @staticmethod
@@ -69,13 +118,22 @@ class WorldController:
                     }
                 )
 
+            logger.info(
+                "Worlds listed successfully",
+                extra={"context": {"total_worlds": len(worlds_data)}},
+            )
+
             return {
                 "success": True,
                 "worlds": worlds_data,
                 "total_worlds": len(worlds_data),
             }
 
-        except IntegrityError:
+        except IntegrityError as e:
+            logger.error(
+                "Failed to list worlds due to database error",
+                extra={"context": {"error": str(e)}},
+            )
             return {
                 "success": False,
                 "error": "Database constraint error while listing worlds.",
@@ -98,6 +156,10 @@ class WorldController:
 
             world = World.query.get(world_id)
             if not world:
+                logger.warning(
+                    "Get world info failed - world not found",
+                    extra={"context": {"world_id": world_id}},
+                )
                 return {"success": False, "error": "World not found."}
 
             teams = Team.query.filter_by(world_id=world_id).all()
@@ -124,9 +186,25 @@ class WorldController:
                 "total_members": total_members,
             }
 
+            logger.info(
+                "World info retrieved successfully",
+                extra={
+                    "context": {
+                        "world_id": world_id,
+                        "world_name": world.name,
+                        "team_count": len(teams),
+                        "total_members": total_members,
+                    }
+                },
+            )
+
             return {"success": True, "world": world_data, "teams": teams_data}
 
-        except IntegrityError:
+        except IntegrityError as e:
+            logger.error(
+                "Failed to get world info due to database error",
+                extra={"context": {"world_id": world_id, "error": str(e)}},
+            )
             return {
                 "success": False,
                 "error": "Database constraint error while retrieving world information.",
@@ -149,28 +227,77 @@ class WorldController:
 
             world = World.query.get(world_id)
             if not world:
+                logger.warning(
+                    "World update failed - world not found",
+                    extra={"context": {"world_id": world_id}},
+                )
                 return {"success": False, "error": "World not found."}
+
+            changes_made = {}
+            old_name = world.name
+            old_description = world.description
 
             if name and name != world.name:
                 existing = World.query.filter_by(name=name).first()
                 if existing:
+                    logger.warning(
+                        "World update failed - name already exists",
+                        extra={
+                            "context": {
+                                "world_id": world_id,
+                                "old_name": old_name,
+                                "new_name": name,
+                                "existing_world_id": existing.id,
+                            }
+                        },
+                    )
                     return {
                         "success": False,
                         "error": f"World name '{name}' already exists",
                     }
+                changes_made["name"] = {"old": old_name, "new": name}
                 world.name = name
 
             if description is not None:
+                changes_made["description"] = {
+                    "old": old_description,
+                    "new": description,
+                }
                 world.description = description
 
             db.session.commit()
 
+            logger.info(
+                "World updated successfully",
+                extra={
+                    "context": {
+                        "world_id": world_id,
+                        "changes_made": changes_made,
+                    }
+                },
+            )
+
             return {
                 "success": True,
-                "world": world,
+                "world": {
+                    "id": world.id,
+                    "name": world.name,
+                    "description": world.description,
+                },
                 "message": "World updated successfully",
             }
 
-        except IntegrityError:
+        except IntegrityError as e:
             db.session.rollback()
+            logger.error(
+                "Failed to update world due to database conflict",
+                extra={
+                    "context": {
+                        "world_id": world_id,
+                        "new_name": name,
+                        "new_description": description,
+                        "error": str(e),
+                    }
+                },
+            )
             return {"success": False, "error": "A world with this name already exists."}

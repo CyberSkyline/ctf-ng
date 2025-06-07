@@ -3,6 +3,10 @@
 from sqlalchemy.exc import IntegrityError
 from typing import Dict, Any
 
+from ..utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 class UserController:
     @staticmethod
@@ -23,6 +27,10 @@ class UserController:
 
             user = User.query.get(user_id)
             if not user:
+                logger.warning(
+                    "Get user teams failed - user not found",
+                    extra={"context": {"user_id": user_id}},
+                )
                 return {"success": False, "error": "User not found in extended system"}
 
             memberships = TeamMember.query.filter_by(user_id=user_id).all()
@@ -39,11 +47,22 @@ class UserController:
                             "team_name": team.name,
                             "world_id": world.id,
                             "world_name": world.name,
-                            "joined_at": membership.joined_at,
+                            "joined_at": membership.joined_at.isoformat() if membership.joined_at else None,
                             "team_member_count": team.member_count,
                             "team_limit": team.limit,
                         }
                     )
+
+            logger.info(
+                "User teams retrieved successfully",
+                extra={
+                    "context": {
+                        "user_id": user_id,
+                        "total_teams": len(teams_data),
+                        "total_memberships": len(memberships),
+                    }
+                },
+            )
 
             return {
                 "success": True,
@@ -51,7 +70,11 @@ class UserController:
                 "total_teams": len(teams_data),
             }
 
-        except IntegrityError:
+        except IntegrityError as e:
+            logger.error(
+                "Failed to retrieve user teams due to database error",
+                extra={"context": {"user_id": user_id, "error": str(e)}},
+            )
             return {
                 "success": False,
                 "error": "Database constraint error while retrieving user teams.",
@@ -75,6 +98,10 @@ class UserController:
 
             world = World.query.get(world_id)
             if not world:
+                logger.warning(
+                    "Get user teams in world failed - world not found",
+                    extra={"context": {"user_id": user_id, "world_id": world_id}},
+                )
                 return {
                     "success": False,
                     "error": f"World with ID {world_id} does not exist",
@@ -84,6 +111,19 @@ class UserController:
 
             if membership:
                 team = Team.query.get(membership.team_id)
+                logger.info(
+                    "User team membership found in world",
+                    extra={
+                        "context": {
+                            "user_id": user_id,
+                            "world_id": world_id,
+                            "world_name": world.name,
+                            "team_id": team.id,
+                            "team_name": team.name,
+                            "role": membership.role,
+                        }
+                    },
+                )
                 return {
                     "success": True,
                     "in_team": True,
@@ -101,9 +141,29 @@ class UserController:
                     },
                 }
             else:
+                logger.info(
+                    "User has no team membership in world",
+                    extra={
+                        "context": {
+                            "user_id": user_id,
+                            "world_id": world_id,
+                            "world_name": world.name,
+                        }
+                    },
+                )
                 return {"success": True, "in_team": False, "team": None}
 
-        except IntegrityError:
+        except IntegrityError as e:
+            logger.error(
+                "Failed to retrieve user teams in world due to database error",
+                extra={
+                    "context": {
+                        "user_id": user_id,
+                        "world_id": world_id,
+                        "error": str(e),
+                    }
+                },
+            )
             return {
                 "success": False,
                 "error": "Database constraint error while retrieving user teams in world.",
@@ -131,7 +191,17 @@ class UserController:
                 "reason": ("User already in a team for this world" if existing_membership else None),
             }
 
-        except IntegrityError:
+        except IntegrityError as e:
+            logger.error(
+                "Failed to check join eligibility due to database error",
+                extra={
+                    "context": {
+                        "user_id": user_id,
+                        "world_id": world_id,
+                        "error": str(e),
+                    }
+                },
+            )
             return {
                 "success": False,
                 "error": "Database constraint error while checking join eligibility.",
@@ -174,7 +244,11 @@ class UserController:
                 },
             }
 
-        except IntegrityError:
+        except IntegrityError as e:
+            logger.error(
+                "Failed to retrieve user stats due to database error",
+                extra={"context": {"user_id": user_id, "error": str(e)}},
+            )
             return {
                 "success": False,
                 "error": "Database constraint error while retrieving user statistics.",

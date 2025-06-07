@@ -1,14 +1,27 @@
 # /plugin/routes/api/teams.py
 
-from flask import request
+from flask import request, g
 from flask_restx import Namespace, Resource
 from CTFd.utils.decorators import authed_only
-from CTFd.utils.user import get_current_user, is_admin
+from CTFd.utils.user import is_admin
 
 from ...controllers.team_controller import TeamController
-from ...utils.api_responses import controller_response, error_response
+from ...utils.api_responses import controller_response, error_response, success_response
+from ...utils.decorators import authed_user_required, json_body_required
+from ...utils.logger import get_logger
+from ...utils import get_current_user_id
+from ...utils.validators import (
+    validate_team_creation,
+    validate_team_update,
+    validate_team_join,
+    validate_team_leave,
+    validate_team_join_by_code,
+    validate_captain_assignment,
+    validate_world_id_param,
+)
 
 teams_namespace = Namespace("teams", description="team management operations")
+logger = get_logger(__name__)
 
 
 @teams_namespace.route("")
@@ -34,19 +47,42 @@ class TeamList(Resource):
         """
         world_id = request.args.get("world_id")
 
-        if not world_id:
-            return error_response("World ID is required", "world_id", 400)
+        is_valid, errors = validate_world_id_param(world_id)
+        if not is_valid:
+            logger.warning(
+                "Validation failed for team list",
+                extra={
+                    "context": {
+                        "errors": errors,
+                        "user_id": get_current_user_id(),
+                        "endpoint": "teams_list",
+                        "world_id": world_id,
+                    }
+                },
+            )
+            return {"success": False, "errors": errors}, 400
 
-        try:
-            world_id = int(world_id)
-        except ValueError:
-            return error_response("World ID must be a number", "world_id", 400)
+        world_id = int(world_id)
 
         result = TeamController.list_teams_in_world(world_id)
+
+        if result["success"]:
+            logger.info(
+                "Teams list retrieved",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "world_id": world_id,
+                        "team_count": len(result.get("teams", [])),
+                    }
+                },
+            )
 
         return controller_response(result, error_field="world")
 
     @authed_only
+    @authed_user_required
+    @json_body_required
     @teams_namespace.doc(
         description="Create a new team in a world",
         params={},
@@ -68,24 +104,22 @@ class TeamList(Resource):
         Returns:
             JSON response with created team info and invite code or error details.
         """
-        data = request.get_json()
+        data = g.json_data
 
-        if not data:
-            return error_response("JSON body is required", "body", 400)
-
-        required_fields = ["name", "world_id"]
-        errors = {}
-
-        for field in required_fields:
-            if field not in data or not data[field]:
-                errors[field] = f"{field} is required"
-
-        if errors:
+        is_valid, errors = validate_team_creation(data)
+        if not is_valid:
+            logger.warning(
+                "Validation failed for team creation",
+                extra={
+                    "context": {
+                        "errors": errors,
+                        "user_id": get_current_user_id(),
+                        "endpoint": "team_create",
+                        "data": data,
+                    }
+                },
+            )
             return {"success": False, "errors": errors}, 400
-
-        current_user = get_current_user()
-        if not current_user:
-            return error_response("User not found in session", "auth", 403)
 
         limit = data.get("limit")
         ranked = data.get("ranked", False)
@@ -93,29 +127,35 @@ class TeamList(Resource):
         result = TeamController.create_team(
             name=data["name"],
             world_id=data["world_id"],
-            creator_id=current_user.id,
+            creator_id=g.user.id,
             limit=limit,
             ranked=ranked,
         )
 
         if result["success"]:
-            return {
-                "success": True,
-                "data": {
-                    "team": {
-                        "id": result["team"].id,
-                        "name": result["team"].name,
-                        "limit": result["team"].limit,
-                        "member_count": result["team"].member_count,
-                        "is_full": result["team"].is_full,
-                        "ranked": result["team"].ranked,
+            logger.info(
+                "Team created successfully",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "team_id": result["team"].id,
+                        "team_name": result["team"].name,
                         "world_id": result["team"].world_id,
-                    },
-                    "invite_code": result["invite_code"],
-                    "message": result["message"],
+                    }
                 },
-            }, 201
+            )
+            return success_response(result, status_code=201)
         else:
+            logger.warning(
+                "Team creation failed",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "error": result["error"],
+                        "endpoint": "team_create",
+                    }
+                },
+            )
             return error_response(result["error"], "team", 400)
 
 
@@ -143,13 +183,26 @@ class TeamDetail(Resource):
         result = TeamController.get_team_info(team_id)
 
         if result["success"]:
-            from ...utils.api_responses import success_response
-
+            logger.info(
+                "Team info retrieved",
+                extra={"context": {"user_id": get_current_user_id(), "team_id": team_id}},
+            )
             return success_response(result)
         else:
+            logger.warning(
+                "Team not found",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "team_id": team_id,
+                        "error": result["error"],
+                    }
+                },
+            )
             return error_response(result["error"], "team", 404)
 
     @authed_only
+    @authed_user_required
     @teams_namespace.doc(
         description="Update team details (Captain/Admin only)",
         responses={
@@ -171,32 +224,61 @@ class TeamDetail(Resource):
         Returns:
             JSON response with updated team info or error details.
         """
-        current_user = get_current_user()
-        if not current_user:
-            return error_response("User not found", "auth", 403)
-
         data = request.get_json() or {}
-        new_name = data.get("name")
 
-        if not new_name:
-            return error_response("New name is required", "name", 400)
+        is_valid, errors = validate_team_update(data)
+        if not is_valid:
+            logger.warning(
+                "Validation failed for team update",
+                extra={
+                    "context": {
+                        "errors": errors,
+                        "user_id": get_current_user_id(),
+                        "endpoint": "team_update",
+                        "team_id": team_id,
+                    }
+                },
+            )
+            return {"success": False, "errors": errors}, 400
+
+        new_name = data.get("name")
 
         result = TeamController.update_team(
             team_id=team_id,
-            actor_id=current_user.id,
+            actor_id=g.user.id,
             new_name=new_name,
             is_admin=is_admin(),
         )
 
         if result["success"]:
-            from ...utils.api_responses import success_response
-
-            return success_response({"message": result["message"]})
+            logger.info(
+                "Team updated successfully",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "team_id": team_id,
+                        "new_name": new_name,
+                    }
+                },
+            )
+            return success_response(result)
         else:
             status_code = 403 if "not authorized" in result["error"].lower() else 400
+            if status_code == 403:
+                logger.warning(
+                    "Unauthorized team update attempt",
+                    extra={
+                        "context": {
+                            "user_id": get_current_user_id(),
+                            "team_id": team_id,
+                            "error": result["error"],
+                        }
+                    },
+                )
             return error_response(result["error"], "update", status_code)
 
     @authed_only
+    @authed_user_required
     @teams_namespace.doc(
         description="Disband a team (Captain/Admin only)",
         responses={
@@ -215,20 +297,35 @@ class TeamDetail(Resource):
         Returns:
             JSON response with confirmation message or error details.
         """
-        current_user = get_current_user()
-        if not current_user:
-            return error_response("User not found", "auth", 403)
-
         user_is_admin = is_admin()
 
-        result = TeamController.disband_team(team_id=team_id, actor_id=current_user.id, is_admin=user_is_admin)
+        result = TeamController.disband_team(team_id=team_id, actor_id=g.user.id, is_admin=user_is_admin)
 
         if result["success"]:
-            from ...utils.api_responses import success_response
-
-            return success_response({"message": result["message"]})
+            logger.info(
+                "Team disbanded successfully",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "team_id": team_id,
+                        "is_admin": user_is_admin,
+                    }
+                },
+            )
+            return success_response(result)
         else:
             status_code = 403 if "not authorized" in result["error"].lower() else 400
+            if status_code == 403:
+                logger.warning(
+                    "Unauthorized team disband attempt",
+                    extra={
+                        "context": {
+                            "user_id": get_current_user_id(),
+                            "team_id": team_id,
+                            "error": result["error"],
+                        }
+                    },
+                )
             return error_response(result["error"], "delete", status_code)
 
 
@@ -236,6 +333,7 @@ class TeamDetail(Resource):
 @teams_namespace.param("team_id", "Team ID")
 class TeamJoin(Resource):
     @authed_only
+    @authed_user_required
     @teams_namespace.doc(
         description="Join a specific team in a world",
         params={"world_id": "World ID where the team exists (required in body)"},
@@ -259,37 +357,58 @@ class TeamJoin(Resource):
             JSON response with team info and membership details.
         """
         data = request.get_json() or {}
+
+        is_valid, errors = validate_team_join(data)
+        if not is_valid:
+            logger.warning(
+                "Validation failed for team join",
+                extra={
+                    "context": {
+                        "errors": errors,
+                        "user_id": get_current_user_id(),
+                        "endpoint": "team_join",
+                        "team_id": team_id,
+                    }
+                },
+            )
+            return {"success": False, "errors": errors}, 400
+
         world_id = data.get("world_id")
 
-        if not world_id:
-            return error_response("World ID is required", "world_id", 400)
-
-        current_user = get_current_user()
-        if not current_user:
-            return error_response("User not found in session", "auth", 403)
-
-        result = TeamController.join_team(user_id=current_user.id, team_id=team_id, world_id=world_id)
+        result = TeamController.join_team(user_id=g.user.id, team_id=team_id, world_id=world_id)
 
         if result["success"]:
-            return {
-                "success": True,
-                "data": {
-                    "message": result["message"],
-                    "team": {
-                        "id": result["team"].id,
-                        "name": result["team"].name,
-                        "member_count": result["team"].member_count,
-                        "limit": result["team"].limit,
-                    },
+            logger.info(
+                "User joined team successfully",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "team_id": team_id,
+                        "team_name": result["team"].name,
+                        "world_id": world_id,
+                    }
                 },
-            }, 200
+            )
+            return success_response(result)
         else:
+            logger.warning(
+                "Team join failed",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "team_id": team_id,
+                        "world_id": world_id,
+                        "error": result["error"],
+                    }
+                },
+            )
             return error_response(result["error"], "join", 400)
 
 
 @teams_namespace.route("/leave")
 class TeamLeave(Resource):
     @authed_only
+    @authed_user_required
     @teams_namespace.doc(
         description="Leave current team in a specific world",
         params={"world_id": "World ID to leave team from (required in body)"},
@@ -309,32 +428,55 @@ class TeamLeave(Resource):
             JSON response with confirmation message and former team name.
         """
         data = request.get_json() or {}
+
+        is_valid, errors = validate_team_leave(data)
+        if not is_valid:
+            logger.warning(
+                "Validation failed for team leave",
+                extra={
+                    "context": {
+                        "errors": errors,
+                        "user_id": get_current_user_id(),
+                        "endpoint": "team_leave",
+                    }
+                },
+            )
+            return {"success": False, "errors": errors}, 400
+
         world_id = data.get("world_id")
 
-        if not world_id:
-            return error_response("World ID is required", "world_id", 400)
-
-        current_user = get_current_user()
-        if not current_user:
-            return error_response("User not found in session", "auth", 403)
-
-        result = TeamController.leave_team(user_id=current_user.id, world_id=world_id)
+        result = TeamController.leave_team(user_id=g.user.id, world_id=world_id)
 
         if result["success"]:
-            return {
-                "success": True,
-                "data": {
-                    "message": result["message"],
-                    "former_team": result["former_team"],
+            logger.info(
+                "User left team successfully",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "world_id": world_id,
+                        "former_team": result["former_team"],
+                    }
                 },
-            }, 200
+            )
+            return success_response(result)
         else:
+            logger.warning(
+                "Team leave failed",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "world_id": world_id,
+                        "error": result["error"],
+                    }
+                },
+            )
             return error_response(result["error"], "leave", 400)
 
 
 @teams_namespace.route("/join-by-code")
 class TeamJoinByCode(Resource):
     @authed_only
+    @authed_user_required
     @teams_namespace.doc(
         description="Join a team using an invite code",
         params={"invite_code": "Team invite code (required in body)"},
@@ -354,33 +496,49 @@ class TeamJoinByCode(Resource):
             JSON response with team info and join confirmation.
         """
         data = request.get_json() or {}
+
+        is_valid, errors = validate_team_join_by_code(data)
+        if not is_valid:
+            logger.warning(
+                "Validation failed for team join by code",
+                extra={
+                    "context": {
+                        "errors": errors,
+                        "user_id": get_current_user_id(),
+                        "endpoint": "team_join_by_code",
+                    }
+                },
+            )
+            return {"success": False, "errors": errors}, 400
+
         invite_code = data.get("invite_code")
 
-        if not invite_code:
-            return error_response("Invite code is required", "invite_code", 400)
-
-        current_user = get_current_user()
-        if not current_user:
-            return error_response("User not found in session", "auth", 403)
-
-        result = TeamController.join_team_by_invite_code(user_id=current_user.id, invite_code=invite_code)
+        result = TeamController.join_team_by_invite_code(user_id=g.user.id, invite_code=invite_code)
 
         if result["success"]:
-            return {
-                "success": True,
-                "data": {
-                    "message": result["message"],
-                    "team": {
-                        "id": result["team"].id,
-                        "name": result["team"].name,
-                        "member_count": result["team"].member_count,
-                        "limit": result["team"].limit,
-                    },
-                    "invite_code": result["invite_code"],
-                    "joined_via_invite": result["joined_via_invite"],
+            logger.info(
+                "User joined team via invite code",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "team_id": result["team"].id,
+                        "team_name": result["team"].name,
+                        "invite_code": invite_code,
+                    }
                 },
-            }, 200
+            )
+            return success_response(result)
         else:
+            logger.warning(
+                "Team join by invite code failed",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "invite_code": invite_code,
+                        "error": result["error"],
+                    }
+                },
+            )
             return error_response(result["error"], "invite", 400)
 
 
@@ -408,13 +566,26 @@ class TeamCaptain(Resource):
         result = TeamController.get_team_captain(team_id)
 
         if result["success"]:
-            from ...utils.api_responses import success_response
-
+            logger.info(
+                "Team captain info retrieved",
+                extra={"context": {"user_id": get_current_user_id(), "team_id": team_id}},
+            )
             return success_response(result)
         else:
+            logger.warning(
+                "Team captain not found",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "team_id": team_id,
+                        "error": result["error"],
+                    }
+                },
+            )
             return error_response(result["error"], "captain", 404)
 
     @authed_only
+    @authed_user_required
     @teams_namespace.doc(
         description="Assign team captain",
         params={"user_id": "User ID (required)"},
@@ -437,41 +608,65 @@ class TeamCaptain(Resource):
         Returns:
             JSON response with new captain info and confirmation.
         """
-
-        current_user = get_current_user()
-        if not current_user:
-            return error_response("User not found in session", "auth", 403)
-
         data = request.get_json() or {}
-        new_captain_user_id = data.get("user_id")
 
-        if not new_captain_user_id:
-            return error_response("User ID is required", "user_id", 400)
+        is_valid, errors = validate_captain_assignment(data)
+        if not is_valid:
+            logger.warning(
+                "Validation failed for captain assignment",
+                extra={
+                    "context": {
+                        "errors": errors,
+                        "user_id": get_current_user_id(),
+                        "endpoint": "captain_assignment",
+                        "team_id": team_id,
+                    }
+                },
+            )
+            return {"success": False, "errors": errors}, 400
 
-        try:
-            new_captain_user_id = int(new_captain_user_id)
-        except (ValueError, TypeError):
-            return error_response("User ID must be a number", "user_id", 400)
+        new_captain_user_id = int(data.get("user_id"))
 
         result = TeamController.transfer_captaincy(
             team_id=team_id,
             new_captain_id=new_captain_user_id,
-            actor_id=current_user.id,
+            actor_id=g.user.id,
             is_admin=is_admin(),
         )
 
         if result["success"]:
-            from ...utils.api_responses import success_response
-
+            logger.info(
+                "Team captaincy transferred",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "team_id": team_id,
+                        "new_captain_id": new_captain_user_id,
+                        "is_admin": is_admin(),
+                    }
+                },
+            )
             return success_response(result)
         else:
             status_code = (
                 403
                 if "not authorized" in result["error"].lower()
                 else 404
-                if "does not exist" in result["error"]
+                if "not found" in result["error"].lower()
                 else 400
             )
+            if status_code == 403:
+                logger.warning(
+                    "Unauthorized captain assignment attempt",
+                    extra={
+                        "context": {
+                            "user_id": get_current_user_id(),
+                            "team_id": team_id,
+                            "new_captain_id": new_captain_user_id,
+                            "error": result["error"],
+                        }
+                    },
+                )
             return error_response(result["error"], "captain", status_code)
 
     @authed_only
@@ -496,11 +691,22 @@ class TeamCaptain(Resource):
         result = TeamController.remove_captain(team_id)
 
         if result["success"]:
-            return {
-                "success": True,
-                "data": {"message": result["message"], "team_id": team_id},
-            }, 200
+            logger.info(
+                "Team captain removed",
+                extra={"context": {"user_id": get_current_user_id(), "team_id": team_id}},
+            )
+            return success_response(result)
         else:
+            logger.warning(
+                "Captain removal failed",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "team_id": team_id,
+                        "error": result["error"],
+                    }
+                },
+            )
             return error_response(result["error"], "captain", 400)
 
 
@@ -509,6 +715,7 @@ class TeamCaptain(Resource):
 @teams_namespace.param("user_id", "User ID of the member")
 class TeamMemberManager(Resource):
     @authed_only
+    @authed_user_required
     @teams_namespace.doc(
         description="Remove a member from a team (Captain/Admin only)",
         responses={
@@ -528,21 +735,38 @@ class TeamMemberManager(Resource):
         Returns:
             JSON response with confirmation message or error details.
         """
-        current_user = get_current_user()
-        if not current_user:
-            return error_response("User not found", "auth", 403)
-
         result = TeamController.remove_member(
             team_id=team_id,
             member_to_remove_id=user_id,
-            actor_id=current_user.id,
+            actor_id=g.user.id,
             is_admin=is_admin(),
         )
 
         if result["success"]:
-            from ...utils.api_responses import success_response
-
-            return success_response({"message": result["message"]})
+            logger.info(
+                "Team member removed",
+                extra={
+                    "context": {
+                        "user_id": get_current_user_id(),
+                        "team_id": team_id,
+                        "removed_user_id": user_id,
+                        "is_admin": is_admin(),
+                    }
+                },
+            )
+            return success_response(result)
         else:
             status_code = 403 if "not authorized" in result["error"].lower() else 400
+            if status_code == 403:
+                logger.warning(
+                    "Unauthorized member removal attempt",
+                    extra={
+                        "context": {
+                            "user_id": get_current_user_id(),
+                            "team_id": team_id,
+                            "target_user_id": user_id,
+                            "error": result["error"],
+                        }
+                    },
+                )
             return error_response(result["error"], "remove", status_code)

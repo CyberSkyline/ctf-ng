@@ -3,101 +3,55 @@
 Tests database models
 """
 
-from CTFd.models import db
+import pytest
+from plugin.models import World, Team, User, TeamMember
 from tests.helpers import gen_user
+from CTFd.models import db as _db
 
-from ..helpers import create_ctfd, destroy_ctfd, get_models
 
-
+@pytest.mark.db
 class TestModels:
-    def test_create_world(self):
+    def test_create_world(self, db_session):
         """Check that worlds can be created."""
-        app = create_ctfd()
+        world = World(name="Test World", description="Test")
+        db_session.add(world)
+        db_session.commit()
 
-        with app.app_context():
-            models = get_models()
-            World = models["World"]
+        assert world.id is not None
+        assert world.name == "Test World"
 
-            world = World(name="Test World", description="Test")
-            db.session.add(world)
-            db.session.commit()
-
-            assert world.id is not None
-            assert world.name == "Test World"
-
-        destroy_ctfd(app)
-
-    def test_create_team(self):
+    def test_create_team(self, db_session, world):
         """Check that teams can be created in a world."""
-        app = create_ctfd()
+        team = Team(name="Test Team", world_id=world.id, limit=4, invite_code="TEST123")
+        db_session.add(team)
+        db_session.commit()
 
-        with app.app_context():
-            models = get_models()
-            World = models["World"]
-            Team = models["Team"]
+        assert team.id is not None
+        assert team.name == "Test Team"
+        assert team.world_id == world.id
 
-            world = World(name="Test World")
-            db.session.add(world)
-            db.session.commit()
-
-            team = Team(name="Test Team", world_id=world.id, limit=4, invite_code="TEST123")
-            db.session.add(team)
-            db.session.commit()
-
-            assert team.id is not None
-            assert team.name == "Test Team"
-            assert team.world_id == world.id
-
-        destroy_ctfd(app)
-
-    def test_create_user(self):
+    def test_create_user(self, db_session):
         """Check that plugin users can be created."""
-        app = create_ctfd()
+        ctfd_user = gen_user(_db, name="testuser", email="test@example.com")
 
-        with app.app_context():
-            models = get_models()
-            User = models["User"]
+        ng_user = User(id=ctfd_user.id)
+        db_session.add(ng_user)
+        db_session.commit()
 
-            ctfd_user = gen_user(db, name="testuser", email="test@example.com")
+        assert ng_user.id == ctfd_user.id
 
-            ng_user = User(id=ctfd_user.id)
-            db.session.add(ng_user)
-            db.session.commit()
-
-            assert ng_user.id == ctfd_user.id
-
-        destroy_ctfd(app)
-
-    def test_team_membership(self):
+    def test_team_membership(self, db_session, world):
         """Check that users can join teams."""
-        app = create_ctfd()
+        ctfd_user = gen_user(_db, name="testuser", email="test@example.com")
+        ng_user = User(id=ctfd_user.id)
+        db_session.add(ng_user)
+        team = Team(name="Test Team", world_id=world.id, limit=4, invite_code="TEST123")
+        db_session.add(team)
+        db_session.commit()
+        membership = TeamMember(user_id=ctfd_user.id, team_id=team.id, world_id=world.id)
+        db_session.add(membership)
+        db_session.commit()
 
-        with app.app_context():
-            models = get_models()
-            World = models["World"]
-            Team = models["Team"]
-            User = models["User"]
-            TeamMember = models["TeamMember"]
-
-            ctfd_user = gen_user(db, name="testuser", email="test@example.com")
-
-            world = World(name="Test World")
-            db.session.add(world)
-            db.session.commit()
-
-            ng_user = User(id=ctfd_user.id)
-            db.session.add(ng_user)
-
-            team = Team(name="Test Team", world_id=world.id, limit=4, invite_code="TEST123")
-            db.session.add(team)
-            db.session.commit()
-
-            membership = TeamMember(user_id=ctfd_user.id, team_id=team.id, world_id=world.id)
-            db.session.add(membership)
-            db.session.commit()
-
-            assert membership.user_id == ctfd_user.id
-            assert membership.team_id == team.id
-            assert membership.world_id == world.id
-
-        destroy_ctfd(app)
+        assert membership.user_id == ctfd_user.id
+        assert membership.team_id == team.id
+        assert membership.world_id == world.id
