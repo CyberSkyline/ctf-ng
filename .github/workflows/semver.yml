@@ -20,13 +20,12 @@ jobs:
           tag_prefix: "v"
           bump_each_commit: true
           bump_each_commit_patch_pattern: "(PATCH)"
-          debug: true
 
       - name: Create tag
         run: |
           git config --global user.email "zcoughlan@cyberskyline.com"
           git config --global user.name "Zoe Coughlan"
-          git tag -a "${{ steps.tag.outputs.version_tag }}"
+          git tag -a "${{ steps.tag.outputs.version_tag }}" -m "version ${{ steps.tag.outputs.version_tag }}"
           git push origin "${{ steps.tag.outputs.version_tag }}"
 
     env:
