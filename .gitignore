@@ -21,3 +21,7 @@ Thumbs.db
 
 # CTFd artifacts
 .ctfd_secret_key
+
+# Pre commit config
+.pre-commit-config.yaml
+

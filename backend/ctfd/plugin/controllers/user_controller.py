@@ -24,6 +24,7 @@ class UserController:
             from ..models.TeamMember import TeamMember
             from ..models.Team import Team
             from ..models.World import World
+            from CTFd.models import db
 
             user = User.query.get(user_id)
             if not user:
@@ -33,25 +34,47 @@ class UserController:
                 )
                 return {"success": False, "error": "User not found in extended system"}
 
-            memberships = TeamMember.query.filter_by(user_id=user_id).all()
+            memberships_query = (
+                db.session.query(
+                    TeamMember.joined_at,
+                    Team.id.label("team_id"),
+                    Team.name.label("team_name"),
+                    Team.limit.label("team_limit"),
+                    World.id.label("world_id"),
+                    World.name.label("world_name"),
+                )
+                .join(Team, TeamMember.team_id == Team.id)
+                .join(World, TeamMember.world_id == World.id)
+                .filter(TeamMember.user_id == user_id)
+                .all()
+            )
 
             teams_data = []
-            for membership in memberships:
-                team = Team.query.get(membership.team_id)
-                world = World.query.get(membership.world_id)
+            for membership in memberships_query:
+                teams_data.append(
+                    {
+                        "team_id": membership.team_id,
+                        "team_name": membership.team_name,
+                        "world_id": membership.world_id,
+                        "world_name": membership.world_name,
+                        "joined_at": membership.joined_at.isoformat() if membership.joined_at else None,
+                        "team_limit": membership.team_limit,
+                    }
+                )
 
-                if team and world:
-                    teams_data.append(
-                        {
-                            "team_id": team.id,
-                            "team_name": team.name,
-                            "world_id": world.id,
-                            "world_name": world.name,
-                            "joined_at": membership.joined_at.isoformat() if membership.joined_at else None,
-                            "team_member_count": team.member_count,
-                            "team_limit": team.limit,
-                        }
-                    )
+            if teams_data:
+                from sqlalchemy import func
+
+                team_ids = [team["team_id"] for team in teams_data]
+                member_counts = dict(
+                    db.session.query(TeamMember.team_id, func.count(TeamMember.id))
+                    .filter(TeamMember.team_id.in_(team_ids))
+                    .group_by(TeamMember.team_id)
+                    .all()
+                )
+
+                for team in teams_data:
+                    team["team_member_count"] = member_counts.get(team["team_id"], 0)
 
             logger.info(
                 "User teams retrieved successfully",
@@ -59,7 +82,7 @@ class UserController:
                     "context": {
                         "user_id": user_id,
                         "total_teams": len(teams_data),
-                        "total_memberships": len(memberships),
+                        "total_memberships": len(teams_data),
                     }
                 },
             )

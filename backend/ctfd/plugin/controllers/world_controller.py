@@ -100,21 +100,31 @@ class WorldController:
             from ..models.World import World
             from ..models.Team import Team
             from ..models.TeamMember import TeamMember
+            from sqlalchemy import func
 
-            worlds = World.query.all()
+            world_stats = (
+                db.session.query(
+                    World.id,
+                    World.name,
+                    World.description,
+                    func.count(Team.id.distinct()).label("team_count"),
+                    func.count(TeamMember.id).label("total_members"),
+                )
+                .outerjoin(Team, World.id == Team.world_id)
+                .outerjoin(TeamMember, World.id == TeamMember.world_id)
+                .group_by(World.id, World.name, World.description)
+                .all()
+            )
 
             worlds_data = []
-            for world in worlds:
-                team_count = Team.query.filter_by(world_id=world.id).count()
-                member_count = TeamMember.query.filter_by(world_id=world.id).count()
-
+            for world_id, name, description, team_count, total_members in world_stats:
                 worlds_data.append(
                     {
-                        "id": world.id,
-                        "name": world.name,
-                        "description": world.description,
+                        "id": world_id,
+                        "name": name,
+                        "description": description,
                         "team_count": team_count,
-                        "total_members": member_count,
+                        "total_members": total_members,
                     }
                 )
 

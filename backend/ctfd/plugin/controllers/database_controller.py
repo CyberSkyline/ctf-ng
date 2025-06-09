@@ -98,28 +98,37 @@ class DatabaseController:
             from ..models.World import World
             from ..models.Team import Team
             from ..models.TeamMember import TeamMember
+            from sqlalchemy import func
 
-            worlds = World.query.all()
+            world_stats_query = (
+                db.session.query(
+                    World.id,
+                    World.name,
+                    func.count(Team.id.distinct()).label("teams"),
+                    func.count(TeamMember.id).label("total_members"),
+                )
+                .outerjoin(Team, World.id == Team.world_id)
+                .outerjoin(TeamMember, World.id == TeamMember.world_id)
+                .group_by(World.id, World.name)
+                .all()
+            )
+
             world_stats = []
-
-            for world in worlds:
-                teams_in_world = Team.query.filter_by(world_id=world.id).count()
-                members_in_world = TeamMember.query.filter_by(world_id=world.id).count()
-
+            for world_id, name, teams, total_members in world_stats_query:
                 world_stats.append(
                     {
-                        "id": world.id,
-                        "name": world.name,
-                        "teams": teams_in_world,
-                        "total_members": members_in_world,
+                        "id": world_id,
+                        "name": name,
+                        "teams": teams,
+                        "total_members": total_members,
                     }
                 )
 
-            all_teams = Team.query.all()
+            empty_teams_query = db.session.query(Team.id, Team.name, Team.world_id).filter(Team.member_count == 0).all()
+
             empty_teams = []
-            for team in all_teams:
-                if team.member_count == 0:
-                    empty_teams.append({"id": team.id, "name": team.name, "world_id": team.world_id})
+            for team_id, team_name, world_id in empty_teams_query:
+                empty_teams.append({"id": team_id, "name": team_name, "world_id": world_id})
 
             return {
                 "success": True,
