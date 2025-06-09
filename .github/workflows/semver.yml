@@ -1,19 +1,21 @@
 name: semver
 on:
   pull_request:
-    types: [closed]
+    # types: [closed]
 
 jobs:
-  build:
+  tag:
     runs-on: ubuntu-latest
-
-    if: github.event.pull_request.merged
-
+    #if: github.event.pull_request.merged
     steps:
-      - name: Tag
-        uses: K-Phoen/semver-release-action@master
+      - name: Checkout
+        uses: actions/checkout@v2
         with:
-          release_branch: development
-          release_strategy: tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+      - name: Tag
+        uses: paulhatch/semantic-version@v5.4.0
+        with:
+          bump_each_commit: true
+          bump_each_commit_patch_pattern: "(PATCH)"
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
