@@ -14,6 +14,7 @@ jobs:
           fetch-depth: 0
 
       - name: Tag
+        id: tag
         uses: paulhatch/semantic-version@v5.4.0
         with:
           tag_prefix: "v"
@@ -23,8 +24,8 @@ jobs:
 
       - name: Create tag
         run: |
-          git tag -a "${{ steps.Tag.outputs.version_tag }}"
-          git push origin "${{ steps.Tag.outputs.version_tag }}
+          git tag -a "${{ steps.tag.outputs.version_tag }}"
+          git push origin "${{ steps.tag.outputs.version_tag }}
 
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
