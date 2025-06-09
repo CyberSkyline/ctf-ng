@@ -18,5 +18,6 @@ jobs:
           tag_prefix: "v"
           bump_each_commit: true
           bump_each_commit_patch_pattern: "(PATCH)"
+          debug: true
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
