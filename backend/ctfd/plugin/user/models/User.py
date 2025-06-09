@@ -1,4 +1,4 @@
-# /plugin/models/User.py
+# /plugin/user/models/User.py
 
 from CTFd.models import db
 from typing import Optional, Any

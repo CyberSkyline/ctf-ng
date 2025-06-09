@@ -6,7 +6,9 @@ Tests database constraints
 import pytest
 from tests.helpers import gen_user
 from sqlalchemy.exc import IntegrityError
-from plugin.models import Team, User, TeamMember
+from plugin.team.models.Team import Team
+from plugin.user.models.User import User
+from plugin.team.models.TeamMember import TeamMember
 from CTFd.models import db as _db
 
 

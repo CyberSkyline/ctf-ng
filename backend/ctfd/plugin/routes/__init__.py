@@ -4,10 +4,10 @@ from flask import Blueprint
 from flask_restx import Api
 from typing import Any
 
-from .api.teams import teams_namespace
-from .api.worlds import worlds_namespace
-from .api.users import users_namespace
-from .api.admin import admin_namespace
+from ..team.routes.teams import teams_namespace
+from ..world.routes.worlds import worlds_namespace
+from ..user.routes.users import users_namespace
+from ..admin.routes.admin import admin_namespace
 
 api_blueprint = Blueprint("plugin_api", __name__)
 

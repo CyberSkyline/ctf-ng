@@ -1,4 +1,4 @@
-# /plugin/models/TeamMember.py
+# /plugin/team/models/TeamMember.py
 
 from CTFd.models import db
 from datetime import datetime

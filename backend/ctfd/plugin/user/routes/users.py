@@ -1,12 +1,12 @@
-# /plugin/routes/api/users.py
+# /plugin/user/routes/users.py
 
 from flask import g
 from flask_restx import Namespace, Resource
 from CTFd.utils.decorators import authed_only, admins_only
 
-from ...controllers.user_controller import UserController
+from ..controllers.user_controller import UserController
 from ...utils.api_responses import controller_response
-from ...utils.decorators import authed_user_required
+from ...utils.decorators import authed_user_required, handle_integrity_error
 from ...utils.logger import get_logger
 from ...utils import get_current_user_id
 
@@ -18,6 +18,7 @@ logger = get_logger(__name__)
 class UserTeams(Resource):
     @authed_only
     @authed_user_required
+    @handle_integrity_error
     @users_namespace.doc(
         description="Get current user's team memberships across all worlds",
         responses={
@@ -52,6 +53,7 @@ class UserTeams(Resource):
 class UserWorldTeams(Resource):
     @authed_only
     @authed_user_required
+    @handle_integrity_error
     @users_namespace.doc(
         description="Get current user's team in a specific world",
         responses={
@@ -93,6 +95,7 @@ class UserWorldTeams(Resource):
 class UserWorldEligibility(Resource):
     @authed_only
     @authed_user_required
+    @handle_integrity_error
     @users_namespace.doc(
         description="Check if current user can join a team in the specified world",
         responses={
@@ -130,6 +133,7 @@ class UserWorldEligibility(Resource):
 class UserStats(Resource):
     @authed_only
     @authed_user_required
+    @handle_integrity_error
     @users_namespace.doc(
         description="Get current user's participation statistics across all worlds",
         responses={
@@ -166,6 +170,7 @@ class UserStats(Resource):
 @users_namespace.param("user_id", "User ID")
 class AdminUserTeams(Resource):
     @admins_only
+    @handle_integrity_error
     @users_namespace.doc(
         description="Get any user's team memberships (Admin only)",
         responses={
@@ -215,6 +220,7 @@ class AdminUserTeams(Resource):
 @users_namespace.param("user_id", "User ID")
 class AdminUserStats(Resource):
     @admins_only
+    @handle_integrity_error
     @users_namespace.doc(
         description="Get any user's participation statistics (Admin only)",
         responses={

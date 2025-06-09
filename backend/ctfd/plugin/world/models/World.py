@@ -1,7 +1,7 @@
-# /plugin/models/World.py
+# /plugin/world/models/World.py
 
 from CTFd.models import db
-from .. import config
+from ... import config
 
 
 class World(db.Model):

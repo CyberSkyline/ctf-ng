@@ -1,9 +1,9 @@
-# /plugin/models/Team.py
+# /plugin/team/models/Team.py
 
 from CTFd.models import db
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import select, func
-from .. import config
+from ... import config
 
 
 class Team(db.Model):
@@ -31,7 +31,7 @@ class Team(db.Model):
     @member_count.expression
     def member_count(cls):
         # Lazy import to prevent circular dependencies
-        from ..models.TeamMember import TeamMember
+        from .TeamMember import TeamMember
 
         return select(func.count(TeamMember.id)).where(TeamMember.team_id == cls.id).scalar_subquery()
 

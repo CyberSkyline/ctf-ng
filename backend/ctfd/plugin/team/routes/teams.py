@@ -1,13 +1,17 @@
-# /plugin/routes/api/teams.py
+# /plugin/team/routes/teams.py
 
 from flask import request, g
 from flask_restx import Namespace, Resource
 from CTFd.utils.decorators import authed_only
 from CTFd.utils.user import is_admin
 
-from ...controllers.team_controller import TeamController
+from ..controllers.team_controller import TeamController
 from ...utils.api_responses import controller_response, error_response, success_response
-from ...utils.decorators import authed_user_required, json_body_required
+from ...utils.decorators import (
+    authed_user_required,
+    json_body_required,
+    handle_integrity_error,
+)
 from ...utils.logger import get_logger
 from ...utils import get_current_user_id
 from ...utils.validators import (
@@ -27,6 +31,7 @@ logger = get_logger(__name__)
 @teams_namespace.route("")
 class TeamList(Resource):
     @authed_only
+    @handle_integrity_error
     @teams_namespace.doc(
         description="Get teams in a specific world",
         params={"world_id": "World ID to filter teams (required)"},
@@ -83,6 +88,7 @@ class TeamList(Resource):
     @authed_only
     @authed_user_required
     @json_body_required
+    @handle_integrity_error
     @teams_namespace.doc(
         description="Create a new team in a world",
         params={},
@@ -163,6 +169,7 @@ class TeamList(Resource):
 @teams_namespace.param("team_id", "Team ID")
 class TeamDetail(Resource):
     @authed_only
+    @handle_integrity_error
     @teams_namespace.doc(
         description="Get detailed information about a specific team",
         responses={
@@ -203,6 +210,7 @@ class TeamDetail(Resource):
 
     @authed_only
     @authed_user_required
+    @handle_integrity_error
     @teams_namespace.doc(
         description="Update team details (Captain/Admin only)",
         responses={
@@ -279,6 +287,7 @@ class TeamDetail(Resource):
 
     @authed_only
     @authed_user_required
+    @handle_integrity_error
     @teams_namespace.doc(
         description="Disband a team (Captain/Admin only)",
         responses={
@@ -334,6 +343,7 @@ class TeamDetail(Resource):
 class TeamJoin(Resource):
     @authed_only
     @authed_user_required
+    @handle_integrity_error
     @teams_namespace.doc(
         description="Join a specific team in a world",
         params={"world_id": "World ID where the team exists (required in body)"},
@@ -409,6 +419,7 @@ class TeamJoin(Resource):
 class TeamLeave(Resource):
     @authed_only
     @authed_user_required
+    @handle_integrity_error
     @teams_namespace.doc(
         description="Leave current team in a specific world",
         params={"world_id": "World ID to leave team from (required in body)"},
@@ -477,6 +488,7 @@ class TeamLeave(Resource):
 class TeamJoinByCode(Resource):
     @authed_only
     @authed_user_required
+    @handle_integrity_error
     @teams_namespace.doc(
         description="Join a team using an invite code",
         params={"invite_code": "Team invite code (required in body)"},
@@ -546,6 +558,7 @@ class TeamJoinByCode(Resource):
 @teams_namespace.param("team_id", "Team ID")
 class TeamCaptain(Resource):
     @authed_only
+    @handle_integrity_error
     @teams_namespace.doc(
         description="Get the current captain of a team",
         responses={
@@ -586,6 +599,7 @@ class TeamCaptain(Resource):
 
     @authed_only
     @authed_user_required
+    @handle_integrity_error
     @teams_namespace.doc(
         description="Assign team captain",
         params={"user_id": "User ID (required)"},
@@ -670,6 +684,7 @@ class TeamCaptain(Resource):
             return error_response(result["error"], "captain", status_code)
 
     @authed_only
+    @handle_integrity_error
     @teams_namespace.doc(
         description="Remove the current captain from a team",
         responses={
@@ -716,6 +731,7 @@ class TeamCaptain(Resource):
 class TeamMemberManager(Resource):
     @authed_only
     @authed_user_required
+    @handle_integrity_error
     @teams_namespace.doc(
         description="Remove a member from a team (Captain/Admin only)",
         responses={

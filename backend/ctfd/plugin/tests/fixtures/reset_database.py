@@ -22,10 +22,10 @@ plugin_path = os.path.join(os.path.dirname(__file__), "..", "..")
 sys.path.append(plugin_path)
 
 from CTFd.models import db  # noqa: E402
-from models.World import World  # noqa: E402
-from models.Team import Team  # noqa: E402
-from models.User import User  # noqa: E402
-from models.TeamMember import TeamMember  # noqa: E402
+from plugin.world.models.World import World  # noqa: E402
+from plugin.team.models.Team import Team  # noqa: E402
+from plugin.user.models.User import User  # noqa: E402
+from plugin.team.models.TeamMember import TeamMember  # noqa: E402
 
 
 def reset_plugin_data():

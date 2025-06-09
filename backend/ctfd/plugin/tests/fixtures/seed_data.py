@@ -16,7 +16,10 @@ import os
 plugin_path = os.path.join(os.path.dirname(__file__), "..", "..")
 sys.path.insert(0, plugin_path)
 
-from models import World, Team, User, TeamMember  # noqa: E402
+from plugin.world.models.World import World  # noqa: E402
+from plugin.team.models.Team import Team  # noqa: E402
+from plugin.user.models.User import User  # noqa: E402
+from plugin.team.models.TeamMember import TeamMember  # noqa: E402
 
 
 db.create_all()

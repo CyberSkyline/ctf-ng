@@ -1,4 +1,4 @@
-# /plugin/routes/api/admin.py
+# /plugin/admin/routes/admin.py
 
 from flask import request
 from flask_restx import Namespace, Resource
@@ -6,8 +6,9 @@ from CTFd.utils.decorators import admins_only
 from datetime import datetime
 
 from ... import config
-from ...controllers.database_controller import DatabaseController
+from ..controllers.database_controller import DatabaseController
 from ...utils.api_responses import controller_response, error_response, success_response
+from ...utils.decorators import handle_integrity_error
 from ...utils.logger import get_logger
 from ...utils import get_current_user_id
 from ...utils.validators import validate_admin_reset, validate_admin_world_reset
@@ -19,6 +20,7 @@ logger = get_logger(__name__)
 @admin_namespace.route("/stats")
 class AdminStats(Resource):
     @admins_only
+    @handle_integrity_error
     @admin_namespace.doc(
         description="Get comprehensive system statistics (Admin only)",
         responses={
@@ -51,6 +53,7 @@ class AdminStats(Resource):
 @admin_namespace.route("/stats/counts")
 class AdminStatsCounts(Resource):
     @admins_only
+    @handle_integrity_error
     @admin_namespace.doc(
         description="Get basic data counts (Admin only)",
         responses={
@@ -88,6 +91,7 @@ class AdminStatsCounts(Resource):
 @admin_namespace.route("/reset")
 class AdminReset(Resource):
     @admins_only
+    @handle_integrity_error
     @admin_namespace.doc(
         description="Reset ALL plugin data - WARNING: This deletes everything! (Admin only)",
         responses={
@@ -162,6 +166,7 @@ class AdminReset(Resource):
 @admin_namespace.param("world_id", "World ID")
 class AdminWorldReset(Resource):
     @admins_only
+    @handle_integrity_error
     @admin_namespace.doc(
         description="Reset all data for a specific world (Admin only)",
         responses={
@@ -244,6 +249,7 @@ class AdminWorldReset(Resource):
 @admin_namespace.route("/cleanup")
 class AdminCleanup(Resource):
     @admins_only
+    @handle_integrity_error
     @admin_namespace.doc(
         description="Clean up orphaned data (users with no teams, etc.) (Admin only)",
         responses={
@@ -297,6 +303,7 @@ class AdminCleanup(Resource):
 @admin_namespace.route("/health")
 class AdminHealth(Resource):
     @admins_only
+    @handle_integrity_error
     @admin_namespace.doc(
         description="Check system health and data integrity (Admin only)",
         responses={

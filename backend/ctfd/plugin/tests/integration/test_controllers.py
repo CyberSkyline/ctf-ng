@@ -5,11 +5,11 @@ Tests controller business logic
 
 import pytest
 from tests.helpers import gen_user as gen_user_original
-from plugin.controllers.team_controller import TeamController
-from plugin.controllers.world_controller import WorldController
-from plugin.controllers.user_controller import UserController
-from plugin.models.Team import Team
-from plugin.models.TeamMember import TeamMember
+from plugin.team.controllers.team_controller import TeamController
+from plugin.world.controllers.world_controller import WorldController
+from plugin.user.controllers.user_controller import UserController
+from plugin.team.models.Team import Team
+from plugin.team.models.TeamMember import TeamMember
 
 
 # Wrapper to adapt db_session for gen_user

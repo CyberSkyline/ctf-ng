@@ -2,14 +2,19 @@
 
 import pytest
 from CTFd.models import db as _db
+from CTFd.cache import cache
+
 from plugin import load as plugin_load
-from plugin.models import User as NgUser
+from plugin.user.models.User import User as NgUser
+from plugin.world.models.World import World
+from plugin.team.controllers.team_controller import TeamController
 from tests.helpers import (
     create_ctfd as create_ctfd_original,
     destroy_ctfd as destroy_ctfd_original,
     setup_ctfd,
     gen_user,
 )
+from .helpers import login_as
 
 
 def create_app():
@@ -56,8 +61,6 @@ def db_session(app, request):
         _db.session = session
 
         # Clear any cached user data before test
-        from CTFd.cache import cache
-
         cache.clear()
 
         yield session
@@ -79,8 +82,6 @@ def client(app):
 @pytest.fixture
 def logged_in_client(client, normal_user):
     """A test client that is logged in as a normal user."""
-    from .helpers import login_as
-
     login_as(client, normal_user)
     return client
 
@@ -88,8 +89,6 @@ def logged_in_client(client, normal_user):
 @pytest.fixture
 def admin_client(client, admin_user):
     """A test client that is logged in as an admin user."""
-    from .helpers import login_as
-
     login_as(client, admin_user)
     return client
 
@@ -128,7 +127,6 @@ def world(db_session):
     """Creates a basic world."""
     if db_session is None:
         return None
-    from plugin.models import World
 
     world = World(name="Test World", description="A world for testing")
     db_session.add(world)
@@ -141,10 +139,9 @@ def team(db_session, world, normal_user):
     """Creates a team with a normal user as the captain."""
     if db_session is None:
         return None
-    from plugin.controllers.team_controller import TeamController
 
     result = TeamController.create_team(name="Test Team", world_id=world.id, creator_id=normal_user.id)
-    # The controller returns a dictionary, we want the model instance
+
     return result["team"]
 
 
@@ -153,7 +150,6 @@ def team_with_members(db_session, world):
     """Creates a team with a captain and a regular member."""
     if db_session is None:
         return None
-    from plugin.controllers.team_controller import TeamController
 
     # Create captain user (CTFd + plugin user)
     captain_ctfd = gen_user(_db, name="captain", email="captain@example.com")

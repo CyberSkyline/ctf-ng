@@ -1,13 +1,13 @@
-# /plugin/routes/api/worlds.py
+# /plugin/world/routes/worlds.py
 
 from flask import g
 from flask_restx import Namespace, Resource
 from CTFd.utils.decorators import authed_only, admins_only
 
-from ...controllers.world_controller import WorldController
-from ...controllers.team_controller import TeamController
+from ..controllers.world_controller import WorldController
+from ...team.controllers.team_controller import TeamController
 from ...utils.api_responses import controller_response, error_response, success_response
-from ...utils.decorators import json_body_required
+from ...utils.decorators import json_body_required, handle_integrity_error
 from ...utils.logger import get_logger
 from ...utils import get_current_user_id
 from ...utils.validators import validate_world_creation, validate_world_update
@@ -19,6 +19,7 @@ logger = get_logger(__name__)
 @worlds_namespace.route("")
 class WorldList(Resource):
     @authed_only
+    @handle_integrity_error
     @worlds_namespace.doc(
         description="Get list of all training worlds with statistics",
         responses={
@@ -49,6 +50,7 @@ class WorldList(Resource):
 
     @admins_only
     @json_body_required
+    @handle_integrity_error
     @worlds_namespace.doc(
         description="Create a new training world (Admin only)",
         params={
@@ -128,6 +130,7 @@ class WorldList(Resource):
 @worlds_namespace.param("world_id", "World ID")
 class WorldDetail(Resource):
     @authed_only
+    @handle_integrity_error
     @worlds_namespace.doc(
         description="Get detailed information about a specific world including teams",
         responses={
@@ -175,6 +178,7 @@ class WorldDetail(Resource):
 
     @admins_only
     @json_body_required
+    @handle_integrity_error
     @worlds_namespace.doc(
         description="Update world information (Admin only)",
         params={
@@ -254,6 +258,7 @@ class WorldDetail(Resource):
 @worlds_namespace.param("world_id", "World ID")
 class WorldTeams(Resource):
     @authed_only
+    @handle_integrity_error
     @worlds_namespace.doc(
         description="Get all teams in a specific world",
         responses={

@@ -10,10 +10,10 @@ logger = get_logger(__name__)
 
 
 def _create_tables() -> Tuple[Any, Any, Any, Any]:
-    from .models.World import World
-    from .models.Team import Team
-    from .models.User import User
-    from .models.TeamMember import TeamMember
+    from .world.models.World import World
+    from .team.models.Team import Team
+    from .user.models.User import User
+    from .team.models.TeamMember import TeamMember
 
     return (
         World,

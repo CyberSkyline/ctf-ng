@@ -4,8 +4,9 @@ API Tests
 """
 
 import pytest
-from plugin.models import Team, TeamMember
-from plugin.models.enums import TeamRole
+from plugin.team.models.Team import Team
+from plugin.team.models.TeamMember import TeamMember
+from plugin.team.models.enums import TeamRole
 
 pytestmark = pytest.mark.db
 

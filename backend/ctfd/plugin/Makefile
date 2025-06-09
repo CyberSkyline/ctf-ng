@@ -1,6 +1,12 @@
 # /plugin/makefile
 
-PYTHON_EXEC = ../../../backend/venv/bin/python
+# Allow environment override, default to python in PATH
+PYTHON_EXEC ?= python
+
+# For local development, prefer the venv if it exists
+ifeq ($(shell test -f ../../../backend/venv/bin/python && echo exists), exists)
+    PYTHON_EXEC = ../../../backend/venv/bin/python
+endif
 
 default: test-all
 

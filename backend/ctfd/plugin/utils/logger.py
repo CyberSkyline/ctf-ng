@@ -1,4 +1,4 @@
-# /plugin/utils/logging.py
+# /plugin/utils/logger.py
 
 import json
 import logging

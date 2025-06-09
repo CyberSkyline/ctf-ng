@@ -4,7 +4,10 @@ Tests database models
 """
 
 import pytest
-from plugin.models import World, Team, User, TeamMember
+from plugin.world.models.World import World
+from plugin.team.models.Team import Team
+from plugin.user.models.User import User
+from plugin.team.models.TeamMember import TeamMember
 from tests.helpers import gen_user
 from CTFd.models import db as _db
 
