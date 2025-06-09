@@ -6,12 +6,13 @@ on:
 jobs:
   tag:
     runs-on: ubuntu-latest
-    #if: github.event.pull_request.merged
+    # if: github.event.pull_request.merged
     steps:
       - name: Checkout
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+
       - name: Tag
         uses: paulhatch/semantic-version@v5.4.0
         with:
@@ -19,5 +20,11 @@ jobs:
           bump_each_commit: true
           bump_each_commit_patch_pattern: "(PATCH)"
           debug: true
+
+      - name: Create tag
+        run: |
+          git tag -a ${{ steps.Tag.outputs.version_tag }}"
+          git push origin ${{ steps.Tag.outputs.version_tag }}
+
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
