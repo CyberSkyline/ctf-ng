@@ -1,19 +1,36 @@
 name: semver
 on:
   pull_request:
-    types: [closed]
+    # types: [closed]
+    branches:
+      # - staging
 
 jobs:
-  build:
+  tag:
     runs-on: ubuntu-latest
-
-    if: github.event.pull_request.merged
-
+    # if: github.event.pull_request.merged
     steps:
-      - name: Tag
-        uses: K-Phoen/semver-release-action@master
+      - name: Checkout
+        uses: actions/checkout@v2
         with:
-          release_branch: development
-          release_strategy: tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Tag
+        id: tag
+        uses: paulhatch/semantic-version@v5.4.0
+        with:
+          tag_prefix: "v"
+          bump_each_commit: true
+          bump_each_commit_patch_pattern: "(PATCH)"
+
+      - name: Create tag
+        run: |
+          git config --global user.email "zcoughlan@cyberskyline.com"
+          git config --global user.name "Zoe Coughlan"
+          git tag -a "${{ steps.tag.outputs.version_tag }}" -m "version ${{ steps.tag.outputs.version_tag }}"
+          git push origin "${{ steps.tag.outputs.version_tag }}"
+      - name: View PR author
+        run: echo "This PR is opened by ${{ github.event.pull_request.user.login }} with email ${{ github.event.pull_request.user.email }}."
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

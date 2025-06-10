@@ -6,11 +6,13 @@ on:
       - development
       - staging
       - production
+    types: [closed]
 
 jobs:
   build-and-deploy:
     name: Build and Deploy Vite App
     runs-on: ubuntu-latest
+    if: github.event.pull_request.merged
 
     steps:
       - name: Checkout repo
