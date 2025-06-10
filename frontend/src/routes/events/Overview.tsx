@@ -1,15 +1,18 @@
 import {
-  Container, Tabs,
+  Container,
+  Tabs,
 } from '@radix-ui/themes';
-import ChallengesTab from 'routes/events/OverviewTabs/ChallengesTab';
-import EventHeader from 'components/event/EventHeader';
-import LeaderboardTab from 'routes/events/OverviewTabs/LeaderboardTab';
-import TeamTab from 'routes/events/OverviewTabs/TeamTab';
-
 import {
-  FaRankingStar, FaTrophy, FaUserGroup,
+  FaRankingStar,
+  FaTrophy,
+  FaUserGroup,
 } from 'react-icons/fa6';
 import { useSearchParams } from 'react-router';
+import EventHeader from 'components/event/EventHeader';
+
+import ChallengesTab from './OverviewTabs/ChallengesTab';
+import LeaderboardTab from './OverviewTabs/LeaderboardTab';
+import TeamTab from './OverviewTabs/TeamTab';
 
 export default function Overview() {
   const [searchParams, setSearchParams] = useSearchParams();
