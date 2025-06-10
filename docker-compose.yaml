@@ -3,7 +3,7 @@ services:
     build:
       context: ./
       dockerfile: ./dockerfiles/ctfd.Dockerfile
-    container_name: placeholder-ctfd
+    container_name: ng-ctfd
     user: root
     restart: always
     ports:
@@ -22,7 +22,7 @@ services:
     volumes:
       - .data/CTFd/logs:/var/log/CTFd
       - .data/CTFd/uploads:/var/uploads
-      - ./backend/ctfd/plugin:/opt/CTFd/CTFd/plugins/placeholder/:ro
+      - ./backend/ctfd/plugin:/opt/CTFd/CTFd/plugins/ng/:ro
       - ./backend/ctfd/entrypoint.html:/opt/CTFd/CTFd/themes/core/templates/entrypoint.html:ro
     depends_on:
       - db
@@ -35,7 +35,7 @@ services:
 
   nginx:
     image: nginx:1.28
-    container_name: placeholder-nginx
+    container_name: ng-nginx
     restart: always
     volumes:
       - ./conf/nginx/http.conf:/etc/nginx/nginx.conf:ro
@@ -48,7 +48,7 @@ services:
 
   db:
     image: mariadb:10.11
-    container_name: placeholder-db
+    container_name: ng-db
     restart: always
     environment:
       - MARIADB_ROOT_PASSWORD=ctfd
@@ -67,7 +67,7 @@ services:
 
   cache:
     image: redis:4
-    container_name: placeholder-redis
+    container_name: ng-redis
     restart: always
     volumes:
     - .data/redis:/data
@@ -79,7 +79,7 @@ services:
     build:
       context: ./
       dockerfile: ./dockerfiles/vite.Dockerfile
-    container_name: placeholder-vite
+    container_name: ng-vite
     restart: always
     tty: true
     volumes:
