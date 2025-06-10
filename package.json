@@ -1,20 +1,20 @@
 {
-  "name": "placeholder",
+  "name": "ctf-ng",
   "version": "1.0.0",
   "description": "",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/CyberSkyline/placeholder.git"
+    "url": "git+https://github.com/CyberSkyline/ctf-ng.git"
   },
-  "license": "ISC",
-  "author": "",
+  "license": "GPL-3.0",
+  "author": "Cyber Skyline",
   "type": "module",
   "scripts": {
     "start" : "docker compose --profile full up --build",
     "stop" : "docker compose --profile full down",
-    "reload" : "docker exec -it placeholder-ctfd supervisorctl restart ctfd",
-    "restart" : "docker exec -it placeholder-ctfd supervisorctl restart ctfd",
-    "restart-nginx" : "docker exec -it placeholder-nginx service nginx restart",
+    "reload" : "docker exec -it ng-ctfd supervisorctl restart ctfd",
+    "restart" : "docker exec -it ng-ctfd supervisorctl restart ctfd",
+    "restart-nginx" : "docker exec -it ng-nginx service nginx restart",
     "logs-nginx" : "docker compose logs -f nginx",
     "logs-vite" : "docker compose logs -f vite",
     "logs-ctfd" : "docker compose logs -f ctfd",
