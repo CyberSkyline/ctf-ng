@@ -27,8 +27,12 @@ jobs:
         run: |
           git config --global user.email "zcoughlan@cyberskyline.com"
           git config --global user.name "Zoe Coughlan"
-          git tag -a "${{ steps.tag.outputs.version_tag }}" -m "version ${{ steps.tag.outputs.version_tag }}"
-          git push origin "${{ steps.tag.outputs.version_tag }}"
+          if git rev-parse "${{ steps.tag.outputs.version_tag }}" >/dev/null 2>&1; then
+            echo "Tag ${{ steps.tag.outputs.version_tag }} already exists. Skipping."
+          else
+            git tag -a "${{ steps.tag.outputs.version_tag }}" -m "version ${{ steps.tag.outputs.version_tag }}"
+            git push origin "${{ steps.tag.outputs.version_tag }}"
+          fi
       - name: View PR author
         run: echo "This PR is opened by ${{ github.event.pull_request.assignee.name }} with email ${{ github.event.pull_request.assignee.email }}."
 
