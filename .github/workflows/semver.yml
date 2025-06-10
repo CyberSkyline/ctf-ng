@@ -1,14 +1,14 @@
 name: semver
 on:
   pull_request:
-    types: [closed]
+    # types: [closed]
     branches:
-      - staging
+      # - staging
 
 jobs:
   tag:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged
+    # if: github.event.pull_request.merged
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -29,6 +29,8 @@ jobs:
           git config --global user.name "Zoe Coughlan"
           git tag -a "${{ steps.tag.outputs.version_tag }}" -m "version ${{ steps.tag.outputs.version_tag }}"
           git push origin "${{ steps.tag.outputs.version_tag }}"
+      - name: View PR author
+        run: echo "This PR is opened by ${{ github.event.pull_request.user.login }} with email ${{ github.event.pull_request.user.email }}."
 
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
