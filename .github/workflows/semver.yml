@@ -30,7 +30,7 @@ jobs:
           git tag -a "${{ steps.tag.outputs.version_tag }}" -m "version ${{ steps.tag.outputs.version_tag }}"
           git push origin "${{ steps.tag.outputs.version_tag }}"
       - name: View PR author
-        run: echo "This PR is opened by ${{ github.event.pull_request.user.login }} with email ${{ github.event.pull_request.user.email }}."
+        run: echo "This PR is opened by ${{ github.event.pull_request.user.name }} with email ${{ github.event.pull_request.user.email }}."
 
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
