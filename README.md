@@ -1,4 +1,4 @@
-# placeholder
+# CTF-NG
 
 ## Installation
 Run `./install.sh` from the project root folder
