@@ -16,7 +16,7 @@ import os
 plugin_path = os.path.join(os.path.dirname(__file__), "..", "..")
 sys.path.insert(0, plugin_path)
 
-from plugin.world.models.World import World  # noqa: E402
+from plugin.event.models.Event import Event  # noqa: E402
 from plugin.team.models.Team import Team  # noqa: E402
 from plugin.user.models.User import User  # noqa: E402
 from plugin.team.models.TeamMember import TeamMember  # noqa: E402
@@ -32,9 +32,9 @@ class SeedDataGenerator:
         self.created_data = {
             "ctfd_users": [],
             "ng_users": [],
-            "worlds": [],
+            "events": [],
             "teams": [],
-            "memberships": [],
+            "team_members": [],
         }
 
     def generate_invite_code(self, length=6):
@@ -80,14 +80,14 @@ class SeedDataGenerator:
         db.session.commit()
         print(f" Created {len(self.created_data['ng_users'])} ng_user extensions")
 
-    def create_worlds(self, count=2):
-        """Create test worlds."""
-        print(f"Creating {count} worlds...")
+    def create_events(self, count=2):
+        """Create test events."""
+        print(f"Creating {count} events...")
 
-        world_data = [
+        event_data = [
             {
                 "name": "Mushroom Kingdom",
-                "description": "Classic Mario world with castles and pipes",
+                "description": "Classic Mario event with castles and pipes",
             },
             {
                 "name": "Bowser's Castle",
@@ -96,31 +96,31 @@ class SeedDataGenerator:
         ]
 
         for i in range(count):
-            data = world_data[i % len(world_data)]
-            world = World(name=data["name"], description=data["description"])
-            db.session.add(world)
+            data = event_data[i % len(event_data)]
+            event = Event(name=data["name"], description=data["description"])
+            db.session.add(event)
             db.session.commit()
-            self.created_data["worlds"].append(world)
+            self.created_data["events"].append(event)
 
-        print(f" Created {count} worlds")
+        print(f" Created {count} events")
 
-    def create_teams(self, teams_per_world=2):
-        """Create teams in each world."""
-        print(f"Creating {teams_per_world} teams per world...")
+    def create_teams(self, teams_per_event=2):
+        """Create teams in each event."""
+        print(f"Creating {teams_per_event} teams per event...")
 
         team_names = ["Super Stars", "Fire Flowers", "1-UP Squad", "Pipe Dreamers"]
 
         total_teams = 0
-        for world in self.created_data["worlds"]:
-            for i in range(teams_per_world):
+        for event in self.created_data["events"]:
+            for i in range(teams_per_event):
                 team_name = team_names[i % len(team_names)]
                 invite_code = self.generate_invite_code()
 
                 team = Team(
-                    name=f"{team_name} ({world.name})",
-                    world_id=world.id,
+                    name=f"{team_name} ({event.name})",
+                    event_id=event.id,
                     invite_code=invite_code,
-                    limit=4,
+                    max_team_size=4,
                 )
                 db.session.add(team)
                 db.session.commit()
@@ -129,13 +129,13 @@ class SeedDataGenerator:
 
         print(f" Created {total_teams} teams")
 
-    def create_team_memberships(self):
-        """Create team memberships."""
-        print("Creating team memberships...")
+    def create_team_members(self):
+        """Create team members."""
+        print("Creating team members...")
 
         # assigning users to teams
         user_index = 0
-        total_memberships = 0
+        total_team_members = 0
 
         for team in self.created_data["teams"]:
             members_count = random.randint(2, 3)
@@ -148,27 +148,27 @@ class SeedDataGenerator:
                 membership = TeamMember(
                     team_id=team.id,
                     user_id=ng_user.id,
-                    world_id=team.world_id,
+                    event_id=team.event_id,
                     joined_at=datetime.utcnow() - timedelta(days=random.randint(1, 30)),
                 )
                 db.session.add(membership)
-                self.created_data["memberships"].append(membership)
-                total_memberships += 1
+                self.created_data["team_members"].append(membership)
+                total_team_members += 1
                 user_index += 1
 
         db.session.commit()
-        print(f" Created {total_memberships} team memberships")
+        print(f" Created {total_team_members} team members")
 
-    def generate_all_data(self, users=6, worlds=2, teams_per_world=2):
+    def generate_all_data(self, users=6, events=2, teams_per_event=2):
         """Generate complete test dataset."""
         print(" Starting seed data generation...")
         print("=" * 50)
 
         self.create_ctfd_users(users)
         self.create_ng_users()
-        self.create_worlds(worlds)
-        self.create_teams(teams_per_world)
-        self.create_team_memberships()
+        self.create_events(events)
+        self.create_teams(teams_per_event)
+        self.create_team_members()
 
         print("=" * 50)
         print(" Seed data generation completed")
@@ -177,9 +177,9 @@ class SeedDataGenerator:
         print(" Created:")
         print(f"   • {len(self.created_data['ctfd_users'])} CTFd users")
         print(f"   • {len(self.created_data['ng_users'])} ng_user extensions")
-        print(f"   • {len(self.created_data['worlds'])} worlds")
+        print(f"   • {len(self.created_data['events'])} events")
         print(f"   • {len(self.created_data['teams'])} teams")
-        print(f"   • {len(self.created_data['memberships'])} team memberships")
+        print(f"   • {len(self.created_data['team_members'])} team members")
 
 
 def demo_seed():
@@ -195,7 +195,7 @@ def clear_data():
     TeamMember.query.delete()
     Team.query.delete()
     User.query.delete()
-    World.query.delete()
+    Event.query.delete()
 
     db.session.commit()
     print("plugin data cleared")

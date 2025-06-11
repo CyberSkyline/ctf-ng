@@ -1,4 +1,7 @@
-# /plugin/tests/conftest.py
+"""
+/backend/ctfd/plugin/tests/conftest.py
+Defines shared Pytest fixtures for application setup.
+"""
 
 import pytest
 from CTFd.models import db as _db
@@ -6,8 +9,8 @@ from CTFd.cache import cache
 
 from plugin import load as plugin_load
 from plugin.user.models.User import User as NgUser
-from plugin.world.models.World import World
-from plugin.team.controllers.team_controller import TeamController
+from plugin.event.models.Event import Event
+from plugin.team.controllers import create_team, join_team
 from tests.helpers import (
     create_ctfd as create_ctfd_original,
     destroy_ctfd as destroy_ctfd_original,
@@ -123,30 +126,42 @@ def admin_user(db_session):
 
 
 @pytest.fixture
-def world(db_session):
-    """Creates a basic world."""
+def event(db_session):
+    """Creates a basic event."""
     if db_session is None:
         return None
 
-    world = World(name="Test World", description="A world for testing")
-    db_session.add(world)
+    event = Event(name="Test Event", description="A event for testing")
+    db_session.add(event)
     db_session.commit()
-    return world
+    return event
 
 
 @pytest.fixture
-def team(db_session, world, normal_user):
+def event2(db_session):
+    """Creates a second event for multi-event tests."""
+    if db_session is None:
+        return None
+
+    event = Event(name="Second Event", description="A second event for testing")
+    db_session.add(event)
+    db_session.commit()
+    return event
+
+
+@pytest.fixture
+def team(db_session, event, normal_user):
     """Creates a team with a normal user as the captain."""
     if db_session is None:
         return None
 
-    result = TeamController.create_team(name="Test Team", world_id=world.id, creator_id=normal_user.id)
+    result = create_team(name="Test Team", event_id=event.id, creator_id=normal_user.id)
 
     return result["team"]
 
 
 @pytest.fixture
-def team_with_members(db_session, world):
+def team_with_members(db_session, event):
     """Creates a team with a captain and a regular member."""
     if db_session is None:
         return None
@@ -164,13 +179,12 @@ def team_with_members(db_session, world):
     db_session.commit()
 
     # Create team with captain as creator
-    team_result = TeamController.create_team(
-        name="Test Team with Members", world_id=world.id, creator_id=captain_ctfd.id
-    )
+    team_result = create_team(name="Test Team with Members", event_id=event.id, creator_id=captain_ctfd.id)
     team = team_result["team"]
 
-    # Add member to the team
-    join_result = TeamController.join_team(member_ctfd.id, team.id, world.id)
+    # Add member to the team using invite code
+    invite_code = team_result["invite_code"]
+    join_result = join_team(member_ctfd.id, invite_code)
     if not join_result["success"]:
         raise Exception(f"Failed to add member to team: {join_result.get('error')}")
 

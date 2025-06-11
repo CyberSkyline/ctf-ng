@@ -1,5 +1,5 @@
 """
-# /plugin/team/models/enums.py
+/backend/ctfd/plugin/team/models/enums.py
 Enumerations to ensure type safety and prevent magic string bugs
 """
 

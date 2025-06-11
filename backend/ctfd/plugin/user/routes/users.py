@@ -1,10 +1,18 @@
-# /plugin/user/routes/users.py
+"""
+/backend/ctfd/plugin/user/routes/users.py
+Defines the public API routes for user-specific data, including team affiliations and stats.
+"""
 
 from flask import g
 from flask_restx import Namespace, Resource
 from CTFd.utils.decorators import authed_only, admins_only
 
-from ..controllers.user_controller import UserController
+from ..controllers import (
+    get_user_teams,
+    get_user_teams_in_event,
+    can_join_team_in_event,
+    get_user_stats,
+)
 from ...utils.api_responses import controller_response
 from ...utils.decorators import authed_user_required, handle_integrity_error
 from ...utils.logger import get_logger
@@ -20,19 +28,20 @@ class UserTeams(Resource):
     @authed_user_required
     @handle_integrity_error
     @users_namespace.doc(
-        description="Get current user's team memberships across all worlds",
+        description="Get current user's teams across all events",
         responses={
-            200: "Success - Returns user teams across all worlds",
+            200: "Success - Returns user teams across all events",
             403: "Forbidden - User not authenticated",
+            500: "Internal Server Error",
         },
     )
     def get(self):
-        """Get current user's team memberships across all worlds.
+        """Get current user's teams across all events.
 
         Returns:
-            JSON response with list of user's teams and world info.
+            JSON response with list of user's teams and event info.
         """
-        result = UserController.get_user_teams(g.user.id)
+        result = get_user_teams(g.user.id)
 
         if result["success"]:
             logger.info(
@@ -48,39 +57,40 @@ class UserTeams(Resource):
         return controller_response(result, error_field="user")
 
 
-@users_namespace.route("/me/worlds/<int:world_id>/teams")
-@users_namespace.param("world_id", "World ID")
-class UserWorldTeams(Resource):
+@users_namespace.route("/me/events/<int:event_id>/teams")
+@users_namespace.param("event_id", "Event ID")
+class UserEventTeams(Resource):
     @authed_only
     @authed_user_required
     @handle_integrity_error
     @users_namespace.doc(
-        description="Get current user's team in a specific world",
+        description="Get current user's team in a specific event",
         responses={
-            200: "Success - Returns user team in specified world",
+            200: "Success - Returns user team in specified event",
             403: "Forbidden - User not authenticated",
-            404: "Not found - World does not exist",
+            404: "Not found - Event does not exist",
+            500: "Internal Server Error",
         },
     )
-    def get(self, world_id):
-        """Get current user's team membership in a world.
+    def get(self, event_id):
+        """Get current user's team membership in a event.
 
         Args:
-            world_id (int): The world ID to check team membership.
+            event_id (int): The event ID to check team membership.
 
         Returns:
             JSON response with team info if user is in a team, or None if not.
         """
-        result = UserController.get_user_teams_in_world(g.user.id, world_id)
+        result = get_user_teams_in_event(g.user.id, event_id)
 
         if result["success"]:
             team_info = result.get("team")
             logger.info(
-                "User world team membership retrieved",
+                "User event team membership retrieved",
                 extra={
                     "context": {
                         "user_id": get_current_user_id(),
-                        "world_id": world_id,
+                        "event_id": event_id,
                         "has_team": team_info is not None,
                         "team_id": team_info.get("id") if team_info else None,
                     }
@@ -90,29 +100,30 @@ class UserWorldTeams(Resource):
         return controller_response(result, error_field="user")
 
 
-@users_namespace.route("/me/worlds/<int:world_id>/eligibility")
-@users_namespace.param("world_id", "World ID")
-class UserWorldEligibility(Resource):
+@users_namespace.route("/me/events/<int:event_id>/eligibility")
+@users_namespace.param("event_id", "Event ID")
+class UserEventEligibility(Resource):
     @authed_only
     @authed_user_required
     @handle_integrity_error
     @users_namespace.doc(
-        description="Check if current user can join a team in the specified world",
+        description="Check if current user can join a team in the specified event",
         responses={
             200: "Success - Returns eligibility status",
             403: "Forbidden - User not authenticated",
+            500: "Internal Server Error",
         },
     )
-    def get(self, world_id):
-        """Check if current user can join a team in the world.
+    def get(self, event_id):
+        """Check if current user can join a team in the event.
 
         Args:
-            world_id (int): The world ID to check eligibility for.
+            event_id (int): The event ID to check eligibility for.
 
         Returns:
             JSON response with eligibility status and reason if not eligible.
         """
-        result = UserController.can_join_team_in_world(g.user.id, world_id)
+        result = can_join_team_in_event(g.user.id, event_id)
 
         if result["success"]:
             logger.info(
@@ -120,7 +131,7 @@ class UserWorldEligibility(Resource):
                 extra={
                     "context": {
                         "user_id": get_current_user_id(),
-                        "world_id": world_id,
+                        "event_id": event_id,
                         "can_join": result.get("can_join", False),
                     }
                 },
@@ -135,19 +146,20 @@ class UserStats(Resource):
     @authed_user_required
     @handle_integrity_error
     @users_namespace.doc(
-        description="Get current user's participation statistics across all worlds",
+        description="Get current user's participation statistics across all events",
         responses={
             200: "Success - Returns user participation statistics",
             403: "Forbidden - User not authenticated",
+            500: "Internal Server Error",
         },
     )
     def get(self):
-        """Get current user's participation stats across all worlds.
+        """Get current user's participation stats across all events.
 
         Returns:
             JSON response with participation stats and metrics.
         """
-        result = UserController.get_user_stats(g.user.id)
+        result = get_user_stats(g.user.id)
 
         if result["success"]:
             stats = result.get("stats", {})
@@ -156,7 +168,7 @@ class UserStats(Resource):
                 extra={
                     "context": {
                         "user_id": get_current_user_id(),
-                        "worlds_participated": stats.get("worlds_participated", 0),
+                        "events_participated": stats.get("events_participated", 0),
                         "teams_joined": stats.get("teams_joined", 0),
                     }
                 },
@@ -172,23 +184,24 @@ class AdminUserTeams(Resource):
     @admins_only
     @handle_integrity_error
     @users_namespace.doc(
-        description="Get any user's team memberships (Admin only)",
+        description="Get any user's teams (Admin only)",
         responses={
             200: "Success - Returns user teams",
             403: "Forbidden - Admin access required",
             404: "Not found - User does not exist",
+            500: "Internal Server Error",
         },
     )
     def get(self, user_id):
-        """Get any user's team memberships across all worlds (Admin only).
+        """Get any user's teams across all events (Admin only).
 
         Args:
             user_id (int): The user ID to get teams for.
 
         Returns:
-            JSON response with list of user's teams and world info.
+            JSON response with list of user's teams and event info.
         """
-        result = UserController.get_user_teams(user_id)
+        result = get_user_teams(user_id)
 
         if result["success"]:
             logger.info(
@@ -227,10 +240,11 @@ class AdminUserStats(Resource):
             200: "Success - Returns user statistics",
             403: "Forbidden - Admin access required",
             404: "Not found - User does not exist",
+            500: "Internal Server Error",
         },
     )
     def get(self, user_id):
-        """Get any user's participation stats across all worlds (Admin only).
+        """Get any user's participation stats across all events (Admin only).
 
         Args:
             user_id (int): The user ID to get stats for.
@@ -238,7 +252,7 @@ class AdminUserStats(Resource):
         Returns:
             JSON response with participation stats and metrics.
         """
-        result = UserController.get_user_stats(user_id)
+        result = get_user_stats(user_id)
 
         if result["success"]:
             stats = result.get("stats", {})
@@ -248,7 +262,7 @@ class AdminUserStats(Resource):
                     "context": {
                         "admin_id": get_current_user_id(),
                         "target_user_id": user_id,
-                        "worlds_participated": stats.get("worlds_participated", 0),
+                        "events_participated": stats.get("events_participated", 0),
                         "teams_joined": stats.get("teams_joined", 0),
                     }
                 },

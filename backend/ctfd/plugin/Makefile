@@ -1,42 +1,46 @@
-# /plugin/makefile
+# /backend/ctfd/plugin/Makefile
 
-# Allow environment override, default to python in PATH
+# Allow environment override
 PYTHON_EXEC ?= python
 
-# For local development, prefer the venv if it exists
-ifeq ($(shell test -f ../../../backend/venv/bin/python && echo exists), exists)
-    PYTHON_EXEC = ../../../backend/venv/bin/python
+ifeq ($(shell test -f ../../venv/bin/python && echo exists), exists)
+    PYTHON_EXEC = ../../venv/bin/python
 endif
 
 default: test-all
 
-# Run all tests
+# All
 test-all:
 	$(PYTHON_EXEC) -m pytest -s
 
-# Unit tests
+# Type
 test-unit:
-	$(PYTHON_EXEC) -m pytest -m "not db" -s
+	$(PYTHON_EXEC) -m pytest tests/unit/ -v
 
-# Integration and API tests
 test-integration:
-	$(PYTHON_EXEC) -m pytest -m "db" -s
-
-# Models Test
-test-models:
-	$(PYTHON_EXEC) -m pytest tests/integration/test_models.py -s
-
-# Controllers Tests
-test-controllers:
-	$(PYTHON_EXEC) -m pytest tests/integration/test_controllers.py -s
-
-# Constraints Test
-test-constraints:
-	$(PYTHON_EXEC) -m pytest tests/integration/test_constraints.py -s
-
-# Endpoint Tests
+	$(PYTHON_EXEC) -m pytest tests/integration/ -v
+	
 test-api:
-	$(PYTHON_EXEC) -m pytest tests/api/ -s
+	$(PYTHON_EXEC) -m pytest tests/api/ -v
 
+# Domain  
+test-team:
+	$(PYTHON_EXEC) -m pytest tests/unit/team/ tests/integration/team/ tests/api/test_team_api.py -v
 
-.PHONY: default test-all test-unit test-integration test-models test-controllers test-constraints test-api
+test-event:
+	$(PYTHON_EXEC) -m pytest tests/unit/event/ tests/integration/event/ tests/api/test_event_api.py -v
+
+test-admin:
+	$(PYTHON_EXEC) -m pytest tests/unit/admin/ tests/integration/admin/ tests/api/test_admin_api.py -v
+
+test-user:
+	$(PYTHON_EXEC) -m pytest tests/unit/user/ tests/integration/user/ tests/api/test_user_api.py -v
+
+test-utils:
+	$(PYTHON_EXEC) -m pytest tests/unit/utils/ -v
+
+# Fast feedback
+test-fast:
+	$(PYTHON_EXEC) -m pytest tests/unit/ -x  
+
+.PHONY: default test-all test-unit test-integration test-api test-team test-event test-admin test-user test-utils test-fast

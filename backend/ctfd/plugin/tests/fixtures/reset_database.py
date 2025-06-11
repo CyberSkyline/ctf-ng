@@ -5,10 +5,10 @@ Database Reset Utility
 Safely clears all custom plugin data while leaving ctfd core data intact.
 
 Clears:
-- all team memberships (ng_team_members)
+- all team members (ng_team_members)
 - all custom teams (ng_teams)
 - all user extensions (ng_users)
-- all custom worlds (ng_worlds)
+- all custom events (ng_events)
 
 keeps
 - ctfd core users, challenges, submissions, etc.
@@ -22,7 +22,7 @@ plugin_path = os.path.join(os.path.dirname(__file__), "..", "..")
 sys.path.append(plugin_path)
 
 from CTFd.models import db  # noqa: E402
-from plugin.world.models.World import World  # noqa: E402
+from plugin.event.models.Event import Event  # noqa: E402
 from plugin.team.models.Team import Team  # noqa: E402
 from plugin.user.models.User import User  # noqa: E402
 from plugin.team.models.TeamMember import TeamMember  # noqa: E402
@@ -35,12 +35,12 @@ def reset_plugin_data():
     try:
         print(" Starting database reset...")
 
-        memberships_count = TeamMember.query.count()
-        if memberships_count > 0:
+        team_members_count = TeamMember.query.count()
+        if team_members_count > 0:
             TeamMember.query.delete()
-            print(f"    Deleted {memberships_count} team memberships")
+            print(f"    Deleted {team_members_count} team members")
         else:
-            print("   No team memberships to delete")
+            print("   No team members to delete")
 
         teams_count = Team.query.count()
         if teams_count > 0:
@@ -56,12 +56,12 @@ def reset_plugin_data():
         else:
             print("     No user extensions to delete")
 
-        worlds_count = World.query.count()
-        if worlds_count > 0:
-            World.query.delete()
-            print(f"    Deleted {worlds_count} worlds")
+        events_count = Event.query.count()
+        if events_count > 0:
+            Event.query.delete()
+            print(f"    Deleted {events_count} events")
         else:
-            print("     No worlds to delete")
+            print("     No events to delete")
 
         db.session.commit()
 
@@ -70,7 +70,12 @@ def reset_plugin_data():
 
         return True
 
+    except (ImportError, AttributeError) as e:
+        print(f" Error with module imports: {str(e)}")
+        db.session.rollback()
+        return False
     except Exception as e:
+        # Broad catch needed for unknown database errors during destructive operations
         print(f" Error during reset: {str(e)}")
         db.session.rollback()
         return False
@@ -82,9 +87,9 @@ def confirm_reset():
     """
     print("  DATABASE RESET WARNING")
     print("This will delete ALL plugin data:")
-    print("  - All worlds")
+    print("  - All events")
     print("  - All teams")
-    print("  - All team memberships")
+    print("  - All team members")
     print("  - All user extensions")
     print()
     print("CTFd core data (users, challenges, etc.) will not be affected.")
@@ -104,25 +109,29 @@ def show_current_data():
     Show the current data counts before reset.
     """
     try:
-        worlds_count = World.query.count()
+        events_count = Event.query.count()
         teams_count = Team.query.count()
         users_count = User.query.count()
-        memberships_count = TeamMember.query.count()
+        team_members_count = TeamMember.query.count()
 
         print(" Current Plugin Data:")
-        print(f"  - Worlds: {worlds_count}")
+        print(f"  - Events: {events_count}")
         print(f"  - Teams: {teams_count}")
         print(f"  - User Extensions: {users_count}")
-        print(f"  - Team Memberships: {memberships_count}")
+        print(f"  - Team Members: {team_members_count}")
         print()
 
-        if worlds_count == 0 and teams_count == 0 and users_count == 0 and memberships_count == 0:
+        if events_count == 0 and teams_count == 0 and users_count == 0 and team_members_count == 0:
             print(" Database is already empty!")
             return False
 
         return True
 
+    except (ImportError, AttributeError) as e:
+        print(f" Error with module imports: {str(e)}")
+        return False
     except Exception as e:
+        # Broad catch needed for unknown database errors during data inspection
         print(f" Error checking current data: {str(e)}")
         return False
 

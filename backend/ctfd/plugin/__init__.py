@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Main Entry Point
 
 from .routes import delete_unwanted_ctfd_routes, api_blueprint
 from .routes.views import plugin_views
@@ -10,13 +11,13 @@ logger = get_logger(__name__)
 
 
 def _create_tables() -> Tuple[Any, Any, Any, Any]:
-    from .world.models.World import World
+    from .event.models.Event import Event
     from .team.models.Team import Team
     from .user.models.User import User
     from .team.models.TeamMember import TeamMember
 
     return (
-        World,
+        Event,
         Team,
         User,
         TeamMember,
@@ -43,8 +44,14 @@ def load(app: Any) -> None:
                 }
             },
         )
-    except Exception as e:
+    except (ImportError, AttributeError, TypeError) as e:
         logger.error(
-            "Error loading plugin",
+            "Error with imports or configuration during plugin load",
+            extra={"context": {"error": str(e), "stage": "failed_initialization"}},
+        )
+    except Exception as e:
+        # Broad catch needed for unknown plugin initialization errors
+        logger.error(
+            "Unknown error loading plugin",
             extra={"context": {"error": str(e), "stage": "failed_initialization"}},
         )

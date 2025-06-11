@@ -1,4 +1,4 @@
 """
-/plugin/tests/fixtures/__init__.py
-reset/seed scripts are now placeholders
+/backend/ctfd/plugin/tests/fixtures/__init__.py
+Reset/seed scripts (placeholders)
 """

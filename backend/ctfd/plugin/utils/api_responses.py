@@ -1,4 +1,7 @@
-# /plugin/utils/api_responses.py
+"""
+/plugin/utils/api_responses.py
+Utilities for creating and formatting standardized JSON API responses.
+"""
 
 from typing import Any
 

@@ -1,4 +1,7 @@
-# /plugin/admin/routes/admin.py
+"""
+/backend/ctfd/plugin/admin/routes/admin.py
+Defines the public API routes for all administrative operations and system management.
+"""
 
 from flask import request
 from flask_restx import Namespace, Resource
@@ -6,12 +9,19 @@ from CTFd.utils.decorators import admins_only
 from datetime import datetime
 
 from ... import config
-from ..controllers.database_controller import DatabaseController
+from ..controllers import (
+    cleanup_orphaned_data,
+    cleanup_headless_teams,
+    get_data_counts,
+    get_detailed_stats,
+    reset_all_plugin_data,
+    reset_event_data,
+)
 from ...utils.api_responses import controller_response, error_response, success_response
 from ...utils.decorators import handle_integrity_error
 from ...utils.logger import get_logger
 from ...utils import get_current_user_id
-from ...utils.validators import validate_admin_reset, validate_admin_world_reset
+from ...utils import validate_admin_reset, validate_admin_event_reset
 
 admin_namespace = Namespace("admin", description="admin operations")
 logger = get_logger(__name__)
@@ -26,15 +36,16 @@ class AdminStats(Resource):
         responses={
             200: "Success - Returns detailed system statistics",
             403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
         },
     )
     def get(self):
-        """Get detailed system stats including per world breakdowns.
+        """Get detailed system stats including per event breakdowns.
 
         Returns:
             JSON response with detailed stats and potential issues.
         """
-        result = DatabaseController.get_detailed_stats()
+        result = get_detailed_stats()
 
         if result["success"]:
             logger.info(
@@ -42,7 +53,7 @@ class AdminStats(Resource):
                 extra={
                     "context": {
                         "admin_id": get_current_user_id(),
-                        "worlds_count": len(result.get("worlds", [])),
+                        "events_count": len(result.get("events", [])),
                     }
                 },
             )
@@ -59,15 +70,16 @@ class AdminStatsCounts(Resource):
         responses={
             200: "Success - Returns data counts",
             403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
         },
     )
     def get(self):
         """Get basic data counts for all plugin entities.
 
         Returns:
-            JSON response with counts of worlds, teams, users, and memberships.
+            JSON response with counts of events, teams, users, and team members.
         """
-        result = DatabaseController.get_data_counts()
+        result = get_data_counts()
 
         if "error" in result:
             logger.warning(
@@ -104,7 +116,7 @@ class AdminReset(Resource):
         """Reset ALL plugin data - WARNING: This deletes everything!
 
         Request Body:
-            confirm (str): Must be {ADMIN_RESET_CONFIRMATION} to proceed.
+            confirm (str): Must be ADMIN_RESET_CONFIRMATION to proceed.
 
         Returns:
             JSON response with deletion results or error.
@@ -136,7 +148,7 @@ class AdminReset(Resource):
             },
         )
 
-        result = DatabaseController.reset_all_plugin_data()
+        result = reset_all_plugin_data()
 
         if result["success"]:
             logger.warning(
@@ -162,70 +174,70 @@ class AdminReset(Resource):
             return error_response(result["error"], "reset", 500)
 
 
-@admin_namespace.route("/worlds/<int:world_id>/reset")
-@admin_namespace.param("world_id", "World ID")
-class AdminWorldReset(Resource):
+@admin_namespace.route("/events/<int:event_id>/reset")
+@admin_namespace.param("event_id", "Event ID")
+class AdminEventReset(Resource):
     @admins_only
     @handle_integrity_error
     @admin_namespace.doc(
-        description="Reset all data for a specific world (Admin only)",
+        description="Reset all data for a specific event (Admin only)",
         responses={
-            200: "Success - World data reset",
-            400: "Bad request - World does not exist",
+            200: "Success - Event data reset",
+            400: "Bad request - Event does not exist",
             403: "Forbidden - Admin access required",
             500: "Internal error - Reset failed",
         },
     )
-    def post(self, world_id):
-        """Reset all data for a specific world.
+    def post(self, event_id):
+        """Reset all data for a specific event.
 
         Args:
-            world_id (int): The world ID to reset.
+            event_id (int): The event ID to reset.
 
         Request Body:
-            confirm (str): Must be 'DELETE_WORLD_DATA' to proceed.
+            confirm (str): Must be 'DELETE_EVENT_DATA' to proceed.
 
         Returns:
             JSON response with deletion results or error.
         """
         data = request.get_json() or {}
 
-        is_valid, errors = validate_admin_world_reset(data)
+        is_valid, errors = validate_admin_event_reset(data)
         if not is_valid:
             logger.warning(
-                "Validation failed for world reset",
+                "Validation failed for event reset",
                 extra={
                     "context": {
                         "errors": errors,
                         "admin_id": get_current_user_id(),
-                        "endpoint": "admin_world_reset",
-                        "world_id": world_id,
+                        "endpoint": "admin_event_reset",
+                        "event_id": event_id,
                     }
                 },
             )
             return {"success": False, "errors": errors}, 400
 
         logger.warning(
-            "Admin initiated world data reset",
+            "Admin initiated event data reset",
             extra={
                 "context": {
                     "admin_id": get_current_user_id(),
-                    "world_id": world_id,
-                    "operation": "RESET_WORLD_DATA",
+                    "event_id": event_id,
+                    "operation": "RESET_EVENT_DATA",
                     "confirmation": data.get("confirm"),
                 }
             },
         )
 
-        result = DatabaseController.reset_world_data(world_id)
+        result = reset_event_data(event_id)
 
         if result["success"]:
             logger.warning(
-                "Admin completed world data reset",
+                "Admin completed event data reset",
                 extra={
                     "context": {
                         "admin_id": get_current_user_id(),
-                        "world_id": world_id,
+                        "event_id": event_id,
                         "deleted_counts": result.get("deleted", {}),
                     }
                 },
@@ -234,11 +246,11 @@ class AdminWorldReset(Resource):
         else:
             status_code = 404 if "not found" in result["error"].lower() else 500
             logger.error(
-                "Admin world reset failed",
+                "Admin event reset failed",
                 extra={
                     "context": {
                         "admin_id": get_current_user_id(),
-                        "world_id": world_id,
+                        "event_id": event_id,
                         "error": result["error"],
                     }
                 },
@@ -274,7 +286,7 @@ class AdminCleanup(Resource):
             },
         )
 
-        result = DatabaseController.cleanup_orphaned_data()
+        result = cleanup_orphaned_data()
 
         if result["success"]:
             logger.warning(
@@ -300,6 +312,63 @@ class AdminCleanup(Resource):
             return error_response(result["error"], "cleanup", 500)
 
 
+@admin_namespace.route("/cleanup/headless-teams")
+class AdminCleanupHeadlessTeams(Resource):
+    @admins_only
+    @handle_integrity_error
+    @admin_namespace.doc(
+        description="Fix teams without captains by auto-promoting oldest member (Admin only)",
+        responses={
+            200: "Success - Headless teams cleanup completed",
+            403: "Forbidden - Admin access required",
+            500: "Internal error - Cleanup failed",
+        },
+    )
+    def post(self):
+        """Fix teams without captains due to user deletion.
+
+        This endpoint finds teams that have members but no captain
+        and automatically promotes the oldest member to captain role.
+
+        Returns:
+            JSON response with cleanup results.
+        """
+        logger.warning(
+            "Admin initiated headless teams cleanup",
+            extra={
+                "context": {
+                    "admin_id": get_current_user_id(),
+                    "operation": "CLEANUP_HEADLESS_TEAMS",
+                }
+            },
+        )
+
+        result = cleanup_headless_teams()
+
+        if result["success"]:
+            logger.warning(
+                "Admin completed headless teams cleanup",
+                extra={
+                    "context": {
+                        "admin_id": get_current_user_id(),
+                        "message": result["message"],
+                    }
+                },
+            )
+            return success_response(result)
+        else:
+            logger.error(
+                "Admin headless teams cleanup failed",
+                extra={
+                    "context": {
+                        "admin_id": get_current_user_id(),
+                        "error": result.get("error", "Unknown error"),
+                    }
+                },
+            )
+            return error_response(result.get("error", "Cleanup failed"), "cleanup", 500)
+
+
 @admin_namespace.route("/health")
 class AdminHealth(Resource):
     @admins_only
@@ -309,6 +378,7 @@ class AdminHealth(Resource):
         responses={
             200: "Success - System health report",
             403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
         },
     )
     def get(self):
@@ -317,8 +387,8 @@ class AdminHealth(Resource):
         Returns:
             JSON response with health report and warnings.
         """
-        counts = DatabaseController.get_data_counts()
-        detailed = DatabaseController.get_detailed_stats()
+        counts = get_data_counts()
+        detailed = get_detailed_stats()
 
         if "error" in counts or not detailed["success"]:
             logger.error(
@@ -336,24 +406,12 @@ class AdminHealth(Resource):
             "status": "healthy",
             "timestamp": datetime.utcnow().isoformat(),
             "data_counts": counts,
-            "worlds_count": len(detailed.get("worlds", [])),
+            "events_count": counts["events"],
             "empty_teams_count": detailed.get("total_empty_teams", 0),
             "warnings": [],
         }
 
-        if counts["users"] > 0 and counts["memberships"] == 0:
-            health_report["warnings"].append("Users exist but no team memberships found")
-
-        if counts["teams"] > 0 and counts["memberships"] == 0:
-            health_report["warnings"].append("Teams exist but no memberships found")
-
-        if (
-            counts["teams"] > 0
-            and detailed.get("total_empty_teams", 0) / counts["teams"] > config.EMPTY_TEAMS_WARNING_THRESHOLD
-        ):
-            health_report["warnings"].append(
-                f"More than {int(config.EMPTY_TEAMS_WARNING_THRESHOLD * 100)}% of teams are empty"
-            )
+        health_report["warnings"] = _generate_health_warnings(counts, detailed)
 
         logger.info(
             "Admin performed health check",
@@ -367,3 +425,30 @@ class AdminHealth(Resource):
         )
 
         return success_response({"success": True, **health_report})
+
+
+def _generate_health_warnings(counts, detailed):
+    """Generate health warnings based on data counts and statistics.
+
+    Args:
+        counts: Dictionary of data counts
+        detailed: Detailed statistics dictionary
+
+    Returns:
+        list: List of warning messages
+    """
+    warnings = []
+
+    if counts["users"] > 0 and counts["team_members"] == 0:
+        warnings.append("Users exist but no team members found")
+
+    if counts["teams"] > 0 and counts["team_members"] == 0:
+        warnings.append("Teams exist but no team members found")
+
+    if (
+        counts["teams"] > 0
+        and detailed.get("total_empty_teams", 0) / counts["teams"] > config.EMPTY_TEAMS_WARNING_THRESHOLD
+    ):
+        warnings.append(f"More than {int(config.EMPTY_TEAMS_WARNING_THRESHOLD * 100)}% of teams are empty")
+
+    return warnings

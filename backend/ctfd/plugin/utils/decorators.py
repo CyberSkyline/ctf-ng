@@ -1,4 +1,7 @@
-# /plugin/utils/decorators.py
+"""
+/backend/ctfd/plugin/utils/decorators.py
+Ultilities for Flask decorators.
+"""
 
 from functools import wraps
 from flask import request, g

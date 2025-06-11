@@ -1,4 +1,7 @@
-# /plugin/utils/logger.py
+"""
+/backend/ctfd/plugin/utils/logger.py
+Configures a JSON logger for machine readable app logging.
+"""
 
 import json
 import logging
