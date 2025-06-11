@@ -56,6 +56,7 @@ export default function TransferTeamModal({ transferCaptain, membersList }: Tran
             </Select.Root>
           </>
         )}
+        <Text>{`Enter your new team\'s invite code to transfer teams.`}</Text>
         <TextField.Root
           placeholder="Invite Code"
           defaultValue=""
