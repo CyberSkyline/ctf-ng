@@ -15,9 +15,11 @@ def _create_tables() -> Tuple[Any, Any, Any, Any]:
     from .team.models.Team import Team
     from .user.models.User import User
     from .team.models.TeamMember import TeamMember
+    from .event_registration.models.EventRegistration import EventRegistration
 
     return (
         Event,
+        EventRegistration,
         Team,
         User,
         TeamMember,
