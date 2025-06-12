@@ -1,0 +1,11 @@
+[project]
+name = "chall-parser"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "attrs>=25.3.0",
+    "cattrs>=25.1.1",
+    "pyyaml>=6.0.2",
+]

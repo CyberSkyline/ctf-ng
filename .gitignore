@@ -25,3 +25,7 @@ Thumbs.db
 # Pre commit config
 .pre-commit-config.yaml
 
+
+# Python
+.venv/
+__pycache__/
