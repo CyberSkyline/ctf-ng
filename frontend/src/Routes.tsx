@@ -17,7 +17,7 @@ import AdminDashboard from 'routes/admin/dashboard';
 import AdminNotifications from 'routes/admin/notifications';
 import AdminUsers from 'routes/admin/users';
 import AdminTickets from 'routes/admin/tickets';
-import { ROUTEPREFIX } from './constants';
+import AdminLayout from 'routes/admin/layout';
 
 function Routes() {
   const routes = useRoutes([
@@ -25,23 +25,26 @@ function Routes() {
       path: '*',
       element: <NotFound />, // Catch-all route for 404 page
     },
-    { path: `/${ROUTEPREFIX}`, element: <Dashboard /> },
+    { path: '/', element: <Dashboard /> },
     {
-      path: `/${ROUTEPREFIX}/events/:idEvent`,
+      path: '/events/:idEvent',
       children: [
         { index: true, element: <Overview /> },
         { path: 'registration', element: <Registration /> },
         { path: 'challenge/:idChallenge', element: <Challenge /> },
       ],
     },
-    { path: `/${ROUTEPREFIX}/notifications/:idNotif`, element: <Notifications /> },
-    { path: `/${ROUTEPREFIX}/profile`, element: <Profile /> },
-    { path: `/${ROUTEPREFIX}/scoreboard/:idEvent`, element: <Scoreboard /> },
-    { path: `/${ROUTEPREFIX}/support`, element: <Support /> },
+    { path: '/notifications/:idNotif', element: <Notifications /> },
+    { path: '/profile', element: <Profile /> },
+    { path: '/scoreboard/:idEvent', element: <Scoreboard /> },
+    { path: '/support', element: <Support /> },
 
     {
-      path: `/${ROUTEPREFIX}/admin`,
+      path: '/admin',
+      element: <AdminLayout />,
       children: [
+        { path: '*', element: <NotFound /> }, // Catch-all for admin routes
+        { index: true, element: <AdminDashboard /> },
         { path: 'dashboard', element: <AdminDashboard /> },
         { path: 'notifications', element: <AdminNotifications /> },
         { path: 'users', element: <AdminUsers /> },
