@@ -17,3 +17,7 @@ Thumbs.db
 
 # VSCODE
 .vscode/
+
+# Python
+.venv/
+__pycache__/
