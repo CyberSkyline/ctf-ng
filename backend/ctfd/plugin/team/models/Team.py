@@ -31,6 +31,7 @@ class Team(db.Model):
     def member_count(self):
         return len(self.members)
 
+    # Required SQLAlchemy pattern: the expression must be named after the property.
     @member_count.expression
     def member_count(cls):
         # Lazy import to prevent circular dependencies (needed)

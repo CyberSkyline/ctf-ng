@@ -12,6 +12,7 @@ from ...config import INVITE_CODE_GENERATION_ATTEMPTS
 from ..models.Team import Team
 
 
+# Internal use only (_ prefix); generates a unique team invite code.
 def _generate_invite_code(length: int = config.INVITE_CODE_LENGTH) -> str:
     characters = string.ascii_uppercase + string.digits
     characters = (
