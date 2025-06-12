@@ -38,6 +38,18 @@ def dict_list_union_hook_gen(converter: cattrs.Converter):
     
     return dict_list_union_hook
 
+def template_struct_hook(val, tp):
+    """Structure hook for Template type."""
+    if isinstance(val, Template):
+        return val
+    raise ValueError(f"Expected {tp}, got {val}")
+
+def template_unstruct_hook(val):
+    """Unstructure hook for Template type."""
+    if isinstance(val, Template):
+        return val
+    raise ValueError(f"Got {val}")
+
 class ComposeYamlParser:
     """Parser for Docker Compose YAML files with challenge extensions and template rewriting."""
     
@@ -56,6 +68,8 @@ class ComposeYamlParser:
         cf_unst_hook = make_dict_unstructure_fn(ComposeFile, converter, challenge=cattrs.override(rename="x-challenge"))
         converter.register_structure_hook(ComposeFile, cf_st_hook)
         converter.register_unstructure_hook(ComposeFile, cf_unst_hook)
+        converter.register_structure_hook(Template, template_struct_hook)
+        converter.register_unstructure_hook(Template, template_unstruct_hook)
         # converter.register_structure_hook(ComposeFile, self._structure_compose_file)
 
         converter.register_structure_hook_func(is_dict_list_union, dict_list_union_hook_gen(converter))
@@ -111,6 +125,8 @@ class ComposeYamlParser:
             rewritten_yaml = yaml.emit(events)
             logger.debug(f"Rewritten YAML:\n{rewritten_yaml}")
             
+            yaml.add_constructor('!template', Template.from_yaml)
+            yaml.add_representer(Template, Template.to_yaml)
             # Step 4: Parse the rewritten YAML into a dictionary
             parsed_data = yaml.load(rewritten_yaml, Loader=yaml.Loader)
             
@@ -120,7 +136,6 @@ class ComposeYamlParser:
             
             logger.info("Successfully parsed compose file")
             return compose_file
-            
         except Exception as e:
             logger.error(f"Error parsing compose file: {e}")
             raise

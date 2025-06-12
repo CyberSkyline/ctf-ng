@@ -80,7 +80,7 @@ x-challenge:
         assert len(compose.challenge.questions) == 1
         assert compose.challenge.questions[0].points == 100
 
-    def test_parse_compose_with_templates(self):
+    def test_parse_compose_with_templates(self, caplog):
         """Test parsing a compose file with template variables."""
         yaml_content = """
 x-challenge:
@@ -104,7 +104,7 @@ services:
     environment:
       FLAG: *flag_var
 """
-        
+        caplog.set_level("DEBUG")
         parser = ComposeYamlParser()
         compose = parser.parse_string(yaml_content)
         
