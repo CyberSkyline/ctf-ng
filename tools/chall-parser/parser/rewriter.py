@@ -36,15 +36,6 @@ def rewrite_variable(loader: BaseLoader):
 
 def rewrite_variables(loader):
     logger.debug("Entering rewrite_variables")
-    if not loader.check_event(ScalarEvent):
-        logger.debug("No ScalarEvent at start of rewrite_variables")
-        return
-    event = loader.get_event()
-    logger.debug(f"Got event: {event}")
-    yield event
-    if event.value != "variables":
-        logger.debug(f"Event value is not 'variables': {event.value}")
-        return
     if not loader.check_event(MappingStartEvent):
         logger.debug("No MappingStartEvent after 'variables'")
         return
@@ -57,15 +48,21 @@ def rewrite_variables(loader):
             logger.debug("No MappingStartEvent after variable key")
             return
         yield from rewrite_variable(loader)
-    return
+
 
 
 def rewrite_aliases(loader: BaseLoader) -> Generator[Event]:
     logger.debug("Entering rewrite_aliases")
     while True:
-        if loader.check_event(MappingStartEvent):
-            logger.debug("Found MappingStartEvent in rewrite_aliases")
-            yield loader.get_event()
+        if loader.check_event(ScalarEvent):
+            logger.debug("Found ScalarEvent in rewrite_aliases")
+            event = loader.get_event()
+            logger.debug(f"Got event: {event}")
+            yield event
+            if event.value != "variables":
+                logger.debug(f"Event value is not 'variables': {event.value}")
+                continue
+            logger.debug("Found 'variables' key, rewriting variables")
             yield from rewrite_variables(loader)
         elif loader.check_event():
             logger.debug("Found other event in rewrite_aliases")
