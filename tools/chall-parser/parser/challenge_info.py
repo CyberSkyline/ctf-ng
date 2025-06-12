@@ -1,6 +1,8 @@
 from typing import Literal
 from attrs import define
 
+from parser.rewriter import Template
+
 
 # # This is the container block for all of the information that you can specify
 # # for use in challenge development
@@ -98,7 +100,7 @@ class Hint:
 
 @define
 class Variable:
-    template: str
+    template: Template
     default: str
 
 @define

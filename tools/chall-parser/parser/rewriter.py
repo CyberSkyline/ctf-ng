@@ -2,7 +2,7 @@ import logging
 from typing import Generator
 import typing
 from attrs import define
-from yaml import BaseLoader, Event, MappingStartEvent, ScalarEvent
+from yaml import BaseLoader, Event, FullLoader, Loader, MappingStartEvent, ScalarEvent, UnsafeLoader
 import yaml
 logger = logging.getLogger(__name__)
 
@@ -29,6 +29,8 @@ def rewrite_variable(loader: BaseLoader):
     logger.debug(f"Default key: {default_key}, value: {default_value}")
     template_value.anchor = default_value.anchor
     template_value.tag = '!template'
+    template_value.implicit = (False, False)
+    logger.debug(f"Setting template value tag to: {template_value.tag}")
     default_value.anchor = None
     logger.debug(f"Setting template value anchor to: {template_value.anchor}")
     yield from (template_key, template_value, default_key, default_value)
@@ -71,8 +73,19 @@ def rewrite_aliases(loader: BaseLoader) -> Generator[Event]:
             logger.debug("No more events in rewrite_aliases")
             break
 
-@define
-class Template(yaml.YAMLObject):
-    template: str
+class Template:
+    def __init__(self, template: str):
+        logger.debug(f"Initializing Template with value: {template}")
+        self.template: str = template
+
+    @classmethod
+    def from_yaml(cls, loader: Loader | FullLoader | UnsafeLoader, node: yaml.nodes.Node) -> 'Template':
+        logger.debug(f"Creating Template from YAML node: {node}")
+        if not isinstance(node, yaml.nodes.ScalarNode):
+            raise yaml.YAMLError("Template must be a scalar value")
+        return cls(template=node.value)
     
-    yaml_tag = '!template'
+    @classmethod
+    def to_yaml(cls, dumper: yaml.Dumper, data: 'Template') -> yaml.nodes.ScalarNode:
+        logger.debug(f"Converting Template to YAML: {data}")
+        return dumper.represent_scalar('!template', data.template)
