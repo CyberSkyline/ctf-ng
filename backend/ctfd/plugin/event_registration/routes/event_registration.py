@@ -1,37 +1,42 @@
-from flask_restx import Namespace, Resource
-from ..utils.logger import get_logger
+from flask_restx import Namespace, Resource, reqparse
+from ...utils.logger import get_logger
 from CTFd.utils.decorators import authed_only
-from ..utils.decorators import json_body_required, handle_integrity_error
-from ..team.controllers.join_event import join_event_new_team, join_event_existing_team
+from ...utils.decorators import json_body_required, handle_integrity_error
+from ..controllers import join_event_new_team, join_event_existing_team
 from ..controllers.get_user_demographic import get_user_demographic
 from ...utils import get_current_user_id
 
 event_reg_namespace= Namespace("event_registration", description="Event Registration related operations")
 logger = get_logger(__name__)
+parser = reqparse.RequestParser()
+parser.add_argument("event_id", type=int, required=True, help="The ID of the event to get demographics for")
 
-@events_reg_namespace.route("/join_event")
-class JoinEvent(Resource):
+
+@event_reg_namespace.route("")
+class UserDemographics(Resource):
     @authed_only
     @handle_integrity_error
     @event_reg_namespace.doc(
         description="Get user demographics for an event",
         responses={
-            200: "Success",
+            200: "Success - User demographics retrieved",
             400: "Bad Request - Missing parameters or invalid data",
             403: "Forbidden - User not authenticated" ,
             404: "Not Found - User or event does not exist",
         }
     )
-    def get(self, event_id):
+    def get(self):
         """Get user demographics for an event
 
         Returns:
             JSON: User demographics for the event or error message
         """
         id = get_current_user_id()
+        args = parser.parse_args()
+        event_id = args.get("event_id")
         demographics = get_user_demographic(
             user_id=id,
-            event_id=request.args.get("event_id")
+            event_id=event_id
         )
         if not demographics["success"]:
             logger.warning(
@@ -41,6 +46,9 @@ class JoinEvent(Resource):
             return demographics, 400
         
         return demographics, 200
+
+@event_reg_namespace.route("/join_event")
+class JoinEvent(Resource):
 
     @authed_only
     @json_body_required

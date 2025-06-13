@@ -116,6 +116,35 @@ def validate_event_creation(data: dict[str, Any]) -> tuple[bool, dict[str, str]]
     return validator.is_valid()
 
 
+def validate_event_registration_creation(data: dict[str, Any]) -> tuple[bool, dict[str, str]]:
+    """Validate event registration creation."""
+    validator = BaseValidator()
+
+    validator.validate_boolean(data, "public", friendly_name="Public registration")
+    validator.validate_boolean(data, "reg_open", friendly_name="Registration open status")
+
+    # Validate optional datetime fields
+    reg_start_date = validator.validate_datetime(
+        data, "reg_start_date", allow_past=False, friendly_name="Registration start date"
+    )
+    reg_end_date = validator.validate_datetime(
+        data, "reg_end_date", allow_past=False, friendly_name="Registration end date"
+    )
+
+    # Check that if one time is provided, both must be provided
+    if (reg_start_date is None) != (reg_end_date is None):
+        if reg_start_date is None:
+            validator.errors["reg_start_date"] = "Registration start date is required when end date is provided"
+        if reg_end_date is None:
+            validator.errors["reg_end_date"] = "Registration end date is required when start date is provided"
+
+    # Check that start date is before end date
+    if reg_start_date and reg_end_date and reg_start_date >= reg_end_date:
+        validator.errors["reg_end_date"] = ValidationError.FIELD_DATETIME_ORDER
+
+    return validator.is_valid()
+
+
 def validate_event_update(data: dict[str, Any]) -> tuple[bool, dict[str, str]]:
     """Validate event updates."""
     validator = BaseValidator()

@@ -22,6 +22,7 @@ def get_user_demographic(user_id: int, event_id: int) -> Dict[str, Any]:
     Returns:
         dict: Success status and demographic data or error info.
     """
+    print(f"Getting demographic for user {user_id} in event {event_id}")
     user = User.query.get(user_id)
     if not user:
         logger.warning(
