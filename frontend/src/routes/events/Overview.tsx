@@ -6,10 +6,9 @@ import EventHeader from 'components/event/EventHeader';
 import LeaderboardTab from 'routes/events/OverviewTabs/LeaderboardTab';
 import TeamTab from 'routes/events/OverviewTabs/TeamTab';
 
-import {
-  FaRankingStar, FaTrophy, FaUserGroup,
-} from 'react-icons/fa6';
 import { useSearchParams } from 'react-router';
+import HeaderContainer from 'components/HeaderContainer';
+import { TbCube, TbStar, TbUsersGroup } from 'react-icons/tb';
 
 export default function Overview() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -17,10 +16,13 @@ export default function Overview() {
 
   return (
     <>
-      <EventHeader
-        name="Event Name"
-        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-      />
+      <HeaderContainer>
+        <EventHeader
+          name="Event Name"
+          description="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+          state="upcoming"
+        />
+      </HeaderContainer>
 
       <Tabs.Root
         value={currentTab}
@@ -34,15 +36,15 @@ export default function Overview() {
         <Container size="2" mb="4">
           <Tabs.List className="*:!basis-0 *:!grow" loop={false}>
             <Tabs.Trigger value="challenges">
-              <FaTrophy className="mr-1" />
+              <TbCube className="mr-1" />
               Challenges
             </Tabs.Trigger>
             <Tabs.Trigger value="leaderboard">
-              <FaRankingStar className="mr-1" />
+              <TbStar className="mr-1" />
               Leaderboard
             </Tabs.Trigger>
             <Tabs.Trigger value="team">
-              <FaUserGroup className="mr-1" />
+              <TbUsersGroup className="mr-1" />
               Team
             </Tabs.Trigger>
           </Tabs.List>

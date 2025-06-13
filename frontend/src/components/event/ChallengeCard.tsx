@@ -2,9 +2,7 @@ import {
   Box, Card, Flex, Heading, Text,
 } from '@radix-ui/themes';
 import type { IconType } from 'react-icons';
-import {
-  FaCheck,
-} from 'react-icons/fa6';
+import { TbCheck } from 'react-icons/tb';
 import { Link } from 'react-router';
 
 export default function ChallengeCard({
@@ -22,28 +20,30 @@ export default function ChallengeCard({
     completed?: boolean;
     icon?: IconType;
 }) {
+  const color = completed ? 'lime' : undefined;
+
   return (
     <Card asChild>
       <Link to={`./challenge/${id}`}>
         <Flex direction="row" align="center" gap="1">
           {Icon ? (
-            <Heading size="4" color="lime">
+            <Heading size="4" color={color}>
               <Icon />
             </Heading>
           ) : null}
-          <Heading size="4" color="lime">{name}</Heading>
+          <Heading size="4" color={color}>{name}</Heading>
           <Box flexGrow="1" />
           {completed ? (
             <Text size="2" color="lime">
-              <FaCheck title="Completed" />
+              <TbCheck title="Completed" />
             </Text>
           ) : null}
-          <Text size="2" color={completed ? 'lime' : 'gray'} aria-label={`${points} points`}>
+          <Text size="2" color={color} aria-label={`${points} points`}>
             {points}
             pts
           </Text>
         </Flex>
-        <Text>{description}</Text>
+        <Text color="gray">{description}</Text>
       </Link>
     </Card>
   );
