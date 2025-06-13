@@ -13,7 +13,7 @@ default: test-all
 install-deps:
 	$(PYTHON_EXEC) -m pip install --upgrade pip
 	$(PYTHON_EXEC) -m pip install -r requirements.txt
-	$(PYTHON_EXEC) -m pip install -r $(CURDIR)/../../external/CTFd/requirements.txt
+	$(PYTHON_EXEC) -m pip install -r $(CURDIR)/../../../external/CTFd/requirements.txt
 
 # All
 test-all: install-deps
