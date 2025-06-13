@@ -1,13 +1,14 @@
 import { Container } from '@radix-ui/themes';
 
-export default function HeaderContainer({ children }: {
-  children: React.ReactNode;
+export default function HeaderContainer({ children = undefined }: {
+  children?: React.ReactNode
 }) {
   return (
+    children && (
     <Container
       size="2"
       px="4"
-      py="8"
+      py="9"
       mx="-4"
       mt="-4"
       mb="4"
@@ -15,5 +16,6 @@ export default function HeaderContainer({ children }: {
     >
       {children}
     </Container>
+    )
   );
 }
