@@ -12,7 +12,6 @@ default: test-all
 # Install dependencies
 install-deps:
 	$(PYTHON_EXEC) -m pip install --upgrade pip
-	$(PYTHON_EXEC) -m pip install pytest
 	$(PYTHON_EXEC) -m pip install -r requirements.txt
 
 # All
