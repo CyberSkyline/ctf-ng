@@ -1,5 +1,6 @@
 from CTFd.models import db
 from sqlalchemy.orm import validates
+from sqlalchemy import CheckConstraint
 
 class EventRegistration(db.Model):
     __tablename__ = 'ng_event_registration'
@@ -16,10 +17,14 @@ class EventRegistration(db.Model):
             "(reg_start_date IS NULL AND reg_end_date IS NULL) OR (reg_start_date IS NOT NULL AND reg_end_date IS NOT NULL)",
             name="ck_event_reg_dates_together",
         ),
+        CheckConstraint(
+            "reg_start_date < reg_end_date",
+            name="ck_event_reg_dates_order",
+        )
     )
 
     def __repr__(self):
-        return f'<Registration Event id={self.world_id} public={self.public} reg_open={self.reg_open}>'
+        return f'<Registration Event id={self.event_id} public={self.public} reg_open={self.reg_open}>'
 
 
     @classmethod

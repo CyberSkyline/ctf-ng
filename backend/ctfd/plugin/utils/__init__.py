@@ -18,6 +18,7 @@ from .domain_validators import (
     validate_admin_reset,
     validate_admin_event_reset,
     validate_event_id_param,
+    validate_event_registration_creation,
 )
 from .data_conversion import rows_to_dicts, row_to_dict
 
@@ -46,6 +47,7 @@ __all__ = [
     "validate_team_join_by_code",
     "validate_captain_assignment",
     "validate_event_creation",
+    "validate_event_registration_creation",
     "validate_event_update",
     "validate_admin_reset",
     "validate_admin_event_reset",

@@ -1,6 +1,9 @@
+from CTFd.models import db
+
+
 class Demographics(db.Model):
     __tablename__ = 'demographics'
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     event_id = db.Column(db.Integer, db.ForeignKey('ng_events.id'))
     reg_timestamp = db.Column(db.DateTime, nullable=False)
 

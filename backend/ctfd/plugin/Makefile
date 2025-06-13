@@ -39,8 +39,11 @@ test-user:
 test-utils:
 	$(PYTHON_EXEC) -m pytest tests/unit/utils/ -v
 
+test-event_registration:
+	$(PYTHON_EXEC) -m pytest tests/unit/event_registration/ tests/integration/event_registration/ tests/api/event_registration/test_event_registration_api.py -v
+
 # Fast feedback
 test-fast:
 	$(PYTHON_EXEC) -m pytest tests/unit/ -x  
 
-.PHONY: default test-all test-unit test-integration test-api test-team test-event test-admin test-user test-utils test-fast
+.PHONY: default test-all test-unit test-integration test-api test-team test-event test-admin test-user test-event_registration test-utils test-fast

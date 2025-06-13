@@ -4,9 +4,10 @@ Defines shared Pytest fixtures for application setup.
 """
 
 import pytest
+from datetime import datetime
 from CTFd.models import db as _db
 from CTFd.cache import cache
-
+from plugin.event_registration.controllers.create_event_registration import create_event_registration
 from plugin import load as plugin_load
 from plugin.user.models.User import User as NgUser
 from plugin.event.models.Event import Event
@@ -86,6 +87,7 @@ def client(app):
 def logged_in_client(client, normal_user):
     """A test client that is logged in as a normal user."""
     login_as(client, normal_user)
+    print(f"Logged in as user: {normal_user.name} (ID: {normal_user.id})")
     return client
 
 
@@ -147,6 +149,55 @@ def event2(db_session):
     db_session.add(event)
     db_session.commit()
     return event
+
+@pytest.fixture
+def event_registration(event, db_session):
+    """Creates an event registration for the given event."""
+    if db_session is None:
+        return None
+
+    result = create_event_registration(event_id=event.id, reg_open=True)
+    if not result["success"]:
+        raise Exception(f"Failed to create event registration: {result.get('error')}")
+
+    return result["event_registration"]
+
+@pytest.fixture
+def closed_event_registration(event, db_session):
+    """Creates a closed event registration for the given event."""
+    if db_session is None:
+        return None
+
+    result = create_event_registration(event_id=event.id, reg_open=False)
+    if not result["success"]:
+        raise Exception(f"Failed to create event registration: {result.get('error')}")
+
+    return result["event_registration"]
+
+@pytest.fixture
+def past_event_registration(event, db_session):
+    """Creates an event registration for the given event with a past registration period."""
+    if db_session is None:
+        return None
+
+    result = create_event_registration(event_id=event.id, reg_open=True, reg_start_date=datetime(2020, 1, 1), reg_end_date=datetime(2020, 1, 2))
+    if not result["success"]:
+        raise Exception(f"Failed to create past event registration: {result.get('error')}")
+
+    return result["event_registration"]
+
+@pytest.fixture
+def future_event_registration(event, db_session):
+    """Creates an event registration for the given event with a future registration period."""
+    if db_session is None:
+        return None
+
+    result = create_event_registration(event_id=event.id, reg_open=True, reg_start_date=datetime(2125, 1, 1), reg_end_date=datetime(2125, 1, 2))
+    if not result["success"]:
+        raise Exception(f"Failed to create future event registration: {result.get('error')}")
+
+    return result["event_registration"]
+
 
 
 @pytest.fixture
