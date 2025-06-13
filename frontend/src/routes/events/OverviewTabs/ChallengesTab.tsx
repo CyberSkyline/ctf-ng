@@ -1,7 +1,6 @@
 import { Container, TextField, Grid } from '@radix-ui/themes';
-import { FaSearch } from 'react-icons/fa';
-import { FaCode } from 'react-icons/fa6';
 import ChallengeCard from 'components/event/ChallengeCard';
+import { TbCode, TbSearch } from 'react-icons/tb';
 
 export default function ChallengesTab() {
   return (
@@ -9,7 +8,7 @@ export default function ChallengesTab() {
       <Container size="2" mb="4">
         <TextField.Root placeholder="Search challenges...">
           <TextField.Slot>
-            <FaSearch height="16" width="16" />
+            <TbSearch height="16" width="16" />
           </TextField.Slot>
         </TextField.Root>
       </Container>
@@ -21,7 +20,7 @@ export default function ChallengesTab() {
               id={index.toString()}
               name="Challenge Name"
               description="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-              icon={FaCode}
+              icon={TbCode}
               points={1000}
               completed={index % 2 === 0} // Example completion status
                   // using index as key for test data. replace with unique id once present
