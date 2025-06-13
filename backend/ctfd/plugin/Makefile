@@ -4,43 +4,48 @@
 PYTHON_EXEC ?= python
 
 ifeq ($(shell test -f ../../venv/bin/python && echo exists), exists)
-    PYTHON_EXEC = ../../venv/bin/python
+	PYTHON_EXEC = ../../venv/bin/python
 endif
 
 default: test-all
 
+# Install dependencies
+install-deps:
+	$(PYTHON_EXEC) -m pip install --upgrade pip
+	$(PYTHON_EXEC) -m pip install pytest
+
 # All
-test-all:
+test-all: install-deps
 	$(PYTHON_EXEC) -m pytest -s
 
 # Type
-test-unit:
+test-unit: install-deps
 	$(PYTHON_EXEC) -m pytest tests/unit/ -v
 
-test-integration:
+test-integration: install-deps
 	$(PYTHON_EXEC) -m pytest tests/integration/ -v
 	
-test-api:
+test-api: install-deps
 	$(PYTHON_EXEC) -m pytest tests/api/ -v
 
 # Domain  
-test-team:
+test-team: install-deps
 	$(PYTHON_EXEC) -m pytest tests/unit/team/ tests/integration/team/ tests/api/test_team_api.py -v
 
-test-event:
+test-event: install-deps
 	$(PYTHON_EXEC) -m pytest tests/unit/event/ tests/integration/event/ tests/api/test_event_api.py -v
 
-test-admin:
+test-admin: install-deps
 	$(PYTHON_EXEC) -m pytest tests/unit/admin/ tests/integration/admin/ tests/api/test_admin_api.py -v
 
-test-user:
+test-user: install-deps
 	$(PYTHON_EXEC) -m pytest tests/unit/user/ tests/integration/user/ tests/api/test_user_api.py -v
 
-test-utils:
+test-utils: install-deps
 	$(PYTHON_EXEC) -m pytest tests/unit/utils/ -v
 
 # Fast feedback
-test-fast:
+test-fast: install-deps
 	$(PYTHON_EXEC) -m pytest tests/unit/ -x  
 
-.PHONY: default test-all test-unit test-integration test-api test-team test-event test-admin test-user test-utils test-fast
+.PHONY: default install-deps test-all test-unit test-integration test-api test-team test-event test-admin test-user test-utils test-fast
