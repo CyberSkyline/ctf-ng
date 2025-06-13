@@ -17,3 +17,11 @@ Thumbs.db
 
 # VSCODE
 .vscode/
+*.code-workspace
+
+# CTFd artifacts
+.ctfd_secret_key
+
+# Pre commit config
+.pre-commit-config.yaml
+
