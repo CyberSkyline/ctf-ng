@@ -1,5 +1,6 @@
 import { map } from 'lodash';
 import { Flex, Table } from '@radix-ui/themes';
+import EditTeamName from './EditTeamName';
 import AddMemberModal from './AddMemberModal';
 import RemovePlayerModal from './RemovePlayerModal';
 import LeaveTeamModal from './LeaveTeamModal';
@@ -18,9 +19,12 @@ export default function TeamManagement() {
 
   return (
     <>
-      <AddMemberModal
-        inviteCode={inviteCode}
-      />
+      <Flex gap="4" direction="column">
+        <EditTeamName />
+        <AddMemberModal
+          inviteCode={inviteCode}
+        />
+      </Flex>
       <Table.Root>
         <Table.Header>
           <Table.Row>
