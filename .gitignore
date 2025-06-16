@@ -18,6 +18,7 @@ Thumbs.db
 # VSCODE
 .vscode/
 *.code-workspace
+.coverage
 
 # CTFd artifacts
 .ctfd_secret_key
