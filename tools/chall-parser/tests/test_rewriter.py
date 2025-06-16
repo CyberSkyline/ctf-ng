@@ -1,6 +1,5 @@
 import pytest
 import yaml
-import logging
 import io
 from yaml import BaseLoader
 from parser.rewriter import Rewriter, Template

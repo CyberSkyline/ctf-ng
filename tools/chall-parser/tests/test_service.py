@@ -1,4 +1,3 @@
-import pytest
 from parser.service import Service
 from parser.rewriter import Template
 
