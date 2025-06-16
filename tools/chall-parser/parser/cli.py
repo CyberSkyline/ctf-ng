@@ -13,8 +13,6 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich.syntax import Syntax
-from rich.text import Text
-from rich import print as rprint
 import typer
 from cattrs import ClassValidationError
 
@@ -259,7 +257,7 @@ def check(
         raise typer.Exit(0)
     except typer.Exit:
         raise
-    except Exception as e:
+    except Exception:
         raise typer.Exit(1)
 
 @app.command()

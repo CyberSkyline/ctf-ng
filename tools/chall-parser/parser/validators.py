@@ -6,11 +6,8 @@ use valid values, particularly for UI elements like icons.
 """
 
 import logging
-from typing import Set
-from attrs import define
 import re
 
-from parser.rewriter import Template
 
 logger = logging.getLogger(__name__)
 

@@ -1,9 +1,13 @@
 import logging
 from typing import Generator
-import typing
-from attrs import define
 from yaml import AliasEvent, BaseLoader, Event, FullLoader, Loader, MappingEndEvent, MappingStartEvent, ScalarEvent, UnsafeLoader
 import yaml
+from faker import Faker
+from faker.providers import address, automotive, bank, barcode, \
+                            color, company, credit_card, currency, \
+                            date_time, doi, emoji, file, geo, internet, \
+                            isbn, job, lorem, misc, passport, person, \
+                            phone_number, profile, python, sbn, ssn, user_agent
 logger = logging.getLogger(__name__)
 
 class Rewriter:
@@ -127,12 +131,6 @@ class Rewriter:
                 break
 
 
-from faker import Faker
-from faker.providers import address, automotive, bank, barcode, \
-                            color, company, credit_card, currency, \
-                            date_time, doi, emoji, file, geo, internet, \
-                            isbn, job, lorem, misc, passport, person, \
-                            phone_number, profile, python, sbn, ssn, user_agent
 fake = Faker()
 
 all_providers = [

@@ -6,9 +6,8 @@ for CTF challenge deployment. It enforces security constraints and validation wh
 supporting the x-challenge extension for CTF-specific metadata.
 """
 
-from typing import Literal, Any, Union, NewType, Dict
+from typing import Literal, NewType, Dict
 from attrs import define, field, validators
-import re
 
 from .service import Service
 from .challenge_info import ChallengeInfo
