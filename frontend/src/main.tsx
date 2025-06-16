@@ -9,6 +9,7 @@ import Routes from './Routes';
 
 import './index.css';
 import { ROUTEPREFIX } from './constants';
+import './grid';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

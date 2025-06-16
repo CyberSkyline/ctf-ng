@@ -18,6 +18,11 @@ import AdminNotifications from 'routes/admin/notifications';
 import AdminUsers from 'routes/admin/users';
 import AdminTickets from 'routes/admin/tickets';
 import AdminLayout from 'routes/admin/layout';
+import AdminContainers from 'routes/admin/containers';
+import AdminTeams from 'routes/admin/teams';
+import AdminEvents from 'routes/admin/events';
+import AdminReports from 'routes/admin/reports';
+import AdminSettings from 'routes/admin/settings';
 
 function Routes() {
   const routes = useRoutes([
@@ -45,17 +50,21 @@ function Routes() {
       children: [
         { path: '*', element: <NotFound /> }, // Catch-all for admin routes
         { index: true, element: <AdminDashboard /> },
-        { path: 'dashboard', element: <AdminDashboard /> },
-        { path: 'notifications', element: <AdminNotifications /> },
+        { path: 'reports', element: <AdminReports /> },
+        { path: 'events', element: <AdminEvents /> },
+        { path: 'containers', element: <AdminContainers /> },
         { path: 'users', element: <AdminUsers /> },
+        { path: 'teams', element: <AdminTeams /> },
+        { path: 'notifications', element: <AdminNotifications /> },
         { path: 'tickets', element: <AdminTickets /> },
+        { path: 'settings', element: <AdminSettings /> },
       ],
     },
 
   ]);
 
   return (
-    <div className="p-4 min-h-[calc(100vh-var(--NavBarHeight)-var(--FooterBarHeight))]">
+    <div className="p-4 min-h-[calc(100vh-var(--NavBarHeight)-var(--FooterBarHeight))] relative">
       {routes}
     </div>
   );
