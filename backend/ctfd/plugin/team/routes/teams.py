@@ -21,11 +21,6 @@ from ..controllers import (
     get_team_captain,
 )
 from ...utils.api_responses import controller_response, error_response, success_response
-from ...utils.decorators import (
-    authed_user_required,
-    json_body_required,
-    handle_integrity_error,
-)
 from ...utils.logger import get_logger
 from ...utils import get_current_user_id
 from ...utils import (
@@ -35,6 +30,16 @@ from ...utils import (
     validate_team_join_by_code,
     validate_captain_assignment,
     validate_event_id_param,
+)
+from ...middleware import (
+    lookup_user,
+    lookup_event,
+    lookup_team,
+    authed_user_required,
+    event_check_valid,
+    event_check_duplicate,
+    handle_integrity_error,
+    json_body_required,
 )
 
 teams_namespace = Namespace("teams", description="team management operations")
@@ -64,25 +69,6 @@ class TeamList(Resource):
         Returns:
             JSON response with team list and event info or error details.
         """
-        event_id = request.args.get("event_id")
-
-        is_valid, errors = validate_event_id_param(event_id)
-        if not is_valid:
-            logger.warning(
-                "Validation failed for team list",
-                extra={
-                    "context": {
-                        "errors": errors,
-                        "user_id": get_current_user_id(),
-                        "endpoint": "teams_list",
-                        "event_id": event_id,
-                    }
-                },
-            )
-            return {"success": False, "errors": errors}, 400
-
-        event_id = int(event_id)
-
         result = list_teams_in_event(event_id)
 
         if result["success"]:

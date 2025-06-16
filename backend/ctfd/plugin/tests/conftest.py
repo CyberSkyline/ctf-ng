@@ -18,6 +18,7 @@ from tests.helpers import (
     gen_user,
 )
 from .helpers import login_as
+from flask import jsonify
 
 
 def create_app():
@@ -44,6 +45,36 @@ def app():
     with _app.app_context():
         destroy_ctfd_original(_app)
 
+
+@pytest.fixture()
+def temp_routes_client():
+    """
+    Adds temporary routes for testing middleware decorators.
+    """
+    app = create_app()
+
+    @app.route("/test/middleware/id", methods=["GET"])
+    @lookup_user('user_id')
+    @lookup_event('event_id')
+    @lookup_team('team_id')
+    def test_middleware_id_lookups():
+        return jsonify({
+            "success": True,
+            "user_id": getattr(g, 'user', None),
+            "event_id": getattr(g, 'event', None),
+            "team_id": getattr(g, 'team', None)
+        })
+
+    @app.route("/test/middleware/name", methods=["GET"])
+    @lookup_event('name')
+    @lookup_team('name')
+    def test_middleware_name_lookups():
+        return jsonify({
+            "success": True,
+            "event_name": getattr(g, 'event', None),
+            "team_name": getattr(g, 'team', None)
+        })
+    
 
 @pytest.fixture(scope="function")
 def db_session(app, request):

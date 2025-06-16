@@ -18,10 +18,12 @@ from ..controllers import (
     reset_event_data,
 )
 from ...utils.api_responses import controller_response, error_response, success_response
-from ...utils.decorators import handle_integrity_error
 from ...utils.logger import get_logger
 from ...utils import get_current_user_id
 from ...utils import validate_admin_reset, validate_admin_event_reset
+from ...middleware import (
+    handle_integrity_error,
+)
 
 admin_namespace = Namespace("admin", description="admin operations")
 logger = get_logger(__name__)
