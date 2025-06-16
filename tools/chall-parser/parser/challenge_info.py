@@ -1,116 +1,110 @@
 from typing import Literal
-from attrs import define
+from attrs import define, field
 
 from parser.rewriter import Template
+from parser.validators import validate_tabler_icon, validate_template_evals
 
 
-# # This is the container block for all of the information that you can specify
-# # for use in challenge development
-# x-challenge:
-# 	# Name of challenge
-# 	name: Text
-# 	# The description presented to players
-# 	description: Text
-# 	# The name of a https://fontawesome.com/icons representative of the challenge
-# 	icon: Text
-# 	# The questions block allows you to specify each question and it's 
-# 	# respective answer
-# 	questions:
-# 		- name: Text
-# 			question: Text
-# 			points: 10
-# 			answer: Regex
-# 			max_attempts: 20
-# 	# The hints block allows you to specify a list of hints that players
-# 	# can open
-# 	hints:
-# 		- hint: 
-# 				type: text
-# 				content: Text
-# 			preview: Text
-# 			deduction: 10
-# 		- hint: 
-# 				type: image
-# 				source: image/path
-# 			preview: Text
-# 			deduction: 10
-# 		- hint: Text
-# 			preview: Text
-# 			deduction: 10
-# 	# Optional string
-# 	summary: Text
-# 	# This block allows you to define templates so you can reuse them elsewhere, 
-# 	# however you can define the templates anywhere that you like as long as you have used 
-# 	# the anchor and alias functionality of yaml. This is simply a convenient centralized 
-# 	# location
-# 	template:
-# 		flag-tmpl: &flag_tmpl "fake.bothify('SKY-????-####', letters=string.ascii_uppercase)"
-# 	# This block is where you define all variables that you are going to utilize
-# 	# and that you want us to randomize. You will need to provide both a default value
-# 	# and a template for generation. 
-# 	variables:
-# 		# You can name the variables whatever you'd like provided that it's a valid
-# 		# yaml key
-# 		variable1:
-# 			# The template functionality is a fragment of python code that can utilize 
-# 			# any of the functions built into the python faker library: 
-# 			# https://faker.readthedocs.io/en/master/index.html
-# 			# Here you can see that we are using the alias functionality to reuse the 
-# 			# template from above
-# 			template: *flag_tmpl
-# 			# The default value that you define here must also have a anchor that you 
-# 			# alias later in the file as we will replace any instance of an alias with the
-# 			# generated value. The anchor name does not need to be the same as the block
-# 			# key
-# 			default: &var1 Some default value
-# 	tags:
-# 		- Category
-# 		- Category
-# 		- Other
-# services:
-# 	service1:
-# 		image: image
-# 		# You will need to use the mapping form of the environment variables rather than 
-# 		# the list form
-# 		environment:
-# 			VARIABLE1: *var1
 @define
 class Question:
-    name: str
-    question: str
-    points: int
-    answer: str
-    max_attempts: int
+    """Represents a single question in the challenge.
+    
+    Each question defines what the player needs to answer and how many points it's worth.
+    """
+    name: str  # Developer facing name for the question (e.g., "flag", "password")
+    question: str  # The actual question text presented to players
+    points: int  # Point value for correctly answering this question (e.g., 10, 100)
+    answer: str  # The correct answer (can be a regex pattern)
+    max_attempts: int  # Maximum number of attempts allowed (e.g., 20)
 
 @define
 class TextHint:
+    """A text-based hint for players."""
     type: Literal['text']
-    content: str
+    content: str  # The actual hint text content
 
-@define
-class ImageHint:
-    type: Literal['image']
-    source: str
+# @define
+# class ImageHint:
+#     type: Literal['image']
+#     source: str
 
 @define
 class Hint:
-    hint: TextHint | ImageHint | str
-    preview: str
-    deduction: int
+    """A hint that players can open to get help solving the challenge.
+    
+    Hints can be either structured (TextHint) or simple strings.
+    Each hint has a preview and costs points when opened.
+    """
+    hint: TextHint | str  # The hint content - can be structured or simple text, may in the future support more complex hint types
+    preview: str  # Short preview text shown before opening the hint
+    deduction: int  # Points deducted when this hint is opened (e.g., 10)
 
 @define
 class Variable:
-    template: Template
-    default: str
+    """Template variable that can be randomized for each challenge instance.
+    
+    Variables use the Faker library for generation and can be referenced
+    throughout the compose file using YAML anchors and aliases.
+    """
+    template: Template = field(validator=validate_template_evals)
+                       # Python code fragment using Faker library functions
+                       # e.g., "fake.bothify('SKY-????-####', letters=string.ascii_uppercase)"
+    default: str  # Default value with YAML anchor for referencing elsewhere
+                 # This anchor can be used in services like: environment: VARIABLE1: *var1
 
 @define
 class ChallengeInfo:
-    name: str
-    description: str
-    questions: list[Question]
-    icon: str | None = None
-    hints: list[Hint] | None = None
-    summary: str | None = None
-    template: dict[str, str] | None = None
-    variables: dict[str, Variable] | None = None
-    tags: list[str] | None = None
+    """Container for all challenge development information.
+    
+    This is the main x-challenge block that defines everything about the CTF challenge.
+    """
+    # Required fields
+    name: str  # Name of the challenge
+    description: str  # The description presented to players
+    questions: list[Question]  # List of questions players must answer
+    
+    # Optional fields
+    icon: str | None = field(
+        default=None, 
+        validator=validate_tabler_icon
+    )  # Tabler icon name (validated against known icons)
+    hints: list[Hint] | None = None  # List of hints players can access
+    summary: str | None = None  # Optional summary text
+    
+    # Template and variable system
+    templates: dict[str, str] | None = None  # Centralized location for reusable templates
+                                           # e.g., flag-tmpl: &flag_tmpl "fake.bothify('CTF{????-####}')"
+    variables: dict[str, Variable] | None = None  # Variables for randomization
+                                                 # You can name variables anything that's a valid YAML key
+    
+    # Categorization
+    tags: list[str] | None = None  # Category tags (e.g., ["web", "easy"], ["crypto", "hard"])
+
+# Usage example in compose file:
+# x-challenge:
+#   name: Web Challenge
+#   description: Find the hidden flag
+#   icon: globe
+#   questions:
+#     - name: flag
+#       question: What is the flag?
+#       points: 100
+#       answer: CTF{.*}
+#       max_attempts: 5
+#   hints:
+#     - hint: Check the environment variables
+#       preview: Look at env vars
+#       deduction: 10
+#   template:
+#     flag-tmpl: &flag_tmpl "fake.bothify('CTF{????-####}')"
+#   variables:
+#     session_id:
+#       template: "fake.uuid4()"
+#       default: &session_var "default-session-id"
+#   tags: ["web", "beginner"]
+# 
+# services:
+#   web:
+#     image: nginx
+#     environment:
+#       SESSION_ID: *session_var  # References the variable default value
