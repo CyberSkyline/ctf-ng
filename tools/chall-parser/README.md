@@ -4,10 +4,6 @@ A Docker Compose parser with CTF challenge extensions that supports templated va
 
 ## Usage
 
-Collecting workspace informationBased on the CLI code, here's a comprehensive usage explanation for the README:
-
-## Usage
-
 The `chall-parser` CLI tool provides commands to validate, inspect, and test CTF challenge Docker Compose files.
 
 ### Installation
