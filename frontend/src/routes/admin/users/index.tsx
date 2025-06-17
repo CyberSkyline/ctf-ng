@@ -7,7 +7,7 @@ import {
 import {
   TbInfoCircle, TbPlus, TbTrash,
 } from 'react-icons/tb';
-import { radixTheme } from '../../../grid';
+import { radixTheme } from '@/grid';
 
 /**
  * User management page for admins.

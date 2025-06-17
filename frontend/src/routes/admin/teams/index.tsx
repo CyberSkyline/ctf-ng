@@ -2,7 +2,7 @@ import { Callout, Flex, Heading } from '@radix-ui/themes';
 import { TbInfoCircle } from 'react-icons/tb';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef } from 'ag-grid-community';
-import { radixTheme } from '../../../grid';
+import { radixTheme } from '@/grid';
 
 /**
  * Team management page for admins.

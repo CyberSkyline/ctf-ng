@@ -2,7 +2,7 @@ import { Callout, Flex, Heading } from '@radix-ui/themes';
 import type { ColDef } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import { TbInfoCircle } from 'react-icons/tb';
-import { radixTheme } from '../../../grid';
+import { radixTheme } from '@/grid';
 
 /**
  * Event management page for admins, will also include challenge YAML uploading.

@@ -6,7 +6,7 @@ import {
 } from 'react-icons/tb';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef } from 'ag-grid-community';
-import { radixTheme } from '../../../grid';
+import { radixTheme } from '@/grid';
 
 /**
  * Admin page to manage challenge networks/containers.
