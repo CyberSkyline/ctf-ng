@@ -7,10 +7,8 @@ from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn
 from cattrs.strategies import configure_union_passthrough, configure_tagged_union
 from typing import get_origin, get_args
 
-from .compose import ComposeFile
-from .service import Template
-from .challenge_info import TextHint
-from .rewriter import Rewriter
+from parser.compose import ComposeFile, Template, TextHint
+from parser.rewriter import Rewriter
 
 logger = logging.getLogger(__name__)
             

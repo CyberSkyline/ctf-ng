@@ -1,4 +1,4 @@
-from parser.challenge_info import ChallengeInfo, Hint, Question, TextHint, Variable
+from parser.compose.challenge_info import ChallengeInfo, Hint, Question, TextHint, Variable
 from parser.rewriter import Template
 
 class TestQuestion:

@@ -71,7 +71,7 @@ def validate_template_evals(instance, attribute, value):
     if value is None:
         return  # Allow None values
     
-    from .rewriter import Template
+    from ..rewriter import Template
     if not isinstance(value, Template):
         raise ValueError(f"Expected Template object, got {type(value)}")
     

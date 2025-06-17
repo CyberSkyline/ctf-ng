@@ -1,11 +1,10 @@
 from typing import cast
 import pytest
 from parser.compose import (
-    ComposeFile, Network, ComposeResourceName, ServicesDict, NetworksDict,
-    validate_compose_name_pattern
+    ComposeFile, Network, ComposeResourceName, ServicesDict, NetworksDict, Service, ChallengeInfo
+    
 )
-from parser.service import Service
-from parser.challenge_info import ChallengeInfo
+from parser.compose.validators import validate_compose_name_pattern
 
 class TestNetwork:
     def test_network_requirements(self):

@@ -1,6 +1,6 @@
 import pytest
 from attrs import define, field
-from parser.validators import validate_tabler_icon, validate_compose_name_pattern, validate_template_evals
+from parser.compose.validators import validate_tabler_icon, validate_compose_name_pattern, validate_template_evals
 from parser.rewriter import Template
 
 @define

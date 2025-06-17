@@ -1,4 +1,4 @@
-from parser.service import Service
+from parser.compose.service import Service
 from parser.rewriter import Template
 
 class TestService:

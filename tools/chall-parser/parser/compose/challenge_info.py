@@ -2,7 +2,7 @@ from typing import Literal
 from attrs import define, field
 
 from parser.rewriter import Template
-from parser.validators import validate_tabler_icon, validate_template_evals
+from parser.compose.validators import validate_tabler_icon, validate_template_evals
 
 
 @define

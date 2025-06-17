@@ -11,7 +11,7 @@ from faker.providers import address, automotive, bank, barcode, \
 logger = logging.getLogger(__name__)
 
 class Rewriter:
-    """Base class for YAML rewriters."""
+    """Rewriter class for processing YAML events, resolving aliases, and rewriting variables."""
     
     def __init__(self, loader: BaseLoader):
         self.loader = loader

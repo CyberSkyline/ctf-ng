@@ -2,10 +2,8 @@
 Docker Compose parser with CTF challenge extensions.
 """
 
-from .yaml_parser import ComposeYamlParser, parse_compose_file, parse_compose_string
-from .compose import ComposeFile
-from .service import Service, Template
-from .challenge_info import ChallengeInfo
+from parser.yaml_parser import ComposeYamlParser, parse_compose_file, parse_compose_string
+from parser.compose import ComposeFile, Service, Template, ChallengeInfo
 
 __all__ = [
     'ComposeYamlParser',

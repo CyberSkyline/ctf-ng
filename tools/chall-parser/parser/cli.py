@@ -16,9 +16,8 @@ from rich.syntax import Syntax
 import typer
 from cattrs import ClassValidationError
 
-from .yaml_parser import parse_compose_file, parse_compose_string
-from .compose import ComposeFile
-from .challenge_info import ChallengeInfo
+from parser.yaml_parser import parse_compose_file, parse_compose_string
+from parser.compose import ComposeFile, ChallengeInfo
 
 app = typer.Typer(
     name="chall-parser",

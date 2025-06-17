@@ -4,11 +4,11 @@ from cattrs import ClassValidationError
 import pytest
 import tempfile
 from pathlib import Path
-from parser.challenge_info import ChallengeInfo
+from parser.compose.challenge_info import ChallengeInfo
 from parser.rewriter import Template
 from parser.yaml_parser import ComposeYamlParser, parse_compose_string, parse_compose_file
 from parser.compose import ComposeFile, ComposeResourceName
-from parser.service import Service
+from parser.compose.service import Service
 
 class TestComposeYamlParser:
     def test_parse_basic_compose(self, caplog):
@@ -266,7 +266,7 @@ services:
         
         # First hint - Text hint
         db_hint = challenge.challenge.hints[0]
-        from parser.challenge_info import TextHint
+        from parser.compose.challenge_info import TextHint
         assert isinstance(db_hint.hint, TextHint)
         assert db_hint.hint.type == "text"
         expected_db_content = (
