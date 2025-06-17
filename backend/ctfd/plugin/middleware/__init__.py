@@ -4,12 +4,8 @@ Middleware package.
 """
 
 from .middleware import (
-    lookup_user,
-    lookup_event,
-    lookup_team,
+    lookup,
     authed_user_required,
-    event_check_valid,
-    event_check_duplicate,
     handle_integrity_error,
     json_body_required,
 )
@@ -17,12 +13,8 @@ from .middleware import (
 
 
 __all__ = [
-    "lookup_user",
-    "lookup_event",
-    "lookup_team",
+    "lookup",
     "authed_user_required",
-    "event_check_valid",
-    "event_check_duplicate",
     "handle_integrity_error",
     "json_body_required",
 ]

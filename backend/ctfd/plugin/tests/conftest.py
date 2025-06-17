@@ -6,10 +6,12 @@ Defines shared Pytest fixtures for application setup.
 import pytest
 from CTFd.models import db as _db
 from CTFd.cache import cache
-
+from datetime import datetime
 from plugin import load as plugin_load
 from plugin.user.models.User import User as NgUser
 from plugin.event.models.Event import Event
+from plugin.team.models.Team import Team
+from plugin.team.models.TeamMember import TeamMember
 from plugin.team.controllers import create_team, join_team
 from tests.helpers import (
     create_ctfd as create_ctfd_original,
@@ -19,6 +21,9 @@ from tests.helpers import (
 )
 from .helpers import login_as
 from flask import jsonify
+from plugin.middleware import (
+    lookup
+)
 
 
 def create_app():
@@ -50,30 +55,85 @@ def app():
 def temp_routes_client():
     """
     Adds temporary routes for testing middleware decorators.
+    Also creates a user, an event, and a team with the user as captain.
     """
-    app = create_app()
+    app = create_ctfd_original(enable_plugins=True, setup=False)
+    with app.app_context():
+        plugin_load(app)
+        user = gen_user(_db, name="tempuser", email="tempuser@example.com")
+        ng_user = NgUser(id=1)
+        _db.session.add(ng_user)
+        _db.session.commit()
+        user2 = gen_user(_db, name="tempuser2", email="user2@example.com")
+        ng_user2 = NgUser(id=2)
+        _db.session.add(ng_user2)
+        _db.session.commit()
+        event = Event(name="Temp Event", description="Temporary event for testing")
+        _db.session.add(event)
+        _db.session.commit()
+        event2 = Event(name="Second Temp Event", description="Another temporary event for testing", locked=True, start_time=datetime(2023, 1, 1), end_time=datetime(2023, 12, 31))
+        _db.session.add(event2)
+        _db.session.commit()
+        team_result = create_team(name="Temp Team", event_id=event.id, creator_id=user.id)
+        team = team_result["team"]
+        team_result2 = create_team(name="Second Team", event_id=event.id, creator_id=user2.id)
+        team2 = team_result2["team"]
 
     @app.route("/test/middleware/id", methods=["GET"])
-    @lookup_user('user_id')
-    @lookup_event('event_id')
-    @lookup_team('team_id')
-    def test_middleware_id_lookups():
+    @lookup(NgUser, ['user_id'])
+    @lookup(Event, ['event_id'])
+    @lookup(Team, ['team_id'])
+    def test_middleware_id_lookups(**kwargs):
         return jsonify({
             "success": True,
-            "user_id": getattr(g, 'user', None),
-            "event_id": getattr(g, 'event', None),
-            "team_id": getattr(g, 'team', None)
+            "user_id": kwargs.get('user').id,
+            "event_name": kwargs.get('event').name,
+            "team_name": kwargs.get('team').name
         })
 
     @app.route("/test/middleware/name", methods=["GET"])
-    @lookup_event('name')
-    @lookup_team('name')
-    def test_middleware_name_lookups():
+    @lookup(Event, ['event_name'])
+    def test_middleware_name_lookups(**kwargs):
         return jsonify({
             "success": True,
-            "event_name": getattr(g, 'event', None),
-            "team_name": getattr(g, 'team', None)
+            "event_name": kwargs.get('event').name
         })
+
+    @app.route("/test/middleware/multi", methods=["GET"])
+    @lookup(TeamMember, ['event_id', 'user_id'])
+    def test_multi_attribute_lookup(**kwargs):
+        return jsonify({
+            "success": True,
+            "team_id": kwargs.get('teammember').id
+        })
+
+    @app.route("/test/middleware/rel", methods=["GET"])
+    @lookup(Team, ['event_id', 'user_id'])
+    def test_relationship_lookup(**kwargs):
+        return jsonify({
+            "success": True,
+            "team_name": kwargs.get('team').name,
+        })
+
+    @app.route("/test/middleware/relgen", methods=["GET"])
+    @lookup(Event, ['locked', 'team_id'])
+    def test_relationship_lookup_with_generic_params(**kwargs):
+        return jsonify({
+            "success": True,
+            "event_name": kwargs.get('event').name,
+            "locked": kwargs.get('event').locked
+        })
+
+    @app.route("/test/middleware/date", methods=["GET"])
+    @lookup(Event, ['start_time', 'end_time'])
+    def test_date_lookup(**kwargs):
+        return jsonify({
+            "success": True,
+            "event_name": kwargs.get('event').name,
+        })
+       
+    app = setup_ctfd(app)
+    return app.test_client()
     
 
 @pytest.fixture(scope="function")
