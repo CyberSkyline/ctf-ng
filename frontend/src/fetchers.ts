@@ -6,10 +6,10 @@ export const apiFetcher: BareFetcher = (resource, init) => fetch(APIPREFIX + res
   .then((res) => res.json())
   .then((data) => {
     // convert api error format defined in api_responses.py to what swr expects
-    // - if data.success is false, throw the errors object that will be present
+    // - if data.success is false, throw the error message(s) listed in data.errors
     // - if data.success is true, return the data object
     if (!data.success) {
-      throw data.errors;
+      throw new Error(Object.values(data.errors).join(', '));
     } else {
       return data.data;
     }
