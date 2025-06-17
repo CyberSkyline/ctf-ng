@@ -5,7 +5,6 @@ import {
 } from '@radix-ui/themes';
 import { Link } from 'react-router';
 import type { accentColors } from '@radix-ui/themes/props';
-import { ROUTEPREFIX } from '../../constants';
 
 export default function EventCard({
   id,
@@ -20,7 +19,7 @@ export default function EventCard({
 }) {
   return (
     <Card asChild>
-      <Link to={`/${ROUTEPREFIX}/events/${id}`}>
+      <Link to={`/events/${id}`}>
         <Flex direction="row" gap="4">
           <Inset side="left" className="w-32 shrink-0">
             <AspectRatio ratio={3 / 4}>
@@ -34,7 +33,7 @@ export default function EventCard({
               <Text size="2" color="gray">{description}</Text>
             </Box>
             <Box>
-              {/* Footer of event card text. Could include date, points, etc. */}
+              <Text size="2" color="gray">Footer</Text>
             </Box>
           </Flex>
         </Flex>

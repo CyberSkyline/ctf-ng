@@ -24,11 +24,11 @@ export default function UpcomingEvents({
           <Callout.Text>
             You are not registered for any upcoming events.
             {' '}
-            <RadixLink asChild><Link to="./events">Register for one</Link></RadixLink>
+            <RadixLink asChild><Link to="/events">Register for an upcoming event</Link></RadixLink>
             {' '}
             or head to the
             {' '}
-            <RadixLink asChild><Link to="./practice">practice area</Link></RadixLink>
+            <RadixLink asChild><Link to="/practice">practice area</Link></RadixLink>
             {' '}
             to hone your skills!
           </Callout.Text>
