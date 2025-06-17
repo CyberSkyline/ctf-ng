@@ -1,6 +1,5 @@
 import {
-  Badge, Box, Flex, Heading, Text,
-  Tooltip,
+  Badge, Box, Flex, Heading, Text, Tooltip,
 } from '@radix-ui/themes';
 import { TbInfoCircle } from 'react-icons/tb';
 
