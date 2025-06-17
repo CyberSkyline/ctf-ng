@@ -39,6 +39,9 @@ test-user:
 test-utils:
 	$(PYTHON_EXEC) -m pytest tests/unit/utils/ -v
 
+test-middleware:
+	$(PYTHON_EXEC) -m pytest tests/api/middleware/ -v
+
 # Fast feedback
 test-fast:
 	$(PYTHON_EXEC) -m pytest tests/unit/ -x  

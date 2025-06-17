@@ -12,7 +12,7 @@ from ... import config
 class Event(db.Model):
     __tablename__ = "ng_events"
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(config.EVENT_NAME_MAX_LENGTH), nullable=False)
+    name = db.Column(db.String(config.EVENT_NAME_MAX_LENGTH), nullable=False, unique=True)
     description = db.Column(db.Text, nullable=True)
     max_team_size = db.Column(db.Integer, default=config.MAX_TEAM_SIZE, nullable=False)
     start_time = db.Column(db.DateTime, nullable=True)
@@ -30,7 +30,7 @@ class Event(db.Model):
         ),
     )
 
-    teams = db.relationship("Team", backref="event", lazy=True)
+    teams = db.relationship("Team", backref="event")
 
     def __repr__(self):
         return f"<Event {self.name}>"
