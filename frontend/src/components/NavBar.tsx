@@ -1,7 +1,6 @@
 import { NavigationMenu } from 'radix-ui';
 import { DropdownMenu } from '@radix-ui/themes';
 import { NavLink } from 'react-router';
-import { ROUTEPREFIX } from '../constants';
 
 export default function NavBar() {
   return (
@@ -9,29 +8,29 @@ export default function NavBar() {
       <NavigationMenu.List className="flex p-1 shadow-md pr-4">
         <div className="flex">
           <NavigationMenu.Item className="p-2">
-            <NavLink to={`/${ROUTEPREFIX}`}>
+            <NavLink to="/">
               Dashboard
             </NavLink>
           </NavigationMenu.Item>
           <NavigationMenu.Item className="p-2">
-            <NavLink to={`/${ROUTEPREFIX}/events`}>
+            <NavLink to="/events">
               Events*
             </NavLink>
           </NavigationMenu.Item>
           <NavigationMenu.Item className="p-2">
-            <NavLink to={`/${ROUTEPREFIX}`}>
+            <NavLink to="/">
               Practice*
             </NavLink>
           </NavigationMenu.Item>
         </div>
         <div className="flex ml-auto">
           <NavigationMenu.Item className="p-2">
-            <NavLink to={`/${ROUTEPREFIX}/support`}>
+            <NavLink to="/support">
               Support
             </NavLink>
           </NavigationMenu.Item>
           <NavigationMenu.Item className="p-2">
-            <NavLink to={`/${ROUTEPREFIX}`}>
+            <NavLink to="/">
               Notifications*
             </NavLink>
           </NavigationMenu.Item>
@@ -47,7 +46,7 @@ export default function NavBar() {
             >
               <DropdownMenu.Item asChild>
                 <NavLink
-                  to={`/${ROUTEPREFIX}/profile`}
+                  to="/profile"
                   className="flex items-center gap-2 px-2 py-1.5 rounded"
                 >
                   Profile
@@ -56,7 +55,7 @@ export default function NavBar() {
 
               <DropdownMenu.Item asChild>
                 <NavLink
-                  to={`/${ROUTEPREFIX}/admin`}
+                  to="/admin"
                   className="flex items-center gap-2 px-2 py-1.5 rounded"
                 >
                   Admin Portal

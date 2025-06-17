@@ -8,10 +8,12 @@ import { SWRConfig } from 'swr';
 import Routes from './Routes';
 
 import './index.css';
+import { ROUTEPREFIX } from './constants';
+import './grid';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={ROUTEPREFIX}>
       <Theme
         appearance="dark"
         panelBackground="solid" // disable blur effect on surfaces for performance
