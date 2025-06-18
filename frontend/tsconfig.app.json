@@ -26,9 +26,6 @@
     "noUncheckedSideEffectImports": true,
     /*Aliases*/
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
       "assets/*": [
         "./src/assets/*"
       ],
@@ -37,6 +34,9 @@
       ],
       "routes/*": [
         "./src/routes/*"
+      ],
+      "@/*": [
+        "./src/*"
       ],
     }
   },

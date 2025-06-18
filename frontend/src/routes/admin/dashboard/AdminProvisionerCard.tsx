@@ -1,4 +1,4 @@
-import Statistic from 'components/admin/Statistic';
+import Statistic from 'components/Statistic';
 import {
   Card, Flex, Heading, Table,
 } from '@radix-ui/themes';

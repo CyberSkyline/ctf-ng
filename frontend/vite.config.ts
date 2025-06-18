@@ -19,10 +19,10 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
       assets: path.resolve(__dirname, './src/assets'),
       components: path.resolve(__dirname, './src/components'),
       routes: path.resolve(__dirname, './src/routes'),
+      '@': path.resolve(__dirname, './src'),
     },
   },
 });
