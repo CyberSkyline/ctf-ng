@@ -1,16 +1,15 @@
 """
-/backend/ctfd/plugin/admin/database/reset_event_data.py
 Contains the business logic for the destructive operation of resetting all data for a single event.
+/backend/ctfd/plugin/admin/controllers/reset_event_data.py
 """
 
 from typing import Any
 
-from CTFd.models import db
 
-from ...utils.logger import get_logger
-from ...event.models.Event import Event
-from ...team.models.Team import Team
-from ...team.models.TeamMember import TeamMember
+from plugin.core.utils.logger import get_logger
+from plugin.event.models.Event import Event
+from plugin.team.models.Team import Team
+from plugin.team.models.TeamMember import TeamMember
 
 logger = get_logger(__name__)
 

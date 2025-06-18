@@ -5,8 +5,8 @@ Retrieves a list of all teams within a specific event.
 
 from typing import Any
 
-from ...event.models.Event import Event
-from ..models.Team import Team
+from plugin.event.models.Event import Event
+from plugin.team.models.Team import Team
 
 
 def list_teams_in_event(event_id: int) -> dict[str, Any]:

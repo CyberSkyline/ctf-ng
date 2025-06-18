@@ -6,11 +6,11 @@ Removes a user from their current team in an event.
 from typing import Any
 from datetime import datetime
 
-from ...utils.logger import get_logger
-from ...event.models.Event import Event
-from ..models.Team import Team
-from ..models.TeamMember import TeamMember
-from ..models.enums import TeamRole
+from plugin.core.utils.logger import get_logger
+from plugin.event.models.Event import Event
+from plugin.team.models.Team import Team
+from plugin.team.models.TeamMember import TeamMember
+from plugin.team.models.enums import TeamRole
 
 logger = get_logger(__name__)
 

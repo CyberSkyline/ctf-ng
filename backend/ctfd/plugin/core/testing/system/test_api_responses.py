@@ -1,13 +1,12 @@
 """
-/backend/ctf-ng/backend/ctfd/plugin/tests/unit/utils/test_api_responses.py
 Unit tests for API response formatting utilities.
+/backend/ctfd/plugin/core/testing/system/test_api_responses.py
 """
-# TODO:
-# Needs to be refactored/fixed to reflect/based on new folder structure
+
 from datetime import datetime
 from unittest.mock import Mock
 
-from plugin.utils.api_responses import (
+from plugin.core.utils.api_responses import (
     success_response,
     error_response,
     controller_response,
@@ -255,7 +254,6 @@ class TestResponseFormatting:
 
     def test_controller_response_routing(self):
         """Test controller response properly routes success vs error."""
-        # Success case
         success_result = {"success": True, "id": 1}
         response, status = controller_response(success_result)
         assert response["success"] is True

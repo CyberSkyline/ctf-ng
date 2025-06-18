@@ -1,9 +1,8 @@
 """
-/backend/ctfd/plugin/tests/helpers.py
 Test helper functions for setting up the plugin's test environment.
+/backend/ctfd/plugin/core/testing/helpers.py
 """
-# TODO:
-# Needs to be refactored/fixed to reflect/based on new folder structure (if needed)
+
 from plugin import load as plugin_load
 
 from tests.helpers import (

@@ -1,10 +1,9 @@
 """
-/backend/ctfd/plugin/tests/unit/team/test_team_models.py
 Unit tests for team model logic without database dependencies.
+/backend/ctfd/plugin/team/tests/test_team_models.py
 """
-# TODO:
-# Needs to be refactored/fixed to reflect/based on new folder structure
-from unittest.mock import Mock, patch
+
+from unittest.mock import patch
 
 from plugin.team.models.Team import Team
 from plugin.team.models.TeamMember import TeamMember
@@ -41,7 +40,7 @@ class TestTeamInviteCodeGeneration:
 
     def test_invite_code_fallback_to_uuid_on_collision(self):
         """Test that code generation falls back to UUID after max retries."""
-        with patch("plugin.team.controllers._generate_invite_code.Team") as mock_team:
+        with patch("plugin.team.controllers._generate_invite_code.Team.is_invite_code_unique") as mock_unique_check:
             collision_count = 0
 
             def mock_collision(*args, **kwargs):
@@ -49,10 +48,10 @@ class TestTeamInviteCodeGeneration:
                 collision_count += 1
                 # Return collision for first 12 attempts (10 + 2), then success
                 if collision_count <= 12:
-                    return Mock()
-                return None
+                    return False  # Code is not unique (collision)
+                return True  # Code is unique (success)
 
-            mock_team.query.filter_by.return_value.first.side_effect = mock_collision
+            mock_unique_check.side_effect = mock_collision
 
             code = _generate_invite_code()
 
@@ -114,24 +113,20 @@ class TestTeamBusinessRules:
 
     def test_team_name_validation_edge_cases(self):
         """Test edge cases for team name validation."""
-        from plugin.utils import validate_team_creation
+        from plugin.core.utils import validate_team_creation
 
-        # Empty name
         valid, errors = validate_team_creation({"name": "", "event_id": 1})
         assert not valid
         assert "name" in errors
 
-        # Whitespace only
         valid, errors = validate_team_creation({"name": "   ", "event_id": 1})
         assert not valid
         assert "name" in errors
 
-        # Unicode characters
         valid, errors = validate_team_creation({"name": "团队名称🚀", "event_id": 1})
         assert valid
         assert len(errors) == 0
 
-        # Very long name
         long_name = "A" * 129
         valid, errors = validate_team_creation({"name": long_name, "event_id": 1})
         assert not valid

@@ -7,9 +7,9 @@ import secrets
 import string
 import uuid
 
-from ... import config
-from ...config import INVITE_CODE_GENERATION_ATTEMPTS
-from ..models.Team import Team
+from plugin import config
+from plugin.config import INVITE_CODE_GENERATION_ATTEMPTS
+from plugin.team.models.Team import Team
 
 
 # Internal use only (_ prefix); generates a unique team invite code.

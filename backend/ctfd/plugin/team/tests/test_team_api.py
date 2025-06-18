@@ -1,16 +1,16 @@
 """
-/backend/ctfd/plugin/tests/api/test_team_api.py
 API Tests for team endpoints
+/backend/ctfd/plugin/team/tests/test_team_api.py
 """
-# TODO:
-# Needs to be refactored/fixed to reflect/based on new folder structure
+
+# We must use the external CTFd test helpers, so we ignore the I001 sort rule.
 import pytest
 import time
 from CTFd.models import db as _db
-from tests.helpers import gen_user
+from tests.helpers import gen_user  # noqa: I001
 from plugin.team.models.TeamMember import TeamMember
 from plugin.team.models.enums import TeamRole
-from plugin.tests.helpers import login_as
+from plugin.core.testing.helpers import login_as
 
 pytestmark = pytest.mark.db
 
@@ -24,7 +24,7 @@ def test_teams_endpoint_requires_authentication(client, event):
 
 def test_teams_endpoint_with_authentication(logged_in_client, event):
     """Check that teams endpoint works for an authenticated user."""
-    response = logged_in_client.get(f"/plugin/api/teams?id={event.id}")
+    response = logged_in_client.get(f"/plugin/api/teams?event_id={event.id}")
     print(response)
     assert response.status_code == 200
     data = response.get_json()
@@ -81,11 +81,11 @@ def test_update_team_endpoint_security(client, team_with_members):
 
     login_as(client, member)
     response = client.patch(f"/plugin/api/teams/{team.id}", json={"name": "Updated by Member"})
-    assert response.status_code in [403, 404]  # Forbidden or not found
+    assert response.status_code in [403, 404]
 
     login_as(client, captain)
     response = client.patch(f"/plugin/api/teams/{team.id}", json={"name": "Updated by Captain"})
-    assert response.status_code in [200, 405]  # Success or method not allowed
+    assert response.status_code in [200, 405]
 
 
 def test_join_team_fails_if_already_in_a_team_in_event(logged_in_client, event, normal_user):

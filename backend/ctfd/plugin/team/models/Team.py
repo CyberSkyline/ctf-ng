@@ -6,8 +6,9 @@ Defines theTeamdatabase model and its properties, including themember_counthybri
 from CTFd.models import db
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import select, func
-from typing import Optional, List, Dict, Any
-from ... import config
+from sqlalchemy.exc import IntegrityError
+from typing import Any
+from plugin import config
 
 
 class Team(db.Model):
@@ -20,7 +21,10 @@ class Team(db.Model):
     event_id = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
     locked = db.Column(db.Boolean, default=False, nullable=False)
 
-    __table_args__ = (db.Index("ix_ng_teams_event_name", "event_id", "name"),)
+    __table_args__ = (
+        db.UniqueConstraint("event_id", "name", name="uq_team_event_name"),
+        db.Index("ix_ng_teams_event_name", "event_id", "name"),
+    )
 
     members = db.relationship("TeamMember", back_populates="team", cascade="all, delete-orphan")
 
@@ -92,10 +96,10 @@ class Team(db.Model):
     @classmethod
     def find_by_id(cls, team_id: int):
         """Find a team by ID.
-        
+
         Args:
             team_id (int): The team ID to find
-            
+
         Returns:
             Team or None: The team instance if found, None otherwise
         """
@@ -104,10 +108,10 @@ class Team(db.Model):
     @classmethod
     def find_by_invite_code(cls, invite_code: str):
         """Find a team by invite code.
-        
+
         Args:
             invite_code (str): The invite code to find
-            
+
         Returns:
             Team or None: The team instance if found, None otherwise
         """
@@ -116,37 +120,37 @@ class Team(db.Model):
     @classmethod
     def find_by_name_and_event(cls, name: str, event_id: int):
         """Find a team by name within a specific event.
-        
+
         Args:
             name (str): The team name to find
             event_id (int): The event ID to search within
-            
+
         Returns:
             Team or None: The team instance if found, None otherwise
         """
         return cls.query.filter_by(name=name, event_id=event_id).first()
 
     @classmethod
-    def find_all_by_event(cls, event_id: int) -> List['Team']:
+    def find_all_by_event(cls, event_id: int) -> list["Team"]:
         """Find all teams in a specific event.
-        
+
         Args:
             event_id (int): The event ID to search within
-            
+
         Returns:
-            List[Team]: List of teams in the event
+            list[Team]: List of teams in the event
         """
         return cls.query.filter_by(event_id=event_id).all()
 
     @classmethod
     def name_exists_in_event_excluding_self(cls, event_id: int, name: str, exclude_team_id: int) -> bool:
         """Check if a team name already exists in an event, excluding a specific team.
-        
+
         Args:
             event_id (int): The event ID to check within
             name (str): The team name to check
             exclude_team_id (int): Team ID to exclude from the check
-            
+
         Returns:
             bool: True if name exists (conflict), False if available
         """
@@ -160,10 +164,10 @@ class Team(db.Model):
     @classmethod
     def is_invite_code_unique(cls, invite_code: str) -> bool:
         """Check if an invite code is unique across all teams.
-        
+
         Args:
             invite_code (str): The invite code to check
-            
+
         Returns:
             bool: True if unique, False if already exists
         """
@@ -173,7 +177,7 @@ class Team(db.Model):
     @classmethod
     def get_total_count(cls) -> int:
         """Get the total count of all teams.
-        
+
         Returns:
             int: Total number of teams
         """
@@ -182,10 +186,10 @@ class Team(db.Model):
     @classmethod
     def count_by_event(cls, event_id: int) -> int:
         """Get the count of teams in a specific event.
-        
+
         Args:
             event_id (int): The event ID to count teams for
-            
+
         Returns:
             int: Number of teams in the event
         """
@@ -194,10 +198,10 @@ class Team(db.Model):
     @classmethod
     def delete_by_event(cls, event_id: int) -> int:
         """Delete all teams in a specific event.
-        
+
         Args:
             event_id (int): The event ID to delete teams from
-            
+
         Returns:
             int: Number of teams deleted
         """
@@ -206,18 +210,74 @@ class Team(db.Model):
         return count
 
     @classmethod
-    def find_empty_teams(cls) -> List[Dict[str, Any]]:
+    def find_empty_teams(cls) -> list[dict[str, Any]]:
         """Find all teams that have no members.
-        
+
         Returns:
-            List[Dict]: List of empty team data with id, name, and event_id
+            list[dict]: List of empty team data with id, name, and event_id
         """
-        # Imported here to use the db session
-        from CTFd.models import db
-        
+
         empty_teams_query = db.session.query(cls.id, cls.name, cls.event_id).filter(cls.member_count == 0).all()
-        
+
         return [
-            {"id": team_id, "name": team_name, "event_id": event_id} 
+            {"id": team_id, "name": team_name, "event_id": event_id}
             for team_id, team_name, event_id in empty_teams_query
         ]
+
+    @classmethod
+    def create_team_with_captain(
+        cls,
+        name: str,
+        event_id: int,
+        creator_id: int,
+        invite_code: str,
+        ranked: bool = False,
+    ) -> tuple[bool, dict]:
+        """
+        Creates a team and assigns creator as captain in a single transaction.
+
+        Returns:
+            tuple: (success: bool, result: dict)
+        """
+        try:
+            team = cls.create_team(
+                name=name,
+                event_id=event_id,
+                ranked=ranked,
+                invite_code=invite_code,
+                flush_only=True,
+            )
+
+            from plugin.user.models.User import User
+
+            ng_user = User.find_by_id(creator_id)
+            if not ng_user:
+                ng_user = User.create_user(creator_id, commit=False)
+
+            from plugin.team.models.TeamMember import TeamMember
+            from plugin.team.models.enums import TeamRole
+            from datetime import datetime
+
+            TeamMember.create_team_member(
+                user_id=creator_id,
+                team_id=team.id,
+                event_id=event_id,
+                role=TeamRole.CAPTAIN,
+                joined_at=datetime.utcnow(),
+                commit=False,
+            )
+
+            db.session.commit()
+
+            return True, {"team": team, "message": "Team created successfully"}
+
+        except IntegrityError as e:
+            db.session.rollback()
+            if "uq_team_event_name" in str(e) or "UNIQUE constraint failed" in str(e):
+                return False, {"error": f"Team '{name}' already exists in this event"}
+            else:
+                raise e
+
+        except Exception as e:
+            db.session.rollback()
+            raise e

@@ -1,10 +1,13 @@
 """
-/plugin/tests/unit/utils/test_validators.py
 Tests for validation utility functions
+/backend/ctfd/plugin/core/testing/system/test_validators.py
 """
-# TODO:
-# Needs to be refactored/fixed to reflect/based on new folder structure
-from plugin.utils import validate_team_creation, validate_event_creation, BaseValidator
+
+from plugin.core.utils import (
+    validate_team_creation,
+    validate_event_creation,
+    BaseValidator,
+)
 
 
 class TestTeamValidation:

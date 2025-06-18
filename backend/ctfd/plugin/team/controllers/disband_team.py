@@ -5,10 +5,9 @@ Disbands a team and removes all its members.
 
 from typing import Any
 
-from ...utils.logger import get_logger
-from ..models.Team import Team
-from ..models.TeamMember import TeamMember
-from ..models.enums import TeamRole
+from plugin.core.utils.logger import get_logger
+from plugin.team.models.Team import Team
+from plugin.team.models.TeamMember import TeamMember
 
 logger = get_logger(__name__)
 

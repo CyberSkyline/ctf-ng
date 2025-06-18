@@ -1,17 +1,17 @@
 """
-/backend/ctfd/plugin/admin/database/reset_all_plugin_data.py
 Contains the business logic for the destructive operation of resetting all plugin-related data.
+/backend/ctfd/plugin/admin/controllers/reset_all_plugin_data.py
 """
 
 from typing import Any
 
 from CTFd.models import db
 
-from ...utils.logger import get_logger
-from ...event.models.Event import Event
-from ...team.models.Team import Team
-from ...team.models.TeamMember import TeamMember
-from ...user.models.User import User
+from plugin.core.utils.logger import get_logger
+from plugin.event.models.Event import Event
+from plugin.team.models.Team import Team
+from plugin.team.models.TeamMember import TeamMember
+from plugin.user.models.User import User
 from .get_data_counts import get_data_counts
 
 logger = get_logger(__name__)

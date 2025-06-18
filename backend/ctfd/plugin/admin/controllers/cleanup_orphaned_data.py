@@ -1,15 +1,14 @@
 """
-/backend/ctfd/plugin/admin/database/cleanup_orphaned_data.py
 Contains the business logic for an admin tool that removes user records with no team associations.
+/backend/ctfd/plugin/admin/controllers/cleanup_orphaned_data.py
 """
 
 from typing import Any
 
 from CTFd.models import db
 
-from ...utils.logger import get_logger
-from ...team.models.TeamMember import TeamMember
-from ...user.models.User import User
+from plugin.core.utils.logger import get_logger
+from plugin.user.models.User import User
 
 logger = get_logger(__name__)
 

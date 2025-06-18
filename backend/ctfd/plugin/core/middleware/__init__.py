@@ -1,6 +1,6 @@
 """
-/backend/ctfd/plugin/middleware/__init__.py
-Middleware package.
+Middleware package for authentication, authorization, and request processing.
+/backend/ctfd/plugin/core/middleware/__init__.py
 """
 
 from .middleware import (
@@ -9,7 +9,6 @@ from .middleware import (
     handle_integrity_error,
     json_body_required,
 )
-
 
 
 __all__ = [

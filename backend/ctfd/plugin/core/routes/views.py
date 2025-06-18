@@ -1,8 +1,8 @@
 """
-All user-accessed URLs use the same view
+All user-accessed URLs use the same view for the frontend application.
+/backend/ctfd/plugin/core/routes/views.py
 """
-# TODO: 
-# Needs fixing if needed to reflect new folder reorg
+
 from flask import Blueprint, render_template
 from typing import Any
 

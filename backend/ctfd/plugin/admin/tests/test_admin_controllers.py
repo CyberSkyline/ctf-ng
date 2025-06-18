@@ -1,9 +1,8 @@
 """
-/plugin/tests/integration/admin/test_admin_controllers.py
 Tests admin controller business logic
+/backend/ctfd/plugin/admin/tests/test_admin_controllers.py
 """
-# TODO:
-# Needs to be refactored/fixed to reflect/based on new folder structure
+
 import time
 import pytest
 from tests.helpers import gen_user as gen_user_original

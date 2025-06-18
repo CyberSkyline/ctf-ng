@@ -8,8 +8,8 @@ from flask_restx import Namespace, Resource
 from CTFd.utils.decorators import admins_only
 from datetime import datetime
 
-from ... import config
-from ..controllers import (
+from plugin import config
+from plugin.admin.controllers import (
     cleanup_orphaned_data,
     cleanup_headless_teams,
     get_data_counts,
@@ -17,11 +17,15 @@ from ..controllers import (
     reset_all_plugin_data,
     reset_event_data,
 )
-from ...utils.api_responses import controller_response, error_response, success_response
-from ...utils.logger import get_logger
-from ...utils import get_current_user_id
-from ...utils import validate_admin_reset, validate_admin_event_reset
-from ...middleware import (
+from plugin.core.utils.api_responses import (
+    controller_response,
+    error_response,
+    success_response,
+)
+from plugin.core.utils.logger import get_logger
+from plugin.core.utils import get_current_user_id
+from plugin.core.utils import validate_admin_reset, validate_admin_event_reset
+from plugin.core.middleware import (
     handle_integrity_error,
 )
 

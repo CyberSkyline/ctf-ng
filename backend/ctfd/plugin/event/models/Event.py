@@ -6,8 +6,8 @@ Defines the Event database model, its columns, and relationships to other models
 from CTFd.models import db
 from sqlalchemy import CheckConstraint, func
 from sqlalchemy.exc import IntegrityError
-from typing import Optional, List, Dict, Any
-from ... import config
+from typing import Any
+from plugin import config
 
 
 class Event(db.Model):
@@ -31,7 +31,7 @@ class Event(db.Model):
         ),
     )
 
-    teams = db.relationship("Team", backref="event")
+    teams = db.relationship("Team", backref="event", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Event {self.name}>"
@@ -101,10 +101,10 @@ class Event(db.Model):
     @classmethod
     def find_by_id(cls, event_id: int):
         """Find an event by ID.
-        
+
         Args:
             event_id (int): The event ID to find
-            
+
         Returns:
             Event or None: The event instance if found, None otherwise
         """
@@ -113,25 +113,25 @@ class Event(db.Model):
     @classmethod
     def find_by_name(cls, name: str):
         """Find an event by name.
-        
+
         Args:
             name (str): The event name to find
-            
+
         Returns:
             Event or None: The event instance if found, None otherwise
         """
         return cls.query.filter_by(name=name).first()
 
     @classmethod
-    def get_events_with_stats(cls) -> List[Dict[str, Any]]:
+    def get_events_with_stats(cls) -> list[dict[str, Any]]:
         """Gets all events with their team and member stats.
 
         Returns:
-            List[Dict]: List of events with stats data.
+            list[dict]: List of events with stats data.
         """
         # Lazy imports to prevent circular dependencies
-        from ...team.models.Team import Team
-        from ...team.models.TeamMember import TeamMember
+        from plugin.team.models.Team import Team
+        from plugin.team.models.TeamMember import TeamMember
 
         event_stats = (
             db.session.query(
@@ -180,15 +180,15 @@ class Event(db.Model):
             ) in event_stats
         ]
 
-    def get_event_details_with_teams(self) -> Dict[str, Any]:
+    def get_event_details_with_teams(self) -> dict[str, Any]:
         """Gets detailed info about this event including all its teams.
 
         Returns:
-            Dict: Event details and teams data.
+            dict: Event details and teams data.
         """
         # Lazy imports to prevent circular dependencies
-        from ...team.models.Team import Team
-        from ...team.models.TeamMember import TeamMember
+        from plugin.team.models.Team import Team
+        from plugin.team.models.TeamMember import TeamMember
 
         # Single join query to get teams with member counts, avoids N+1 queries
         teams_with_counts = (
@@ -234,30 +234,30 @@ class Event(db.Model):
 
     def get_largest_team_size(self) -> int:
         """Get the size of the largest team in this event.
-        
+
         Returns:
             int: Size of the largest team, or 0 if no teams exist.
         """
         # Lazy import to prevent circular dependencies
-        from ...team.models.Team import Team
+        from plugin.team.models.Team import Team
 
         return db.session.query(func.max(Team.member_count)).filter(Team.event_id == self.id).scalar() or 0
 
     def get_team_count(self) -> int:
         """Get the number of teams in this event.
-        
+
         Returns:
             int: Number of teams in this event.
         """
         # Lazy import to prevent circular dependencies
-        from ...team.models.Team import Team
+        from plugin.team.models.Team import Team
 
         return Team.query.filter_by(event_id=self.id).count()
 
     @classmethod
     def get_total_count(cls) -> int:
         """Get the total count of all events.
-        
+
         Returns:
             int: Total number of events
         """

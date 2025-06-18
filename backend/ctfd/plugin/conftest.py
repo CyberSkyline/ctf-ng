@@ -1,9 +1,14 @@
 """
-/backend/ctfd/plugin/tests/conftest.py
 Defines shared Pytest fixtures for application setup.
+/backend/ctfd/plugin/conftest.py
+
+Conftest.py is now located in plugin/ instead of plugin/core/testing/
+because to make its fixtures, like the database session and app client,
+globally available to all tests in every domain subdirectory. Placing it here
+ensures that tests in /team/tests, user/tests, etc., can all access the same
+shared testing setup, which is a pytest best practice for project wide fixtures.
 """
-# TODO:
-# Needs to be refactored/fixed to reflect/based on new folder structure
+
 import pytest
 from CTFd.models import db as _db
 from CTFd.cache import cache
@@ -11,20 +16,15 @@ from datetime import datetime
 from plugin import load as plugin_load
 from plugin.user.models.User import User as NgUser
 from plugin.event.models.Event import Event
-from plugin.team.models.Team import Team
-from plugin.team.models.TeamMember import TeamMember
-from plugin.team.controllers import create_team, join_team
+from plugin.team.controllers.create_team import create_team
+from plugin.team.controllers.join_team import join_team
 from tests.helpers import (
     create_ctfd as create_ctfd_original,
     destroy_ctfd as destroy_ctfd_original,
     setup_ctfd,
     gen_user,
 )
-from .helpers import login_as
-from flask import jsonify
-from plugin.middleware import (
-    lookup
-)
+from plugin.core.testing.helpers import login_as
 
 
 def create_app():
@@ -52,90 +52,81 @@ def app():
         destroy_ctfd_original(_app)
 
 
-@pytest.fixture()
-def temp_routes_client():
+@pytest.fixture(scope="function")
+def middleware_client():
     """
-    Adds temporary routes for testing middleware decorators.
-    Also creates a user, an event, and a team with the user as captain.
+    Creates an isolated, authenticated Flask app for testing middleware.
+    It uses an in-memory database and cleans up after itself.
+    Only used by tests marked with @pytest.mark.middleware.
     """
+    from plugin.core.testing.system.middleware_test_routes import middleware_test_routes
+
     app = create_ctfd_original(enable_plugins=True, setup=False)
+
+    # Override the database configuration to use in memory sqlite for isolation
+    app.config.update(
+        {
+            "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+            "TESTING": True,
+            "SECRET_KEY": "test-secret-key-for-sessions",
+            "WTF_CSRF_ENABLED": False,
+            "SERVER_NAME": None,
+        }
+    )
+
     with app.app_context():
+        # Load our plugin isolated
         plugin_load(app)
-        user = gen_user(_db, name="tempuser", email="tempuser@example.com")
-        ng_user = NgUser(id=1)
+
+        # Register ONLY our temporary test routes
+        app.register_blueprint(middleware_test_routes)
+
+        # Create the tables but in the sqlite db
+        _db.create_all()
+
+        # Minimal ctfd config
+        from CTFd.models import Configs
+
+        setup_config = Configs(key="setup", value="true")
+        _db.session.add(setup_config)
+        _db.session.commit()
+
+        # Isolated context
+        user_to_login = gen_user(_db, name="tempuser", email="tempuser@example.com")
+        ng_user = NgUser(id=user_to_login.id)
         _db.session.add(ng_user)
         _db.session.commit()
+
         user2 = gen_user(_db, name="tempuser2", email="user2@example.com")
-        ng_user2 = NgUser(id=2)
+        ng_user2 = NgUser(id=user2.id)
         _db.session.add(ng_user2)
         _db.session.commit()
+
         event = Event(name="Temp Event", description="Temporary event for testing")
         _db.session.add(event)
         _db.session.commit()
-        event2 = Event(name="Second Temp Event", description="Another temporary event for testing", locked=True, start_time=datetime(2023, 1, 1), end_time=datetime(2023, 12, 31))
+
+        event2 = Event(
+            name="Second Temp Event",
+            description="Another temporary event for testing",
+            locked=True,
+            start_time=datetime(2023, 1, 1),
+            end_time=datetime(2023, 12, 31),
+        )
         _db.session.add(event2)
         _db.session.commit()
-        team_result = create_team(name="Temp Team", event_id=event.id, creator_id=user.id)
-        team = team_result["team"]
-        team_result2 = create_team(name="Second Team", event_id=event.id, creator_id=user2.id)
-        team2 = team_result2["team"]
 
-    @app.route("/test/middleware/id", methods=["GET"])
-    @lookup(NgUser, ['user_id'])
-    @lookup(Event, ['event_id'])
-    @lookup(Team, ['team_id'])
-    def test_middleware_id_lookups(**kwargs):
-        return jsonify({
-            "success": True,
-            "user_id": kwargs.get('user').id,
-            "event_name": kwargs.get('event').name,
-            "team_name": kwargs.get('team').name
-        })
+        create_team(name="Temp Team", event_id=event.id, creator_id=user_to_login.id)
+        create_team(name="Second Team", event_id=event.id, creator_id=user2.id)
 
-    @app.route("/test/middleware/name", methods=["GET"])
-    @lookup(Event, ['event_name'])
-    def test_middleware_name_lookups(**kwargs):
-        return jsonify({
-            "success": True,
-            "event_name": kwargs.get('event').name
-        })
+        client = app.test_client()
+        login_as(client, user_to_login)
 
-    @app.route("/test/middleware/multi", methods=["GET"])
-    @lookup(TeamMember, ['event_id', 'user_id'])
-    def test_multi_attribute_lookup(**kwargs):
-        return jsonify({
-            "success": True,
-            "team_id": kwargs.get('teammember').id
-        })
+        # Yield the authenticated client to the test
+        yield client
 
-    @app.route("/test/middleware/rel", methods=["GET"])
-    @lookup(Team, ['event_id', 'user_id'])
-    def test_relationship_lookup(**kwargs):
-        return jsonify({
-            "success": True,
-            "team_name": kwargs.get('team').name,
-        })
+    # Teardown happens automatically after yield
 
-    @app.route("/test/middleware/relgen", methods=["GET"])
-    @lookup(Event, ['locked', 'team_id'])
-    def test_relationship_lookup_with_generic_params(**kwargs):
-        return jsonify({
-            "success": True,
-            "event_name": kwargs.get('event').name,
-            "locked": kwargs.get('event').locked
-        })
-
-    @app.route("/test/middleware/date", methods=["GET"])
-    @lookup(Event, ['start_time', 'end_time'])
-    def test_date_lookup(**kwargs):
-        return jsonify({
-            "success": True,
-            "event_name": kwargs.get('event').name,
-        })
-       
-    app = setup_ctfd(app)
-    return app.test_client()
-    
 
 @pytest.fixture(scope="function")
 def db_session(app, request):

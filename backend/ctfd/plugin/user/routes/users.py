@@ -7,16 +7,16 @@ from flask import g
 from flask_restx import Namespace, Resource
 from CTFd.utils.decorators import authed_only, admins_only
 
-from ..controllers import (
+from plugin.user.controllers import (
     get_user_teams,
     get_user_teams_in_event,
     can_join_team_in_event,
     get_user_stats,
 )
-from ...utils.api_responses import controller_response
-from ...utils.logger import get_logger
-from ...utils import get_current_user_id
-from ...middleware import authed_user_required, handle_integrity_error
+from plugin.core.utils.api_responses import controller_response
+from plugin.core.utils.logger import get_logger
+from plugin.core.utils import get_current_user_id
+from plugin.core.middleware import authed_user_required, handle_integrity_error
 
 users_namespace = Namespace("users", description="user team operations")
 logger = get_logger(__name__)

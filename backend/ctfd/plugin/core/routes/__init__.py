@@ -1,17 +1,16 @@
 """
-/backend/ctfd/plugin/routes/__init__.py
 Main API blueprint and namespace configuration for the plugin.
+/backend/ctfd/plugin/core/routes/__init__.py
 """
-# TODO: 
-# Needs fixing if needed to reflect new folder reorg
+
 from flask import Blueprint
 from flask_restx import Api
 from typing import Any
 
-from ..team.routes.teams import teams_namespace
-from ..event.routes.events import events_namespace
-from ..user.routes.users import users_namespace
-from ..admin.routes.admin import admin_namespace
+from plugin.team.routes.teams import teams_namespace
+from plugin.event.routes.events import events_namespace
+from plugin.user.routes.users import users_namespace
+from plugin.admin.routes.admin import admin_namespace
 
 api_blueprint = Blueprint("plugin_api", __name__)
 

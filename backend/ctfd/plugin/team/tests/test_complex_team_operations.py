@@ -1,12 +1,12 @@
 """
-/backend/ctfd/plugin/tests/integration/team/test_complex_team_operations.py
 Complex team operation workflows and edge cases.
+/backend/ctfd/plugin/team/tests/test_complex_team_operations.py
 """
-# TODO:
-# Needs to be refactored/fixed to reflect/based on new folder structure
+
+# We must use the external CTFd test helpers, so we ignore the I001 sort rule.
 import time
 import pytest
-from tests.helpers import gen_user as gen_user_original
+from tests.helpers import gen_user as gen_user_original  # noqa: I001
 from plugin.team.controllers.create_team import create_team
 from plugin.team.controllers.join_team import join_team
 from plugin.team.controllers.leave_team import leave_team

@@ -1,9 +1,11 @@
 """
-/backend/ctfd/plugin/tests/unit/admin/test_admin_logic.py
 Unit tests for admin domain logic without database dependencies.
+/backend/ctfd/plugin/admin/tests/test_admin_logic.py
 """
-# TODO:
-# Needs to be refactored/fixed to reflect/based on new folder structure
+
+from datetime import datetime, timedelta
+from plugin import config
+from plugin.core.utils import validate_admin_reset, validate_admin_event_reset
 from plugin.team.models.enums import TeamRole
 
 
@@ -120,7 +122,6 @@ class TestCleanupAlgorithms:
 
     def test_oldest_member_promotion_logic(self):
         """Test logic for promoting oldest member to captain."""
-        from datetime import datetime, timedelta
 
         base_time = datetime.utcnow()
         members = [
@@ -170,8 +171,6 @@ class TestAdminValidation:
 
     def test_admin_reset_confirmation_required(self):
         """Test that admin reset requires specific confirmation."""
-        from plugin.utils import validate_admin_reset
-        from plugin import config
 
         valid, errors = validate_admin_reset({})
         assert not valid
@@ -187,8 +186,6 @@ class TestAdminValidation:
 
     def test_admin_event_reset_confirmation_required(self):
         """Test that event reset requires specific confirmation."""
-        from plugin.utils import validate_admin_event_reset
-        from plugin import config
 
         valid, errors = validate_admin_event_reset({})
         assert not valid

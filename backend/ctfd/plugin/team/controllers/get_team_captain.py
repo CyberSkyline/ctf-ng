@@ -6,8 +6,7 @@ Retrieves information about the current captain of a team.
 from typing import Any
 
 from CTFd.models import Users
-from ..models.TeamMember import TeamMember
-from ..models.enums import TeamRole
+from plugin.team.models.TeamMember import TeamMember
 
 
 def get_team_captain(team_id: int) -> dict[str, Any]:

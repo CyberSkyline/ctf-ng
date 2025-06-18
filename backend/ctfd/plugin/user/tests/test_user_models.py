@@ -1,9 +1,8 @@
 """
-/backend/ctfd/plugin/tests/unit/user/test_user_models.py
 Unit tests for user model logic without database dependencies.
+/backend/ctfd/plugin/user/tests/test_user_models.py
 """
-# TODO:
-# Needs to be refactored/fixed to reflect/based on new folder structure
+
 from plugin.user.models.User import User
 from plugin.team.models.enums import TeamRole
 
@@ -19,7 +18,6 @@ class TestUserModelLogic:
         repr_str = repr(user)
         assert "NgUser" in repr_str
         assert "id=42" in repr_str
-
 
 
 class TestUserStatistics:

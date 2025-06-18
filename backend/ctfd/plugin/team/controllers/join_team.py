@@ -6,12 +6,12 @@ Allows a user to join a team using an invite code.
 from datetime import datetime
 from typing import Any
 
-from ...utils.logger import get_logger
-from ...event.models.Event import Event
-from ...user.models.User import User
-from ..models.Team import Team
-from ..models.TeamMember import TeamMember
-from ..models.enums import TeamRole
+from plugin.core.utils.logger import get_logger
+from plugin.event.models.Event import Event
+from plugin.user.models.User import User
+from plugin.team.models.Team import Team
+from plugin.team.models.TeamMember import TeamMember
+from plugin.team.models.enums import TeamRole
 
 logger = get_logger(__name__)
 
@@ -62,7 +62,6 @@ def join_team(user_id: int, invite_code: str) -> dict[str, Any]:
                 "team_name": team.name,
                 "event_id": team.event_id,
                 "role": role,
-                "invite_code": invite_code,
             }
         },
     )
@@ -93,7 +92,6 @@ def _validate_team_exists(invite_code, user_id):
             "Team join failed - invalid invite code",
             extra={
                 "context": {
-                    "invite_code": invite_code,
                     "user_id": user_id,
                 }
             },
@@ -127,7 +125,6 @@ def _validate_team_join_eligibility(team, event, user_id, invite_code):
                     "event_id": team.event_id,
                     "event_name": event.name,
                     "user_id": user_id,
-                    "invite_code": invite_code,
                 }
             },
         )
@@ -146,7 +143,6 @@ def _validate_team_join_eligibility(team, event, user_id, invite_code):
                     "team_name": team.name,
                     "event_id": team.event_id,
                     "user_id": user_id,
-                    "invite_code": invite_code,
                 }
             },
         )
@@ -167,7 +163,6 @@ def _validate_team_join_eligibility(team, event, user_id, invite_code):
                     "user_id": user_id,
                     "member_count": team.member_count,
                     "max_team_size": event.max_team_size,
-                    "invite_code": invite_code,
                 }
             },
         )
@@ -209,7 +204,6 @@ def _validate_user_membership(user_id, event_id, team, invite_code):
                     "existing_team_name": existing_team.name if existing_team else "Unknown",
                     "requested_team_id": team.id,
                     "requested_team_name": team.name,
-                    "invite_code": invite_code,
                 }
             },
         )

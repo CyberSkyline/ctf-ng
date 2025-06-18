@@ -1,9 +1,8 @@
 """
-/backend/ctfd/plugin/utils/__init__.py
 Utility functions and decorators for common plugin functionality.
+/backend/ctfd/plugin/core/utils/__init__.py
 """
-# TODO: 
-# Needs fixing if needed to reflect new folder reorg
+
 from flask import g
 from .logger import get_logger, logger
 from .validation_framework import ValidationError, BaseValidator

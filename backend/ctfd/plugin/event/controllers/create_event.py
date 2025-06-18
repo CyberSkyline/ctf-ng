@@ -7,7 +7,7 @@ from typing import Any
 from datetime import datetime
 
 
-from ...utils.logger import get_logger
+from plugin.core.utils.logger import get_logger
 from ..models.Event import Event
 
 logger = get_logger(__name__)

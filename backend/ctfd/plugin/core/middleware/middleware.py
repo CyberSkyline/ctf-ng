@@ -1,25 +1,19 @@
+"""
+Middleware decorators for authentication, authorization, lookup, and request validation.
+/backend/ctfd/plugin/core/middleware/middleware.py
+"""
+
 from functools import wraps
-from flask import request, abort,g
-from sqlalchemy import and_, inspect
+from flask import request, g
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.types import Boolean, DateTime
-from sqlalchemy.orm.attributes import InstrumentedAttribute
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from CTFd.utils.user import get_current_user
 from CTFd.models import db
-from datetime import datetime
-from dateutil.parser import parse as parse_date
-from ...user.models.User import User
-from ...event.models.Event import Event
-from ...team.models.Team import Team
 from ..utils.api_responses import error_response
 from ..utils.logger import get_logger
 from .utils import (
     params_check_valid,
     get_param_values,
     filter_model_by_fields,
-    condition_add,
-    condition_add_rel,
 )
 
 
@@ -30,6 +24,7 @@ For all lookup decorators, generic/common parameters are expected to be prefixed
 For example, 'user_id', 'event_name', 'team_id'.
 This allows the decorator to handle both specific and generic parameter names.
 """
+
 
 def lookup(model, params: list[str], attach_as: str = None):
     """
@@ -45,6 +40,7 @@ def lookup(model, params: list[str], attach_as: str = None):
 
     The retrieved instance is attached to the `kwargs` as `attach_as`.
     """
+
     def decorator(f):
         @wraps(f)
         def wrapped(*args, **kwargs):
@@ -53,21 +49,30 @@ def lookup(model, params: list[str], attach_as: str = None):
                     f"Invalid parameters {params} for model {model.__name__}.",
                     "invalid_parameter",
                     400,
-            )
-            values = get_param_values(params, request)
-            if isinstance(values, tuple):
-                return values
-            results = filter_model_by_fields(model, dict(zip(params, values)))
-            if isinstance(results, tuple):
-                return results
+                )
+
+            values_result = get_param_values(params, request)
+            if not values_result.success:
+                return values_result.error_response
+
+            values = values_result.data
+
+            filter_result = filter_model_by_fields(model, dict(zip(params, values)))
+            if not filter_result.success:
+                return filter_result.error_response
+
             attach_name = attach_as or model.__name__.lower()
-            kwargs[attach_name] = results
+            kwargs[attach_name] = filter_result.data
             return f(*args, **kwargs)
+
         return wrapped
+
     return decorator
+
 
 def authed_user_required(f):
     """Decorator that ensures user is authenticated and attaches user to g.user"""
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         current_user = get_current_user()
@@ -75,8 +80,8 @@ def authed_user_required(f):
             return error_response("User not found in session", "auth", 401)
         g.user = current_user
         return f(*args, **kwargs)
+
     return decorated_function
-                              
 
 
 def json_body_required(f):
@@ -123,4 +128,3 @@ def handle_integrity_error(f):
             )
 
     return decorated_function
-

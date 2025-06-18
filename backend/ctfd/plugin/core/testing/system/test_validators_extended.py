@@ -1,15 +1,14 @@
 """
-/backend/ctfd/plugin/tests/unit/utils/test_validators_extended.py
 Extended unit tests for validators covering edge cases.
+/backend/ctfd/plugin/core/testing/system/test_validators_extended.py
 """
 
 from datetime import datetime, timedelta
-from plugin.utils import (
+from plugin.core.utils import (
     BaseValidator,
 )
 
-# TODO:
-# Needs to be refactored/fixed to reflect/based on new folder structure
+
 class TestDatetimeValidationEdgeCases:
     """Test datetime validation edge cases."""
 

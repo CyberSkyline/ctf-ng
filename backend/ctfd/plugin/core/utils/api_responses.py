@@ -1,9 +1,8 @@
 """
-/plugin/utils/api_responses.py
 Utilities for creating and formatting standardized JSON API responses.
+/backend/ctfd/plugin/core/utils/api_responses.py
 """
-# TODO: 
-# Needs fixing if needed to reflect new folder reorg
+
 from typing import Any
 
 

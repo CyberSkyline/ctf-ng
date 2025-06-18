@@ -7,11 +7,11 @@ from CTFd.models import db
 from typing import Any
 from datetime import datetime
 
-from ...event.models.Event import Event
-from ..models.Team import Team
-from ..models.TeamMember import TeamMember
-from ..models.enums import TeamRole
-from ...utils.logger import get_logger
+from plugin.event.models.Event import Event
+from plugin.team.models.Team import Team
+from plugin.team.models.TeamMember import TeamMember
+from plugin.team.models.enums import TeamRole
+from plugin.core.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -69,9 +69,14 @@ def remove_member(team_id: int, member_to_remove_id: int, actor_id: int, is_admi
     if team_member_to_remove.role == TeamRole.CAPTAIN:
         return _handle_captain_removal(team, team_member_to_remove, actor_id, is_admin)
 
-    team_member_to_remove.remove_team_member(commit=False)
-    team.update_invite_code(commit=True)
-    return {"success": True, "message": "Team member removed successfully."}
+    try:
+        team_member_to_remove.remove_team_member(commit=False)
+        team.update_invite_code(commit=False)
+        db.session.commit()
+        return {"success": True, "message": "Team member removed successfully."}
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 
 def _handle_captain_removal(team: Team, captain_to_remove: TeamMember, actor_id: int, is_admin: bool):
@@ -85,19 +90,24 @@ def _handle_captain_removal(team: Team, captain_to_remove: TeamMember, actor_id:
         return {"success": True, "message": "Captain removed. The team is now empty."}
 
     if is_admin:
-        new_captain = remaining_members[0]
-        new_captain.update_role(TeamRole.CAPTAIN, commit=False)
-        captain_to_remove.remove_team_member(commit=False)
-        db.session.commit()
+        try:
+            new_captain = remaining_members[0]
+            new_captain.update_role(TeamRole.CAPTAIN, commit=False)
+            captain_to_remove.remove_team_member(commit=False)
+            team.update_invite_code(commit=False)
+            db.session.commit()
 
-        logger.info(
-            f"Admin removed captain {captain_to_remove.user_id} from team {team.id}, auto-promoted {new_captain.user_id}."
-        )
-        return {
-            "success": True,
-            "message": f"Captain removed. User {new_captain.user_id} has been automatically promoted to captain.",
-            "new_captain_id": new_captain.user_id,
-        }
+            logger.info(
+                f"Admin removed captain {captain_to_remove.user_id} from team {team.id}, auto-promoted {new_captain.user_id}."
+            )
+            return {
+                "success": True,
+                "message": f"Captain removed. User {new_captain.user_id} has been automatically promoted to captain.",
+                "new_captain_id": new_captain.user_id,
+            }
+        except Exception as e:
+            db.session.rollback()
+            raise e
     else:
         return {
             "success": False,

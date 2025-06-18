@@ -1,9 +1,8 @@
 """
-/backend/ctfd/plugin/utils/validation_framework.py
 Base validation framework - reusable across domains.
+/backend/ctfd/plugin/core/utils/validation_framework.py
 """
-# TODO: 
-# Needs fixing if needed to reflect new folder reorg
+
 from typing import Optional
 from datetime import datetime
 

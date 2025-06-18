@@ -5,7 +5,7 @@ Defines the User extension model.
 
 from CTFd.models import db
 from sqlalchemy import func
-from typing import Optional, Any
+from typing import Any
 
 
 class User(db.Model):
@@ -37,10 +37,10 @@ class User(db.Model):
     @classmethod
     def find_by_id(cls, user_id: int):
         """Find a user by ID.
-        
+
         Args:
             user_id (int): The user ID to find
-            
+
         Returns:
             User or None: The user instance if found, None otherwise
         """
@@ -58,9 +58,9 @@ class User(db.Model):
             dict: Contains event, team_member, team data or None values if not found.
         """
         # Lazy imports to prevent circular dependencies
-        from ...event.models.Event import Event
-        from ...team.models.Team import Team
-        from ...team.models.TeamMember import TeamMember
+        from plugin.event.models.Event import Event
+        from plugin.team.models.Team import Team
+        from plugin.team.models.TeamMember import TeamMember
 
         event = Event.query.get(event_id)
         if not event:
@@ -85,7 +85,7 @@ class User(db.Model):
             bool: True if user can join, False if already in a team.
         """
         # Lazy import to prevent circular dependencies
-        from ...team.models.TeamMember import TeamMember
+        from plugin.team.models.TeamMember import TeamMember
 
         existing_team_member = TeamMember.query.filter_by(user_id=user_id, event_id=event_id).first()
         return existing_team_member is None
@@ -101,9 +101,9 @@ class User(db.Model):
             list[dict]: List of team data with event info, empty list if user not found.
         """
         # Lazy imports to prevent circular dependencies
-        from ...event.models.Event import Event
-        from ...team.models.Team import Team
-        from ...team.models.TeamMember import TeamMember
+        from plugin.event.models.Event import Event
+        from plugin.team.models.Team import Team
+        from plugin.team.models.TeamMember import TeamMember
 
         user = cls.query.get(user_id)
         if not user:
@@ -150,8 +150,8 @@ class User(db.Model):
             dict: Stats data or None if user not found.
         """
         # Lazy imports to prevent circular dependencies
-        from ...event.models.Event import Event
-        from ...team.models.TeamMember import TeamMember
+        from plugin.event.models.Event import Event
+        from plugin.team.models.TeamMember import TeamMember
 
         user = cls.query.get(user_id)
         if not user:
@@ -173,7 +173,7 @@ class User(db.Model):
     @classmethod
     def get_total_count(cls) -> int:
         """Get the total count of all users.
-        
+
         Returns:
             int: Total number of users
         """
@@ -182,13 +182,11 @@ class User(db.Model):
     @classmethod
     def find_orphaned_users_query(cls):
         """Find users that have no team member associations (orphaned users).
-        
+
         Returns:
             Query: SQLAlchemy query object for orphaned users (can be used for .all() or .delete())
         """
         # Lazy import to prevent circular dependencies
-        from ...team.models.TeamMember import TeamMember
-        
-        return cls.query.outerjoin(TeamMember, cls.id == TeamMember.user_id).filter(
-            TeamMember.id.is_(None)
-        )
+        from plugin.team.models.TeamMember import TeamMember
+
+        return cls.query.outerjoin(TeamMember, cls.id == TeamMember.user_id).filter(TeamMember.id.is_(None))

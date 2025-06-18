@@ -1,9 +1,8 @@
 """
-/plugin/tests/integration/event/test_event_controllers.py
 Tests event controller business logic
+/backend/ctfd/plugin/event/tests/test_event_controllers.py
 """
-# TODO:
-# Needs to be refactored/fixed to reflect/based on new folder structure
+
 import pytest
 from datetime import datetime
 from plugin.event.controllers.create_event import create_event

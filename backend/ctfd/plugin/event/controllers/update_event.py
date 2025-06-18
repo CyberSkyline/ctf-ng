@@ -9,7 +9,7 @@ from datetime import datetime
 from CTFd.models import db
 from sqlalchemy.exc import IntegrityError
 
-from ...utils.logger import get_logger
+from plugin.core.utils.logger import get_logger
 from ..models.Event import Event
 
 logger = get_logger(__name__)

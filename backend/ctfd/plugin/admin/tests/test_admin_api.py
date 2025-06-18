@@ -1,9 +1,8 @@
 """
-/plugin/tests/api/test_admin_api.py
 API Tests for admin endpoints
+/backend/ctfd/plugin/admin/tests/test_admin_api.py
 """
-# TODO:
-# Needs to be refactored/fixed to reflect/based on new folder structure
+
 import pytest
 
 pytestmark = pytest.mark.db

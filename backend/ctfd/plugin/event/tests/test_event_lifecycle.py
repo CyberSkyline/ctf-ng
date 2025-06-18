@@ -1,9 +1,8 @@
 """
-/backend/ctfd/plugin/tests/integration/event/test_event_lifecycle.py
 Complete event lifecycle and management workflows.
+/backend/ctfd/plugin/event/tests/test_event_lifecycle.py
 """
-# TODO:
-# Needs to be refactored/fixed to reflect/based on new folder structure
+
 import time
 import pytest
 from datetime import datetime, timedelta

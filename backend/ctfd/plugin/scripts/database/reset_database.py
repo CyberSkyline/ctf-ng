@@ -21,6 +21,7 @@ import os
 plugin_path = os.path.join(os.path.dirname(__file__), "..", "..")
 sys.path.append(plugin_path)
 
+# ruff - ignore this 'wrong' import order (needed)
 from CTFd.models import db  # noqa: E402
 from plugin.event.models.Event import Event  # noqa: E402
 from plugin.team.models.Team import Team  # noqa: E402

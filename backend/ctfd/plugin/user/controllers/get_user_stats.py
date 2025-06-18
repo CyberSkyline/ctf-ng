@@ -5,7 +5,7 @@ Calculates participation statistics for a user across all events.
 
 from typing import Any
 
-from ..models.User import User
+from plugin.user.models.User import User
 
 
 def get_user_stats(user_id: int) -> dict[str, Any]:

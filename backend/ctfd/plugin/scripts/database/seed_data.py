@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 /plugin/tests/fixtures/seed_data.py
-Seed data
+Seed data (PLACEHOLDER)
 """
 
 import random
@@ -16,6 +16,7 @@ import os
 plugin_path = os.path.join(os.path.dirname(__file__), "..", "..")
 sys.path.insert(0, plugin_path)
 
+# ruff - ignore this 'wrong' import order (needed)
 from plugin.event.models.Event import Event  # noqa: E402
 from plugin.team.models.Team import Team  # noqa: E402
 from plugin.user.models.User import User  # noqa: E402
@@ -45,7 +46,7 @@ class SeedDataGenerator:
         """Create CTFd users for testing."""
         print(f"Creating {count} CTFd users...")
 
-        # mario
+        # Mario
         first_names = ["Mario", "Luigi", "Peach", "Daisy", "Toad", "Yoshi"]
         last_names = ["Bro", "Toadstool", "Koopa", "Troopa", "Kong", "Star"]
 
@@ -133,7 +134,7 @@ class SeedDataGenerator:
         """Create team members."""
         print("Creating team members...")
 
-        # assigning users to teams
+        # Assigning users to teams
         user_index = 0
         total_team_members = 0
 

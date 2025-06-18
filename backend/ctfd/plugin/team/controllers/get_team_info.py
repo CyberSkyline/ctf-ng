@@ -5,9 +5,9 @@ Retrieves detailed information about a team and its members.
 
 from typing import Any
 
-from ...event.models.Event import Event
-from ..models.Team import Team
-from ..models.TeamMember import TeamMember
+from plugin.event.models.Event import Event
+from plugin.team.models.Team import Team
+from plugin.team.models.TeamMember import TeamMember
 
 
 def get_team_info(team_id: int) -> dict[str, Any]:

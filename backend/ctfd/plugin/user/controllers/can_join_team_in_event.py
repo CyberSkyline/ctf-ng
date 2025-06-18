@@ -5,7 +5,7 @@ Checks if a user is eligible to join a team in a specific event.
 
 from typing import Any
 
-from ..models.User import User
+from plugin.user.models.User import User
 
 
 def can_join_team_in_event(user_id: int, event_id: int) -> dict[str, Any]:

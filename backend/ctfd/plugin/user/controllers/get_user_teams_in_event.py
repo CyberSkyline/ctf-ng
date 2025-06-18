@@ -5,8 +5,8 @@ Retrieves a user's team membership details within a specific event.
 
 from typing import Any
 
-from ...utils.logger import get_logger
-from ..models.User import User
+from plugin.core.utils.logger import get_logger
+from plugin.user.models.User import User
 
 logger = get_logger(__name__)
 
@@ -23,7 +23,7 @@ def get_user_teams_in_event(user_id: int, event_id: int) -> dict[str, Any]:
     """
 
     data = User.get_user_teams_in_event_data(user_id, event_id)
-    
+
     if not data["event"]:
         logger.warning(
             "Get user teams in event failed - event not found",
@@ -50,7 +50,7 @@ def get_user_teams_in_event(user_id: int, event_id: int) -> dict[str, Any]:
     team = data["team"]
     team_member = data["team_member"]
     event = data["event"]
-    
+
     logger.info(
         "User team membership found in event",
         extra={

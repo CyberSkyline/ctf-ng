@@ -3,13 +3,13 @@
 Transfers captain role from current captain to another member.
 """
 
-from CTFd.models import Users
+from CTFd.models import Users, db
 from typing import Any
 
-from ...utils.logger import get_logger
-from ..models.Team import Team
-from ..models.TeamMember import TeamMember
-from ..models.enums import TeamRole
+from plugin.core.utils.logger import get_logger
+from plugin.team.models.Team import Team
+from plugin.team.models.TeamMember import TeamMember
+from plugin.team.models.enums import TeamRole
 
 logger = get_logger(__name__)
 
@@ -79,33 +79,38 @@ def transfer_captaincy(team_id: int, new_captain_id: int, actor_id: int, is_admi
     existing_captain = TeamMember.find_captain_by_team(team_id)
     old_captain_id = existing_captain.user_id if existing_captain else None
 
-    if existing_captain:
-        existing_captain.update_role(TeamRole.MEMBER, commit=False)
+    try:
+        if existing_captain:
+            existing_captain.update_role(TeamRole.MEMBER, commit=False)
 
-    new_captain_team_member.update_role(TeamRole.CAPTAIN, commit=True)
+        new_captain_team_member.update_role(TeamRole.CAPTAIN, commit=False)
+        db.session.commit()
 
-    # Get the new captain's name for user friendly message (optional)
-    new_captain_user = Users.query.filter_by(id=new_captain_id).first()
-    new_captain_name = new_captain_user.name if new_captain_user else f"User ID {new_captain_id}"
+        # Get the new captain's name for user friendly message (optional)
+        new_captain_user = Users.query.filter_by(id=new_captain_id).first()
+        new_captain_name = new_captain_user.name if new_captain_user else f"User ID {new_captain_id}"
 
-    logger.info(
-        "Captain transferred successfully",
-        extra={
-            "context": {
-                "team_id": team_id,
-                "team_name": team.name,
-                "old_captain_id": old_captain_id,
-                "new_captain_id": new_captain_id,
-                "new_captain_name": new_captain_name,
-                "actor_id": actor_id,
-                "is_admin": is_admin,
-            }
-        },
-    )
+        logger.info(
+            "Captain transferred successfully",
+            extra={
+                "context": {
+                    "team_id": team_id,
+                    "team_name": team.name,
+                    "old_captain_id": old_captain_id,
+                    "new_captain_id": new_captain_id,
+                    "new_captain_name": new_captain_name,
+                    "actor_id": actor_id,
+                    "is_admin": is_admin,
+                }
+            },
+        )
 
-    return {
-        "success": True,
-        "message": f"'{new_captain_name}' is now captain of '{team.name}'",
-        "team_id": team.id,
-        "captain_id": new_captain_id,
-    }
+        return {
+            "success": True,
+            "message": f"'{new_captain_name}' is now captain of '{team.name}'",
+            "team_id": team.id,
+            "captain_id": new_captain_id,
+        }
+    except Exception as e:
+        db.session.rollback()
+        raise e

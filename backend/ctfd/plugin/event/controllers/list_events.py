@@ -5,7 +5,7 @@ Contains the business logic to query and retrieve a list of all events with thei
 
 from typing import Any
 
-from ...utils.logger import get_logger
+from plugin.core.utils.logger import get_logger
 from ..models.Event import Event
 
 logger = get_logger(__name__)

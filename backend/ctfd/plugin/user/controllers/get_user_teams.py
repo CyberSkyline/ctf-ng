@@ -5,8 +5,8 @@ Retrieves all team memberships for a user across all events.
 
 from typing import Any
 
-from ...utils.logger import get_logger
-from ..models.User import User
+from plugin.core.utils.logger import get_logger
+from plugin.user.models.User import User
 
 logger = get_logger(__name__)
 

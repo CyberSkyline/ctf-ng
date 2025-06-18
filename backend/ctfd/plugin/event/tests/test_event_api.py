@@ -1,9 +1,8 @@
 """
-/backend/ctfd/plugin/tests/api/test_event_api.py
 API Tests for event endpoints
+/backend/ctfd/plugin/event/tests/test_event_api.py
 """
-# TODO:
-# Needs to be refactored/fixed to reflect/based on new folder structure
+
 import pytest
 
 pytestmark = pytest.mark.db

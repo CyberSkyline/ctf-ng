@@ -1,14 +1,13 @@
 """
-/backend/ctfd/plugin/tests/unit/utils/test_data_conversion.py
 Unit tests for data conversion utilities.
+/backend/ctfd/plugin/core/testing/system/test_data_conversion.py
 """
-# TODO:
-# Needs to be refactored/fixed to reflect/based on new folder structure
+
 from datetime import datetime
 from enum import Enum
 from unittest.mock import Mock
 
-from plugin.utils.data_conversion import rows_to_dicts, row_to_dict
+from plugin.core.utils.data_conversion import rows_to_dicts, row_to_dict
 
 
 class StatusEnum(Enum):

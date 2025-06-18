@@ -1,9 +1,8 @@
 """
-/backend/ctfd/plugin/tests/api/test_user_api.py
 API Tests for user endpoints
+/backend/ctfd/plugin/user/tests/test_user_api.py
 """
-# TODO:
-# Needs to be refactored/fixed to reflect/based on new folder structure
+
 import pytest
 
 pytestmark = pytest.mark.db
@@ -26,7 +25,6 @@ def test_users_me_teams_endpoint(logged_in_client, team, event):
     assert user_team["team_name"] == team.name
     assert user_team["event_id"] == event.id
 
-    # Check other expected fields
     assert "joined_at" in user_team
     assert "max_team_size" in user_team
     assert "team_member_count" in user_team

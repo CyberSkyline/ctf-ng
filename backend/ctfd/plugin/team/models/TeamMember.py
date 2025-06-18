@@ -5,7 +5,6 @@ Defines the TeamMember model, link between users, teams, and events.
 
 from CTFd.models import db
 from datetime import datetime
-from typing import Optional, List
 from .enums import TeamRole
 
 
@@ -32,7 +31,15 @@ class TeamMember(db.Model):
         return f"<TeamMember user={self.user_id} team={self.team_id} event={self.event_id}>"
 
     @classmethod
-    def create_team_member(cls, user_id, team_id, event_id, role=TeamRole.MEMBER, joined_at=None):
+    def create_team_member(
+        cls,
+        user_id,
+        team_id,
+        event_id,
+        role=TeamRole.MEMBER,
+        joined_at=None,
+        commit=True,
+    ):
         """Create and persist a new team member to the database.
 
         Args:
@@ -41,6 +48,7 @@ class TeamMember(db.Model):
             event_id (int): Event ID
             role (TeamRole, optional): Member role
             joined_at (datetime, optional): Join timestamp
+            commit (bool, optional): Whether to commit immediately. Defaults to True.
 
         Returns:
             TeamMember: The created team member instance
@@ -57,7 +65,8 @@ class TeamMember(db.Model):
         )
 
         db.session.add(team_member)
-        db.session.commit()
+        if commit:
+            db.session.commit()
         return team_member
 
     def remove_team_member(self, commit=True):
@@ -75,11 +84,11 @@ class TeamMember(db.Model):
     @classmethod
     def find_by_user_and_event(cls, user_id: int, event_id: int):
         """Find a team member by user and event.
-        
+
         Args:
             user_id (int): The user ID to find
             event_id (int): The event ID to search within
-            
+
         Returns:
             TeamMember or None: The team member instance if found, None otherwise
         """
@@ -88,10 +97,10 @@ class TeamMember(db.Model):
     @classmethod
     def find_captain_by_team(cls, team_id: int):
         """Find the captain of a team.
-        
+
         Args:
             team_id (int): The team ID to find captain for
-            
+
         Returns:
             TeamMember or None: The captain team member if found, None otherwise
         """
@@ -100,11 +109,11 @@ class TeamMember(db.Model):
     @classmethod
     def find_captain_by_team_and_user(cls, team_id: int, user_id: int):
         """Find a captain by team and user (for authorization checks).
-        
+
         Args:
             team_id (int): The team ID to check
             user_id (int): The user ID to check
-            
+
         Returns:
             TeamMember or None: The captain team member if found, None otherwise
         """
@@ -113,65 +122,66 @@ class TeamMember(db.Model):
     @classmethod
     def find_by_user_and_team(cls, user_id: int, team_id: int):
         """Find a team member by user and team.
-        
+
         Args:
             user_id (int): The user ID to find
             team_id (int): The team ID to search within
-            
+
         Returns:
             TeamMember or None: The team member instance if found, None otherwise
         """
         return cls.query.filter_by(user_id=user_id, team_id=team_id).first()
 
     @classmethod
-    def find_all_by_team(cls, team_id: int) -> List['TeamMember']:
+    def find_all_by_team(cls, team_id: int) -> list["TeamMember"]:
         """Find all team members in a team.
-        
+
         Args:
             team_id (int): The team ID to search within
-            
+
         Returns:
-            List[TeamMember]: List of team members in the team
+            list[TeamMember]: List of team members in the team
         """
         return cls.query.filter_by(team_id=team_id).all()
 
     @classmethod
     def count_other_members_in_team(cls, team_id: int, exclude_member_id: int) -> int:
         """Count other members in a team excluding a specific member.
-        
+
         Args:
             team_id (int): The team ID to count in
             exclude_member_id (int): The team member ID to exclude
-            
+
         Returns:
             int: Count of other members
         """
-        return cls.query.filter(
-            cls.team_id == team_id,
-            cls.id != exclude_member_id
-        ).count()
+        return cls.query.filter(cls.team_id == team_id, cls.id != exclude_member_id).count()
 
     @classmethod
-    def find_remaining_members_for_captain_removal(cls, team_id: int, captain_id: int) -> List['TeamMember']:
+    def find_remaining_members_for_captain_removal(cls, team_id: int, captain_id: int) -> list["TeamMember"]:
         """Find remaining members when removing a captain (for auto-promotion).
-        
+
         Args:
             team_id (int): The team ID to search in
             captain_id (int): The captain member ID being removed
-            
+
         Returns:
-            List[TeamMember]: List of remaining members ordered by join date
+            list[TeamMember]: List of remaining members ordered by join date
         """
-        return cls.query.filter(
-            cls.team_id == team_id,
-            cls.id != captain_id,
-            cls.role == TeamRole.MEMBER,
-        ).order_by(cls.joined_at.asc()).all()
+        return (
+            cls.query.filter(
+                cls.team_id == team_id,
+                cls.id != captain_id,
+                cls.role == TeamRole.MEMBER,
+            )
+            .order_by(cls.joined_at.asc())
+            .all()
+        )
 
     @classmethod
     def get_total_count(cls) -> int:
         """Get the total count of all team members.
-        
+
         Returns:
             int: Total number of team members
         """
@@ -180,10 +190,10 @@ class TeamMember(db.Model):
     @classmethod
     def count_by_event(cls, event_id: int) -> int:
         """Get the count of team members in a specific event.
-        
+
         Args:
             event_id (int): The event ID to count team members for
-            
+
         Returns:
             int: Number of team members in the event
         """
@@ -192,10 +202,10 @@ class TeamMember(db.Model):
     @classmethod
     def delete_by_event(cls, event_id: int) -> int:
         """Delete all team members in a specific event.
-        
+
         Args:
             event_id (int): The event ID to delete team members from
-            
+
         Returns:
             int: Number of team members deleted
         """
@@ -204,13 +214,13 @@ class TeamMember(db.Model):
         return count
 
     @classmethod
-    def find_all_by_team_ordered_by_join_date(cls, team_id: int) -> List['TeamMember']:
+    def find_all_by_team_ordered_by_join_date(cls, team_id: int) -> list["TeamMember"]:
         """Find all team members in a team ordered by join date (oldest first).
-        
+
         Args:
             team_id (int): The team ID to search within
-            
+
         Returns:
-            List[TeamMember]: List of team members ordered by join date
+            list[TeamMember]: List of team members ordered by join date
         """
         return cls.query.filter_by(team_id=team_id).order_by(cls.joined_at.asc()).all()

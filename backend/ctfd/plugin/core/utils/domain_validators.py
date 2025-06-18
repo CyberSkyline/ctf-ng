@@ -1,12 +1,11 @@
 """
-/backend/ctfd/plugin/utils/domain_validators.py
 Domain specific validation functions using the base framework.
+/backend/ctfd/plugin/core/utils/domain_validators.py
 """
-# TODO: 
-# Needs fixing if needed to reflect new folder reorg
+
 from typing import Any, Union
 from .validation_framework import BaseValidator, ValidationError
-from .. import config
+from plugin import config
 
 
 def validate_team_creation(data: dict[str, Any]) -> tuple[bool, dict[str, str]]:

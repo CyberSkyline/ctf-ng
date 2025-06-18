@@ -1,14 +1,14 @@
 """
-/backend/ctfd/plugin/admin/database/get_data_counts.py
 Contains the business logic to efficiently query and retrieve basic data counts for all plugin entities.
+/backend/ctfd/plugin/admin/controllers/get_data_counts.py
 """
 
 from typing import Any
 
-from ...event.models.Event import Event
-from ...team.models.Team import Team
-from ...team.models.TeamMember import TeamMember
-from ...user.models.User import User
+from plugin.event.models.Event import Event
+from plugin.team.models.Team import Team
+from plugin.team.models.TeamMember import TeamMember
+from plugin.user.models.User import User
 
 
 def get_data_counts() -> dict[str, Any]:

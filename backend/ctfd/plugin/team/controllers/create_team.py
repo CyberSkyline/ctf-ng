@@ -3,16 +3,13 @@
 Creates a new team in an event with the creator as captain.
 """
 
-from datetime import datetime
 from typing import Any
 
-from ...utils.logger import get_logger
-from ...event.models.Event import Event
-from ...user.models.User import User
-from ..models.Team import Team
-from ..models.TeamMember import TeamMember
-from ..models.enums import TeamRole
-from ._generate_invite_code import _generate_invite_code
+from plugin.core.utils.logger import get_logger
+from plugin.event.models.Event import Event
+from plugin.team.models.Team import Team
+from plugin.team.models.TeamMember import TeamMember
+from plugin.team.controllers._generate_invite_code import _generate_invite_code
 
 logger = get_logger(__name__)
 
@@ -34,6 +31,7 @@ def create_team(
     Returns:
         dict: Success status, team object, invite code, and message or error info.
     """
+
     event = Event.find_by_id(event_id)
     if not event:
         logger.warning(
@@ -62,24 +60,6 @@ def create_team(
             "error": f"Event '{event.name}' is locked and not accepting new teams",
         }
 
-    existing_team = Team.find_by_name_and_event(name, event_id)
-    if existing_team:
-        logger.warning(
-            "Team creation failed - name already exists",
-            extra={
-                "context": {
-                    "team_name": name,
-                    "event_id": event_id,
-                    "event_name": event.name,
-                    "existing_team_id": existing_team.id,
-                }
-            },
-        )
-        return {
-            "success": False,
-            "error": f"Team '{name}' already exists in {event.name}",
-        }
-
     existing_team_member = TeamMember.find_by_user_and_event(creator_id, event_id)
     if existing_team_member:
         logger.warning(
@@ -99,44 +79,49 @@ def create_team(
 
     invite_code = _generate_invite_code()
 
-    team = Team.create_team(
+    success, result = Team.create_team_with_captain(
         name=name,
         event_id=event_id,
-        ranked=ranked,
+        creator_id=creator_id,
         invite_code=invite_code,
-        flush_only=True,
+        ranked=ranked,
     )
 
-    ng_user = User.find_by_id(creator_id)
-    if not ng_user:
-        ng_user = User.create_user(creator_id, commit=False)
+    if success:
+        team = result["team"]
+        logger.info(
+            "Team created successfully",
+            extra={
+                "context": {
+                    "team_id": team.id,
+                    "team_name": name,
+                    "event_id": event_id,
+                    "event_name": event.name,
+                    "creator_id": creator_id,
+                    "ranked": ranked,
+                }
+            },
+        )
 
-    TeamMember.create_team_member(
-        user_id=creator_id,
-        team_id=team.id,
-        event_id=event_id,
-        role=TeamRole.CAPTAIN,
-        joined_at=datetime.utcnow(),
-    )
-
-    logger.info(
-        "Team created successfully",
-        extra={
-            "context": {
-                "team_id": team.id,
-                "team_name": name,
-                "event_id": event_id,
-                "event_name": event.name,
-                "creator_id": creator_id,
-                "invite_code": invite_code,
-                "ranked": ranked,
-            }
-        },
-    )
-
-    return {
-        "success": True,
-        "team": team,
-        "invite_code": invite_code,
-        "message": f"Team '{name}' created successfully in {event.name}",
-    }
+        return {
+            "success": True,
+            "team": team,
+            "invite_code": invite_code,
+            "message": f"Team '{name}' created successfully in {event.name}",
+        }
+    else:
+        logger.warning(
+            "Team creation failed",
+            extra={
+                "context": {
+                    "team_name": name,
+                    "event_id": event_id,
+                    "creator_id": creator_id,
+                    "error": result["error"],
+                }
+            },
+        )
+        return {
+            "success": False,
+            "error": result["error"],
+        }

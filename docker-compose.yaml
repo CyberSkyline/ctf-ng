@@ -20,6 +20,7 @@ services:
       - ERROR_LOG=-
       - REVERSE_PROXY=true
       - SWAGGER_UI=true
+      - LOG_LEVEL=DEBUG  # DEBUG for development | INFO/WARNING for production.            
     volumes:
       - .data/CTFd/logs:/var/log/CTFd
       - .data/CTFd/uploads:/var/uploads

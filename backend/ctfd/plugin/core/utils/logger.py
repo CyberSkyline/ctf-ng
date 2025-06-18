@@ -1,13 +1,16 @@
 """
-/backend/ctfd/plugin/utils/logger.py
 Configures a JSON logger for machine readable app logging.
+/backend/ctfd/plugin/core/utils/logger.py
 """
-# TODO: 
-# Needs fixing if needed to reflect new folder reorg
+
+import os
 import json
 import logging
 import sys
 from datetime import datetime
+
+PLUGIN_LOGGER_NAME = "ctfd_ng_plugin"
+logger = logging.getLogger(PLUGIN_LOGGER_NAME)
 
 
 class JSONFormatter(logging.Formatter):
@@ -26,17 +29,38 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_entry)
 
 
-def get_logger(name: str = __name__) -> logging.Logger:
-    logger = logging.getLogger(name)
+def _configure_logger():
+    """Configures the global plugin logger based on the execution environment."""
 
-    if not logger.handlers:
-        handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(JSONFormatter())
-        logger.addHandler(handler)
-        logger.setLevel(logging.INFO)
+    if "pytest" in sys.modules:
+        logger.addHandler(logging.NullHandler())
         logger.propagate = False
+        return
 
-    return logger
+    # Read the log level from the environment in docker-compose.yml
+    log_level_str = os.getenv("LOG_LEVEL", "INFO").upper()
+
+    log_level = getattr(logging, log_level_str, logging.INFO)
+    logger.setLevel(log_level)
+
+    if logger.hasHandlers():
+        logger.handlers.clear()
+
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(JSONFormatter())
+    logger.addHandler(handler)
+
+    logger.propagate = False
+
+    logger.info(f"Plugin logger configured with level: {log_level_str}")
 
 
-logger = get_logger(__name__)
+_configure_logger()
+
+
+def get_logger(name: str) -> logging.Logger:
+    """
+    Returns a child logger of the globally configured plugin logger.
+    This ensures all loggers inherit the same settings (level, formatter).
+    """
+    return logging.getLogger(f"{PLUGIN_LOGGER_NAME}.{name}")
