@@ -87,7 +87,7 @@ def _validate_team_exists(invite_code, user_id):
     Returns:
         dict: Success status, team and event objects, or error
     """
-    team = Team.query.filter_by(invite_code=invite_code).first()
+    team = Team.find_by_invite_code(invite_code)
     if not team:
         logger.warning(
             "Team join failed - invalid invite code",
@@ -100,7 +100,7 @@ def _validate_team_exists(invite_code, user_id):
         )
         return {"success": False, "error": "Invalid invite code"}
 
-    event = Event.query.get(team.event_id)
+    event = Event.find_by_id(team.event_id)
     return {"success": True, "team": team, "event": event}
 
 
@@ -191,14 +191,14 @@ def _validate_user_membership(user_id, event_id, team, invite_code):
     Returns:
         dict: Success status and user object, or error message
     """
-    user = User.query.get(user_id)
+    user = User.find_by_id(user_id)
     if not user:
         user = User.create_user(user_id, commit=False)
 
-    existing_team_member = TeamMember.query.filter_by(user_id=user_id, event_id=event_id).first()
+    existing_team_member = TeamMember.find_by_user_and_event(user_id, event_id)
 
     if existing_team_member:
-        existing_team = Team.query.get(existing_team_member.team_id)
+        existing_team = Team.find_by_id(existing_team_member.team_id)
         logger.warning(
             "Team join failed - user already in team",
             extra={

@@ -19,8 +19,8 @@ def get_data_counts() -> dict[str, Any]:
     """
 
     return {
-        "events": Event.query.count(),
-        "teams": Team.query.count(),
-        "users": User.query.count(),
-        "team_members": TeamMember.query.count(),
+        "events": Event.get_total_count(),
+        "teams": Team.get_total_count(),
+        "users": User.get_total_count(),
+        "team_members": TeamMember.get_total_count(),
     }

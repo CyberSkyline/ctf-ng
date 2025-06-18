@@ -6,9 +6,7 @@ Retrieves a user's team membership details within a specific event.
 from typing import Any
 
 from ...utils.logger import get_logger
-from ...event.models.Event import Event
-from ...team.models.Team import Team
-from ...team.models.TeamMember import TeamMember
+from ..models.User import User
 
 logger = get_logger(__name__)
 
@@ -24,8 +22,9 @@ def get_user_teams_in_event(user_id: int, event_id: int) -> dict[str, Any]:
         dict: Success status, team info if user is in a team, or None if not.
     """
 
-    event = Event.query.get(event_id)
-    if not event:
+    data = User.get_user_teams_in_event_data(user_id, event_id)
+    
+    if not data["event"]:
         logger.warning(
             "Get user teams in event failed - event not found",
             extra={"context": {"user_id": user_id, "event_id": event_id}},
@@ -35,22 +34,23 @@ def get_user_teams_in_event(user_id: int, event_id: int) -> dict[str, Any]:
             "error": f"Event with ID {event_id} does not exist",
         }
 
-    team_member = TeamMember.query.filter_by(user_id=user_id, event_id=event_id).first()
-
-    if not team_member:
+    if not data["team_member"]:
         logger.info(
             "User has no team membership in event",
             extra={
                 "context": {
                     "user_id": user_id,
                     "event_id": event_id,
-                    "event_name": event.name,
+                    "event_name": data["event"].name,
                 }
             },
         )
         return {"success": True, "in_team": False, "team": None}
 
-    team = Team.query.get(team_member.team_id)
+    team = data["team"]
+    team_member = data["team_member"]
+    event = data["event"]
+    
     logger.info(
         "User team membership found in event",
         extra={

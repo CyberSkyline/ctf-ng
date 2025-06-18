@@ -17,9 +17,7 @@ logger = get_logger(__name__)
 def cleanup_orphaned_data() -> dict[str, Any]:
     """Removes user records that have no team members."""
 
-    orphaned_users_query = User.query.outerjoin(TeamMember, User.id == TeamMember.user_id).filter(
-        TeamMember.id.is_(None)
-    )
+    orphaned_users_query = User.find_orphaned_users_query()
 
     orphaned_users = orphaned_users_query.all()
     orphaned_count = len(orphaned_users)

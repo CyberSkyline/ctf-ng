@@ -34,7 +34,7 @@ def create_team(
     Returns:
         dict: Success status, team object, invite code, and message or error info.
     """
-    event = Event.query.get(event_id)
+    event = Event.find_by_id(event_id)
     if not event:
         logger.warning(
             "Team creation failed - event not found",
@@ -62,7 +62,7 @@ def create_team(
             "error": f"Event '{event.name}' is locked and not accepting new teams",
         }
 
-    existing_team = Team.query.filter_by(name=name, event_id=event_id).first()
+    existing_team = Team.find_by_name_and_event(name, event_id)
     if existing_team:
         logger.warning(
             "Team creation failed - name already exists",
@@ -80,7 +80,7 @@ def create_team(
             "error": f"Team '{name}' already exists in {event.name}",
         }
 
-    existing_team_member = TeamMember.query.filter_by(user_id=creator_id, event_id=event_id).first()
+    existing_team_member = TeamMember.find_by_user_and_event(creator_id, event_id)
     if existing_team_member:
         logger.warning(
             "Team creation failed - user already in team",
@@ -107,7 +107,7 @@ def create_team(
         flush_only=True,
     )
 
-    ng_user = User.query.get(creator_id)
+    ng_user = User.find_by_id(creator_id)
     if not ng_user:
         ng_user = User.create_user(creator_id, commit=False)
 

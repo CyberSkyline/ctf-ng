@@ -21,12 +21,12 @@ def _generate_invite_code(length: int = config.INVITE_CODE_LENGTH) -> str:
 
     for attempt in range(INVITE_CODE_GENERATION_ATTEMPTS):
         code = "".join(secrets.choice(characters) for _ in range(length))
-        if not Team.query.filter_by(invite_code=code).first():
+        if Team.is_invite_code_unique(code):
             return code
 
     while True:
         uuid_code = str(uuid.uuid4()).replace("-", "").upper()[:length]
-        if not Team.query.filter_by(invite_code=uuid_code).first():
+        if Team.is_invite_code_unique(uuid_code):
             return uuid_code
 
         length += 1

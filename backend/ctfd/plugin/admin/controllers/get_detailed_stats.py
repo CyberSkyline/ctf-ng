@@ -37,11 +37,7 @@ def get_detailed_stats() -> dict[str, Any]:
 
     event_stats = rows_to_dicts(event_stats_query)
 
-    empty_teams_query = db.session.query(Team.id, Team.name, Team.event_id).filter(Team.member_count == 0).all()
-
-    empty_teams = [
-        {"id": team_id, "name": team_name, "event_id": event_id} for team_id, team_name, event_id in empty_teams_query
-    ]
+    empty_teams = Team.find_empty_teams()
 
     return {
         "success": True,

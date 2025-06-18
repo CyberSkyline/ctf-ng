@@ -1,5 +1,8 @@
 # /backend/ctfd/plugin/Makefile
 
+# TODO:
+# Needs to be refactored/fixed to reflect/based on new folder structure
+
 # Allow environment override
 PYTHON_EXEC ?= python
 

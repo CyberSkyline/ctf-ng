@@ -25,7 +25,7 @@ def leave_team(user_id: int, event_id: int) -> dict[str, Any]:
     Returns:
         dict: Success status, former team name, and message or error info.
     """
-    team_member = TeamMember.query.filter_by(user_id=user_id, event_id=event_id).first()
+    team_member = TeamMember.find_by_user_and_event(user_id, event_id)
     if not team_member:
         logger.warning(
             "Team leave failed - user not in any team",
@@ -37,8 +37,8 @@ def leave_team(user_id: int, event_id: int) -> dict[str, Any]:
         }
 
     # Fetch the team and event to check locked status
-    team = Team.query.get(team_member.team_id)
-    event = Event.query.get(event_id)
+    team = Team.find_by_id(team_member.team_id)
+    event = Event.find_by_id(event_id)
 
     # Block leaving if event/team is locked or event has started
     if event and (event.locked or (event.start_time and datetime.utcnow() >= event.start_time)):
@@ -79,10 +79,8 @@ def leave_team(user_id: int, event_id: int) -> dict[str, Any]:
         }
 
     if team_member.role == TeamRole.CAPTAIN:
-        team = Team.query.get(team_member.team_id)
-        other_members_count = TeamMember.query.filter(
-            TeamMember.team_id == team.id, TeamMember.id != team_member.id
-        ).count()
+        team = Team.find_by_id(team_member.team_id)
+        other_members_count = TeamMember.count_other_members_in_team(team.id, team_member.id)
 
         if other_members_count > 0:
             return {

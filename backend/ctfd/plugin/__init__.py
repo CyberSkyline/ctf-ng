@@ -9,7 +9,8 @@ from typing import Tuple, Any
 
 logger = get_logger(__name__)
 
-
+# TODO: 
+# Needs fixing if needed to reflect new folder reorg
 def _create_tables() -> Tuple[Any, Any, Any, Any]:
     from .event.models.Event import Event
     from .team.models.Team import Team

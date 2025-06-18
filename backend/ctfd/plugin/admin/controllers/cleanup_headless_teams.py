@@ -37,7 +37,7 @@ def cleanup_headless_teams():
 
     fixed_count = 0
     for (team_id,) in headless_team_ids:
-        members = TeamMember.query.filter_by(team_id=team_id).order_by(TeamMember.joined_at.asc()).all()
+        members = TeamMember.find_all_by_team_ordered_by_join_date(team_id)
         if members:
             # Promote the oldest member
             new_captain = members[0]

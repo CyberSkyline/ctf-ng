@@ -5,7 +5,7 @@ Checks if a user is eligible to join a team in a specific event.
 
 from typing import Any
 
-from ...team.models.TeamMember import TeamMember
+from ..models.User import User
 
 
 def can_join_team_in_event(user_id: int, event_id: int) -> dict[str, Any]:
@@ -19,10 +19,10 @@ def can_join_team_in_event(user_id: int, event_id: int) -> dict[str, Any]:
         dict: Success status, eligibility boolean, and reason if not eligible.
     """
 
-    existing_team_member = TeamMember.query.filter_by(user_id=user_id, event_id=event_id).first()
+    can_join = User.check_can_join_team_in_event(user_id, event_id)
 
     return {
         "success": True,
-        "can_join": existing_team_member is None,
-        "reason": ("User already in a team for this event" if existing_team_member else None),
+        "can_join": can_join,
+        "reason": ("User already in a team for this event" if not can_join else None),
     }

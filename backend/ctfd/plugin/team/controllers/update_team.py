@@ -30,7 +30,7 @@ def update_team(
     Returns:
         dict: Success status, updated team info, and message or error info.
     """
-    team = Team.query.get(team_id)
+    team = Team.find_by_id(team_id)
     if not team:
         logger.warning(
             "Team update failed - team not found",
@@ -38,7 +38,7 @@ def update_team(
         )
         return {"success": False, "error": "Team not found."}
 
-    is_captain = TeamMember.query.filter_by(team_id=team_id, user_id=actor_id, role=TeamRole.CAPTAIN).first()
+    is_captain = TeamMember.find_captain_by_team_and_user(team_id, actor_id)
 
     if not is_admin and not is_captain:
         logger.warning(
@@ -68,11 +68,7 @@ def update_team(
                 "error": "Team name cannot be empty.",
             }
 
-        existing_team = Team.query.filter(
-            Team.event_id == team.event_id,
-            Team.name == new_name,
-            Team.id != team_id,
-        ).first()
+        existing_team = Team.name_exists_in_event_excluding_self(team.event_id, new_name, team_id)
         if existing_team:
             logger.warning(
                 "Team update failed - name already exists",

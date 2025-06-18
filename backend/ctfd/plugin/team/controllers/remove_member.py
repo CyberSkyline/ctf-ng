@@ -28,11 +28,11 @@ def remove_member(team_id: int, member_to_remove_id: int, actor_id: int, is_admi
     Returns:
         dict: Success status and confirmation message or error info.
     """
-    team = Team.query.get(team_id)
+    team = Team.find_by_id(team_id)
     if not team:
         return {"success": False, "error": "Team not found."}
 
-    event = Event.query.get(team.event_id)
+    event = Event.find_by_id(team.event_id)
 
     if not is_admin:
         if event and (event.locked or (event.start_time and datetime.utcnow() >= event.start_time)):
@@ -47,7 +47,7 @@ def remove_member(team_id: int, member_to_remove_id: int, actor_id: int, is_admi
                 "error": f"Team '{team.name}' is locked and members cannot be removed.",
             }
 
-    is_captain = TeamMember.query.filter_by(team_id=team_id, user_id=actor_id, role=TeamRole.CAPTAIN).first()
+    is_captain = TeamMember.find_captain_by_team_and_user(team_id, actor_id)
 
     if not is_admin and not is_captain:
         return {
@@ -55,7 +55,7 @@ def remove_member(team_id: int, member_to_remove_id: int, actor_id: int, is_admi
             "error": "You are not authorized to remove members",
         }
 
-    team_member_to_remove = TeamMember.query.filter_by(team_id=team_id, user_id=member_to_remove_id).first()
+    team_member_to_remove = TeamMember.find_by_user_and_team(member_to_remove_id, team_id)
 
     if not team_member_to_remove:
         return {"success": False, "error": "User is not a member of this team"}
@@ -77,15 +77,7 @@ def remove_member(team_id: int, member_to_remove_id: int, actor_id: int, is_admi
 def _handle_captain_removal(team: Team, captain_to_remove: TeamMember, actor_id: int, is_admin: bool):
     """Smartly handles captain removal by either auto promoting or blocking."""
 
-    remaining_members = (
-        TeamMember.query.filter(
-            TeamMember.team_id == team.id,
-            TeamMember.id != captain_to_remove.id,
-            TeamMember.role == TeamRole.MEMBER,
-        )
-        .order_by(TeamMember.joined_at.asc())
-        .all()
-    )
+    remaining_members = TeamMember.find_remaining_members_for_captain_removal(team.id, captain_to_remove.id)
 
     if not remaining_members:
         captain_to_remove.remove_team_member()

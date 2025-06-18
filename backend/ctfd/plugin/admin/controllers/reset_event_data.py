@@ -25,7 +25,7 @@ def reset_event_data(event_id: int) -> dict[str, Any]:
         dict: Success status and deletion counts or error info.
     """
 
-    event = Event.query.get(event_id)
+    event = Event.find_by_id(event_id)
     if not event:
         logger.warning(
             "Event reset failed - event not found",
@@ -33,8 +33,8 @@ def reset_event_data(event_id: int) -> dict[str, Any]:
         )
         return {"success": False, "error": "Event not found."}
 
-    team_members_count = TeamMember.query.filter_by(event_id=event_id).count()
-    teams_count = Team.query.filter_by(event_id=event_id).count()
+    team_members_count = TeamMember.count_by_event(event_id)
+    teams_count = Team.count_by_event(event_id)
 
     logger.warning(
         "Initiating event data reset",
@@ -48,10 +48,8 @@ def reset_event_data(event_id: int) -> dict[str, Any]:
         },
     )
 
-    TeamMember.query.filter_by(event_id=event_id).delete()
-    Team.query.filter_by(event_id=event_id).delete()
-
-    db.session.commit()
+    TeamMember.delete_by_event(event_id)
+    Team.delete_by_event(event_id)
 
     logger.info(
         "Event data reset successfully",

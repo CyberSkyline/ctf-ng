@@ -26,7 +26,7 @@ def transfer_captaincy(team_id: int, new_captain_id: int, actor_id: int, is_admi
     Returns:
         dict: Success status, new captain info, and message or error info.
     """
-    team = Team.query.get(team_id)
+    team = Team.find_by_id(team_id)
     if not team:
         logger.warning(
             "Captain transfer failed - team not found",
@@ -40,7 +40,7 @@ def transfer_captaincy(team_id: int, new_captain_id: int, actor_id: int, is_admi
         )
         return {"success": False, "error": "Team not found."}
 
-    is_current_captain = TeamMember.query.filter_by(team_id=team_id, user_id=actor_id, role=TeamRole.CAPTAIN).first()
+    is_current_captain = TeamMember.find_captain_by_team_and_user(team_id, actor_id)
 
     if not is_admin and not is_current_captain:
         logger.warning(
@@ -61,7 +61,7 @@ def transfer_captaincy(team_id: int, new_captain_id: int, actor_id: int, is_admi
             "error": "You are not authorized to assign captain",
         }
 
-    new_captain_team_member = TeamMember.query.filter_by(user_id=new_captain_id, team_id=team_id).first()
+    new_captain_team_member = TeamMember.find_by_user_and_team(new_captain_id, team_id)
     if not new_captain_team_member:
         logger.warning(
             "Captain transfer failed - new captain not a team member",
@@ -76,7 +76,7 @@ def transfer_captaincy(team_id: int, new_captain_id: int, actor_id: int, is_admi
         )
         return {"success": False, "error": "User is not a member of this team"}
 
-    existing_captain = TeamMember.query.filter_by(team_id=team_id, role=TeamRole.CAPTAIN).first()
+    existing_captain = TeamMember.find_captain_by_team(team_id)
     old_captain_id = existing_captain.user_id if existing_captain else None
 
     if existing_captain:

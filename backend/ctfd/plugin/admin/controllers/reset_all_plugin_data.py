@@ -31,6 +31,8 @@ def reset_all_plugin_data() -> dict[str, Any]:
         extra={"context": {"initial_counts": initial_counts}},
     )
 
+    # Direct bulk deletes are intentionally left as administrative operations
+    # These are deliberate, destructive admin functions that require explicit control
     TeamMember.query.delete()
     Team.query.delete()
     User.query.delete()

@@ -19,7 +19,7 @@ def get_team_captain(team_id: int) -> dict[str, Any]:
     Returns:
         dict: Success status, captain ID if exists, and captain status info.
     """
-    captain = TeamMember.query.filter_by(team_id=team_id, role=TeamRole.CAPTAIN).first()
+    captain = TeamMember.find_captain_by_team(team_id)
 
     if captain:
         captain_user = Users.query.filter_by(id=captain.user_id).first()
