@@ -1,4 +1,4 @@
-name: After refactor test of test runner
+name: Now confirmed to still work after testing reorg and isolation of middleware tests
 
 on:
   push:
