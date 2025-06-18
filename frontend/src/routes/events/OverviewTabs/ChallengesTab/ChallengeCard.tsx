@@ -13,12 +13,12 @@ export default function ChallengeCard({
   completed = false,
   icon: Icon = undefined,
 }: {
-    id: string;
-    name: string;
-    description: string;
-    points: number;
-    completed?: boolean;
-    icon?: IconType;
+  id: string;
+  name: string;
+  description: string;
+  points: number;
+  completed?: boolean;
+  icon?: IconType;
 }) {
   const color = completed ? 'lime' : undefined;
 
