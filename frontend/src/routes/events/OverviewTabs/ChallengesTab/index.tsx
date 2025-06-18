@@ -1,6 +1,6 @@
 import { Container, TextField, Grid } from '@radix-ui/themes';
-import ChallengeCard from 'components/event/ChallengeCard';
 import { TbCode, TbSearch } from 'react-icons/tb';
+import ChallengeCard from './ChallengeCard';
 
 export default function ChallengesTab() {
   return (

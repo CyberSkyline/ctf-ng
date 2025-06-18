@@ -1,4 +1,4 @@
-import Statistic from 'components/admin/Statistic';
+import Statistic from '@/components/Statistic';
 import { Card, Flex } from '@radix-ui/themes';
 
 export default function AdminOverviewCard() {

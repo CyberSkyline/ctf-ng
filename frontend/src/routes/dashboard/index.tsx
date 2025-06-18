@@ -1,7 +1,7 @@
 import { Button, Container, Flex } from '@radix-ui/themes';
 import PastEvents from 'routes/dashboard/PastEvents';
 import UpcomingEvents from 'routes/dashboard/UpcomingEvents';
-import EventHeader from 'components/event/EventHeader';
+import EventHeader from 'components/EventHeader';
 import HeaderContainer from 'components/HeaderContainer';
 
 export default function Dashboard() {

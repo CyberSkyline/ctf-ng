@@ -1,5 +1,5 @@
 import { Card, Flex, Heading } from '@radix-ui/themes';
-import Statistic from 'components/admin/Statistic';
+import Statistic from '@/components/Statistic';
 import { TbLink } from 'react-icons/tb';
 import { Link } from 'react-router';
 

@@ -1,10 +1,10 @@
 import {
   Callout, Grid, Heading, Link as RadixLink,
 } from '@radix-ui/themes';
-import EventCard from 'components/event/EventCard';
 import type { accentColors } from '@radix-ui/themes/props';
 import { TbInfoCircle } from 'react-icons/tb';
 import { Link } from 'react-router';
+import EventCard from './EventCard';
 
 export default function UpcomingEvents({
   events,

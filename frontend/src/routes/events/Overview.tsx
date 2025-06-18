@@ -1,14 +1,15 @@
 import {
   Container, Tabs,
 } from '@radix-ui/themes';
-import ChallengesTab from 'routes/events/OverviewTabs/ChallengesTab';
-import EventHeader from 'components/event/EventHeader';
-import LeaderboardTab from 'routes/events/OverviewTabs/LeaderboardTab';
-import TeamTab from 'routes/events/OverviewTabs/TeamTab';
 
 import { useSearchParams } from 'react-router';
 import HeaderContainer from 'components/HeaderContainer';
 import { TbCube, TbStar, TbUsersGroup } from 'react-icons/tb';
+
+import EventHeader from 'components/EventHeader';
+import LeaderboardTab from 'routes/events/OverviewTabs/LeaderboardTab';
+import TeamTab from 'routes/events/OverviewTabs/TeamTab';
+import ChallengesTab from './OverviewTabs/ChallengesTab';
 
 export default function Overview() {
   const [searchParams, setSearchParams] = useSearchParams();

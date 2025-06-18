@@ -1,6 +1,6 @@
 import { Grid, Heading } from '@radix-ui/themes';
 import type { accentColors } from '@radix-ui/themes/props';
-import EventCard from 'components/event/EventCard';
+import EventCard from './EventCard';
 
 export default function PastEvents({ events }: {
     events: {
