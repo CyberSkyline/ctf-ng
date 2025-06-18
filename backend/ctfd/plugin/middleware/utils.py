@@ -41,7 +41,7 @@ def get_param_values(params, request):
     """Extract values for the given parameters from the request."""
     values = []
     for param in params:
-        value = request.args.get(param)
+        value = request.args.get(param) or request.view_args.get(param)
         if value is None:
             logger.error(f"Missing required parameter '{param}' in request.")
             return error_response(
