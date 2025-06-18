@@ -1,6 +1,5 @@
 from functools import wraps
 from flask import request, abort,g
-from sqlalchemy import and_, inspect
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.types import Boolean, DateTime
 from sqlalchemy.orm.attributes import InstrumentedAttribute

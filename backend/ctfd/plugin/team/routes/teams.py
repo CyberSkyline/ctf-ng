@@ -32,12 +32,8 @@ from ...utils import (
     validate_event_id_param,
 )
 from ...middleware import (
-    lookup_user,
-    lookup_event,
-    lookup_team,
+    lookup,
     authed_user_required,
-    event_check_valid,
-    event_check_duplicate,
     handle_integrity_error,
     json_body_required,
 )

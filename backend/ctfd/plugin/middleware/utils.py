@@ -14,7 +14,7 @@ from dateutil.parser import parse as parse_date
 logger = get_logger(__name__)
 
 def params_check_valid(params, model):
-    """Check if the request has valid parameters for the given model."""
+    """Check if the decorator was given valid parameters for the given model."""
     values = []
     relationships = inspect(model).relationships
     related_models = [rel.mapper.class_ for rel in relationships]
