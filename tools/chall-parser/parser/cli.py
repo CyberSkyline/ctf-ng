@@ -14,7 +14,9 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.syntax import Syntax
 import typer
-from cattrs import ClassValidationError
+from cattrs import ClassValidationError, transform_error
+from cattrs.v import format_exception
+import yaml
 
 from parser.yaml_parser import parse_compose_file, parse_compose_string
 from parser.compose import ComposeFile, ChallengeInfo
@@ -28,24 +30,85 @@ console = Console()
 
 def setup_logging(verbose: bool = False):
     """Setup logging configuration."""
-    level = logging.DEBUG if verbose else logging.INFO
+    level = logging.DEBUG if verbose else logging.CRITICAL
     logging.basicConfig(
         level=level,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[logging.StreamHandler(sys.stderr)]
     )
 
+def format_parse_exceptions(error: BaseException, type: type | None) -> str:
+    """Format parse exceptions for better readability."""
+    if isinstance(error, ValueError):
+        return f"Value error: {str(error)}"
+    elif isinstance(error, FileNotFoundError):
+        return f"File not found: {str(error)}"
+    elif isinstance(error, yaml.YAMLError):
+        return f"YAML error: {str(error)}"
+    return format_exception(error, type)
+        
+
 def format_validation_error(error: Exception) -> str:
-    """Format validation errors in a user-friendly way."""
+    """Format validation errors in a user-friendly way using cattrs transform_error."""
+    
+    # Handle cattrs validation errors (ExceptionGroups) using transform_error
+    if isinstance(error, (ExceptionGroup, ClassValidationError, Exception)):
+        try:
+            # Use cattrs' transform_error for proper ExceptionGroup handling
+            error_messages = transform_error(error, format_exception=format_parse_exceptions)
+            if error_messages:
+                formatted_errors = []
+                for msg in error_messages:
+                    # Clean up the error message formatting
+                    if msg.startswith("invalid value for type"):
+                        formatted_errors.append(f"  • {msg}")
+                    elif " @ " in msg:
+                        # Split location from message for better formatting
+                        parts = msg.split(" @ ", 1)
+                        if len(parts) == 2:
+                            formatted_errors.append(f"  • {parts[0]} (at {parts[1]})")
+                        else:
+                            formatted_errors.append(f"  • {msg}")
+                    else:
+                        formatted_errors.append(f"  • {msg}")
+                
+                return "Validation errors:\n" + "\n".join(formatted_errors)
+        except Exception:
+            # Fallback to original handling if transform_error fails
+            pass
+    
+    # Fallback for ClassValidationError with __notes__ (PEP 678)
     if isinstance(error, ClassValidationError):
         errors = []
-        for exc in error.exceptions:
-            if hasattr(exc, '__notes__'):
-                for note in exc.__notes__:
-                    errors.append(f"  • {note}")
-            else:
-                errors.append(f"  • {str(exc)}")
-        return "Validation errors:\n" + "\n".join(errors)
+        
+        # Handle the main exception
+        if hasattr(error, '__notes__') and error.__notes__:
+            for note in error.__notes__:
+                errors.append(f"  • {note}")
+        
+        # Handle nested exceptions in the group
+        if hasattr(error, 'exceptions'):
+            for exc in error.exceptions:
+                if hasattr(exc, '__notes__') and exc.__notes__:
+                    for note in exc.__notes__:
+                        errors.append(f"  • {note}")
+                elif hasattr(exc, 'exceptions'):
+                    # Handle nested ExceptionGroups recursively
+                    for nested_exc in exc.exceptions: # type: ignore
+                        if hasattr(nested_exc, '__notes__') and nested_exc.__notes__:
+                            for note in nested_exc.__notes__:
+                                errors.append(f"  • {note}")
+                        else:
+                            errors.append(f"  • {str(nested_exc)}")
+                else:
+                    errors.append(f"  • {str(exc)}")
+        
+        if errors:
+            return "Validation errors:\n" + "\n".join(errors)
+        else:
+            return f"Validation error: {str(error)}"
+    
+    # Handle other common exceptions
     elif isinstance(error, ValueError):
         return f"Value error: {str(error)}"
     elif isinstance(error, FileNotFoundError):

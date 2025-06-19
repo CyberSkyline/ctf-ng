@@ -6,6 +6,14 @@ from parser.cli import app
 runner = CliRunner()
 
 class TestCLI:
+    def test_validate_complex_challenge(self):
+        """Test validating a complex challenge compose file."""
+
+        result = runner.invoke(app, ["validate",  "tests/complex_chall.yml"])
+        assert result.exit_code == 0
+        assert "Successfully validated" in result.stdout
+
+
     def test_validate_valid_file(self):
         """Test validating a valid compose file."""
         yaml_content = """
