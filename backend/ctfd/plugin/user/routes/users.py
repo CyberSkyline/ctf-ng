@@ -14,9 +14,9 @@ from ..controllers import (
     get_user_stats,
 )
 from ...utils.api_responses import controller_response
-from ...utils.decorators import authed_user_required, handle_integrity_error
 from ...utils.logger import get_logger
 from ...utils import get_current_user_id
+from ...middleware import authed_user_required, handle_integrity_error
 
 users_namespace = Namespace("users", description="user team operations")
 logger = get_logger(__name__)

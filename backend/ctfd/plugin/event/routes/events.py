@@ -10,10 +10,13 @@ from CTFd.utils.decorators import authed_only, admins_only
 from ..controllers import create_event, list_events, get_event_info, update_event
 from ...team.controllers import list_teams_in_event
 from ...utils.api_responses import controller_response, error_response, success_response
-from ...utils.decorators import json_body_required, handle_integrity_error
 from ...utils.logger import get_logger
 from ...utils import get_current_user_id
 from ...utils import validate_event_creation, validate_event_update
+from ...middleware import (
+    handle_integrity_error,
+    json_body_required,
+)
 
 events_namespace = Namespace("events", description="event management operations")
 logger = get_logger(__name__)

@@ -25,7 +25,7 @@ test-api:
 
 # Domain  
 test-team:
-	$(PYTHON_EXEC) -m pytest tests/unit/team/ tests/integration/team/ tests/api/test_team_api.py -v
+	$(PYTHON_EXEC) -m pytest tests/unit/team/ tests/integration/team/ tests/api/team/test_team_api.py -v
 
 test-event:
 	$(PYTHON_EXEC) -m pytest tests/unit/event/ tests/integration/event/ tests/api/test_event_api.py -v
@@ -38,6 +38,9 @@ test-user:
 
 test-utils:
 	$(PYTHON_EXEC) -m pytest tests/unit/utils/ -v
+
+test-middleware:
+	$(PYTHON_EXEC) -m pytest tests/api/middleware/ -v
 
 # Fast feedback
 test-fast:
