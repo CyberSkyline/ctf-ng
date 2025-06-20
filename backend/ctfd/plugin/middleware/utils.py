@@ -5,7 +5,7 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.types import Boolean, DateTime
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from dateutil.parser import parse as parse_date
-from flask import request, abort
+from flask import abort
 
 
 

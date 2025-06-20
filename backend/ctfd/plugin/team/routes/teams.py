@@ -7,7 +7,6 @@ from flask import request, g
 from flask_restx import Namespace, Resource
 from CTFd.utils.decorators import authed_only
 from CTFd.utils.user import is_admin
-from 
 
 from ..controllers import (
     create_team,
