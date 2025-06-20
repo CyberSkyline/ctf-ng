@@ -1,0 +1,38 @@
+/* Milkdown Overrides */
+
+.milkdownEditor :global(.milkdown) {
+  --crepe-color-on-background : rgba(0, 0, 0, 0.87);
+  /* --crepe-font-default : 'CyberSkyline', sans-serif; */
+}
+
+.milkdownEditor :global(.milkdown .editor) {
+  padding : initial;
+}
+
+/* End Milkdown Overrides */
+
+.milkdownEditor {
+  padding : calc(1.25em - 2px);
+}
+
+:global(.DynamicInput) .milkdownEditor {
+  padding-top : 1.75em;
+  padding-bottom: 1.25em;
+}
+
+.milkdownEditor :global(.milkdown .milkdown-slash-menu), .milkdownEditor :global(.milkdown .milkdown-toolbar) {
+  z-index: 3;
+}
+
+.milkdownEditor :global(.milkdown .milkdown-block-handle) {
+  display : none;
+}
+
+.milkdownEditor {
+  border: 1px solid rgba(34, 36, 38, 0.15);
+}
+
+.milkdownEditor :global(.milkdown .ProseMirror p) {
+  font-size : 1em;
+  line-height: 1.4285em;
+}
