@@ -62,7 +62,7 @@ x-challenge:
   # Optional: Template definitions for reusable values
   templates:
     # Define reusable templates with anchors
-    database-flag: &db_flag_template "fake.bothify('CTF{sql_??_####}', letters='ABCDEF')"
+    database-flag: &db_flag_template "fake.bothify('CTF{sql_??_####}', letters='ABCDEF'"
     admin-flag: &admin_flag_template "fake.bothify('CTF{admin_####}', letters='0123456789')"
   
   # Optional: Variable definitions with templates and defaults
@@ -145,7 +145,7 @@ services:
   
   # Vulnerable application service  
   app:
-    image: "vulnerable-webapp:latest"
+    image: "alpine:latest"
     hostname: "app-server"
     
     # Command override
@@ -174,4 +174,4 @@ services:
 networks:
   challenge-net:
     # Required: Internal-only network
-    internal: true
+    internal: false

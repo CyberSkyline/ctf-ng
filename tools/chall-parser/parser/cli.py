@@ -361,7 +361,7 @@ def info(
         raise typer.Exit(1)
 
 @app.command()
-def template_test(
+def render(
     file_path: Path = typer.Argument(..., help="Path to the challenge compose file"),
     variable: Optional[str] = typer.Option(None, "--variable", "-var", help="Test specific variable template"),
     count: int = typer.Option(5, "--count", "-c", help="Number of template evaluations to show")

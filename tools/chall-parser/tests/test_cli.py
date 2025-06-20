@@ -156,8 +156,8 @@ services:
         finally:
             temp_path.unlink()
 
-    def test_template_test_command(self):
-        """Test template-test command."""
+    def test_render_command(self):
+        """Test render command."""
         yaml_content = """
 x-challenge:
   name: Template Test Challenge
@@ -180,7 +180,7 @@ services:
             temp_path = Path(f.name)
         
         try:
-            result = runner.invoke(app, ["template-test", str(temp_path)])
+            result = runner.invoke(app, ["render", str(temp_path)])
             assert result.exit_code == 0
             assert "test_var" in result.stdout
             assert "fake.word()" in result.stdout

@@ -4,7 +4,7 @@ A Docker Compose parser with CTF challenge extensions that supports templated va
 
 ## Usage
 
-The `chall-parser` CLI tool provides commands to validate, inspect, and test CTF challenge Docker Compose files.
+The `chall-check` CLI tool provides commands to validate, inspect, and test CTF challenge Docker Compose files.
 
 ### Installation
 
@@ -24,18 +24,18 @@ Validate a CTF challenge Docker Compose file and display a comprehensive summary
 
 ```bash
 # Basic validation with summary
-chall-parser validate challenge.yml
+chall-check validate challenge.yml
 
 # Verbose output with detailed logging
-chall-parser validate challenge.yml --verbose
+chall-check validate challenge.yml --verbose
 
 # Different output formats
-chall-parser validate challenge.yml --format json
-chall-parser validate challenge.yml --format yaml
-chall-parser validate challenge.yml --format table  # default
+chall-check validate challenge.yml --format json
+chall-check validate challenge.yml --format yaml
+chall-check validate challenge.yml --format table  # default
 
 # Skip the summary display
-chall-parser validate challenge.yml --no-summary
+chall-check validate challenge.yml --no-summary
 ```
 
 **What it validates:**
@@ -50,11 +50,11 @@ Performs validation and returns only exit codes (useful for scripts and CI/CD).
 
 ```bash
 # Check a file (silent output)
-chall-parser check challenge.yml
+chall-check check challenge.yml
 echo $?  # 0 = valid, 1 = invalid
 
 # Check from stdin
-cat challenge.yml | chall-parser check --stdin
+cat challenge.yml | chall-check check --stdin
 ```
 
 #### `info` - Show Challenge Information
@@ -63,36 +63,36 @@ Display detailed information about a challenge configuration.
 
 ```bash
 # Show full challenge summary
-chall-parser info challenge.yml
+chall-check info challenge.yml
 
 # Show specific field
-chall-parser info challenge.yml --field name
-chall-parser info challenge.yml --field description
-chall-parser info challenge.yml --field questions
-chall-parser info challenge.yml --field variables
+chall-check info challenge.yml --field name
+chall-check info challenge.yml --field description
+chall-check info challenge.yml --field questions
+chall-check info challenge.yml --field variables
 ```
 
-#### `template-test` - Test Template Variables
+#### `render` - Test Template Variables
 
 Test Faker template variable generation to preview what values will be generated.
 
 ```bash
 # Test all variables (shows 5 generations each)
-chall-parser template-test challenge.yml
+chall-check render challenge.yml
 
 # Test specific variable
-chall-parser template-test challenge.yml --variable flag_suffix
+chall-check render challenge.yml --variable flag_suffix
 
 # Generate more examples
-chall-parser template-test challenge.yml --count 10
+chall-check render challenge.yml --count 10
 
 # Test specific variable with custom count
-chall-parser template-test challenge.yml --variable username --count 3
+chall-check render challenge.yml --variable username --count 3
 ```
 
 #### Template Testing
 ```bash
-$ chall-parser template-test challenge.yml --variable username
+$ chall-check render challenge.yml --variable username
 
 username
 Template: {{ fake.user_name() }}
@@ -109,11 +109,11 @@ Generated values:
 
 ```bash
 # Show version
-chall-parser --version
+chall-check --version
 
 # Get help for any command
-chall-parser validate --help
-chall-parser template-test --help
+chall-check validate --help
+chall-check render --help
 ```
 
 ### Exit Codes
@@ -381,4 +381,3 @@ Common Faker methods:
 - `fake.ipv4()` - IP addresses
 - `fake.user_agent()` - Browser user agents
 - `fake.uuid4()` - UUID values
-```
