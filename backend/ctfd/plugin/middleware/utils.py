@@ -5,6 +5,7 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.types import Boolean, DateTime
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from dateutil.parser import parse as parse_date
+from flask import request, abort
 
 
 
@@ -15,7 +16,6 @@ logger = get_logger(__name__)
 
 def params_check_valid(params, model):
     """Check if the decorator was given valid parameters for the given model."""
-    values = []
     relationships = inspect(model).relationships
     related_models = [rel.mapper.class_ for rel in relationships]
     prefix = model.__name__.lower() + "_"

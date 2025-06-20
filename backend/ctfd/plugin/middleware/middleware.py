@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import request, abort,g
+from flask import request,g
 from sqlalchemy.exc import IntegrityError
 from CTFd.utils.user import get_current_user
 from CTFd.models import db

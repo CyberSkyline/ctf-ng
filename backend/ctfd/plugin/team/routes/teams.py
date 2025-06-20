@@ -7,6 +7,7 @@ from flask import request, g
 from flask_restx import Namespace, Resource
 from CTFd.utils.decorators import authed_only
 from CTFd.utils.user import is_admin
+from 
 
 from ..controllers import (
     create_team,
@@ -63,7 +64,7 @@ class TeamList(Resource):
         Returns:
             JSON response with team list and event info or error details.
         """
-        event_id = kwargs.get("event_id")
+        event_id = request.args.get("event_id", type=int)
         result = list_teams_in_event(event_id)
 
         if result["success"]:
