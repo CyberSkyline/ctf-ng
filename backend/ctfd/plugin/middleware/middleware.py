@@ -1,24 +1,14 @@
 from functools import wraps
 from flask import request, abort,g
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.types import Boolean, DateTime
-from sqlalchemy.orm.attributes import InstrumentedAttribute
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from CTFd.utils.user import get_current_user
 from CTFd.models import db
-from datetime import datetime
-from dateutil.parser import parse as parse_date
-from plugin.user.models.User import User
-from plugin.event.models.Event import Event
-from plugin.team.models.Team import Team
 from plugin.utils.api_responses import error_response
 from plugin.utils.logger import get_logger
 from .utils import (
     params_check_valid,
     get_param_values,
     filter_model_by_fields,
-    condition_add,
-    condition_add_rel,
 )
 
 

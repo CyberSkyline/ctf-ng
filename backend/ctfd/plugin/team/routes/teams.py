@@ -29,10 +29,8 @@ from ...utils import (
     validate_team_leave,
     validate_team_join_by_code,
     validate_captain_assignment,
-    validate_event_id_param,
 )
 from ...middleware import (
-    lookup,
     authed_user_required,
     handle_integrity_error,
     json_body_required,
@@ -65,6 +63,7 @@ class TeamList(Resource):
         Returns:
             JSON response with team list and event info or error details.
         """
+        event_id = kwargs.get("event_id")
         result = list_teams_in_event(event_id)
 
         if result["success"]:

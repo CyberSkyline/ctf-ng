@@ -15,7 +15,7 @@ def test_lookup_by_id(temp_routes_client):
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"] is True
-    assert data["user_id"] is 1
+    assert data["user_id"] == 1
     assert data["event_name"] == "Temp Event"
     assert data["team_name"] == "Temp Team"
 

@@ -112,7 +112,7 @@ def condition_add(conditions, model, key, value):
             value = parse_date(value)
         except ValueError:
             logger.error(f"Invalid date format for value '{value}'.")
-            abort(400, description=f"Invalid date format for value'.")
+            abort(400, description=f"Invalid date format for {value}'.")
         conditions.append(getattr(model, key) == value)
     else:
         conditions.append(getattr(model, key) == value)

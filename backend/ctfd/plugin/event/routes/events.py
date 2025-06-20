@@ -14,8 +14,6 @@ from ...utils.logger import get_logger
 from ...utils import get_current_user_id
 from ...utils import validate_event_creation, validate_event_update
 from ...middleware import (
-    lookup,
-    authed_user_required,
     handle_integrity_error,
     json_body_required,
 )

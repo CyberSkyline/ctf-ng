@@ -24,7 +24,6 @@ def test_teams_endpoint_requires_authentication(client, event):
 def test_teams_endpoint_with_authentication(logged_in_client, event):
     """Check that teams endpoint works for an authenticated user."""
     response = logged_in_client.get(f"/plugin/api/teams?id={event.id}")
-    print(response)
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"]

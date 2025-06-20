@@ -74,10 +74,9 @@ def temp_routes_client():
         event2 = Event(name="Second Temp Event", description="Another temporary event for testing", locked=True, start_time=datetime(2023, 1, 1), end_time=datetime(2023, 12, 31))
         _db.session.add(event2)
         _db.session.commit()
-        team_result = create_team(name="Temp Team", event_id=event.id, creator_id=user.id)
-        team = team_result["team"]
-        team_result2 = create_team(name="Second Team", event_id=event.id, creator_id=user2.id)
-        team2 = team_result2["team"]
+        create_team(name="Temp Team", event_id=event.id, creator_id=user.id)
+        create_team(name="Second Team", event_id=event.id, creator_id=user2.id)
+
 
     @app.route("/test/middleware/id", methods=["GET"])
     @lookup(NgUser, ['user_id'])
