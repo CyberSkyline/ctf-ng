@@ -1,7 +1,7 @@
 import tempfile
 from pathlib import Path
 from typer.testing import CliRunner
-from parser.cli import app
+from chall_check.cli import app
 
 runner = CliRunner()
 
@@ -9,7 +9,7 @@ class TestCLI:
     def test_validate_complex_challenge(self):
         """Test validating a complex challenge compose file."""
 
-        result = runner.invoke(app, ["validate",  "tests/complex_chall.yml"])
+        result = runner.invoke(app, ["validate",  "examples/complex_chall.yml"])
         assert result.exit_code == 0
         assert "Successfully validated" in result.stdout
 

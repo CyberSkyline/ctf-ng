@@ -218,7 +218,7 @@ services:
 
     def test_complex_challenge(self):
         """Test parsing a complex challenge with multiple services and networks."""
-        challenge = parse_compose_file("tests/complex_chall.yml")
+        challenge = parse_compose_file("examples/complex_chall.yml")
         
         # Validate challenge metadata
         assert challenge.challenge is not None

@@ -5,10 +5,13 @@ This module provides a CLI tool for parsing and validating Docker Compose files
 with CTF challenge extensions using Typer.
 """
 
+from enum import Enum, StrEnum
+from itertools import chain
 import sys
 import logging
 from pathlib import Path
 from typing import Optional
+import attrs
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
@@ -17,8 +20,9 @@ import typer
 from cattrs import ClassValidationError, transform_error
 from cattrs.v import format_exception
 import yaml
+import json
 
-from parser.yaml_parser import parse_compose_file, parse_compose_string
+from parser.yaml_parser import parse_compose_file, parse_compose_string, ComposeYamlParser
 from parser.compose import ComposeFile, ChallengeInfo
 
 app = typer.Typer(
@@ -260,13 +264,10 @@ def validate(
                 display_challenge_summary(compose.challenge)
                 display_services_summary(compose)
             elif output_format == "json":
-                import json
-                from .yaml_parser import ComposeYamlParser
                 parser = ComposeYamlParser()
                 data = parser.converter.unstructure(compose)
                 console.print(Syntax(json.dumps(data, indent=2), "json"))
             elif output_format == "yaml":
-                from .yaml_parser import ComposeYamlParser
                 parser = ComposeYamlParser()
                 yaml_output = parser.to_yaml(compose)
                 console.print(Syntax(yaml_output, "yaml"))
@@ -306,7 +307,6 @@ def check(
     """
     try:
         if stdin:
-            import sys
             yaml_content = sys.stdin.read()
             parse_compose_string(yaml_content)
         elif file_path:
@@ -322,10 +322,12 @@ def check(
     except Exception:
         raise typer.Exit(1)
 
+ChallengeField = Enum("ChallengeField", map(lambda x: (x,x), attrs.fields_dict(ChallengeInfo).keys()), type=str)
+
 @app.command()
 def info(
     file_path: Path = typer.Argument(..., help="Path to the challenge compose file"),
-    field: Optional[str] = typer.Option(None, "--field", help="Show specific field (name, description, questions, etc.)")
+    field: ChallengeField = typer.Argument(..., help="Show specific field (name, description, questions, etc.)")
 ):
     """
     Show information about a challenge.
@@ -338,19 +340,18 @@ def info(
         challenge = compose.challenge
         
         if field:
-            if hasattr(challenge, field):
-                value = getattr(challenge, field)
+            if hasattr(challenge, field.value):
+                value = getattr(challenge, field.value)
                 if value is not None:
                     if isinstance(value, (list, dict)):
-                        import json
                         console.print(json.dumps(value, indent=2, default=str))
                     else:
                         console.print(str(value))
                 else:
-                    console.print(f"[yellow]Field '{field}' is not set[/yellow]")
+                    console.print(f"[yellow]Field '{field.value}' is not set[/yellow]")
             else:
-                console.print(f"[red]Unknown field: {field}[/red]")
-                available_fields = [attr for attr in dir(challenge) if not attr.startswith('_')]
+                console.print(f"[red]Unknown field: {field.value}[/red]")
+                available_fields = [attr.value for attr in ChallengeField]
                 console.print(f"Available fields: {', '.join(available_fields)}")
                 raise typer.Exit(1)
         else:
