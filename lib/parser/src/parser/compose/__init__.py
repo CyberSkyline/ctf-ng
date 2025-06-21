@@ -1,5 +1,5 @@
 from parser.compose.compose import ComposeFile, Network, ComposeResourceName, ServicesDict, NetworksDict
-from parser.compose.service import Service, Template
+from parser.compose.service import Service
 from parser.compose.challenge_info import ChallengeInfo, TextHint, Hint, Question, Variable
 
 __all__ = [

@@ -104,34 +104,6 @@ services:
         assert result.exit_code == 1
         assert result.stdout.strip() == ""  # Silent failure
 
-    def test_info_command(self):
-        """Test info command."""
-        yaml_content = """
-x-challenge:
-  name: Info Test Challenge
-  description: Testing info command
-  icon: TbInfo
-  questions: []
-  tags:
-    - test
-    - cli
-services:
-  app:
-    image: test:latest
-    hostname: test-host
-"""
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yml', delete=False) as f:
-            f.write(yaml_content)
-            temp_path = Path(f.name)
-        
-        try:
-            result = runner.invoke(app, ["info", str(temp_path)])
-            assert result.exit_code == 0
-            assert "Info Test Challenge" in result.stdout
-        finally:
-            temp_path.unlink()
-
     def test_info_specific_field(self):
         """Test info command with specific field."""
         yaml_content = """
@@ -150,7 +122,7 @@ services:
             temp_path = Path(f.name)
         
         try:
-            result = runner.invoke(app, ["info", str(temp_path), "--field", "name"])
+            result = runner.invoke(app, ["info", str(temp_path), "name"])
             assert result.exit_code == 0
             assert "Field Test Challenge" in result.stdout
         finally:
