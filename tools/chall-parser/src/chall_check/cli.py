@@ -5,8 +5,7 @@ This module provides a CLI tool for parsing and validating Docker Compose files
 with CTF challenge extensions using Typer.
 """
 
-from enum import Enum, StrEnum
-from itertools import chain
+from enum import Enum
 import sys
 import logging
 from pathlib import Path

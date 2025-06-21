@@ -27,3 +27,5 @@ build-backend = "hatchling.build"
 [tool.uv.sources]
 parser = { path = "../../lib/parser" }
 
+[tool.ruff]
+target-version = "py311"
