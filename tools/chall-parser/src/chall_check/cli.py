@@ -9,7 +9,7 @@ from enum import Enum
 import sys
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
 import attrs
 from rich.console import Console
 from rich.table import Table
@@ -232,12 +232,18 @@ def display_services_summary(compose: ComposeFile):
     
     console.print(services_table)
 
+class OutputFormat(str, Enum):
+    TABLE = "table"
+    JSON = "json"
+    YAML = "yaml"
+    
+
 @app.command()
 def validate(
-    file_path: Path = typer.Argument(..., help="Path to the challenge compose file"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose logging"),
-    show_summary: bool = typer.Option(True, "--summary/--no-summary", help="Show challenge summary"),
-    output_format: str = typer.Option("table", "--format", "-f", help="Output format: table, json, yaml")
+    file_path: Annotated[Path, typer.Argument(help="Path to the challenge compose file")],
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Enable verbose logging")] = False,
+    show_summary: Annotated[bool, typer.Option("--summary/--no-summary", help="Show challenge summary")] = True,
+    output_format: Annotated[OutputFormat, typer.Option("--format", "-f", help="Output format: table, json, yaml")] = OutputFormat.TABLE
 ):
     """
     Validate a CTF challenge Docker Compose file.
@@ -294,8 +300,8 @@ def validate(
 
 @app.command()
 def check(
-    file_path: Optional[Path] = typer.Argument(None, help="Path to the challenge compose file"),
-    stdin: bool = typer.Option(False, "--stdin", help="Read from stdin instead of file")
+    file_path: Annotated[Optional[Path], typer.Argument(help="Path to the challenge compose file")],
+    stdin: Annotated[bool, typer.Option(help="Read from stdin instead of file")] = False
 ):
     """
     Quick validation check (exit code only).
@@ -325,8 +331,8 @@ ChallengeField = Enum("ChallengeField", map(lambda x: (x,x), attrs.fields_dict(C
 
 @app.command()
 def info(
-    file_path: Path = typer.Argument(..., help="Path to the challenge compose file"),
-    field: ChallengeField = typer.Argument(..., help="Show specific field (name, description, questions, etc.)")
+    file_path: Annotated[Path, typer.Argument(help="Path to the challenge compose file")],
+    field: Annotated[ChallengeField, typer.Argument(help="Show specific field (name, description, questions, etc.)")]
 ):
     """
     Show information about a challenge.
@@ -362,9 +368,9 @@ def info(
 
 @app.command()
 def render(
-    file_path: Path = typer.Argument(..., help="Path to the challenge compose file"),
-    variable: Optional[str] = typer.Option(None, "--variable", "-var", help="Test specific variable template"),
-    count: int = typer.Option(5, "--count", "-c", help="Number of template evaluations to show")
+    file_path: Annotated[Path, typer.Argument(help="Path to the challenge compose file")],
+    variable: Annotated[Optional[str], typer.Option("--variable", "-var", help="Test specific variable template")] = None,
+    count: Annotated[int, typer.Option("--count", "-c", help="Number of template evaluations to show")] = 5
 ):
     """
     Test template variable generation.
@@ -410,7 +416,7 @@ def render(
 
 @app.callback(invoke_without_command=True)
 def main(
-    version: bool = typer.Option(False, "--version", help="Show version and exit")
+    version: Annotated[bool, typer.Option(help="Show version and exit")] = False
 ):
     """
     CTF Challenge Parser - Validate and parse Docker Compose files with CTF extensions.
