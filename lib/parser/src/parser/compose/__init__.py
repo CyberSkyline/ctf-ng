@@ -5,7 +5,6 @@ from parser.compose.challenge_info import ChallengeInfo, TextHint, Hint, Questio
 __all__ = [
     'ComposeFile',
     'Service',
-    'Template',
     'ChallengeInfo',
     'TextHint',
     'Hint',

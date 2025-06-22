@@ -26,7 +26,7 @@ from parser.compose import ComposeFile, ChallengeInfo
 
 app = typer.Typer(
     name="chall-parser",
-    add_completion=False
+    add_completion=True
 )
 
 console = Console()

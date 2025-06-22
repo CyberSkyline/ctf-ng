@@ -87,7 +87,7 @@ class Rewriter:
 
         yield self.loader.get_event()
 
-    def rewrite_variables(self):
+    def rewrite_variables(self) -> Generator[Event, None, None]:
         logger.debug("Entering rewrite_variables")
         if not self.loader.check_event(MappingStartEvent):
             logger.debug("No MappingStartEvent after 'variables'")
@@ -103,7 +103,7 @@ class Rewriter:
                 return
             yield from self.rewrite_variable(variable_key.value)
 
-    def rewrite(self) -> Generator[Event]:
+    def rewrite(self) -> Generator[Event, None, None]:
         logger.debug("Entering rewrite_aliases")
         while True:
             if self.loader.check_event(ScalarEvent):
