@@ -1,6 +1,6 @@
 """
-/backend/ctfd/plugin/admin/database/get_detailed_stats.py
 Contains the business logic to query and assemble a comprehensive statistics report for the system.
+/backend/ctfd/plugin/admin/controllers/get_detailed_stats.py
 """
 
 from typing import Any
@@ -8,11 +8,11 @@ from typing import Any
 from CTFd.models import db
 from sqlalchemy import func
 
-from ...event.models.Event import Event
-from ...team.models.Team import Team
-from ...team.models.TeamMember import TeamMember
+from plugin.event.models.Event import Event
+from plugin.team.models.Team import Team
+from plugin.team.models.TeamMember import TeamMember
+from plugin.core.utils.data_conversion import rows_to_dicts
 from .get_data_counts import get_data_counts
-from ...utils.data_conversion import rows_to_dicts
 
 
 def get_detailed_stats() -> dict[str, Any]:
@@ -37,11 +37,7 @@ def get_detailed_stats() -> dict[str, Any]:
 
     event_stats = rows_to_dicts(event_stats_query)
 
-    empty_teams_query = db.session.query(Team.id, Team.name, Team.event_id).filter(Team.member_count == 0).all()
-
-    empty_teams = [
-        {"id": team_id, "name": team_name, "event_id": event_id} for team_id, team_name, event_id in empty_teams_query
-    ]
+    empty_teams = Team.find_empty_teams()
 
     return {
         "success": True,

@@ -1,16 +1,15 @@
 """
-/backend/ctfd/plugin/admin/database/reset_event_data.py
 Contains the business logic for the destructive operation of resetting all data for a single event.
+/backend/ctfd/plugin/admin/controllers/reset_event_data.py
 """
 
 from typing import Any
 
-from CTFd.models import db
 
-from ...utils.logger import get_logger
-from ...event.models.Event import Event
-from ...team.models.Team import Team
-from ...team.models.TeamMember import TeamMember
+from plugin.core.utils.logger import get_logger
+from plugin.event.models.Event import Event
+from plugin.team.models.Team import Team
+from plugin.team.models.TeamMember import TeamMember
 
 logger = get_logger(__name__)
 
@@ -25,7 +24,7 @@ def reset_event_data(event_id: int) -> dict[str, Any]:
         dict: Success status and deletion counts or error info.
     """
 
-    event = Event.query.get(event_id)
+    event = Event.find_by_id(event_id)
     if not event:
         logger.warning(
             "Event reset failed - event not found",
@@ -33,8 +32,8 @@ def reset_event_data(event_id: int) -> dict[str, Any]:
         )
         return {"success": False, "error": "Event not found."}
 
-    team_members_count = TeamMember.query.filter_by(event_id=event_id).count()
-    teams_count = Team.query.filter_by(event_id=event_id).count()
+    team_members_count = TeamMember.count_by_event(event_id)
+    teams_count = Team.count_by_event(event_id)
 
     logger.warning(
         "Initiating event data reset",
@@ -48,10 +47,8 @@ def reset_event_data(event_id: int) -> dict[str, Any]:
         },
     )
 
-    TeamMember.query.filter_by(event_id=event_id).delete()
-    Team.query.filter_by(event_id=event_id).delete()
-
-    db.session.commit()
+    TeamMember.delete_by_event(event_id)
+    Team.delete_by_event(event_id)
 
     logger.info(
         "Event data reset successfully",

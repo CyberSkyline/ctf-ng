@@ -9,41 +9,41 @@ endif
 
 default: test-all
 
-# All
+# All tests except middleware (need isolation)
 test-all:
-	$(PYTHON_EXEC) -m pytest -s
+	$(PYTHON_EXEC) -m pytest -m "not middleware" -s
 
 # Type
 test-unit:
-	$(PYTHON_EXEC) -m pytest tests/unit/ -v
+	$(PYTHON_EXEC) -m pytest admin/tests/test_admin_logic.py event/tests/test_event_models.py team/tests/test_team_models.py user/tests/test_user_models.py core/testing/system/ -v
 
 test-integration:
-	$(PYTHON_EXEC) -m pytest tests/integration/ -v
+	$(PYTHON_EXEC) -m pytest admin/tests/test_admin_controllers.py event/tests/test_event_controllers.py event/tests/test_event_lifecycle.py team/tests/test_captain_edge_cases.py team/tests/test_complex_team_operations.py team/tests/test_team_controllers.py user/tests/test_user_controllers.py -v
 	
 test-api:
-	$(PYTHON_EXEC) -m pytest tests/api/ -v
+	$(PYTHON_EXEC) -m pytest admin/tests/test_admin_api.py event/tests/test_event_api.py team/tests/test_team_api.py user/tests/test_user_api.py -v
 
 # Domain  
 test-team:
-	$(PYTHON_EXEC) -m pytest tests/unit/team/ tests/integration/team/ tests/api/team/test_team_api.py -v
+	$(PYTHON_EXEC) -m pytest team/tests/ -v
 
 test-event:
-	$(PYTHON_EXEC) -m pytest tests/unit/event/ tests/integration/event/ tests/api/test_event_api.py -v
+	$(PYTHON_EXEC) -m pytest event/tests/ -v
 
 test-admin:
-	$(PYTHON_EXEC) -m pytest tests/unit/admin/ tests/integration/admin/ tests/api/test_admin_api.py -v
+	$(PYTHON_EXEC) -m pytest admin/tests/ -v
 
 test-user:
-	$(PYTHON_EXEC) -m pytest tests/unit/user/ tests/integration/user/ tests/api/test_user_api.py -v
+	$(PYTHON_EXEC) -m pytest user/tests/ -v
 
 test-utils:
-	$(PYTHON_EXEC) -m pytest tests/unit/utils/ -v
+	$(PYTHON_EXEC) -m pytest core/testing/system/ -v
 
 test-middleware:
-	$(PYTHON_EXEC) -m pytest tests/api/middleware/ -v
+	$(PYTHON_EXEC) -m pytest -m middleware -v
 
 # Fast feedback
 test-fast:
-	$(PYTHON_EXEC) -m pytest tests/unit/ -x  
+	$(PYTHON_EXEC) -m pytest admin/tests/test_admin_logic.py event/tests/test_event_models.py team/tests/test_team_models.py user/tests/test_user_models.py -x  
 
 .PHONY: default test-all test-unit test-integration test-api test-team test-event test-admin test-user test-utils test-fast

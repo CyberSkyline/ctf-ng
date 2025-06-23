@@ -1,13 +1,13 @@
 """
-/plugin/admin/controllers/cleanup_headless_teams.py
 Contains the business logic for an admin tool that finds and fixes teams without a captain.
+/backend/ctfd/plugin/admin/controllers/cleanup_headless_teams.py
 """
 
 from CTFd.models import db
-from ...team.models.Team import Team
-from ...team.models.TeamMember import TeamMember
-from ...team.models.enums import TeamRole
-from ...utils.logger import get_logger
+from plugin.team.models.Team import Team
+from plugin.team.models.TeamMember import TeamMember
+from plugin.team.models.enums import TeamRole
+from plugin.core.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -37,7 +37,7 @@ def cleanup_headless_teams():
 
     fixed_count = 0
     for (team_id,) in headless_team_ids:
-        members = TeamMember.query.filter_by(team_id=team_id).order_by(TeamMember.joined_at.asc()).all()
+        members = TeamMember.find_all_by_team_ordered_by_join_date(team_id)
         if members:
             # Promote the oldest member
             new_captain = members[0]

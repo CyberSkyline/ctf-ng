@@ -5,10 +5,9 @@ Disbands a team and removes all its members.
 
 from typing import Any
 
-from ...utils.logger import get_logger
-from ..models.Team import Team
-from ..models.TeamMember import TeamMember
-from ..models.enums import TeamRole
+from plugin.core.utils.logger import get_logger
+from plugin.team.models.Team import Team
+from plugin.team.models.TeamMember import TeamMember
 
 logger = get_logger(__name__)
 
@@ -24,7 +23,7 @@ def disband_team(team_id: int, actor_id: int, is_admin: bool = False) -> dict[st
     Returns:
         dict: Success status and confirmation message or error info.
     """
-    team = Team.query.get(team_id)
+    team = Team.find_by_id(team_id)
     if not team:
         logger.warning(
             "Team disband failed - team not found",
@@ -32,7 +31,7 @@ def disband_team(team_id: int, actor_id: int, is_admin: bool = False) -> dict[st
         )
         return {"success": False, "error": "Team not found."}
 
-    is_captain = TeamMember.query.filter_by(team_id=team_id, user_id=actor_id, role=TeamRole.CAPTAIN).first()
+    is_captain = TeamMember.find_captain_by_team_and_user(team_id, actor_id)
 
     if not is_admin and not is_captain:
         logger.warning(

@@ -1,15 +1,14 @@
 """
-/backend/ctfd/plugin/admin/database/cleanup_orphaned_data.py
 Contains the business logic for an admin tool that removes user records with no team associations.
+/backend/ctfd/plugin/admin/controllers/cleanup_orphaned_data.py
 """
 
 from typing import Any
 
 from CTFd.models import db
 
-from ...utils.logger import get_logger
-from ...team.models.TeamMember import TeamMember
-from ...user.models.User import User
+from plugin.core.utils.logger import get_logger
+from plugin.user.models.User import User
 
 logger = get_logger(__name__)
 
@@ -17,9 +16,7 @@ logger = get_logger(__name__)
 def cleanup_orphaned_data() -> dict[str, Any]:
     """Removes user records that have no team members."""
 
-    orphaned_users_query = User.query.outerjoin(TeamMember, User.id == TeamMember.user_id).filter(
-        TeamMember.id.is_(None)
-    )
+    orphaned_users_query = User.find_orphaned_users_query()
 
     orphaned_users = orphaned_users_query.all()
     orphaned_count = len(orphaned_users)

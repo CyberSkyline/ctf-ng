@@ -7,13 +7,22 @@ from flask import g
 from flask_restx import Namespace, Resource
 from CTFd.utils.decorators import authed_only, admins_only
 
-from ..controllers import create_event, list_events, get_event_info, update_event
-from ...team.controllers import list_teams_in_event
-from ...utils.api_responses import controller_response, error_response, success_response
-from ...utils.logger import get_logger
-from ...utils import get_current_user_id
-from ...utils import validate_event_creation, validate_event_update
-from ...middleware import (
+from plugin.event.controllers import (
+    create_event,
+    list_events,
+    get_event_info,
+    update_event,
+)
+from plugin.team.controllers import list_teams_in_event
+from plugin.core.utils.api_responses import (
+    controller_response,
+    error_response,
+    success_response,
+)
+from plugin.core.utils.logger import get_logger
+from plugin.core.utils import get_current_user_id
+from plugin.core.utils import validate_event_creation, validate_event_update
+from plugin.core.middleware import (
     handle_integrity_error,
     json_body_required,
 )

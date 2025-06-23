@@ -8,7 +8,7 @@ from flask_restx import Namespace, Resource
 from CTFd.utils.decorators import authed_only
 from CTFd.utils.user import is_admin
 
-from ..controllers import (
+from plugin.team.controllers import (
     create_team,
     join_team,
     leave_team,
@@ -20,21 +20,28 @@ from ..controllers import (
     transfer_captaincy,
     get_team_captain,
 )
-from ...utils.api_responses import controller_response, error_response, success_response
-from ...utils.logger import get_logger
-from ...utils import get_current_user_id
-from ...utils import (
+from plugin.core.utils.api_responses import (
+    controller_response,
+    error_response,
+    success_response,
+)
+from plugin.core.utils.logger import get_logger
+from plugin.core.utils import get_current_user_id
+from plugin.core.utils import (
     validate_team_creation,
     validate_team_update,
     validate_team_leave,
     validate_team_join_by_code,
     validate_captain_assignment,
 )
-from ...middleware import (
+from plugin.core.middleware import (
+    lookup,
     authed_user_required,
     handle_integrity_error,
     json_body_required,
 )
+from plugin.event.models.Event import Event
+from plugin.team.models.Team import Team
 
 teams_namespace = Namespace("teams", description="team management operations")
 logger = get_logger(__name__)
@@ -43,6 +50,7 @@ logger = get_logger(__name__)
 @teams_namespace.route("")
 class TeamList(Resource):
     @authed_only
+    @lookup(Event, ["event_id"])
     @handle_integrity_error
     @teams_namespace.doc(
         description="Get teams in a specific event",
@@ -54,7 +62,7 @@ class TeamList(Resource):
             500: "Internal Server Error",
         },
     )
-    def get(self):
+    def get(self, **kwargs):
         """Get all teams in a event.
 
         Query Parameters:
@@ -63,8 +71,8 @@ class TeamList(Resource):
         Returns:
             JSON response with team list and event info or error details.
         """
-        event_id = request.args.get("event_id", type=int)
-        result = list_teams_in_event(event_id)
+        event = kwargs["event"]
+        result = list_teams_in_event(event.id)
 
         if result["success"]:
             logger.info(
@@ -72,7 +80,7 @@ class TeamList(Resource):
                 extra={
                     "context": {
                         "user_id": get_current_user_id(),
-                        "event_id": event_id,
+                        "event_id": event.id,
                         "team_count": len(result.get("teams", [])),
                     }
                 },
@@ -162,6 +170,7 @@ class TeamList(Resource):
 @teams_namespace.param("team_id", "Team ID")
 class TeamDetail(Resource):
     @authed_only
+    @lookup(Team, ["team_id"])
     @handle_integrity_error
     @teams_namespace.doc(
         description="Get detailed information about a specific team",
@@ -172,7 +181,7 @@ class TeamDetail(Resource):
             500: "Internal Server Error",
         },
     )
-    def get(self, team_id):
+    def get(self, team_id, **kwargs):
         """Get detailed info about a team.
 
         Args:
@@ -181,12 +190,13 @@ class TeamDetail(Resource):
         Returns:
             JSON response with team details, members, and event info.
         """
-        result = get_team_info(team_id)
+        team = kwargs["team"]
+        result = get_team_info(team.id)
 
         if result["success"]:
             logger.info(
                 "Team info retrieved",
-                extra={"context": {"user_id": get_current_user_id(), "team_id": team_id}},
+                extra={"context": {"user_id": get_current_user_id(), "team_id": team.id}},
             )
             return success_response(result)
         else:
@@ -204,6 +214,7 @@ class TeamDetail(Resource):
 
     @authed_only
     @authed_user_required
+    @lookup(Team, ["team_id"])
     @handle_integrity_error
     @teams_namespace.doc(
         description="Update team details (Captain/Admin only)",
@@ -215,7 +226,7 @@ class TeamDetail(Resource):
             500: "Internal Server Error",
         },
     )
-    def patch(self, team_id):
+    def patch(self, team_id, **kwargs):
         """Update team info with proper auth checks.
 
         Args:
@@ -246,8 +257,9 @@ class TeamDetail(Resource):
 
         new_name = data.get("name")
 
+        team = kwargs["team"]
         result = update_team(
-            team_id=team_id,
+            team_id=team.id,
             actor_id=g.user.id,
             new_name=new_name,
             is_admin=is_admin(),
@@ -259,7 +271,7 @@ class TeamDetail(Resource):
                 extra={
                     "context": {
                         "user_id": get_current_user_id(),
-                        "team_id": team_id,
+                        "team_id": team.id,
                         "new_name": new_name,
                     }
                 },
@@ -273,7 +285,7 @@ class TeamDetail(Resource):
                     extra={
                         "context": {
                             "user_id": get_current_user_id(),
-                            "team_id": team_id,
+                            "team_id": team.id,
                             "error": result["error"],
                         }
                     },
@@ -282,6 +294,7 @@ class TeamDetail(Resource):
 
     @authed_only
     @authed_user_required
+    @lookup(Team, ["team_id"])
     @handle_integrity_error
     @teams_namespace.doc(
         description="Disband a team (Captain/Admin only)",
@@ -293,7 +306,7 @@ class TeamDetail(Resource):
             500: "Internal Server Error",
         },
     )
-    def delete(self, team_id):
+    def delete(self, team_id, **kwargs):
         """Disband a team and remove all its members.
 
         Args:
@@ -302,9 +315,10 @@ class TeamDetail(Resource):
         Returns:
             JSON response with confirmation message or error details.
         """
+        team = kwargs["team"]
         user_is_admin = is_admin()
 
-        result = disband_team(team_id=team_id, actor_id=g.user.id, is_admin=user_is_admin)
+        result = disband_team(team_id=team.id, actor_id=g.user.id, is_admin=user_is_admin)
 
         if result["success"]:
             logger.info(
@@ -312,7 +326,7 @@ class TeamDetail(Resource):
                 extra={
                     "context": {
                         "user_id": get_current_user_id(),
-                        "team_id": team_id,
+                        "team_id": team.id,
                         "is_admin": user_is_admin,
                     }
                 },
@@ -326,7 +340,7 @@ class TeamDetail(Resource):
                     extra={
                         "context": {
                             "user_id": get_current_user_id(),
-                            "team_id": team_id,
+                            "team_id": team.id,
                             "error": result["error"],
                         }
                     },
@@ -456,7 +470,6 @@ class TeamJoin(Resource):
                         "user_id": get_current_user_id(),
                         "team_id": result["team"].id,
                         "team_name": result["team"].name,
-                        "invite_code": invite_code,
                     }
                 },
             )
@@ -467,7 +480,6 @@ class TeamJoin(Resource):
                 extra={
                     "context": {
                         "user_id": get_current_user_id(),
-                        "invite_code": invite_code,
                         "error": result["error"],
                     }
                 },

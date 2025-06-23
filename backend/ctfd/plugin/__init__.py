@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # Main Entry Point
 
-from .routes import delete_unwanted_ctfd_routes, api_blueprint
-from .routes.views import plugin_views
-from .utils.logger import get_logger
+from .core.routes import delete_unwanted_ctfd_routes, api_blueprint
+from .core.routes.views import plugin_views
+from .core.utils.logger import get_logger
 from CTFd.models import db
-from typing import Tuple, Any
+from typing import Any
 
 logger = get_logger(__name__)
 
 
-def _create_tables() -> Tuple[Any, Any, Any, Any]:
+def _create_tables() -> tuple[Any, Any, Any, Any]:
     from .event.models.Event import Event
     from .team.models.Team import Team
     from .user.models.User import User

@@ -5,8 +5,8 @@ Retrieves a list of all teams within a specific event.
 
 from typing import Any
 
-from ...event.models.Event import Event
-from ..models.Team import Team
+from plugin.event.models.Event import Event
+from plugin.team.models.Team import Team
 
 
 def list_teams_in_event(event_id: int) -> dict[str, Any]:
@@ -18,14 +18,14 @@ def list_teams_in_event(event_id: int) -> dict[str, Any]:
     Returns:
         dict: Success status, list of teams with stats, and event info.
     """
-    event = Event.query.get(event_id)
+    event = Event.find_by_id(event_id)
     if not event:
         return {
             "success": False,
             "error": f"Event with ID {event_id} does not exist",
         }
 
-    teams = Team.query.filter_by(event_id=event_id).all()
+    teams = Team.find_all_by_event(event_id)
 
     team_list = []
     for team in teams:

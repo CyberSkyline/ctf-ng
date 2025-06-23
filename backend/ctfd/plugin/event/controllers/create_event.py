@@ -7,7 +7,7 @@ from typing import Any
 from datetime import datetime
 
 
-from ...utils.logger import get_logger
+from plugin.core.utils.logger import get_logger
 from ..models.Event import Event
 
 logger = get_logger(__name__)
@@ -35,7 +35,7 @@ def create_event(
         dict: Success status, event object, and confirmation message or error info.
     """
 
-    existing_event = Event.query.filter_by(name=name).first()
+    existing_event = Event.find_by_name(name)
     if existing_event:
         logger.warning(
             "Event creation failed - name already exists",

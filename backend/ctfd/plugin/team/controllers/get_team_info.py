@@ -5,9 +5,9 @@ Retrieves detailed information about a team and its members.
 
 from typing import Any
 
-from ...event.models.Event import Event
-from ..models.Team import Team
-from ..models.TeamMember import TeamMember
+from plugin.event.models.Event import Event
+from plugin.team.models.Team import Team
+from plugin.team.models.TeamMember import TeamMember
 
 
 def get_team_info(team_id: int) -> dict[str, Any]:
@@ -19,12 +19,12 @@ def get_team_info(team_id: int) -> dict[str, Any]:
     Returns:
         dict: Success status, team details, and membership info.
     """
-    team = Team.query.get(team_id)
+    team = Team.find_by_id(team_id)
     if not team:
         return {"success": False, "error": "Team not found."}
 
-    event = Event.query.get(team.event_id)
-    team_members = TeamMember.query.filter_by(team_id=team_id).all()
+    event = Event.find_by_id(team.event_id)
+    team_members = TeamMember.find_all_by_team(team_id)
 
     team_data = {
         "id": team.id,

@@ -7,11 +7,9 @@ from typing import Any
 from datetime import datetime
 
 from CTFd.models import db
-from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 
-from ...utils.logger import get_logger
-from ...team.models.Team import Team
+from plugin.core.utils.logger import get_logger
 from ..models.Event import Event
 
 logger = get_logger(__name__)
@@ -41,7 +39,7 @@ def update_event(
         dict: Success status, updated event object, and confirmation message or error info.
     """
 
-    event = Event.query.get(event_id)
+    event = Event.find_by_id(event_id)
     if not event:
         logger.warning(
             "Event update failed - event not found",
@@ -57,7 +55,7 @@ def update_event(
     old_locked = event.locked
 
     if name and name != event.name:
-        existing = Event.query.filter_by(name=name).first()
+        existing = Event.find_by_name(name)
         if existing:
             logger.warning(
                 "Event update failed - name already exists",
@@ -106,7 +104,6 @@ def update_event(
         }
 
     try:
-        # Build update data with actual values (not ISO strings)
         update_data = {}
         if name and name != event.name:
             update_data["name"] = name
@@ -175,7 +172,7 @@ def _validate_max_team_size_change(event, new_max_size, changes_made):
     Returns:
         dict: Success status and error message if validation fails
     """
-    largest_team_size = db.session.query(func.max(Team.member_count)).filter(Team.event_id == event.id).scalar() or 0
+    largest_team_size = event.get_largest_team_size()
 
     if new_max_size < largest_team_size:
         return {
@@ -188,7 +185,7 @@ def _validate_max_team_size_change(event, new_max_size, changes_made):
         "new": new_max_size,
     }
 
-    affected_teams = Team.query.filter_by(event_id=event.id).count()
+    affected_teams = event.get_team_count()
     logger.info(f"Updated max team size affects {affected_teams} teams in event '{event.name}'")
 
     return {"success": True}
