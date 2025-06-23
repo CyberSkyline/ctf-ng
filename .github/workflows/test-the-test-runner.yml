@@ -1,6 +1,10 @@
-name: Test Runner
 
-on: [ pull_request ]
+name: Testing the test runner
+
+on:
+  push:
+    branches:
+      - refactor/plugin-dir-removal
 
 jobs:
   test:
