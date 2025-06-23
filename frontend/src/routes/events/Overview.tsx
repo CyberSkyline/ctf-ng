@@ -1,15 +1,15 @@
 import {
   Container, Tabs,
 } from '@radix-ui/themes';
-import ChallengesTab from 'routes/events/OverviewTabs/ChallengesTab';
-import EventHeader from 'components/event/EventHeader';
-import LeaderboardTab from 'routes/events/OverviewTabs/LeaderboardTab';
-import TeamTab from 'routes/events/OverviewTabs/TeamTab';
 
-import {
-  FaRankingStar, FaTrophy, FaUserGroup,
-} from 'react-icons/fa6';
+import { TbCube, TbStar, TbUsersGroup } from 'react-icons/tb';
 import { useSearchParams } from 'react-router';
+
+import EventHeader from 'components/EventHeader';
+import HeaderContainer from 'components/HeaderContainer';
+import LeaderboardTab from './OverviewTabs/LeaderboardTab';
+import ChallengesTab from './OverviewTabs/ChallengesTab';
+import TeamTab from './OverviewTabs/TeamTab';
 
 export default function Overview() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -17,10 +17,13 @@ export default function Overview() {
 
   return (
     <>
-      <EventHeader
-        name="Event Name"
-        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-      />
+      <HeaderContainer>
+        <EventHeader
+          name="Event Name"
+          description="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+          state="upcoming"
+        />
+      </HeaderContainer>
 
       <Tabs.Root
         value={currentTab}
@@ -34,15 +37,15 @@ export default function Overview() {
         <Container size="2" mb="4">
           <Tabs.List className="*:!basis-0 *:!grow" loop={false}>
             <Tabs.Trigger value="challenges">
-              <FaTrophy className="mr-1" />
+              <TbCube className="mr-1" />
               Challenges
             </Tabs.Trigger>
             <Tabs.Trigger value="leaderboard">
-              <FaRankingStar className="mr-1" />
+              <TbStar className="mr-1" />
               Leaderboard
             </Tabs.Trigger>
             <Tabs.Trigger value="team">
-              <FaUserGroup className="mr-1" />
+              <TbUsersGroup className="mr-1" />
               Team
             </Tabs.Trigger>
           </Tabs.List>
