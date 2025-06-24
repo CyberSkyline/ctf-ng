@@ -1,5 +1,5 @@
 """
-/backend/ctfd/event/routes/events.py
+/backend/ng/event/routes/events.py
 Defines the public API routes for creating, listing, viewing, and updating events.
 """
 

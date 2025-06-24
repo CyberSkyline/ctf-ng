@@ -1,4 +1,4 @@
 """
 Event domain test package for training event management testing.
-/backend/ctfd/event/tests/__init__.py
+/backend/ng/event/tests/__init__.py
 """
