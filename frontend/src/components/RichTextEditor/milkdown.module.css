@@ -1,0 +1,25 @@
+/* Milkdown Overrides */
+
+.milkdownEditor :global(.milkdown) {
+  --crepe-color-on-background : rgba(0, 0, 0, 0.87);
+}
+
+.milkdownEditor :global(.milkdown .editor) {
+  padding : 1em;
+}
+
+/* Hide the handle to drop/drop blocks */
+.milkdownEditor :global(.milkdown .milkdown-block-handle) {
+  display : none;
+}
+
+/* End Milkdown Overrides */
+
+
+.milkdownEditor :global(.milkdown .milkdown-slash-menu), .milkdownEditor :global(.milkdown .milkdown-toolbar) {
+  z-index: 3;
+}
+
+.milkdownEditor {
+  border: 1px solid rgba(34, 36, 38, 0.15);
+}

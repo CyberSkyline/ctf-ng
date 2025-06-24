@@ -16,6 +16,12 @@ module.exports = {
   plugins: ['@typescript-eslint', 'react', 'react-hooks'], // Enable TypeScript, React, and React Hooks plugins
   rules: {
     // Customize any rules here
+    'key-spacing': [ 'error', {
+      beforeColon : true, // Enforce spacing before colons in object literals
+      afterColon : true, // Enforce spacing after colons in object literals
+      mode : 'strict', // Enforce strict spacing rules
+    } ],
+    'max-len': [ 'error', { code: 160 } ], // Set maximum line length to 160 characters
     'no-unused-vars': 'off', // Disable default no-unused-vars rule
     '@typescript-eslint/no-unused-vars': ['error'], // Enable the TypeScript version of the rule
     'react/prop-types': 'off', // Disable prop-types check since TypeScript already handles types
