@@ -1,6 +1,6 @@
 """
 All user-accessed URLs use the same view for the frontend application.
-/backend/ctfd/core/routes/views.py
+/backend/ng/core/routes/views.py
 """
 
 from flask import Blueprint, render_template

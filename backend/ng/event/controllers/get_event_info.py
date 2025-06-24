@@ -1,5 +1,5 @@
 """
-/backend/ctfd/event/controllers/get_event_info.py
+/backend/ng/event/controllers/get_event_info.py
 Contains the business logic to retrieve all details for a single event, including its teams.
 """
 

@@ -1,6 +1,6 @@
 """
 Main API blueprint and namespace configuration for the plugin.
-/backend/ctfd/core/routes/__init__.py
+/backend/ng/core/routes/__init__.py
 """
 
 from flask import Blueprint
