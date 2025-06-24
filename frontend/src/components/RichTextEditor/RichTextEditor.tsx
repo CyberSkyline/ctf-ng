@@ -19,7 +19,13 @@ import styles from './milkdown.module.css';
   - @milkdown/plugin-gfm
 */
 
-function CrepeEditor({ initialValue, onChange } : { initialValue? : string, onChange : (value : string) => void }) {
+function CrepeEditor({
+  initialValue = '',
+  onChange,
+} : {
+  initialValue? : string,
+  onChange : (value : string) => void,
+}) {
   const features = {
     'image-block' : false,
     latex : false,
@@ -31,8 +37,13 @@ function CrepeEditor({ initialValue, onChange } : { initialValue? : string, onCh
     },
   };
 
-  const { } = useEditor((root) => {
-    const crepe = new Crepe({ root, features, featureConfigs, defaultValue : initialValue || ''});
+  useEditor((root) => {
+    const crepe = new Crepe({
+      root,
+      features,
+      featureConfigs,
+      defaultValue : initialValue,
+    });
 
     crepe.editor.use(automd);
     crepe.editor.config(nord);
@@ -45,12 +56,18 @@ function CrepeEditor({ initialValue, onChange } : { initialValue? : string, onCh
     });
 
     return crepe;
-  }, [ ]);
+  }, []);
 
   return <Milkdown />;
 }
 
-export default function MilkdownEditorWrapper({ initialValue, onChange } : { initialValue? : string, onChange : (value : string) => void }) {
+export default function MilkdownEditorWrapper({
+  initialValue = '',
+  onChange,
+} : {
+  initialValue? : string,
+  onChange : (value : string) => void,
+}) {
   return (
     <MilkdownProvider>
       <div className={styles.milkdownEditor}>
