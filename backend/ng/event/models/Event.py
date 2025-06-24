@@ -1,5 +1,5 @@
 """
-/backend/ctfd/plugin/event/models/Event.py
+/backend/ng/event/models/Event.py
 Defines the Event database model, its columns, and relationships to other models.
 """
 
