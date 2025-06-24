@@ -3,6 +3,11 @@
 set -o pipefail
 set -e
 
+if [ "$EUID" -eq 0 ]; then
+  echo "This script must not be run as root. Please run as a non-root user."
+  exit 1
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PYTHON_DIR="$SCRIPT_DIR/backend/"
 
