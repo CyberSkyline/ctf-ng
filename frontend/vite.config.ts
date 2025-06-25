@@ -6,7 +6,7 @@ import path from 'path';
 // https://vite.dev/config/
 export default defineConfig({
   server : {
-    allowedHosts : ['.cyberskyline.com', '.localhost'],
+    allowedHosts : [ '.cyberskyline.com', '.localhost' ],
     host : '0.0.0.0',
     cors : true,
     hmr : {
@@ -16,7 +16,7 @@ export default defineConfig({
     },
   },
   base : '/static/',
-  plugins : [react(), tailwindcss()],
+  plugins : [ react(), tailwindcss() ],
   resolve : {
     alias : {
       assets : path.resolve(__dirname, './src/assets'),
@@ -34,5 +34,8 @@ export default defineConfig({
         assetFileNames : '[name][extname]',
       },
     },
+  },
+  optimizeDeps : {
+    include : [ 'react', 'react-dom', 'react-router-dom' ],
   },
 });
