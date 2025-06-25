@@ -129,7 +129,7 @@ source "$PYTHON_DIR"venv/bin/activate
 pip install --upgrade pip
 pip install -r "$SCRIPT_DIR/external/CTFd/requirements.txt" # Install CTFd requirements
 pip install -r "$PYTHON_DIR"ng/requirements.txt # Install our additional requirements
-pip install -e "$SCRIPT_DIR/tools/chall-check"
+pip install cyber-skyline-chall-check
 chall-check --install-completion
 
 # Install ruff

@@ -9,7 +9,7 @@ needed for challenge infrastructure while ignoring complex orchestration feature
 from typing import Literal, Any
 from attrs import define, field
 
-from parser.rewriter import Template
+from ..rewriter import Template
 
 @define
 class Service:

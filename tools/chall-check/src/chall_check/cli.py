@@ -20,12 +20,12 @@ from cattrs import ClassValidationError, transform_error
 from cattrs.v import format_exception
 import yaml
 import json
-
+import cyber_skyline.chall_parser as parser
 from parser.yaml_parser import parse_compose_file, parse_compose_string, ComposeYamlParser
 from parser.compose import ComposeFile, ChallengeInfo
 
 app = typer.Typer(
-    name="chall-parser",
+    name="chall-check",
     add_completion=True
 )
 

@@ -1,5 +1,5 @@
 [project]
-name = "parser"
+name = "cyber-skyline-chall-parser"
 version = "0.1.0"
 description = "Parser library for handling the specialized challenge docker compose format"
 readme = "README.md"
@@ -18,3 +18,9 @@ dependencies = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cyber_skyline"]
+
+[tool.hatch.build.targets.sdist]
+packages = ["src/cyber_skyline"]

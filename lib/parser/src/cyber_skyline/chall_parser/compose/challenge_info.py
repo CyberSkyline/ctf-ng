@@ -1,8 +1,8 @@
 from typing import Literal
 from attrs import define, field
 
-from parser.rewriter import Template
-from parser.compose.validators import validate_tabler_icon, validate_template_evals
+from ..rewriter import Template
+from .validators import validate_tabler_icon, validate_template_evals
 
 
 @define

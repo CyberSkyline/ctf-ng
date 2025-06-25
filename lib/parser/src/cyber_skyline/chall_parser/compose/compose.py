@@ -9,9 +9,9 @@ supporting the x-challenge extension for CTF-specific metadata.
 from typing import Literal, NewType, Dict
 from attrs import define, field, validators
 
-from parser.compose.service import Service
-from parser.compose.challenge_info import ChallengeInfo
-from parser.compose.validators import validate_compose_name_pattern
+from .service import Service
+from .challenge_info import ChallengeInfo
+from .validators import validate_compose_name_pattern
 
 @define
 class Network:
