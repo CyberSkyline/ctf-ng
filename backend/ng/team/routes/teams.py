@@ -5,20 +5,20 @@ Public API routes for all team operations.
 
 from flask import request, g
 from flask_restx import Namespace, Resource
-from CTFd.utils.decorators import authed_only
+from CTFd.utils.decorators import authed_only, admins_only
 from CTFd.utils.user import is_admin
 
 from ..controllers import (
     create_team,
     join_team,
     leave_team,
-    list_teams_in_event,
     get_team_info,
     update_team,
     disband_team,
     remove_member,
     transfer_captaincy,
     get_team_captain,
+    list_all_teams,
 )
 from ...core.utils.api_responses import (
     controller_response,
@@ -40,7 +40,6 @@ from ...core.middleware import (
     handle_integrity_error,
     json_body_required,
 )
-from ...event.models.Event import Event
 from ..models.Team import Team
 
 teams_namespace = Namespace("teams", description="team management operations")
@@ -49,44 +48,31 @@ logger = get_logger(__name__)
 
 @teams_namespace.route("")
 class TeamList(Resource):
-    @authed_only
-    @lookup(Event, ["event_id"])
+    @admins_only
     @handle_integrity_error
     @teams_namespace.doc(
-        description="Get teams in a specific event",
-        params={"event_id": "Event ID to filter teams (required)"},
+        description="Get ALL teams in the system (Admin only)",
         responses={
-            200: "Success - Returns list of teams",
-            400: "Bad request - Missing or invalid event_id",
-            403: "Forbidden - User not authenticated",
-            500: "Internal Server Error",
+            200: "Success - Returns list of all teams",
+            403: "Forbidden - Admin access required",
         },
     )
-    def get(self, **kwargs):
-        """Get all teams in a event.
-
-        Query Parameters:
-            event_id (int): The event ID to list teams from.
-
-        Returns:
-            JSON response with team list and event info or error details.
-        """
-        event = kwargs["event"]
-        result = list_teams_in_event(event.id)
+    def get(self):
+        """Get all teams in the system for the admin grid."""
+        result = list_all_teams()
 
         if result["success"]:
             logger.info(
-                "Teams list retrieved",
+                "Admin listed all teams",
                 extra={
                     "context": {
-                        "user_id": get_current_user_id(),
-                        "event_id": event.id,
-                        "team_count": len(result.get("teams", [])),
+                        "admin_id": get_current_user_id(),
+                        "team_count": result.get("total", 0),
                     }
                 },
             )
 
-        return controller_response(result, error_field="event")
+        return controller_response(result)
 
     @authed_only
     @authed_user_required

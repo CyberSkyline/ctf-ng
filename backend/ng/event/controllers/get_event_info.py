@@ -1,25 +1,19 @@
 """
-/backend/ng/event/controllers/get_event_info.py
-Contains the business logic to retrieve all details for a single event, including its teams.
+Gets detailed info about an event.
 """
 
 from typing import Any
 
 from ...core.utils.logger import get_logger
 from ..models.Event import Event
+from ...team.models.Team import Team
+from ...team.models.TeamMember import TeamMember
 
 logger = get_logger(__name__)
 
 
 def get_event_info(event_id: int) -> dict[str, Any]:
-    """Gets detailed info about a event including all its teams.
-
-    Args:
-        event_id (int): The event ID to get info for.
-
-    Returns:
-        dict: Success status, event details, and list of teams in the event.
-    """
+    """Gets detailed info about an event."""
 
     event = Event.find_by_id(event_id)
     if not event:
@@ -29,9 +23,20 @@ def get_event_info(event_id: int) -> dict[str, Any]:
         )
         return {"success": False, "error": "Event not found."}
 
-    result = event.get_event_details_with_teams()
-    event_data = result["event"]
-    teams_data = result["teams"]
+    total_members = TeamMember.count_by_event(event.id)
+    team_count = Team.count_by_event(event.id)
+
+    event_data = {
+        "id": event.id,
+        "name": event.name,
+        "description": event.description,
+        "max_team_size": event.max_team_size,
+        "start_time": event.start_time.isoformat() if event.start_time else None,
+        "end_time": event.end_time.isoformat() if event.end_time else None,
+        "locked": event.locked,
+        "team_count": team_count,
+        "total_members": total_members,
+    }
 
     logger.info(
         "Event info retrieved successfully",
@@ -39,10 +44,9 @@ def get_event_info(event_id: int) -> dict[str, Any]:
             "context": {
                 "event_id": event_id,
                 "event_name": event.name,
-                "team_count": len(teams_data),
-                "total_members": event_data["total_members"],
+                "team_count": team_count,
             }
         },
     )
 
-    return {"success": True, "event": event_data, "teams": teams_data}
+    return {"success": True, "event": event_data}
