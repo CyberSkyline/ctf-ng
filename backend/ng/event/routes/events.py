@@ -4,6 +4,7 @@ Defines the public API routes for creating, listing, viewing, and updating event
 """
 
 from flask import g
+from datetime import datetime
 from flask_restx import Namespace, Resource
 from CTFd.utils.decorators import authed_only, admins_only
 
@@ -69,15 +70,10 @@ class EventList(Resource):
     @handle_integrity_error
     @events_namespace.doc(
         description="Create a new training event (Admin only)",
-        params={
-            "name": "Event name (required)",
-            "description": "Event description (optional)",
-        },
         responses={
             201: "Success - Event created",
             400: "Bad request - Invalid data",
             403: "Forbidden - Admin access required",
-            500: "Internal Server Error",
         },
     )
     def post(self):
@@ -91,7 +87,6 @@ class EventList(Resource):
         Returns:
             JSON response with created event info or error details.
         """
-
         data = g.json_data
 
         is_valid, errors = validate_event_creation(data)
@@ -109,20 +104,19 @@ class EventList(Resource):
             )
             return {"success": False, "errors": errors}, 400
 
-        name = data.get("name")
-        description = data.get("description")
-        max_team_size = data.get("max_team_size")
-        start_time = data.get("start_time")
-        end_time = data.get("end_time")
-        locked = data.get("locked", False)
+        start_time_str = data.get("start_time")
+        end_time_str = data.get("end_time")
+
+        start_time_obj = datetime.fromisoformat(start_time_str.replace("Z", "+00:00")) if start_time_str else None
+        end_time_obj = datetime.fromisoformat(end_time_str.replace("Z", "+00:00")) if end_time_str else None
 
         result = create_event(
-            name=name,
-            description=description,
-            max_team_size=max_team_size,
-            start_time=start_time,
-            end_time=end_time,
-            locked=locked,
+            name=data.get("name"),
+            description=data.get("description"),
+            max_team_size=data.get("max_team_size"),
+            start_time=start_time_obj,
+            end_time=end_time_obj,
+            locked=data.get("locked", False),
         )
 
         if result["success"]:
@@ -146,7 +140,7 @@ class EventList(Resource):
                     "context": {
                         "admin_id": get_current_user_id(),
                         "error": result["error"],
-                        "name": name,
+                        "name": data.get("name"),
                     }
                 },
             )

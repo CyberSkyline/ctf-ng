@@ -1,6 +1,5 @@
 """
-Contains the business logic to query and assemble a comprehensive statistics report for the system.
-/backend/ng/admin/controllers/get_detailed_stats.py
+Contains the business logic to query and create a statistics report.
 """
 
 from typing import Any
@@ -26,23 +25,34 @@ def get_detailed_stats() -> dict[str, Any]:
         db.session.query(
             Event.id,
             Event.name,
+            Event.start_time,
+            Event.end_time,
             func.count(Team.id.distinct()).label("teams"),
             func.count(TeamMember.id).label("total_members"),
         )
         .outerjoin(Team, Event.id == Team.event_id)
         .outerjoin(TeamMember, Event.id == TeamMember.event_id)
-        .group_by(Event.id, Event.name)
+        .group_by(Event.id, Event.name, Event.start_time, Event.end_time)
         .all()
     )
 
-    event_stats = rows_to_dicts(event_stats_query)
+    event_stats_raw = rows_to_dicts(event_stats_query)
+
+    event_stats_serialized = []
+
+    for stat in event_stats_raw:
+        if stat.get("start_time"):
+            stat["start_time"] = stat["start_time"].isoformat()
+        if stat.get("end_time"):
+            stat["end_time"] = stat["end_time"].isoformat()
+        event_stats_serialized.append(stat)
 
     empty_teams = Team.find_empty_teams()
 
     return {
         "success": True,
         "overview": get_data_counts(),
-        "events": event_stats,
+        "events": event_stats_serialized,
         "empty_teams": empty_teams,
         "total_empty_teams": len(empty_teams),
     }

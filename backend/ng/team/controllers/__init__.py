@@ -13,6 +13,7 @@ from .disband_team import disband_team
 from .remove_member import remove_member
 from .transfer_captaincy import transfer_captaincy
 from .get_team_captain import get_team_captain
+from .list_all_teams import list_all_teams
 
 __all__ = [
     "create_team",
@@ -25,4 +26,5 @@ __all__ = [
     "remove_member",
     "transfer_captaincy",
     "get_team_captain",
+    "list_all_teams",
 ]

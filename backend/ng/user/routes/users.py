@@ -13,6 +13,7 @@ from ..controllers import (
     can_join_team_in_event,
     get_user_stats,
     list_users,
+    get_user_info,
 )
 from ...core.utils.api_responses import controller_response
 from ...core.utils.logger import get_logger
@@ -49,6 +50,37 @@ class UserList(Resource):
             },
         )
         return controller_response(result, error_field="users")
+
+
+@users_namespace.route("/<int:user_id>")
+@users_namespace.param("user_id", "User ID")
+class UserDetails(Resource):
+    @admins_only
+    @handle_integrity_error
+    @users_namespace.doc(
+        description="Get detailed information for a specific user (Admin only)",
+        responses={
+            200: "Success - Returns user details",
+            403: "Forbidden - Admin access required",
+            404: "Not Found - User does not exist",
+        },
+    )
+    def get(self, user_id):
+        """Get detailed information for a specific user."""
+        result = get_user_info(user_id)
+        if not result.get("success"):
+            return controller_response(result, error_field="user"), 404
+
+        logger.info(
+            "Admin retrieved user details",
+            extra={
+                "context": {
+                    "admin_id": get_current_user_id(),
+                    "target_user_id": user_id,
+                }
+            },
+        )
+        return controller_response(result)
 
 
 @users_namespace.route("/me/teams")

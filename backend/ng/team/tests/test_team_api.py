@@ -22,14 +22,25 @@ def test_teams_endpoint_requires_authentication(client, event):
     assert response.location is not None
 
 
-def test_teams_endpoint_with_authentication(logged_in_client, event):
-    """Check that teams endpoint works for an authenticated user."""
-    response = logged_in_client.get(f"/ng/teams?event_id={event.id}")
-    print(response)
+def test_get_teams_in_event_is_public_and_secure(logged_in_client, team_with_members):
+    """
+    Check the public endpoint for listing teams in an event and ensures it's secure.
+    """
+    team_data = team_with_members
+    event_id = team_data["team"].event_id
+
+    response = logged_in_client.get(f"/ng/events/{event_id}/teams")
     assert response.status_code == 200
+
     data = response.get_json()
     assert data["success"]
     assert "teams" in data["data"]
+
+    teams_list = data["data"]["teams"]
+    assert len(teams_list) >= 1
+
+    first_team = teams_list[0]
+    assert "invite_code" not in first_team
 
 
 def test_create_team_requires_data(logged_in_client):
@@ -117,3 +128,31 @@ def test_join_team_fails_if_already_in_a_team_in_event(logged_in_client, event, 
     else:
         error_msg = str(errors)
     assert "already" in error_msg.lower()
+
+
+def test_list_all_teams_as_admin(admin_client, team_with_members):
+    """
+    Check that an admin can fetch the list of all teams and it includes invite codes.
+    """
+    response = admin_client.get("/ng/teams")
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert data["success"]
+    assert "teams" in data["data"]
+
+    teams_list = data["data"]["teams"]
+
+    assert len(teams_list) >= 1
+
+    first_team = teams_list[0]
+    assert "invite_code" in first_team
+
+
+def test_list_all_teams_fails_for_normal_user(logged_in_client):
+    """
+    Check that a regular user gets a 403 Forbidden error.
+    CTFd's @admins_only redirects, so we expect a 302.
+    """
+    response = logged_in_client.get("/ng/teams")
+    assert response.status_code == 302

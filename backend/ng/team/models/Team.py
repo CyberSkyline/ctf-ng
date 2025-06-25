@@ -1,5 +1,4 @@
 """
-/backend/ctfd/plugin/team/models/Team.py
 Defines theTeamdatabase model and its properties, including themember_counthybrid.
 """
 
@@ -94,6 +93,30 @@ class Team(db.Model):
             db.session.commit()
 
     @classmethod
+    def get_all_teams_for_admin(cls) -> list[dict[str, Any]]:
+        """
+        Gets all teams with their detailed information for admin purposes.
+
+        Returns:
+            list[dict]: A list of dictionaries, each representing a team.
+        """
+        teams = cls.query.order_by(cls.id).all()
+
+        teams_data = [
+            {
+                "id": team.id,
+                "name": team.name,
+                "event_id": team.event_id,
+                "member_count": team.member_count,
+                "invite_code": team.invite_code,  # Admin only
+                "ranked": team.ranked,
+                "locked": team.locked,
+            }
+            for team in teams
+        ]
+        return teams_data
+
+    @classmethod
     def find_by_id(cls, team_id: int):
         """Find a team by ID.
 
@@ -143,6 +166,18 @@ class Team(db.Model):
         return cls.query.filter_by(event_id=event_id).all()
 
     @classmethod
+    def count_by_event(cls, event_id: int) -> int:
+        """Get the count of teams in a specific event.
+
+        Args:
+            event_id (int): The event ID to count teams for
+
+        Returns:
+            int: Number of teams in the event
+        """
+        return cls.query.filter_by(event_id=event_id).count()
+
+    @classmethod
     def name_exists_in_event_excluding_self(cls, event_id: int, name: str, exclude_team_id: int) -> bool:
         """Check if a team name already exists in an event, excluding a specific team.
 
@@ -184,18 +219,6 @@ class Team(db.Model):
         return cls.query.count()
 
     @classmethod
-    def count_by_event(cls, event_id: int) -> int:
-        """Get the count of teams in a specific event.
-
-        Args:
-            event_id (int): The event ID to count teams for
-
-        Returns:
-            int: Number of teams in the event
-        """
-        return cls.query.filter_by(event_id=event_id).count()
-
-    @classmethod
     def delete_by_event(cls, event_id: int) -> int:
         """Delete all teams in a specific event.
 
@@ -223,6 +246,82 @@ class Team(db.Model):
             {"id": team_id, "name": team_name, "event_id": event_id}
             for team_id, team_name, event_id in empty_teams_query
         ]
+
+    @classmethod
+    def get_full_team_details(cls, team_id: int) -> dict[str, Any] | None:
+        """
+        Gets all details for a team, including event info and member list.
+
+        Args:
+            team_id (int): The ID of the team to fetch.
+
+        Returns:
+            dict | None: A dictionary of full team data, or None if not found.
+        """
+        team = cls.query.get(team_id)
+        if not team:
+            return None
+
+        from ...event.models.Event import Event
+        from .TeamMember import TeamMember
+
+        event = Event.find_by_id(team.event_id)
+        team_members = TeamMember.find_all_by_team(team_id)
+
+        team_data = {
+            "id": team.id,
+            "name": team.name,
+            "event_id": team.event_id,
+            "event_name": event.name if event else "Unknown",
+            "member_count": team.member_count,
+            "max_team_size": event.max_team_size if event else 0,
+            "is_full": team.member_count >= (event.max_team_size if event else 0),
+            "invite_code": team.invite_code,
+            "ranked": team.ranked,
+        }
+
+        members_data = [
+            {
+                "user_id": m.user_id,
+                "joined_at": m.joined_at.isoformat() if m.joined_at else None,
+                "role": m.role,
+            }
+            for m in team_members
+        ]
+
+        return {"team": team_data, "team_members": members_data}
+
+    @classmethod
+    def get_all_teams_in_event_for_public(cls, event_id: int) -> dict[str, Any] | None:
+        """
+        Gets a list of all teams in a specific event,
+        for public display (If needed).
+        """
+        from ...event.models.Event import Event
+
+        event = Event.find_by_id(event_id)
+        if not event:
+            return None
+
+        teams = cls.find_all_by_event(event_id)
+
+        team_list = [
+            {
+                "id": team.id,
+                "name": team.name,
+                "member_count": team.member_count,
+                "max_team_size": event.max_team_size,
+                "is_full": team.member_count >= event.max_team_size,
+                "ranked": team.ranked,
+            }
+            for team in teams
+        ]
+
+        return {
+            "teams": team_list,
+            "event_name": event.name,
+            "total_teams": len(team_list),
+        }
 
     @classmethod
     def create_team_with_captain(
