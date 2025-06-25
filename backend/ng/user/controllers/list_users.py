@@ -1,6 +1,5 @@
 """
-/backend/ng/user/controllers/list_users.py
-Retrieves a list of all users with extended details for administrative purposes.
+Retrieves a list of all users with extended details for admin.
 """
 
 from typing import Any
@@ -9,7 +8,7 @@ from ..models.User import User
 
 def list_users() -> dict[str, Any]:
     """
-    Gets all users with their detailed information.
+    Gets all users with their detailed information (Admin).
 
     Returns:
         dict: Success status, list of users, and total count.

@@ -1,5 +1,4 @@
 """
-/backend/ctfd/plugin/team/models/TeamMember.py
 Defines the TeamMember model, link between users, teams, and events.
 """
 
@@ -95,6 +94,18 @@ class TeamMember(db.Model):
         return cls.query.filter_by(user_id=user_id, event_id=event_id).first()
 
     @classmethod
+    def count_by_event(cls, event_id: int) -> int:
+        """Get the count of team members in a specific event.
+
+        Args:
+            event_id (int): The event ID to count team members for
+
+        Returns:
+            int: Number of team members in the event
+        """
+        return cls.query.filter_by(event_id=event_id).count()
+
+    @classmethod
     def find_captain_by_team(cls, team_id: int):
         """Find the captain of a team.
 
@@ -186,18 +197,6 @@ class TeamMember(db.Model):
             int: Total number of team members
         """
         return cls.query.count()
-
-    @classmethod
-    def count_by_event(cls, event_id: int) -> int:
-        """Get the count of team members in a specific event.
-
-        Args:
-            event_id (int): The event ID to count team members for
-
-        Returns:
-            int: Number of team members in the event
-        """
-        return cls.query.filter_by(event_id=event_id).count()
 
     @classmethod
     def delete_by_event(cls, event_id: int) -> int:

@@ -42,3 +42,23 @@ def test_create_event_succeeds_for_admin_user(admin_client):
     assert response_data["success"]
     assert response_data["data"]["event"]["name"] == "Admin Event"
     assert response_data["data"]["event"]["max_team_size"] == 4
+
+
+def test_get_event_detail_is_performant(admin_client, event, team_with_members):
+    """
+    Tests that the main event detail endpoint returns event data but not the full team list.
+    """
+    response = admin_client.get(f"/ng/events/{event.id}")
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert data["success"]
+
+    event_data = data["data"]["event"]
+    assert event_data["id"] == event.id
+
+    assert "teams" not in data["data"]
+
+    assert "team_count" in event_data
+    assert "total_members" in event_data
+    assert event_data["team_count"] >= 1

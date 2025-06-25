@@ -234,3 +234,43 @@ class User(db.Model):
         ]
 
         return users_list
+
+    @classmethod
+    def get_user_details_by_id(cls, user_id: int) -> dict[str, Any] | None:
+        """
+        Gets detailed info for a single user by their ID, including team count.
+
+        Args:
+            user_id (int): The ID of the user to fetch.
+
+        Returns:
+            dict | None: A dictionary of user data, or None if not found.
+        """
+        from ...team.models.TeamMember import TeamMember
+
+        user_details = (
+            db.session.query(
+                CTFdUsers.id,
+                CTFdUsers.name,
+                CTFdUsers.email,
+                CTFdUsers.type.label("role"),
+                CTFdUsers.created.label("registered_at"),
+                func.count(TeamMember.id).label("team_count"),
+            )
+            .outerjoin(TeamMember, CTFdUsers.id == TeamMember.user_id)
+            .filter(CTFdUsers.id == user_id)
+            .group_by(CTFdUsers.id)
+            .first()
+        )
+
+        if not user_details:
+            return None
+
+        return {
+            "id": user_details.id,
+            "name": user_details.name,
+            "email": user_details.email,
+            "role": user_details.role,
+            "registered_at": user_details.registered_at.isoformat() if user_details.registered_at else None,
+            "team_count": user_details.team_count,
+        }
