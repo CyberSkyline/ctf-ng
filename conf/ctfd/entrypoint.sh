@@ -2,9 +2,11 @@
 
 set -euo pipefail
 
+cd /opt/CTFd/
+
 install_plugin_deps() {
   ## Install plugins deps on load
-  for d in CTFd/plugins/*; do
+  for d in /opt/CTFd/CTFd/plugins/*; do
     if [ -f "$d/requirements.txt" ]; then
       pip install --no-cache-dir -r "$d/requirements.txt";
     fi;

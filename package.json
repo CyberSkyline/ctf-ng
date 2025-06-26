@@ -10,8 +10,8 @@
   "author": "Cyber Skyline",
   "type": "module",
   "scripts": {
-    "prod-start" : "cd ./frontend && vite build && cd - && ENV_FILE=.env.prod docker compose up --build",
-    "start" : "ENV_FILE=.env.dev docker compose up --build",
+    "prod-start" : "cd ./frontend && vite build && cd - && ENV_FILE=.env.prod docker compose up ctfd --build",
+    "start" : "ENV_FILE=.env.dev docker compose up ctfd --build",
     "stop" : "docker compose down",
     "reload" : "docker exec -it ng-ctfd supervisorctl restart ctfd",
     "restart" : "docker exec -it ng-ctfd supervisorctl restart ctfd",

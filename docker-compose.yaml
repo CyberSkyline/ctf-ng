@@ -17,6 +17,9 @@ services:
       - ./backend/ng:/opt/CTFd/CTFd/plugins/ng/:ro
     depends_on:
       - db
+      - cache
+      - vite
+      - nginx
     networks:
       default:
       internal:
@@ -35,8 +38,6 @@ services:
     ports:
       - 80:80
       - 5173:5173
-    depends_on:
-      - ctfd
 
   db:
     image: mariadb:10.11
