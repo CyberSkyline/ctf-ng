@@ -44,7 +44,7 @@ def test_create_team_sets_creator_as_captain(db_session, event):
     assert result["success"]
     team = result["team"]
     captain_member = TeamMember.query.filter_by(team_id=team.id, role=TeamRole.CAPTAIN).first()
-    assert captain_member.user_id == 0
+    assert captain_member.user_id == creator.id
 
 
 @pytest.mark.db
