@@ -69,24 +69,34 @@ def validate_captain_assignment(data: dict[str, Any]) -> tuple[bool, dict[str, s
     return validator.is_valid()
 
 
-def validate_event_creation(data: dict[str, Any]) -> tuple[bool, dict[str, str]]:
-    """Validate event creation."""
+def validate_event_creation(data: dict[str, Any]) -> tuple[bool, dict]:
+    """
+    Validate event creation data.
+    On success, returns a dictionary of parsed and typed values.
+    On failure, returns a dictionary of error messages.
+    """
     validator = BaseValidator()
+    parsed_data = {}
 
-    validator.validate_string(
+    if validator.validate_string(
         data,
         "name",
         config.EVENT_NAME_MAX_LENGTH,
         required=True,
         friendly_name="Event name",
-    )
-    validator.validate_string(
+    ):
+        parsed_data["name"] = data.get("name")
+
+    if validator.validate_string(
         data,
         "description",
         config.EVENT_DESCRIPTION_MAX_LENGTH,
         friendly_name="Event description",
-    )
-    validator.validate_integer_range(
+    ):
+        if data.get("description") is not None:
+            parsed_data["description"] = data.get("description")
+
+    max_team_size_val = validator.validate_integer_range(
         data,
         "max_team_size",
         1,
@@ -94,26 +104,36 @@ def validate_event_creation(data: dict[str, Any]) -> tuple[bool, dict[str, str]]
         required=True,
         friendly_name="Max team size",
     )
+    if max_team_size_val is not None:
+        parsed_data["max_team_size"] = max_team_size_val
 
-    # Validate optional datetime fields
-    start_time = validator.validate_datetime(data, "start_time", allow_past=False, friendly_name="Start time")
-    end_time = validator.validate_datetime(data, "end_time", allow_past=False, friendly_name="End time")
+    if validator.validate_boolean(data, "locked", friendly_name="Locked status"):
+        if "locked" in data:
+            parsed_data["locked"] = data.get("locked")
 
-    # Validate boolean field
-    validator.validate_boolean(data, "locked", friendly_name="Locked status")
+    start_time_obj = validator.validate_datetime(data, "start_time", allow_past=False, friendly_name="Start time")
+    if start_time_obj:
+        parsed_data["start_time"] = start_time_obj
 
-    # Check that if one time is provided, both must be provided
-    if (start_time is None) != (end_time is None):
-        if start_time is None:
+    end_time_obj = validator.validate_datetime(data, "end_time", allow_past=False, friendly_name="End time")
+    if end_time_obj:
+        parsed_data["end_time"] = end_time_obj
+
+    if ("start_time" in parsed_data) != ("end_time" in parsed_data):
+        if "start_time" not in parsed_data:
             validator.errors["start_time"] = "Start time is required when end time is provided"
-        if end_time is None:
+        if "end_time" not in parsed_data:
             validator.errors["end_time"] = "End time is required when start time is provided"
 
-    # Check that start time is before end time
-    if start_time and end_time and start_time >= end_time:
-        validator.errors["end_time"] = ValidationError.FIELD_DATETIME_ORDER
+    if "start_time" in parsed_data and "end_time" in parsed_data:
+        if parsed_data["start_time"] >= parsed_data["end_time"]:
+            validator.errors["end_time"] = ValidationError.FIELD_DATETIME_ORDER
 
-    return validator.is_valid()
+    is_valid, errors = validator.is_valid()
+    if not is_valid:
+        return False, errors
+
+    return True, parsed_data
 
 
 def validate_event_registration_creation(data: dict[str, Any]) -> tuple[bool, dict[str, str]]:

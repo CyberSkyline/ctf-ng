@@ -4,7 +4,6 @@ Defines the public API routes for creating, listing, viewing, and updating event
 """
 
 from flask import g
-from datetime import datetime
 from flask_restx import Namespace, Resource
 from CTFd.utils.decorators import authed_only, admins_only
 
@@ -77,46 +76,31 @@ class EventList(Resource):
         },
     )
     def post(self):
-        """Create a new training event with given config.
-
-        Request Body:
-            name (str): Unique name for the event.
-            description (str, optional): Description of the event's purpose.
-            max_team_size (int, optional): Maximum team size.
-
-        Returns:
-            JSON response with created event info or error details.
-        """
+        """Create a new training event with given config."""
         data = g.json_data
 
-        is_valid, errors = validate_event_creation(data)
+        is_valid, parsed_data_or_errors = validate_event_creation(data)
         if not is_valid:
             logger.warning(
                 "Validation failed for event creation",
                 extra={
                     "context": {
-                        "errors": errors,
+                        "errors": parsed_data_or_errors,
                         "admin_id": get_current_user_id(),
                         "endpoint": "event_create",
                         "data": data,
                     }
                 },
             )
-            return {"success": False, "errors": errors}, 400
-
-        start_time_str = data.get("start_time")
-        end_time_str = data.get("end_time")
-
-        start_time_obj = datetime.fromisoformat(start_time_str.replace("Z", "+00:00")) if start_time_str else None
-        end_time_obj = datetime.fromisoformat(end_time_str.replace("Z", "+00:00")) if end_time_str else None
+            return {"success": False, "errors": parsed_data_or_errors}, 400
 
         result = create_event(
-            name=data.get("name"),
-            description=data.get("description"),
-            max_team_size=data.get("max_team_size"),
-            start_time=start_time_obj,
-            end_time=end_time_obj,
-            locked=data.get("locked", False),
+            name=parsed_data_or_errors.get("name"),
+            description=parsed_data_or_errors.get("description"),
+            max_team_size=parsed_data_or_errors.get("max_team_size"),
+            start_time=parsed_data_or_errors.get("start_time"),
+            end_time=parsed_data_or_errors.get("end_time"),
+            locked=parsed_data_or_errors.get("locked", False),
         )
 
         if result["success"]:

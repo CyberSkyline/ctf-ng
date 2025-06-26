@@ -152,3 +152,26 @@ class TestEventBusinessRules:
         valid, errors = validate_event_creation({"name": "Test Event", "max_team_size": -1})
         assert not valid
         assert "max_team_size" in errors
+
+    def test_event_serialize_method(self):
+        """Test the dictionary serialization of the Event model."""
+        now = datetime.utcnow()
+        event = Event(
+            id=1,
+            name="Serialized Event",
+            description="A test description.",
+            max_team_size=5,
+            start_time=now,
+            end_time=None,
+            locked=True,
+        )
+
+        serialized_data = event.serialize()
+
+        assert isinstance(serialized_data, dict)
+        assert serialized_data["id"] == 1
+        assert serialized_data["name"] == "Serialized Event"
+        assert serialized_data["max_team_size"] == 5
+        assert serialized_data["locked"] is True
+        assert serialized_data["start_time"] == now.isoformat()
+        assert serialized_data["end_time"] is None

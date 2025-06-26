@@ -62,17 +62,7 @@ class TeamList(Resource):
         result = list_all_teams()
 
         if result["success"]:
-            logger.info(
-                "Admin listed all teams",
-                extra={
-                    "context": {
-                        "admin_id": get_current_user_id(),
-                        "team_count": result.get("total", 0),
-                    }
-                },
-            )
-
-        return controller_response(result)
+            return controller_response(result)
 
     @authed_only
     @authed_user_required
@@ -180,10 +170,6 @@ class TeamDetail(Resource):
         result = get_team_info(team.id)
 
         if result["success"]:
-            logger.info(
-                "Team info retrieved",
-                extra={"context": {"user_id": get_current_user_id(), "team_id": team.id}},
-            )
             return success_response(result)
         else:
             logger.warning(
@@ -499,10 +485,6 @@ class TeamCaptain(Resource):
         result = get_team_captain(team_id)
 
         if result["success"]:
-            logger.info(
-                "Team captain info retrieved",
-                extra={"context": {"user_id": get_current_user_id(), "team_id": team_id}},
-            )
             return success_response(result)
         else:
             logger.warning(
