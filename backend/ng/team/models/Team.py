@@ -1,13 +1,17 @@
 """
-Defines theTeamdatabase model and its properties, including themember_counthybrid.
+Defines the Team database model and its properties
 """
+
+from __future__ import annotations
+from typing import Any
 
 from CTFd.models import db
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
-from typing import Any
+
 from ... import config
+from ...core.exceptions import ConflictError
 
 
 class Team(db.Model):
@@ -43,6 +47,29 @@ class Team(db.Model):
 
         return select(func.count(TeamMember.id)).where(TeamMember.team_id == cls.id).scalar_subquery()
 
+    def serialize(self, include_admin_fields: bool = False) -> dict[str, Any]:
+        """Serialize team for API response.
+
+        Args:
+            include_admin_fields: Whether to include admin-only fields
+
+        Returns:
+            dict: Serialized team data
+        """
+        data = {
+            "id": self.id,
+            "name": self.name,
+            "event_id": self.event_id,
+            "member_count": self.member_count,
+            "ranked": self.ranked,
+            "locked": self.locked,
+        }
+
+        if include_admin_fields:
+            data["invite_code"] = self.invite_code
+
+        return data
+
     @classmethod
     def create_team(cls, name, event_id, invite_code, ranked=False, flush_only=False):
         """Create and persist a new team to the database.
@@ -71,15 +98,16 @@ class Team(db.Model):
             db.session.commit()
         return team
 
-    def disband_team(self):
+    def disband_team(self, commit=True):
         """Delete this team and all its members from the database."""
         db.session.delete(self)
-        db.session.commit()
+        if commit:
+            db.session.commit()
 
     def update_invite_code(self, new_code=None, commit=True):
         """Update team invite code and persist to database."""
         if new_code is None:
-            from ..controllers._generate_invite_code import _generate_invite_code
+            from ..team.controllers._generate_invite_code import _generate_invite_code
 
             new_code = _generate_invite_code()
         self.invite_code = new_code
@@ -93,28 +121,13 @@ class Team(db.Model):
             db.session.commit()
 
     @classmethod
-    def get_all_teams_for_admin(cls) -> list[dict[str, Any]]:
-        """
-        Gets all teams with their detailed information for admin purposes.
+    def get_all_teams_for_admin(cls):
+        """Gets all teams for admin purposes.
 
         Returns:
-            list[dict]: A list of dictionaries, each representing a team.
+            list[Team]: List of all team objects
         """
-        teams = cls.query.order_by(cls.id).all()
-
-        teams_data = [
-            {
-                "id": team.id,
-                "name": team.name,
-                "event_id": team.event_id,
-                "member_count": team.member_count,
-                "invite_code": team.invite_code,  # Admin only
-                "ranked": team.ranked,
-                "locked": team.locked,
-            }
-            for team in teams
-        ]
-        return teams_data
+        return cls.query.order_by(cls.id).all()
 
     @classmethod
     def find_by_id(cls, team_id: int):
@@ -233,70 +246,49 @@ class Team(db.Model):
         return count
 
     @classmethod
-    def find_empty_teams(cls) -> list[dict[str, Any]]:
+    def find_empty_teams(cls):
         """Find all teams that have no members.
 
         Returns:
-            list[dict]: List of empty team data with id, name, and event_id
+            list: Raw query results (Row objects) with team info
         """
-
         empty_teams_query = db.session.query(cls.id, cls.name, cls.event_id).filter(cls.member_count == 0).all()
-
-        return [
-            {"id": team_id, "name": team_name, "event_id": event_id}
-            for team_id, team_name, event_id in empty_teams_query
-        ]
+        return empty_teams_query
 
     @classmethod
-    def get_full_team_details(cls, team_id: int) -> dict[str, Any] | None:
-        """
-        Gets all details for a team, including event info and member list.
+    def get_full_team_details(cls, team_id: int):
+        """Gets all details for a team, including event info and member list.
 
         Args:
             team_id (int): The ID of the team to fetch.
 
         Returns:
-            dict | None: A dictionary of full team data, or None if not found.
+            dict | None: Team object with related data, or None if not found
         """
         team = cls.query.get(team_id)
         if not team:
             return None
 
+        # Lazy imports to prevent circular dependencies (needed)
         from ...event.models.Event import Event
         from .TeamMember import TeamMember
 
         event = Event.find_by_id(team.event_id)
         team_members = TeamMember.find_all_by_team(team_id)
 
-        team_data = {
-            "id": team.id,
-            "name": team.name,
-            "event_id": team.event_id,
-            "event_name": event.name if event else "Unknown",
-            "member_count": team.member_count,
-            "max_team_size": event.max_team_size if event else 0,
-            "is_full": team.member_count >= (event.max_team_size if event else 0),
-            "invite_code": team.invite_code,
-            "ranked": team.ranked,
-        }
-
-        members_data = [
-            {
-                "user_id": m.user_id,
-                "joined_at": m.joined_at.isoformat() if m.joined_at else None,
-                "role": m.role,
-            }
-            for m in team_members
-        ]
-
-        return {"team": team_data, "team_members": members_data}
+        return {"team": team, "event": event, "team_members": team_members}
 
     @classmethod
-    def get_all_teams_in_event_for_public(cls, event_id: int) -> dict[str, Any] | None:
+    def get_all_teams_in_event_for_public(cls, event_id: int):
+        """Gets a list of all teams in a specific event.
+
+        Args:
+            event_id (int): The event ID
+
+        Returns:
+            dict | None: Event and teams data, or None if event not found
         """
-        Gets a list of all teams in a specific event,
-        for public display (If needed).
-        """
+        # Lazy import to prevent circular dependencies (needed)
         from ...event.models.Event import Event
 
         event = Event.find_by_id(event_id)
@@ -305,23 +297,7 @@ class Team(db.Model):
 
         teams = cls.find_all_by_event(event_id)
 
-        team_list = [
-            {
-                "id": team.id,
-                "name": team.name,
-                "member_count": team.member_count,
-                "max_team_size": event.max_team_size,
-                "is_full": team.member_count >= event.max_team_size,
-                "ranked": team.ranked,
-            }
-            for team in teams
-        ]
-
-        return {
-            "teams": team_list,
-            "event_name": event.name,
-            "total_teams": len(team_list),
-        }
+        return {"event": event, "teams": teams}
 
     @classmethod
     def create_team_with_captain(
@@ -331,12 +307,10 @@ class Team(db.Model):
         creator_id: int,
         invite_code: str,
         ranked: bool = False,
-    ) -> tuple[bool, dict]:
+    ) -> Team:
         """
-        Creates a team and assigns creator as captain in a single transaction.
-
-        Returns:
-            tuple: (success: bool, result: dict)
+        Creates a team, assigns the creator as captain, and creates a demographic
+        record in a single, atomic transaction.
         """
         try:
             team = cls.create_team(
@@ -349,50 +323,135 @@ class Team(db.Model):
 
             from ...user.models.User import User
 
-            ng_user = User.find_by_id(creator_id)
-            if not ng_user:
-                ng_user = User.create_user(creator_id, commit=False)
+            if not User.find_by_id(creator_id):
+                User.create_user(creator_id, commit=False)
 
             from .TeamMember import TeamMember
             from .enums import TeamRole
-            from datetime import datetime
 
             TeamMember.create_team_member(
                 user_id=creator_id,
                 team_id=team.id,
                 event_id=event_id,
                 role=TeamRole.CAPTAIN,
-                joined_at=datetime.utcnow(),
                 commit=False,
             )
 
             db.session.commit()
-
-            return True, {"team": team, "message": "Team created successfully"}
+            return team
 
         except IntegrityError as e:
             db.session.rollback()
-            if "uq_team_event_name" in str(e) or "UNIQUE constraint failed" in str(e):
-                return False, {"error": f"Team '{name}' already exists in this event"}
-            else:
-                raise e
-
-        except Exception as e:
-            db.session.rollback()
+            if "uq_team_event_name" in str(e.orig):
+                raise ConflictError(f"A team with the name '{name}' already exists in this event.")
             raise e
 
-    def serialize(self) -> dict[str, Any]:
-        """Serialize the team instance to a dictionary.
+        except Exception:
+            db.session.rollback()
+            raise
+
+    def remove_member_and_regenerate_code(self, member_id: int) -> None:
+        """Remove a team member and regenerate invite code in single transaction."""
+
+        from .TeamMember import TeamMember
+
+        try:
+            member = TeamMember.query.get(member_id)
+            if member:
+                member.remove_team_member(commit=False)
+                self.update_invite_code(commit=False)
+                db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise
+
+    def remove_captain_and_promote(self, captain_id: int, new_captain_user_id: int) -> bool:
+        """Remove captain and promote new one in single transaction."""
+
+        from .TeamMember import TeamMember
+        from .enums import TeamRole
+
+        try:
+            captain = TeamMember.query.get(captain_id)
+            if captain:
+                captain.remove_team_member(commit=False)
+
+            new_captain = TeamMember.query.filter_by(team_id=self.id, user_id=new_captain_user_id).first()
+            if new_captain:
+                new_captain.update_role(TeamRole.CAPTAIN, commit=False)
+
+            self.update_invite_code(commit=False)
+
+            db.session.commit()
+            return True
+        except Exception:
+            db.session.rollback()
+            raise
+
+    @classmethod
+    def fix_headless_teams(cls) -> int:
+        """Finds and fixes teams without a captain due to user deletion.
 
         Returns:
-            dict: Serialized team data
+            int: Number of teams fixed
         """
-        return {
-            "id": self.id,
-            "name": self.name,
-            "ranked": self.ranked,
-            "invite_code": self.invite_code,
-            "event_id": self.event_id,
-            "locked": self.locked,
-            "member_count": self.member_count,
-        }
+        from .TeamMember import TeamMember
+        from .enums import TeamRole
+
+        try:
+            teams_with_members = (
+                db.session.query(cls.id)
+                .join(TeamMember)
+                .group_by(cls.id)
+                .having(db.func.count(TeamMember.id) > 0)
+                .subquery()
+            )
+
+            teams_without_captain = (
+                db.session.query(cls.id)
+                .outerjoin(
+                    TeamMember,
+                    db.and_(
+                        cls.id == TeamMember.team_id,
+                        TeamMember.role == TeamRole.CAPTAIN,
+                    ),
+                )
+                .group_by(cls.id)
+                .having(db.func.count(TeamMember.id) == 0)
+                .subquery()
+            )
+
+            headless_team_ids = (
+                db.session.query(teams_with_members.c.id)
+                .join(
+                    teams_without_captain,
+                    teams_with_members.c.id == teams_without_captain.c.id,
+                )
+                .all()
+            )
+
+            fixed_count = 0
+            for (team_id,) in headless_team_ids:
+                members = TeamMember.find_all_by_team_ordered_by_join_date(team_id)
+                if members:
+                    new_captain = members[0]
+                    new_captain.update_role(TeamRole.CAPTAIN, commit=False)
+                    fixed_count += 1
+
+            if fixed_count > 0:
+                db.session.commit()
+
+            return fixed_count
+        except Exception:
+            db.session.rollback()
+            raise
+
+    @classmethod
+    def delete_all(cls) -> None:
+        """Delete all teams from the database."""
+        try:
+            cls.query.delete()
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise

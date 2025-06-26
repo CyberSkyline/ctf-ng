@@ -1,45 +1,73 @@
-import pytest
-import time
-from ..controllers.join_event_existing_team import join_event_existing_team
-from ..controllers.join_event_new_team import join_event_new_team
-from tests.helpers import gen_user as gen_user_original
+"""
+Controller tests for event registration domain
+"""
+
+from flask import g
+
+from ...team.models.Team import Team
+from ...team.models.TeamMember import TeamMember
+from ..models.Demographic import Demographic
+from ..controllers.join_event_controller import join_event_controller
 
 
-class DBWrapper:
-    def __init__(self, session):
-        self.session = session
+def test_join_event_controller_with_new_team(app, user, open_event_reg):
+    """Test the main join controller when creating a new team."""
+    with app.test_request_context(json={"event_id": open_event_reg.event_id, "team_name": "The New Crew"}):
+        g.user = user
+        g.event = open_event_reg.event
+        g.validated_data = {"team_name": "The New Crew"}
+        g.json_data = {"team_name": "The New Crew"}
+        g.user_eligibility = {"can_join": True}
 
-def gen_unique_user(db_wrapper):
-    """Generate a user with unique email to avoid conflicts."""
-    timestamp = str(int(time.time() * 1000000))
-    return gen_user_original(db_wrapper, name=f"user_{timestamp}", email=f"user_{timestamp}@example.com")
+        result_dict = join_event_controller()
 
+        assert isinstance(result_dict, dict)
+        assert "team" in result_dict
+        assert "demographic" in result_dict
 
-pytestmark = pytest.mark.db
+        team_object = result_dict["team"]
+        assert isinstance(team_object, Team)
+        assert team_object.name == "The New Crew"
 
-@pytest.mark.db
-def test_join_event_with_new_team(db_session,event, event_registration):
-    """Test joining an event by creating a new team."""
+        member = TeamMember.find_by_user_and_event(user.id, open_event_reg.event_id)
+        assert member is not None
+        assert member.team_id == team_object.id
 
-    user = gen_unique_user(DBWrapper(db_session))
-
-
-    result = join_event_new_team(
-        user_id=user.id,
-        event_id=event.id,
-        team_name="New Team",
-    )
-
-    assert result["success"]
-
-@pytest.mark.db
-def test_join_event_with_existing_team(db_session, event, normal_user, team_with_members, event_registration):
-    """Test joining an event with an existing team."""
+        demographic = Demographic.find_by_user_and_event(user.id, open_event_reg.event_id)
+        assert demographic is not None
 
 
-    result = join_event_existing_team(
-        user_id=normal_user.id,
-        event_id=event.id,
-        invite_code=team_with_members["team"].invite_code,
-    )
-    assert result["success"]
+def test_join_event_controller_with_existing_team(app, user, open_event_reg, team_factory):
+    """Test the main join controller when joining an existing team."""
+    existing_team = team_factory(event=open_event_reg.event)
+
+    with app.test_request_context(
+        json={
+            "event_id": open_event_reg.event_id,
+            "invite_code": existing_team.invite_code,
+        }
+    ):
+        g.user = user
+        g.event = open_event_reg.event
+        g.team = existing_team
+        g.validated_data = {"invite_code": existing_team.invite_code}
+        g.json_data = {"invite_code": existing_team.invite_code}
+        g.user_eligibility = {"can_join": True}
+
+        result_dict = join_event_controller()
+
+        assert isinstance(result_dict, dict)
+        assert "team" in result_dict
+        assert "team_member" in result_dict
+        assert "demographic" in result_dict
+
+        team_object = result_dict["team"]
+        assert isinstance(team_object, Team)
+        assert team_object.id == existing_team.id
+
+        member = TeamMember.find_by_user_and_event(user.id, open_event_reg.event_id)
+        assert member is not None
+        assert member.team_id == team_object.id
+
+        demographic = Demographic.find_by_user_and_event(user.id, open_event_reg.event_id)
+        assert demographic is not None

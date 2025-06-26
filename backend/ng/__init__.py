@@ -1,30 +1,26 @@
 #!/usr/bin/env python3
-# Main Entry Point
 
+from typing import Any
+from flask_socketio import SocketIO
+
+from CTFd.models import db
+from .core.utils.logger import get_logger
 from .core.routes import delete_unwanted_ctfd_routes, api_blueprint
 from .core.routes.views import plugin_views
-from .core.utils.logger import get_logger
-from CTFd.models import db
-from typing import Any
+from .core.middleware.error_handler import register_error_handlers
+from .support import sockets as support_sockets
 
+from .event.models.Event import Event  # noqa: F401
+from .team.models.Team import Team  # noqa: F401
+from .user.models.User import User  # noqa: F401
+from .team.models.TeamMember import TeamMember  # noqa: F401
+from .support.models.Ticket import Ticket  # noqa: F401
+from .support.models.TicketMessage import TicketMessage  # noqa: F401
+from .support.models.TicketTag import TicketTag  # noqa: F401
+from .event_registration.models.EventRegistration import EventRegistration  # noqa: F401
+from .event_registration.models.Demographic import Demographic  # noqa: F401
 
 logger = get_logger(__name__)
-
-
-def _create_tables() -> tuple[Any, Any, Any, Any]:
-    from .event.models.Event import Event
-    from .team.models.Team import Team
-    from .user.models.User import User
-    from .team.models.TeamMember import TeamMember
-    from .event_registration.models.EventRegistration import EventRegistration
-
-    return (
-        Event,
-        EventRegistration,
-        Team,
-        User,
-        TeamMember,
-    )
 
 
 def load(app: Any) -> None:
@@ -33,8 +29,21 @@ def load(app: Any) -> None:
 
         logger.info("Loading plugin", extra={"context": {"stage": "initialization"}})
 
-        _create_tables()
         db.create_all()
+
+        register_error_handlers(app)
+
+        # Will be ignored for now
+        socketio = SocketIO(
+            app,
+            async_mode="gevent",
+            message_queue=app.config.get("REDIS_URL"),
+            cors_allowed_origins="*",
+        )
+
+        app.extensions["socketio"] = socketio
+
+        support_sockets.initialize_socket_handlers(socketio)
 
         app.register_blueprint(plugin_views)
         app.register_blueprint(api_blueprint, url_prefix="/ng")
