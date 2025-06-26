@@ -11,6 +11,7 @@ from ...utils.api_responses import (
     error_response,
     controller_response,
     serialize_model_for_api,
+    serialize_item_datetimes,
 )
 
 
@@ -217,6 +218,30 @@ class TestSerializeModelForApi:
         assert serialize_model_for_api(42) == 42
         assert serialize_model_for_api(True) is True
         assert serialize_model_for_api([1, 2, 3]) == [1, 2, 3]
+
+
+class TestSerializeHelpers:
+    """Test serialization helper functions."""
+
+    def test_serialize_item_datetimes(self):
+        """Test the helper for serializing datetimes in a dictionary."""
+        now = datetime.utcnow()
+
+        item1 = {"id": 1, "start_time": now, "end_time": now, "other": "value"}
+        result1 = serialize_item_datetimes(item1)
+        assert result1["start_time"] == now.isoformat()
+        assert result1["end_time"] == now.isoformat()
+        assert result1["id"] == 1
+
+        item2 = {"id": 2, "start_time": None, "end_time": None}
+        result2 = serialize_item_datetimes(item2)
+        assert result2["start_time"] is None
+        assert result2["end_time"] is None
+
+        item3 = {"id": 3, "start_time": now, "end_time": None}
+        result3 = serialize_item_datetimes(item3)
+        assert result3["start_time"] == now.isoformat()
+        assert result3["end_time"] is None
 
 
 class TestResponseFormatting:

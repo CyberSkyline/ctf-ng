@@ -23,30 +23,9 @@ def get_event_info(event_id: int) -> dict[str, Any]:
         )
         return {"success": False, "error": "Event not found."}
 
-    total_members = TeamMember.count_by_event(event.id)
-    team_count = Team.count_by_event(event.id)
+    event_data = event.serialize()
 
-    event_data = {
-        "id": event.id,
-        "name": event.name,
-        "description": event.description,
-        "max_team_size": event.max_team_size,
-        "start_time": event.start_time.isoformat() if event.start_time else None,
-        "end_time": event.end_time.isoformat() if event.end_time else None,
-        "locked": event.locked,
-        "team_count": team_count,
-        "total_members": total_members,
-    }
-
-    logger.info(
-        "Event info retrieved successfully",
-        extra={
-            "context": {
-                "event_id": event_id,
-                "event_name": event.name,
-                "team_count": team_count,
-            }
-        },
-    )
+    event_data["team_count"] = Team.count_by_event(event.id)
+    event_data["total_members"] = TeamMember.count_by_event(event.id)
 
     return {"success": True, "event": event_data}

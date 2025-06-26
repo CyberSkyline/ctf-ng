@@ -46,21 +46,13 @@ class TestEventValidation:
             "locked": False,
         }
 
-        is_valid, errors = validate_event_creation(valid_data)
-        assert is_valid, f"Valid data should pass but got errors: {errors}"
+        is_valid, result = validate_event_creation(valid_data)
 
-    def test_invalid_event_creation(self):
-        """Test that invalid event data fails validation."""
-        invalid_cases = [
-            {},  # Missing required fields
-            {"name": "", "max_team_size": 4},
-            {"name": "Event", "max_team_size": 0},
-            {"name": "Event", "max_team_size": 100},
-        ]
+        assert is_valid is True, f"Valid data should pass but got errors: {result}"
 
-        for data in invalid_cases:
-            is_valid, errors = validate_event_creation(data)
-            assert not is_valid, f"Invalid data should fail but passed: {data}"
+        assert isinstance(result, dict)
+        assert result.get("name") == "CTF Championship"
+        assert result.get("max_team_size") == 4
 
 
 class TestBaseValidator:

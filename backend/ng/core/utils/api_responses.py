@@ -58,3 +58,16 @@ def controller_response(
     else:
         error_msg = result.get("error", "Unknown error occurred")
         return error_response(error_msg, error_field, 400)
+
+
+def serialize_item_datetimes(item: dict) -> dict:
+    """
+    This is a helper for serializing data from complex queries.
+    """
+    if item.get("start_time") and hasattr(item["start_time"], "isoformat"):
+        item["start_time"] = item["start_time"].isoformat()
+
+    if item.get("end_time") and hasattr(item["end_time"], "isoformat"):
+        item["end_time"] = item["end_time"].isoformat()
+
+    return item
