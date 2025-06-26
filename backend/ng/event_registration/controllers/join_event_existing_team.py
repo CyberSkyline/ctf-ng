@@ -1,9 +1,8 @@
 from typing import Any
-from CTFd.models import db
 from ...core.utils.logger import get_logger
-from ..models.EventRegistration import EventRegistration
-from ..models.Demographic import Demographic
 from ...team.controllers.join_team import join_team
+from ..controllers.create_demographic import create_demographic
+from ...team.controllers.leave_team import leave_team
 
 
 logger = get_logger(__name__)
@@ -27,11 +26,13 @@ def join_event_existing_team(event_id: int, user_id: int, invite_code: str) -> d
     if not response["success"]:
         return response
 
-    Demographic.create_demographic(
+    response = create_demographic(
         user_id=user_id,
         event_id=event_id,
-        reg_timestamp=db.func.now(),
     )
+    if not response["success"]:
+        leave_team(user_id, event_id)
+        return response
 
 
     return {

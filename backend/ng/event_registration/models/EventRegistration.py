@@ -1,6 +1,5 @@
 from CTFd.models import db
 from sqlalchemy import CheckConstraint
-from datetime import datetime
 
 class EventRegistration(db.Model):
     __tablename__ = 'ng_event_registration'

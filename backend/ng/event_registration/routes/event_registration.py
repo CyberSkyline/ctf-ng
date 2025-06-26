@@ -6,8 +6,6 @@ from ...core.middleware import json_body_required, handle_integrity_error, authe
 from ..controllers import join_event_new_team, join_event_existing_team, create_event_registration
 from ..controllers.get_user_demographic import get_user_demographic
 from ...core.utils.domain_validators import validate_join_event, validate_event_registration_creation
-from ..models.EventRegistration import EventRegistration
-from ..models.Demographic import Demographic
 from CTFd.utils.decorators import admins_only
 
 event_reg_namespace= Namespace("event_registration", description="Event Registration related operations")
@@ -41,6 +39,7 @@ class UserDemographics(Resource):
 
         if not event_id:
             return {"success": False, "error": "Missing event_id"}, 400
+            
         demographic = get_user_demographic(
             user_id=id,
             event_id=event_id
