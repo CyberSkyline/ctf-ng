@@ -7,6 +7,7 @@ from .core.utils.logger import get_logger
 from CTFd.models import db
 from typing import Any
 
+
 logger = get_logger(__name__)
 
 

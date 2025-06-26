@@ -18,6 +18,7 @@ Thumbs.db
 # VSCODE
 .vscode/
 *.code-workspace
+.coverage
 
 # CTFd artifacts
 .ctfd_secret_key
@@ -25,3 +26,8 @@ Thumbs.db
 # Pre commit config
 .pre-commit-config.yaml
 
+
+# Python
+.venv/
+__pycache__/
+*.egg-info/

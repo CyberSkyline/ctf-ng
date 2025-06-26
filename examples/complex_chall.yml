@@ -1,0 +1,177 @@
+# Complete Challenge Specification Example
+x-challenge:
+  # Required: Name of the challenge displayed to participants
+  name: "Advanced Web Exploitation"
+  
+  # Required: Detailed description shown to participants
+  description: |
+    This challenge involves exploiting a vulnerable web application to retrieve
+    multiple flags. You'll need to use SQL injection, XSS, and privilege escalation
+    techniques to complete all objectives.
+  
+  # Optional: Tabler icon name with Tb prefix
+  icon: "TbShieldAlt"
+  
+  # Required: List of questions/objectives for the challenge
+  questions:
+    - name: "SQL Injection Flag"
+      question: "What is the flag hidden in the users table?"
+      points: 150
+      answer: "CTF\\{sql_1nj3ct10n_m4st3r\\}"  # Regex pattern
+      max_attempts: 5
+    
+    - name: "Admin Panel Flag" 
+      question: "What flag is displayed on the admin dashboard?"
+      points: 200
+      answer: "CTF\\{4dm1n_p4n3l_h4ck3d\\}"
+      max_attempts: 3
+    
+    - name: "Privilege Escalation Flag"
+      question: "What is the root flag on the server?"
+      points: 300
+      answer: "CTF\\{pr1v_3sc_c0mpl3t3\\}"
+      max_attempts: 2
+  
+  # Optional: Hints that participants can unlock (with point deductions)
+  hints:
+    # Text hint
+    - hint:
+        type: text
+        content: |
+          Look for SQL injection vulnerabilities in the login form.
+          Try using single quotes to break the SQL syntax.
+      preview: "Database interaction hint"
+      deduction: 25
+    
+    # Simple string hint
+    - hint: "The admin panel might be accessible at /admin or /dashboard"
+      preview: "Admin panel location"
+      deduction: 30
+    
+    - hint:
+        type: text
+        content: "Check for SUID binaries or writable system files for privilege escalation"
+      preview: "System exploitation hint"
+      deduction: 50
+  
+  # Optional: Challenge summary/overview
+  summary: |
+    A multi-stage web exploitation challenge covering SQL injection,
+    cross-site scripting, and Linux privilege escalation techniques.
+  
+  # Optional: Template definitions for reusable values
+  templates:
+    # Define reusable templates with anchors
+    database-flag: &db_flag_template "fake.bothify('CTF{sql_??_####}', letters='ABCDEF')"
+    admin-flag: &admin_flag_template "fake.bothify('CTF{admin_####}', letters='0123456789')"
+  
+  # Optional: Variable definitions with templates and defaults
+  variables:
+    # Database flag variable
+    db_flag:
+      template: *db_flag_template
+      default: &db_flag_default "CTF{sql_1nj3ct10n_m4st3r}"
+    
+    # Admin panel flag
+    admin_flag:
+      template: *admin_flag_template  
+      default: &admin_flag_default "CTF{4dm1n_p4n3l_h4ck3d}"
+    
+    # Database credentials
+    db_password:
+      template: "fake.password(length=12, special_chars=True, digits=True, upper_case=True, lower_case=True)"
+      default: &db_pass_default "SecureP4ss!"
+    
+    # Random port for database
+    db_port:
+      template: "fake.port_number()"
+      default: &db_port_default "3306"
+  
+  # Optional: Challenge categories/tags
+  tags:
+    - "web"
+    - "sql-injection" 
+    - "privilege-escalation"
+    - "hard"
+
+# Standard Docker Compose services using templated variables
+services:
+  # Web application service
+  web:
+    # Required fields
+    image: "nginx:alpine"
+    hostname: "web-server"
+    
+    # Optional networking
+    networks:
+      - "challenge-net"
+    
+    # Environment variables using templated values
+    environment:
+      DB_HOST: "database"
+      DB_PORT: *db_port_default
+      DB_PASSWORD: *db_pass_default
+      FLAG_1: *db_flag_default
+      FLAG_2: *admin_flag_default
+    
+    # Resource limits
+    mem_limit: "256m"
+    cpus: "0.5"
+    
+    # Security capabilities
+    cap_add:
+      - "NET_ADMIN"
+  
+  # Database service
+  database:
+    image: "mysql:8.0"
+    hostname: "db-server"
+    
+    networks:
+      - "challenge-net"
+    
+    environment:
+      MYSQL_ROOT_PASSWORD: *db_pass_default
+      MYSQL_DATABASE: "challenge_db"
+      MYSQL_USER: "webapp"
+      MYSQL_PASSWORD: "webapp123"
+      # Flag hidden in database
+      HIDDEN_FLAG: *db_flag_default
+    
+    # Resource constraints
+    mem_limit: "512m"
+    memswap_limit: "1g"
+    cpus: "1.0"
+  
+  # Vulnerable application service  
+  app:
+    image: "vulnerable-webapp:latest"
+    hostname: "app-server"
+    
+    # Command override
+    command: 
+      - "/start.sh"
+      - "--debug"
+    
+    # Custom entrypoint
+    entrypoint:
+      - "/entrypoint.sh"
+      - "webapp"
+    
+    networks:
+      - "challenge-net"
+    
+    environment:
+      APP_ENV: "production"
+      SECRET_KEY: "dont_use_in_real_life" 
+      ADMIN_FLAG: *admin_flag_default
+      DB_CONNECTION: "mysql://webapp:webapp123@database:3306/challenge_db"
+    
+    # User context
+    user: "webapp"
+
+# Network definitions
+networks:
+  challenge-net:
+    # Required: Internal-only network
+    internal: true

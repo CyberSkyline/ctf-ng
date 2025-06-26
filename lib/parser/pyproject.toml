@@ -1,0 +1,19 @@
+[project]
+name = "cyber-skyline-chall-parser"
+version = "0.1.6"
+description = "Parser library for handling the specialized challenge docker compose format"
+readme = "README.md"
+authors = [
+    { name = "John Marsden", email = "research@johnmarsden.dev" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "attrs>=25.3.0",
+    "cattrs>=25.1.1",
+    "faker>=37.4.0",
+    "pyyaml>=6.0.2"
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"

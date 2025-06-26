@@ -1,0 +1,31 @@
+[project]
+name = "cyber-skyline-chall-check"
+version = "0.1.6"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "cattrs>=25.1.1",
+    "cyber-skyline-chall-parser",
+    "pyyaml>=6.0.2",
+    "typer>=0.16.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.0",
+    "pytest-cov>=6.2.1",
+]
+
+[project.scripts]
+chall-check = "chall_check.cli:app"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv.sources]
+cyber-skyline-chall-parser = { path = "../../lib/parser" }
+
+[tool.ruff]
+target-version = "py311"
