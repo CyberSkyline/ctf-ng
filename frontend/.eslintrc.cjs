@@ -41,9 +41,7 @@ module.exports = {
     ],
     'react/jsx-filename-extension' : [ 'error', { extensions : [ '.js', '.jsx', '.ts', '.tsx' ] } ],
     'import/no-extraneous-dependencies' : [ 'error', { devDependencies : true } ],
-    'react/require-default-props' : [ 'error', {
-      functions : 'defaultArguments', // Default props must now be defined in arguments - .defaultProps was removed in React 19
-    } ],
+    'react/require-default-props' : 'off',
   },
   settings : {
     react : {
