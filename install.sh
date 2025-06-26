@@ -3,6 +3,11 @@
 set -o pipefail
 set -e
 
+if [ "$EUID" -eq 0 ]; then
+  echo "This script must not be run as root. Please run as a non-root user."
+  exit 1
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PYTHON_DIR="$SCRIPT_DIR/backend/"
 
@@ -28,6 +33,15 @@ if [ ! -f ".env" ]; then
   echo "$PYTHONPATH_LINE" > ".env"
 elif ! grep -Fxq "PYTHONPATH" ".env"; then
   echo "$PYTHONPATH_LINE" >> ".env"
+fi
+
+# Set up default .env.dev and .env.prod files if they do not exist
+if [ ! -f ".env.dev" ]; then
+  cp ./conf/ctfd/.env.default.dev .env.dev
+fi
+
+if [ ! -f ".env.prod" ]; then
+  cp ./conf/ctfd/.env.default.prod .env.prod
 fi
 
 # Docker
