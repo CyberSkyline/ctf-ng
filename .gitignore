@@ -33,5 +33,6 @@ __pycache__/
 
 # Node / yarn
 node_modules/
-.yarn/
+.yarn/*
 !.yarn/plugins/
+!.yarn/plugins/**
