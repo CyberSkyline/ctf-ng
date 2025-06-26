@@ -17,7 +17,9 @@
   ],
   "scripts": {
     "prod-start": "yarn build && ENV_FILE=.env.prod docker compose up ctfd --build",
+    "outdated": "yarn upgrade-interactive",
     "build": "cd ./frontend && vite build",
+    "lint": "cd ./frontend && yarn lint",
     "start": "ENV_FILE=.env.dev docker compose up ctfd --build",
     "stop": "docker compose down",
     "reload": "docker exec -it ng-ctfd supervisorctl restart ctfd",
