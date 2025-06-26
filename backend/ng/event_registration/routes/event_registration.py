@@ -2,7 +2,7 @@ from flask_restx import Namespace, Resource, reqparse
 from ...core.utils.logger import get_logger
 from CTFd.utils.decorators import authed_only
 from flask import g
-from ...core.middleware import json_body_required, handle_integrity_error, authed_user_required
+from ...core.middleware import json_body_required, handle_integrity_error, authed_user_required, event_joinable
 from ..controllers import join_event_new_team, join_event_existing_team, create_event_registration
 from ..controllers.get_user_demographic import get_user_demographic
 from ...core.utils.domain_validators import validate_join_event, validate_event_registration_creation
@@ -38,6 +38,9 @@ class UserDemographics(Resource):
         id = g.user.id
         args = parser.parse_args()
         event_id = args.get("event_id")
+
+        if not event_id:
+            return {"success": False, "error": "Missing event_id"}, 400
         demographic = get_user_demographic(
             user_id=id,
             event_id=event_id
@@ -53,12 +56,13 @@ class UserDemographics(Resource):
         
         return {
             "success": True,
-            "demographic": Demographic.serialize(demographic["demographic"])
+            "demographic": demographic["demographic"].serialize()
         }, 200
 
 @event_reg_namespace.route("/join_event")
 class JoinEvent(Resource):
 
+    @event_joinable
     @authed_only
     @authed_user_required
     @json_body_required
@@ -95,16 +99,6 @@ class JoinEvent(Resource):
             )
             return {"success": False, "error": errors}, 400
 
-
-        if not event_id or not (team_name or invite_code):
-            logger.warning(
-                "Join event failed - missing required parameters",
-                extra={"context": {"event_id": event_id, "user_id": user_id, "team_name": team_name, "invite_code": invite_code}},
-            )
-            return {
-                "success": False,
-                "error": "Missing required parameters: event_id and either team_name or invite_code are required."
-            }, 400
         if invite_code:
             response = join_event_existing_team(event_id, user_id, invite_code)
 
@@ -180,5 +174,5 @@ class CreateRegistrationPeriod(Resource):
 
         return {
             "success": True,
-            "event_registration": EventRegistration.serialize(response["event_registration"]),
+            "event_registration": response["event_registration"].serialize(),
         }, 200

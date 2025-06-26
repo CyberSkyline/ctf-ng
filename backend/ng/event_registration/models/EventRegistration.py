@@ -54,33 +54,7 @@ class EventRegistration(db.Model):
         db.session.commit()
         return registration
 
-    @classmethod
-    def event_joinable(cls, event_id: int):
-        """Check if an event is joinable based on its registration status.
-
-        Args:
-            event_id (int): The ID of the event to check.
-
-        Returns:
-            tuple: A tuple containing a boolean indicating if the event is joinable and a string message.
-        """
-        registration = cls.query.filter_by(event_id=event_id).first()
-        if not registration:
-            return False, "Event registration not found"
-
-        if not registration.reg_open:
-            return False, "Event registration is closed"
-
-        if registration.reg_start_date and registration.reg_start_date > datetime.now():
-            return False, "Event registration has not started yet"
-
-        if registration.reg_end_date and registration.reg_end_date < datetime.now():
-            return False, "Event registration has ended"
-
-        return True, "Event is joinable"
-
-    @classmethod
-    def serialize(cls, registration):
+    def serialize(self):
         """Serialize an event registration instance to a dictionary.
 
         Args:
@@ -90,11 +64,10 @@ class EventRegistration(db.Model):
             dict: Serialized event registration data.
         """
         return {
-            "id": registration.id,
-            "event_id": registration.event_id,
-            "public": registration.public,
-            "reg_open": registration.reg_open,
-            "reg_start_date": registration.reg_start_date.isoformat() if registration.reg_start_date else None,
-            "reg_end_date": registration.reg_end_date.isoformat() if registration.reg_end_date else None,
+            "id": self.id,
+            "event_id": self.event_id,
+            "public": self.public,
+            "reg_open": self.reg_open,
+            "reg_start_date": self.reg_start_date.isoformat() if self.reg_start_date else None,
+            "reg_end_date": self.reg_end_date.isoformat() if self.reg_end_date else None,
         }
-

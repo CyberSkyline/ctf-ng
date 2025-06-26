@@ -46,8 +46,7 @@ class Demographic(db.Model):
         """
         return cls.query.filter_by(user_id=user_id, event_id=event_id).first()
 
-    @classmethod
-    def serialize(cls, demographic):
+    def serialize(self):
         """Serialize a demographic instance to a dictionary.
 
         Args:
@@ -57,8 +56,8 @@ class Demographic(db.Model):
             dict: Serialized demographic data
         """
         return {
-            "user_id": demographic.user_id,
-            "event_id": demographic.event_id,
-            "reg_timestamp": demographic.reg_timestamp.isoformat(),
+            "user_id": self.user_id,
+            "event_id": self.event_id,
+            "reg_timestamp": self.reg_timestamp.isoformat() if self.reg_timestamp else None
         }
     

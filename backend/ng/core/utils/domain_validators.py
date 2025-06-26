@@ -165,6 +165,16 @@ def validate_join_event(data: dict[str, Any]) -> tuple[bool, dict[str, str]]:
         required=False,
         friendly_name="Team name",
     )
+    if not data.get("event_id"):
+        validator.errors["event_id"] = "Event ID is required"
+        
+    # Ensure at least one of invite_code or team_name is provided
+    if not data.get("invite_code") and not data.get("team_name"):
+        validator.errors["fields"] = "Either invite_code or team_name must be provided"
+
+    # Ensure only one of invite_code or team_name is provided
+    if data.get("invite_code") and data.get("team_name"):
+        validator.errors["fields"] = "Only one of invite_code or team_name can be provided"
 
     return validator.is_valid()
 

@@ -60,8 +60,9 @@ def test_join_closed_event_fails(logged_in_client, closed_event_registration):
         "team_name": "New Team"
     }
     response = logged_in_client.post("/ng/event_registration/join_event", json=data)
-    assert response.status_code == 400
-    assert "Event registration is closed" in response.get_json()["error"]
+    assert response.status_code == 403
+    assert "Event Registration is not open" in response.get_json()["errors"]["event_registration_closed"]
+    
 
 def test_join_event_past_registration_period_fails(logged_in_client, past_event_registration):
     """Check that joining an event after the registration period fails."""
@@ -70,8 +71,8 @@ def test_join_event_past_registration_period_fails(logged_in_client, past_event_
         "team_name": "New Team"
     }
     response = logged_in_client.post("/ng/event_registration/join_event", json=data)
-    assert response.status_code == 400
-    assert "Event registration has ended" in response.get_json()["error"]
+    assert response.status_code == 403
+    assert "Event Registration has ended" in response.get_json()["errors"]["event_registration_ended"]
 
 def test_join_event_before_registration_starts_fails(logged_in_client, future_event_registration):
     """Check that joining an event before the registration starts fails."""
@@ -80,8 +81,8 @@ def test_join_event_before_registration_starts_fails(logged_in_client, future_ev
         "team_name": "New Team"
     }
     response = logged_in_client.post("/ng/event_registration/join_event", json=data)
-    assert response.status_code == 400
-    assert "Event registration has not started yet" in response.get_json()["error"]
+    assert response.status_code == 403
+    assert "Event Registration has not started yet" in response.get_json()["errors"]["event_registration_not_started"]
 
 def test_can_only_register_once(logged_in_client, event_registration, team_with_members):
     """Check that a user can only register once for an event."""
@@ -92,6 +93,7 @@ def test_can_only_register_once(logged_in_client, event_registration, team_with_
     response = logged_in_client.post("/ng/event_registration/join_event", json=data)
     assert response.status_code == 200
     response = logged_in_client.post("/ng/event_registration/join_event", json=data)
+    print(response.get_json())
     assert response.status_code == 400
     assert "User is already in team" in response.get_json()["error"]
 

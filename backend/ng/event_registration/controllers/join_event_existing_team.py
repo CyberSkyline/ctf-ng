@@ -18,17 +18,6 @@ def join_event_existing_team(event_id: int, user_id: int, invite_code: str) -> d
         dict: Success status, team info, and membership details or error info.
     """
 
-    can_join, reason = EventRegistration.event_joinable(event_id)
-    if not can_join:
-        logger.warning(
-            "Join event failed - user cannot join",
-            extra={"context": {"event_id": event_id, "user_id": user_id, "reason": reason}},
-        )
-        return {
-            "success": False,
-            "error": reason
-        }
-
     response = join_team(
         user_id=user_id,
         invite_code=invite_code
@@ -43,21 +32,11 @@ def join_event_existing_team(event_id: int, user_id: int, invite_code: str) -> d
         event_id=event_id,
         reg_timestamp=db.func.now(),
     )
-    logger.info(
-        "User joined existing team for event",
-        extra={"context": {"user_id": user_id, "team_id": team.id, "event_id": event_id}}
-    )
+
+
     return {
         "success": True,
-        "team": {
-            "id": team.id,
-            "name": team.name,
-            "invite_code": team.invite_code,
-            "event_id": team.event_id,
-            "ranked": team.ranked,
-            "member_count": team.member_count
-        },
-        "message": f"Successfully joined the team '{team.name}' for the event.",
+        "team": team.serialize(),
     }
     
 
