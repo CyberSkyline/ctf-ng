@@ -1,5 +1,6 @@
-from plugin.event_registration.models.EventRegistration import EventRegistration
-from plugin.event_registration.models.Demographics import Demographics
+from ..models.EventRegistration import EventRegistration
+from ..models.Demographics import Demographics
+from ...core.utils.domain_validators import validate_event_registration_creation
 from CTFd.models import db
 from datetime import timedelta,datetime
 
@@ -48,7 +49,6 @@ class TestEventRegistrationConstraints:
     
     def test_event_registration_time_constraints(self):
         """Test that registration start and end dates follow the constraints."""
-        from plugin.utils import validate_event_registration_creation
         curr = datetime.utcnow()
         future_start = (curr + timedelta(days=1)).isoformat()
         future_end = (curr + timedelta(days=2)).isoformat()
@@ -79,7 +79,6 @@ class TestEventRegistrationConstraints:
     
     def test_event_reg_time_both_or_neither_constraint(self):
         """Test that both times must be provided together or neither."""
-        from plugin.utils import validate_event_registration_creation
 
         now = datetime.utcnow()
         start = (now + timedelta(hours=1)).isoformat()

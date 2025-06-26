@@ -1,12 +1,6 @@
-from typing import Any, Dict
-from sqlalchemy import func
+from typing import Any
 from CTFd.models import db
-from datetime import datetime, timedelta
-from flask import request, jsonify
-from ...utils.logger import get_logger
-from ...team.models.Team import Team
-from ...team.models.TeamMember import TeamMember
-from ...user.models.User import User
+from ...core.utils.logger import get_logger
 from ..models.EventRegistration import EventRegistration
 from ..models.Demographics import Demographics
 from ...team.controllers.join_team import join_team
@@ -24,11 +18,11 @@ def join_event_existing_team(event_id: int, user_id: int, invite_code: str) -> d
         dict: Success status, team info, and membership details or error info.
     """
 
-    can_join, reason = event_joinable(event_id)
+    can_join, reason = EventRegistration.event_joinable(event_id)
     if not can_join:
         logger.warning(
-            "Join event failed - user cannot join event",
-            extra={"context": {"event_id": event_id, "user_id": user_id}},
+            "Join event failed - user cannot join",
+            extra={"context": {"event_id": event_id, "user_id": user_id, "reason": reason}},
         )
         return {
             "success": False,
@@ -42,16 +36,12 @@ def join_event_existing_team(event_id: int, user_id: int, invite_code: str) -> d
     team = response.get("team")
 
     if not response["success"]:
-        logger.warning(
-            "Join event failed - team join failed",
-            extra={"context": {"event_id": event_id, "user_id": user_id, "error": response["error"]}},
-        )
         return {
             "success": False,
             "error": response["error"]
         }
 
-    demographics = Demographics.create_demographics(
+    Demographics.create_demographics(
         user_id=user_id,
         event_id=event_id,
         reg_timestamp=db.func.now(),
@@ -76,19 +66,3 @@ def join_event_existing_team(event_id: int, user_id: int, invite_code: str) -> d
 
 
 
-def event_joinable(event_id: int) -> dict[str, Any]:
-    """Check if an event is joinable"""
-    event = EventRegistration.query.get(event_id)
-    print(type(event.reg_start_date))
-    print(type(func.now()))
-    if not event:
-        return False, "Event does not exist."
-    if not event.reg_open:
-        return False, "Event registration is not open."
-    if event.reg_start_date is not None and event.reg_start_date > func.now():
-        return False, "Event registration has not started yet."
-    if event.reg_end_date is not None and event.reg_end_date < func.now():
-        return False, "Event registration has ended."
-
-    return True, None
-    

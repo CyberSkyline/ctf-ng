@@ -1,12 +1,7 @@
 import pytest
 import time
-from datetime import datetime
-from plugin.event_registration.controllers.join_event_existing_team import join_event_existing_team
-from plugin.event_registration.controllers.join_event_new_team import join_event_new_team
-from plugin.event_registration.models.EventRegistration import EventRegistration
-from plugin.event_registration.controllers.create_event_registration import create_event_registration
-from plugin.event.controllers.create_event import create_event
-from plugin.team.controllers.create_team import create_team
+from ..controllers.join_event_existing_team import join_event_existing_team
+from ..controllers.join_event_new_team import join_event_new_team
 from tests.helpers import gen_user as gen_user_original
 
 
@@ -18,6 +13,9 @@ def gen_unique_user(db_wrapper):
     """Generate a user with unique email to avoid conflicts."""
     timestamp = str(int(time.time() * 1000000))
     return gen_user_original(db_wrapper, name=f"user_{timestamp}", email=f"user_{timestamp}@example.com")
+
+
+pytestmark = pytest.mark.db
 
 @pytest.mark.db
 def test_join_event_with_new_team(db_session,event, event_registration):
@@ -59,7 +57,7 @@ def test_join_closed_event_fails(db_session, event, closed_event_registration, n
     )
 
     assert not result["success"]
-    assert "Event registration is not open." in result["error"]
+    assert "Event registration is closed" in result["error"]
 
 
 @pytest.mark.db
@@ -73,7 +71,7 @@ def test_join_event_past_registration_period_fails(db_session, event, past_event
     )
 
     assert not result["success"]
-    assert "Event registration has ended." in result["error"]
+    assert "Event registration has ended" in result["error"]
 
 @pytest.mark.db
 def test_join_event_before_registration_starts_fails(db_session, event, future_event_registration, normal_user):
@@ -87,5 +85,5 @@ def test_join_event_before_registration_starts_fails(db_session, event, future_e
     )
 
     assert not result["success"]
-    assert "Event registration has not started yet." in result["error"]
+    assert "Event registration has not started yet" in result["error"]
     

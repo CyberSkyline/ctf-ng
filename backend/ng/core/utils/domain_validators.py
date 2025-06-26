@@ -145,6 +145,30 @@ def validate_event_registration_creation(data: dict[str, Any]) -> tuple[bool, di
     return validator.is_valid()
 
 
+def validate_join_event(data: dict[str, Any]) -> tuple[bool, dict[str, str]]:
+    """Validate joining an event."""
+    validator = BaseValidator()
+
+    # Validate required fields
+    validator.validate_positive_integer(data, "event_id", required=True, friendly_name="Event ID")
+    validator.validate_string(
+        data,
+        "invite_code",
+        config.INVITE_CODE_MAX_LENGTH,
+        required=False,
+        friendly_name="Invite code",
+    )
+    validator.validate_string(
+        data,
+        "team_name",
+        config.TEAM_NAME_MAX_LENGTH,
+        required=False,
+        friendly_name="Team name",
+    )
+
+    return validator.is_valid()
+
+
 def validate_event_update(data: dict[str, Any]) -> tuple[bool, dict[str, str]]:
     """Validate event updates."""
     validator = BaseValidator()

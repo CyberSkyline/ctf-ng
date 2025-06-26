@@ -17,7 +17,7 @@ class Demographics(db.Model):
         Args:
             user_id (int): User ID
             event_id (int): Event ID
-            reg_timestamp (datetime, optional): Registration timestamp
+            reg_timestamp (datetime): Registration timestamp
 
         Returns:
             Demographics: The created demographics instance
@@ -32,4 +32,17 @@ class Demographics(db.Model):
         db.session.add(demographics)
         db.session.commit()
         return demographics
+
+    @classmethod
+    def get_demographics_by_user_and_event(cls, user_id, event_id):
+        """Retrieve demographics for a specific user and event.
+
+        Args:
+            user_id (int): User ID
+            event_id (int): Event ID
+
+        Returns:
+            Demographics: The demographics entry for the user and event
+        """
+        return cls.query.filter_by(user_id=user_id, event_id=event_id).first()
     

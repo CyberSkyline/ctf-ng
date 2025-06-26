@@ -13,12 +13,12 @@ import pytest
 from datetime import datetime
 from CTFd.models import db as _db
 from CTFd.cache import cache
-from datetime import datetime
 from . import load as plugin_load
 from .user.models.User import User as NgUser
 from .event.models.Event import Event
 from .team.controllers.create_team import create_team
 from .team.controllers.join_team import join_team
+from .event_registration.controllers.create_registration import create_registration
 from tests.helpers import (
     create_ctfd as create_ctfd_original,
     destroy_ctfd as destroy_ctfd_original,
@@ -237,7 +237,7 @@ def event_registration(event, db_session):
     if db_session is None:
         return None
 
-    result = create_event_registration(event_id=event.id, reg_open=True)
+    result = create_registration(event_id=event.id, reg_open=True)
     if not result["success"]:
         raise Exception(f"Failed to create event registration: {result.get('error')}")
 
@@ -249,7 +249,7 @@ def closed_event_registration(event, db_session):
     if db_session is None:
         return None
 
-    result = create_event_registration(event_id=event.id, reg_open=False)
+    result = create_registration(event_id=event.id, reg_open=False)
     if not result["success"]:
         raise Exception(f"Failed to create event registration: {result.get('error')}")
 
@@ -261,7 +261,7 @@ def past_event_registration(event, db_session):
     if db_session is None:
         return None
 
-    result = create_event_registration(event_id=event.id, reg_open=True, reg_start_date=datetime(2020, 1, 1), reg_end_date=datetime(2020, 1, 2))
+    result = create_registration(event_id=event.id, reg_open=True, reg_start_date=datetime(2020, 1, 1), reg_end_date=datetime(2020, 1, 2))
     if not result["success"]:
         raise Exception(f"Failed to create past event registration: {result.get('error')}")
 
@@ -273,7 +273,7 @@ def future_event_registration(event, db_session):
     if db_session is None:
         return None
 
-    result = create_event_registration(event_id=event.id, reg_open=True, reg_start_date=datetime(2125, 1, 1), reg_end_date=datetime(2125, 1, 2))
+    result = create_registration(event_id=event.id, reg_open=True, reg_start_date=datetime(2125, 1, 1), reg_end_date=datetime(2125, 1, 2))
     if not result["success"]:
         raise Exception(f"Failed to create future event registration: {result.get('error')}")
 

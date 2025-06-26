@@ -11,6 +11,7 @@ from ...team.routes.teams import teams_namespace
 from ...event.routes.events import events_namespace
 from ...user.routes.users import users_namespace
 from ...admin.routes.admin import admin_namespace
+from ...event_registration.routes.event_registration import event_reg_namespace
 
 api_blueprint = Blueprint("plugin_api", __name__)
 

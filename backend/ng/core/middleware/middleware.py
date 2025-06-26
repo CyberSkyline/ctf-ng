@@ -122,7 +122,7 @@ def handle_integrity_error(f):
                 },
             )
             return error_response(
-                "Database constraint error. Please check your request and try again.",
+                f"Database constraint error. {str(e)}",
                 "database",
                 409,
             )
