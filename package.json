@@ -9,17 +9,27 @@
   "license": "GPL-3.0",
   "author": "Cyber Skyline",
   "type": "module",
-  "scripts": {
-    "prod-start" : "cd ./frontend && vite build && cd - && ENV_FILE=.env.prod docker compose up ctfd --build",
-    "start" : "ENV_FILE=.env.dev docker compose up ctfd --build",
-    "stop" : "docker compose down",
-    "reload" : "docker exec -it ng-ctfd supervisorctl restart ctfd",
-    "restart" : "docker exec -it ng-ctfd supervisorctl restart ctfd",
-    "restart-nginx" : "docker exec -it ng-nginx service nginx restart",
-    "logs-nginx" : "docker compose logs -f nginx",
-    "logs-vite" : "docker compose logs -f vite",
-    "logs-ctfd" : "docker compose logs -f ctfd",
-    "nuke" : "rm -rf ./frontend/node_modules && cd ./frontend && yarn install"
+  "engines": {
+    "node": "24.x"
   },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "prod-start": "yarn build && ENV_FILE=.env.prod docker compose up ctfd --build",
+    "build": "cd ./frontend && vite build",
+    "start": "ENV_FILE=.env.dev docker compose up ctfd --build",
+    "stop": "docker compose down",
+    "reload": "docker exec -it ng-ctfd supervisorctl restart ctfd",
+    "restart": "docker exec -it ng-ctfd supervisorctl restart ctfd",
+    "restart-nginx": "docker exec -it ng-nginx service nginx restart",
+    "logs-nginx": "docker compose logs -f nginx",
+    "logs-vite": "docker compose logs -f vite",
+    "logs-ctfd": "docker compose logs -f ctfd",
+    "nuke": "rm -rf ./node_modules && yarn install"
+  },
+  "devDependencies": {
+    "@yarnpkg/plugin-interactive-tools": "^4.0.3"
+  },
+  "packageManager": "yarn@3.7.0"
 }

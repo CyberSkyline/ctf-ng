@@ -26,8 +26,12 @@ Thumbs.db
 # Pre commit config
 .pre-commit-config.yaml
 
-
 # Python
 .venv/
 __pycache__/
 *.egg-info/
+
+# Node / yarn
+node_modules/
+.yarn/
+!.yarn/plugins/
