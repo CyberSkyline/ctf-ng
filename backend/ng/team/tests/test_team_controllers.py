@@ -37,7 +37,6 @@ def test_create_team_sets_creator_as_captain(db_session, event):
     """Test that team creator becomes captain."""
     db_wrapper = DBWrapper(db_session)
     creator = gen_unique_user(db_wrapper)
-    print(f"Creating team with creator: {creator.name} (ID: {creator.id})")
 
     result = create_team("Test Team", event.id, creator.id)
 
