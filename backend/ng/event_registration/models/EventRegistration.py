@@ -79,3 +79,22 @@ class EventRegistration(db.Model):
 
         return True, "Event is joinable"
 
+    @classmethod
+    def serialize(cls, registration):
+        """Serialize an event registration instance to a dictionary.
+
+        Args:
+            registration (EventRegistration): The event registration instance to serialize.
+
+        Returns:
+            dict: Serialized event registration data.
+        """
+        return {
+            "id": registration.id,
+            "event_id": registration.event_id,
+            "public": registration.public,
+            "reg_open": registration.reg_open,
+            "reg_start_date": registration.reg_start_date.isoformat() if registration.reg_start_date else None,
+            "reg_end_date": registration.reg_end_date.isoformat() if registration.reg_end_date else None,
+        }
+

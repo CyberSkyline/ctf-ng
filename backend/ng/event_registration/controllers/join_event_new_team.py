@@ -2,7 +2,7 @@ from typing import Any
 from CTFd.models import db
 from ...core.utils.logger import get_logger
 from ..models.EventRegistration import EventRegistration
-from ..models.Demographics import Demographics
+from ..models.Demographic import Demographic
 from ...team.controllers.create_team import create_team
 
 
@@ -47,7 +47,7 @@ def join_event_new_team(event_id: int, user_id: int, team_name: str) -> dict[str
         extra={"context": {"user_id": user_id, "team_name": team_name, "event_id": event_id}}
     )
 
-    Demographics.create_demographics(
+    Demographic.create_demographic(
         user_id=user_id,
         event_id=event_id,
         reg_timestamp=db.func.now(),

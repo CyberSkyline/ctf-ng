@@ -7,15 +7,15 @@ import pytest
 from ng.user.models.User import User
 from flask import g
 from datetime import datetime
-from ..models.Demographics import Demographics
+from ..models.Demographic import Demographic
 from datetime import timedelta
 
 pytestmark = pytest.mark.db
 
-def test_get_demographics_authenticated(logged_in_client,event):
-    """Check that user demographics endpoint works for authenticated users."""
+def test_get_demographic_authenticated(logged_in_client,event):
+    """Check that user demographic endpoint works for authenticated users."""
     g.user = User(id=1)
-    Demographics.create_demographics(
+    Demographic.create_demographic(
         user_id=g.user.id,
         event_id=event.id,
         reg_timestamp=datetime.utcnow()
@@ -25,11 +25,11 @@ def test_get_demographics_authenticated(logged_in_client,event):
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"]
-    assert "demographics" in data
-    assert len(data["demographics"]) > 0
+    assert "demographic" in data
+    assert len(data["demographic"]) > 0
 
-def test_get_demographics_unauthenticated(client, event):
-    """Check that user demographics endpoint requires authentication."""
+def test_get_demographic_unauthenticated(client, event):
+    """Check that user demographic endpoint requires authentication."""
     response = client.get("/ng/event_registration", query_string={"event_id": event.id})
     assert response.status_code == 302  # Redirect to login
     assert response.location is not None

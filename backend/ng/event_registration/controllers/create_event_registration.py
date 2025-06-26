@@ -3,7 +3,7 @@ from ...core.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-def create_registration(event_id, public=False, reg_open=True, reg_start_date=None, reg_end_date=None):
+def create_event_registration(event_id, public=False, reg_open=True, reg_start_date=None, reg_end_date=None):
     """Create a new event registration for the specified event.
 
     Args:

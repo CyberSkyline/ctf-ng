@@ -3,9 +3,11 @@ from ...core.utils.logger import get_logger
 from CTFd.utils.decorators import authed_only
 from flask import g
 from ...core.middleware import json_body_required, handle_integrity_error, authed_user_required
-from ..controllers import join_event_new_team, join_event_existing_team, create_registration
+from ..controllers import join_event_new_team, join_event_existing_team, create_event_registration
 from ..controllers.get_user_demographic import get_user_demographic
 from ...core.utils.domain_validators import validate_join_event, validate_event_registration_creation
+from ..models.EventRegistration import EventRegistration
+from ..models.Demographic import Demographic
 from CTFd.utils.decorators import admins_only
 
 event_reg_namespace= Namespace("event_registration", description="Event Registration related operations")
@@ -36,20 +38,23 @@ class UserDemographics(Resource):
         id = g.user.id
         args = parser.parse_args()
         event_id = args.get("event_id")
-        demographics = get_user_demographic(
+        demographic = get_user_demographic(
             user_id=id,
             event_id=event_id
         )
-        if not demographics["success"]:
+        if not demographic["success"]:
             logger.warning(
                 "Get user demographics failed",
-                extra={"context": {"user_id": id, "event_id": event_id, "error": demographics["error"]}},
+                extra={"context": {"user_id": id, "event_id": event_id, "error": demographic["error"]}},
             )
-            if demographics["error"] == "No demographic data found for user ID {} in event ID {}".format(id, event_id):
-                return {"success": False, "error": demographics["error"]}, 404
-            return {"success": False, "error": demographics["error"]}, 400
+            if demographic["error"] == "No demographic data found for user ID {} in event ID {}".format(id, event_id):
+                return {"success": False, "error": demographic["error"]}, 404
+            return {"success": False, "error": demographic["error"]}, 400
         
-        return demographics, 200
+        return {
+            "success": True,
+            "demographic": Demographic.serialize(demographic["demographic"])
+        }, 200
 
 @event_reg_namespace.route("/join_event")
 class JoinEvent(Resource):
@@ -164,22 +169,16 @@ class CreateRegistrationPeriod(Resource):
             )
             return {"success": False, "error": errors}, 400
 
-        response = create_registration(event_id, public=public, reg_open=reg_open, reg_start_date=start_date, reg_end_date=end_date)
+        response = create_event_registration(event_id, public=public, reg_open=reg_open, reg_start_date=start_date, reg_end_date=end_date)
 
         if not response["success"]:
             logger.warning(
-                "Create registration period failed - error in create_registration_period",
+                "Create registration period failed - error in create_event_registration_period",
                 extra={"context": {"event_id": event_id, "error": response["error"]}},
             )
             return {"success": False, "error": response["error"]}, 400
 
         return {
             "success": True,
-            "event_registration": {
-                "event_id": response["event_registration"].event_id,
-                "public": response["event_registration"].public,
-                "reg_open": response["event_registration"].reg_open,
-                "reg_start_date": response["event_registration"].reg_start_date or None,
-                "reg_end_date": response["event_registration"].reg_end_date or None
-            }
+            "event_registration": EventRegistration.serialize(response["event_registration"]),
         }, 200

@@ -1,23 +1,23 @@
 from ..models.EventRegistration import EventRegistration
-from ..models.Demographics import Demographics
+from ..models.Demographic import Demographic
 from ...core.utils.domain_validators import validate_event_registration_creation
 from CTFd.models import db
 from datetime import timedelta,datetime
 
 
 
-class TestDemographicsModel:
+class TestdemographicModel:
 
-    def test_demographics_repr(self):
-        """Test the string representation of Demographics model."""
-        demographics = Demographics()
-        demographics.event_id = 5678
-        demographics.user_id = 1234
+    def test_demographic_repr(self):
+        """Test the string representation of demographic model."""
+        demographic = Demographic()
+        demographic.event_id = 5678
+        demographic.user_id = 1234
         currtime = db.func.now()
-        demographics.reg_timestamp = currtime
+        demographic.reg_timestamp = currtime
 
-        repr_str = repr(demographics)
-        assert "Demographics" in repr_str
+        repr_str = repr(demographic)
+        assert "Demographic" in repr_str
         assert "id=5678" in repr_str
         assert "user_id=1234" in repr_str
         assert f"reg_timestamp={currtime}" in repr_str
