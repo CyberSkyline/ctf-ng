@@ -1,14 +1,33 @@
+# Copyright 2025 Cyber Skyline
+
+# Permission is hereby granted, free of charge, to any person obtaining a 
+# copy of this software and associated documentation files (the “Software”), 
+# to deal in the Software without restriction, including without limitation 
+# the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+# and/or sell copies of the Software, and to permit persons to whom the 
+# Software is furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included 
+# in all copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
+# IN THE SOFTWARE.
 import logging
 import re
 from cattrs import ClassValidationError
 import pytest
 import tempfile
 from pathlib import Path
-from parser.compose.challenge_info import ChallengeInfo
-from parser.rewriter import Template
-from parser.yaml_parser import ComposeYamlParser, parse_compose_string, parse_compose_file
-from parser.compose import ComposeFile, ComposeResourceName
-from parser.compose.service import Service
+from cyber_skyline.chall_parser.compose.challenge_info import ChallengeInfo, TextHint
+from cyber_skyline.chall_parser.rewriter import Template
+from cyber_skyline.chall_parser.yaml_parser import ComposeYamlParser, parse_compose_string, parse_compose_file
+from cyber_skyline.chall_parser.compose import ComposeFile, ComposeResourceName
+from cyber_skyline.chall_parser.compose.service import Service
 
 class TestComposeYamlParser:
     def test_parse_basic_compose(self, caplog):
@@ -266,13 +285,13 @@ services:
         
         # First hint - Text hint
         db_hint = challenge.challenge.hints[0]
-        from parser.compose.challenge_info import TextHint
         assert isinstance(db_hint.hint, TextHint)
         assert db_hint.hint.type == "text"
         expected_db_content = (
             "Look for SQL injection vulnerabilities in the login form.\n"
             "Try using single quotes to break the SQL syntax.\n"
         )
+        assert isinstance(db_hint.hint, TextHint)
         assert db_hint.hint.content == expected_db_content
         assert db_hint.preview == "Database interaction hint"
         assert db_hint.deduction == 25
