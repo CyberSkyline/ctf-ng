@@ -1,6 +1,9 @@
 name: Publish Python distributions to PyPI
 on:
   pull_request:
+    paths:
+      - "lib/parser/**"
+      - "tools/chall-check/**"
     branches:
       - development
       - staging
