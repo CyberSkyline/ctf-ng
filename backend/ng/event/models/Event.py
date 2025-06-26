@@ -232,6 +232,18 @@ class Event(db.Model):
 
         return {"event": event_data, "teams": teams_data}
 
+    def serialize(self):
+        """Returns a dictionary representation of the Event model."""
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "max_team_size": self.max_team_size,
+            "start_time": self.start_time.isoformat() if self.start_time else None,
+            "end_time": self.end_time.isoformat() if self.end_time else None,
+            "locked": self.locked,
+        }
+
     def get_largest_team_size(self) -> int:
         """Get the size of the largest team in this event.
 

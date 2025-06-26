@@ -71,15 +71,6 @@ class UserDetails(Resource):
         if not result.get("success"):
             return controller_response(result, error_field="user"), 404
 
-        logger.info(
-            "Admin retrieved user details",
-            extra={
-                "context": {
-                    "admin_id": get_current_user_id(),
-                    "target_user_id": user_id,
-                }
-            },
-        )
         return controller_response(result)
 
 
