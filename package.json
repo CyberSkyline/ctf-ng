@@ -10,8 +10,9 @@
   "author": "Cyber Skyline",
   "type": "module",
   "scripts": {
-    "start" : "docker compose --profile full up --build",
-    "stop" : "docker compose --profile full down",
+    "prod-start" : "cd ./frontend && vite build && cd - && ENV_FILE=.env.prod docker compose up --build",
+    "start" : "ENV_FILE=.env.dev docker compose up --build",
+    "stop" : "docker compose down",
     "reload" : "docker exec -it ng-ctfd supervisorctl restart ctfd",
     "restart" : "docker exec -it ng-ctfd supervisorctl restart ctfd",
     "restart-nginx" : "docker exec -it ng-nginx service nginx restart",

@@ -9,17 +9,17 @@
       };
     </script>
     <script type="module">
-      import('/static/@react-refresh').then((RefreshRuntime) => {
+      import("{{ static_build_path }}@react-refresh").then((RefreshRuntime) => {
         RefreshRuntime.injectIntoGlobalHook(window);
         window.$RefreshReg$ = () => {};
         window.$RefreshSig$ = () => (type) => type;
         window.__vite_plugin_react_preamble_installed__ = true;
       });
     </script>
-    <script type="module" src="/static/@vite/client"></script>
+    <script type="module" src="{{ static_build_path }}@vite/client"></script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/static/src/main.tsx"></script>
+    <script type="module" src="{{ static_build_path }}src/main.tsx"></script>
   </body>
 </html>

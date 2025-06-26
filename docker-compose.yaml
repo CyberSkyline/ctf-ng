@@ -9,31 +9,21 @@ services:
     ports:
       - "8000:8000"
       - "4000:4000"
-    environment:
-      - UPLOAD_FOLDER=/var/uploads
-      - DATABASE_URL=mysql+pymysql://ctfd:ctfd@db/ctfd
-      - REDIS_URL=redis://cache:6379
-      - DEBUG=true
-      - WORKERS=1
-      - LOG_FOLDER=/var/log/CTFd
-      - ACCESS_LOG=-
-      - ERROR_LOG=-
-      - REVERSE_PROXY=true
-      - SWAGGER_UI=true
-      - LOG_LEVEL=DEBUG  # DEBUG for development | INFO/WARNING for production.            
+    env_file:
+      - ${ENV_FILE:-.env.dev}   
     volumes:
       - .data/CTFd/logs:/var/log/CTFd
       - .data/CTFd/uploads:/var/uploads
       - ./backend/ng:/opt/CTFd/CTFd/plugins/ng/:ro
-      - ./backend/entrypoint.html:/opt/CTFd/CTFd/themes/core/templates/entrypoint.html:ro
     depends_on:
       - db
     networks:
       default:
       internal:
+    tty: true
     entrypoint : /bin/bash
+    # command : -c "exec bash"
     command : -c "/usr/bin/supervisord -c /etc/supervisor/supervisord.conf && supervisorctl tail -f ctfd"
-    profiles : [ full ]
 
   nginx:
     image: nginx:1.28
@@ -41,12 +31,12 @@ services:
     restart: always
     volumes:
       - ./conf/nginx/http.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend/dist:/var/www/vite-build:ro
     ports:
       - 80:80
       - 5173:5173
     depends_on:
       - ctfd
-    profiles : [ full ]
 
   db:
     image: mariadb:10.11
@@ -65,7 +55,6 @@ services:
         default:
     # This command is required to set important mariadb defaults
     command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --wait_timeout=28800, --log-warnings=0]
-    profiles : [ full ]
 
   cache:
     image: redis:4
@@ -75,7 +64,6 @@ services:
     - .data/redis:/data
     networks:
         internal:
-    profiles : [ full ]
 
   vite:
     build:
@@ -86,7 +74,6 @@ services:
     tty: true
     volumes:
       - ./frontend:/app
-    profiles : [ frontend, full ]
 
 networks:
     default:

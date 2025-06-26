@@ -35,6 +35,15 @@ elif ! grep -Fxq "PYTHONPATH" ".env"; then
   echo "$PYTHONPATH_LINE" >> ".env"
 fi
 
+# Set up default .env.dev and .env.prod files if they do not exist
+if [ ! -f ".env.dev" ]; then
+  cp ./conf/ctfd/.env.default.dev .env.dev
+fi
+
+if [ ! -f ".env.prod" ]; then
+  cp ./conf/ctfd/.env.default.prod .env.prod
+fi
+
 # Docker
 if ! command -v docker &> /dev/null; then
   echo "Docker is not installed."
