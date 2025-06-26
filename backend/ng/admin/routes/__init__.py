@@ -1,4 +1,5 @@
 """
-/backend/ctfd/admin/routes/__init__.py
+/backend/ng/admin/routes/__init__.py
 Admin API routes package.
 """
+

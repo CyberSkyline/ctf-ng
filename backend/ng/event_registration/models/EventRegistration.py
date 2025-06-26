@@ -1,45 +1,103 @@
-from CTFd.models import db
+"""
+Defines the EventRegistration model for event registration configuration.
+"""
+
+from __future__ import annotations
+from typing import Any
+
+from datetime import datetime
 from sqlalchemy import CheckConstraint
 
+from CTFd.models import db
+
+
 class EventRegistration(db.Model):
-    __tablename__ = 'ng_event_registration'
+    __tablename__ = "ng_event_registrations"
+
     id = db.Column(db.Integer, primary_key=True)
-    event_id = db.Column(db.Integer, db.ForeignKey('ng_events.id'))
+    event_id = db.Column(
+        db.Integer,
+        db.ForeignKey("ng_events.id"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
     public = db.Column(db.Boolean, nullable=False, default=False)
     reg_open = db.Column(db.Boolean, nullable=False, default=False)
     reg_start_date = db.Column(db.DateTime, nullable=True)
     reg_end_date = db.Column(db.DateTime, nullable=True)
 
-
+    event = db.relationship("Event", backref=db.backref("registration", uselist=False))
 
     __table_args__ = (
         CheckConstraint(
-            "(reg_start_date IS NULL AND reg_end_date IS NULL) OR (reg_start_date IS NOT NULL AND reg_end_date IS NOT NULL)",
+            "(reg_start_date IS NULL AND reg_end_date IS NULL) OR "
+            "(reg_start_date IS NOT NULL AND reg_end_date IS NOT NULL)",
             name="ck_event_reg_dates_together",
         ),
         CheckConstraint(
-            "reg_start_date < reg_end_date",
+            "reg_start_date IS NULL OR reg_end_date IS NULL OR reg_start_date < reg_end_date",
             name="ck_event_reg_dates_order",
-        )
+        ),
     )
 
     def __repr__(self):
-        return f'<Registration Event id={self.event_id} public={self.public} reg_open={self.reg_open}>'
+        return f"<EventRegistration event_id={self.event_id} reg_open={self.reg_open}>"
 
-
-    @classmethod
-    def create_event_registration(cls, event_id, public=False, reg_open=False, reg_start_date=None, reg_end_date=None):
-        """Create and persist a new event registration to the database.
+    def serialize(self, include_admin_fields: bool = False) -> dict[str, Any]:
+        """Serialize event registration for API response.
 
         Args:
-            event_id (int): Event ID
-            public (bool, optional): Whether registration is public
-            reg_open (bool, optional): Whether registration is open
-            reg_start_date (datetime, optional): Registration start date
-            reg_end_date (datetime, optional): Registration end date
+            include_admin_fields: Whether to include admin-only fields
 
         Returns:
-            EventRegistration: The created event registration instance
+            dict: Serialized event registration data
+        """
+        data = {
+            "id": self.id,
+            "event_id": self.event_id,
+            "public": self.public,
+            "reg_open": self.reg_open,
+            "reg_start_date": self.reg_start_date,
+            "reg_end_date": self.reg_end_date,
+        }
+
+        return data
+
+    @classmethod
+    def find_by_event_id(cls, event_id: int) -> EventRegistration | None:
+        """Find an event registration by its associated event ID.
+
+        Args:
+            event_id: The event ID to find registration for
+
+        Returns:
+            EventRegistration or None: The registration if found
+        """
+        return cls.query.filter_by(event_id=event_id).first()
+
+    @classmethod
+    def create_event_registration(
+        cls,
+        event_id: int,
+        public: bool = False,
+        reg_open: bool = False,
+        reg_start_date: datetime | None = None,
+        reg_end_date: datetime | None = None,
+        commit: bool = True,
+    ) -> EventRegistration:
+        """Create and persist a new event registration.
+
+        Args:
+            event_id: Event ID
+            public: Whether registration is public
+            reg_open: Whether registration is open
+            reg_start_date: Registration start date
+            reg_end_date: Registration end date
+            commit: Whether to commit immediately
+
+        Returns:
+            EventRegistration: The created instance
         """
         registration = cls(
             event_id=event_id,
@@ -50,23 +108,6 @@ class EventRegistration(db.Model):
         )
 
         db.session.add(registration)
-        db.session.commit()
+        if commit:
+            db.session.commit()
         return registration
-
-    def serialize(self):
-        """Serialize an event registration instance to a dictionary.
-
-        Args:
-            registration (EventRegistration): The event registration instance to serialize.
-
-        Returns:
-            dict: Serialized event registration data.
-        """
-        return {
-            "id": self.id,
-            "event_id": self.event_id,
-            "public": self.public,
-            "reg_open": self.reg_open,
-            "reg_start_date": self.reg_start_date.isoformat() if self.reg_start_date else None,
-            "reg_end_date": self.reg_end_date.isoformat() if self.reg_end_date else None,
-        }

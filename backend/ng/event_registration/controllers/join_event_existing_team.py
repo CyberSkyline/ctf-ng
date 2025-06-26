@@ -1,45 +1,37 @@
+"""
+Handles joining an event by joining an existing team.
+"""
+
 from typing import Any
-from ...core.utils.logger import get_logger
+from flask import g
+from sqlalchemy.exc import IntegrityError
+
+from ...core import BusinessLogicError
+from .create_demographic import create_demographic
 from ...team.controllers.join_team import join_team
-from ..controllers.create_demographic import create_demographic
-from ...team.controllers.leave_team import leave_team
 
 
-logger = get_logger(__name__)
-
-def join_event_existing_team(event_id: int, user_id: int, invite_code: str) -> dict[str, Any]:
+def join_event_existing_team() -> dict[str, Any]:
     """Join an existing team in an event using an invite code.
-    Args:
-        event_id (int): The event ID where the team exists.
-        user_id (int): The user ID joining the team.
-        invite_code (str): The team's invite code.
+
     Returns:
-        dict: Success status, team info, and membership details or error info.
+        dict: Team and demographic data
     """
+    team = g.team
+    event = g.event
+    user = g.user
 
-    response = join_team(
-        user_id=user_id,
-        invite_code=invite_code
-    )
-    team = response.get("team")
+    team_result = join_team(user.id, team.invite_code)
+    team_member = team_result["team_member"]
 
-    if not response["success"]:
-        return response
+    try:
+        demo_result = create_demographic(user.id, event.id)
 
-    response = create_demographic(
-        user_id=user_id,
-        event_id=event_id,
-    )
-    if not response["success"]:
-        leave_team(user_id, event_id)
-        return response
-
-
-    return {
-        "success": True,
-        "team": team,
-    }
-    
-
-
-
+        return {
+            "team": team,
+            "team_member": team_member,
+            "demographic": demo_result["demographic"],
+        }
+    except IntegrityError:
+        team_member.remove_team_member()
+        raise BusinessLogicError("You have already registered for this event")

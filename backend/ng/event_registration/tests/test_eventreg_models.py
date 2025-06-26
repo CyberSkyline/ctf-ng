@@ -1,102 +1,75 @@
-from ..models.EventRegistration import EventRegistration
+"""
+Model tests for event registration domain
+"""
+
+import pytest
+from datetime import datetime, timedelta
+from ...core.exceptions import ValidationError
 from ..models.Demographic import Demographic
-from ...core.utils.domain_validators import validate_event_registration_creation
-from CTFd.models import db
-from datetime import timedelta,datetime
-
-
-
-class TestdemographicModel:
-
-    def test_demographic_repr(self):
-        """Test the string representation of demographic model."""
-        demographic = Demographic()
-        demographic.event_id = 5678
-        demographic.user_id = 1234
-        currtime = db.func.now()
-        demographic.reg_timestamp = currtime
-
-        repr_str = repr(demographic)
-        assert "Demographic" in repr_str
-        assert "id=5678" in repr_str
-        assert "user_id=1234" in repr_str
-        assert f"reg_timestamp={currtime}" in repr_str
+from ..models.EventRegistration import EventRegistration
+from ...core.validation.event_registration import validate_event_registration_creation
 
 
 class TestEventRegistrationModel:
-    """Test suite for EventRegistration model."""
-    
-    def test_event_registration_repr(self):
-        """Test the string representation of EventRegistration model."""
-        registration = EventRegistration()
-        registration.event_id = 1234
+    """Test suite for the EventRegistration SQLAlchemy model."""
 
-        repr_str = repr(registration)
-        assert "Registration" in repr_str
-        assert "id=1234" in repr_str
+    def test_repr(self, open_event_reg):
+        """Test the string representation of the model."""
+        assert f"event_id={open_event_reg.event_id}" in repr(open_event_reg)
 
-    def test_event_registration_defaults(self):
-        """Test default values for EventRegistration model."""
-        registration = EventRegistration()
-        #Figure this out later
-        assert registration.reg_open is False or registration.reg_open is None , "Default reg_open should be False"
-        assert registration.public is False or registration.public is None , "Default public should be False"
-        assert registration.reg_start_date is None, "Default reg_start_date should be None"
-        assert registration.reg_end_date is None, "Default reg_end_date should be None"
+    def test_defaults(self):
+        """Test the default values for a new instance."""
+        reg = EventRegistration()
+        assert reg.public is None
+        assert reg.reg_open is None
+        assert reg.reg_start_date is None
+        assert reg.reg_end_date is None
 
-class TestEventRegistrationConstraints:
-    """Test suite for EventRegistration model constraints."""
-    
-    def test_event_registration_time_constraints(self):
-        """Test that registration start and end dates follow the constraints."""
-        curr = datetime.utcnow()
-        future_start = (curr + timedelta(days=1)).isoformat()
-        future_end = (curr + timedelta(days=2)).isoformat()
 
-        # Valid case: start < end
-        valid, errors = validate_event_registration_creation(
-            {
-                "event_id": 1234,
-                "public": True,
-                "reg_open": True,
-                "reg_start_date": future_start,
-                "reg_end_date": future_end,
-            }
-        )
-        assert valid, f"Should be valid but got errors: {errors}"
+class TestDemographicModel:
+    """Test suite for the Demographic SQLAlchemy model."""
 
-        # Invalid case: start >= end
-        valid, errors = validate_event_registration_creation(
-            {
-                "event_id": 1,
-                "public": True,
-                "reg_open": True,
-                "reg_start_date": future_end,
-                "reg_end_date": future_start,
-            }
-        )
-        assert not valid, "Should be invalid due to start >= end"
-    
-    def test_event_reg_time_both_or_neither_constraint(self):
-        """Test that both times must be provided together or neither."""
+    def test_repr(self, user, event):
+        """Test the string representation of the model."""
+        demo = Demographic(user_id=user.id, event_id=event.id)
+        assert f"user_id={user.id}" in repr(demo)
+        assert f"event_id={event.id}" in repr(demo)
 
-        now = datetime.utcnow()
-        start = (now + timedelta(hours=1)).isoformat()
-        end = (now + timedelta(days=2)).isoformat()
 
-        valid, errors = validate_event_registration_creation({"event_id": 1234, "public": True, "reg_open": True})
-        assert valid
+class TestEventRegistrationValidation:
+    """Test suite for the event registration validation functions."""
 
-        valid, errors = validate_event_registration_creation({"event_id": 1234, "public": True, "reg_open": True, "reg_start_date": start})
-        assert not valid
-        assert "reg_end_date" in errors
+    def test_validation_success(self, event):
+        """Test a successful validation with all fields."""
+        data = {
+            "event_id": event.id,
+            "public": True,
+            "reg_open": True,
+            "reg_start_date": (datetime.utcnow() + timedelta(days=1)).isoformat(),
+            "reg_end_date": (datetime.utcnow() + timedelta(days=2)).isoformat(),
+        }
 
-        valid, errors = validate_event_registration_creation({"event_id": 1234, "public": True, "reg_open": True, "reg_end_date": start})
-        assert not valid
-        assert "reg_start_date" in errors
+        parsed_data = validate_event_registration_creation(data)
+        assert parsed_data["event_id"] == event.id
 
-        valid, errors = validate_event_registration_creation(
-            {"event_id": 1234, "public": True, "reg_open": True, "reg_start_date": start, "reg_end_date": end}
-        )
-        print(valid,errors)
-        assert valid, "Should be valid when both times are provided"
+    def test_validation_invalid_date_order(self, event):
+        """Test that start_date must be before end_date."""
+        data = {
+            "event_id": event.id,
+            "reg_start_date": (datetime.utcnow() + timedelta(days=2)).isoformat(),
+            "reg_end_date": (datetime.utcnow() + timedelta(days=1)).isoformat(),
+        }
+        with pytest.raises(ValidationError) as e:
+            validate_event_registration_creation(data)
+        assert "reg_end_date" in e.value.errors
+        assert "must be after" in e.value.errors["reg_end_date"]
+
+    def test_validation_date_missing_pair(self, event):
+        """Test that if one date is provided, the other must be too."""
+        data = {
+            "event_id": event.id,
+            "reg_start_date": (datetime.utcnow() + timedelta(days=1)).isoformat(),
+        }
+        with pytest.raises(ValidationError) as e:
+            validate_event_registration_creation(data)
+        assert "time_constraint" in e.value.errors

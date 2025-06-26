@@ -1,16 +1,17 @@
 """
 Main API blueprint and namespace configuration for the plugin.
-/backend/ng/core/routes/__init__.py
 """
 
+from typing import Any
 from flask import Blueprint
 from flask_restx import Api
-from typing import Any
 
 from ...team.routes.teams import teams_namespace
 from ...event.routes.events import events_namespace
 from ...user.routes.users import users_namespace
 from ...admin.routes.admin import admin_namespace
+from ...support.routes.tickets import tickets_namespace
+from ...admin.routes.admin_tickets import admin_tickets_namespace
 from ...event_registration.routes.event_registration import event_reg_namespace
 
 api_blueprint = Blueprint("plugin_api", __name__)
@@ -26,9 +27,9 @@ def delete_unwanted_ctfd_routes(app: Any) -> None:
 # Swagger Docs
 api_v1 = Api(
     api_blueprint,
-    version="1.0",
+    version="v1",
     title="CTFd Plugin API",
-    description="The API for CTF-NG. Used to manage events, teams, scoring, and other features for our custom plugin.",
+    description="The API for CTF-NG. Used to manage events, teams, scoring, support tickets, and other features for our custom plugin.",
     doc="/docs",
     authorizations={"sessionAuth": {"type": "apiKey", "in": "cookie", "name": "session"}},
     security=["sessionAuth"],
@@ -39,4 +40,6 @@ api_v1.add_namespace(teams_namespace, path="/teams")
 api_v1.add_namespace(events_namespace, path="/events")
 api_v1.add_namespace(users_namespace, path="/users")
 api_v1.add_namespace(admin_namespace, path="/admin")
+api_v1.add_namespace(tickets_namespace, path="/support/tickets")
+api_v1.add_namespace(admin_tickets_namespace, path="/support/admin")
 api_v1.add_namespace(event_reg_namespace, path="/event_registration")

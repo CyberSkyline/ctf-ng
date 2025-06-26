@@ -1,54 +1,55 @@
 """
-Utility functions and decorators for common plugin functionality.
-/backend/ng/core/utils/__init__.py
+Utility functions for common plugin functionality.
 """
 
 from flask import g
-from .logger import get_logger, logger
-from .validation_framework import ValidationError, BaseValidator
-from .domain_validators import (
-    validate_team_creation,
-    validate_team_update,
-    validate_team_leave,
-    validate_team_join_by_code,
-    validate_captain_assignment,
-    validate_event_creation,
-    validate_event_update,
-    validate_admin_reset,
-    validate_admin_event_reset,
-    validate_event_id_param,
-    validate_event_registration_creation,
+from datetime import datetime, timezone
+
+from .emitters import emit_event
+from .logger import (
+    get_logger,
+    logger,
 )
-from .data_conversion import rows_to_dicts, row_to_dict
+from .api import (
+    success_response,
+    error_response,
+    serialize_model_for_api,
+)
+from .update import (
+    build_update_data,
+    build_conditional_update_data,
+)
 
 
-def get_current_user_id():
+# --------Global get user_id ----------#
+def get_current_user_id() -> int | None:
     """Safely get the current user ID from Flask g context.
 
     Returns:
-        int or None: User ID if available, None otherwise.
+        User ID if available, None otherwise.
     """
     user = getattr(g, "user", None)
     return user.id if user else None
+
+
+# --------Global utc function ----------#
+def utc_now() -> datetime:
+    """
+    Get current UTC datetime
+    Replacement for deprecated datetime.utcnow()
+    """
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 __all__ = [
     "get_logger",
     "logger",
     "get_current_user_id",
-    "ValidationError",
-    "BaseValidator",
-    "validate_team_creation",
-    "validate_team_update",
-    "validate_team_leave",
-    "validate_team_join_by_code",
-    "validate_captain_assignment",
-    "validate_event_creation",
-    "validate_event_registration_creation",
-    "validate_event_update",
-    "validate_admin_reset",
-    "validate_admin_event_reset",
-    "validate_event_id_param",
-    "rows_to_dicts",
-    "row_to_dict",
+    "utc_now",
+    "serialize_model_for_api",
+    "success_response",
+    "error_response",
+    "build_update_data",
+    "build_conditional_update_data",
+    "emit_event",
 ]

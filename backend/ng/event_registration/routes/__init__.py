@@ -1,4 +1,3 @@
 """
-/backend/ctfd/plugin/event_registration/routes/__init__.py
-Event API routes package.
+Event Registration API routes package.
 """

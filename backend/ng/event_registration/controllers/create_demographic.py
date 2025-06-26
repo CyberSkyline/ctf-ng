@@ -1,28 +1,27 @@
-from ..models.Demographic import Demographic
-from CTFd.models import db
+"""
+Creates demographic entries for users joining events.
+"""
 
-def create_demographic(user_id: int, event_id: int):
+from typing import Any
+
+from ..models.Demographic import Demographic
+from ...core.utils import utc_now
+
+
+def create_demographic(user_id: int, event_id: int) -> dict[str, Any]:
     """Create a demographic entry for a user in an event.
 
     Args:
-        user_id (int): The user ID.
-        event_id (int): The event ID.
+        user_id: The user ID
+        event_id: The event ID
 
     Returns:
-        dict: Success status and demographic info or error info.
+        dict: Created demographic data
     """
-    try:
-        demographic = Demographic.create_demographic(
-            user_id=user_id,
-            event_id=event_id,
-            reg_timestamp=db.func.now(),
-        )
-        return {
-            "success": True,
-            "demographic": demographic,
-        }
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-        }
+    demographic = Demographic.create_demographic(
+        user_id=user_id,
+        event_id=event_id,
+        reg_timestamp=utc_now(),
+    )
+
+    return {"demographic": demographic}
