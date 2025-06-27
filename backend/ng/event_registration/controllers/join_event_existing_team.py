@@ -37,7 +37,7 @@ def join_event_existing_team(event_id: int, user_id: int, invite_code: str) -> d
 
     return {
         "success": True,
-        "team": team.serialize(),
+        "team": team,
     }
     
 

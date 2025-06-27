@@ -39,7 +39,7 @@ class UserDemographics(Resource):
 
         if not event_id:
             return {"success": False, "error": "Missing event_id"}, 400
-            
+
         demographic = get_user_demographic(
             user_id=id,
             event_id=event_id
@@ -108,7 +108,10 @@ class JoinEvent(Resource):
                 )
                 return response, 400
 
-            return response, 200
+            return {
+                "success": True,
+                "team": response["team"].serialize(),
+            }
             
         if team_name:
             response = join_event_new_team(event_id, user_id, team_name)
@@ -119,7 +122,10 @@ class JoinEvent(Resource):
                     extra={"context": {"event_id": event_id, "user_id": user_id, "error": response["error"]}},
                 )
                 return response, 400
-            return response, 200
+            return {
+                "success": True,
+                "team": response["team"].serialize(),
+            }, 200
 
 @event_reg_namespace.route("/create_registration_period")
 class CreateRegistrationPeriod(Resource):

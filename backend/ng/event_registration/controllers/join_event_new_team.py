@@ -43,6 +43,5 @@ def join_event_new_team(event_id: int, user_id: int, team_name: str) -> dict[str
 
     return {
         "success": True,
-        "team": team.serialize(),
-        "message": "Successfully created new team and joined event"
+        "team": team,
     }

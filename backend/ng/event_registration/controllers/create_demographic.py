@@ -19,7 +19,7 @@ def create_demographic(user_id: int, event_id: int):
         )
         return {
             "success": True,
-            "demographic": demographic.serialize(),
+            "demographic": demographic,
         }
     except Exception as e:
         return {

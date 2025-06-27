@@ -106,7 +106,6 @@ def test_create_registration_period(admin_client, event):
         "reg_end_date": (datetime.utcnow() + timedelta(days=1)).isoformat()
     }
     response = admin_client.post("/ng/event_registration/create_registration_period", json=data)
-    print(response.get_json())
     assert response.status_code == 200
     assert response.get_json()["success"] is True
 

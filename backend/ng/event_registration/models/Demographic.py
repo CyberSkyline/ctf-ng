@@ -58,6 +58,6 @@ class Demographic(db.Model):
         return {
             "user_id": self.user_id,
             "event_id": self.event_id,
-            "reg_timestamp": self.reg_timestamp.isoformat() if self.reg_timestamp else None
+            "reg_timestamp": self.reg_timestamp.isoformat()
         }
     
