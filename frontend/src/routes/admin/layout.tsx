@@ -3,8 +3,7 @@ import { Card, Flex } from '@radix-ui/themes';
 import { NavigationMenu } from 'radix-ui';
 import type { IconType } from 'react-icons';
 import {
-  TbBell, TbChartPie, TbLayoutDashboard, TbMessage,
-  TbPackages, TbSettings,
+  TbBell, TbBraces, TbChartPie, TbLayoutDashboard, TbMessage, TbPackages, TbSettings,
 } from 'react-icons/tb';
 import { NavLink, Outlet } from 'react-router';
 
@@ -62,6 +61,7 @@ export default function AdminLayout() {
               <NavItem to="/admin/notifications" label="Notifications" icon={TbBell} />
               <NavItem to="/admin/tickets" label="Tickets" icon={TbMessage} />
               <NavItem to="/admin/settings" label="Settings" icon={TbSettings} />
+              <NavItem to="/admin/api-test" label="API Test" icon={TbBraces} />
             </NavigationMenu.List>
           </NavigationMenu.Root>
         </Card>

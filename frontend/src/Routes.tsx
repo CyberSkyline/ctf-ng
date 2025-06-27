@@ -4,7 +4,6 @@ import NotFound from 'components/NotFound';
 import Dashboard from 'routes/dashboard';
 import Notifications from 'routes/notifications';
 import Profile from 'routes/profile';
-import Scoreboard from 'routes/scoreboard';
 
 // Support tickets
 import Support from 'routes/support';
@@ -27,6 +26,7 @@ import AdminTeams from 'routes/admin/teams';
 import AdminEvents from 'routes/admin/events';
 import AdminReports from 'routes/admin/reports';
 import AdminSettings from 'routes/admin/settings';
+import AdminApiTest from 'routes/admin/api-test';
 
 function Routes() {
   const routes = useRoutes([
@@ -45,7 +45,6 @@ function Routes() {
     },
     { path : '/notifications/:idNotif', element : <Notifications /> },
     { path : '/profile', element : <Profile /> },
-    { path : '/scoreboard/:idEvent', element : <Scoreboard /> },
     {
       path : '/support',
       children : [
@@ -69,6 +68,7 @@ function Routes() {
         { path : 'notifications', element : <AdminNotifications /> },
         { path : 'tickets', element : <AdminTickets /> },
         { path : 'settings', element : <AdminSettings /> },
+        { path : 'api-test', element : <AdminApiTest /> },
       ],
     },
 
