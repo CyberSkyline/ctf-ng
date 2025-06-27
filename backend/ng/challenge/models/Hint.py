@@ -1,0 +1,26 @@
+from CTFd.models import db
+
+class Hint(db.Model):
+    __tablename__ = 'ng_challenge_hint'
+    id = db.Column(db.Integer, primary_key=True)
+    challenge_id = db.Column(db.Integer, db.ForeignKey('ng_challenge.id'), nullable=False, index=True)
+    preview = db.Column(db.String(255))
+    hint = db.Column(db.String(255))
+    deduction = db.Column(db.Integer)
+
+    challenge = db.relationship('Challenge', back_populates='hints')
+
+    def __repr__(self):
+        return f'<NgHint {self.id}>'
+
+    @classmethod
+    def create_hint(cls, **kwargs):
+        try:
+            hint = cls(**kwargs)
+            db.session.add(hint)
+            db.session.commit()
+            return hint
+        except Exception as e:
+            db.session.rollback()
+            raise e
+
