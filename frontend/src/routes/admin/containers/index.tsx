@@ -1,12 +1,8 @@
-import {
-  Callout, Flex, Heading,
-} from '@radix-ui/themes';
-import {
-  TbInfoCircle,
-} from 'react-icons/tb';
+import { Flex, Heading } from '@radix-ui/themes';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef } from 'ag-grid-community';
 import { radixTheme } from '@/grid';
+import { InfoCallout } from 'components/Callouts';
 
 /**
  * Admin page to manage challenge networks/containers.
@@ -52,47 +48,18 @@ export default function AdminContainers() {
       />
       <Flex direction="column" gap="4" className="grow basis-1/3">
         <Heading>Services</Heading>
-        <Callout.Root variant="surface" color="jade">
-          <Callout.Icon>
-            <TbInfoCircle />
-          </Callout.Icon>
-          <Callout.Text>
-            List of containers that are part of the challenge
-            with statuses, resource usage, and actions.
-          </Callout.Text>
-        </Callout.Root>
+        <InfoCallout>List of containers that are part of the challenge with statuses, resource usage, and actions.</InfoCallout>
 
         <Heading>Network</Heading>
-        <Callout.Root variant="surface" color="jade">
-          <Callout.Icon>
-            <TbInfoCircle />
-          </Callout.Icon>
-          <Callout.Text>
-            Information about the challenge container network, like address space.
-          </Callout.Text>
-        </Callout.Root>
+        <InfoCallout>Information about the challenge container network, like address space.</InfoCallout>
 
         <Heading>
           Variables
         </Heading>
-        <Callout.Root variant="surface" color="jade">
-          <Callout.Icon>
-            <TbInfoCircle />
-          </Callout.Icon>
-          <Callout.Text>
-            Faker-generated challenge variables for this challenge instance.
-          </Callout.Text>
-        </Callout.Root>
+        <InfoCallout>Faker-generated challenge variables for this challenge instance.</InfoCallout>
 
         <Heading>Workspaces</Heading>
-        <Callout.Root variant="surface" color="jade">
-          <Callout.Icon>
-            <TbInfoCircle />
-          </Callout.Icon>
-          <Callout.Text>
-            Links to user workspaces attached to this container network, if any.
-          </Callout.Text>
-        </Callout.Root>
+        <InfoCallout>Links to user workspaces attached to this container network, if any.</InfoCallout>
       </Flex>
     </Flex>
   );
