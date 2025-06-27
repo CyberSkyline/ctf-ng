@@ -31,7 +31,6 @@ class ImportChallenge(Resource):
         data = request.get_json()
         payload = base64.urlsafe_b64decode(data['yaml'])
         res = import_yaml(payload.decode('utf-8'))
-        print(res)
 
         if res['success']:
             return success_response(res)

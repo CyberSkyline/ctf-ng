@@ -14,11 +14,12 @@ class Hint(db.Model):
         return f'<NgHint {self.id}>'
 
     @classmethod
-    def create_hint(cls, **kwargs):
+    def create_hint(cls, commit=True, **kwargs):
         try:
             hint = cls(**kwargs)
             db.session.add(hint)
-            db.session.commit()
+            if commit:
+                db.session.commit()
             return hint
         except Exception as e:
             db.session.rollback()

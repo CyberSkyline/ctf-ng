@@ -23,11 +23,12 @@ class ContainerBlueprint(db.Model):
         return f'<ContainerBlueprint {self.id}>'
 
     @classmethod
-    def create_container_blueprint(cls, **kwargs):
+    def create_container_blueprint(cls, commit=True, **kwargs):
         try:
             blueprint = cls(**kwargs)
             db.session.add(blueprint)
-            db.session.commit()
+            if commit:
+                db.session.commit()
             return blueprint
         except Exception as e:
             db.session.rollback()

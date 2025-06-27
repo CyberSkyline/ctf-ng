@@ -16,11 +16,12 @@ class Question(db.Model):
         return f'<NgChallengeQuestion {self.id}>'
 
     @classmethod
-    def create_question(cls, **kwargs):
+    def create_question(cls, commit=True, **kwargs):
         try:
             question = cls(**kwargs)
             db.session.add(question)
-            db.session.commit()
+            if commit:
+                db.session.commit()
             return question
         except Exception as e:
             db.session.rollback()

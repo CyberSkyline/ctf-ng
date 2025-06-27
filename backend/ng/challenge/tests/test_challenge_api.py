@@ -1,9 +1,5 @@
 import pytest
-import time
 import base64
-from CTFd.models import db as _db
-from tests.helpers import gen_user  # noqa: I001
-from ..models.ContainerBlueprint import ContainerBlueprint
 from ..models.Challenge import Challenge
 
 pytestmark = pytest.mark.db
@@ -43,7 +39,6 @@ networks:
     challenge = Challenge.query.filter_by(name='Basic Challenge').first()
 
     assert response.status_code == 200
-
     assert len(challenge.hints) == 1
     assert len(challenge.questions) == 1
 

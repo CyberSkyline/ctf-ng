@@ -14,11 +14,12 @@ class Challenge(db.Model):
     questions = db.relationship('Question', back_populates='challenge', cascade='all, delete-orphan')
 
     @classmethod
-    def create_challenge(cls, **kwargs):
+    def create_challenge(cls, commit=True, **kwargs):
         try:
             challenge = cls(**kwargs)
             db.session.add(challenge)
-            db.session.commit()
+            if commit:
+                db.session.commit()
             return challenge
         except Exception as e:
             db.session.rollback()

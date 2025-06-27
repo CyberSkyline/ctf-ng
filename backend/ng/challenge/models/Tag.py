@@ -12,11 +12,12 @@ class Tag(db.Model):
         return f'<NgChallengeTag {self.id}>'
 
     @classmethod
-    def create_tag(cls, **kwargs):
+    def create_tag(cls, commit=True, **kwargs):
         try:
             tag = cls(**kwargs)
             db.session.add(tag)
-            db.session.commit()
+            if commit:
+                db.session.commit()
             return tag
         except Exception as e:
             db.session.rollback()
