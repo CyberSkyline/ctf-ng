@@ -8,7 +8,7 @@ ModuleRegistry.registerModules([ AllCommunityModule ]);
 export const radixTheme = themeQuartz
   .withParams(
     {
-      backgroundColor : 'var(--card-background-color)',
+      backgroundColor : 'var(--gray-1)',
       chromeBackgroundColor : 'var(--gray-2)',
       foregroundColor : 'var(--gray-12)',
       accentColor : 'var(--lime-9)',
