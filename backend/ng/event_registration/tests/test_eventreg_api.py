@@ -102,8 +102,8 @@ def test_create_registration_period(admin_client, event):
     data = {
         "event_id": event.id,
         "reg_open": True,
-        "reg_start_date": datetime.utcnow().isoformat(),
-        "reg_end_date": (datetime.utcnow() + timedelta(days=1)).isoformat()
+        "reg_start_date": (datetime.utcnow() + timedelta(days=1)).isoformat(),
+        "reg_end_date": (datetime.utcnow() + timedelta(days=2)).isoformat()
     }
     response = admin_client.post("/ng/event_registration/create_registration_period", json=data)
     assert response.status_code == 200
@@ -115,8 +115,8 @@ def test_create_registration_period_invalid_dates(admin_client, event):
     data = {
         "event_id": event.id,
         "reg_open": True,
-        "reg_start_date": (datetime.utcnow() + timedelta(days=1)).isoformat(),
-        "reg_end_date": datetime.utcnow().isoformat()  # End date before start date
+        "reg_start_date": (datetime.utcnow() + timedelta(days=2)).isoformat(),
+        "reg_end_date": (datetime.utcnow() + timedelta(days=1)).isoformat()  # End date before start date
     }
     response = admin_client.post("/ng/event_registration/create_registration_period", json=data)
     assert response.status_code == 400
@@ -127,8 +127,8 @@ def test_create_registration_only_admin(logged_in_client, event):
     data = {
         "event_id": event.id,
         "reg_open": True,
-        "reg_start_date": datetime.utcnow().isoformat(),
-        "reg_end_date": (datetime.utcnow() + timedelta(days=1)).isoformat()
+        "reg_start_date": (datetime.utcnow() + timedelta(days=1)).isoformat(),
+        "reg_end_date": (datetime.utcnow() + timedelta(days=2)).isoformat()
     }
     response = logged_in_client.post("/ng/event_registration/create_registration_period", json=data)
     assert response.status_code == 403  # Forbidden
