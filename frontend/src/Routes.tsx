@@ -5,7 +5,11 @@ import Dashboard from 'routes/dashboard';
 import Notifications from 'routes/notifications';
 import Profile from 'routes/profile';
 import Scoreboard from 'routes/scoreboard';
+
+// Support tickets
 import Support from 'routes/support';
+import CreateTicket from 'routes/support/CreateTicket';
+import TicketDetail from 'routes/support/Detail';
 
 // events
 import Overview from 'routes/events/Overview';
@@ -42,7 +46,14 @@ function Routes() {
     { path: '/notifications/:idNotif', element: <Notifications /> },
     { path: '/profile', element: <Profile /> },
     { path: '/scoreboard/:idEvent', element: <Scoreboard /> },
-    { path: '/support', element: <Support /> },
+    {
+      path: '/support',
+      children: [
+        { index: true, element: <Support /> },
+        { path: 'createTicket', element: <CreateTicket /> },
+        { path: ':idTicket', element: <TicketDetail /> },
+      ],
+    },
 
     {
       path: '/admin',
