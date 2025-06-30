@@ -1,116 +1,66 @@
 """
-/backend/ng/team/controllers/remove_member.py
-Removes a member from a team with smart captain handling.
+Removes a member from a team with captain handling.
 """
 
-from CTFd.models import db
+from flask import g
 from typing import Any
-from datetime import datetime
 
-from ...event.models.Event import Event
-from ..models.Team import Team
+from ...core import BusinessLogicError
+from ...core.validation import (
+    validate_event_locked_state,
+    validate_event_timing,
+)
 from ..models.TeamMember import TeamMember
 from ..models.enums import TeamRole
-from ...core.utils.logger import get_logger
-
-logger = get_logger(__name__)
 
 
 def remove_member(team_id: int, member_to_remove_id: int, actor_id: int, is_admin: bool = False) -> dict[str, Any]:
     """Removes a member from a team with auth checks.
-
-    Args:
-        team_id (int): The team ID.
-        member_to_remove_id (int): The member ID to remove.
-        actor_id (int): The user ID doing the removal.
-        is_admin (bool, optional): Whether the actor is admin. Defaults to False.
-
     Returns:
-        dict: Success status and confirmation message or error info.
+        dict: Confirmation message
     """
-    team = Team.find_by_id(team_id)
-    if not team:
-        return {"success": False, "error": "Team not found."}
-
-    event = Event.find_by_id(team.event_id)
+    team = g.team
+    event = g.event
+    team_member_to_remove = g.target_member
 
     if not is_admin:
-        if event and (event.locked or (event.start_time and datetime.utcnow() >= event.start_time)):
-            return {
-                "success": False,
-                "error": "Cannot remove members after the event has started or been locked.",
-            }
+        validate_event_locked_state(event, "removing team members")
+        validate_event_timing(event)
 
         if team.locked:
-            return {
-                "success": False,
-                "error": f"Team '{team.name}' is locked and members cannot be removed.",
-            }
-
-    is_captain = TeamMember.find_captain_by_team_and_user(team_id, actor_id)
-
-    if not is_admin and not is_captain:
-        return {
-            "success": False,
-            "error": "You are not authorized to remove members",
-        }
-
-    team_member_to_remove = TeamMember.find_by_user_and_team(member_to_remove_id, team_id)
-
-    if not team_member_to_remove:
-        return {"success": False, "error": "User is not a member of this team"}
+            raise BusinessLogicError(f"Team '{team.name}' is locked and members cannot be removed")
 
     if team_member_to_remove.user_id == actor_id:
-        return {
-            "success": False,
-            "error": "Captains cannot remove themselves. Use the 'Leave Team' or 'Disband Team' feature.",
-        }
+        raise BusinessLogicError("Captains cannot remove themselves. Use the 'Leave Team' or 'Disband Team' feature.")
 
     if team_member_to_remove.role == TeamRole.CAPTAIN:
         return _handle_captain_removal(team, team_member_to_remove, actor_id, is_admin)
 
-    try:
-        team_member_to_remove.remove_team_member(commit=False)
-        team.update_invite_code(commit=False)
-        db.session.commit()
-        return {"success": True, "message": "Team member removed successfully."}
-    except Exception as e:
-        db.session.rollback()
-        raise e
+    team.remove_member_and_regenerate_code(team_member_to_remove.id)
+
+    return {"message": "Team member removed successfully."}
 
 
-def _handle_captain_removal(team: Team, captain_to_remove: TeamMember, actor_id: int, is_admin: bool):
-    """Smartly handles captain removal by either auto promoting or blocking."""
-
+def _handle_captain_removal(team, captain_to_remove: TeamMember, actor_id: int, is_admin: bool) -> dict[str, Any]:
+    """Handles captain removal by either auto promoting or blocking."""
     remaining_members = TeamMember.find_remaining_members_for_captain_removal(team.id, captain_to_remove.id)
 
     if not remaining_members:
         captain_to_remove.remove_team_member()
-        logger.info(f"Captain removed, team {team.id} is now empty.")
-        return {"success": True, "message": "Captain removed. The team is now empty."}
+        return {"message": "Captain removed. The team is now empty."}
 
     if is_admin:
-        try:
-            new_captain = remaining_members[0]
-            new_captain.update_role(TeamRole.CAPTAIN, commit=False)
-            captain_to_remove.remove_team_member(commit=False)
-            team.update_invite_code(commit=False)
-            db.session.commit()
+        new_captain = remaining_members[0]
+        team.remove_captain_and_promote(
+            captain_to_remove_id=captain_to_remove.id,
+            new_captain_user_id=new_captain.user_id,
+        )
 
-            logger.info(
-                f"Admin removed captain {captain_to_remove.user_id} from team {team.id}, auto-promoted {new_captain.user_id}."
-            )
-            return {
-                "success": True,
-                "message": f"Captain removed. User {new_captain.user_id} has been automatically promoted to captain.",
-                "new_captain_id": new_captain.user_id,
-            }
-        except Exception as e:
-            db.session.rollback()
-            raise e
-    else:
         return {
-            "success": False,
-            "error": "You cannot remove the captain while other members are on the team. Please transfer captaincy first.",
-            "available_for_captaincy": [m.user_id for m in remaining_members],
+            "message": f"Captain removed. User {new_captain.user_id} has been automatically promoted to captain.",
+            "new_captain_id": new_captain.user_id,
         }
+    else:
+        raise BusinessLogicError(
+            "You cannot remove the captain while other members are on the team. Please transfer captaincy first."
+        )

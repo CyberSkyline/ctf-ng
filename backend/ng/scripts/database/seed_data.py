@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-/plugin/tests/fixtures/seed_data.py
 Seed data (PLACEHOLDER)
 """
 
 import random
 import string
-from datetime import datetime, timedelta
+from datetime import timedelta
+from ...core.utils import utc_now
 
 from CTFd.models import db
 from CTFd.models import Users as CTFdUsers
@@ -150,7 +150,7 @@ class SeedDataGenerator:
                     team_id=team.id,
                     user_id=ng_user.id,
                     event_id=team.event_id,
-                    joined_at=datetime.utcnow() - timedelta(days=random.randint(1, 30)),
+                    joined_at=utc_now() - timedelta(days=random.randint(1, 30)),
                 )
                 db.session.add(membership)
                 self.created_data["team_members"].append(membership)

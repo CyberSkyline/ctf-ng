@@ -1,11 +1,9 @@
 """
-/backend/ng/team/routes/teams.py
-Public API routes for all team operations.
+Team management API routes.
 """
 
-from flask import request, g
+from flask import g
 from flask_restx import Namespace, Resource
-from CTFd.utils.decorators import authed_only, admins_only
 from CTFd.utils.user import is_admin
 
 from ..controllers import (
@@ -20,632 +18,157 @@ from ..controllers import (
     get_team_captain,
     list_all_teams,
 )
-from ...core.utils.api_responses import (
-    controller_response,
-    error_response,
-    success_response,
+from ...core.middleware import (
+    user_endpoint,
+    admin_endpoint,
+    load_team,
+    load_event_from_request,
+    load_team_and_event,
+    load_target_member,
+    load_user_team_in_event,
+    require_team_captain,
+    require_team_member_management,
+    check_team_join_eligibility,
+    load_team_and_event_by_invite,
 )
-from ...core.utils.logger import get_logger
-from ...core.utils import get_current_user_id
-from ...core.utils import (
+from ...core.utils import success_response
+from ...core.validation import (
     validate_team_creation,
     validate_team_update,
     validate_team_leave,
     validate_team_join_by_code,
     validate_captain_assignment,
 )
-from ...core.middleware import (
-    lookup,
-    authed_user_required,
-    handle_integrity_error,
-    json_body_required,
+from ...core.docs import (
+    LIST_ALL_TEAMS_DOC,
+    CREATE_TEAM_DOC,
+    GET_TEAM_DOC,
+    UPDATE_TEAM_DOC,
+    DISBAND_TEAM_DOC,
+    JOIN_TEAM_DOC,
+    LEAVE_TEAM_DOC,
+    GET_CAPTAIN_DOC,
+    TRANSFER_CAPTAINCY_DOC,
+    REMOVE_MEMBER_DOC,
 )
-from ..models.Team import Team
 
 teams_namespace = Namespace("teams", description="team management operations")
-logger = get_logger(__name__)
 
 
 @teams_namespace.route("")
 class TeamList(Resource):
-    @admins_only
-    @handle_integrity_error
-    @teams_namespace.doc(
-        description="Get ALL teams in the system (Admin only)",
-        responses={
-            200: "Success - Returns list of all teams",
-            403: "Forbidden - Admin access required",
-        },
-    )
+    @admin_endpoint()
+    @teams_namespace.doc(**LIST_ALL_TEAMS_DOC)
     def get(self):
-        """Get all teams in the system for the admin grid."""
+        """Get all teams"""
         result = list_all_teams()
+        return success_response(result)
 
-        if result["success"]:
-            return controller_response(result)
-
-    @authed_only
-    @authed_user_required
-    @json_body_required
-    @handle_integrity_error
-    @teams_namespace.doc(
-        description="Create a new team in a event",
-        params={},
-        responses={
-            201: "Success - Team created",
-            400: "Bad request - Invalid data",
-            403: "Forbidden - User not authenticated",
-            500: "Internal Server Error",
-        },
-    )
+    @user_endpoint(json_required=True, validation_func=validate_team_creation)
+    @load_event_from_request()
+    @check_team_join_eligibility()
+    @teams_namespace.doc(**CREATE_TEAM_DOC)
     def post(self):
-        """Create a new team in the event with current user as captain.
-
-        Request Body:
-            name (str): The team name.
-            event_id (int): The event ID where the team will be created.
-            ranked (bool, optional): Whether team is ranked.
-
-        Returns:
-            JSON response with created team info and invite code or error details.
-        """
-        data = g.json_data
-
-        is_valid, errors = validate_team_creation(data)
-        if not is_valid:
-            logger.warning(
-                "Validation failed for team creation",
-                extra={
-                    "context": {
-                        "errors": errors,
-                        "user_id": get_current_user_id(),
-                        "endpoint": "team_create",
-                        "data": data,
-                    }
-                },
-            )
-            return {"success": False, "errors": errors}, 400
-
-        ranked = data.get("ranked", False)
-
+        """Create team"""
+        data = g.validated_data
         result = create_team(
             name=data["name"],
             event_id=data["event_id"],
             creator_id=g.user.id,
-            ranked=ranked,
+            ranked=data.get("ranked", False),
         )
-
-        if result["success"]:
-            logger.info(
-                "Team created successfully",
-                extra={
-                    "context": {
-                        "user_id": get_current_user_id(),
-                        "team_id": result["team"].id,
-                        "team_name": result["team"].name,
-                        "event_id": result["team"].event_id,
-                    }
-                },
-            )
-            return success_response(result, status_code=201)
-        else:
-            logger.warning(
-                "Team creation failed",
-                extra={
-                    "context": {
-                        "user_id": get_current_user_id(),
-                        "error": result["error"],
-                        "endpoint": "team_create",
-                    }
-                },
-            )
-            return error_response(result["error"], "team", 400)
+        return success_response(result, status_code=201)
 
 
 @teams_namespace.route("/<int:team_id>")
-@teams_namespace.param("team_id", "Team ID")
 class TeamDetail(Resource):
-    @authed_only
-    @lookup(Team, ["team_id"])
-    @handle_integrity_error
-    @teams_namespace.doc(
-        description="Get detailed information about a specific team",
-        responses={
-            200: "Success - Team details returned",
-            403: "Forbidden - User not authenticated",
-            404: "Not found - Team does not exist",
-            500: "Internal Server Error",
-        },
-    )
-    def get(self, team_id, **kwargs):
-        """Get detailed info about a team.
+    @user_endpoint()
+    @load_team()
+    @teams_namespace.doc(**GET_TEAM_DOC)
+    def get(self, team_id):
+        """Get team details"""
+        result = get_team_info(team_id)
+        return success_response(result)
 
-        Args:
-            team_id (int): The team ID to get.
-
-        Returns:
-            JSON response with team details, members, and event info.
-        """
-        team = kwargs["team"]
-        result = get_team_info(team.id)
-
-        if result["success"]:
-            return success_response(result)
-        else:
-            logger.warning(
-                "Team not found",
-                extra={
-                    "context": {
-                        "user_id": get_current_user_id(),
-                        "team_id": team_id,
-                        "error": result["error"],
-                    }
-                },
-            )
-            return error_response(result["error"], "team", 404)
-
-    @authed_only
-    @authed_user_required
-    @lookup(Team, ["team_id"])
-    @handle_integrity_error
-    @teams_namespace.doc(
-        description="Update team details (Captain/Admin only)",
-        responses={
-            200: "Success - Team updated",
-            400: "Bad request - Invalid data",
-            403: "Forbidden - Not authorized",
-            404: "Not found - Team does not exist",
-            500: "Internal Server Error",
-        },
-    )
-    def patch(self, team_id, **kwargs):
-        """Update team info with proper auth checks.
-
-        Args:
-            team_id (int): The team ID to update.
-
-        Request Body:
-            name (str): New team name.
-
-        Returns:
-            JSON response with updated team info or error details.
-        """
-        data = request.get_json() or {}
-
-        is_valid, errors = validate_team_update(data)
-        if not is_valid:
-            logger.warning(
-                "Validation failed for team update",
-                extra={
-                    "context": {
-                        "errors": errors,
-                        "user_id": get_current_user_id(),
-                        "endpoint": "team_update",
-                        "team_id": team_id,
-                    }
-                },
-            )
-            return {"success": False, "errors": errors}, 400
-
-        new_name = data.get("name")
-
-        team = kwargs["team"]
+    @user_endpoint(json_required=True, validation_func=validate_team_update)
+    @load_team()
+    @require_team_captain()
+    @teams_namespace.doc(**UPDATE_TEAM_DOC)
+    def patch(self, team_id):
+        """Update team"""
+        data = g.validated_data
         result = update_team(
-            team_id=team.id,
+            team_id=team_id,
             actor_id=g.user.id,
-            new_name=new_name,
+            new_name=data.get("name"),
             is_admin=is_admin(),
         )
+        return success_response(result)
 
-        if result["success"]:
-            logger.info(
-                "Team updated successfully",
-                extra={
-                    "context": {
-                        "user_id": get_current_user_id(),
-                        "team_id": team.id,
-                        "new_name": new_name,
-                    }
-                },
-            )
-            return success_response(result)
-        else:
-            status_code = 403 if "not authorized" in result["error"].lower() else 400
-            if status_code == 403:
-                logger.warning(
-                    "Unauthorized team update attempt",
-                    extra={
-                        "context": {
-                            "user_id": get_current_user_id(),
-                            "team_id": team.id,
-                            "error": result["error"],
-                        }
-                    },
-                )
-            return error_response(result["error"], "update", status_code)
-
-    @authed_only
-    @authed_user_required
-    @lookup(Team, ["team_id"])
-    @handle_integrity_error
-    @teams_namespace.doc(
-        description="Disband a team (Captain/Admin only)",
-        responses={
-            200: "Success - Team disbanded",
-            400: "Bad request - Cannot disband team",
-            403: "Forbidden - Not authorized",
-            404: "Not found - Team does not exist",
-            500: "Internal Server Error",
-        },
-    )
-    def delete(self, team_id, **kwargs):
-        """Disband a team and remove all its members.
-
-        Args:
-            team_id (int): The team ID to disband.
-
-        Returns:
-            JSON response with confirmation message or error details.
-        """
-        team = kwargs["team"]
-        user_is_admin = is_admin()
-
-        result = disband_team(team_id=team.id, actor_id=g.user.id, is_admin=user_is_admin)
-
-        if result["success"]:
-            logger.info(
-                "Team disbanded successfully",
-                extra={
-                    "context": {
-                        "user_id": get_current_user_id(),
-                        "team_id": team.id,
-                        "is_admin": user_is_admin,
-                    }
-                },
-            )
-            return success_response(result)
-        else:
-            status_code = 403 if "not authorized" in result["error"].lower() else 400
-            if status_code == 403:
-                logger.warning(
-                    "Unauthorized team disband attempt",
-                    extra={
-                        "context": {
-                            "user_id": get_current_user_id(),
-                            "team_id": team.id,
-                            "error": result["error"],
-                        }
-                    },
-                )
-            return error_response(result["error"], "delete", status_code)
-
-
-@teams_namespace.route("/leave")
-class TeamLeave(Resource):
-    @authed_only
-    @authed_user_required
-    @handle_integrity_error
-    @teams_namespace.doc(
-        description="Leave current team in a specific event",
-        params={"event_id": "Event ID to leave team from (required in body)"},
-        responses={
-            200: "Success - Left team",
-            400: "Bad request - Not in a team or invalid event",
-            403: "Forbidden - User not authenticated",
-            500: "Internal Server Error",
-        },
-    )
-    def post(self):
-        """Leave the current team in the event.
-
-        Request Body:
-            event_id (int): The event ID to leave team from.
-
-        Returns:
-            JSON response with confirmation message and former team name.
-        """
-        data = request.get_json() or {}
-
-        is_valid, errors = validate_team_leave(data)
-        if not is_valid:
-            logger.warning(
-                "Validation failed for team leave",
-                extra={
-                    "context": {
-                        "errors": errors,
-                        "user_id": get_current_user_id(),
-                        "endpoint": "team_leave",
-                    }
-                },
-            )
-            return {"success": False, "errors": errors}, 400
-
-        event_id = data.get("event_id")
-
-        result = leave_team(user_id=g.user.id, event_id=event_id)
-
-        if result["success"]:
-            logger.info(
-                "User left team successfully",
-                extra={
-                    "context": {
-                        "user_id": get_current_user_id(),
-                        "event_id": event_id,
-                        "former_team": result["former_team"],
-                    }
-                },
-            )
-            return success_response(result)
-        else:
-            logger.warning(
-                "Team leave failed",
-                extra={
-                    "context": {
-                        "user_id": get_current_user_id(),
-                        "event_id": event_id,
-                        "error": result["error"],
-                    }
-                },
-            )
-            return error_response(result["error"], "leave", 400)
+    @user_endpoint()
+    @load_team()
+    @require_team_captain()
+    @teams_namespace.doc(**DISBAND_TEAM_DOC)
+    def delete(self, team_id):
+        """Disband team"""
+        result = disband_team(team_id, g.user.id, is_admin())
+        return success_response(result)
 
 
 @teams_namespace.route("/join")
 class TeamJoin(Resource):
-    @authed_only
-    @authed_user_required
-    @handle_integrity_error
-    @teams_namespace.doc(
-        description="Join a team using an invite code",
-        params={"invite_code": "Team invite code (required in body)"},
-        responses={
-            200: "Success - Joined team via invite code",
-            400: "Bad request - Invalid invite code or cannot join",
-            403: "Forbidden - User not authenticated",
-            500: "Internal Server Error",
-        },
-    )
+    @user_endpoint(json_required=True, validation_func=validate_team_join_by_code)
+    @load_team_and_event_by_invite()
+    @check_team_join_eligibility()
+    @teams_namespace.doc(**JOIN_TEAM_DOC)
     def post(self):
-        """Join a team using its invite code.
+        """Join team"""
+        data = g.validated_data
+        result = join_team(g.user.id, data["invite_code"])
+        return success_response(result)
 
-        Request Body:
-            invite_code (str): The team's invite code.
 
-        Returns:
-            JSON response with team info and join confirmation.
-        """
-        data = request.get_json() or {}
-
-        is_valid, errors = validate_team_join_by_code(data)
-        if not is_valid:
-            logger.warning(
-                "Validation failed for team join",
-                extra={
-                    "context": {
-                        "errors": errors,
-                        "user_id": get_current_user_id(),
-                        "endpoint": "team_join",
-                    }
-                },
-            )
-            return {"success": False, "errors": errors}, 400
-
-        invite_code = data.get("invite_code")
-
-        result = join_team(user_id=g.user.id, invite_code=invite_code)
-
-        if result["success"]:
-            logger.info(
-                "User joined team via invite code",
-                extra={
-                    "context": {
-                        "user_id": get_current_user_id(),
-                        "team_id": result["team"].id,
-                        "team_name": result["team"].name,
-                    }
-                },
-            )
-            return success_response(result)
-        else:
-            logger.warning(
-                "Team join failed",
-                extra={
-                    "context": {
-                        "user_id": get_current_user_id(),
-                        "error": result["error"],
-                    }
-                },
-            )
-            return error_response(result["error"], "invite", 400)
+@teams_namespace.route("/leave")
+class TeamLeave(Resource):
+    @user_endpoint(json_required=True, validation_func=validate_team_leave)
+    @load_user_team_in_event()
+    @teams_namespace.doc(**LEAVE_TEAM_DOC)
+    def post(self):
+        """Leave team"""
+        result = leave_team()
+        return success_response(result)
 
 
 @teams_namespace.route("/<int:team_id>/captain")
-@teams_namespace.param("team_id", "Team ID")
 class TeamCaptain(Resource):
-    @authed_only
-    @handle_integrity_error
-    @teams_namespace.doc(
-        description="Get the current captain of a team",
-        responses={
-            200: "Success - Captain information returned",
-            403: "Forbidden - User not authenticated",
-            404: "Not found - Team does not exist or has no captain",
-            500: "Internal Server Error",
-        },
-    )
+    @user_endpoint()
+    @load_team()
+    @teams_namespace.doc(**GET_CAPTAIN_DOC)
     def get(self, team_id):
-        """Get the current captain info for the team.
-
-        Args:
-            team_id (int): The team ID.
-
-        Returns:
-            JSON response with captain user ID and status info.
-        """
+        """Get captain"""
         result = get_team_captain(team_id)
+        return success_response(result)
 
-        if result["success"]:
-            return success_response(result)
-        else:
-            logger.warning(
-                "Team captain not found",
-                extra={
-                    "context": {
-                        "user_id": get_current_user_id(),
-                        "team_id": team_id,
-                        "error": result["error"],
-                    }
-                },
-            )
-            return error_response(result["error"], "captain", 404)
-
-    @authed_only
-    @authed_user_required
-    @handle_integrity_error
-    @teams_namespace.doc(
-        description="Assign team captain",
-        params={"user_id": "User ID (required)"},
-        responses={
-            200: "Success",
-            400: "Bad request",
-            403: "Forbidden",
-            404: "Not found",
-            500: "Internal Server Error",
-        },
-    )
+    @user_endpoint(json_required=True, validation_func=validate_captain_assignment)
+    @load_team()
+    @require_team_captain()
+    @load_target_member()
+    @teams_namespace.doc(**TRANSFER_CAPTAINCY_DOC)
     def post(self, team_id):
-        """Transfer team captaincy to another member.
-
-        Args:
-            team_id (int): The team ID.
-
-        Request Body:
-            user_id (int): The user ID of the new captain.
-
-        Returns:
-            JSON response with new captain info and confirmation.
-        """
-        data = request.get_json() or {}
-
-        is_valid, errors = validate_captain_assignment(data)
-        if not is_valid:
-            logger.warning(
-                "Validation failed for captain assignment",
-                extra={
-                    "context": {
-                        "errors": errors,
-                        "user_id": get_current_user_id(),
-                        "endpoint": "captain_assignment",
-                        "team_id": team_id,
-                    }
-                },
-            )
-            return {"success": False, "errors": errors}, 400
-
-        new_captain_user_id = int(data.get("user_id"))
-
-        result = transfer_captaincy(
-            team_id=team_id,
-            new_captain_id=new_captain_user_id,
-            actor_id=g.user.id,
-            is_admin=is_admin(),
-        )
-
-        if result["success"]:
-            logger.info(
-                "Team captaincy transferred",
-                extra={
-                    "context": {
-                        "user_id": get_current_user_id(),
-                        "team_id": team_id,
-                        "new_captain_id": new_captain_user_id,
-                        "is_admin": is_admin(),
-                    }
-                },
-            )
-            return success_response(result)
-        else:
-            status_code = (
-                403
-                if "not authorized" in result["error"].lower()
-                else 404
-                if "not found" in result["error"].lower()
-                else 400
-            )
-            if status_code == 403:
-                logger.warning(
-                    "Unauthorized captain assignment attempt",
-                    extra={
-                        "context": {
-                            "user_id": get_current_user_id(),
-                            "team_id": team_id,
-                            "new_captain_id": new_captain_user_id,
-                            "error": result["error"],
-                        }
-                    },
-                )
-            return error_response(result["error"], "captain", status_code)
+        """Transfer captaincy"""
+        data = g.validated_data
+        result = transfer_captaincy(team_id, data["user_id"], g.user.id, is_admin())
+        return success_response(result)
 
 
 @teams_namespace.route("/<int:team_id>/members/<int:user_id>")
-@teams_namespace.param("team_id", "Team ID")
-@teams_namespace.param("user_id", "User ID of the member")
 class TeamMemberManager(Resource):
-    @authed_only
-    @authed_user_required
-    @handle_integrity_error
-    @teams_namespace.doc(
-        description="Remove a member from a team (Captain/Admin only)",
-        responses={
-            200: "Success - Member removed",
-            400: "Bad request - Cannot remove member",
-            403: "Forbidden - Not authorized",
-            404: "Not found - Team or member does not exist",
-            500: "Internal Server Error",
-        },
-    )
+    @user_endpoint()
+    @load_team_and_event()
+    @require_team_member_management()
+    @load_target_member()
+    @teams_namespace.doc(**REMOVE_MEMBER_DOC)
     def delete(self, team_id, user_id):
-        """Remove a member from the team (Captain/Admin only).
-
-        Args:
-            team_id (int): The team ID.
-            user_id (int): The member ID to remove.
-
-        Returns:
-            JSON response with confirmation message or error details.
-        """
-        result = remove_member(
-            team_id=team_id,
-            member_to_remove_id=user_id,
-            actor_id=g.user.id,
-            is_admin=is_admin(),
-        )
-
-        if result["success"]:
-            logger.info(
-                "Team member removed",
-                extra={
-                    "context": {
-                        "user_id": get_current_user_id(),
-                        "team_id": team_id,
-                        "removed_user_id": user_id,
-                        "is_admin": is_admin(),
-                    }
-                },
-            )
-            return success_response(result)
-        else:
-            status_code = 403 if "not authorized" in result["error"].lower() else 400
-            if status_code == 403:
-                logger.warning(
-                    "Unauthorized member removal attempt",
-                    extra={
-                        "context": {
-                            "user_id": get_current_user_id(),
-                            "team_id": team_id,
-                            "target_user_id": user_id,
-                            "error": result["error"],
-                        }
-                    },
-                )
-            return error_response(result["error"], "remove", status_code)
+        """Remove member"""
+        result = remove_member(team_id, user_id, g.user.id, is_admin())
+        return success_response(result)

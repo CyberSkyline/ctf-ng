@@ -1,5 +1,4 @@
 """
-/backend/ng/team/controllers/_generate_invite_code.py
 Generates unique invite codes for teams.
 """
 
@@ -7,12 +6,12 @@ import secrets
 import string
 import uuid
 
-from ...config import (
-    INVITE_CODE_GENERATION_ATTEMPTS,
-    INVITE_CODE_LENGTH,
-    INVITE_CODE_MAX_LENGTH,
-)
+from ... import config
 from ..models.Team import Team
+
+INVITE_CODE_GENERATION_ATTEMPTS = config.INVITE_CODE_GENERATION_ATTEMPTS
+INVITE_CODE_LENGTH = config.INVITE_CODE_LENGTH
+INVITE_CODE_MAX_LENGTH = config.INVITE_CODE_MAX_LENGTH
 
 
 # Internal use only (_ prefix); generates a unique team invite code.

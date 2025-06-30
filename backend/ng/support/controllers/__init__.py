@@ -1,5 +1,4 @@
 """
-/backend/ng/support/controllers/__init__.py
 Support controller functions for ticket management and support operations.
 """
 
@@ -8,6 +7,7 @@ from .list_tickets import list_tickets
 from .get_ticket import get_ticket
 from .create_ticket_message import create_ticket_message
 from .update_ticket import update_ticket
+
 from .admin_ticket_operations import (
     assign_ticket,
     unassign_ticket,
@@ -15,7 +15,7 @@ from .admin_ticket_operations import (
     reopen_ticket,
     mute_ticket,
     unmute_ticket,
-    get_ticket_statistics
+    get_ticket_statistics,
 )
 from .tag_management import (
     create_tag,
@@ -23,29 +23,26 @@ from .tag_management import (
     delete_tag,
     list_tags,
     add_tags_to_ticket,
-    remove_tags_from_ticket
+    remove_tags_from_ticket,
 )
 
 __all__ = [
-    # Ticket operations
     "create_ticket",
     "list_tickets",
     "get_ticket",
     "create_ticket_message",
     "update_ticket",
-    # Admin operations
     "assign_ticket",
     "unassign_ticket",
     "close_ticket",
     "reopen_ticket",
-    "mute_ticket", 
+    "mute_ticket",
     "unmute_ticket",
     "get_ticket_statistics",
-    # Tag operations
     "create_tag",
     "update_tag",
     "delete_tag",
     "list_tags",
     "add_tags_to_ticket",
-    "remove_tags_from_ticket"
+    "remove_tags_from_ticket",
 ]

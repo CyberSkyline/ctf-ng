@@ -7,16 +7,14 @@ from ..models.User import User
 
 
 def list_users() -> dict[str, Any]:
-    """
-    Gets all users with their detailed information (Admin).
+    """Gets all users with their detailed information (Admin).
 
     Returns:
-        dict: Success status, list of users, and total count.
+        dict: List of users and total count.
     """
     users_data = User.get_all_users_with_details()
 
     return {
-        "success": True,
         "users": users_data,
         "total": len(users_data),
     }

@@ -1,0 +1,134 @@
+"""
+Simplified main decorators - just handle auth and input validation.
+Resource loading and permissions are handled by separate decorators.
+"""
+
+from functools import wraps
+from flask import request, g
+from CTFd.utils.user import get_current_user, is_admin as is_admin_ctfd
+from CTFd.utils.decorators import admins_only, authed_only
+from ..exceptions import PermissionError, ValidationError
+from .error_handler import handle_exceptions
+
+
+def api_endpoint(auth_required=True, admin_required=False, json_required=False, validation_func=None):
+    """
+    API endpoint decorator that handles:
+    - Authentication (optional/required/admin)
+    - JSON body validation and parsing
+    - Input data validation
+    - Error handling
+
+    Resource loading and permission checking is handled by other decorators.
+
+    Args:
+        auth_required: Whether authentication is required
+        admin_required: Whether admin privileges are required
+        json_required: Whether JSON body is required
+        validation_func: Function to validate request data
+
+    Usage:
+        @api_endpoint(auth_required=True, json_required=True, validation_func=validate_team_creation)
+        @load_event()  # Loads event from route params
+        @check_team_join_eligibility()  # Checks if user can join teams in this event
+        def create_team(self, event_id):
+            data = g.validated_data  # Already parsed and validated
+            event = g.event  # Already loaded
+            eligibility = g.user_eligibility  # Already checked
+            # ... business logic
+    """
+
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if admin_required:
+                return admins_only(_auth_handler(f, auth_required, json_required, validation_func))(*args, **kwargs)
+            elif auth_required:
+                return authed_only(_auth_handler(f, auth_required, json_required, validation_func))(*args, **kwargs)
+            else:
+                return _auth_handler(f, auth_required, json_required, validation_func)(*args, **kwargs)
+
+        return decorated_function
+
+    return decorator
+
+
+def _auth_handler(f, auth_required, json_required, validation_func):
+    """Internal helper to handle the actual endpoint logic"""
+
+    @handle_exceptions
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if auth_required:
+            current_user = get_current_user()
+            if not current_user:
+                raise PermissionError("Authentication is required to access this resource.")
+            g.user = current_user
+        if json_required:
+            if not request.is_json:
+                raise ValidationError("Request must have a JSON body.")
+            data = request.get_json()
+            if not data:
+                raise ValidationError("JSON body is malformed or empty.")
+            g.json_data = data
+            if validation_func:
+                try:
+                    g.validated_data = validation_func(data)
+                except Exception as e:
+                    raise ValidationError(str(e))
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+# Convenience decorators for common patterns
+def user_endpoint(json_required=False, validation_func=None):
+    """Shorthand for authenticated user endpoints"""
+    return api_endpoint(
+        auth_required=True,
+        admin_required=False,
+        json_required=json_required,
+        validation_func=validation_func,
+    )
+
+
+def admin_endpoint(json_required=False, validation_func=None):
+    """Shorthand for admin-only endpoints"""
+    return api_endpoint(
+        auth_required=True,
+        admin_required=True,
+        json_required=json_required,
+        validation_func=validation_func,
+    )
+
+
+def public_endpoint(json_required=False, validation_func=None):
+    """Shorthand for public endpoints (no auth required)"""
+    return api_endpoint(
+        auth_required=False,
+        admin_required=False,
+        json_required=json_required,
+        validation_func=validation_func,
+    )
+
+
+# Testing Decorator
+def admin_view(f):
+    """
+    Decorator for traditional Flask views that require admin access.
+    It integrates with our plugin's custom exception handling by raising
+    a PermissionError, ensuring consistent error responses.
+    """
+
+    @wraps(f)
+    @handle_exceptions
+    def decorated_function(*args, **kwargs):
+        user = get_current_user()
+        if not user:
+            raise PermissionError("You must be logged in to view this page.")
+        if not is_admin_ctfd():
+            raise PermissionError("You must be an administrator to view this page.")
+        g.user = user
+        return f(*args, **kwargs)
+
+    return decorated_function

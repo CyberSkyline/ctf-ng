@@ -1,4 +1,3 @@
 """
-/backend/ng/admin/__init__.py
-Admin domain package for system management and data operations.
+Admin domain for system management and data operations.
 """

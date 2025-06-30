@@ -11,13 +11,11 @@ def list_all_teams() -> dict[str, Any]:
     Gets all teams with their information.
 
     Returns:
-        dict: Success status, list of teams, and total count.
+        dict: List of teams and total count.
     """
-
     all_teams_data = Team.get_all_teams_for_admin()
 
     return {
-        "success": True,
         "teams": all_teams_data,
         "total": len(all_teams_data),
     }

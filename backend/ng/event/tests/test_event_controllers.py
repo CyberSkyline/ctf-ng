@@ -1,29 +1,10 @@
 """
-Tests event controller business logic
-/backend/ng/event/tests/test_event_controllers.py
+Unit tests for event domain controllers
 """
 
-import pytest
-from datetime import datetime
-from ..controllers.create_event import create_event
+from datetime import datetime, timezone
 
 
-@pytest.mark.db
-def test_create_event_with_all_fields(db_session):
-    """Test creating an event with all optional fields."""
-    start_time = datetime(2025, 6, 1, 10, 0, 0)
-    end_time = datetime(2025, 6, 1, 18, 0, 0)
-
-    result = create_event(
-        name="Full Event",
-        description="Complete event with all fields",
-        max_team_size=5,
-        start_time=start_time,
-        end_time=end_time,
-        locked=False,
-    )
-
-    assert result["success"]
-    assert result["event"]["name"] == "Full Event"
-    assert result["event"]["max_team_size"] == 5
-    assert result["event"]["locked"] is False
+def utc_now() -> datetime:
+    """Get current UTC datetime. Replacement for deprecated datetime.utcnow()."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """
-/backend/ng/tests/fixtures/reset_database.py
 Database Reset Utility
 Safely clears all custom plugin data while leaving ctfd core data intact.
 
