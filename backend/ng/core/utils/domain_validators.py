@@ -116,6 +116,69 @@ def validate_event_creation(data: dict[str, Any]) -> tuple[bool, dict[str, str]]
     return validator.is_valid()
 
 
+def validate_event_registration_creation(data: dict[str, Any]) -> tuple[bool, dict[str, str]]:
+    """Validate event registration creation."""
+    validator = BaseValidator()
+
+    validator.validate_boolean(data, "public", friendly_name="Public registration")
+    validator.validate_boolean(data, "reg_open", friendly_name="Registration open status")
+
+    # Validate optional datetime fields
+    reg_start_date = validator.validate_datetime(
+        data, "reg_start_date", allow_past=False, friendly_name="Registration start date"
+    )
+    reg_end_date = validator.validate_datetime(
+        data, "reg_end_date", allow_past=False, friendly_name="Registration end date"
+    )
+
+    # Check that if one time is provided, both must be provided
+    if (reg_start_date is None) != (reg_end_date is None):
+        if reg_start_date is None:
+            validator.errors["reg_start_date"] = "Registration start date is required when end date is provided"
+        if reg_end_date is None:
+            validator.errors["reg_end_date"] = "Registration end date is required when start date is provided"
+
+    # Check that start date is before end date
+    if reg_start_date and reg_end_date and reg_start_date >= reg_end_date:
+        validator.errors["reg_end_date"] = ValidationError.FIELD_DATETIME_ORDER
+
+    return validator.is_valid()
+
+
+def validate_join_event(data: dict[str, Any]) -> tuple[bool, dict[str, str]]:
+    """Validate joining an event."""
+    validator = BaseValidator()
+
+    # Validate required fields
+    validator.validate_positive_integer(data, "event_id", required=True, friendly_name="Event ID")
+    validator.validate_string(
+        data,
+        "invite_code",
+        config.INVITE_CODE_MAX_LENGTH,
+        required=False,
+        friendly_name="Invite code",
+    )
+    validator.validate_string(
+        data,
+        "team_name",
+        config.TEAM_NAME_MAX_LENGTH,
+        required=False,
+        friendly_name="Team name",
+    )
+    if not data.get("event_id"):
+        validator.errors["event_id"] = "Event ID is required"
+        
+    # Ensure at least one of invite_code or team_name is provided
+    if not data.get("invite_code") and not data.get("team_name"):
+        validator.errors["fields"] = "Either invite_code or team_name must be provided"
+
+    # Ensure only one of invite_code or team_name is provided
+    if data.get("invite_code") and data.get("team_name"):
+        validator.errors["fields"] = "Only one of invite_code or team_name can be provided"
+
+    return validator.is_valid()
+
+
 def validate_event_update(data: dict[str, Any]) -> tuple[bool, dict[str, str]]:
     """Validate event updates."""
     validator = BaseValidator()

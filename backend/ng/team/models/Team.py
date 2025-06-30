@@ -281,3 +281,19 @@ class Team(db.Model):
         except Exception as e:
             db.session.rollback()
             raise e
+
+    def serialize(self) -> dict[str, Any]:
+        """Serialize the team instance to a dictionary.
+
+        Returns:
+            dict: Serialized team data
+        """
+        return {
+            "id": self.id,
+            "name": self.name,
+            "ranked": self.ranked,
+            "invite_code": self.invite_code,
+            "event_id": self.event_id,
+            "locked": self.locked,
+            "member_count": self.member_count,
+        }

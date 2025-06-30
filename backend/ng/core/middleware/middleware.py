@@ -8,8 +8,10 @@ from flask import request, g
 from sqlalchemy.exc import IntegrityError
 from CTFd.utils.user import get_current_user
 from CTFd.models import db
+from datetime import datetime
 from ..utils.api_responses import error_response
 from ..utils.logger import get_logger
+from ...event_registration.models.EventRegistration import EventRegistration
 from .utils import (
     params_check_valid,
     get_param_values,
@@ -122,9 +124,46 @@ def handle_integrity_error(f):
                 },
             )
             return error_response(
-                "Database constraint error. Please check your request and try again.",
+                f"Database constraint error. {str(e)}",
                 "database",
                 409,
             )
 
+    return decorated_function
+
+
+def event_joinable(f):
+    """Check if an event is joinable based on its registration status."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        event_id = request.view_args.get("event_id") or request.json.get("event_id")
+        if not event_id:
+            return error_response("Event ID is required", "event_id_missing", 400)
+        eventreg = EventRegistration.query.filter_by(event_id=event_id).first()
+        print(f"Checking event joinability for event ID: {event_id}")
+        if not eventreg:
+            return error_response(
+                f"Event Registration not found for event ID {event_id}",
+                "event_not_found",
+                404,
+            )
+        if not eventreg.reg_open:
+            return error_response(
+                f"Event Registration is not open for event ID {event_id}",
+                "event_registration_closed",
+                403,
+            )
+        if eventreg.reg_start_date and eventreg.reg_start_date > datetime.utcnow():
+            return error_response(
+                f"Event Registration has not started yet for event ID {event_id}",
+                "event_registration_not_started",
+                403,
+            )
+        if eventreg.reg_end_date and eventreg.reg_end_date < datetime.utcnow():
+            return error_response(
+                f"Event Registration has ended for event ID {event_id}",
+                "event_registration_ended",
+                403,
+            )
+        return f(*args, **kwargs)
     return decorated_function
