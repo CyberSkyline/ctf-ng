@@ -10,11 +10,15 @@ from ...support.controllers import (
     get_ticket,
     update_ticket,
     assign_ticket,
+    unassign_ticket,
     close_ticket,
+    reopen_ticket,
     create_tag,
     update_tag,
     delete_tag,
     list_tags,
+    add_tags_to_ticket,
+    remove_tags_from_ticket,
 )
 from ...core.validation import (
     validate_ticket_update,
@@ -22,6 +26,7 @@ from ...core.validation import (
     validate_ticket_filters,
     validate_tag_creation,
     validate_tag_update,
+    validate_ticket_tags_update,
 )
 from ...core.utils import success_response
 from ...core.middleware import (
@@ -29,16 +34,21 @@ from ...core.middleware import (
     load_ticket,
     load_tag,
     load_associations_from_request,
+    load_tags_from_request,
 )
 from ...core.docs import (
     ADMIN_GET_ALL_TICKETS_DOC,
     ADMIN_GET_TICKET_DETAILS_DOC,
     ADMIN_UPDATE_TICKET_DOC,
     ADMIN_ASSIGN_TICKET_DOC,
+    ADMIN_UNASSIGN_TICKET_DOC,
     ADMIN_CLOSE_TICKET_DOC,
+    ADMIN_REOPEN_TICKET_DOC,
     ADMIN_CREATE_TAG_DOC,
     ADMIN_UPDATE_TAG_DOC,
     ADMIN_DELETE_TAG_DOC,
+    ADMIN_ADD_TAGS_TO_TICKET_DOC,
+    ADMIN_REMOVE_TAGS_FROM_TICKET_DOC,
     LIST_TAGS_DOC,
 )
 
@@ -105,6 +115,17 @@ class AdminTicketAssign(Resource):
         return success_response(result)
 
 
+@admin_tickets_namespace.route("/tickets/<int:ticket_id>/unassign")
+class AdminTicketUnassign(Resource):
+    @admin_endpoint()
+    @load_ticket()
+    @admin_tickets_namespace.doc(**ADMIN_UNASSIGN_TICKET_DOC)
+    def post(self, ticket_id):
+        """Unassign ticket"""
+        result = unassign_ticket(ticket_id, g.user.id)
+        return success_response(result)
+
+
 @admin_tickets_namespace.route("/tickets/<int:ticket_id>/close")
 class AdminTicketClose(Resource):
     @admin_endpoint()
@@ -113,6 +134,17 @@ class AdminTicketClose(Resource):
     def post(self, ticket_id):
         """Close ticket"""
         result = close_ticket(ticket_id, g.user.id)
+        return success_response(result)
+
+
+@admin_tickets_namespace.route("/tickets/<int:ticket_id>/reopen")
+class AdminTicketReopen(Resource):
+    @admin_endpoint()
+    @load_ticket()
+    @admin_tickets_namespace.doc(**ADMIN_REOPEN_TICKET_DOC)
+    def post(self, ticket_id):
+        """Reopen ticket"""
+        result = reopen_ticket(ticket_id, g.user.id)
         return success_response(result)
 
 
@@ -132,6 +164,27 @@ class AdminTagList(Resource):
         data = g.validated_data
         result = create_tag(data["name"], data.get("color"), data.get("description"))
         return success_response(result, status_code=201)
+
+
+@admin_tickets_namespace.route("/tickets/<int:ticket_id>/tags")
+class AdminTicketTags(Resource):
+    @admin_endpoint(json_required=True, validation_func=validate_ticket_tags_update)
+    @load_ticket()
+    @load_tags_from_request()
+    @admin_tickets_namespace.doc(**ADMIN_ADD_TAGS_TO_TICKET_DOC)
+    def post(self, ticket_id):
+        """Add tags to ticket"""
+        result = add_tags_to_ticket(ticket_id)
+        return success_response(result)
+
+    @admin_endpoint(json_required=True, validation_func=validate_ticket_tags_update)
+    @load_ticket()
+    @load_tags_from_request()
+    @admin_tickets_namespace.doc(**ADMIN_REMOVE_TAGS_FROM_TICKET_DOC)
+    def delete(self, ticket_id):
+        """Remove tags from ticket"""
+        result = remove_tags_from_ticket(ticket_id)
+        return success_response(result)
 
 
 @admin_tickets_namespace.route("/tags/<int:tag_id>")
