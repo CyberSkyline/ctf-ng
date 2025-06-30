@@ -1,254 +1,109 @@
 """
-/backend/ng/support/controllers/tag_management.py
-Manages ticket tags (admin only).
+Manages the lifecycle of ticket tags and their association with tickets.
 """
 
-from typing import Any, Optional
+from flask import g
+from typing import Any
 
-from ...core.utils.logger import get_logger
+from ...core.utils import emit_event
+from ...core.utils import build_conditional_update_data
+from ...core.validation import validate_unique_name
+
 from ..models.TicketTag import TicketTag
-from ..models.Ticket import Ticket
-from ..exceptions import TagNotFoundError, TicketValidationError, TicketNotFoundError
-
-logger = get_logger(__name__)
 
 
-def create_tag(
-    name: str,
-    color: Optional[str] = None,
-    description: Optional[str] = None
-) -> dict[str, Any]:
-    """Creates a new ticket tag.
-    
-    Args:
-        name: Tag name
-        color: Optional hex color code
-        description: Optional tag description
-        
-    Returns:
-        dict: Success status and created tag data
-        
-    Raises:
-        TicketValidationError: If tag name already exists
-    """
-    # Check if tag name already exists TODO
-    existing = TicketTag.find_by_name(name)
-    if existing:
-        raise TicketValidationError(f"Tag with name '{name}' already exists")
-    
-    tag = TicketTag.create(
-        name=name,
-        color=color,
-        description=description
-    )
-    
-    logger.info(
-        "Ticket tag created",
-        extra={
-            "context": {
-                "tag_id": tag.id,
-                "tag_name": name
-            }
-        }
-    )
-    
+def create_tag(name: str, color: str | None = None, description: str | None = None) -> dict[str, Any]:
+    """Creates a new ticket tag definition. This is an admin-only operation."""
+    validate_unique_name(TicketTag, name)
+    tag = TicketTag.create(name=name, color=color, description=description)
+
     return {
-        "success": True,
-        "tag": tag.serialize(),
-        "message": f"Tag '{name}' created successfully"
+        "tag": tag,
+        "message": f"Tag '{name}' created successfully",
     }
 
 
 def update_tag(
     tag_id: int,
-    name: Optional[str] = None,
-    color: Optional[str] = None,
-    description: Optional[str] = None
+    name: str | None = None,
+    color: str | None = None,
+    description: str | None = None,
 ) -> dict[str, Any]:
-    """Updates an existing tag.
-    
-    Args:
-        tag_id: Tag to update
-        name: New tag name
-        color: New color
-        description: New description
-        
-    Returns:
-        dict: Success status and updated tag data
-        
-    Raises:
-        TagNotFoundError: If tag doesn't exist
-        TicketValidationError: If new name already exists
-    """
-    tag = TicketTag.find_by_id(tag_id)
-    if not tag:
-        raise TagNotFoundError(f"Tag with ID {tag_id} not found")
-    
-    # Check name uniqueness if changing TODO
-    if name and name != tag.name:
-        existing = TicketTag.find_by_name(name)
-        if existing:
-            raise TicketValidationError(f"Tag with name '{name}' already exists")
-    
-    # Track changes
-    changes = {}
-    if name and name != tag.name:
-        changes["name"] = {"old": tag.name, "new": name}
-    if color is not None and color != tag.color:
-        changes["color"] = {"old": tag.color, "new": color}
-    if description is not None and description != tag.description:
-        changes["description"] = {"old": tag.description, "new": description}
-    
-    # Apply updates
-    update_data = {}
+    """Updates the properties of an existing tag definition."""
+    tag = g.tag
+
     if name:
-        update_data["name"] = name
-    if color is not None:
-        update_data["color"] = color
-    if description is not None:
-        update_data["description"] = description
-    
+        validate_unique_name(TicketTag, name, current_object=tag)
+
+    update_data = build_conditional_update_data(
+        tag,
+        name=(name, name is not None and name != tag.name),
+        color=(color, color is not None and color != tag.color),
+        description=(
+            description,
+            description is not None and description != tag.description,
+        ),
+    )
+
     if update_data:
         tag.update_tag(**update_data)
-        
-        logger.info(
-            "Ticket tag updated",
-            extra={
-                "context": {
-                    "tag_id": tag_id,
-                    "changes": changes
-                }
-            }
-        )
-    
-    return {
-        "success": True,
-        "tag": tag.serialize(),
-        "changes": changes
-    }
+
+    return {"tag": tag}
 
 
 def delete_tag(tag_id: int) -> dict[str, Any]:
-    """Deletes a tag.
-    
-    Args:
-        tag_id: Tag to delete
-        
-    Returns:
-        dict: Success status
-        
-    Raises:
-        TagNotFoundError: If tag doesn't exist
-    """
-    tag = TicketTag.find_by_id(tag_id)
-    if not tag:
-        raise TagNotFoundError(f"Tag with ID {tag_id} not found")
-    
+    """Deletes a tag definition from the system."""
+    tag = g.tag
     tag_name = tag.name
     ticket_count = len(tag.tickets)
-    
     tag.delete_tag()
-    
-    logger.info(
-        "Ticket tag deleted",
-        extra={
-            "context": {
-                "tag_id": tag_id,
-                "tag_name": tag_name,
-                "affected_tickets": ticket_count
-            }
-        }
-    )
-    
+
     return {
-        "success": True,
         "message": f"Tag '{tag_name}' deleted successfully",
-        "affected_tickets": ticket_count
+        "affected_tickets": ticket_count,
     }
 
 
 def list_tags() -> dict[str, Any]:
-    """Lists all available tags.
-    
-    Returns:
-        dict: Success status and list of tags
-    """
+    """Lists all available tag definitions."""
     tags = TicketTag.get_all_tags()
-    
     return {
-        "success": True,
-        "tags": [tag.serialize() for tag in tags],
-        "total": len(tags)
+        "tags": tags,
+        "total": len(tags),
     }
 
 
 def add_tags_to_ticket(ticket_id: int, tag_ids: list[int]) -> dict[str, Any]:
-    """Adds tags to a ticket.
-    
-    Args:
-        ticket_id: Ticket to add tags to
-        tag_ids: List of tag IDs to add
-        
-    Returns:
-        dict: Success status and updated ticket
-        
-    Raises:
-        TicketNotFoundError: If ticket doesn't exist
-        TagNotFoundError: If any tag doesn't exist
-    """
-    ticket = Ticket.find_by_id(ticket_id)
-    if not ticket:
-        raise TicketNotFoundError(f"Ticket with ID {ticket_id} not found")
-    
-    # Validate all tags exist TODO
-    tags = []
-    for tag_id in tag_ids:
-        tag = TicketTag.find_by_id(tag_id)
-        if not tag:
-            raise TagNotFoundError(f"Tag with ID {tag_id} not found")
-        tags.append(tag)
-    
-    # Add tags
+    """Adds one or more tags to a specific ticket."""
+    ticket = g.ticket
+    tags = g.tags
     ticket.add_tags(tags)
-    
+
+    emit_event(
+        event_name="ticket_updated",
+        data=ticket.serialize(include_admin_fields=True),
+        room=f"ticket_{ticket_id}",
+    )
+
     return {
-        "success": True,
-        "ticket": ticket.serialize(include_admin_fields=True),
-        "message": f"Added {len(tags)} tags to ticket"
+        "ticket": ticket,
+        "message": f"Added {len(tags)} tags to ticket",
     }
 
 
 def remove_tags_from_ticket(ticket_id: int, tag_ids: list[int]) -> dict[str, Any]:
-    """Removes tags from a ticket.
-    
-    Args:
-        ticket_id: Ticket to remove tags from
-        tag_ids: List of tag IDs to remove
-        
-    Returns:
-        dict: Success status and updated ticket
-        
-    Raises:
-        TicketNotFoundError: If ticket doesn't exist
-        TagNotFoundError: If any tag doesn't exist
-    """
-    ticket = Ticket.find_by_id(ticket_id)
-    if not ticket:
-        raise TicketNotFoundError(f"Ticket with ID {ticket_id} not found")
-    
-    # Validate all tags exist TODO
-    tags = []
-    for tag_id in tag_ids:
-        tag = TicketTag.find_by_id(tag_id)
-        if not tag:
-            raise TagNotFoundError(f"Tag with ID {tag_id} not found")
-        tags.append(tag)
-    
-    # Remove tags
+    """Removes one or more tags from a specific ticket."""
+    ticket = g.ticket
+    tags = g.tags
     ticket.remove_tags(tags)
-    
+
+    emit_event(
+        event_name="ticket_updated",
+        data=ticket.serialize(include_admin_fields=True),
+        room=f"ticket_{ticket_id}",
+    )
+
     return {
-        "success": True,
-        "ticket": ticket.serialize(include_admin_fields=True),
-        "message": f"Removed {len(tags)} tags from ticket"
+        "ticket": ticket,
+        "message": f"Removed {len(tags)} tags from ticket",
     }

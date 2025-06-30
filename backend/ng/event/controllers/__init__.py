@@ -1,11 +1,10 @@
 """
-/backend/ctfd/event/controllers/__init__.py
 Event controller functions for training event management.
 """
 
 from .create_event import create_event
-from .list_events import list_events
 from .get_event_info import get_event_info
+from .list_events import list_events
 from .update_event import update_event
 
 __all__ = [

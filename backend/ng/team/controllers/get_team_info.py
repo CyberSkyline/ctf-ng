@@ -2,16 +2,20 @@
 Retrieves detailed information about a team and its members.
 """
 
+from flask import g
 from typing import Any
+
 from ..models.Team import Team
 
 
 def get_team_info(team_id: int) -> dict[str, Any]:
-    """Gets detailed info about a team."""
+    """Gets detailed info about a team.
 
-    full_details = Team.get_full_team_details(team_id)
+    Returns:
+        dict: Full team details including members and event.
+    """
 
-    if not full_details:
-        return {"success": False, "error": "Team not found."}
+    team = g.team
 
-    return {"success": True, **full_details}
+    full_details = Team.get_full_team_details(team.id)
+    return full_details

@@ -1,11 +1,9 @@
 """
-/backend/ng/event/routes/events.py
-Defines the public API routes for creating, listing, viewing, and updating events.
+Event management API routes.
 """
 
 from flask import g
 from flask_restx import Namespace, Resource
-from CTFd.utils.decorators import authed_only, admins_only
 
 from ..controllers import (
     create_event,
@@ -14,301 +12,87 @@ from ..controllers import (
     update_event,
 )
 from ...team.controllers import list_teams_in_event
-from ...core.utils.api_responses import (
-    controller_response,
-    error_response,
-    success_response,
+from ...core.utils import success_response
+from ...core.validation import (
+    validate_event_creation,
+    validate_event_update,
 )
-from ...core.utils.logger import get_logger
-from ...core.utils import get_current_user_id
-from ...core.utils import validate_event_creation, validate_event_update
 from ...core.middleware import (
-    handle_integrity_error,
-    json_body_required,
+    user_endpoint,
+    admin_endpoint,
+    load_event,
+)
+from ...core.docs import (
+    LIST_EVENTS_DOC,
+    CREATE_EVENT_DOC,
+    GET_EVENT_DOC,
+    UPDATE_EVENT_DOC,
+    GET_EVENT_TEAMS_DOC,
 )
 
+
 events_namespace = Namespace("events", description="event management operations")
-logger = get_logger(__name__)
 
 
 @events_namespace.route("")
 class EventList(Resource):
-    @authed_only
-    @handle_integrity_error
-    @events_namespace.doc(
-        description="Get list of all training events with statistics",
-        responses={
-            200: "Success - Returns list of events with team/member counts",
-            403: "Forbidden - User not authenticated",
-            500: "Internal Server Error",
-        },
-    )
+    @user_endpoint()
+    @events_namespace.doc(**LIST_EVENTS_DOC)
     def get(self):
-        """Get all training events with their team and member stats.
-
-        Returns:
-            JSON response with list of events including team counts and member counts.
-        """
+        """Get all events"""
         result = list_events()
+        return success_response(result)
 
-        if result["success"]:
-            logger.info(
-                "Events list retrieved",
-                extra={
-                    "context": {
-                        "user_id": get_current_user_id(),
-                        "event_count": len(result.get("events", [])),
-                    }
-                },
-            )
-
-        return controller_response(result, error_field="events")
-
-    @admins_only
-    @json_body_required
-    @handle_integrity_error
-    @events_namespace.doc(
-        description="Create a new training event (Admin only)",
-        responses={
-            201: "Success - Event created",
-            400: "Bad request - Invalid data",
-            403: "Forbidden - Admin access required",
-        },
-    )
+    @admin_endpoint(json_required=True, validation_func=validate_event_creation)
+    @events_namespace.doc(**CREATE_EVENT_DOC)
     def post(self):
-        """Create a new training event with given config."""
-        data = g.json_data
-
-        is_valid, parsed_data_or_errors = validate_event_creation(data)
-        if not is_valid:
-            logger.warning(
-                "Validation failed for event creation",
-                extra={
-                    "context": {
-                        "errors": parsed_data_or_errors,
-                        "admin_id": get_current_user_id(),
-                        "endpoint": "event_create",
-                        "data": data,
-                    }
-                },
-            )
-            return {"success": False, "errors": parsed_data_or_errors}, 400
-
+        """Create event"""
+        data = g.validated_data
         result = create_event(
-            name=parsed_data_or_errors.get("name"),
-            description=parsed_data_or_errors.get("description"),
-            max_team_size=parsed_data_or_errors.get("max_team_size"),
-            start_time=parsed_data_or_errors.get("start_time"),
-            end_time=parsed_data_or_errors.get("end_time"),
-            locked=parsed_data_or_errors.get("locked", False),
+            data["name"],
+            data.get("description"),
+            data.get("max_team_size"),
+            data.get("start_time"),
+            data.get("end_time"),
+            data.get("locked", False),
         )
-
-        if result["success"]:
-            event_data = result["event"]
-            logger.warning(
-                "Admin created event",
-                extra={
-                    "context": {
-                        "admin_id": get_current_user_id(),
-                        "event_id": event_data["id"],
-                        "event_name": event_data["name"],
-                        "max_team_size": event_data["max_team_size"],
-                    }
-                },
-            )
-            return success_response(result, status_code=201)
-        else:
-            logger.warning(
-                "Event creation failed",
-                extra={
-                    "context": {
-                        "admin_id": get_current_user_id(),
-                        "error": result["error"],
-                        "name": data.get("name"),
-                    }
-                },
-            )
-            return error_response(result["error"], "event", 400)
+        return success_response(result, status_code=201)
 
 
 @events_namespace.route("/<int:event_id>")
-@events_namespace.param("event_id", "Event ID")
 class EventDetail(Resource):
-    @authed_only
-    @handle_integrity_error
-    @events_namespace.doc(
-        description="Get detailed information about a specific event including teams",
-        responses={
-            200: "Success - Event details with teams returned",
-            403: "Forbidden - User not authenticated",
-            404: "Not found - Event does not exist",
-            500: "Internal Server Error",
-        },
-    )
+    @user_endpoint()
+    @load_event()
+    @events_namespace.doc(**GET_EVENT_DOC)
     def get(self, event_id):
-        """Get detailed info about a event including all teams.
-
-        Args:
-            event_id (int): The event ID to get.
-
-        Returns:
-            JSON response with event details and list of teams in the event.
-        """
+        """Get event details"""
         result = get_event_info(event_id)
+        return success_response(result)
 
-        if result["success"]:
-            teams_count = len(result.get("teams", []))
-            logger.info(
-                "Event info retrieved",
-                extra={
-                    "context": {
-                        "user_id": get_current_user_id(),
-                        "event_id": event_id,
-                        "teams_count": teams_count,
-                    }
-                },
-            )
-            return success_response(result)
-        else:
-            logger.warning(
-                "Event not found",
-                extra={
-                    "context": {
-                        "user_id": get_current_user_id(),
-                        "event_id": event_id,
-                        "error": result["error"],
-                    }
-                },
-            )
-            return error_response(result["error"], "event", 404)
-
-    @admins_only
-    @json_body_required
-    @handle_integrity_error
-    @events_namespace.doc(
-        description="Update event information (Admin only)",
-        params={
-            "name": "New event name (optional)",
-            "description": "New event description (optional)",
-        },
-        responses={
-            200: "Success - Event updated",
-            400: "Bad request - Invalid data or name conflict",
-            403: "Forbidden - Admin access required",
-            404: "Not found - Event does not exist",
-            500: "Internal Server Error",
-        },
-    )
+    @admin_endpoint(json_required=True, validation_func=validate_event_update)
+    @load_event()
+    @events_namespace.doc(**UPDATE_EVENT_DOC)
     def patch(self, event_id):
-        """Update event info with the provided fields.
-
-        Args:
-            event_id (int): The event ID to update.
-
-        Request Body:
-            name (str, optional): New name for the event.
-            description (str, optional): New description for the event.
-            max_team_size (int, optional): New maximum team size for teams in this event.
-
-        Returns:
-            JSON response with updated event info or error details.
-        """
-        data = g.json_data
-
-        is_valid, errors = validate_event_update(data)
-        if not is_valid:
-            logger.warning(
-                "Validation failed for event update",
-                extra={
-                    "context": {
-                        "errors": errors,
-                        "admin_id": get_current_user_id(),
-                        "endpoint": "event_update",
-                        "event_id": event_id,
-                    }
-                },
-            )
-            return {"success": False, "errors": errors}, 400
-
-        name = data.get("name")
-        description = data.get("description")
-        max_team_size = data.get("max_team_size")
-        start_time = data.get("start_time")
-        end_time = data.get("end_time")
-        locked = data.get("locked")
-
+        """Update event"""
+        data = g.validated_data
         result = update_event(
-            event_id=event_id,
-            name=name,
-            description=description,
-            max_team_size=max_team_size,
-            start_time=start_time,
-            end_time=end_time,
-            locked=locked,
+            event_id,
+            data.get("name"),
+            data.get("description"),
+            data.get("max_team_size"),
+            data.get("start_time"),
+            data.get("end_time"),
+            data.get("locked"),
         )
-
-        if result["success"]:
-            logger.warning(
-                "Admin updated event",
-                extra={
-                    "context": {
-                        "admin_id": get_current_user_id(),
-                        "event_id": event_id,
-                        "new_name": name,
-                        "new_description": description,
-                    }
-                },
-            )
-            return success_response(result)
-        else:
-            logger.warning(
-                "Event update failed",
-                extra={
-                    "context": {
-                        "admin_id": get_current_user_id(),
-                        "event_id": event_id,
-                        "error": result["error"],
-                    }
-                },
-            )
-            return error_response(result["error"], "event", 400)
+        return success_response(result)
 
 
 @events_namespace.route("/<int:event_id>/teams")
-@events_namespace.param("event_id", "Event ID")
 class EventTeams(Resource):
-    @authed_only
-    @handle_integrity_error
-    @events_namespace.doc(
-        description="Get all teams in a specific event",
-        responses={
-            200: "Success - Teams in event returned",
-            403: "Forbidden - User not authenticated",
-            404: "Not found - Event does not exist",
-            500: "Internal Server Error",
-        },
-    )
+    @user_endpoint()
+    @load_event()
+    @events_namespace.doc(**GET_EVENT_TEAMS_DOC)
     def get(self, event_id):
-        """Get all teams in the event.
-
-        Args:
-            event_id (int): The event ID to list teams from.
-
-        Returns:
-            JSON response with list of teams in the event or error details.
-        """
+        """Get teams in event"""
         result = list_teams_in_event(event_id)
-
-        if result["success"]:
-            logger.info(
-                "Event teams retrieved",
-                extra={
-                    "context": {
-                        "user_id": get_current_user_id(),
-                        "event_id": event_id,
-                        "team_count": len(result.get("teams", [])),
-                    }
-                },
-            )
-
-        return controller_response(result, error_field="event")
+        return success_response(result)

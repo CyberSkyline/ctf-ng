@@ -1,15 +1,26 @@
 """
 Test helper functions for setting up the plugin's test environment.
-/backend/ng/core/testing/helpers.py
 """
-
-from ... import load as plugin_load
 
 from tests.helpers import (
     create_ctfd as create_ctfd_original,
     destroy_ctfd as destroy_ctfd_original,
     setup_ctfd,
 )
+
+
+def plugin_load(app):
+    """Load the plugin into the app context."""
+    try:
+        from ... import load
+
+        load(app)
+    except Exception as e:
+        print(f"Plugin load failed: {e}")
+        import traceback
+
+        traceback.print_exc()
+        raise
 
 
 def create_ctfd():

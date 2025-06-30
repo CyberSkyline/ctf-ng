@@ -2,8 +2,12 @@
 Defines the TeamMember model, link between users, teams, and events.
 """
 
+from __future__ import annotations
+from typing import Any
+
 from CTFd.models import db
-from datetime import datetime
+
+from ...core.utils import utc_now
 from .enums import TeamRole
 
 
@@ -14,7 +18,7 @@ class TeamMember(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("ng_users.id"), nullable=False, index=True)
     event_id = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
     team_id = db.Column(db.Integer, db.ForeignKey("ng_teams.id"), nullable=False, index=True)
-    joined_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    joined_at = db.Column(db.DateTime, nullable=False, default=utc_now)
     role = db.Column(db.Enum(TeamRole), default=TeamRole.MEMBER, nullable=False)
 
     __table_args__ = (
@@ -28,6 +32,26 @@ class TeamMember(db.Model):
 
     def __repr__(self):
         return f"<TeamMember user={self.user_id} team={self.team_id} event={self.event_id}>"
+
+    def serialize(self, include_admin_fields: bool = False) -> dict[str, Any]:
+        """Serialize team member for API response.
+
+        Args:
+            include_admin_fields: Whether to include admin-only fields
+
+        Returns:
+            dict: Serialized team member data
+        """
+        data = {
+            "id": self.id,
+            "user_id": self.user_id,
+            "team_id": self.team_id,
+            "event_id": self.event_id,
+            "joined_at": self.joined_at.isoformat() if self.joined_at else None,
+            "role": self.role.value,
+        }
+
+        return data
 
     @classmethod
     def create_team_member(
@@ -53,7 +77,7 @@ class TeamMember(db.Model):
             TeamMember: The created team member instance
         """
         if joined_at is None:
-            joined_at = datetime.utcnow()
+            joined_at = utc_now()
 
         team_member = cls(
             user_id=user_id,
@@ -223,3 +247,20 @@ class TeamMember(db.Model):
             list[TeamMember]: List of team members ordered by join date
         """
         return cls.query.filter_by(team_id=team_id).order_by(cls.joined_at.asc()).all()
+
+    @classmethod
+    def transfer_captain_role(cls, team_id: int, old_captain_id: int, new_captain_id: int) -> bool:
+        """Transfer captain role in a single transaction."""
+        try:
+            old_captain = cls.query.get(old_captain_id)
+            new_captain = cls.query.get(new_captain_id)
+
+            if old_captain:
+                old_captain.role = TeamRole.MEMBER
+            new_captain.role = TeamRole.CAPTAIN
+
+            db.session.commit()
+            return True
+        except Exception:
+            db.session.rollback()
+            raise

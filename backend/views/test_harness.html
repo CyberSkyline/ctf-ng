@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Plugin API Test Harness (to test websockets - run: 'npm run test-support')</title>
+    <style>
+        body { font-family: sans-serif; display: flex; gap: 20px; padding: 20px; background-color: #f4f4f9; color: #333; }
+        .column { flex: 1; display: flex; flex-direction: column; gap: 15px; max-width: 50%; }
+        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2, h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        button { padding: 8px 12px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background-color: #e7e7e7; margin: 2px; }
+        button:hover { background-color: #ddd; }
+        pre { background: #2d2d2d; color: #f0f0f0; padding: 10px; border-radius: 4px; white-space: pre-wrap; word-break: break-all; max-height: 400px; overflow-y: auto; }
+        input[type="text"], input[type="number"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        fieldset { border: 1px solid #ccc; padding: 10px; border-radius: 4px; }
+        legend { font-weight: bold; }
+        #ws-log { list-style: none; padding: 0; margin: 0; max-height: 300px; overflow-y: auto; }
+        #ws-log li { padding: 5px; border-bottom: 1px solid #eee; font-size: 0.9em; word-break: break-all; }
+        #ws-log li:nth-child(odd) { background-color: #f9f9f9; }
+    </style>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+    <!-- REST API Column -->
+    <div class="column">
+        <h2>REST API Tester</h2>
+
+        <div class="card">
+            <h3>Admin API</h3>
+            <button onclick="fetchAPI('/ng/admin/stats')">GET Admin Stats</button>
+            <button onclick="fetchAPI('/ng/admin/stats/counts')">GET Data Counts</button>
+            <button onclick="fetchAPI('/ng/admin/cleanup/headless-teams', {method: 'POST'})">POST Fix Headless</button>
+        </div>
+
+        <div class="card">
+            <h3>Event & Team API</h3>
+            <fieldset>
+                <legend>Event</legend>
+                <button onclick="fetchAPI('/ng/events')">GET Events</button>
+                <button onclick="createTestEvent()">POST Create Event</button>
+            </fieldset>
+            <fieldset>
+                <legend>Team</legend>
+                <input type="number" id="team-event-id" placeholder="Event ID for Team (e.g., 1)" value="1">
+                <button onclick="createTeam()">POST Create Team</button>
+                <input type="text" id="team-id-input" placeholder="Team ID to GET/DELETE" value="1">
+                <button onclick="fetchAPI(`/ng/teams/${document.getElementById('team-id-input').value}`)">GET Team</button>
+                <button onclick="fetchAPI(`/ng/teams/${document.getElementById('team-id-input').value}`, {method: 'DELETE'})">DELETE Team</button>
+            </fieldset>
+        </div>
+
+        <div class="card">
+            <h3>Support Ticket API</h3>
+             <fieldset>
+                <legend>Ticket Actions</legend>
+                <input type="text" id="ticket-subject" placeholder="Ticket Subject" value="Please help me!!">
+                <input type="number" id="ticket-event-id" placeholder="Event ID (optional)" value="1">
+                <input type="number" id="ticket-team-id" placeholder="Team ID (optional)" value="1">
+                <button onclick="createTicket()">POST Create Ticket</button>
+                <br>
+                <input type="number" id="ticket-id-manage" placeholder="Ticket ID to Manage" value="1">
+                <button onclick="fetchAPI(`/ng/support/admin/tickets/${document.getElementById('ticket-id-manage').value}`)">GET Ticket</button>
+                <button onclick="closeTicket()">POST Close Ticket</button>
+             </fieldset>
+             <fieldset>
+                <legend>Admin Tags</legend>
+                <button onclick="createTag()">POST Create Tag "Urgent"</button>
+                <button onclick="fetchAPI('/ng/support/admin/tags')">GET All Tags</button>
+             </fieldset>
+        </div>
+
+        <div class="card">
+            <h3>API Response</h3>
+            <pre id="json-output">Click a button to see API response...</pre>
+        </div>
+    </div>
+
+    <!-- WebSocket Column -->
+    <div class="column">
+        <h2>WebSocket Tester</h2>
+        <div class="card">
+            <button id="ws-connect-btn" onclick="connectWebSocket()">Connect</button>
+            <button id="ws-disconnect-btn" onclick="disconnectWebSocket()" disabled>Disconnect</button>
+            <p>Status: <b id="ws-status">Not Connected</b></p>
+        </div>
+        <div class="card">
+            <h3>Ticket Room Subscription</h3>
+            <input type="number" id="ws-ticket-id-input" placeholder="Enter Ticket ID (e.g., 1)" value="1">
+            <button onclick="joinTicketRoom()">Join Room</button>
+            <button onclick="leaveTicketRoom()">Leave Room</button>
+        </div>
+        <div class="card">
+            <h3>WebSocket Log</h3>
+            <ul id="ws-log"></ul>
+        </div>
+    </div>
+
+    <script>
+        const CSRF_TOKEN = '{{ Session.nonce }}';
+        const jsonOutput = document.getElementById('json-output');
+        let lastCreated = {};
+
+        async function fetchAPI(endpoint, options = {}) {
+            jsonOutput.textContent = 'Loading...';
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'GET',
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'CSRF-Token': CSRF_TOKEN,
+                        ...options.headers,
+                    },
+                });
+                const data = await response.json();
+                if (response.ok && data.data) {
+                    lastCreated = data.data;
+                }
+                jsonOutput.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                jsonOutput.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        // --- API Action Functions ---
+        function createTestEvent() {
+            const body = { name: `Test Event ${Date.now()}`, max_team_size: 4 };
+            fetchAPI('/ng/events', { method: 'POST', body: JSON.stringify(body) });
+        }
+
+        function createTeam() {
+            const eventId = document.getElementById('team-event-id').value;
+            const body = { name: `Test Team ${Date.now()}`, event_id: parseInt(eventId) };
+            fetchAPI('/ng/teams', { method: 'POST', body: JSON.stringify(body) });
+        }
+
+        function createTicket() {
+            const body = {
+                subject: document.getElementById('ticket-subject').value,
+                text: "This is the initial message from the test harness.",
+                event_id: parseInt(document.getElementById('ticket-event-id').value),
+                team_id: parseInt(document.getElementById('ticket-team-id').value),
+            };
+            fetchAPI('/ng/support/tickets', { method: 'POST', body: JSON.stringify(body) });
+        }
+
+        function closeTicket() {
+            const ticketId = document.getElementById('ticket-id-manage').value;
+            fetchAPI(`/ng/support/admin/tickets/${ticketId}/close`, { method: 'POST' });
+        }
+
+        function createTag() {
+            const body = { name: `Urgent-${Date.now()}`, color: "#FF0000", description: "High priority ticket" };
+            fetchAPI('/ng/support/admin/tags', { method: 'POST', body: JSON.stringify(body) });
+        }
+
+        // --- WebSocket Logic ---
+        let socket = null;
+        const wsStatus = document.getElementById('ws-status');
+        const wsLog = document.getElementById('ws-log');
+        const connectBtn = document.getElementById('ws-connect-btn');
+        const disconnectBtn = document.getElementById('ws-disconnect-btn');
+
+        function logWsMessage(event, data) {
+            const li = document.createElement('li');
+            li.innerHTML = `<b>[${event}]</b>: ${JSON.stringify(data)}`;
+            wsLog.prepend(li);
+        }
+
+        function connectWebSocket() {
+            if (socket) return;
+            socket = io({ path: '/socket.io' });
+            socket.on('connect', () => {
+                wsStatus.textContent = 'Connected';
+                wsStatus.style.color = 'green';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                logWsMessage('connect', { id: socket.id });
+            });
+            socket.on('disconnect', () => {
+                wsStatus.textContent = 'Disconnected';
+                wsStatus.style.color = 'red';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                socket = null;
+                logWsMessage('disconnect', {});
+            });
+
+            // Listen to all relevant events
+            ['connection_ack', 'room_joined', 'room_left', 'new_ticket', 'new_message', 'ticket_updated', 'error'].forEach(event => {
+                socket.on(event, (data) => logWsMessage(event, data));
+            });
+        }
+
+        function disconnectWebSocket() {
+            if (socket) socket.disconnect();
+        }
+
+        function joinTicketRoom() {
+            if (!socket) { alert('Connect to WebSocket first!'); return; }
+            const ticketId = document.getElementById('ws-ticket-id-input').value;
+            if (!ticketId) { alert('Please enter a Ticket ID.'); return; }
+            socket.emit('join_ticket_room', { ticket_id: parseInt(ticketId) });
+            logWsMessage('EMIT > join_ticket_room', { ticket_id: parseInt(ticketId) });
+        }
+        
+        function leaveTicketRoom() {
+            if (!socket) { alert('Connect to WebSocket first!'); return; }
+            const ticketId = document.getElementById('ws-ticket-id-input').value;
+            if (!ticketId) { alert('Please enter a Ticket ID.'); return; }
+            socket.emit('leave_ticket_room', { ticket_id: parseInt(ticketId) });
+            logWsMessage('EMIT > leave_ticket_room', { ticket_id: parseInt(ticketId) });
+        }
+    </script>
+</body>
+</html>

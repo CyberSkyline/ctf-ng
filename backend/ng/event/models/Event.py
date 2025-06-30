@@ -1,17 +1,19 @@
 """
-/backend/ng/event/models/Event.py
-Defines the Event database model, its columns, and relationships to other models.
+Defines the Event database model.
 """
 
-from CTFd.models import db
-from sqlalchemy import CheckConstraint, func
-from sqlalchemy.exc import IntegrityError
+from __future__ import annotations
 from typing import Any
+
+from sqlalchemy import CheckConstraint, func
+from CTFd.models import db
+
 from ... import config
 
 
 class Event(db.Model):
     __tablename__ = "ng_events"
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(config.EVENT_NAME_MAX_LENGTH), nullable=False, unique=True)
     description = db.Column(db.Text, nullable=True)
@@ -29,12 +31,34 @@ class Event(db.Model):
             "start_time IS NULL OR end_time IS NULL OR start_time < end_time",
             name="ck_event_times_order",
         ),
+        {"extend_existing": True},
     )
 
     teams = db.relationship("Team", backref="event", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Event {self.name}>"
+
+    def serialize(self, include_admin_fields: bool = False) -> dict[str, Any]:
+        """Serialize event for API response.
+
+        Args:
+            include_admin_fields: Whether to include admin-only fields
+
+        Returns:
+            dict: Serialized event data
+        """
+        data = {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "max_team_size": self.max_team_size,
+            "start_time": self.start_time,
+            "end_time": self.end_time,
+            "locked": self.locked,
+        }
+
+        return data
 
     @classmethod
     def create_event(
@@ -75,28 +99,24 @@ class Event(db.Model):
         db.session.commit()
         return event
 
-    def update_event(self, **kwargs):
+    def update_event(self, commit=True, **kwargs):
         """Update event properties and persist to database.
 
         Args:
+            commit: Whether to commit changes immediately
             **kwargs: Event properties to update
 
         Returns:
             bool: True if successful
-
-        Raises:
-            IntegrityError: If database constraints are violated
         """
         for key, value in kwargs.items():
             if hasattr(self, key):
                 setattr(self, key, value)
 
-        try:
+        if commit:
             db.session.commit()
-            return True
-        except IntegrityError:
-            db.session.rollback()
-            raise
+
+        return True
 
     @classmethod
     def find_by_id(cls, event_id: int):
@@ -123,11 +143,11 @@ class Event(db.Model):
         return cls.query.filter_by(name=name).first()
 
     @classmethod
-    def get_events_with_stats(cls) -> list[dict[str, Any]]:
+    def get_events_with_stats(cls):
         """Gets all events with their team and member stats.
 
         Returns:
-            list[dict]: List of events with stats data.
+            list: Raw query results (Row objects) with event stats
         """
         # Lazy imports to prevent circular dependencies (needed)
         from ...team.models.Team import Team
@@ -157,92 +177,26 @@ class Event(db.Model):
             .all()
         )
 
-        return [
-            {
-                "id": event_id,
-                "name": name,
-                "description": description,
-                "start_time": start_time.isoformat() if start_time else None,
-                "end_time": end_time.isoformat() if end_time else None,
-                "locked": locked,
-                "team_count": team_count,
-                "total_members": total_members,
-            }
-            for (
-                event_id,
-                name,
-                description,
-                start_time,
-                end_time,
-                locked,
-                team_count,
-                total_members,
-            ) in event_stats
-        ]
+        return event_stats
 
     def get_event_details_with_teams(self) -> dict[str, Any]:
-        """Gets detailed info about this event including all its teams.
+        """
+        Gets detailed info about this event, including all its associated teams.
 
         Returns:
-            dict: Event details and teams data.
+            A dictionary containing the raw <Event> object (self) and a raw
+            list of <Team> objects associated with it.
         """
         # Lazy imports to prevent circular dependencies (needed)
         from ...team.models.Team import Team
         from ...team.models.TeamMember import TeamMember
 
-        # Single join query to get teams with member counts, avoids N+1 queries
-        teams_with_counts = (
-            db.session.query(
-                Team.id,
-                Team.name,
-                Team.ranked,
-                func.count(TeamMember.id).label("member_count"),
-            )
-            .outerjoin(TeamMember, Team.id == TeamMember.team_id)
-            .filter(Team.event_id == self.id)
-            .group_by(Team.id, Team.name, Team.ranked)
-            .all()
-        )
+        teams_in_event = Team.query.filter_by(event_id=self.id).all()
 
-        total_members = TeamMember.query.filter_by(event_id=self.id).count()
+        self.team_count = len(teams_in_event)
+        self.total_members = TeamMember.query.filter_by(event_id=self.id).count()
 
-        teams_data = [
-            {
-                "id": team_id,
-                "name": name,
-                "member_count": member_count,
-                "max_team_size": self.max_team_size,
-                "is_full": member_count >= self.max_team_size,
-                "ranked": ranked,
-            }
-            for team_id, name, ranked, member_count in teams_with_counts
-        ]
-
-        event_data = {
-            "id": self.id,
-            "name": self.name,
-            "description": self.description,
-            "max_team_size": self.max_team_size,
-            "start_time": self.start_time.isoformat() if self.start_time else None,
-            "end_time": self.end_time.isoformat() if self.end_time else None,
-            "locked": self.locked,
-            "team_count": len(teams_data),
-            "total_members": total_members,
-        }
-
-        return {"event": event_data, "teams": teams_data}
-
-    def serialize(self):
-        """Returns a dictionary representation of the Event model."""
-        return {
-            "id": self.id,
-            "name": self.name,
-            "description": self.description,
-            "max_team_size": self.max_team_size,
-            "start_time": self.start_time.isoformat() if self.start_time else None,
-            "end_time": self.end_time.isoformat() if self.end_time else None,
-            "locked": self.locked,
-        }
+        return {"event": self, "teams": teams_in_event}
 
     def get_largest_team_size(self) -> int:
         """Get the size of the largest team in this event.
@@ -274,3 +228,49 @@ class Event(db.Model):
             int: Total number of events
         """
         return cls.query.count()
+
+    @classmethod
+    def get_events_with_detailed_stats(cls):
+        """Gets all events with their detailed team and member stats.
+
+        Returns:
+            list: Raw query results with event statistics
+        """
+        # Lazy imports to prevent circular dependencies (needed)
+        from ...team.models.Team import Team
+        from ...team.models.TeamMember import TeamMember
+
+        event_stats_query = (
+            db.session.query(
+                cls.id,
+                cls.name,
+                cls.start_time,
+                cls.end_time,
+                func.count(Team.id.distinct()).label("teams"),
+                func.count(TeamMember.id).label("total_members"),
+            )
+            .outerjoin(Team, cls.id == Team.event_id)
+            .outerjoin(TeamMember, cls.id == TeamMember.event_id)
+            .group_by(cls.id, cls.name, cls.start_time, cls.end_time)
+            .all()
+        )
+
+        return event_stats_query
+
+    @classmethod
+    def reset_all_plugin_data(cls) -> None:
+        """Deletes all plugin data from the database in correct order."""
+        # Lazy imports to prevent circular dependencies (needed)
+        from ...team.models.Team import Team
+        from ...team.models.TeamMember import TeamMember
+        from ...user.models.User import User
+
+        try:
+            TeamMember.query.delete()
+            Team.query.delete()
+            User.query.delete()
+            cls.query.delete()
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise

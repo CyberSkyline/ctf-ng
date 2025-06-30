@@ -1,119 +1,52 @@
 """
-/backend/ng/team/controllers/leave_team.py
 Removes a user from their current team in an event.
 """
 
+from flask import g
 from typing import Any
-from datetime import datetime
 
-from ...core.utils.logger import get_logger
-from ...event.models.Event import Event
-from ..models.Team import Team
+from ...core import BusinessLogicError
+from ...core.validation import (
+    validate_event_locked_state,
+    validate_captain_leave_rules,
+    validate_event_timing,
+)
 from ..models.TeamMember import TeamMember
 from ..models.enums import TeamRole
 
-logger = get_logger(__name__)
 
-
-def leave_team(user_id: int, event_id: int) -> dict[str, Any]:
+def leave_team() -> dict[str, Any]:
     """Removes a user from their current team in the event.
 
-    Args:
-        user_id (int): The user ID leaving the team.
-        event_id (int): The event ID containing the team.
-
     Returns:
-        dict: Success status, former team name, and message or error info.
+        dict: Confirmation message and former team name.
     """
-    team_member = TeamMember.find_by_user_and_event(user_id, event_id)
-    if not team_member:
-        logger.warning(
-            "Team leave failed - user not in any team",
-            extra={"context": {"user_id": user_id, "event_id": event_id}},
-        )
-        return {
-            "success": False,
-            "error": "User is not in any team for this event",
-        }
+    team_member = g.team_member
+    team = g.team
+    event = g.event
 
-    # Fetch the team and event to check locked status
-    team = Team.find_by_id(team_member.team_id)
-    event = Event.find_by_id(event_id)
+    validate_event_locked_state(event, "leaving teams")
+    validate_event_timing(event)
 
-    # Block leaving if event/team is locked or event has started
-    if event and (event.locked or (event.start_time and datetime.utcnow() >= event.start_time)):
-        logger.warning(
-            "Team leave failed - event is locked or started",
-            extra={
-                "context": {
-                    "user_id": user_id,
-                    "event_id": event_id,
-                    "team_id": team_member.team_id,
-                    "event_locked": event.locked,
-                    "event_started": event.start_time and datetime.utcnow() >= event.start_time
-                    if event.start_time
-                    else False,
-                }
-            },
-        )
-        return {
-            "success": False,
-            "error": "Cannot leave team after the event has started or been locked.",
-        }
+    if team.locked:
+        raise BusinessLogicError(f"Team '{team.name}' is locked and members cannot leave")
 
-    if team and team.locked:
-        logger.warning(
-            "Team leave failed - team is locked",
-            extra={
-                "context": {
-                    "user_id": user_id,
-                    "event_id": event_id,
-                    "team_id": team.id,
-                    "team_name": team.name,
-                }
-            },
-        )
-        return {
-            "success": False,
-            "error": f"Team '{team.name}' is locked and members cannot leave.",
-        }
+    validate_captain_leave_rules(team_member, team)
 
     if team_member.role == TeamRole.CAPTAIN:
-        team = Team.find_by_id(team_member.team_id)
         other_members_count = TeamMember.count_other_members_in_team(team.id, team_member.id)
-
-        if other_members_count > 0:
-            return {
-                "success": False,
-                "error": "Captains cannot leave a team that has other members. You must transfer captaincy first or disband the team.",
-            }
-        else:
+        if other_members_count == 0:
             team_name = team.name
             team.disband_team()
             return {
-                "success": True,
                 "message": f"You have left and disbanded '{team_name}' as you were the last member.",
                 "team_disbanded": True,
             }
 
-    team_name = team.name if team else "Unknown Team"
-
+    team_name = team.name
     team_member.remove_team_member()
 
-    logger.info(
-        "User successfully left team",
-        extra={
-            "context": {
-                "user_id": user_id,
-                "event_id": event_id,
-                "team_id": team_member.team_id,
-                "team_name": team_name,
-            }
-        },
-    )
-
     return {
-        "success": True,
         "message": f"Successfully left team '{team_name}'",
         "former_team": team_name,
     }

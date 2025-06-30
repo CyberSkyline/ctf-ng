@@ -1,0 +1,25 @@
+"""
+Imports all user related API docs.
+"""
+
+from .users_docs import (
+    LIST_ALL_USERS_DOC,
+    GET_USER_DETAILS_DOC,
+    GET_MY_TEAMS_DOC,
+    GET_MY_EVENT_TEAM_DOC,
+    GET_MY_ELIGIBILITY_DOC,
+    GET_MY_STATS_DOC,
+    GET_USER_TEAMS_DOC,
+    GET_USER_STATS_DOC,
+)
+
+__all__ = [
+    "LIST_ALL_USERS_DOC",
+    "GET_USER_DETAILS_DOC",
+    "GET_MY_TEAMS_DOC",
+    "GET_MY_EVENT_TEAM_DOC",
+    "GET_MY_ELIGIBILITY_DOC",
+    "GET_MY_STATS_DOC",
+    "GET_USER_TEAMS_DOC",
+    "GET_USER_STATS_DOC",
+]

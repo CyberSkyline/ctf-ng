@@ -1,12 +1,13 @@
 """
-/backend/ng/user/models/User.py
 Defines the User extension model.
 """
+
+from __future__ import annotations
+from typing import Any
 
 from CTFd.models import db
 from CTFd.models import Users as CTFdUsers
 from sqlalchemy import func
-from typing import Any
 
 
 class User(db.Model):
@@ -17,6 +18,24 @@ class User(db.Model):
 
     def __repr__(self):
         return f"<NgUser id={self.id}>"
+
+    def serialize(self, include_admin_fields: bool = False) -> dict[str, Any]:
+        """Serialize user for API response.
+
+        Note: This only serializes the plugin specific user data.
+
+        Args:
+            include_admin_fields: Whether to include admin-only fields
+
+        Returns:
+            dict: Serialized user data
+        """
+        data = {
+            "id": self.id,
+            "team_count": len(self.team_members),
+        }
+
+        return data
 
     @classmethod
     def create_user(cls, user_id, commit=True):
@@ -58,6 +77,7 @@ class User(db.Model):
         Returns:
             dict: Contains event, team_member, team data or None values if not found.
         """
+        # Lazy imports to prevent circular dependencies (needed)
         from ...event.models.Event import Event
         from ...team.models.Team import Team
         from ...team.models.TeamMember import TeamMember
@@ -84,21 +104,23 @@ class User(db.Model):
         Returns:
             bool: True if user can join, False if already in a team.
         """
+        # Lazy import to prevent circular dependencies (needed)
         from ...team.models.TeamMember import TeamMember
 
         existing_team_member = TeamMember.query.filter_by(user_id=user_id, event_id=event_id).first()
         return existing_team_member is None
 
     @classmethod
-    def get_user_teams_data(cls, user_id: int) -> list[dict]:
+    def get_user_teams_data(cls, user_id: int):
         """Gets all team members for a user across all events with optimized query.
 
         Args:
             user_id (int): The user ID to get teams for.
 
         Returns:
-            list[dict]: List of team data with event info, empty list if user not found.
+            list: Raw query results (Row objects), empty list if user not found
         """
+        # Lazy imports to prevent circular dependencies (needed)
         from ...event.models.Event import Event
         from ...team.models.Team import Team
         from ...team.models.TeamMember import TeamMember
@@ -107,7 +129,6 @@ class User(db.Model):
         if not user:
             return []
 
-        # Single query with member count
         team_members_query = (
             db.session.query(
                 TeamMember.joined_at,
@@ -124,18 +145,7 @@ class User(db.Model):
             .all()
         )
 
-        return [
-            {
-                "team_id": team_member.team_id,
-                "team_name": team_member.team_name,
-                "event_id": team_member.event_id,
-                "event_name": team_member.event_name,
-                "joined_at": team_member.joined_at.isoformat() if team_member.joined_at else None,
-                "max_team_size": team_member.max_team_size,
-                "team_member_count": team_member.team_member_count,
-            }
-            for team_member in team_members_query
-        ]
+        return team_members_query
 
     @classmethod
     def get_user_participation_stats(cls, user_id: int) -> dict[str, Any]:
@@ -147,6 +157,7 @@ class User(db.Model):
         Returns:
             dict: Stats data or None if user not found.
         """
+        # Lazy imports to prevent circular dependencies (needed)
         from ...event.models.Event import Event
         from ...team.models.TeamMember import TeamMember
 
@@ -154,7 +165,6 @@ class User(db.Model):
         if not user:
             return None
 
-        # Direct query for distinct event IDs, avoids loading objects
         events_participated_query = db.session.query(TeamMember.event_id.distinct()).filter_by(user_id=user_id).all()
         events_participated = {event_id for (event_id,) in events_participated_query}
 
@@ -183,19 +193,19 @@ class User(db.Model):
         Returns:
             Query: SQLAlchemy query object for orphaned users (can be used for .all() or .delete())
         """
+        # Lazy imports to prevent circular dependencies (needed)
         from ...team.models.TeamMember import TeamMember
 
         return cls.query.outerjoin(TeamMember, cls.id == TeamMember.user_id).filter(TeamMember.id.is_(None))
 
     @classmethod
-    def get_all_users_with_details(cls) -> list[dict[str, Any]]:
-        """
-        Gets a list of all users with their core CTFd data and extended
-        plugin data, like team count.
+    def get_all_users_with_details(cls):
+        """Gets a list of all users with their core CTFd data and extended plugin data.
 
         Returns:
-            list[dict]: A list of dictionaries, each representing a user.
+            list: Raw query results (Row objects)
         """
+        # Lazy import to prevent circular dependencies (needed)
         from ...team.models.TeamMember import TeamMember
 
         # Query to join plugin users, CTFd users, and count team memberships
@@ -221,31 +231,19 @@ class User(db.Model):
             .all()
         )
 
-        users_list = [
-            {
-                "id": user.id,
-                "name": user.name,
-                "email": user.email,
-                "role": user.role,
-                "registered_at": user.registered_at.isoformat() if user.registered_at else None,
-                "team_count": user.team_count,
-            }
-            for user in users_query
-        ]
-
-        return users_list
+        return users_query
 
     @classmethod
-    def get_user_details_by_id(cls, user_id: int) -> dict[str, Any] | None:
-        """
-        Gets detailed info for a single user by their ID, including team count.
+    def get_user_details_by_id(cls, user_id: int):
+        """Gets detailed info for a single user by their ID, including team count.
 
         Args:
             user_id (int): The ID of the user to fetch.
 
         Returns:
-            dict | None: A dictionary of user data, or None if not found.
+            Row object or None if not found
         """
+        # Lazy import to prevent circular dependencies (needed)
         from ...team.models.TeamMember import TeamMember
 
         user_details = (
@@ -263,14 +261,25 @@ class User(db.Model):
             .first()
         )
 
-        if not user_details:
-            return None
+        return user_details
 
-        return {
-            "id": user_details.id,
-            "name": user_details.name,
-            "email": user_details.email,
-            "role": user_details.role,
-            "registered_at": user_details.registered_at.isoformat() if user_details.registered_at else None,
-            "team_count": user_details.team_count,
-        }
+    @classmethod
+    def cleanup_orphaned_users(cls) -> int:
+        """Removes user records that have no team member associations.
+
+        Returns:
+            int: Number of users deleted
+        """
+        try:
+            orphaned_users_query = cls.find_orphaned_users_query()
+            orphaned_users = orphaned_users_query.all()
+            orphaned_count = len(orphaned_users)
+
+            if orphaned_count > 0:
+                orphaned_users_query.delete(synchronize_session=False)
+                db.session.commit()
+
+            return orphaned_count
+        except Exception:
+            db.session.rollback()
+            raise
