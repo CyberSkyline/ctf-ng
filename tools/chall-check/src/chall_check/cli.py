@@ -345,18 +345,22 @@ def check(
     except Exception:
         raise typer.Exit(1)
 
-ChallengeField = Enum("ChallengeField", map(lambda x: (x,x), attrs.fields_dict(ChallengeInfo).keys()), type=str)
+class ChallengeField(Enum):
+    """Enum for challenge fields to display."""
+    _ignore_ = "ChallengeField field" 
+    ChallengeField = vars()
+    for field in attrs.fields_dict(ChallengeInfo).keys():
+        ChallengeField[field] = field
 
 @app.command()
 def info(
-    file_path: Annotated[Path, typer.Argument(help="Path to the challenge compose file")],
-    field: Annotated[ChallengeField, typer.Argument(help="Show specific field (name, description, questions, etc.)")]
+    file_path: Annotated[Path, typer.Argument(help="Path to the challenge compose file", show_default=False)],
+    field: Annotated[Optional[ChallengeField], typer.Option(help="Show specific field (name, description, questions, etc.)")] = None
 ):
     """
     Show information about a challenge.
     
     Display detailed information about the challenge configuration.
-    Use --field to show only a specific field.
     """
     try:
         compose = parse_compose_file(file_path)
