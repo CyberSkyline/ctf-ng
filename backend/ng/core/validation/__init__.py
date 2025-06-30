@@ -40,6 +40,7 @@ from .support import (
     validate_tag_update,
     validate_ticket_assignment,
     validate_ticket_filters,
+    validate_ticket_tags_update,
 )
 
 __all__ = [
@@ -70,4 +71,5 @@ __all__ = [
     "validate_unique_name",
     "validate_update_has_fields",
     "validate_event_timing",
+    "validate_ticket_tags_update",
 ]

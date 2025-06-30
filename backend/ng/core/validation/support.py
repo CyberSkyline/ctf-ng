@@ -121,3 +121,29 @@ def validate_ticket_filters(data: dict[str, Any]) -> dict[str, Any]:
     if not is_valid:
         raise ValidationError("Ticket filter data is invalid.", errors=errors)
     return parsed_data
+
+
+def validate_ticket_tags_update(data: dict[str, Any]) -> dict[str, Any]:
+    """Validate tag list for adding/removing tags from tickets."""
+    validator = BaseValidator()
+
+    if "tag_ids" not in data:
+        validator.errors["tag_ids"] = "Tag IDs list is required"
+    elif not isinstance(data["tag_ids"], list):
+        validator.errors["tag_ids"] = "Tag IDs must be a list"
+    elif len(data["tag_ids"]) == 0:
+        validator.errors["tag_ids"] = "Tag IDs list cannot be empty"
+    else:
+        valid_tag_ids = []
+        for idx, tag_id in enumerate(data["tag_ids"]):
+            if not isinstance(tag_id, int) or tag_id <= 0:
+                validator.errors[f"tag_ids[{idx}]"] = "Each tag ID must be a positive integer"
+            else:
+                valid_tag_ids.append(tag_id)
+        if not validator.errors:
+            validator._add_parsed_data("tag_ids", valid_tag_ids)
+
+    is_valid, errors, parsed_data = validator.is_valid()
+    if not is_valid:
+        raise ValidationError("Tag update data is invalid.", errors=errors)
+    return parsed_data
