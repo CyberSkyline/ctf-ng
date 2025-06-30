@@ -4,8 +4,8 @@ class ContainerBlueprint(db.Model):
     __tablename__ = 'ng_container_blueprint'
 
     id = db.Column(db.Integer, primary_key=True)
-    image = db.Column(db.String(255))
-    hostname = db.Column(db.String(255))
+    image = db.Column(db.String(255), nullable=False)
+    hostname = db.Column(db.String(255), nullable=False)
     stdin_open = db.Column(db.Boolean, nullable=True)
     tty = db.Column(db.Boolean, nullable=True)
     command = db.Column(db.PickleType, nullable=True)

@@ -15,6 +15,7 @@ def import_yaml(yaml):
             'name' : parsed_yaml['challenge']['name'],
             'description' : parsed_yaml['challenge']['description'],
             'icon' : parsed_yaml['challenge']['icon'],
+            'summary' : parsed_yaml['challenge'].get('summary', None)
         }
 
         challenge = Challenge.create_challenge(**challenge_fields)

@@ -9,6 +9,7 @@ def test_challenge_import_endpoint(logged_in_client):
 x-challenge:
   name: Basic Challenge
   description: A simple challenge to test parsing
+  summary: A simple challenge to test parsing
   icon: TbPuzzle
   questions:
     - name: flag

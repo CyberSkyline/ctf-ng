@@ -3,11 +3,11 @@ from CTFd.models import db
 class Question(db.Model):
     __tablename__ = 'ng_challengequestion'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255))
-    question = db.Column(db.String(255))
-    points = db.Column(db.Integer)
-    answer = db.Column(db.String(255))
-    max_attempts = db.Column(db.Integer)
+    name = db.Column(db.String(255), nullable=False)
+    question = db.Column(db.String(255), nullable=False)
+    points = db.Column(db.Integer, nullable=False)
+    answer = db.Column(db.String(255), nullable=False)
+    max_attempts = db.Column(db.Integer, nullable=False)
     challenge_id = db.Column(db.Integer, db.ForeignKey('ng_challenge.id'), nullable=False, index=True)
 
     challenge = db.relationship('Challenge', back_populates='questions')

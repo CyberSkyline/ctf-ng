@@ -4,10 +4,10 @@ class Challenge(db.Model):
     __tablename__ =  'ng_challenge'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255))
-    description = db.Column(db.String(255))
-    icon = db.Column(db.String(255))
-    summary = db.Column(db.String(255))
+    name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.String(255), nullable=True)
+    icon = db.Column(db.String(255), nullable=True)
+    summary = db.Column(db.String(255), nullable=True)
 
     hints = db.relationship('Hint', back_populates='challenge', cascade='all, delete-orphan')
     tags = db.relationship('Tag', back_populates='challenge', cascade='all, delete-orphan')
