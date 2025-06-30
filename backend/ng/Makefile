@@ -65,10 +65,14 @@ test-admin:
 test-user:
 	$(PYTHON_EXEC) -m pytest ./user/tests/ -v
 
+test-support:
+	$(PYTHON_EXEC) -m pytest ./support/tests/ -v
+
 test-utils:
 	$(PYTHON_EXEC) -m pytest ./core/testing/system/ -v
 
 test-middleware:
 	$(PYTHON_EXEC) -m pytest -m middleware . -v
+
 
 .PHONY: check fix format test-all test-logic test-models test-validation test-controllers test-integration test-team test-event test-admin test-user test-support test-utils test-fast test-middleware dev check-install start prod-start stop reload restart restart-nginx logs-ctfd logs-vite logs-nginx nuke-frontend
