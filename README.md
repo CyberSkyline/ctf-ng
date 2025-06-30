@@ -15,12 +15,12 @@ To ensure that your submodules do not get out of sync, please set run `git confi
 Both of these steps are done for you when you run `install.sh`.
 
 ### Running the server
-`npm start`
+`yarn start`
 
 Use `CTRL + C` to stop the server. 
 
 ### Backend Development
-After making any changes to the backend, you need to run `npm reload` to restart CTFd with your changes.
+After making any changes to the backend that cannot be hot-reloaded, you need to run `yarn reload` to restart CTFd with your changes.
 
 For linting locally you can install ruff with the following `curl -LsSf https://astral.sh/ruff/install.sh | sh`
 Then run `ruff check .`
