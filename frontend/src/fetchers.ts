@@ -56,21 +56,6 @@ async function parseResponseData(res: Response) {
 export const apiFetcher: BareFetcher = (resource, init) => fetch(APIPREFIX + resource, init).then(parseResponseData);
 
 /**
- * Workaround to retrieve the CSRF token that's injected into base ctfd views.
- * Eventually this will be made available via the window object.
- */
-async function getCsrf() {
-  const response = await fetch('/');
-  const text = await response.text();
-
-  const match = text.match(/'csrfNonce':\s*"([^"]+)"/);
-  if (match) {
-    return match[1];
-  }
-  throw new Error('CSRF token not found');
-}
-
-/**
  * Function used to perform API mutations.
  * After the promise resolves, make sure to call SWR's mutate with the relevant resource(s) to ensure data is updated.
  * @param resource The resource to mutate.
@@ -79,7 +64,7 @@ async function getCsrf() {
  * @returns The response from the API.
  */
 export const apiMutation = async (resource: string, body: unknown, init?: RequestInit) => {
-  const csrf = await getCsrf();
+  const csrf = window.init.csrfToken;
   const res = await fetch(APIPREFIX + resource, {
     ...init,
     headers : {
