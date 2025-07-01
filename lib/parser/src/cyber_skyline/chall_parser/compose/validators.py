@@ -26,6 +26,7 @@ use valid values, particularly for UI elements like icons.
 
 import logging
 import re
+from cyber_skyline.chall_parser.rewriter import Template
 
 
 logger = logging.getLogger(__name__)
@@ -90,7 +91,6 @@ def validate_template_evals(instance, attribute, value):
     if value is None:
         return  # Allow None values
     
-    from ..rewriter import Template
     if not isinstance(value, Template):
         raise ValueError(f"Expected Template object, got {type(value)}")
     
@@ -101,3 +101,29 @@ def validate_template_evals(instance, attribute, value):
     except Exception as e:
         logger.error(f"Template validation failed for variable '{value.parent_variable}' with template '{value.eval_str}': {e}")
         raise ValueError(f"Template evaluation failed for variable '{value.parent_variable}': {value.eval_str} ") from e
+    
+def validate_answer(instance, attribute, value):
+    """Validator for answer regex patterns.
+    
+    Ensures that the provided answer is a valid regex pattern.
+    
+    Args:
+        instance: The instance being validated
+        attribute: The attribute being validated
+        value: The answer regex to validate
+        
+    Raises:
+        ValueError: If the answer is not a valid regex pattern
+    """
+    if isinstance(value, Template):
+        # If it's a Template, it must have been validated already
+        return
+        
+
+    if value is None:
+        raise ValueError(f"{attribute.name} cannot be empty, null, or None")
+    
+    try:
+        re.compile(value)
+    except re.error as e:
+        raise ValueError(f"Invalid regex pattern for {attribute.name}: {value}") from e

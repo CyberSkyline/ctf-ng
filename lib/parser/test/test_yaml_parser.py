@@ -18,6 +18,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
 # IN THE SOFTWARE.
 import logging
+import pathlib
 import re
 from cattrs import ClassValidationError
 import pytest
@@ -237,7 +238,8 @@ services:
 
     def test_complex_challenge(self):
         """Test parsing a complex challenge with multiple services and networks."""
-        challenge = parse_compose_file("examples/complex_chall.yml")
+        chall_file = pathlib.Path(__file__).parent.resolve() / "../../../examples/complex_chall.yml"
+        challenge = parse_compose_file(chall_file)
         
         # Validate challenge metadata
         assert challenge.challenge is not None
@@ -846,4 +848,58 @@ services:
         with pytest.raises(Exception):
             parse_compose_string(yaml_content)
 
+
+
+    def test_invalid_challenge_key(self):
+        """Test error when challenge key is invalid."""
+        yaml_content = """
+scan-challenge:
+  name: Test Challenge
+  description: Testing question validation
+  questions:
+    - name: 123  # should be string
+      question: "What is the flag?"
+      points: "invalid"  # should be int
+      answer: "CTF{test}"
+      max_attempts: 5
+services:
+  app:
+    image: test:latest
+    hostname: test-host
+"""
+        with pytest.raises(Exception):
+            parse_compose_string(yaml_content)
+
+    def test_answer_template_validation(self, caplog):
+        """Test that answer templates are validated."""
+        yaml_content = """
+x-challenge:
+  name: Test Challenge
+  description: Testing answer template validation
+  variables:
+    test_var:
+      template: "fake.word()"
+      default: &test_val "default_word"
+  questions:
+    - name: flag
+      question: "What is the flag?"
+      points: 100
+      answer: *test_val  # should be a template
+      max_attempts: 5
+services:
+  app:
+    image: test:latest
+    hostname: test-host
+"""
+        caplog.set_level("DEBUG")
+        chall = parse_compose_string(yaml_content)
+        assert chall.challenge is not None
+        assert chall.challenge.variables is not None
+        assert "test_var" in chall.challenge.variables
+        assert chall.challenge.variables["test_var"].default == "default_word"
+        assert chall.challenge.variables["test_var"].template is not None
+        assert isinstance(chall.challenge.variables["test_var"].template, Template)
+        assert not isinstance(chall.challenge.questions[0].answer, str)
+        assert isinstance(chall.challenge.questions[0].answer, Template)
+        assert chall.challenge.variables["test_var"].template == chall.challenge.questions[0].answer
 
