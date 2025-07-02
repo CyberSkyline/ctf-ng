@@ -28,7 +28,8 @@
     "logs-nginx": "docker compose logs -f nginx",
     "logs-vite": "docker compose logs -f vite",
     "logs-ctfd": "docker compose logs -f ctfd",
-    "nuke": "rm -rf ./node_modules && yarn install"
+    "nuke": "rm -rf ./node_modules && yarn install",
+    "chall-check": "backend/venv/bin/chall-check"
   },
   "devDependencies": {
     "@yarnpkg/plugin-interactive-tools": "^4.0.3"
