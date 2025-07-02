@@ -21,6 +21,7 @@ import tempfile
 from pathlib import Path
 from typer.testing import CliRunner
 from chall_check.cli import app
+import pathlib
 
 runner = CliRunner()
 
@@ -28,7 +29,8 @@ class TestCLI:
     def test_validate_complex_challenge(self):
         """Test validating a complex challenge compose file."""
 
-        result = runner.invoke(app, ["validate",  "examples/complex_chall.yml"])
+        chall_file = pathlib.Path(__file__).parent.resolve() / "../../../examples/complex_chall.yml"
+        result = runner.invoke(app, ["validate", str(chall_file)])
         assert result.exit_code == 0
         assert "Successfully validated" in result.stdout
 
@@ -141,7 +143,7 @@ services:
             temp_path = Path(f.name)
         
         try:
-            result = runner.invoke(app, ["info", str(temp_path), "name"])
+            result = runner.invoke(app, ["info", str(temp_path), "--field", "name"])
             assert result.exit_code == 0
             assert "Field Test Challenge" in result.stdout
         finally:
@@ -182,7 +184,7 @@ services:
         """Test version flag."""
         result = runner.invoke(app, ["--version"])
         assert result.exit_code == 0
-        assert "chall-parser version" in result.stdout
+        assert "chall-check version" in result.stdout
 
     def test_help_command(self):
         """Test help command."""
@@ -215,6 +217,33 @@ services:
             # Test YAML format
             result = runner.invoke(app, ["validate", str(temp_path), "--format", "yaml"])
             assert result.exit_code == 0
+            
+        finally:
+            temp_path.unlink()
+
+
+    def test_validate_with_wrong_challenge_key(self, caplog):
+        """Test validate command with different output formats."""
+        yaml_content = """
+scan-challenge:
+  name: Format Test
+  description: Testing output formats
+  questions: []
+services:
+  app:
+    image: test:latest
+    hostname: test-host
+"""
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yml', delete=False) as f:
+            f.write(yaml_content)
+            temp_path = Path(f.name)
+        
+        try:
+            result = runner.invoke(app, ["validate", str(temp_path)])
+            assert result.exit_code == 1
+            assert "Validation Failed" in result.stdout
+            assert "Required field 'x-challenge' missing" in result.stdout
             
         finally:
             temp_path.unlink()

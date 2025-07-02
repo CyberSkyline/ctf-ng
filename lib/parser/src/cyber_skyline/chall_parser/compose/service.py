@@ -28,7 +28,7 @@ needed for challenge infrastructure while ignoring complex orchestration feature
 from typing import Literal, Any
 from attrs import define, field
 
-from ..rewriter import Template
+from cyber_skyline.chall_parser.rewriter import Template
 
 @define
 class Service:

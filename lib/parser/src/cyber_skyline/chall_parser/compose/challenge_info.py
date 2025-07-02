@@ -20,8 +20,8 @@
 from typing import Literal
 from attrs import define, field
 
-from ..rewriter import Template
-from .validators import validate_tabler_icon, validate_template_evals
+from cyber_skyline.chall_parser.rewriter import Template
+from cyber_skyline.chall_parser.compose.validators import validate_answer, validate_tabler_icon, validate_template_evals
 
 
 @define
@@ -33,7 +33,7 @@ class Question:
     name: str  # Developer facing name for the question (e.g., "flag", "password")
     question: str  # The actual question text presented to players
     points: int  # Point value for correctly answering this question (e.g., 10, 100)
-    answer: str  # The correct answer (can be a regex pattern)
+    answer: str | Template = field(validator=validate_answer)  # The correct answer (can be a regex pattern)
     max_attempts: int  # Maximum number of attempts allowed (e.g., 20)
 
 @define

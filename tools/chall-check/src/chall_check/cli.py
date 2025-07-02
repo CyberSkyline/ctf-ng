@@ -39,6 +39,7 @@ from cattrs import ClassValidationError, transform_error
 from cattrs.v import format_exception
 import yaml
 import json
+from importlib.metadata import version as get_version
 from cyber_skyline.chall_parser.yaml_parser import parse_compose_file, parse_compose_string, ComposeYamlParser
 from cyber_skyline.chall_parser.compose import ComposeFile, ChallengeInfo
 
@@ -60,7 +61,9 @@ def setup_logging(verbose: bool = False):
 
 def format_parse_exceptions(error: BaseException, type: type | None) -> str:
     """Format parse exceptions for better readability."""
-    if isinstance(error, ValueError):
+    if isinstance(error, KeyError):
+        return f"Required field {str(error)} missing"
+    elif isinstance(error, ValueError):
         return f"Value error: {str(error)}"
     elif isinstance(error, FileNotFoundError):
         return f"File not found: {str(error)}"
@@ -345,18 +348,22 @@ def check(
     except Exception:
         raise typer.Exit(1)
 
-ChallengeField = Enum("ChallengeField", map(lambda x: (x,x), attrs.fields_dict(ChallengeInfo).keys()), type=str)
+class ChallengeField(Enum):
+    """Enum for challenge fields to display."""
+    _ignore_ = "ChallengeField field" 
+    ChallengeField = vars()
+    for field in attrs.fields_dict(ChallengeInfo).keys():
+        ChallengeField[field] = field
 
 @app.command()
 def info(
-    file_path: Annotated[Path, typer.Argument(help="Path to the challenge compose file")],
-    field: Annotated[ChallengeField, typer.Argument(help="Show specific field (name, description, questions, etc.)")]
+    file_path: Annotated[Path, typer.Argument(help="Path to the challenge compose file", show_default=False)],
+    field: Annotated[Optional[ChallengeField], typer.Option(help="Show specific field (name, description, questions, etc.)")] = None
 ):
     """
     Show information about a challenge.
     
     Display detailed information about the challenge configuration.
-    Use --field to show only a specific field.
     """
     try:
         compose = parse_compose_file(file_path)
@@ -442,7 +449,8 @@ def main(
     This tool helps validate challenge configurations, ensuring proper format
     """
     if version:
-        console.print("chall-parser version 0.1.0")
+        version_str = get_version('cyber-skyline-chall-check')
+        console.print(f"chall-check version {version_str}")
         raise typer.Exit(0)
 
 if __name__ == "__main__":

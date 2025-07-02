@@ -25,8 +25,8 @@ from pathlib import Path
 from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn
 from cattrs.strategies import configure_union_passthrough, configure_tagged_union
 from typing import get_origin, get_args
-from .compose import ComposeFile, TextHint
-from .rewriter import Rewriter, Template
+from cyber_skyline.chall_parser.compose import ComposeFile, TextHint
+from cyber_skyline.chall_parser.rewriter import Rewriter, Template
 
 logger = logging.getLogger(__name__)
             
@@ -77,7 +77,7 @@ class ComposeYamlParser:
     
     def _setup_converter(self) -> cattrs.Converter:
         """Set up cattrs converter with proper union handling and custom hooks."""
-        converter = cattrs.Converter()
+        converter = cattrs.Converter(forbid_extra_keys=True)
         
         # Configure union passthrough for compose union types
         configure_union_passthrough(int | bool | str | Template | None, converter)
@@ -90,7 +90,6 @@ class ComposeYamlParser:
         converter.register_unstructure_hook(ComposeFile, cf_unst_hook)
         converter.register_structure_hook(Template, template_struct_hook)
         converter.register_unstructure_hook(Template, template_unstruct_hook)
-        # converter.register_structure_hook(ComposeFile, self._structure_compose_file)
 
         converter.register_structure_hook_func(is_dict_list_union, dict_list_union_hook_gen(converter))
         

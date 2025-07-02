@@ -28,9 +28,9 @@ supporting the x-challenge extension for CTF-specific metadata.
 from typing import Literal, NewType, Dict
 from attrs import define, field, validators
 
-from .service import Service
-from .challenge_info import ChallengeInfo
-from .validators import validate_compose_name_pattern
+from cyber_skyline.chall_parser.compose.service import Service
+from cyber_skyline.chall_parser.compose.challenge_info import ChallengeInfo
+from cyber_skyline.chall_parser.compose.validators import validate_compose_name_pattern
 
 @define
 class Network:
