@@ -18,5 +18,6 @@ def disband_team(team_id: int, actor_id: int, is_admin: bool = False) -> dict[st
     team.disband_team()
 
     return {
-        "message": f"Team '{team_name}' has been disbanded.",
+        "team_disbanded": True,
+        "team_name": team_name,
     }

@@ -8,24 +8,6 @@ ifeq ($(shell test -f $(VENV_PYTHON) && echo exists), exists)
     PYTHON_EXEC = $(VENV_PYTHON)
 endif
 
-GREEN := \033[0;32m
-
-
-check:
-	@echo "$(GREEN)Running Ruff linter...$(NC)"
-	@$(PYTHON_EXEC) -m ruff check .
-
-fix:
-	@echo "$(GREEN)Running Ruff linter with auto-fix...$(NC)"
-	@$(PYTHON_EXEC) -m ruff check . --fix
-	@echo "$(GREEN)✅ Fixes applied.$(NC)"
-
-format:
-	@echo "$(GREEN)Running Ruff formatter...$(NC)"
-	@$(PYTHON_EXEC) -m ruff format .
-	@echo "$(GREEN)✅ Formatting complete.$(NC)"
-
-
 
 # All tests
 test-all:
@@ -77,5 +59,7 @@ test-challenge:
 test-middleware:
 	$(PYTHON_EXEC) -m pytest -m middleware . -v
 
+test-event-registration:
+	$(PYTHON_EXEC) -m pytest ./event_registration/tests/ -v
 
-.PHONY: check fix format test-all test-logic test-models test-validation test-controllers test-integration test-team test-event test-admin test-user test-support test-utils test-fast test-middleware dev check-install start prod-start stop reload restart restart-nginx logs-ctfd logs-vite logs-nginx nuke-frontend
+.PHONY: check fix format test-all test-logic test-models test-validation test-controllers test-integration test-team test-event test-admin test-user test-support test-utils test-fast test-middleware test-event-registration

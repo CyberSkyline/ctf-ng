@@ -39,14 +39,16 @@ def leave_team() -> dict[str, Any]:
             team_name = team.name
             team.disband_team()
             return {
-                "message": f"You have left and disbanded '{team_name}' as you were the last member.",
                 "team_disbanded": True,
+                "team_name": team_name,
+                "was_last_member": True,
             }
 
     team_name = team.name
     team_member.remove_team_member()
 
     return {
-        "message": f"Successfully left team '{team_name}'",
-        "former_team": team_name,
+        "left_team": True,
+        "team_name": team_name,
+        "team_disbanded": False,
     }

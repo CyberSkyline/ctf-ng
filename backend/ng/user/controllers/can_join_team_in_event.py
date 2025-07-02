@@ -19,4 +19,4 @@ def can_join_team_in_event(user_id: int, event_id: int) -> dict[str, Any]:
     if not eligibility["can_join"]:
         raise BusinessLogicError("User is already in a team for this event")
 
-    return {"can_join": True, "message": "User is eligible to join a team."}
+    return {"can_join": True, "eligible": True}

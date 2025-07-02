@@ -2,16 +2,10 @@
 Unit tests for admin domain validation
 """
 
-from datetime import datetime, timezone
 import pytest
 from ...core.exceptions import ValidationError
 from ...core.validation import validate_admin_reset, validate_admin_event_reset
 from ... import config
-
-
-def utc_now() -> datetime:
-    """Get current UTC datetime. Replacement for deprecated datetime.utcnow()."""
-    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class TestAdminValidation:

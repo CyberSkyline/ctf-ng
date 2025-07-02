@@ -17,7 +17,7 @@ from ..models.enums import TeamRole
 def remove_member(team_id: int, member_to_remove_id: int, actor_id: int, is_admin: bool = False) -> dict[str, Any]:
     """Removes a member from a team with auth checks.
     Returns:
-        dict: Confirmation message
+        dict: Operation result data
     """
     team = g.team
     event = g.event
@@ -38,7 +38,11 @@ def remove_member(team_id: int, member_to_remove_id: int, actor_id: int, is_admi
 
     team.remove_member_and_regenerate_code(team_member_to_remove.id)
 
-    return {"message": "Team member removed successfully."}
+    return {
+        "member_removed": True,
+        "member_id": team_member_to_remove.user_id,
+        "was_captain": False,
+    }
 
 
 def _handle_captain_removal(team, captain_to_remove: TeamMember, actor_id: int, is_admin: bool) -> dict[str, Any]:
@@ -47,7 +51,12 @@ def _handle_captain_removal(team, captain_to_remove: TeamMember, actor_id: int, 
 
     if not remaining_members:
         captain_to_remove.remove_team_member()
-        return {"message": "Captain removed. The team is now empty."}
+        return {
+            "captain_removed": True,
+            "captain_id": captain_to_remove.user_id,
+            "team_now_empty": True,
+            "new_captain_promoted": False,
+        }
 
     if is_admin:
         new_captain = remaining_members[0]
@@ -57,8 +66,11 @@ def _handle_captain_removal(team, captain_to_remove: TeamMember, actor_id: int, 
         )
 
         return {
-            "message": f"Captain removed. User {new_captain.user_id} has been automatically promoted to captain.",
+            "captain_removed": True,
+            "captain_id": captain_to_remove.user_id,
+            "new_captain_promoted": True,
             "new_captain_id": new_captain.user_id,
+            "team_now_empty": False,
         }
     else:
         raise BusinessLogicError(

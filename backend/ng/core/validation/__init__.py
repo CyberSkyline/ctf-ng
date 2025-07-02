@@ -42,6 +42,10 @@ from .support import (
     validate_ticket_filters,
     validate_ticket_tags_update,
 )
+from .event_registration import (
+    validate_event_registration_creation,
+    validate_join_event,
+)
 
 __all__ = [
     "BaseValidator",
@@ -72,4 +76,6 @@ __all__ = [
     "validate_update_has_fields",
     "validate_event_timing",
     "validate_ticket_tags_update",
+    "validate_event_registration_creation",
+    "validate_join_event",
 ]

@@ -58,11 +58,10 @@ class TestApiEndpointDecorator:
 
             importlib.reload(decorators)
 
-            # Mock the dependencies
             mock_g = Mock()
-            mock_get_current_user = Mock(return_value=None)  # No user authenticated
-            mock_authed_only = Mock(side_effect=lambda f: f)  # Pass through
-            mock_handle_exceptions = Mock(side_effect=lambda f: f)  # Pass through
+            mock_get_current_user = Mock(return_value=None)
+            mock_authed_only = Mock(side_effect=lambda f: f)
+            mock_handle_exceptions = Mock(side_effect=lambda f: f)
 
             with patch.object(decorators, "g", mock_g):
                 with patch.object(decorators, "get_current_user", mock_get_current_user):

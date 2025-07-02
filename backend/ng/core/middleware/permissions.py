@@ -5,7 +5,8 @@ Pure permission checking middleware - assumes resources are already loaded in g.
 from functools import wraps
 from flask import g
 from CTFd.utils.user import get_current_user, is_admin
-from ..exceptions import PermissionError
+from ..exceptions import PermissionError, BusinessLogicError
+from ...core.utils import utc_now
 
 
 def _get_models():
@@ -13,8 +14,16 @@ def _get_models():
     from ...team.models.Team import Team
     from ...team.models.TeamMember import TeamMember
     from ...user.models.User import User
+    from ...event_registration.models.Demographic import Demographic
+    from ...event_registration.models.EventRegistration import EventRegistration
 
-    return {"Team": Team, "TeamMember": TeamMember, "User": User}
+    return {
+        "Team": Team,
+        "TeamMember": TeamMember,
+        "User": User,
+        "Demographic": Demographic,
+        "EventRegistration": EventRegistration,
+    }
 
 
 def require_user_access():
@@ -125,6 +134,33 @@ def require_team_member_management():
     return decorator
 
 
+def require_event_is_joinable():
+    """Ensures the loaded event (in g.event) is open for registration."""
+
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            models = _get_models()
+
+            if not hasattr(g, "event"):
+                raise ValueError("Event must be loaded before checking joinability.")
+            event_reg = models["EventRegistration"].query.filter_by(event_id=g.event.id).first()
+            if not event_reg:
+                raise BusinessLogicError("Event registration has not been configured for this event.")
+            if not event_reg.reg_open:
+                raise BusinessLogicError("Event registration is currently closed.")
+            now = utc_now()
+            if event_reg.reg_start_date and now < event_reg.reg_start_date:
+                raise BusinessLogicError("Event registration has not yet started.")
+            if event_reg.reg_end_date and now > event_reg.reg_end_date:
+                raise BusinessLogicError("Event registration has ended.")
+            return f(*args, **kwargs)
+
+        return decorated_function
+
+    return decorator
+
+
 def check_team_join_eligibility():
     """Special permission check for team joining - loads eligibility data"""
 
@@ -148,6 +184,29 @@ def check_team_join_eligibility():
                 "can_join": can_join,
                 "current_team_name": current_team_name,
             }
+            return f(*args, **kwargs)
+
+        return decorated_function
+
+    return decorator
+
+
+def check_demographic_eligibility():
+    """Check if user can register for the event (no existing demographic)"""
+
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            models = _get_models()
+
+            if not hasattr(g, "user") or not hasattr(g, "event"):
+                raise ValueError("User and event must be loaded first")
+
+            existing = models["Demographic"].find_by_user_and_event(g.user.id, g.event.id)
+
+            if existing:
+                raise BusinessLogicError("You have already registered for this event")
+
             return f(*args, **kwargs)
 
         return decorated_function

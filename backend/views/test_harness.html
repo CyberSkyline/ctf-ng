@@ -46,7 +46,38 @@
                 <input type="text" id="team-id-input" placeholder="Team ID to GET/DELETE" value="1">
                 <button onclick="fetchAPI(`/ng/teams/${document.getElementById('team-id-input').value}`)">GET Team</button>
                 <button onclick="fetchAPI(`/ng/teams/${document.getElementById('team-id-input').value}`, {method: 'DELETE'})">DELETE Team</button>
+                <br>
+                <input type="text" id="invite-code" placeholder="Invite Code (e.g., ABC123)" value="">
+                <button onclick="joinTeamByCode()">POST Join Team</button>
+                <input type="number" id="leave-team-event-id" placeholder="Event ID to Leave" value="1">
+                <button onclick="leaveTeam()">POST Leave Team</button>
             </fieldset>
+        </div>
+
+        <div class="card">
+            <h3>Event Registration API</h3>
+            <fieldset>
+                <legend>Registration Management</legend>
+                <input type="number" id="reg-event-id" placeholder="Event ID" value="1">
+                <button onclick="createEventRegistration()">POST Create Registration Period</button>
+                <button onclick="fetchAPI(`/ng/event_registration/${document.getElementById('reg-event-id').value}/demographics`)">GET My Demographics</button>
+            </fieldset>
+            <fieldset>
+                <legend>Join Event</legend>
+                <input type="number" id="join-event-id" placeholder="Event ID to Join" value="1">
+                <input type="text" id="join-team-name" placeholder="New Team Name (optional)">
+                <input type="text" id="join-invite-code" placeholder="OR Invite Code (optional)">
+                <button onclick="joinEvent()">POST Join Event</button>
+            </fieldset>
+        </div>
+
+        <div class="card">
+            <h3>User API</h3>
+            <button onclick="fetchAPI('/ng/users/me/teams')">GET My Teams</button>
+            <button onclick="fetchAPI('/ng/users/me/stats')">GET My Stats</button>
+            <input type="number" id="user-event-id" placeholder="Event ID" value="1">
+            <button onclick="fetchAPI(`/ng/users/me/events/${document.getElementById('user-event-id').value}/teams`)">GET My Team in Event</button>
+            <button onclick="fetchAPI(`/ng/users/me/events/${document.getElementById('user-event-id').value}/eligibility`)">GET My Eligibility</button>
         </div>
 
         <div class="card">
@@ -59,8 +90,12 @@
                 <button onclick="createTicket()">POST Create Ticket</button>
                 <br>
                 <input type="number" id="ticket-id-manage" placeholder="Ticket ID to Manage" value="1">
-                <button onclick="fetchAPI(`/ng/support/admin/tickets/${document.getElementById('ticket-id-manage').value}`)">GET Ticket</button>
+                <button onclick="fetchAPI(`/ng/support/tickets/${document.getElementById('ticket-id-manage').value}`)">GET My Ticket</button>
+                <button onclick="fetchAPI(`/ng/support/admin/tickets/${document.getElementById('ticket-id-manage').value}`)">GET Ticket (Admin)</button>
                 <button onclick="closeTicket()">POST Close Ticket</button>
+                <br>
+                <input type="text" id="message-text" placeholder="Message Text" value="This is a reply message">
+                <button onclick="createTicketMessage()">POST Reply to Ticket</button>
              </fieldset>
              <fieldset>
                 <legend>Admin Tags</legend>
@@ -134,6 +169,52 @@
             fetchAPI('/ng/teams', { method: 'POST', body: JSON.stringify(body) });
         }
 
+        function joinTeamByCode() {
+            const inviteCode = document.getElementById('invite-code').value;
+            if (!inviteCode) {
+                alert('Please enter an invite code');
+                return;
+            }
+            const body = { invite_code: inviteCode };
+            fetchAPI('/ng/teams/join', { method: 'POST', body: JSON.stringify(body) });
+        }
+
+        function leaveTeam() {
+            const eventId = document.getElementById('leave-team-event-id').value;
+            const body = { event_id: parseInt(eventId) };
+            fetchAPI('/ng/teams/leave', { method: 'POST', body: JSON.stringify(body) });
+        }
+
+        // Event Registration Functions
+        function createEventRegistration() {
+            const eventId = document.getElementById('reg-event-id').value;
+            const body = { 
+                event_id: parseInt(eventId),
+                reg_open: true,
+                public: true
+            };
+            fetchAPI('/ng/event_registration/create_registration_period', { method: 'POST', body: JSON.stringify(body) });
+        }
+
+        function joinEvent() {
+            const eventId = document.getElementById('join-event-id').value;
+            const teamName = document.getElementById('join-team-name').value;
+            const inviteCode = document.getElementById('join-invite-code').value;
+            
+            const body = {};
+            if (teamName) {
+                body.team_name = teamName;
+            } else if (inviteCode) {
+                body.invite_code = inviteCode;
+            } else {
+                alert('Please provide either a team name or invite code');
+                return;
+            }
+            
+            fetchAPI(`/ng/event_registration/join/${eventId}`, { method: 'POST', body: JSON.stringify(body) });
+        }
+
+        // Support Functions
         function createTicket() {
             const body = {
                 subject: document.getElementById('ticket-subject').value,
@@ -142,6 +223,14 @@
                 team_id: parseInt(document.getElementById('ticket-team-id').value),
             };
             fetchAPI('/ng/support/tickets', { method: 'POST', body: JSON.stringify(body) });
+        }
+
+        function createTicketMessage() {
+            const ticketId = document.getElementById('ticket-id-manage').value;
+            const body = {
+                text: document.getElementById('message-text').value
+            };
+            fetchAPI(`/ng/support/tickets/${ticketId}/messages`, { method: 'POST', body: JSON.stringify(body) });
         }
 
         function closeTicket() {

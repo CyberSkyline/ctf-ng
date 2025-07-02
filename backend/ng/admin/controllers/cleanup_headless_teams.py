@@ -13,5 +13,6 @@ def cleanup_headless_teams() -> dict[str, Any]:
     fixed_count = Team.fix_headless_teams()
 
     return {
-        "message": f"Cleanup complete. Fixed {fixed_count} headless teams.",
+        "headless_teams_fixed": fixed_count,
+        "cleanup_completed": True,
     }

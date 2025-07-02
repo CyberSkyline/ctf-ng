@@ -2,12 +2,8 @@
 Comprehensive Admin Business Logic Tests
 """
 
-from datetime import datetime, timedelta, timezone
-
-
-def utc_now() -> datetime:
-    """Get current UTC datetime. Replacement for deprecated datetime.utcnow()."""
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+from datetime import timedelta
+from ...core.utils import utc_now
 
 
 class TestDataCountingAlgorithms:

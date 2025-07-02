@@ -2,13 +2,6 @@
 Unit tests for user domain validation
 """
 
-from datetime import datetime, timezone
-
-
-def utc_now() -> datetime:
-    """Get current UTC datetime. Replacement for deprecated datetime.utcnow()."""
-    return datetime.now(timezone.utc).replace(tzinfo=None)
-
 
 class ValidationError(Exception):
     def __init__(self, message, errors=None):
