@@ -41,6 +41,7 @@ jobs:
           path: dist/
   publish-python-distributions:
     name: Upload parser to PyPI
+    needs: build-python-distributions
     runs-on: ubuntu-latest
     # Specifying a GitHub environment is optional, but strongly encouraged
     environment: PyPi
