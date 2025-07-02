@@ -74,7 +74,8 @@ services:
     restart: always
     tty: true
     volumes:
-      - ./frontend:/app
+      - ./frontend:/app/frontend
+      - ./node_modules:/app/node_modules
 
 networks:
     default:

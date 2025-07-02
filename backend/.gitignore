@@ -11,3 +11,6 @@ venv/
 # Pytest and test results
 .cache/
 .pytest_cache/
+
+# Yarn
+.yarn/

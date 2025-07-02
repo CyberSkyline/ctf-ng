@@ -1,0 +1,10 @@
+{
+  "name": "backend",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "lint": ".yarn-scripts/lint.sh",
+    "test": ".yarn-scripts/tesh.sh"
+  },
+  "packageManager": "yarn@4.9.2"
+}
