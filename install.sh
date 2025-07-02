@@ -147,7 +147,14 @@ pip install cyber-skyline-chall-check
 chall-check --install-completion
 
 # Install ruff
-curl -LsSf https://astral.sh/ruff/install.sh | sh
+if ! command -v ruff &> /dev/null; then
+  prompt_user "Would you like to install ruff?" && {
+    curl -LsSf https://astral.sh/ruff/install.sh | sh
+  } || {
+    echo "ruff installation aborted. Exiting."
+    exit 1
+  }
+fi
 
 # Install pytest
 if ! command -v pytest &> /dev/null; then

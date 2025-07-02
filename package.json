@@ -12,14 +12,17 @@
   "engines": {
     "node": "24.x"
   },
+  "private": true,
   "workspaces": [
+    "backend",
     "frontend"
   ],
   "scripts": {
-    "prod-start": "yarn build && ENV_FILE=.env.prod docker compose up ctfd --build",
+    "lint": "yarn workspaces foreach --all run lint",
+    "test": "yarn workspaces foreach --all run test",
     "outdated": "yarn upgrade-interactive",
     "build": "cd ./frontend && vite build",
-    "lint": "cd ./frontend && yarn lint",
+    "prod-start": "yarn build && ENV_FILE=.env.prod docker compose up ctfd --build",
     "start": "ENV_FILE=.env.dev docker compose up ctfd --build",
     "stop": "docker compose down",
     "reload": "docker exec -it ng-ctfd supervisorctl restart ctfd",
@@ -30,8 +33,5 @@
     "logs-ctfd": "docker compose logs -f ctfd",
     "nuke": "rm -rf ./node_modules && yarn install"
   },
-  "devDependencies": {
-    "@yarnpkg/plugin-interactive-tools": "^4.0.3"
-  },
-  "packageManager": "yarn@3.7.0"
+  "packageManager": "yarn@4.9.2"
 }
