@@ -1,11 +1,9 @@
 """
 Centralized error handling for the entire Flask application.
 Provides a unified decorator and a global registration function.
-@handle_exceptions
 """
 
 from functools import wraps
-from flask import jsonify
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from CTFd.models import db
 
@@ -16,7 +14,6 @@ from ..utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-# Decorator - @handle_exceptions
 def handle_exceptions(f):
     """
     A unified decorator that catches all application exceptions and ensures proper
@@ -69,8 +66,12 @@ def handle_exceptions(f):
                 500,
             )
 
-        except Exception:  # 4. Final catch all for any other unexpected exception
+        except Exception as e:
             db.session.remove()
+            import traceback
+
+            print(f"ERROR: {str(e)}")
+            print(traceback.format_exc())
             logger.exception("Unexpected internal server error occurred.")
             return error_response("An internal server error occurred.", "server_error", 500)
 
@@ -78,7 +79,6 @@ def handle_exceptions(f):
 
 
 # --- The Global Registration Function  --- #
-# Acts as a fallback in case the decorator isn't applied
 def register_error_handlers(app):
     """
     Registers global error handlers as a fallback safety net.
@@ -88,41 +88,34 @@ def register_error_handlers(app):
     def handle_api_error(error):
         db.session.remove()
         logger.warning(f"API Error: {error.__class__.__name__}: {str(error)}")
-        return jsonify(error.to_dict()), error.status_code
+        return error_response(error.message, error.error_field, error.status_code)
 
     @app.errorhandler(IntegrityError)
     def handle_integrity_error(error):
         db.session.rollback()
         db.session.remove()
         logger.error("Database Integrity Error", exc_info=True)
-        return jsonify(
-            {
-                "success": False,
-                "errors": {"database": "A resource with this name or value already exists."},
-            }
-        ), 409
+        return error_response("A resource with this name or value already exists.", "database", 409)
 
     @app.errorhandler(SQLAlchemyError)
     def handle_sqlalchemy_error(error):
         db.session.rollback()
         db.session.remove()
         logger.error("SQLAlchemy error occurred", exc_info=True)
-        return jsonify(
-            {
-                "success": False,
-                "errors": {"database": "A database error occurred. Please contact an administrator."},
-            }
-        ), 500
+        return error_response(
+            "A database error occurred. Please contact an administrator.",
+            "database",
+            500,
+        )
 
     @app.errorhandler(Exception)
     def handle_generic_exception(error):
         db.session.remove()
+        import traceback
+
+        print(f"ERROR: {str(error)}")
+        print(traceback.format_exc())
         logger.exception("Unexpected internal server error occurred")
-        return jsonify(
-            {
-                "success": False,
-                "errors": {"server": "An internal server error occurred."},
-            }
-        ), 500
+        return error_response("An internal server error occurred.", "server", 500)
 
     logger.info("Global error handlers registered successfully.")

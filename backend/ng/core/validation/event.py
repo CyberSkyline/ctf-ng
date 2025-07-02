@@ -9,27 +9,14 @@ from ... import config
 
 
 def _validate_event_time_logic(validator: BaseValidator, data: dict[str, Any], is_update: bool = False):
-    """
-    Internal helper to contain the shared time validation logic for event
-    creation and updates. Modifies the validator object directly.
-    """
-    start_time = validator.validate_datetime(data, "start_time", required=False, allow_past=False)
-    end_time = validator.validate_datetime(data, "end_time", required=False, allow_past=False)
-
-    has_start = "start_time" in data and data.get("start_time") is not None
-    has_end = "end_time" in data and data.get("end_time") is not None
-
-    if is_update and (has_start ^ has_end):  # XOR
-        validator.errors["time_constraint"] = "Both start_time and end_time must be provided together for updates."
-        return
-
-    if not is_update and (start_time and not end_time):
-        validator.errors["end_time"] = "End time is required when a start time is provided."
-    elif not is_update and (end_time and not start_time):
-        validator.errors["start_time"] = "Start time is required when an end time is provided."
-
-    if start_time and end_time and start_time >= end_time:
-        validator.errors["end_time"] = "End time must be after start time"
+    """Internal helper to validate the event's start and end times."""
+    validator.validate_time_window(
+        data,
+        start_field="start_time",
+        end_field="end_time",
+        is_update=is_update,
+        allow_past=False,
+    )
 
 
 def validate_event_creation(data: dict[str, Any]) -> dict[str, Any]:

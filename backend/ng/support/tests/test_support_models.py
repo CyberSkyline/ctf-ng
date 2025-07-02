@@ -2,12 +2,8 @@
 Unit tests for support model logic.
 """
 
-from datetime import datetime, timedelta, timezone
-
-
-def utc_now() -> datetime:
-    """Get current UTC datetime. Replacement for deprecated datetime.utcnow()."""
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+from datetime import datetime, timedelta
+from ...core.utils import utc_now
 
 
 class TestTicketModelStructure:

@@ -13,6 +13,6 @@ def cleanup_orphaned_data() -> dict[str, Any]:
     orphaned_count = User.cleanup_orphaned_users()
 
     return {
-        "message": "Cleanup completed successfully",
-        "cleaned_up": {"orphaned_users": orphaned_count},
+        "cleanup_completed": True,
+        "orphaned_users_removed": orphaned_count,
     }

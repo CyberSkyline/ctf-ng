@@ -13,7 +13,7 @@ class TicketTag(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False, unique=True)
-    color = db.Column(db.String(7), nullable=True)  # Hex color code for UI
+    color = db.Column(db.String(7), nullable=True)
     description = db.Column(db.String(200), nullable=True)
 
     tickets = db.relationship("Ticket", secondary="ng_ticket_tags_junction", back_populates="tags")

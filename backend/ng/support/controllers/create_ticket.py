@@ -42,4 +42,7 @@ def create_ticket(
         room="support_staff",
     )
 
-    return {"ticket": ticket, "message": "Ticket created successfully"}
+    return {
+        "ticket": ticket,
+        "ticket_created": True,
+    }

@@ -1,7 +1,5 @@
 # CTF-NG Plugin Architecture
 
-This document outlines the architectural patterns and engineering principles used throughout the CTF-NG plugin codebase.
-
 ## Overview
 
 CTF-NG is a Flask plugin for CTFd that adds team management, event organization, and support ticket functionality. The codebase follows strict MVC principles adapted for a RESTful API architecture.
@@ -25,6 +23,7 @@ backend/ng/
 ├── team/               # Team domain  
 ├── user/               # User domain
 ├── support/            # Support ticket domain
+├── event_registration/ # Event registration domain
 └── admin/              # Administrative operations
 ```
 
@@ -75,12 +74,14 @@ Resources are loaded into Flask's `g` object:
 @load_event()        # Loads g.event from event_id in URL
 @load_team()         # Loads g.team from team_id in URL
 @load_user()         # Loads g.target_user from user_id in URL
+@load_ticket()       # Loads g.ticket from ticket_id in URL
 ```
 
 ### Permission Checking
 ```python
 @require_team_captain()       # Verifies user is team captain
 @require_ticket_access()      # Verifies user can access ticket
+@require_event_is_joinable()  # Verifies event registration is open
 ```
 
 ### Decorator Composition
@@ -117,7 +118,7 @@ def validate_event_creation(data: dict[str, Any]) -> dict[str, Any]:
 ```
 
 ### Cross-Domain Validation
-Shared validation logic lives in `core/validation/resources.py`:
+Shared validation logic lives in `core/validation/business_rules.py`:
 - `validate_unique_name()` - Ensures names are unique within scope
 - `validate_team_capacity()` - Checks team size limits
 - `validate_event_locked_state()` - Prevents operations on locked events
@@ -147,10 +148,10 @@ def create_team_with_captain(cls, name, event_id, creator_id):
         team = cls.create_team(name, event_id, flush_only=True)
         TeamMember.create_team_member(creator_id, team.id, role=TeamRole.CAPTAIN)
         db.session.commit()
-        return True, {"team": team}
+        return team
     except IntegrityError:
         db.session.rollback()
-        return False, {"error": "Team name already exists"}
+        raise ConflictError("Team name already exists")
 ```
 
 ### Query Patterns
@@ -172,7 +173,7 @@ APIException (base)
 ```
 
 ### Global Error Handler
-The `@handle_exceptions` decorator on every endpoint ensures:
+The `@handle_exceptions` decorator is automatically applied within the authentication decorators (`@api_endpoint`, `@user_endpoint`, `@admin_endpoint`, `@public_endpoint`) and ensures:
 - Proper database cleanup (`db.session.remove()`)
 - Consistent error response format
 - Appropriate logging
@@ -186,7 +187,7 @@ The `@handle_exceptions` decorator on every endpoint ensures:
     "data": {
         "team": {
             "id": 123,
-            "name": "Team Alpha",
+            "name": "Team foo",
             "member_count": 4
         }
     }
@@ -290,11 +291,10 @@ When adding a new domain or feature:
 6. Add to main blueprint in `core/routes/__init__.py`
 7. Write tests following existing patterns
 
-## WebSocket Support (Future)
+## WebSocket Support
 
 The support ticket system includes WebSocket infrastructure:
 - Event emission via `emit_event()` utility
 - Room-based broadcasting (e.g., `ticket_123`)
 - Socket handlers in `support/sockets.py`
 
-Currently disabled but ready for activation when needed

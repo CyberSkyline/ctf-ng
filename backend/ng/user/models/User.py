@@ -283,3 +283,13 @@ class User(db.Model):
         except Exception:
             db.session.rollback()
             raise
+
+    @classmethod
+    def delete_all(cls) -> None:
+        """Delete all user extensions from the database."""
+        try:
+            cls.query.delete()
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise

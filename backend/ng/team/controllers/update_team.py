@@ -43,5 +43,5 @@ def update_team(
 
     return {
         "team": team,
-        "message": "Team updated successfully",
+        "updated": True,
     }

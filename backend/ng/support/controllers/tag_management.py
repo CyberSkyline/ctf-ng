@@ -19,7 +19,7 @@ def create_tag(name: str, color: str | None = None, description: str | None = No
 
     return {
         "tag": tag,
-        "message": f"Tag '{name}' created successfully",
+        "tag_created": True,
     }
 
 
@@ -59,8 +59,9 @@ def delete_tag(tag_id: int) -> dict[str, Any]:
     tag.delete_tag()
 
     return {
-        "message": f"Tag '{tag_name}' deleted successfully",
-        "affected_tickets": ticket_count,
+        "tag_deleted": True,
+        "tag_name": tag_name,
+        "affected_tickets_count": ticket_count,
     }
 
 
@@ -87,7 +88,8 @@ def add_tags_to_ticket(ticket_id: int, tag_ids: list[int]) -> dict[str, Any]:
 
     return {
         "ticket": ticket,
-        "message": f"Added {len(tags)} tags to ticket",
+        "tags_added": len(tags),
+        "operation_completed": True,
     }
 
 
@@ -105,5 +107,6 @@ def remove_tags_from_ticket(ticket_id: int, tag_ids: list[int]) -> dict[str, Any
 
     return {
         "ticket": ticket,
-        "message": f"Removed {len(tags)} tags from ticket",
+        "tags_removed": len(tags),
+        "operation_completed": True,
     }

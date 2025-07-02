@@ -26,7 +26,7 @@ def reset_event_data(event_id: int) -> dict[str, Any]:
     Team.delete_by_event(event_id)
 
     return {
-        "message": f"Reset event '{event.name}' successfully",
-        "deleted": {"team_members": team_members_count, "teams": teams_count},
+        "reset_completed": True,
         "event": event,
+        "deleted_counts": {"team_members": team_members_count, "teams": teams_count},
     }

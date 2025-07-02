@@ -2,13 +2,9 @@
 Tests for generic validation utility functions
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from ...validation import BaseValidator
-
-
-def utc_now() -> datetime:
-    """Get current UTC datetime. Replacement for deprecated datetime.utcnow()."""
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+from ...utils import utc_now
 
 
 class ValidationError(Exception):

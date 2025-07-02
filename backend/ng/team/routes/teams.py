@@ -73,8 +73,6 @@ class TeamList(Resource):
         data = g.validated_data
         result = create_team(
             name=data["name"],
-            event_id=data["event_id"],
-            creator_id=g.user.id,
             ranked=data.get("ranked", False),
         )
         return success_response(result, status_code=201)

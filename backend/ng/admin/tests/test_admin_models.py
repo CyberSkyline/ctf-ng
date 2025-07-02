@@ -2,13 +2,9 @@
 Unit tests for admin domain models and constraints
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from ...team.models.enums import TeamRole
-
-
-def utc_now() -> datetime:
-    """Get current UTC datetime. Replacement for deprecated datetime.utcnow()."""
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+from ...core.utils import utc_now
 
 
 class TestDataProcessingLogic:

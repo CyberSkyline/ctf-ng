@@ -1,8 +1,4 @@
 """
-Comprehensive Team Business Logic Tests
-"""
-
-"""
 Hypothetical Team Business Logic Tests
 """
 

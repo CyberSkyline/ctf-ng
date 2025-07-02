@@ -258,17 +258,9 @@ class Event(db.Model):
         return event_stats_query
 
     @classmethod
-    def reset_all_plugin_data(cls) -> None:
-        """Deletes all plugin data from the database in correct order."""
-        # Lazy imports to prevent circular dependencies (needed)
-        from ...team.models.Team import Team
-        from ...team.models.TeamMember import TeamMember
-        from ...user.models.User import User
-
+    def delete_all(cls) -> None:
+        """Delete all events from the database."""
         try:
-            TeamMember.query.delete()
-            Team.query.delete()
-            User.query.delete()
             cls.query.delete()
             db.session.commit()
         except Exception:

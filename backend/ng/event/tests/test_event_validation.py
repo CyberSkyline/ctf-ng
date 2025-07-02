@@ -2,16 +2,12 @@
 Hypothetical Validation tests for event creation
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 import pytest
 from ...core.exceptions import ValidationError
 from ...core.validation import validate_event_creation
 from ... import config
-
-
-def utc_now() -> datetime:
-    """Get current UTC datetime. Replacement for deprecated datetime.utcnow()."""
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+from ...core.utils import utc_now
 
 
 class TestEventTimeConstraints:
@@ -57,11 +53,11 @@ class TestEventTimeConstraints:
 
         with pytest.raises(ValidationError) as exc_info:
             validate_event_creation({"name": "Test Event", "max_team_size": 4, "start_time": future_time})
-        assert "end_time" in exc_info.value.errors
+        assert "time_constraint" in exc_info.value.errors
 
         with pytest.raises(ValidationError) as exc_info:
             validate_event_creation({"name": "Test Event", "max_team_size": 4, "end_time": future_time})
-        assert "start_time" in exc_info.value.errors
+        assert "time_constraint" in exc_info.value.errors
 
 
 class TestEventBusinessRules:

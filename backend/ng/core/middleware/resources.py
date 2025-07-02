@@ -48,37 +48,6 @@ def load_ticket(param_name="ticket_id"):
     return decorator
 
 
-def load_tags_from_request(field_name="tag_ids"):
-    """
-    Load TicketTag objects from a list of IDs in the request body.
-    """
-
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            models = _get_models()
-            if not hasattr(g, "validated_data"):
-                raise ValueError("Validated data required - use validation middleware first")
-
-            tag_ids = g.validated_data.get(field_name)
-            if not tag_ids:
-                raise ValueError(f"Field '{field_name}' is required in validated data")
-
-            tags = []
-            for tag_id in tag_ids:
-                tag = models["TicketTag"].find_by_id(tag_id)
-                if not tag:
-                    raise NotFoundError(f"Tag with ID {tag_id} not found")
-                tags.append(tag)
-
-            g.tags = tags
-            return f(*args, **kwargs)
-
-        return decorated_function
-
-    return decorator
-
-
 def load_team(param_name="team_id"):
     """Load team from URL parameter"""
 
@@ -233,6 +202,37 @@ def load_target_member():
             if not target_member:
                 raise NotFoundError("User is not a member of this team")
             g.target_member = target_member
+            return f(*args, **kwargs)
+
+        return decorated_function
+
+    return decorator
+
+
+def load_tags_from_request(field_name="tag_ids"):
+    """
+    Load TicketTag objects from a list of IDs in the request body.
+    """
+
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            models = _get_models()
+            if not hasattr(g, "validated_data"):
+                raise ValueError("Validated data required - use validation middleware first")
+
+            tag_ids = g.validated_data.get(field_name)
+            if not tag_ids:
+                raise ValueError(f"Field '{field_name}' is required in validated data")
+
+            tags = []
+            for tag_id in tag_ids:
+                tag = models["TicketTag"].find_by_id(tag_id)
+                if not tag:
+                    raise NotFoundError(f"Tag with ID {tag_id} not found")
+                tags.append(tag)
+
+            g.tags = tags
             return f(*args, **kwargs)
 
         return decorated_function

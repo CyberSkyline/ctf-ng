@@ -33,6 +33,11 @@ from .event import (
     UPDATE_EVENT_DOC,
     GET_EVENT_TEAMS_DOC,
 )
+from .event_registration import (
+    GET_USER_DEMOGRAPHICS_DOC,
+    JOIN_EVENT_DOC,
+    CREATE_EVENT_REGISTRATION_DOC,
+)
 from .support import (
     GET_MY_TICKETS_DOC,
     CREATE_NEW_TICKET_DOC,
@@ -93,6 +98,10 @@ __all__ = [
     "GET_EVENT_DOC",
     "UPDATE_EVENT_DOC",
     "GET_EVENT_TEAMS_DOC",
+    # Event Registration Docs
+    "GET_USER_DEMOGRAPHICS_DOC",
+    "JOIN_EVENT_DOC",
+    "CREATE_EVENT_REGISTRATION_DOC",
     # Support Docs
     "GET_MY_TICKETS_DOC",
     "CREATE_NEW_TICKET_DOC",

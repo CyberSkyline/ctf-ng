@@ -200,3 +200,32 @@ class BaseValidator:
         Return the validation results and the dictionary of parsed, valid data.
         """
         return len(self.errors) == 0, self.errors, self.parsed_data
+
+    def validate_time_window(
+        self,
+        data: dict[str, Any],
+        start_field: str,
+        end_field: str,
+        is_update: bool = False,
+        allow_past: bool = False,
+    ):
+        """
+        Validates a start/end time window, ensuring both or neither are present
+        and that start is before end.
+        """
+        start_time = self.validate_datetime(data, start_field, required=False, allow_past=allow_past)
+        end_time = self.validate_datetime(data, end_field, required=False, allow_past=allow_past)
+
+        has_start = start_field in data and data.get(start_field) is not None
+        has_end = end_field in data and data.get(end_field) is not None
+
+        if has_start ^ has_end:  # XOR
+            self.errors["time_constraint"] = (
+                f"Both {start_field} and {end_field} must be provided together, or neither."
+            )
+            return
+
+        if start_time and end_time and start_time >= end_time:
+            self.errors[end_field] = (
+                f"{end_field.replace('_', ' ').title()} must be after {start_field.replace('_', ' ')}."
+            )

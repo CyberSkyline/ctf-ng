@@ -8,7 +8,7 @@ from .get_ticket import get_ticket
 from .create_ticket_message import create_ticket_message
 from .update_ticket import update_ticket
 
-from .admin_ticket_operations import (
+from .admin import (
     assign_ticket,
     unassign_ticket,
     close_ticket,
