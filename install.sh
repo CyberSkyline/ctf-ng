@@ -1,25 +1,16 @@
 #!/bin/bash
 
-set -o pipefail
-set -e
+set -euo pipefail
 
 if [ "$EUID" -eq 0 ]; then
   echo "This script must not be run as root. Please run as a non-root user."
   exit 1
 fi
 
+source .yarn-scripts/utils.sh
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PYTHON_DIR="$SCRIPT_DIR/backend/"
-
-prompt_user() {
-  local message="$1"
-  read -p "$message (y/n): " response
-  if [[ "$response" == "y" || "$response" == "Y" ]]; then
-    return 0
-  else
-    return 1
-  fi
-}
 
 sudo apt-get update
 
