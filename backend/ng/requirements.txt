@@ -13,4 +13,4 @@ pyyaml>=6.0.2
 Flask-SocketIO==5.5.1
 python-socketio==5.13.0
 gevent-websocket==0.10.1
-redis==6.2.0
+#redis==6.2.0
