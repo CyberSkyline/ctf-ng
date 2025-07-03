@@ -30,6 +30,9 @@ import logging
 from pathlib import Path
 from typing import Annotated, Optional
 import attrs
+from cyber_skyline.chall_parser.compose.answer import Answer
+from cyber_skyline.chall_parser.compose.challenge_info import Hint, TextBody
+from cyber_skyline.chall_parser.rewriter import Template
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
@@ -169,15 +172,39 @@ def display_challenge_summary(challenge: ChallengeInfo):
         questions_table.add_column("Points", justify="right", style="yellow")
         questions_table.add_column("Max Attempts", justify="right", style="red")
         questions_table.add_column("Question", style="white")
+        questions_table.add_column("Answer", style="blue")
+        questions_table.add_column("Test Cases", style="magenta")
         
         for question in challenge.questions:
+            test_cases = [""]
+            answer = question.answer
+            if isinstance(answer, Answer):
+                if answer.test_cases:
+                    test_cases = [f'{ ":white_heavy_check_mark:" if test_case.correct else ":cross_mark:" } {test_case.answer}' for test_case in answer.test_cases]
+                answer = answer.body
+            elif isinstance(answer, Template):
+                answer = answer.eval_str
+            
+            test_cases = iter(test_cases)
             questions_table.add_row(
                 question.name,
                 str(question.points),
                 str(question.max_attempts),
-                question.question
+                question.body,
+                answer,
+                next(test_cases)
             )
-        
+
+            for test_case in test_cases:
+                questions_table.add_row(
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    test_case
+                )
+
         console.print(questions_table)
         console.print()
     
@@ -187,13 +214,15 @@ def display_challenge_summary(challenge: ChallengeInfo):
         hints_table.add_column("Preview", style="bold blue")
         hints_table.add_column("Deduction", justify="right", style="red")
         hints_table.add_column("Type", style="cyan")
+        hints_table.add_column("Hint", style="white")
         
         for hint in challenge.hints:
-            hint_type = "text" if hasattr(hint.hint, 'type') else "string"
+            hint_type = "text" if isinstance(hint.body, TextBody) else "string"
             hints_table.add_row(
                 hint.preview,
                 str(hint.deduction),
-                hint_type
+                hint_type,
+                hint.body.content if isinstance(hint.body, TextBody) else hint.body
             )
         
         console.print(hints_table)

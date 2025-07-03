@@ -12,48 +12,6 @@ x-challenge:
   # Optional: Tabler icon name with Tb prefix
   icon: "TbShieldAlt"
   
-  # Required: List of questions/objectives for the challenge
-  questions:
-    - name: "SQL Injection Flag"
-      question: "What is the flag hidden in the users table?"
-      points: 150
-      answer: "CTF\\{sql_1nj3ct10n_m4st3r\\}"  # Regex pattern
-      max_attempts: 5
-    
-    - name: "Admin Panel Flag" 
-      question: "What flag is displayed on the admin dashboard?"
-      points: 200
-      answer: "CTF\\{4dm1n_p4n3l_h4ck3d\\}"
-      max_attempts: 3
-    
-    - name: "Privilege Escalation Flag"
-      question: "What is the root flag on the server?"
-      points: 300
-      answer: "CTF\\{pr1v_3sc_c0mpl3t3\\}"
-      max_attempts: 2
-  
-  # Optional: Hints that participants can unlock (with point deductions)
-  hints:
-    # Text hint
-    - hint:
-        type: text
-        content: |
-          Look for SQL injection vulnerabilities in the login form.
-          Try using single quotes to break the SQL syntax.
-      preview: "Database interaction hint"
-      deduction: 25
-    
-    # Simple string hint
-    - hint: "The admin panel might be accessible at /admin or /dashboard"
-      preview: "Admin panel location"
-      deduction: 30
-    
-    - hint:
-        type: text
-        content: "Check for SUID binaries or writable system files for privilege escalation"
-      preview: "System exploitation hint"
-      deduction: 50
-  
   # Optional: Challenge summary/overview
   summary: |
     A multi-stage web exploitation challenge covering SQL injection,
@@ -86,6 +44,63 @@ x-challenge:
     db_port:
       template: "fake.port_number()"
       default: &db_port_default "3306"
+  
+  # Required: List of questions/objectives for the challenge
+  questions:
+    - name: "SQL Injection Flag"
+      body: "What is the flag hidden in the users table?"
+      points: 150
+      answer: *db_flag_default
+      max_attempts: 5
+    
+    - name: "Admin Panel Flag" 
+      body: "What flag is displayed on the admin dashboard?"
+      points: 200
+      answer: *admin_flag_default
+      max_attempts: 3
+    
+    - name: "Privilege Escalation Flag"
+      body: "What is the root flag on the server?"
+      points: 300
+      answer: 
+        body: "CTF\\{pr1v_3sc_c0mpl3t3\\}"
+        test_cases:
+          - answer: "CTF{pr1v_3sc_c0mpl3t3}"
+            correct: True
+      max_attempts: 2
+
+    - name: "Complex Regex"
+      body: "what is a valid flag?"
+      points: 100
+      answer:
+        body: "CTF\\{[a-zA-Z0-9_]+\\}"
+        test_cases:
+          - answer: "CTF{valid_flag_123}"
+            correct: True
+          - answer: "CTF{invalid flag}"
+            correct: False
+      max_attempts: 4
+  # Optional: Hints that participants can unlock (with point deductions)
+  hints:
+    # Text hint
+    - body:
+        type: text
+        content: |
+          Look for SQL injection vulnerabilities in the login form.
+          Try using single quotes to break the SQL syntax.
+      preview: "Database interaction hint"
+      deduction: 25
+    
+    # Simple string hint
+    - body: "The admin panel might be accessible at /admin or /dashboard"
+      preview: "Admin panel location"
+      deduction: 30
+    
+    - body:
+        type: text
+        content: "Check for SUID binaries or writable system files for privilege escalation"
+      preview: "System exploitation hint"
+      deduction: 50
   
   # Optional: Challenge categories/tags
   tags:

@@ -21,10 +21,11 @@ import logging
 import pathlib
 import re
 from cattrs import ClassValidationError
+from cyber_skyline.chall_parser.compose.answer import Answer
 import pytest
 import tempfile
 from pathlib import Path
-from cyber_skyline.chall_parser.compose.challenge_info import ChallengeInfo, TextHint
+from cyber_skyline.chall_parser.compose.challenge_info import ChallengeInfo, TextBody
 from cyber_skyline.chall_parser.rewriter import Template
 from cyber_skyline.chall_parser.yaml_parser import ComposeYamlParser, parse_compose_string, parse_compose_file
 from cyber_skyline.chall_parser.compose import ComposeFile, ComposeResourceName
@@ -40,12 +41,12 @@ x-challenge:
   icon: TbPuzzle
   questions:
     - name: flag
-      question: What is the flag?
+      body: What is the flag?
       points: 100
       answer: CTF{test_flag}
       max_attempts: 3
   hints:
-    - hint: Check the logs
+    - body: Check the logs
       preview: Log hint
       deduction: 10
   tags:
@@ -84,12 +85,12 @@ x-challenge:
   icon: TbGlobe
   questions:
     - name: flag
-      question: What is the flag?
+      body: What is the flag?
       points: 100
       answer: CTF{test_flag}
       max_attempts: 5
   hints:
-    - hint: Check the environment variables
+    - body: Check the environment variables
       preview: Environment hint
       deduction: 10
   tags:
@@ -113,7 +114,7 @@ x-challenge:
   icon: TbPuzzle
   questions:
     - name: flag_question
-      question: What is the flag?
+      body: What is the flag?
       points: 100
       answer: CTF{template_flag}
       max_attempts: 3
@@ -149,7 +150,7 @@ x-challenge:
   icon: puzzle
   questions:
     - name: flag_question
-      question: What is the flag?
+      body: What is the flag?
       points: 100
       answer: CTF{template_flag}
       max_attempts: 3
@@ -179,7 +180,7 @@ x-challenge:
     hints:
     questions:
     - name: file_question
-      question: What is the content of the file?
+      body: What is the content of the file?
       points: 50
       answer: CTF{file_content}
       max_attempts: 3
@@ -239,77 +240,139 @@ services:
     def test_complex_challenge(self):
         """Test parsing a complex challenge with multiple services and networks."""
         chall_file = pathlib.Path(__file__).parent.resolve() / "../../../examples/complex_chall.yml"
-        challenge = parse_compose_file(chall_file)
+        compose = parse_compose_file(chall_file)
         
         # Validate challenge metadata
-        assert challenge.challenge is not None
-        assert challenge.challenge.name == "Advanced Web Exploitation"
+        assert compose.challenge is not None
+        assert compose.challenge.name == "Advanced Web Exploitation"
         
         expected_description = (
             "This challenge involves exploiting a vulnerable web application to retrieve\n"
             "multiple flags. You'll need to use SQL injection, XSS, and privilege escalation\n"
             "techniques to complete all objectives.\n"
         )
-        assert challenge.challenge.description == expected_description
-        assert challenge.challenge.icon == "TbShieldAlt"
+        assert compose.challenge.description == expected_description
+        assert compose.challenge.icon == "TbShieldAlt"
+        
+        # Validate template definitions
+        assert compose.challenge.templates is not None
+        assert "database-flag" in compose.challenge.templates
+        assert "admin-flag" in compose.challenge.templates
+        
+        # Validate variables
+        assert compose.challenge.variables is not None
+        assert len(compose.challenge.variables) == 4
+        
+        # Database flag variable
+        assert "db_flag" in compose.challenge.variables
+        db_flag_var = compose.challenge.variables["db_flag"]
+        assert db_flag_var.default == "CTF{sql_1nj3ct10n_m4st3r}"
+        # Template should evaluate to something like CTF{sql_XX_####}
+        db_flag_eval = str(db_flag_var.template.eval())
+        assert db_flag_eval.startswith("CTF{sql_")
+        assert db_flag_eval.endswith("}")
+        
+        # Admin flag variable
+        assert "admin_flag" in compose.challenge.variables
+        admin_flag_var = compose.challenge.variables["admin_flag"]
+        assert admin_flag_var.default == "CTF{4dm1n_p4n3l_h4ck3d}"
+        admin_flag_eval = str(admin_flag_var.template.eval())
+        assert admin_flag_eval.startswith("CTF{admin_")
+        
+        # Database password variable
+        assert "db_password" in compose.challenge.variables
+        db_pass_var = compose.challenge.variables["db_password"]
+        assert db_pass_var.default == "SecureP4ss!"
+        # Template should generate a 12-character password
+        db_pass_eval = str(db_pass_var.template.eval())
+        assert len(db_pass_eval) == 12
+        
+        # Database port variable
+        assert "db_port" in compose.challenge.variables
+        db_port_var = compose.challenge.variables["db_port"]
+        assert db_port_var.default == "3306"
+        # Template should generate a valid port number
+        db_port_eval = db_port_var.template.eval()
+        assert isinstance(db_port_eval, int)
+        assert 1 <= db_port_eval <= 65535
         
         # Validate questions
-        assert challenge.challenge.questions is not None
-        assert len(challenge.challenge.questions) == 3
+        assert compose.challenge.questions is not None
+        assert len(compose.challenge.questions) == 4
         
         # First question - SQL Injection
-        sql_question = challenge.challenge.questions[0]
+        sql_question = compose.challenge.questions[0]
         assert sql_question.name == "SQL Injection Flag"
-        assert sql_question.question == "What is the flag hidden in the users table?"
+        assert sql_question.body == "What is the flag hidden in the users table?"
         assert sql_question.points == 150
-        assert sql_question.answer == "CTF\\{sql_1nj3ct10n_m4st3r\\}"
+        assert sql_question.answer == db_flag_var.template
         assert sql_question.max_attempts == 5
         
         # Second question - Admin Panel
-        admin_question = challenge.challenge.questions[1]
+        admin_question = compose.challenge.questions[1]
         assert admin_question.name == "Admin Panel Flag"
-        assert admin_question.question == "What flag is displayed on the admin dashboard?"
+        assert admin_question.body == "What flag is displayed on the admin dashboard?"
         assert admin_question.points == 200
-        assert admin_question.answer == "CTF\\{4dm1n_p4n3l_h4ck3d\\}"
+        assert admin_question.answer == admin_flag_var.template
         assert admin_question.max_attempts == 3
         
         # Third question - Privilege Escalation
-        priv_question = challenge.challenge.questions[2]
+        priv_question = compose.challenge.questions[2]
         assert priv_question.name == "Privilege Escalation Flag"
-        assert priv_question.question == "What is the root flag on the server?"
+        assert priv_question.body == "What is the root flag on the server?"
         assert priv_question.points == 300
-        assert priv_question.answer == "CTF\\{pr1v_3sc_c0mpl3t3\\}"
+        assert isinstance(priv_question.answer, Answer)
+        assert priv_question.answer.body == "CTF\\{pr1v_3sc_c0mpl3t3\\}"
+        assert priv_question.answer.test_cases
+        assert len(priv_question.answer.test_cases) == 1
+        assert priv_question.answer.test_cases[0].answer == "CTF{pr1v_3sc_c0mpl3t3}"
+        assert priv_question.answer.test_cases[0].correct
         assert priv_question.max_attempts == 2
-        
+
+        # Fourth question - Complex Regex
+        complex_question = compose.challenge.questions[3]
+        assert complex_question.name == "Complex Regex"
+        assert complex_question.body == "what is a valid flag?"
+        assert complex_question.points == 100
+        assert isinstance(complex_question.answer, Answer)
+        assert complex_question.answer.body == "CTF\\{[a-zA-Z0-9_]+\\}"
+        assert complex_question.answer.test_cases
+        assert len(complex_question.answer.test_cases) == 2
+        assert complex_question.answer.test_cases[0].answer == "CTF{valid_flag_123}"
+        assert complex_question.answer.test_cases[0].correct
+        assert complex_question.answer.test_cases[1].answer == "CTF{invalid flag}"
+        assert not complex_question.answer.test_cases[1].correct
+        assert complex_question.max_attempts == 4
+
         # Validate hints
-        assert challenge.challenge.hints is not None
-        assert len(challenge.challenge.hints) == 3
+        assert compose.challenge.hints is not None
+        assert len(compose.challenge.hints) == 3
         
         # First hint - Text hint
-        db_hint = challenge.challenge.hints[0]
-        assert isinstance(db_hint.hint, TextHint)
-        assert db_hint.hint.type == "text"
+        db_hint = compose.challenge.hints[0]
+        assert isinstance(db_hint.body, TextBody)
+        assert db_hint.body.type == "text"
         expected_db_content = (
             "Look for SQL injection vulnerabilities in the login form.\n"
             "Try using single quotes to break the SQL syntax.\n"
         )
-        assert isinstance(db_hint.hint, TextHint)
-        assert db_hint.hint.content == expected_db_content
+        assert isinstance(db_hint.body, TextBody)
+        assert db_hint.body.content == expected_db_content
         assert db_hint.preview == "Database interaction hint"
         assert db_hint.deduction == 25
         
         # Second hint - Simple string
-        admin_hint = challenge.challenge.hints[1]
-        assert isinstance(admin_hint.hint, str)
-        assert admin_hint.hint == "The admin panel might be accessible at /admin or /dashboard"
+        admin_hint = compose.challenge.hints[1]
+        assert isinstance(admin_hint.body, str)
+        assert admin_hint.body == "The admin panel might be accessible at /admin or /dashboard"
         assert admin_hint.preview == "Admin panel location"
         assert admin_hint.deduction == 30
         
         # Third hint - Text hint for privilege escalation
-        priv_hint = challenge.challenge.hints[2]
-        assert isinstance(priv_hint.hint, TextHint)
-        assert priv_hint.hint.type == "text"
-        assert priv_hint.hint.content == "Check for SUID binaries or writable system files for privilege escalation"
+        priv_hint = compose.challenge.hints[2]
+        assert isinstance(priv_hint.body, TextBody)
+        assert priv_hint.body.type == "text"
+        assert priv_hint.body.content == "Check for SUID binaries or writable system files for privilege escalation"
         assert priv_hint.preview == "System exploitation hint"
         assert priv_hint.deduction == 50
         
@@ -318,62 +381,20 @@ services:
             "A multi-stage web exploitation challenge covering SQL injection,\n"
             "cross-site scripting, and Linux privilege escalation techniques.\n"
         )
-        assert challenge.challenge.summary == expected_summary
-        
-        # Validate template definitions
-        assert challenge.challenge.templates is not None
-        assert "database-flag" in challenge.challenge.templates
-        assert "admin-flag" in challenge.challenge.templates
-        
-        # Validate variables
-        assert challenge.challenge.variables is not None
-        assert len(challenge.challenge.variables) == 4
-        
-        # Database flag variable
-        assert "db_flag" in challenge.challenge.variables
-        db_flag_var = challenge.challenge.variables["db_flag"]
-        assert db_flag_var.default == "CTF{sql_1nj3ct10n_m4st3r}"
-        # Template should evaluate to something like CTF{sql_XX_####}
-        db_flag_eval = str(db_flag_var.template.eval())
-        assert db_flag_eval.startswith("CTF{sql_")
-        assert db_flag_eval.endswith("}")
-        
-        # Admin flag variable
-        assert "admin_flag" in challenge.challenge.variables
-        admin_flag_var = challenge.challenge.variables["admin_flag"]
-        assert admin_flag_var.default == "CTF{4dm1n_p4n3l_h4ck3d}"
-        admin_flag_eval = str(admin_flag_var.template.eval())
-        assert admin_flag_eval.startswith("CTF{admin_")
-        
-        # Database password variable
-        assert "db_password" in challenge.challenge.variables
-        db_pass_var = challenge.challenge.variables["db_password"]
-        assert db_pass_var.default == "SecureP4ss!"
-        # Template should generate a 12-character password
-        db_pass_eval = str(db_pass_var.template.eval())
-        assert len(db_pass_eval) == 12
-        
-        # Database port variable
-        assert "db_port" in challenge.challenge.variables
-        db_port_var = challenge.challenge.variables["db_port"]
-        assert db_port_var.default == "3306"
-        # Template should generate a valid port number
-        db_port_eval = db_port_var.template.eval()
-        assert isinstance(db_port_eval, int)
-        assert 1 <= db_port_eval <= 65535
+        assert compose.challenge.summary == expected_summary
         
         # Validate tags
-        assert challenge.challenge.tags is not None
+        assert compose.challenge.tags is not None
         expected_tags = ["web", "sql-injection", "privilege-escalation", "hard"]
-        assert challenge.challenge.tags == expected_tags
+        assert compose.challenge.tags == expected_tags
         
         # Validate services
-        assert challenge.services is not None
-        assert len(challenge.services) == 3
+        assert compose.services is not None
+        assert len(compose.services) == 3
         
         # Web service validation
-        assert "web" in challenge.services
-        web_service = challenge.services[ComposeResourceName("web")]
+        assert "web" in compose.services
+        web_service = compose.services[ComposeResourceName("web")]
         assert web_service.image == "nginx:alpine"
         assert web_service.hostname == "web-server"
         assert web_service.networks == ["challenge-net"]
@@ -416,8 +437,8 @@ services:
             
         
         # Database service validation
-        assert "database" in challenge.services
-        db_service = challenge.services[ComposeResourceName("database")]
+        assert "database" in compose.services
+        db_service = compose.services[ComposeResourceName("database")]
         assert db_service.image == "mysql:8.0"
         assert db_service.hostname == "db-server"
         assert db_service.networks == ["challenge-net"]
@@ -449,8 +470,8 @@ services:
         assert hidden_flag_eval.endswith("}")
         
         # App service validation
-        assert "app" in challenge.services
-        app_service = challenge.services[ComposeResourceName("app")]
+        assert "app" in compose.services
+        app_service = compose.services[ComposeResourceName("app")]
         assert app_service.image == "vulnerable-webapp:latest"
         assert app_service.hostname == "app-server"
         assert app_service.networks == ["challenge-net"]
@@ -508,12 +529,12 @@ x-challenge:
   description: Testing hint types
   questions: []
   hints:
-    - hint:
+    - body:
         type: text
         content: Structured text hint
       preview: Structured hint
       deduction: 15
-    - hint: Simple string hint
+    - body: Simple string hint
       preview: Simple hint 
       deduction: 5
 services:
@@ -836,7 +857,7 @@ x-challenge:
   description: Testing question validation
   questions:
     - name: 123  # should be string
-      question: "What is the flag?"
+      body: "What is the flag?"
       points: "invalid"  # should be int
       answer: "CTF{test}"
       max_attempts: 5
@@ -858,7 +879,7 @@ scan-challenge:
   description: Testing question validation
   questions:
     - name: 123  # should be string
-      question: "What is the flag?"
+      body: "What is the flag?"
       points: "invalid"  # should be int
       answer: "CTF{test}"
       max_attempts: 5
@@ -882,7 +903,7 @@ x-challenge:
       default: &test_val "default_word"
   questions:
     - name: flag
-      question: "What is the flag?"
+      body: "What is the flag?"
       points: 100
       answer: *test_val  # should be a template
       max_attempts: 5

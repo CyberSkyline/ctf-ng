@@ -19,13 +19,13 @@
 # IN THE SOFTWARE.
 from cyber_skyline.chall_parser.compose.compose import ComposeFile, Network, ComposeResourceName, ServicesDict, NetworksDict
 from cyber_skyline.chall_parser.compose.service import Service
-from cyber_skyline.chall_parser.compose.challenge_info import ChallengeInfo, TextHint, Hint, Question, Variable
+from cyber_skyline.chall_parser.compose.challenge_info import ChallengeInfo, TextBody, Hint, Question, Variable
 
 __all__ = [
     'ComposeFile',
     'Service',
     'ChallengeInfo',
-    'TextHint',
+    'TextBody',
     'Hint',
     'Question',
     'Variable',
