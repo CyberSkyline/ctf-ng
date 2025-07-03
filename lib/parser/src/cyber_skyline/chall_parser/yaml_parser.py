@@ -18,7 +18,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
 # IN THE SOFTWARE.
 import logging
-from cyber_skyline.chall_parser.compose.answer import Answer
 import yaml
 import cattrs
 from typing import TextIO, Union

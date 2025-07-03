@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import Annotated, Optional
 import attrs
 from cyber_skyline.chall_parser.compose.answer import Answer
-from cyber_skyline.chall_parser.compose.challenge_info import Hint, TextBody
+from cyber_skyline.chall_parser.compose.challenge_info import TextBody
 from cyber_skyline.chall_parser.rewriter import Template
 from rich.console import Console
 from rich.table import Table
