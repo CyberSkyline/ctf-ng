@@ -18,6 +18,7 @@
     "@radix-ui/themes": "^3.2.1",
     "ag-grid-community": "^33.3.2",
     "ag-grid-react": "^33.3.2",
+    "lodash": "^4.17.21",
     "radix-ui": "^1.4.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

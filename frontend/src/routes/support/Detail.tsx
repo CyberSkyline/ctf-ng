@@ -3,6 +3,14 @@ import {
 } from '@radix-ui/themes';
 import { TbArrowLeft } from 'react-icons/tb';
 import { useNavigate } from 'react-router';
+// import Editor from 'components/Editor';
+import { useState } from 'react';
+import { map } from 'lodash';
+/* import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize'; */
 
 function StatusBadge(status: string) {
   switch (status) {
@@ -16,13 +24,25 @@ export default function Detail() {
   const status = 'inprogress';
   const event = 'blah event';
   const challenge = 'blah challenge';
+  const repliesArray = [
+    { user: 'user1', timestamp: '2025-11-1', text: 'blah' },
+    { user: 'user2', timestamp: '2025-11-1', text: 'blah' },
+    { user: 'user3', timestamp: '2025-11-1', text: 'blah' },
+    { user: 'user4', timestamp: '2025-11-1', text: 'blah' },
+  ];
+
   const navigate = useNavigate();
+  const [value, setValue] = useState();
 
   function resolveTicket() {
     // do server call to resolve ticket
     console.log('Resolved Ticket');
     // onSuccess go back to details page
     navigate('/support');
+  }
+
+  function handleOnChange(e) {
+    setValue(e);
   }
 
   return (
@@ -39,6 +59,7 @@ export default function Detail() {
             Support
           </Button>
         </Box>
+        <Heading size="7">Ticket Detail</Heading>
         <Box maxWidth="200px">
           <Button
             onClick={resolveTicket}
@@ -46,8 +67,24 @@ export default function Detail() {
             Mark Ticket as Resolved
           </Button>
         </Box>
-        <Heading size="7">Ticket Detail</Heading>
-        <div>Chat box goes here with submit button</div>
+        <div>
+          {map(repliesArray, ({ user, timestamp, text }) => (
+            <Card className="pt-8">
+              <Text>{user}</Text>
+              <Text>{timestamp}</Text>
+              <div className="pb-4">
+                {text}
+                markdownreact here
+              </div>
+            </Card>
+          ))}
+        </div>
+        <div>
+          {/* <Editor
+            value={value}
+            onChange={handleOnChange}
+          /> */}
+        </div>
       </Flex>
 
       <Card size="3" className="w-1/5">
