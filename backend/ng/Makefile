@@ -59,7 +59,5 @@ test-challenge:
 test-middleware:
 	$(PYTHON_EXEC) -m pytest -m middleware . -v
 
-test-event-registration:
-	$(PYTHON_EXEC) -m pytest ./event_registration/tests/ -v
 
 .PHONY: check fix format test-all test-logic test-models test-validation test-controllers test-integration test-team test-event test-admin test-user test-support test-utils test-fast test-middleware test-event-registration

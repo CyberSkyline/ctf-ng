@@ -6,7 +6,6 @@ from __future__ import annotations
 from typing import Any
 
 from CTFd.models import db
-from CTFd.models import Users as CTFdUsers
 from sqlalchemy import func
 
 
@@ -14,28 +13,38 @@ class User(db.Model):
     __tablename__ = "ng_users"
 
     id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)  # links to ctfd's main users table
+
+    ctfd_user = db.relationship(
+        "Users",
+        backref=db.backref("ng_user", uselist=False, cascade="all, delete-orphan"),
+        lazy="joined",
+        foreign_keys=[id],
+    )
+
     team_members = db.relationship("TeamMember", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<NgUser id={self.id}>"
 
     def serialize(self, include_admin_fields: bool = False) -> dict[str, Any]:
-        """Serialize user for API response.
+        if not self.ctfd_user:
+            return {
+                "id": self.id,
+                "name": f"User {self.id} (Data Inconsistency)",
+                "email": None,
+                "role": "unknown",
+                "registered_at": None,
+                "team_count": len(self.team_members),
+            }
 
-        Note: This only serializes the plugin specific user data.
-
-        Args:
-            include_admin_fields: Whether to include admin-only fields
-
-        Returns:
-            dict: Serialized user data
-        """
-        data = {
+        return {
             "id": self.id,
+            "name": self.ctfd_user.name,
+            "email": self.ctfd_user.email,
+            "role": self.ctfd_user.type,
+            "registered_at": self.ctfd_user.created,
             "team_count": len(self.team_members),
         }
-
-        return data
 
     @classmethod
     def create_user(cls, user_id, commit=True):
@@ -144,7 +153,6 @@ class User(db.Model):
             .filter(TeamMember.user_id == user_id)
             .all()
         )
-
         return team_members_query
 
     @classmethod
@@ -167,7 +175,6 @@ class User(db.Model):
 
         events_participated_query = db.session.query(TeamMember.event_id.distinct()).filter_by(user_id=user_id).all()
         events_participated = {event_id for (event_id,) in events_participated_query}
-
         total_events = Event.query.count()
 
         return {
@@ -203,65 +210,23 @@ class User(db.Model):
         """Gets a list of all users with their core CTFd data and extended plugin data.
 
         Returns:
-            list: Raw query results (Row objects)
+            list[User]: List of User objects with loaded relationships
         """
-        # Lazy import to prevent circular dependencies (needed)
-        from ...team.models.TeamMember import TeamMember
 
-        # Query to join plugin users, CTFd users, and count team memberships
-        users_query = (
-            db.session.query(
-                CTFdUsers.id,
-                CTFdUsers.name,
-                CTFdUsers.email,
-                CTFdUsers.type.label("role"),
-                CTFdUsers.created.label("registered_at"),
-                func.count(TeamMember.id).label("team_count"),
-            )
-            .join(cls, CTFdUsers.id == cls.id)
-            .outerjoin(TeamMember, cls.id == TeamMember.user_id)
-            .group_by(
-                CTFdUsers.id,
-                CTFdUsers.name,
-                CTFdUsers.email,
-                CTFdUsers.type,
-                CTFdUsers.created,
-            )
-            .order_by(CTFdUsers.id)
-            .all()
-        )
-
-        return users_query
+        return cls.query.options(db.joinedload(cls.team_members)).all()
 
     @classmethod
-    def get_user_details_by_id(cls, user_id: int):
-        """Gets detailed info for a single user by their ID, including team count.
+    def get_user_details_by_id(cls, user_id: int) -> "User" | None:
+        """Gets detailed info for a single user by their ID.
 
         Args:
-            user_id (int): The ID of the user to fetch.
+            user_id: The ID of the user to fetch.
 
         Returns:
-            Row object or None if not found
+            User: The User object with loaded relationships, or None if not found
         """
-        # Lazy import to prevent circular dependencies (needed)
-        from ...team.models.TeamMember import TeamMember
 
-        user_details = (
-            db.session.query(
-                CTFdUsers.id,
-                CTFdUsers.name,
-                CTFdUsers.email,
-                CTFdUsers.type.label("role"),
-                CTFdUsers.created.label("registered_at"),
-                func.count(TeamMember.id).label("team_count"),
-            )
-            .outerjoin(TeamMember, CTFdUsers.id == TeamMember.user_id)
-            .filter(CTFdUsers.id == user_id)
-            .group_by(CTFdUsers.id)
-            .first()
-        )
-
-        return user_details
+        return cls.query.options(db.joinedload(cls.team_members)).filter_by(id=user_id).first()
 
     @classmethod
     def cleanup_orphaned_users(cls) -> int:
