@@ -1,11 +1,11 @@
-from CTFD.models import db
+from CTFd.models import db
 
 class RolePermission(db.Model):
     __tablename__ = "ng_role_permissions"
     id = db.Column(db.Integer, primary_key=True)
     role_id = db.Column(db.Integer, db.ForeignKey("ng_roles.id"), nullable=False)
     permission_id = db.Column(db.Integer, db.ForeignKey("ng_permissions.id"), nullable=False)
-    role = db.relationship("Role", backref="permissions", lazy="joined")
+
 
     def __repr__(self):
         return f"<RolePermission role_id={self.role_id} permission_id={self.permission_id}>"
@@ -24,11 +24,7 @@ class RolePermission(db.Model):
         """
         role_permission = cls(role_id=role_id, permission_id=permission_id)
         db.session.add(role_permission)
-        try:
-            db.session.commit()
-        except IntegrityError:
-            db.session.rollback()
-            raise ValueError(f"RolePermission with role_id '{role_id}' and permission_id '{permission_id}' already exists.")
+        db.session.commit()
         return role_permission
 
     @classmethod
@@ -42,3 +38,18 @@ class RolePermission(db.Model):
             list: List of RolePermission instances for the role
         """
         return cls.query.filter_by(role_id=role_id).all()
+
+    
+    def serialize(self):
+        """Serialize a RolePermission instance to a dictionary.
+
+        Returns:
+            dict: Serialized role permission data
+        """
+        return {
+            "id": self.id,
+            "role_id": self.role_id,
+            "permission_id": self.permission_id,
+            "role": self.role.serialize(),
+            "permission": self.permission.serialize()
+        } if self.role and self.permission else None

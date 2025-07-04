@@ -12,6 +12,7 @@ from ...event.routes.events import events_namespace
 from ...user.routes.users import users_namespace
 from ...admin.routes.admin import admin_namespace
 from ...event_registration.routes.event_registration import event_reg_namespace
+from ...permissions.routes.permissions import permissions_namespace
 
 api_blueprint = Blueprint("plugin_api", __name__)
 
@@ -40,3 +41,4 @@ api_v1.add_namespace(events_namespace, path="/events")
 api_v1.add_namespace(users_namespace, path="/users")
 api_v1.add_namespace(admin_namespace, path="/admin")
 api_v1.add_namespace(event_reg_namespace, path="/event_registration")
+api_v1.add_namespace(permissions_namespace, path="/permissions")

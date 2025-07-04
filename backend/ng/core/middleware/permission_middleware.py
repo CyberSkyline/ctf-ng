@@ -5,7 +5,10 @@ from CTFd.utils.user import get_current_user
 from CTFd.models import db
 from ..utils.api_responses import error_response
 from ..utils.logger import get_logger
-from .models.UserRole import UserRole
+from ...permissions.models.UserRole import UserRole
+from ...permissions.controllers.get_team_management_permissions import get_team_management_permissions
+from ...permissions.controllers.get_user_permissions import get_user_permissions
+from ...permissions.models.Role import Role
 from .utils import (
     params_check_valid,
     get_param_values,
@@ -20,7 +23,7 @@ def get_user_role_permissions(f):
     Decorator to retrieve user role permissions and attach them to the request context.
     This allows access to user permissions in the view function.
 
-    The retrieved permissions are attached to `g.user_permissions`.
+    The retrieved permissions are attached to kwargs as 'permissions'.
     """
     
     @wraps(f)
@@ -28,21 +31,17 @@ def get_user_role_permissions(f):
         user = get_current_user()
         if not user:
             return error_response("User not authenticated", "unauthorized", 401)
-        user_role = UserRole.get_user_role(user.id)
-        if not user_role:
-            return error_response("User role not found", "not_found", 404)
-
-        permissions = UserRole.get_permissions(user_role.role)
-        if not permissions:
-            return error_response("No permissions found for user role", "not_found", 404)
-        
-        perm_array = [perm.name for perm in permissions]
-        kwargs['permissions'] = perm_array
-
-        
+        response = get_user_permissions(user)
+        if "error" in response:
+            return error_response(response["error"], "user_permissions", 400)
+        if kwargs.get('permissions') is None:
+            kwargs['permissions'] = [permission.name for permission in response["permissions"]]
+        else:
+            kwargs['permissions'].extend([permission.name for permission in response["permissions"]])
         return f(*args, **kwargs)
-
     return wrapped
+
+
 
 
 def check_user_can_edit_team(f):
@@ -62,9 +61,14 @@ def check_user_can_edit_team(f):
         team_id = request.view_args.get('team_id') or request.args.get('team_id')
         if not team_id:
             return error_response("Team ID is required", "bad_request", 400)
-        perms = get_team_management_permissions(team_id)
-        if "CAN_EDIT_TEAM" not in perms:
-            return error_response("User does not have permission to edit this team", "forbidden", 403)
+        response = get_team_management_permissions(team_id)
+        if "error" in response:
+            return error_response(response["error"], "team_management", 400)
+
+        if kwargs.get('permissions') is None:
+            kwargs['permissions'] = [permission.name for permission in response["permissions"]]
+        else:
+            kwargs['permissions'].extend([permission.name for permission in response["permissions"]])
 
         return f(*args, **kwargs)
 

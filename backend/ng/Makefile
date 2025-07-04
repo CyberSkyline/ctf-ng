@@ -64,6 +64,9 @@ test-utils:
 test-middleware:
 	$(PYTHON_EXEC) -m pytest -m middleware -v
 
+test-permissions:
+	$(PYTHON_EXEC) -m pytest permissions/tests/ -v
+
 # Fast feedback
 test-fast:
 	$(PYTHON_EXEC) -m pytest admin/tests/test_admin_logic.py event/tests/test_event_models.py team/tests/test_team_models.py user/tests/test_user_models.py -x  

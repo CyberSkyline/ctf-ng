@@ -4,6 +4,7 @@ Tests for middleware decorators in the CTFd plugin.
 """
 
 import pytest
+from ....team.models.TeamMember import TeamMember
 
 # Mark all tests in this file with middleware and db markers (middleware tests need to be isolated)
 pytestmark = [pytest.mark.middleware, pytest.mark.db]
@@ -90,6 +91,32 @@ def test_lookup_missing_params(middleware_client):
     response = middleware_client.get("/id", query_string={"invalid_param": "value"})
     assert response.status_code == 400
     data = response.get_json()
-    print(data)
     assert data["success"] is False
     assert "missing_parameter" in data["errors"]
+
+def test_get_user_role_permissions(middleware_client):
+    """
+    Test the get_user_role_permissions middleware decorator.
+    This checks if the decorator correctly retrieves user permissions.
+    """
+    response = middleware_client.get("/get_user_permissions", query_string={"user_id": 1})
+    
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert "permissions" in data
+    assert isinstance(data["permissions"], list)
+    assert len(data["permissions"]) > 0
+    assert "CAN_EDIT_TEAM" in data["permissions"]
+
+def test_check_user_can_edit_team(middleware_client):
+    """
+    Test the check_user_can_edit_team middleware decorator.
+    This checks if the decorator correctly verifies if a user can edit a team.
+    """
+    response = middleware_client.get("/check_user_can_edit_team", query_string={"team_id": 1, "user_id": 1})
+    print(response.get_json())
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert "can edit" in data['message']

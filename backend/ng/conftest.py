@@ -18,6 +18,11 @@ from .user.models.User import User as NgUser
 from .event.models.Event import Event
 from .team.controllers.create_team import create_team
 from .team.controllers.join_team import join_team
+from .permissions.controllers import assign_role_to_user
+from .permissions.models.Role import Role
+from .permissions.models.RolePermission import RolePermission
+from .permissions.models.Permission import Permission
+from .permissions.models.UserRole import UserRole
 from .event_registration.controllers.create_event_registration import create_event_registration
 from tests.helpers import (
     create_ctfd as create_ctfd_original,
@@ -95,6 +100,13 @@ def middleware_client():
         ng_user = NgUser(id=user_to_login.id)
         _db.session.add(ng_user)
         _db.session.commit()
+
+        Role.create_role("Admin")
+        Role.create_role("User")
+        Permission.create_permission("CAN_EDIT_TEAM", "Edit team details")
+        RolePermission.create_role_permission(1, 1)  # Admin role with all permissions
+
+        assign_role_to_user(user_to_login.id, "Admin")
 
         user2 = gen_user(_db, name="tempuser2", email="user2@example.com")
         ng_user2 = NgUser(id=user2.id)
@@ -321,3 +333,46 @@ def team_with_members(db_session, event):
         raise Exception(f"Failed to add member to team: {join_result.get('error')}")
 
     return {"team": team, "captain": captain_ctfd, "member": member_ctfd}
+
+
+@pytest.fixture
+def role_with_permissions(db_session):
+    """Creates a role with permissions for testing."""
+    if db_session is None:
+        return None
+
+    # Create a role
+    role = Role.create_role("Test Role")
+
+    # Create some permissions
+    permission1 = Permission.create_permission("TEST_PERMISSION_1", "Test Permission 1")
+    permission2 = Permission.create_permission("TEST_PERMISSION_2", "Test Permission 2")
+    permission3 = Permission.create_permission("TEST_PERMISSION_3", "Test Permission 3")
+
+    # Assign permissions to the role
+    RolePermission.create_role_permission(role.id, permission1.id)
+    RolePermission.create_role_permission(role.id, permission2.id)
+
+    db_session.commit()
+
+    return role
+
+@pytest.fixture
+def user_with_roles(db_session):
+    """Creates a user with multiple roles for testing."""
+    if db_session is None:
+        return None
+
+    # Create a user
+    user = gen_user(_db, name="testuser_with_roles", email="testuser_with_roles@example.com")
+    ng_user = NgUser(id=user.id)
+    db_session.add(ng_user)
+    db_session.commit()
+
+    # Assign multiple roles to the user
+    role1 = Role.create_role("Test Role 1")
+    role2 = Role.create_role("Test Role 2")
+    assign_role_to_user(user.id, role1.name)
+    assign_role_to_user(user.id, role2.name)
+
+    return user

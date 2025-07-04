@@ -27,6 +27,7 @@ def _create_tables() -> tuple[Any, Any, Any, Any]:
     )
 
 
+
 def load(app: Any) -> None:
     try:
         delete_unwanted_ctfd_routes(app)

@@ -267,3 +267,66 @@ def validate_event_id_param(event_id: Union[str, int]) -> tuple[bool, dict[str, 
     validator.validate_positive_integer(data, "event_id", required=True, friendly_name="Event ID")
 
     return validator.is_valid()
+
+def validate_role_update(data: dict[str, Any]) -> tuple[bool, dict[str, str]]:
+    """Validate role updates."""
+    validator = BaseValidator()
+
+    if not any(
+        data.get(field) is not None
+        for field in ["name", "description", "permissions"]
+    ):
+        validator.errors["fields"] = (
+            "At least one field (name, description, or permissions) must be provided"
+        )
+        return validator.is_valid()
+
+    if "name" in data:
+        validator.validate_string(
+            data,
+            "name",
+            required=False,
+            friendly_name="Role name",
+        )
+    if "description" in data:
+        validator.validate_string(
+            data,
+            "description",
+            required=False,
+            friendly_name="Role description",
+        )
+    if "permissions" in data:
+        for permission in data["permissions"]:
+            validator.validate_string(
+                {"permission": permission},
+                "permission",
+                required=False,
+                friendly_name="Permission name",
+            )
+            if not validator.is_valid():
+                validator.errors["permissions"] = "Invalid permission names provided"
+                break
+
+    return validator.is_valid()
+
+
+def validate_user_role_update(data: dict[str, Any]) -> tuple[bool, dict[str, str]]:
+    """Validate user role updates."""
+    validator = BaseValidator()
+
+    if not data.get("roles"):
+        validator.errors["roles"] = "No role names provided"
+        return validator.is_valid()
+
+    for role in data["roles"]:
+        validator.validate_string(
+            {"role": role},
+            "role",
+            required=False,
+            friendly_name="Role name",
+        )
+        if not validator.is_valid():
+            validator.errors["roles"] = "Invalid role names provided"
+            break
+
+    return validator.is_valid()

@@ -7,6 +7,7 @@ from CTFd.models import db
 from CTFd.models import Users as CTFdUsers
 from sqlalchemy import func
 from typing import Any
+from sqlalchemy.ext.associationproxy import association_proxy
 
 
 class User(db.Model):
@@ -14,6 +15,9 @@ class User(db.Model):
 
     id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)  # links to ctfd's main users table
     team_members = db.relationship("TeamMember", back_populates="user", cascade="all, delete-orphan")
+    user_roles = db.relationship("UserRole",back_populates="user",cascade="all, delete-orphan",)
+
+    roles = association_proxy("user_roles","role",creator=lambda role: UserRole(role=role))
 
     def __repr__(self):
         return f"<NgUser id={self.id}>"
@@ -234,3 +238,16 @@ class User(db.Model):
         ]
 
         return users_list
+
+
+    def serialize(self) -> dict[str, Any]:
+        """Serialize the User instance to a dictionary.
+
+        Returns:
+            dict: Serialized user data
+        """
+        return {
+            "id": self.id,
+            "roles": [role.serialize() for role in self.roles],
+            "team_members": [tm.serialize() for tm in self.team_members],
+        }

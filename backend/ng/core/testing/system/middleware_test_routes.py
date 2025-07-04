@@ -4,7 +4,11 @@ Test routes for middleware testing isolated in a separate Flask app instance.
 """
 
 from flask import Blueprint, jsonify
-from ...middleware.middleware import lookup
+from ...middleware.middleware import lookup, authed_user_required
+from ...middleware.permission_middleware import (
+    get_user_role_permissions,
+    check_user_can_edit_team,
+)
 from ....user.models.User import User
 from ....event.models.Event import Event
 from ....team.models.Team import Team
@@ -72,3 +76,24 @@ def test_date_lookup(**kwargs):
             "event_name": kwargs.get("event").name,
         }
     )
+
+
+@middleware_test_routes.route("/get_user_permissions", methods=["GET"])
+@authed_user_required
+@get_user_role_permissions
+def get_user_permissions(**kwargs):
+    """
+    Endpoint to retrieve user permissions.
+    The permissions are attached to the request context by the decorator.
+    """
+    return jsonify({"success": True, "permissions": kwargs.get("permissions", [])})
+
+@middleware_test_routes.route("/check_user_can_edit_team", methods=["GET"])
+@authed_user_required
+@check_user_can_edit_team
+def check_user_can_edit_team(**kwargs):
+    """
+    Endpoint to check if the user can edit the specified team.
+    The check is performed by the decorator.
+    """
+    return jsonify({"success": True, "message": "User can edit the team."}) 

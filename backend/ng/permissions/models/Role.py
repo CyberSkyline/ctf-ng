@@ -1,12 +1,18 @@
 from CTFd.models import db
+from sqlalchemy.ext.associationproxy import association_proxy
+from ...user.models.User import User
+from .RolePermission import RolePermission
+from .Permission import Permission
 
-
-class Role(db.model):
+class Role(db.Model):
     __tablename__ = "ng_roles"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False, unique=True)
 
-    def repr(self):
+    role_permissions = db.relationship("RolePermission", backref="role", lazy="joined", cascade="all, delete-orphan")
+    permissions = association_proxy("role_permissions","permission",creator=lambda permission: RolePermission(permission=permission))
+
+    def __repr__(self):
         return f"<Role {self.name}>"
 
     @classmethod
@@ -21,9 +27,45 @@ class Role(db.model):
         """
         role = cls(name=name)
         db.session.add(role)
-        try:
-            db.session.commit()
-        except IntegrityError:
-            db.session.rollback()
-            raise ValueError(f"Role with name '{name}' already exists.")
+        db.session.commit()
         return role
+    
+    @classmethod
+    def get_permissions(cls, role_id: int):
+        """Retrieve permissions for a specific role.
+
+        Args:
+            role_id (int): ID of the role
+
+        Returns:
+            list: List of RolePermission instances for the role
+        """
+        return cls.query.get(role_id).permissions
+
+
+    @classmethod
+    def get_users_with_role(cls, role_name: str):
+        """Get all users who have a specific role.
+
+        Args:
+            role_name (str): Name of the role to check
+
+        Returns:
+            list: List of User instances with the specified permission
+        """
+        from .UserRole import UserRole
+        return User.query.join(User.user_roles).join(UserRole.role).filter(Role.name == role_name).all()
+
+
+
+    def serialize(self):
+        """Serialize a Role instance to a dictionary.
+
+        Returns:
+            dict: Serialized role data
+        """
+        return {
+            "id": self.id,
+            "name": self.name,
+            "permissions": [permission.serialize() for permission in self.permissions]
+        } if self else None
