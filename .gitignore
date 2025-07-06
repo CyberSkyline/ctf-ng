@@ -30,6 +30,8 @@ Thumbs.db
 .venv/
 __pycache__/
 *.egg-info/
+lib/**/build/
+tools/**/build/
 
 # Node / yarn
 node_modules/
