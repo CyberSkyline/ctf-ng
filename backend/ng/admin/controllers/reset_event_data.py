@@ -17,8 +17,6 @@ def reset_event_data(event_id: int) -> dict[str, Any]:
         dict: Success status and deletion counts.
     """
 
-    event = g.event
-
     team_members_count = TeamMember.count_by_event(event_id)
     teams_count = Team.count_by_event(event_id)
 
@@ -26,7 +24,5 @@ def reset_event_data(event_id: int) -> dict[str, Any]:
     Team.delete_by_event(event_id)
 
     return {
-        "reset_completed": True,
-        "event": event,
         "deleted_counts": {"team_members": team_members_count, "teams": teams_count},
     }

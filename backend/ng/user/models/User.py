@@ -229,27 +229,6 @@ class User(db.Model):
         return cls.query.options(db.joinedload(cls.team_members)).filter_by(id=user_id).first()
 
     @classmethod
-    def cleanup_orphaned_users(cls) -> int:
-        """Removes user records that have no team member associations.
-
-        Returns:
-            int: Number of users deleted
-        """
-        try:
-            orphaned_users_query = cls.find_orphaned_users_query()
-            orphaned_users = orphaned_users_query.all()
-            orphaned_count = len(orphaned_users)
-
-            if orphaned_count > 0:
-                orphaned_users_query.delete(synchronize_session=False)
-                db.session.commit()
-
-            return orphaned_count
-        except Exception:
-            db.session.rollback()
-            raise
-
-    @classmethod
     def delete_all(cls) -> None:
         """Delete all user extensions from the database."""
         try:
