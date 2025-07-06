@@ -7,8 +7,6 @@ from ...core.utils import utc_now
 from ... import config
 
 from ..controllers import (
-    cleanup_orphaned_data,
-    cleanup_headless_teams,
     get_data_counts,
     get_detailed_stats,
     reset_all_plugin_data,
@@ -25,8 +23,6 @@ from ...core.docs import (
     GET_DATA_COUNTS_DOC,
     RESET_ALL_DATA_DOC,
     RESET_EVENT_DATA_DOC,
-    CLEANUP_ORPHANED_DATA_DOC,
-    CLEANUP_HEADLESS_TEAMS_DOC,
     SYSTEM_HEALTH_DOC,
 )
 
@@ -72,27 +68,6 @@ class AdminEventReset(Resource):
         """Reset event data"""
         result = reset_event_data(event_id)
         return success_response(result)
-
-
-@admin_namespace.route("/cleanup")
-class AdminCleanup(Resource):
-    @admin_endpoint()
-    @admin_namespace.doc(**CLEANUP_ORPHANED_DATA_DOC)
-    def post(self):
-        """Cleanup orphaned data"""
-        result = cleanup_orphaned_data()
-        return success_response(result)
-
-
-@admin_namespace.route("/cleanup/headless-teams")
-class AdminCleanupHeadlessTeams(Resource):
-    @admin_endpoint()
-    @admin_namespace.doc(**CLEANUP_HEADLESS_TEAMS_DOC)
-    def post(self):
-        """Fix headless teams"""
-        result = cleanup_headless_teams()
-        return success_response(result)
-
 
 @admin_namespace.route("/health")
 class AdminHealth(Resource):

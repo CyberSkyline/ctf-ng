@@ -60,25 +60,6 @@ RESET_EVENT_DATA_DOC = {
     },
 }
 
-# ============ CLEANUP OPERATIONS ============
-CLEANUP_ORPHANED_DATA_DOC = {
-    "description": "Clean up orphaned data such as users with no team associations (Admin only)",
-    "responses": {
-        200: "Success - Cleanup completed successfully with counts of cleaned data",
-        403: "Forbidden - Admin access required",
-        500: "Internal error - Cleanup failed",
-    },
-}
-
-CLEANUP_HEADLESS_TEAMS_DOC = {
-    "description": "Fix teams without captains by automatically promoting the oldest member to captain role (Admin only)",
-    "responses": {
-        200: "Success - Headless teams cleanup completed with count of fixed teams",
-        403: "Forbidden - Admin access required",
-        500: "Internal error - Cleanup failed",
-    },
-}
-
 # ============ SYSTEM HEALTH ============
 SYSTEM_HEALTH_DOC = {
     "description": "Check system health and data integrity with warnings for potential issues (Admin only)",
