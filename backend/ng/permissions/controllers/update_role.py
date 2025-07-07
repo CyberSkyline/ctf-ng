@@ -38,5 +38,4 @@ def update_role(role_id, data):
     return {
         "success": True,
         "role": role,
-        "message": "Role updated successfully",
     }

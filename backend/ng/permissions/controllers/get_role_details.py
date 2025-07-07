@@ -15,4 +15,4 @@ def get_role_details(role_id: int) -> dict:
     if not role:
         return {"success": False, "error": "Role not found"}
     users = Role.get_users_with_role(role.name)
-    return {"success": True, "role": role.serialize(), "users": [user.serialize() for user in users]}
+    return {"success": True, "role": role, "users": [user for user in users]}

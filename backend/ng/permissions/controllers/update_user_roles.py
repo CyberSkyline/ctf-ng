@@ -29,6 +29,5 @@ def update_user_roles(user_id, data):
 
     return {
         "success": True,
-        "message": "User roles updated successfully",
         "roles": user_roles
     }
