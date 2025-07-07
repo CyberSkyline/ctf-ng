@@ -42,7 +42,6 @@ export default function Detail() {
             onClick={() => { navigate('/support'); }}
           >
             <TbArrowLeft />
-            {' '}
             Support
           </Button>
         </Box>
