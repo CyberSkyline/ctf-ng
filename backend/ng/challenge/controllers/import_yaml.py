@@ -23,7 +23,7 @@ def import_yaml(yaml):
         ## Need list conversion because of sql alchemey lazing loading relationships
         list(map(lambda hint: Hint.create_hint(challenge_id=challenge.id, **hint), parsed_yaml['challenge']['hints']))
         list(map(lambda question: Question.create_question(challenge_id=challenge.id, **question), parsed_yaml['challenge']['questions']))
-        list(map(lambda tag: Tag.create_tag(challenge_id=challenge.id, tag=tag), parsed_yaml['challenge']['tags']))
+        list(map(lambda name: Tag.create_tag(challenge_id=challenge.id, name=name), parsed_yaml['challenge']['tags']))
         list(map(lambda kv: ContainerBlueprint.create_container_blueprint(challenge_id=challenge.id, **kv[1]), parsed_yaml['services'].items()))
 
         return {

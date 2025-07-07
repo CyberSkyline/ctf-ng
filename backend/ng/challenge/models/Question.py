@@ -4,7 +4,7 @@ class Question(db.Model):
     __tablename__ = 'ng_challengequestion'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
-    question = db.Column(db.String(255), nullable=False)
+    body = db.Column(db.String(255), nullable=False)
     points = db.Column(db.Integer, nullable=False)
     answer = db.Column(db.String(255), nullable=False)
     max_attempts = db.Column(db.Integer, nullable=False)

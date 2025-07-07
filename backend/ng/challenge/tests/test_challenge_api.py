@@ -13,12 +13,12 @@ x-challenge:
   icon: TbPuzzle
   questions:
     - name: flag
-      question: What is the flag?
+      body: What is the flag?
       points: 100
       answer: CTF{test_flag}
       max_attempts: 3
   hints:
-    - hint: Check the logs
+    - body: Check the logs
       preview: Log hint
       deduction: 10
   tags:
