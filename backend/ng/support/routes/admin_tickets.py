@@ -5,10 +5,13 @@ Admin API routes for support ticket management.
 from flask import request, g
 from flask_restx import Namespace, Resource
 
-from ...support.controllers import (
+from ..controllers.all_actions import (
     list_tickets,
     get_ticket,
     update_ticket,
+)
+
+from ..controllers.admin_actions import (
     assign_ticket,
     unassign_ticket,
     close_ticket,
@@ -36,7 +39,7 @@ from ...core.middleware import (
     load_associations_from_request,
     load_tags_from_request,
 )
-from ...core.docs import (
+from ._admin_tickets_docs import (
     ADMIN_GET_ALL_TICKETS_DOC,
     ADMIN_GET_TICKET_DETAILS_DOC,
     ADMIN_UPDATE_TICKET_DOC,
@@ -49,7 +52,7 @@ from ...core.docs import (
     ADMIN_DELETE_TAG_DOC,
     ADMIN_ADD_TAGS_TO_TICKET_DOC,
     ADMIN_REMOVE_TAGS_FROM_TICKET_DOC,
-    LIST_TAGS_DOC,
+    ADMIN_LIST_TAGS_DOC,
 )
 
 
@@ -151,7 +154,7 @@ class AdminTicketReopen(Resource):
 @admin_tickets_namespace.route("/tags")
 class AdminTagList(Resource):
     @admin_endpoint()
-    @admin_tickets_namespace.doc(**LIST_TAGS_DOC)
+    @admin_tickets_namespace.doc(**ADMIN_LIST_TAGS_DOC)
     def get(self):
         """List all tags"""
         result = list_tags()

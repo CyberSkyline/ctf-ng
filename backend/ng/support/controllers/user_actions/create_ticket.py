@@ -4,10 +4,10 @@ Creates a new support ticket.
 
 from typing import Any
 
-from ...core.utils import emit_event
-from ...core import ValidationError, NotFoundError
+from ....core.utils import emit_event
+from ....core import ValidationError, NotFoundError
 
-from ..models.Ticket import Ticket
+from ...models.Ticket import Ticket
 
 
 def create_ticket(
@@ -42,7 +42,4 @@ def create_ticket(
         room="support_staff",
     )
 
-    return {
-        "ticket": ticket,
-        "ticket_created": True,
-    }
+    return ticket.serialize(include_admin_fields=False)

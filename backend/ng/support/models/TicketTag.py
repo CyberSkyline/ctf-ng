@@ -47,7 +47,7 @@ class TicketTag(db.Model):
         color: str | None = None,
         description: str | None = None,
         commit: bool = True,
-    ) -> "TicketTag":
+    ) -> TicketTag:
         """Create and persist a new ticket tag.
 
         Args:
@@ -88,7 +88,7 @@ class TicketTag(db.Model):
         db.session.commit()
 
     @classmethod
-    def find_by_id(cls, tag_id: int) -> "TicketTag" | None:
+    def find_by_id(cls, tag_id: int) -> TicketTag | None:
         """Find a tag by ID.
 
         Args:
@@ -100,7 +100,7 @@ class TicketTag(db.Model):
         return cls.query.get(tag_id)
 
     @classmethod
-    def find_by_name(cls, name: str) -> "TicketTag" | None:
+    def find_by_name(cls, name: str) -> TicketTag | None:
         """Find a tag by name.
 
         Args:
@@ -112,7 +112,7 @@ class TicketTag(db.Model):
         return cls.query.filter_by(name=name).first()
 
     @classmethod
-    def get_all_tags(cls) -> list["TicketTag"]:
+    def get_all_tags(cls) -> list[TicketTag]:
         """Get all tags ordered by name.
 
         Returns:
@@ -121,7 +121,7 @@ class TicketTag(db.Model):
         return cls.query.order_by(cls.name.asc()).all()
 
     @classmethod
-    def get_popular_tags(cls, limit: int = 10) -> list[tuple["TicketTag", int]]:
+    def get_popular_tags(cls, limit: int = 10) -> list[tuple[TicketTag, int]]:
         """Get most used tags.
 
         Args:
@@ -148,7 +148,7 @@ class TicketTag(db.Model):
         return popular
 
     @classmethod
-    def search_tags(cls, query: str) -> list["TicketTag"]:
+    def search_tags(cls, query: str) -> list[TicketTag]:
         """Search tags by name.
 
         Args:

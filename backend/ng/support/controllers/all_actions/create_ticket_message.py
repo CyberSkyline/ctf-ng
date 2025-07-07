@@ -5,8 +5,8 @@ Creates a new message in a support ticket thread.
 from flask import g
 from typing import Any
 
-from ...core.validation import validate_ticket_reply_allowed
-from ...core.utils import emit_event
+from ....core.validation import validate_ticket_reply_allowed
+from ....core.utils import emit_event
 
 
 def create_ticket_message(ticket_id: int, text: str, author_id: int, is_admin: bool = False) -> dict[str, Any]:

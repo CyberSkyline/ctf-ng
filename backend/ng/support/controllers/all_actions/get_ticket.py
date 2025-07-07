@@ -7,8 +7,7 @@ from typing import Any
 
 from CTFd.models import Users
 
-from ..models.TicketMessage import TicketMessage
-
+from ...models.TicketMessage import TicketMessage
 
 def get_ticket(ticket_id: int, user_id: int, is_admin: bool = False) -> dict[str, Any]:
     """Gets detailed information for a single ticket, including its full message history."""

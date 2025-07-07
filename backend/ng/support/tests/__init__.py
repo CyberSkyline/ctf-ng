@@ -1,3 +1,0 @@
-"""
-Support Domain Test Suite
-"""

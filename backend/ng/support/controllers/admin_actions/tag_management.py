@@ -5,11 +5,11 @@ Manages the lifecycle of ticket tags and their association with tickets.
 from flask import g
 from typing import Any
 
-from ...core.utils import emit_event
-from ...core.utils import build_conditional_update_data
-from ...core.validation import validate_unique_name
+from ....core.utils import emit_event
+from ....core.utils import build_conditional_update_data
+from ....core.validation import validate_unique_name
 
-from ..models.TicketTag import TicketTag
+from ...models.TicketTag import TicketTag
 
 
 def create_tag(name: str, color: str | None = None, description: str | None = None) -> dict[str, Any]:

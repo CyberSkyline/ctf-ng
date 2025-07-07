@@ -3,13 +3,12 @@ Reopens a previously closed ticket
 """
 
 from flask import g
-from typing import Any
 
 from ....core import ValidationError
 from ....core.utils import emit_event
 
 
-def reopen_ticket(ticket_id: int, admin_id: int) -> dict[str, Any]:
+def reopen_ticket(ticket_id: int, admin_id: int):
     """Reopens a previously closed ticket."""
     ticket = g.ticket
 
@@ -24,7 +23,3 @@ def reopen_ticket(ticket_id: int, admin_id: int) -> dict[str, Any]:
         room=f"ticket_{ticket_id}",
     )
 
-    return {
-        "ticket": ticket,
-        "ticket_reopened": True,
-    }

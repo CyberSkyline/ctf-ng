@@ -74,7 +74,7 @@ class TicketMessage(db.Model):
         return message
 
     @classmethod
-    def find_by_id(cls, message_id: int) -> "TicketMessage" | None:
+    def find_by_id(cls, message_id: int) -> TicketMessage | None:
         """Find a message by ID.
 
         Args:
@@ -86,7 +86,7 @@ class TicketMessage(db.Model):
         return cls.query.get(message_id)
 
     @classmethod
-    def find_by_ticket(cls, ticket_id: int) -> list["TicketMessage"]:
+    def find_by_ticket(cls, ticket_id: int) -> list[TicketMessage]:
         """Find all messages for a specific ticket.
 
         Args:
@@ -98,7 +98,7 @@ class TicketMessage(db.Model):
         return cls.query.filter_by(ticket_id=ticket_id).order_by(cls.created_at.asc()).all()
 
     @classmethod
-    def find_by_author(cls, author_id: int) -> list["TicketMessage"]:
+    def find_by_author(cls, author_id: int) -> list[TicketMessage]:
         """Find all messages by a specific author.
 
         Args:
@@ -120,26 +120,6 @@ class TicketMessage(db.Model):
             int: Number of messages in the ticket
         """
         return cls.query.filter_by(ticket_id=ticket_id).count()
-
-    @classmethod
-    def get_first_admin_message(cls, ticket_id: int) -> "TicketMessage" | None:
-        """Get the first message from an admin user in a ticket.
-
-        Args:
-            ticket_id: The ticket ID to check
-
-        Returns:
-            TicketMessage or None: The first admin message if exists
-        """
-        # Lazy import to prevent circular dependencies (needed)
-        from CTFd.models import Users
-
-        return (
-            cls.query.join(Users)
-            .filter(cls.ticket_id == ticket_id, Users.type == "admin")
-            .order_by(cls.created_at.asc())
-            .first()
-        )
 
     @classmethod
     def delete_by_ticket(cls, ticket_id: int) -> int:

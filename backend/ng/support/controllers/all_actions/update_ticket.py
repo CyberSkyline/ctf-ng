@@ -5,11 +5,10 @@ Updates ticket information.
 from flask import g
 from typing import Any
 
-from ...core.utils import (
+from ....core.utils import (
     emit_event,
     build_conditional_update_data,
 )
-
 
 def update_ticket(
     ticket_id: int,

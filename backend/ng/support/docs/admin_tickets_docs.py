@@ -108,7 +108,7 @@ ADMIN_GET_TICKET_STATS_DOC = {
     "responses": ADMIN_SUPPORT_RESPONSES,
 }
 
-LIST_TAGS_DOC = {
+ADMIN_LIST_TAGS_DOC = {
     "description": "Get all tags available in the system (Admin only).",
     "responses": ADMIN_SUPPORT_RESPONSES,
 }
