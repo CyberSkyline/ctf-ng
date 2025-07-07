@@ -277,16 +277,6 @@ Dictionary of network definitions for service communication. All networks must b
 
 ```yaml
 x-challenge:
-  # Required fields
-  name: "Challenge Name"                    # String: Challenge title
-  description: "Challenge description"      # String: Detailed description for participants
-  questions:                               # List[Question]: Questions/objectives (required)
-    - name: "flag"                         # String: Developer-facing identifier
-      body: "What is the flag?"            # String: Question text for participants  
-      points: 100                          # Integer: Points awarded for correct answer
-      answer: "CTF\\{.*\\}"                # String|Answer|Template: Regex pattern or exact answer
-      max_attempts: 5                      # Integer: Maximum submission attempts
-  
   # Optional fields
   icon: "TbFlag"                          # String: Tabler icon name (validated)
   summary: "Challenge overview"           # String: Brief challenge summary
@@ -311,6 +301,32 @@ x-challenge:
     session_id:
       template: "fake.uuid4()" # Template: Faker template string
       default: &session_id "01905492-7ea3-42e7-95b4-c0ac73c6912f"     # String: Default value with YAML anchor
+  # Required fields 
+  name: "Challenge Name"                    # String: Challenge title
+  description: "Challenge description"      # String: Detailed description for participants
+
+  questions:                               # List[Question]: Questions/objectives (required)
+    - name: "flag 1"                       # String: Developer-facing identifier
+      body: "What is the flag?"            # String: Question text for participants  
+      points: 100                          # Integer: Points awarded for correct answer
+      answer: "CTF\\{.*\\}"                # String|Answer|Template: Regex pattern or exact answer
+      max_attempts: 5                      # Integer: Maximum submission attempts
+    - name: "flag 2"                       # String: Developer-facing identifier
+      body: "What is the flag?"            # String: Question text for participants  
+      points: 100                          # Integer: Points awarded for correct answer
+      answer:                              # String|Answer|Template: Regex pattern or exact answer
+        body: "CTF\\{.*\\}"                # String: Regex pattern or exact answer
+        test_cases:                        # List[AnswerTestCase]: List of Test Cases that must validate against the body
+          - answer: "CTF{word}"            # String: Answer to the question
+            correct: true                  # Boolean: Whether the Answer is Correct or Not
+          - answer: "CTF"
+            correct: false
+      max_attempts: 5                      # Integer: Maximum submission attempts
+    - name: "flag 3"                       # String: Developer-facing identifier
+      body: "What is the session id?"            # String: Question text for participants  
+      points: 100                          # Integer: Points awarded for correct answer
+      answer: *session_id                  # String|Answer|Template: Regex pattern or exact answer
+      max_attempts: 5                      # Integer: Maximum submission attempts
       
   tags: ["web", "beginner"]               # List[str]: Category tags
 ```
