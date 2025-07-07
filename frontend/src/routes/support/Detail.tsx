@@ -3,8 +3,7 @@ import {
 } from '@radix-ui/themes';
 import { TbArrowLeft } from 'react-icons/tb';
 import { useNavigate } from 'react-router';
-// import Editor from 'components/Editor';
-import { useState } from 'react';
+// import Editor from 'components/Editor'; //milkdown
 import { map } from 'lodash';
 /* import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -25,24 +24,19 @@ export default function Detail() {
   const event = 'blah event';
   const challenge = 'blah challenge';
   const repliesArray = [
-    { user: 'user1', timestamp: '2025-11-1', text: 'blah' },
-    { user: 'user2', timestamp: '2025-11-1', text: 'blah' },
-    { user: 'user3', timestamp: '2025-11-1', text: 'blah' },
-    { user: 'user4', timestamp: '2025-11-1', text: 'blah' },
+    { user : 'user1', timestamp : '2025-11-1', text : 'blah' },
+    { user : 'user2', timestamp : '2025-11-1', text : 'blah' },
+    { user : 'user3', timestamp : '2025-11-1', text : 'blah' },
+    { user : 'user4', timestamp : '2025-11-1', text : 'blah' },
   ];
 
   const navigate = useNavigate();
-  const [value, setValue] = useState();
 
   function resolveTicket() {
     // do server call to resolve ticket
     console.log('Resolved Ticket');
     // onSuccess go back to details page
     navigate('/support');
-  }
-
-  function handleOnChange(e) {
-    setValue(e);
   }
 
   return (
