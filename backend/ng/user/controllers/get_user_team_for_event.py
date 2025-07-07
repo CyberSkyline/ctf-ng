@@ -6,7 +6,7 @@ from flask import g
 from typing import Any
 
 
-def get_user_teams_in_event(user_id: int, event_id: int) -> dict[str, Any]:
+def get_user_team_for_event(user_id: int, event_id: int) -> dict[str, Any]:
     """Gets a user's team membership in an event.
     Returns:
 

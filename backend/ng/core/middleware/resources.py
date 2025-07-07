@@ -338,25 +338,6 @@ def load_associations_from_request():
 
     return decorator
 
-
-def load_user_stats():
-    """Load user stats for user routes"""
-
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            models = _get_models()
-            if not hasattr(g, "target_user"):
-                raise ValueError("User must be loaded first (@load_user)")
-            stats = models["User"].get_user_participation_stats(g.target_user.id)
-            g.user_stats = stats
-            return f(*args, **kwargs)
-
-        return decorated_function
-
-    return decorator
-
-
 def load_user_teams():
     """Load user teams for user routes"""
 
