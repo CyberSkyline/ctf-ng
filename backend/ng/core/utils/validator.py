@@ -4,7 +4,7 @@ Base validation framework - reusable across domains.
 
 from typing import Any
 from datetime import datetime
-from ..utils import utc_now
+from . import utc_now
 
 
 class ValidationErrorMessages:
@@ -206,26 +206,23 @@ class BaseValidator:
         data: dict[str, Any],
         start_field: str,
         end_field: str,
-        is_update: bool = False,
-        allow_past: bool = False,
     ):
         """
         Validates a start/end time window, ensuring both or neither are present
         and that start is before end.
         """
-        start_time = self.validate_datetime(data, start_field, required=False, allow_past=allow_past)
-        end_time = self.validate_datetime(data, end_field, required=False, allow_past=allow_past)
+        start_time = self.validate_datetime(data, start_field, required=False, allow_past=False)
+        end_time = self.validate_datetime(data, end_field, required=False, allow_past=False)
 
         has_start = start_field in data and data.get(start_field) is not None
         has_end = end_field in data and data.get(end_field) is not None
 
         if has_start ^ has_end:  # XOR
-            self.errors["time_constraint"] = (
-                f"Both {start_field} and {end_field} must be provided together, or neither."
-            )
+            self.errors["time_constraint"] = (f"Both {start_field} and {end_field} must be provided together, or neither.")
             return
 
         if start_time and end_time and start_time >= end_time:
-            self.errors[end_field] = (
-                f"{end_field.replace('_', ' ').title()} must be after {start_field.replace('_', ' ')}."
-            )
+            self.errors[end_field] = (f"{end_field.replace('_', ' ').title()} must be after {start_field.replace('_', ' ')}.")
+            return
+        
+        

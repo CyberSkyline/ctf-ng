@@ -4,8 +4,7 @@ Support Domain Validation
 
 from typing import Any
 from ..exceptions import ValidationError
-from .framework import BaseValidator
-
+from ..utils.validator import BaseValidator
 
 def validate_ticket_creation(data: dict[str, Any]) -> dict[str, Any]:
     """Validate ticket creation data. Raises ValidationError on failure."""

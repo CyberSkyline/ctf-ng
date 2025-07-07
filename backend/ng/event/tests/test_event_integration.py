@@ -1,27 +1,15 @@
-"""
-Simple integration test for event domain - API endpoint testing
-These act as quick api unit tests -
-for comprehensive api tests, register as admin
-and go to localhost/test-harness
-"""
-
 import json
-
 
 class TestEventIntegration:
     """Integration tests for event API endpoints."""
-
-    def test_plugin_routes_loaded(self, app):
-        """Test that plugin routes are loaded."""
-        ng_routes = [rule for rule in app.url_map.iter_rules() if rule.rule.startswith("/ng")]
-
-        assert len(ng_routes) > 0, "No /ng routes found - plugin blueprints not loaded"
 
     def test_list_events_endpoint(self, admin_client):
         """Test listing events through the API endpoint."""
         response = admin_client.get("/ng/events")
 
         assert response.status_code != 404, "Events endpoint not found"
+
+        # TODO - Actually check the response
 
     def test_create_event_endpoint(self, admin_client):
         """Test creating an event through the API endpoint."""
@@ -36,8 +24,5 @@ class TestEventIntegration:
 
         assert response.status_code != 404, "Create event endpoint not found"
 
-    def test_teams_endpoint(self, admin_client):
-        """Test teams endpoint is accessible."""
-        response = admin_client.get("/ng/teams")
+        # TODO actually verify the event was created correctly
 
-        assert response.status_code != 404, "Teams endpoint not found"

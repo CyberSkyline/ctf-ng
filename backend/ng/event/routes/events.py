@@ -13,10 +13,9 @@ from ..controllers import (
 )
 from ...team.controllers import list_teams_in_event
 from ...core.utils import success_response
-from ...core.validation import (
-    validate_event_creation,
-    validate_event_update,
-)
+
+from ...event.models.Event import Event
+
 from ...core.middleware import (
     user_endpoint,
     admin_endpoint,
@@ -43,7 +42,7 @@ class EventList(Resource):
         result = list_events()
         return success_response(result)
 
-    @admin_endpoint(json_required=True, validation_func=validate_event_creation)
+    @admin_endpoint(json_required=True, validation_func=Event.validate)
     @events_namespace.doc(**CREATE_EVENT_DOC)
     def post(self):
         """Create event"""
@@ -69,7 +68,7 @@ class EventDetail(Resource):
         result = get_event_info(event_id)
         return success_response(result)
 
-    @admin_endpoint(json_required=True, validation_func=validate_event_update)
+    @admin_endpoint(json_required=True, validation_func=Event.validate)
     @load_event()
     @events_namespace.doc(**UPDATE_EVENT_DOC)
     def patch(self, event_id):

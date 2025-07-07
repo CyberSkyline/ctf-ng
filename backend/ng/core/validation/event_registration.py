@@ -3,9 +3,8 @@ Event Registration Domain Validation
 """
 
 from typing import Any
-from .framework import BaseValidator
+from ..utils.validator import BaseValidator
 from ..exceptions import ValidationError
-
 
 def validate_event_registration_creation(data: dict[str, Any]) -> dict[str, Any]:
     """Validate event registration creation data."""
@@ -19,8 +18,6 @@ def validate_event_registration_creation(data: dict[str, Any]) -> dict[str, Any]
         data,
         start_field="reg_start_date",
         end_field="reg_end_date",
-        is_update=False,
-        allow_past=False,
     )
 
     is_valid, errors, parsed_data = validator.is_valid()
