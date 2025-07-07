@@ -22,7 +22,6 @@ from .permissions.controllers import assign_role_to_user
 from .permissions.models.Role import Role
 from .permissions.models.RolePermission import RolePermission
 from .permissions.models.Permission import Permission
-from .permissions.models.UserRole import UserRole
 from .event_registration.controllers.create_event_registration import create_event_registration
 from tests.helpers import (
     create_ctfd as create_ctfd_original,
@@ -352,6 +351,7 @@ def role_with_permissions(db_session):
     # Assign permissions to the role
     RolePermission.create_role_permission(role.id, permission1.id)
     RolePermission.create_role_permission(role.id, permission2.id)
+    RolePermission.create_role_permission(role.id, permission3.id)
 
     db_session.commit()
 

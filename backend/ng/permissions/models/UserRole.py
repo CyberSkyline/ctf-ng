@@ -1,5 +1,4 @@
 from CTFd.models import db
-from ...user.models.User import User
 from .Role import Role
 
 class UserRole(db.Model):

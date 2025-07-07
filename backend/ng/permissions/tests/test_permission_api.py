@@ -13,8 +13,8 @@ def test_get_role_permissions(logged_in_client, role_with_permissions):
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"]
-    assert "permissions" in data["data"]["role"]
-    assert len(data["data"]["role"]["permissions"]) > 0
+    assert "permissions" in data["role"]
+    assert len(data["role"]["permissions"]) > 0
 
 def test_role_endpoints_not_authenticated(client, role_with_permissions):
     """Check that role endpoints are not accessible without authentication."""

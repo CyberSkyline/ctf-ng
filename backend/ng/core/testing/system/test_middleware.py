@@ -4,7 +4,6 @@ Tests for middleware decorators in the CTFd plugin.
 """
 
 import pytest
-from ....team.models.TeamMember import TeamMember
 
 # Mark all tests in this file with middleware and db markers (middleware tests need to be isolated)
 pytestmark = [pytest.mark.middleware, pytest.mark.db]

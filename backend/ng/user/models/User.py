@@ -8,6 +8,7 @@ from CTFd.models import Users as CTFdUsers
 from sqlalchemy import func
 from typing import Any
 from sqlalchemy.ext.associationproxy import association_proxy
+from ...permissions.models.UserRole import UserRole
 
 
 class User(db.Model):
@@ -16,6 +17,7 @@ class User(db.Model):
     id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)  # links to ctfd's main users table
     team_members = db.relationship("TeamMember", back_populates="user", cascade="all, delete-orphan")
     user_roles = db.relationship("UserRole",back_populates="user",cascade="all, delete-orphan",)
+
 
     roles = association_proxy("user_roles","role",creator=lambda role: UserRole(role=role))
 

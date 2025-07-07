@@ -1,15 +1,13 @@
 from flask_restx import Namespace, Resource
-from flask import g, request
+from flask import g
 from CTFd.utils.decorators import authed_only, admins_only
 from ...core.utils.logger import get_logger
-from ...core.utils.api_responses import success_response, error_response, controller_response
+from ...core.utils.api_responses import error_response
 from ...core.middleware import json_body_required, authed_user_required
-from ..models.Permission import Permission
 from ..models.Role import Role
-from ..models.UserRole import UserRole
 from ...user.models.User import User
 from ...core.utils.domain_validators import validate_role_update, validate_user_role_update
-from ..controllers import get_role_details, update_role, get_user_roles, assign_role_to_user, update_user_roles, create_role
+from ..controllers import get_role_details, update_role, get_user_roles, update_user_roles, create_role
 
 
 permissions_namespace = Namespace("permissions", description="Permissions management")
@@ -76,7 +74,15 @@ class RoleDetails(Resource):
         Get all details for a specific role by ID.
         """
         role_details = get_role_details(role_id)
-        return controller_response(role_details, error_field="role")
+        if not role_details.get("success"):
+            return error_response(role_details.get("error", "Role not found"), "role", 404)
+        role = role_details.get("role")
+        users = role_details.get("users", [])
+        return {
+            "success": True,
+            "role": role.serialize(),
+            "users": [user.serialize() for user in users],
+        }
 
     @authed_only
     @authed_user_required
@@ -173,14 +179,13 @@ class UserRoles(Resource):
         if not data or "roles" not in data:
             return error_response("No role names provided", "roles", 400)
 
-        user = User.query.get_or_404(user_id)
+        User.query.get_or_404(user_id)
 
         is_valid, errors = validate_user_role_update(data)
         if not is_valid:
             return {"success": False, "errors": errors}, 400
 
         response = update_user_roles(user_id, data)
-        print(response)
         if "error" in response:
             return error_response(response["error"], "user", 400)
 

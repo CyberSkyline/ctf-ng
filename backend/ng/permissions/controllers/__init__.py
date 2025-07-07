@@ -1,3 +1,8 @@
+"""
+Controllers for managing permissions and roles in the application.
+"""
+
+
 from .get_team_management_permissions import get_team_management_permissions
 from .assign_role_to_user import assign_role_to_user
 from .get_role_details import get_role_details
@@ -13,7 +18,7 @@ __all__ = [
     "get_role_details",
     "update_role",
     "get_user_roles",
-    "update_user_roles"
+    "update_user_roles",
     "get_user_permissions",
     "create_role"
 ]

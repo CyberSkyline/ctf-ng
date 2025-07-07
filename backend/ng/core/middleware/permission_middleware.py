@@ -1,19 +1,10 @@
 from functools import wraps
-from flask import request, g
-from sqlalchemy.exc import IntegrityError
+from flask import request
 from CTFd.utils.user import get_current_user
-from CTFd.models import db
 from ..utils.api_responses import error_response
 from ..utils.logger import get_logger
-from ...permissions.models.UserRole import UserRole
 from ...permissions.controllers.get_team_management_permissions import get_team_management_permissions
 from ...permissions.controllers.get_user_permissions import get_user_permissions
-from ...permissions.models.Role import Role
-from .utils import (
-    params_check_valid,
-    get_param_values,
-    filter_model_by_fields,
-)
 
 logger = get_logger(__name__)
 

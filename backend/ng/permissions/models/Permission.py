@@ -1,5 +1,4 @@
 from CTFd.models import db
-from .RolePermission import RolePermission
 
 class Permission(db.Model):
     __tablename__ = "ng_permissions"

@@ -20,5 +20,5 @@ def get_user_permissions(user):
 
     return {
         "success": True,
-        "permissions": list(set(permissions))  # Remove duplicates
+        "permissions": list(set(permissions))
     }

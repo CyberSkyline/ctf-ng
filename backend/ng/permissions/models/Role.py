@@ -1,6 +1,5 @@
 from CTFd.models import db
 from sqlalchemy.ext.associationproxy import association_proxy
-from ...user.models.User import User
 from .RolePermission import RolePermission
 from .Permission import Permission
 
@@ -53,7 +52,9 @@ class Role(db.Model):
         Returns:
             list: List of User instances with the specified permission
         """
+        #need to import UserRole and User here to avoid circular imports
         from .UserRole import UserRole
+        from ...user.models.User import User
         return User.query.join(User.user_roles).join(UserRole.role).filter(Role.name == role_name).all()
 
     @classmethod
