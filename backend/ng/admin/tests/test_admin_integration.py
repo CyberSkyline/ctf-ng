@@ -34,13 +34,3 @@ class TestAdminIntegration:
             assert "success" in data
 
         assert response.status_code != 404, "Admin stats endpoint not found"
-
-    def test_admin_cleanup_endpoint(self, admin_client):
-        """Test admin cleanup endpoint."""
-        response = admin_client.post("/ng/admin/cleanup")
-
-        if response.status_code == 200:
-            data = response.get_json()
-            assert "success" in data
-
-        assert response.status_code != 404, "Admin cleanup endpoint not found"

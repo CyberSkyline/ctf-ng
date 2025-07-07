@@ -5,7 +5,7 @@ Hypothetical Validation tests for event creation
 from datetime import timedelta
 import pytest
 from ...core.exceptions import ValidationError
-from ...core.validation import validate_event_creation
+from ..models.Event import Event
 from ... import config
 from ...core.utils import utc_now
 
@@ -20,7 +20,7 @@ class TestEventTimeConstraints:
         future_start = (now + timedelta(hours=1)).isoformat()
         future_end = (now + timedelta(hours=2)).isoformat()
 
-        result = validate_event_creation(
+        result = Event.validate(
             {
                 "name": "Test Event",
                 "max_team_size": 4,
@@ -31,7 +31,7 @@ class TestEventTimeConstraints:
         assert result is not None
 
         with pytest.raises(ValidationError) as exc_info:
-            validate_event_creation(
+            Event.validate(
                 {
                     "name": "Test Event",
                     "max_team_size": 4,
@@ -48,15 +48,15 @@ class TestEventTimeConstraints:
         now = utc_now()
         future_time = (now + timedelta(hours=1)).isoformat()
 
-        result = validate_event_creation({"name": "Test Event", "max_team_size": 4})
+        result = Event.validate({"name": "Test Event", "max_team_size": 4})
         assert result is not None
 
         with pytest.raises(ValidationError) as exc_info:
-            validate_event_creation({"name": "Test Event", "max_team_size": 4, "start_time": future_time})
+            Event.validate({"name": "Test Event", "max_team_size": 4, "start_time": future_time})
         assert "time_constraint" in exc_info.value.errors
 
         with pytest.raises(ValidationError) as exc_info:
-            validate_event_creation({"name": "Test Event", "max_team_size": 4, "end_time": future_time})
+            Event.validate({"name": "Test Event", "max_team_size": 4, "end_time": future_time})
         assert "time_constraint" in exc_info.value.errors
 
 
@@ -67,29 +67,29 @@ class TestEventBusinessRules:
         """Test edge cases for event name validation."""
 
         with pytest.raises(ValidationError) as exc_info:
-            validate_event_creation({"name": "", "max_team_size": 4})
+            Event.validate({"name": "", "max_team_size": 4})
         assert "name" in exc_info.value.errors
 
         with pytest.raises(ValidationError) as exc_info:
-            validate_event_creation({"name": "   ", "max_team_size": 4})
+            Event.validate({"name": "   ", "max_team_size": 4})
         assert "name" in exc_info.value.errors
 
-        result = validate_event_creation({"name": "イベント2024 🎯", "max_team_size": 4})
+        result = Event.validate({"name": "イベント2024 🎯", "max_team_size": 4})
         assert result is not None
 
         if hasattr(config, "EVENT_NAME_MAX_LENGTH"):
             long_name = "A" * (config.EVENT_NAME_MAX_LENGTH + 1)
             with pytest.raises(ValidationError) as exc_info:
-                validate_event_creation({"name": long_name, "max_team_size": 4})
+                Event.validate({"name": long_name, "max_team_size": 4})
             assert "name" in exc_info.value.errors
 
     def test_event_description_length_limits(self):
         """Test event description validation."""
 
-        result = validate_event_creation({"name": "Test Event", "max_team_size": 4})
+        result = Event.validate({"name": "Test Event", "max_team_size": 4})
         assert result is not None
 
-        result = validate_event_creation(
+        result = Event.validate(
             {
                 "name": "Test Event",
                 "max_team_size": 4,
@@ -101,21 +101,21 @@ class TestEventBusinessRules:
         if hasattr(config, "EVENT_DESCRIPTION_MAX_LENGTH"):
             long_desc = "A" * (config.EVENT_DESCRIPTION_MAX_LENGTH + 1)
             with pytest.raises(ValidationError) as exc_info:
-                validate_event_creation({"name": "Test Event", "max_team_size": 4, "description": long_desc})
+                Event.validate({"name": "Test Event", "max_team_size": 4, "description": long_desc})
             assert "description" in exc_info.value.errors
 
     def test_event_max_team_size_minimum_value(self):
         """Test that max_team_size has minimum value of 1."""
 
-        result = validate_event_creation({"name": "Test Event", "max_team_size": 1})
+        result = Event.validate({"name": "Test Event", "max_team_size": 1})
         assert result is not None
 
         with pytest.raises(ValidationError) as exc_info:
-            validate_event_creation({"name": "Test Event", "max_team_size": 0})
+            Event.validate({"name": "Test Event", "max_team_size": 0})
         assert "max_team_size" in exc_info.value.errors
 
         with pytest.raises(ValidationError) as exc_info:
-            validate_event_creation({"name": "Test Event", "max_team_size": -1})
+            Event.validate({"name": "Test Event", "max_team_size": -1})
         assert "max_team_size" in exc_info.value.errors
 
 
@@ -138,7 +138,7 @@ class TestEventValidationEdgeCases:
         ]
 
         for name in valid_names:
-            result = validate_event_creation({"name": name, "max_team_size": 4})
+            result = Event.validate({"name": name, "max_team_size": 4})
             assert result is not None, f"Valid name '{name}' should pass validation"
 
         # Edge case: only whitespace variations
@@ -146,17 +146,17 @@ class TestEventValidationEdgeCases:
 
         for name in invalid_names:
             with pytest.raises(ValidationError) as exc_info:
-                validate_event_creation({"name": name, "max_team_size": 4})
+                Event.validate({"name": name, "max_team_size": 4})
             assert "name" in exc_info.value.errors, f"Invalid name '{repr(name)}' should fail validation"
 
     def test_event_description_special_cases(self):
         """Test event description validation edge cases."""
         # Empty string vs None
-        result = validate_event_creation({"name": "Test Event", "max_team_size": 4, "description": ""})
+        result = Event.validate({"name": "Test Event", "max_team_size": 4, "description": ""})
         assert result is not None
 
         # Only whitespace
-        result = validate_event_creation({"name": "Test Event", "max_team_size": 4, "description": "   \t   "})
+        result = Event.validate({"name": "Test Event", "max_team_size": 4, "description": "   \t   "})
         assert result is not None
 
         # Multiline description
@@ -169,35 +169,35 @@ class TestEventValidationEdgeCases:
         - Special characters !@#$%
         - Unicode: 🎯 イベント"""
 
-        result = validate_event_creation({"name": "Test Event", "max_team_size": 4, "description": multiline_desc})
+        result = Event.validate({"name": "Test Event", "max_team_size": 4, "description": multiline_desc})
         assert result is not None
 
     def test_team_size_boundary_values(self):
         """Test team size validation at boundary values."""
         # Test minimum valid value
-        result = validate_event_creation({"name": "Test Event", "max_team_size": 1})
+        result = Event.validate({"name": "Test Event", "max_team_size": 1})
         assert result is not None
 
         # Test various valid sizes (within config limit)
         valid_sizes = [1, 2, 3, 4, 5]
         for size in valid_sizes:
-            result = validate_event_creation({"name": f"Test Event {size}", "max_team_size": size})
+            result = Event.validate({"name": f"Test Event {size}", "max_team_size": size})
             assert result is not None, f"Team size {size} should be valid"
 
         # Test maximum team size
-        result = validate_event_creation({"name": "Max Size Event", "max_team_size": config.MAX_TEAM_SIZE})
+        result = Event.validate({"name": "Max Size Event", "max_team_size": config.MAX_TEAM_SIZE})
         assert result is not None
 
         # Test exceeding maximum
         with pytest.raises(ValidationError) as exc_info:
-            validate_event_creation({"name": "Over Max Event", "max_team_size": config.MAX_TEAM_SIZE + 1})
+            Event.validate({"name": "Over Max Event", "max_team_size": config.MAX_TEAM_SIZE + 1})
         assert "max_team_size" in exc_info.value.errors
 
         # Test invalid values
         invalid_sizes = [0, -1, -10, -999]
         for size in invalid_sizes:
             with pytest.raises(ValidationError) as exc_info:
-                validate_event_creation({"name": f"Invalid {size}", "max_team_size": size})
+                Event.validate({"name": f"Invalid {size}", "max_team_size": size})
             assert "max_team_size" in exc_info.value.errors
 
     def test_datetime_edge_cases(self):
@@ -208,7 +208,7 @@ class TestEventValidationEdgeCases:
         start_time = (now + timedelta(hours=1)).isoformat()
         end_time = (now + timedelta(hours=1, seconds=1)).isoformat()
 
-        result = validate_event_creation(
+        result = Event.validate(
             {
                 "name": "Close Times Event",
                 "max_team_size": 4,
@@ -221,7 +221,7 @@ class TestEventValidationEdgeCases:
         # Exactly same times (should fail)
         same_time = (now + timedelta(hours=1)).isoformat()
         with pytest.raises(ValidationError) as exc_info:
-            validate_event_creation(
+            Event.validate(
                 {
                     "name": "Same Times Event",
                     "max_team_size": 4,
@@ -233,7 +233,7 @@ class TestEventValidationEdgeCases:
 
         # Long duration event
         long_end = (now + timedelta(days=365)).isoformat()
-        result = validate_event_creation(
+        result = Event.validate(
             {
                 "name": "Long Event",
                 "max_team_size": 4,
@@ -246,16 +246,16 @@ class TestEventValidationEdgeCases:
     def test_boolean_field_variations(self):
         """Test locked field with various boolean representations."""
         # Explicit boolean values
-        result = validate_event_creation({"name": "Locked Event", "max_team_size": 4, "locked": True})
+        result = Event.validate({"name": "Locked Event", "max_team_size": 4, "locked": True})
         assert result is not None
         assert result["locked"] is True
 
-        result = validate_event_creation({"name": "Unlocked Event", "max_team_size": 4, "locked": False})
+        result = Event.validate({"name": "Unlocked Event", "max_team_size": 4, "locked": False})
         assert result is not None
         assert result["locked"] is False
 
         # Default value when omitted
-        result = validate_event_creation({"name": "Default Lock Event", "max_team_size": 4})
+        result = Event.validate({"name": "Default Lock Event", "max_team_size": 4})
         assert result is not None
         # Should have default value (typically False)
 
@@ -266,7 +266,7 @@ class TestEventValidationEdgeCases:
         future_end = (now + timedelta(hours=4)).isoformat()
 
         # All fields provided
-        result = validate_event_creation(
+        result = Event.validate(
             {
                 "name": "Complete Event",
                 "description": "A complete event with all fields",
@@ -283,7 +283,7 @@ class TestEventValidationEdgeCases:
         assert result["locked"] is True
 
         # Minimal valid event
-        result = validate_event_creation({"name": "Minimal Event", "max_team_size": 1})
+        result = Event.validate({"name": "Minimal Event", "max_team_size": 1})
         assert result is not None
         assert result["name"] == "Minimal Event"
         assert result["max_team_size"] == 1
@@ -301,7 +301,7 @@ class TestEventAdvancedDatetimeValidation:
         future_end_tz = now + timedelta(hours=3)
 
         # Convert to ISO format (framework should handle timezone)
-        result = validate_event_creation(
+        result = Event.validate(
             {
                 "name": "Timezone Event",
                 "max_team_size": 4,
@@ -329,7 +329,7 @@ class TestEventAdvancedDatetimeValidation:
 
         for start_fmt, end_fmt in valid_formats:
             try:
-                result = validate_event_creation(
+                result = Event.validate(
                     {
                         "name": f"Format Test {len(start_fmt)}",
                         "max_team_size": 4,

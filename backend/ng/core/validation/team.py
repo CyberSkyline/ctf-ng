@@ -4,7 +4,7 @@ Team Domain Validation
 
 from typing import Any
 from ..exceptions import ValidationError
-from .framework import BaseValidator
+from ..utils.validator import BaseValidator
 from ... import config
 
 

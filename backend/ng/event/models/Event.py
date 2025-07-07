@@ -9,6 +9,8 @@ from sqlalchemy import CheckConstraint, func
 from CTFd.models import db
 
 from ... import config
+from ...core.utils.validator import BaseValidator
+from ...core.exceptions import ValidationError
 
 
 class Event(db.Model):
@@ -61,11 +63,57 @@ class Event(db.Model):
         return data
 
     @classmethod
+    def validate(
+        cls,
+        data: dict[str, Any]
+    ) -> dict[str, Any]:
+        validator = BaseValidator()
+
+        validator.validate_string(
+            data,
+            "name",
+            config.EVENT_NAME_MAX_LENGTH,
+            required=True,
+            friendly_name="Event name",
+        )
+        validator.validate_string(
+            data,
+            "description",
+            config.EVENT_DESCRIPTION_MAX_LENGTH,
+            required=False,
+            friendly_name="Event description",
+        )
+        validator.validate_integer_range(
+            data,
+            "max_team_size",
+            1,
+            config.MAX_TEAM_SIZE,
+            required=True,
+            friendly_name="Max team size",
+        )
+        validator.validate_boolean(
+            data,
+            "locked",
+            required=False,
+            friendly_name="Locked status",
+        )
+        validator.validate_time_window(
+            data,
+            start_field="start_time",
+            end_field="end_time",
+        )
+
+        is_valid, errors, parsed_data = validator.is_valid()
+        if not is_valid:
+            raise ValidationError("Event data is invalid.", errors=errors)
+        return parsed_data
+
+    @classmethod
     def create_event(
         cls,
         name,
         description=None,
-        max_team_size=None,
+        max_team_size=config.MAX_TEAM_SIZE,
         start_time=None,
         end_time=None,
         locked=False,
@@ -83,8 +131,6 @@ class Event(db.Model):
         Returns:
             Event: The created event instance
         """
-        if max_team_size is None:
-            max_team_size = config.MAX_TEAM_SIZE
 
         event = cls(
             name=name,
@@ -112,6 +158,8 @@ class Event(db.Model):
         for key, value in kwargs.items():
             if hasattr(self, key):
                 setattr(self, key, value)
+
+        Event.validate(self.serialize())
 
         if commit:
             db.session.commit()
