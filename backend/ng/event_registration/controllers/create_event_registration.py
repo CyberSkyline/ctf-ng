@@ -30,4 +30,4 @@ def create_event_registration(
         reg_end_date=reg_end_date,
     )
 
-    return {"event_registration": registration}
+    return registration

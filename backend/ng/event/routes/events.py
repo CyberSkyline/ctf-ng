@@ -21,7 +21,7 @@ from ...core.middleware import (
     admin_endpoint,
     load_event,
 )
-from ...core.docs import (
+from ._docs import (
     LIST_EVENTS_DOC,
     CREATE_EVENT_DOC,
     GET_EVENT_DOC,

@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 
 from ...core import ValidationError
 from ...core.utils import build_conditional_update_data
-from ...core.validation import validate_unique_name, validate_event_max_team_size
+from ...core.validation import validate_unique_name
 from ..models.Event import Event
 
 
@@ -31,9 +31,6 @@ def update_event(
 
     if name:
         validate_unique_name(Event, name, current_object=event)
-
-    if max_team_size is not None:
-        validate_event_max_team_size(event, max_team_size)
 
     update_data = build_conditional_update_data(
         event,

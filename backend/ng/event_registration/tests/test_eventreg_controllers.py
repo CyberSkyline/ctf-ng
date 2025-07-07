@@ -19,7 +19,7 @@ def test_join_event_controller_with_new_team(app, user, open_event_reg):
         g.json_data = {"team_name": "The New Crew"}
         g.user_eligibility = {"can_join": True}
 
-        result_dict = join_event_controller()
+        result_dict = join_event_controller(g.json_data)
 
         assert isinstance(result_dict, dict)
         assert "team" in result_dict
@@ -54,7 +54,7 @@ def test_join_event_controller_with_existing_team(app, user, open_event_reg, tea
         g.json_data = {"invite_code": existing_team.invite_code}
         g.user_eligibility = {"can_join": True}
 
-        result_dict = join_event_controller()
+        result_dict = join_event_controller(g.json_data)
 
         assert isinstance(result_dict, dict)
         assert "team" in result_dict

@@ -10,6 +10,8 @@ from sqlalchemy import CheckConstraint
 
 from CTFd.models import db
 
+from ...core.utils.validator import BaseValidator
+from ...core.exceptions import ValidationError
 
 class EventRegistration(db.Model):
     __tablename__ = "ng_event_registrations"
@@ -63,6 +65,37 @@ class EventRegistration(db.Model):
         }
 
         return data
+
+    @classmethod
+    def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
+        """Validate event registration data.
+
+        Args:
+            data: Data to validate
+
+        Returns:
+            dict: Validated data
+
+        Raises:
+            ValidationError: If validation fails
+        """
+        validator = BaseValidator()
+
+        validator.validate_positive_integer(data, "event_id", required=True)
+        validator.validate_boolean(data, "reg_open", required=False)
+        validator.validate_boolean(data, "public", required=False)
+
+        validator.validate_time_window(
+            data,
+            start_field="reg_start_date",
+            end_field="reg_end_date",
+        )
+
+        is_valid, errors, parsed_data = validator.is_valid()
+        if not is_valid:
+            raise ValidationError("Event registration data is invalid.", errors=errors)
+
+        return parsed_data
 
     @classmethod
     def find_by_event_id(cls, event_id: int) -> EventRegistration | None:
