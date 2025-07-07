@@ -27,7 +27,6 @@ export default function Detail() {
 
   function resolveTicket() {
     // do server call to resolve ticket
-    console.log('Resolved Ticket');
     // onSuccess go back to details page
     navigate('/support');
   }
@@ -48,7 +47,7 @@ export default function Detail() {
         <Heading size="7">Ticket Detail</Heading>
         <Box maxWidth="200px">
           <Button
-            onClick={resolveTicket}
+            onClick={() => resolveTicket()}
           >
             Mark Ticket as Resolved
           </Button>
