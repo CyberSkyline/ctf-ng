@@ -124,7 +124,6 @@ class RoleDetails(Resource):
             return {"success": False, "errors": errors}, 400
 
         response = update_role(role_id, data)
-        print(response)
         if "error" in response:
             return error_response(response["error"], "role", 400)
         return {

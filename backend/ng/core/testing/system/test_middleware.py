@@ -52,7 +52,6 @@ def test_relationship_lookup(middleware_client):
     response = middleware_client.get("/rel", query_string={"event_id": 1, "user_id": 2})
     assert response.status_code == 200
     data = response.get_json()
-    print(data)
     assert data["success"] is True
     assert data["team_name"] == "Second Team"
 
@@ -114,7 +113,6 @@ def test_check_user_can_edit_team(middleware_client):
     This checks if the decorator correctly verifies if a user can edit a team.
     """
     response = middleware_client.get("/check_user_can_edit_team", query_string={"team_id": 1, "user_id": 1})
-    print(response.get_json())
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"] is True
