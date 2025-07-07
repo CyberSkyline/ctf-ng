@@ -76,31 +76,11 @@ GET_MY_ELIGIBILITY_DOC = {
     },
 }
 
-GET_MY_STATS_DOC = {
-    "description": "Get current user's participation statistics across all events including participation rate and team count",
-    "responses": {
-        200: "Success - Returns user participation statistics and metrics",
-        403: "Forbidden - User not authenticated",
-        404: "Not found - User not found in extended system",
-        500: "Internal Server Error",
-    },
-}
-
 # ============ ADMIN USER DATA ACCESS ============
 GET_USER_TEAMS_DOC = {
     "description": "Get any user's team memberships across all events with detailed team and event information (Admin only)",
     "responses": {
         200: "Success - Returns user teams with join dates and team details",
-        403: "Forbidden - Admin access required",
-        404: "Not found - User does not exist",
-        500: "Internal Server Error",
-    },
-}
-
-GET_USER_STATS_DOC = {
-    "description": "Get any user's participation statistics across all events including metrics and participation rate (Admin only)",
-    "responses": {
-        200: "Success - Returns user statistics with participation metrics",
         403: "Forbidden - Admin access required",
         404: "Not found - User does not exist",
         500: "Internal Server Error",

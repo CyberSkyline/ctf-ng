@@ -29,7 +29,7 @@ from ...core.middleware import (
     require_ticket_access,
     load_associations_from_request,
 )
-from ._user_ticket_docs import (
+from ._user_tickets_docs import (
     GET_MY_TICKETS_DOC,
     CREATE_NEW_TICKET_DOC,
     GET_MY_TICKET_DETAILS_DOC,
@@ -66,7 +66,6 @@ class TicketList(Resource):
             data.get("tag_ids"),
         )
         return success_response(result, status_code=201)
-
 
 @user_tickets_namespace.route("/<int:ticket_id>")
 class TicketDetail(Resource):
