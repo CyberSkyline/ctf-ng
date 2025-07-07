@@ -5,13 +5,17 @@ User facing API routes for support ticket operations.
 from flask import request, g
 from flask_restx import Namespace, Resource
 
-from ..controllers import (
-    create_ticket,
+from ..controllers.all_actions import (
     list_tickets,
     get_ticket,
     create_ticket_message,
     update_ticket,
 )
+
+from ..controllers.user_actions import (
+    create_ticket,
+)
+
 from ...core.validation import (
     validate_ticket_creation,
     validate_ticket_message,
@@ -25,7 +29,7 @@ from ...core.middleware import (
     require_ticket_access,
     load_associations_from_request,
 )
-from ...core.docs import (
+from ._user_ticket_docs import (
     GET_MY_TICKETS_DOC,
     CREATE_NEW_TICKET_DOC,
     GET_MY_TICKET_DETAILS_DOC,
@@ -34,13 +38,13 @@ from ...core.docs import (
 )
 
 
-tickets_namespace = Namespace("tickets", description="support ticket operations")
+user_tickets_namespace = Namespace("tickets", description="support ticket operations")
 
 
-@tickets_namespace.route("")
+@user_tickets_namespace.route("")
 class TicketList(Resource):
     @user_endpoint()
-    @tickets_namespace.doc(**GET_MY_TICKETS_DOC)
+    @user_tickets_namespace.doc(**GET_MY_TICKETS_DOC)
     def get(self):
         """Get user tickets"""
         filters = validate_ticket_filters(request.args.to_dict())
@@ -49,7 +53,7 @@ class TicketList(Resource):
 
     @user_endpoint(json_required=True, validation_func=validate_ticket_creation)
     @load_associations_from_request()
-    @tickets_namespace.doc(**CREATE_NEW_TICKET_DOC)
+    @user_tickets_namespace.doc(**CREATE_NEW_TICKET_DOC)
     def post(self):
         """Create ticket"""
         data = g.validated_data
@@ -64,12 +68,12 @@ class TicketList(Resource):
         return success_response(result, status_code=201)
 
 
-@tickets_namespace.route("/<int:ticket_id>")
+@user_tickets_namespace.route("/<int:ticket_id>")
 class TicketDetail(Resource):
     @user_endpoint()
     @load_ticket()
     @require_ticket_access()
-    @tickets_namespace.doc(**GET_MY_TICKET_DETAILS_DOC)
+    @user_tickets_namespace.doc(**GET_MY_TICKET_DETAILS_DOC)
     def get(self, ticket_id):
         """Get ticket details"""
         result = get_ticket(ticket_id, g.user.id, is_admin=False)
@@ -78,7 +82,7 @@ class TicketDetail(Resource):
     @user_endpoint(json_required=True, validation_func=validate_ticket_update)
     @load_ticket()
     @require_ticket_access()
-    @tickets_namespace.doc(**UPDATE_MY_TICKET_DOC)
+    @user_tickets_namespace.doc(**UPDATE_MY_TICKET_DOC)
     def patch(self, ticket_id):
         """Update ticket"""
         data = g.validated_data
@@ -86,12 +90,12 @@ class TicketDetail(Resource):
         return success_response(result)
 
 
-@tickets_namespace.route("/<int:ticket_id>/messages")
+@user_tickets_namespace.route("/<int:ticket_id>/messages")
 class TicketMessages(Resource):
     @user_endpoint(json_required=True, validation_func=validate_ticket_message)
     @load_ticket()
     @require_ticket_access()
-    @tickets_namespace.doc(**CREATE_TICKET_REPLY_DOC)
+    @user_tickets_namespace.doc(**CREATE_TICKET_REPLY_DOC)
     def post(self, ticket_id):
         """Reply to ticket"""
         data = g.validated_data

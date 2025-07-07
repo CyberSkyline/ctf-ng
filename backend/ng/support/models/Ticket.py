@@ -90,14 +90,15 @@ class Ticket(db.Model):
         }
 
         if include_admin_fields:
+            first_admin_response_timestamp = (
+                self.first_admin_response_timestamp.isoformat() if self.first_admin_response_timestamp else None
+            )
             data.update(
                 {
                     "assigned_to": self.assigned_to,
                     "closed_timestamp": self.closed_timestamp.isoformat() if self.closed_timestamp else None,
                     "muted": self.muted,
-                    "first_admin_response_timestamp": self.first_admin_response_timestamp.isoformat()
-                    if self.first_admin_response_timestamp
-                    else None,
+                    "first_admin_response_timestamp": first_admin_response_timestamp,
                 }
             )
 
@@ -111,9 +112,9 @@ class Ticket(db.Model):
         event_id: int | None = None,
         team_id: int | None = None,
         challenge_id: int | None = None,
-        tags: list["TicketTag"] | None = None,
+        tags: list[TicketTag] | None = None,
         commit: bool = True,
-    ) -> "Ticket":
+    ) -> Ticket:
         """Create and persist a new ticket.
 
         Args:
@@ -179,16 +180,9 @@ class Ticket(db.Model):
         if commit:
             db.session.commit()
 
-    def mute_ticket(self, commit: bool = True) -> None:
-        """Mute the ticket."""
-        self.muted = True
-        self.last_updated = utc_now()
-        if commit:
-            db.session.commit()
-
-    def unmute_ticket(self, commit: bool = True) -> None:
-        """Unmute the ticket."""
-        self.muted = False
+    def toggle_mute(self, muted : bool, commit : bool = True) -> None:
+        """Toggle the muted state of the ticket."""
+        self.muted = muted
         self.last_updated = utc_now()
         if commit:
             db.session.commit()
@@ -207,7 +201,7 @@ class Ticket(db.Model):
         if commit:
             db.session.commit()
 
-    def set_first_admin_response(self, timestamp: datetime = None, commit: bool = True) -> None:
+    def set_first_admin_response(self, timestamp: datetime | None = None, commit: bool = True) -> None:
         """Set the first admin response timestamp if not already set."""
         if self.first_admin_response_timestamp is None:
             self.first_admin_response_timestamp = timestamp or utc_now()
@@ -233,7 +227,7 @@ class Ticket(db.Model):
             db.session.commit()
 
     @classmethod
-    def find_by_id(cls, ticket_id: int) -> "Ticket" | None:
+    def find_by_id(cls, ticket_id: int) -> Ticket | None:
         """Find a ticket by ID.
 
         Args:
@@ -347,7 +341,7 @@ class Ticket(db.Model):
         event_id: int | None = None,
         team_id: int | None = None,
         is_admin: bool = False,
-    ) -> list["Ticket"]:
+    ) -> list[Ticket]:
         """Find tickets based on filters and permissions.
 
         Args:

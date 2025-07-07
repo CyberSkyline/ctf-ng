@@ -3,13 +3,12 @@ Assigns a ticket to a support user.
 """
 
 from flask import g
-from typing import Any
 
 from ....core import ValidationError
 from ....core.utils import emit_event
 
 
-def assign_ticket(ticket_id: int, user_id: int, admin_id: int) -> dict[str, Any]:
+def assign_ticket(ticket_id: int, user_id: int, admin_id: int):
     """Assigns a ticket to a support user."""
     ticket = g.ticket
 
@@ -22,9 +21,3 @@ def assign_ticket(ticket_id: int, user_id: int, admin_id: int) -> dict[str, Any]
         data=ticket.serialize(include_admin_fields=True),
         room=f"ticket_{ticket_id}",
     )
-
-    return {
-        "ticket": ticket,
-        "assigned_to": result["user_name"],
-        "assignment_changed": True,
-    }

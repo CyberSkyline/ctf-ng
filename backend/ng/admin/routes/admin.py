@@ -16,7 +16,7 @@ from ...core.middleware import (
     admin_endpoint,
     load_event,
 )
-from ...core.docs import (
+from ..docs.api import (
     GET_DETAILED_STATS_DOC,
     GET_DATA_COUNTS_DOC,
     RESET_ALL_DATA_DOC,
@@ -25,7 +25,6 @@ from ...core.docs import (
 )
 
 admin_namespace = Namespace("admin", description="admin operations")
-
 
 @admin_namespace.route("/stats")
 class AdminStats(Resource):

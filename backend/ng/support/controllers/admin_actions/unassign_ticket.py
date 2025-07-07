@@ -3,12 +3,10 @@ Removes the assignment from a ticket
 """
 
 from flask import g
-from typing import Any
 
 from ....core.utils import emit_event
 
-
-def unassign_ticket(ticket_id: int, admin_id: int) -> dict[str, Any]:
+def unassign_ticket(ticket_id: int, admin_id: int):
     """Removes the assignment from a ticket."""
     ticket = g.ticket
     ticket.unassign()
@@ -18,8 +16,3 @@ def unassign_ticket(ticket_id: int, admin_id: int) -> dict[str, Any]:
         data=ticket.serialize(include_admin_fields=True),
         room=f"ticket_{ticket_id}",
     )
-
-    return {
-        "ticket": ticket,
-        "assignment_removed": True,
-    }
