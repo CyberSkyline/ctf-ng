@@ -61,6 +61,9 @@ test-user:
 test-utils:
 	$(PYTHON_EXEC) -m pytest core/testing/system/ -v
 
+test-challenge:
+	$(PYTHON_EXEC) -m pytest -s challenge/tests/ -v
+
 test-middleware:
 	$(PYTHON_EXEC) -m pytest -m middleware -v
 

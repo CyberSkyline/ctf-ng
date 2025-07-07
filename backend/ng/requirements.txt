@@ -2,4 +2,8 @@ python-dotenv==0.13.0
 flask-restx==1.1.0
 pre-commit==4.2.0
 ruff==0.12.0
-# cyber-skyline-chall-parser>=0.1.6
+cyber-skyline-chall-parser>=0.1.8
+attrs>=25.3.0 
+cattrs>=25.1.1
+faker>=37.4.0
+pyyaml>=6.0.2
