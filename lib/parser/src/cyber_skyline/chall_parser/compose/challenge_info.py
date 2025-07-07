@@ -20,9 +20,10 @@
 from typing import Literal
 from attrs import define, field
 
+import attrs
+from cyber_skyline.chall_parser.compose.answer import Answer
 from cyber_skyline.chall_parser.rewriter import Template
-from cyber_skyline.chall_parser.compose.validators import validate_answer, validate_tabler_icon, validate_template_evals
-
+from cyber_skyline.chall_parser.compose.validators import validate_answer, validate_regex, validate_tabler_icon, validate_template_evals
 
 @define
 class Question:
@@ -31,19 +32,24 @@ class Question:
     Each question defines what the player needs to answer and how many points it's worth.
     """
     name: str  # Developer facing name for the question (e.g., "flag", "password")
-    question: str  # The actual question text presented to players
+    body: str  # The actual question text presented to players
     points: int  # Point value for correctly answering this question (e.g., 10, 100)
-    answer: str | Template = field(validator=validate_answer)  # The correct answer (can be a regex pattern)
+    answer: str | Answer | Template = field(validator=attrs.validators.or_(
+        attrs.validators.and_(attrs.validators.instance_of(str), validate_regex),
+        attrs.validators.and_ (attrs.validators.instance_of(Answer), validate_answer), # type: ignore
+        attrs.validators.instance_of(Template) # type: ignore
+    ))  # The correct answer (can be a regex pattern)
+
     max_attempts: int  # Maximum number of attempts allowed (e.g., 20)
 
 @define
-class TextHint:
+class TextBody:
     """A text-based hint for players."""
     type: Literal['text']
     content: str  # The actual hint text content
 
 # @define
-# class ImageHint:
+# class ImageBody:
 #     type: Literal['image']
 #     source: str
 
@@ -54,7 +60,7 @@ class Hint:
     Hints can be either structured (TextHint) or simple strings.
     Each hint has a preview and costs points when opened.
     """
-    hint: TextHint | str  # The hint content - can be structured or simple text, may in the future support more complex hint types
+    body: TextBody | str  # The hint content - can be structured or simple text, may in the future support more complex hint types
     preview: str  # Short preview text shown before opening the hint
     deduction: int  # Points deducted when this hint is opened (e.g., 10)
 

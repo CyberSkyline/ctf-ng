@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
 # IN THE SOFTWARE.
-from cyber_skyline.chall_parser.compose.challenge_info import ChallengeInfo, Hint, Question, TextHint, Variable
+from cyber_skyline.chall_parser.compose.challenge_info import ChallengeInfo, Hint, Question, TextBody, Variable
 from cyber_skyline.chall_parser.rewriter import Template
 
 class TestQuestion:
@@ -25,7 +25,7 @@ class TestQuestion:
         """Test creating a basic question."""
         question = Question(
             name="flag",
-            question="What is the flag?",
+            body="What is the flag?",
             points=100,
             answer="CTF{test}",
             max_attempts=5
@@ -37,25 +37,25 @@ class TestQuestion:
 class TestHint:
     def test_text_hint(self):
         """Test creating a text hint."""
-        text_hint = TextHint(type="text", content="This is a hint")
+        text_hint = TextBody(type="text", content="This is a hint")
         hint = Hint(
-            hint=text_hint,
+            body=text_hint,
             preview="Hint preview",
             deduction=10
         )
-        assert isinstance(hint.hint, TextHint)
-        assert hint.hint.content == "This is a hint"
+        assert isinstance(hint.body, TextBody)
+        assert hint.body.content == "This is a hint"
         assert hint.deduction == 10
 
     def test_string_hint(self):
         """Test creating a simple string hint."""
         hint = Hint(
-            hint="Simple hint text",
+            body="Simple hint text",
             preview="Simple hint",
             deduction=5
         )
-        assert isinstance(hint.hint, str)
-        assert hint.hint == "Simple hint text"
+        assert isinstance(hint.body, str)
+        assert hint.body == "Simple hint text"
 
 class TestVariable:
     def test_variable_with_template(self):
@@ -84,14 +84,14 @@ class TestChallengeInfo:
         """Test ChallengeInfo with all optional fields populated."""
         question = Question(
             name="comprehensive_test",
-            question="Test question?",
+            body="Test question?",
             points=50,
             answer="test_answer",
             max_attempts=10
         )
         
         hint = Hint(
-            hint=TextHint(type="text", content="Test hint content"),
+            body=TextBody(type="text", content="Test hint content"),
             preview="Test preview",
             deduction=5
         )
