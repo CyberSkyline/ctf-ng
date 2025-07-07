@@ -1,8 +1,9 @@
 import {
-  Badge, Box, Button, Card, Flex, Heading, Separator, Text,
+  Box, Button, Card, Flex, Heading, Separator, Text,
 } from '@radix-ui/themes';
 import { TbArrowLeft } from 'react-icons/tb';
 import { useNavigate } from 'react-router';
+import { StatusBadge } from 'components/StatusBadge';
 // import Editor from 'components/Editor'; //milkdown
 import { map } from 'lodash';
 /* import ReactMarkdown from 'react-markdown';
@@ -10,14 +11,6 @@ import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize'; */
-
-function StatusBadge(status: string) {
-  switch (status) {
-    case 'closed': return <Badge color="jade">Closed</Badge>;
-    case 'inprogress': return <Badge color="blue">In Progress</Badge>;
-    default: return <Badge color="orange">Open</Badge>;
-  }
-}
 
 export default function Detail() {
   const status = 'inprogress';
