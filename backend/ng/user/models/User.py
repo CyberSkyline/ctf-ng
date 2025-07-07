@@ -46,6 +46,37 @@ class User(db.Model):
             "team_count": len(self.team_members),
         }
 
+    def get_all_team_memberships(self):
+        """Gets all team members for a user across all events with optimized query.
+
+        Args:
+            user_id (int): The user ID to get teams for.
+
+        Returns:
+            list: Raw query results (Row objects), empty list if user not found
+        """
+        # Lazy imports to prevent circular dependencies (needed)
+        from ...event.models.Event import Event
+        from ...team.models.Team import Team
+        from ...team.models.TeamMember import TeamMember
+
+        team_members_query = (
+            db.session.query(
+                TeamMember.joined_at,
+                Team.id.label("team_id"),
+                Team.name.label("team_name"),
+                Event.max_team_size.label("max_team_size"),
+                Event.id.label("event_id"),
+                Event.name.label("event_name"),
+                func.count(TeamMember.id).over(partition_by=Team.id).label("team_member_count"),
+            )
+            .join(Team, TeamMember.team_id == Team.id)
+            .join(Event, TeamMember.event_id == Event.id)
+            .filter(TeamMember.user_id == self.id)
+            .all()
+        )
+        return team_members_query
+
     @classmethod
     def create_user(cls, user_id, commit=True):
         """Create and persist a new user extension to the database.
@@ -118,71 +149,6 @@ class User(db.Model):
 
         existing_team_member = TeamMember.query.filter_by(user_id=user_id, event_id=event_id).first()
         return existing_team_member is None
-
-    @classmethod
-    def get_user_teams_data(cls, user_id: int):
-        """Gets all team members for a user across all events with optimized query.
-
-        Args:
-            user_id (int): The user ID to get teams for.
-
-        Returns:
-            list: Raw query results (Row objects), empty list if user not found
-        """
-        # Lazy imports to prevent circular dependencies (needed)
-        from ...event.models.Event import Event
-        from ...team.models.Team import Team
-        from ...team.models.TeamMember import TeamMember
-
-        user = cls.query.get(user_id)
-        if not user:
-            return []
-
-        team_members_query = (
-            db.session.query(
-                TeamMember.joined_at,
-                Team.id.label("team_id"),
-                Team.name.label("team_name"),
-                Event.max_team_size.label("max_team_size"),
-                Event.id.label("event_id"),
-                Event.name.label("event_name"),
-                func.count(TeamMember.id).over(partition_by=Team.id).label("team_member_count"),
-            )
-            .join(Team, TeamMember.team_id == Team.id)
-            .join(Event, TeamMember.event_id == Event.id)
-            .filter(TeamMember.user_id == user_id)
-            .all()
-        )
-        return team_members_query
-
-    @classmethod
-    def get_user_participation_stats(cls, user_id: int) -> dict[str, Any]:
-        """Gets participation stats for a user across all events.
-
-        Args:
-            user_id (int): The user ID to get stats for.
-
-        Returns:
-            dict: Stats data or None if user not found.
-        """
-        # Lazy imports to prevent circular dependencies (needed)
-        from ...event.models.Event import Event
-        from ...team.models.TeamMember import TeamMember
-
-        user = cls.query.get(user_id)
-        if not user:
-            return None
-
-        events_participated_query = db.session.query(TeamMember.event_id.distinct()).filter_by(user_id=user_id).all()
-        events_participated = {event_id for (event_id,) in events_participated_query}
-        total_events = Event.query.count()
-
-        return {
-            "total_team_members": TeamMember.query.filter_by(user_id=user_id).count(),
-            "events_participated": len(events_participated),
-            "total_events_available": total_events,
-            "participation_rate": (len(events_participated) / total_events if total_events > 0 else 0),
-        }
 
     @classmethod
     def get_total_count(cls) -> int:

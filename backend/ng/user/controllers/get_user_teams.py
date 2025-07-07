@@ -2,19 +2,11 @@
 Retrieves all team memberships for a user across all events.
 """
 
-from flask import g
 from typing import Any
+from ..models.User import User
 
-
-def get_user_teams(user_id: int) -> dict[str, Any]:
+def get_user_teams(user: User) -> list[Any]:
     """Gets all team members for a user across all events.
 
-    Returns:
-        dict: List of teams with event info and total count.
     """
-    teams_data = g.user_teams_data
-
-    return {
-        "teams": teams_data,
-        "total_teams": len(teams_data),
-    }
+    return user.get_all_team_memberships()

@@ -6,15 +6,10 @@ from typing import Any
 from ..models.User import User
 
 
-def list_users() -> dict[str, Any]:
+def list_users() -> list[Any]:
     """Gets all users with their detailed information (Admin).
 
-    Returns:
-        dict: List of users and total count.
     """
     users_data = User.get_all_users_with_details()
 
-    return {
-        "users": users_data,
-        "total": len(users_data),
-    }
+    return users_data

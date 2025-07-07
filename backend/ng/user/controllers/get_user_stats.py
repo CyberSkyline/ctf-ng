@@ -14,4 +14,4 @@ def get_user_stats(user_id: int) -> dict[str, Any]:
     """
     stats = g.user_stats
 
-    return {"stats": stats}
+    return stats

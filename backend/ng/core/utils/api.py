@@ -51,14 +51,16 @@ def serialize_model_for_api(obj: Any, is_admin_request: bool = False) -> Any:
 
 
 # Success | Error | Responses
-def success_response(data: dict[str, Any] | list[Any] | None, status_code: int = 200) -> tuple[dict[str, Any], int]:
+def success_response(data: dict[str, Any] | list[Any] | bool | None, status_code: int = 200) -> tuple[dict[str, Any], int]:
     if data is None:
         return {"success": True, "data": None}, status_code
 
     if isinstance(data, dict):
         clean_data = {k: v for k, v in data.items() if k not in ["success", "error"]}
-    else:
+    elif isinstance(data, list):
         clean_data = data
+    else:
+        clean_data = { "data" : data}
     try:
         user_is_admin = is_admin()
     except RuntimeError:
