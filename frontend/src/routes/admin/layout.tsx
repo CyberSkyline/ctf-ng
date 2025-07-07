@@ -13,7 +13,7 @@ import { NavLink, Outlet } from 'react-router';
 function NavItem({
   to,
   label,
-  icon: Icon = undefined,
+  icon : Icon = undefined,
 }: {
     to: string;
     label: string;
@@ -22,7 +22,12 @@ function NavItem({
   return (
     <NavigationMenu.Item>
       <NavigationMenu.Link asChild>
-        <NavLink to={to} end className="flex items-center gap-2 [&[aria-current='page']]:bg-[var(--lime-9)] [&[aria-current='page']]:text-[var(--accent-contrast)] p-2 rounded overflow-hidden">
+        <NavLink
+          to={to}
+          end
+          className="flex items-center gap-2 [&[aria-current='page']]:bg-[var(--lime-9)]
+            [&[aria-current='page']]:text-[var(--accent-contrast)] p-2 rounded overflow-hidden"
+        >
           {Icon && <Icon className="text-xl shrink-0" />}
           <span>{label}</span>
         </NavLink>

@@ -8,7 +8,7 @@ import { TbInfoCircle } from 'react-icons/tb';
  */
 export default function AdminReports() {
   return (
-    <Grid columns={{ initial: '1', md: '2', xl: '3' }} gap="4">
+    <Grid columns={{ initial : '1', md : '2', xl : '3' }} gap="4">
       <Card>
         <Heading>Report 1</Heading>
         <Callout.Root

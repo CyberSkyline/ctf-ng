@@ -42,7 +42,7 @@ export default function UpcomingEvents({
       {heading}
       <Grid
         columns={{
-          initial: '1', xs: '1', sm: '2', lg: '3',
+          initial : '1', xs : '1', sm : '2', lg : '3',
         }}
         gap="4"
       >

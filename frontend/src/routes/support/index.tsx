@@ -18,22 +18,22 @@ export default function Support() {
   const navigate = useNavigate();
   const rowData = [
     {
-      id: '1', subject: 'test ticket 1', event: 'track 1 round 1', status: 'open', created: '2022-02-14', updated: '2022-02-15',
+      id : '1', subject : 'test ticket 1', event : 'track 1 round 1', status : 'open', created : '2022-02-14', updated : '2022-02-15',
     },
     {
-      id: '3', subject: 'test ticket 3', event: 'track 1 round 3', status: 'inprogress', created: '2022-02-14', updated: '2022-02-15',
+      id : '3', subject : 'test ticket 3', event : 'track 1 round 3', status : 'inprogress', created : '2022-02-14', updated : '2022-02-15',
     },
     {
-      id: '2', subject: 'test ticket 2', event: 'track 1 round 2', status: 'closed', created: '2022-02-14', updated: '2022-02-15',
+      id : '2', subject : 'test ticket 2', event : 'track 1 round 2', status : 'closed', created : '2022-02-14', updated : '2022-02-15',
     },
   ];
 
   const colDefs: ColDef<typeof rowData[number]>[] = [
-    { field: 'subject' },
-    { field: 'event' },
-    { field: 'status', cellRenderer: StatusBadge },
-    { field: 'created', valueFormatter: (params) => new Date(params.value).toString() },
-    { field: 'updated', valueFormatter: (params) => new Date(params.value).toString() },
+    { field : 'subject' },
+    { field : 'event' },
+    { field : 'status', cellRenderer : StatusBadge },
+    { field : 'created', valueFormatter : (params) => new Date(params.value).toString() },
+    { field : 'updated', valueFormatter : (params) => new Date(params.value).toString() },
   ];
 
   return (

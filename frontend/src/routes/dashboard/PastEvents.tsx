@@ -19,7 +19,7 @@ export default function PastEvents({ events }: {
       <Heading size="6">Your Past Events</Heading>
       <Grid
         columns={{
-          initial: '1', xs: '1', sm: '2', lg: '3',
+          initial : '1', xs : '1', sm : '2', lg : '3',
         }}
         gap="4"
       >
