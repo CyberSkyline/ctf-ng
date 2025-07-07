@@ -74,7 +74,7 @@ class TestUserProfileValidation:
 
     def test_username_validation(self):
         """Test username validation rules."""
-        from ...core.validation.framework import BaseValidator
+        from ...core.utils.validator import BaseValidator
 
         def validate_username(data):
             validator = BaseValidator()
@@ -113,7 +113,7 @@ class TestUserProfileValidation:
 
     def test_email_validation(self):
         """Test email validation rules."""
-        from ...core.validation.framework import BaseValidator
+        from ...core.utils.validator import BaseValidator
         import re
 
         def validate_email(data):
@@ -197,7 +197,7 @@ class TestUserProfileValidation:
 
     def test_user_registration_validation(self):
         """Test comprehensive user registration validation."""
-        from ...core.validation.framework import BaseValidator
+        from ...core.utils.validator import BaseValidator
 
         def validate_user_registration(data):
             validator = BaseValidator()

@@ -7,8 +7,6 @@ from datetime import datetime, timedelta
 from ...core.exceptions import ValidationError
 from ..models.Demographic import Demographic
 from ..models.EventRegistration import EventRegistration
-from ...core.validation.event_registration import validate_event_registration_creation
-
 
 class TestEventRegistrationModel:
     """Test suite for the EventRegistration SQLAlchemy model."""
@@ -49,7 +47,7 @@ class TestEventRegistrationValidation:
             "reg_end_date": (datetime.utcnow() + timedelta(days=2)).isoformat(),
         }
 
-        parsed_data = validate_event_registration_creation(data)
+        parsed_data = EventRegistration.validate(data)
         assert parsed_data["event_id"] == event.id
 
     def test_validation_invalid_date_order(self, event):
@@ -60,7 +58,7 @@ class TestEventRegistrationValidation:
             "reg_end_date": (datetime.utcnow() + timedelta(days=1)).isoformat(),
         }
         with pytest.raises(ValidationError) as e:
-            validate_event_registration_creation(data)
+            EventRegistration.validate(data)
         assert "reg_end_date" in e.value.errors
         assert "must be after" in e.value.errors["reg_end_date"]
 
@@ -71,5 +69,5 @@ class TestEventRegistrationValidation:
             "reg_start_date": (datetime.utcnow() + timedelta(days=1)).isoformat(),
         }
         with pytest.raises(ValidationError) as e:
-            validate_event_registration_creation(data)
+            EventRegistration.validate(data)
         assert "time_constraint" in e.value.errors

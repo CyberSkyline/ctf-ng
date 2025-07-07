@@ -12,7 +12,6 @@ from .business_rules import (
     validate_update_has_fields,
     validate_event_locked_state,
     validate_captain_leave_rules,
-    validate_event_max_team_size,
     validate_ticket_reply_allowed,
     validate_event_timing,
 )
@@ -34,10 +33,6 @@ from .support import (
     validate_ticket_assignment,
     validate_ticket_filters,
     validate_ticket_tags_update,
-)
-from .event_registration import (
-    validate_event_registration_creation,
-    validate_join_event,
 )
 
 __all__ = [
@@ -62,6 +57,4 @@ __all__ = [
     "validate_update_has_fields",
     "validate_event_timing",
     "validate_ticket_tags_update",
-    "validate_event_registration_creation",
-    "validate_join_event",
 ]

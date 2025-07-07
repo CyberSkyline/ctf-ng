@@ -111,12 +111,12 @@ class Event(db.Model):
     @classmethod
     def create_event(
         cls,
-        name,
-        description=None,
-        max_team_size=config.MAX_TEAM_SIZE,
+        name: str,
+        description: str = "",
+        max_team_size: int = config.MAX_TEAM_SIZE,
         start_time=None,
         end_time=None,
-        locked=False,
+        locked: bool = False,
     ):
         """Create and persist a new event to the database.
 
@@ -245,17 +245,6 @@ class Event(db.Model):
         self.total_members = TeamMember.query.filter_by(event_id=self.id).count()
 
         return {"event": self, "teams": teams_in_event}
-
-    def get_largest_team_size(self) -> int:
-        """Get the size of the largest team in this event.
-
-        Returns:
-            int: Size of the largest team, or 0 if no teams exist.
-        """
-        # Lazy imports to prevent circular dependencies (needed)
-        from ...team.models.Team import Team
-
-        return db.session.query(func.max(Team.member_count)).filter(Team.event_id == self.id).scalar() or 0
 
     def get_team_count(self) -> int:
         """Get the number of teams in this event.

@@ -54,15 +54,6 @@ def validate_captain_leave_rules(team_member, team) -> None:
         if other_members_count > 0:
             raise BusinessLogicError("Captains cannot leave a team that has other members")
 
-
-# Event
-def validate_event_max_team_size(event, new_max_size: int) -> None:
-    """Check if new max team size doesn't conflict with existing teams"""
-    largest_team_size = event.get_largest_team_size()
-    if new_max_size < largest_team_size:
-        raise ValidationError(f"Cannot set max size to {new_max_size}. A team already has {largest_team_size} members")
-
-
 def validate_event_timing(event) -> None:
     """Check if operation is allowed based on event timing"""
     now = utc_now()
