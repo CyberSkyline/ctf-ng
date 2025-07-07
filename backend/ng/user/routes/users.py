@@ -9,7 +9,6 @@ from ..controllers import (
     get_user_teams,
     get_user_teams_in_event,
     can_join_team_in_event,
-    get_user_stats,
     list_users,
     get_user_info,
 )
@@ -20,7 +19,6 @@ from ...core.middleware import (
     load_user,
     load_event,
     load_current_user_as_target,
-    load_user_stats,
     load_user_teams,
     load_user_event_team_data,
     load_user_details,
@@ -32,9 +30,7 @@ from ...core.docs import (
     GET_MY_TEAMS_DOC,
     GET_MY_EVENT_TEAM_DOC,
     GET_MY_ELIGIBILITY_DOC,
-    GET_MY_STATS_DOC,
     GET_USER_TEAMS_DOC,
-    GET_USER_STATS_DOC,
 )
 
 users_namespace = Namespace("users", description="user team operations")
@@ -89,21 +85,7 @@ class UserEventEligibility(Resource):
         result = can_join_team_in_event(g.user.id, event_id)
         return success_response(result)
 
-
-@users_namespace.route("/me/stats")
-class UserStats(Resource):
-    @user_endpoint()
-    @load_current_user_as_target()
-    @load_user_stats()
-    @users_namespace.doc(**GET_MY_STATS_DOC)
-    def get(self):
-        """Get my stats"""
-        result = get_user_stats(g.user.id)
-        return success_response(result)
-
-
 # ============ ADMIN ENDPOINTS FOR MANAGING OTHER USERS ============
-
 
 @users_namespace.route("/all")
 class UserList(Resource):
@@ -124,16 +106,4 @@ class AdminUserTeams(Resource):
     def get(self, user_id):
         """Get any user's teams"""
         result = get_user_teams(user_id)
-        return success_response(result)
-
-
-@users_namespace.route("/<int:user_id>/stats")
-class AdminUserStats(Resource):
-    @admin_endpoint()
-    @load_user()
-    @load_user_stats()
-    @users_namespace.doc(**GET_USER_STATS_DOC)
-    def get(self, user_id):
-        """Get any user's stats"""
-        result = get_user_stats(user_id)
         return success_response(result)
