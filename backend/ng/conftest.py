@@ -376,3 +376,18 @@ def user_with_roles(db_session):
     assign_role_to_user(user.id, role2.name)
 
     return user
+
+@pytest.fixture
+def permissions(db_session):
+
+    if db_session is None:
+        return None
+
+    # Create some permissions
+    permission1 = Permission.create_permission("TEST_PERMISSION_1", "Test Permission 1")
+    permission2 = Permission.create_permission("TEST_PERMISSION_2", "Test Permission 2")
+    permission3 = Permission.create_permission("TEST_PERMISSION_3", "Test Permission 3")
+
+    db_session.commit()
+
+    return [permission1, permission2, permission3]

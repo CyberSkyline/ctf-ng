@@ -16,7 +16,7 @@ class Role(db.Model):
         return f"<Role {self.name}>"
 
     @classmethod
-    def create_role(cls, name: str):
+    def create_role(cls, name: str, permissions: list[Permission] = None):
         """Create and persist a new role to the database.
 
         Args:
@@ -25,7 +25,7 @@ class Role(db.Model):
         Returns:
             Role: The created role instance
         """
-        role = cls(name=name)
+        role = cls(name=name, permissions=permissions or [])
         db.session.add(role)
         db.session.commit()
         return role
@@ -55,6 +55,18 @@ class Role(db.Model):
         """
         from .UserRole import UserRole
         return User.query.join(User.user_roles).join(UserRole.role).filter(Role.name == role_name).all()
+
+    @classmethod
+    def get_role_by_name(cls, name: str):
+        """Retrieve a role by its name.
+
+        Args:
+            name (str): Name of the role
+
+        Returns:
+            Role: The role instance if found, else None
+        """
+        return cls.query.filter_by(name=name).first()
 
 
 

@@ -5,6 +5,7 @@ from .update_role import update_role
 from .get_user_roles import get_user_roles
 from .update_user_roles import update_user_roles
 from .get_user_permissions import get_user_permissions
+from .create_role import create_role
 
 __all__ = [
     "get_team_management_permissions",
@@ -13,5 +14,6 @@ __all__ = [
     "update_role",
     "get_user_roles",
     "update_user_roles"
-    "get_user_permissions"
+    "get_user_permissions",
+    "create_role"
 ]

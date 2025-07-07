@@ -49,7 +49,6 @@ def check_user_can_edit_team(f):
     Decorator to check if the current user can edit the specified team.
     The team ID is expected to be provided in the request parameters.
 
-    If the user does not have permission, an error response is returned.
     """
 
     @wraps(f)

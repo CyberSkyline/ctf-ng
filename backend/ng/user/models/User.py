@@ -251,3 +251,15 @@ class User(db.Model):
             "roles": [role.serialize() for role in self.roles],
             "team_members": [tm.serialize() for tm in self.team_members],
         }
+
+    def get_permissions(self) -> list[str]:
+        """Get all permissions for the user by aggregating from roles.
+
+        Returns:
+            list[str]: List of permission names assigned to the user
+        """
+        permissions = set()
+        for role in self.roles:
+            for permission in role.permissions:
+                permissions.add(permission.name)
+        return list(permissions)

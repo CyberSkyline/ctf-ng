@@ -21,3 +21,5 @@ def assign_role_to_user(user_id, role_name):
         raise ValueError(f"Role '{role_name}' does not exist")
 
     UserRole.assign_role_to_user_by_id(user_id, role.id)
+
+    return {"success": True, "role": role}

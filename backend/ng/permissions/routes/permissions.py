@@ -9,7 +9,7 @@ from ..models.Role import Role
 from ..models.UserRole import UserRole
 from ...user.models.User import User
 from ...core.utils.domain_validators import validate_role_update, validate_user_role_update
-from ..controllers import get_role_details, update_role, get_user_roles, assign_role_to_user, update_user_roles
+from ..controllers import get_role_details, update_role, get_user_roles, assign_role_to_user, update_user_roles, create_role
 
 
 permissions_namespace = Namespace("permissions", description="Permissions management")
@@ -17,6 +17,47 @@ logger = get_logger(__name__)
 
 
 
+
+@permissions_namespace.route("/roles/create")
+class CreateRole(Resource):
+    """
+    Resource to create a new role with permissions.
+    """
+    @authed_only
+    @admins_only
+    @json_body_required
+    @permissions_namespace.doc(
+        description="Create a new role with permissions",
+        responses={
+            201: "Role created successfully",
+            400: "Bad Request - Invalid data",
+            500: "Internal Server Error - Could not create role"
+        },
+        body={
+            "name": "Name of the role",
+            "description": "Description of the role",
+            "permissions": "List of permission names to assign to the role"
+        }
+    )
+    def post(self):
+        """
+        Create a new role with permissions.
+        """
+        data = g.json_data
+        if not data:
+            return error_response("No data provided", "data", 400)
+
+        is_valid, errors = validate_role_update(data)
+        if not is_valid:
+            return {"success": False, "errors": errors}, 400
+
+        response = create_role(data.get("name"), data.get("permissions", []))
+        if "error" in response:
+            return error_response(response["error"], "role", 400)
+        return {
+            "success": True,
+            "role": response.get("role").serialize(),
+        }   
 
 @permissions_namespace.route("/<int:role_id>/details")
 class RoleDetails(Resource):
