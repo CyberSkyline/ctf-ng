@@ -2,26 +2,23 @@
 Creates event registration configuration.
 """
 
-from typing import Any
-from flask import g
 from datetime import datetime
 
+from ...event.models.Event import Event
 from ..models.EventRegistration import EventRegistration
 
-
 def create_event_registration(
+    event : Event,
     public: bool = False,
     reg_open: bool = True,
     reg_start_date: datetime | None = None,
     reg_end_date: datetime | None = None,
-) -> dict[str, Any]:
+) -> EventRegistration:
     """Create a new event registration for the specified event.
 
     Returns:
-        dict: Created event registration data
+        EventRegistration: The created event registration object
     """
-    event = g.event
-
     registration = EventRegistration.create_event_registration(
         event_id=event.id,
         public=public,

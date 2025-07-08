@@ -141,7 +141,7 @@ class Team(db.Model):
         if commit:
             db.session.commit()
 
-    def add_member(self, user_id: int, role: TeamRole, commit=True):
+    def add_member(self, user_id: int, role: TeamRole = TeamRole.MEMBER, commit=True):
         """Add a member to the team.
 
         Args:
@@ -172,7 +172,7 @@ class Team(db.Model):
         return member
 
     @classmethod
-    def get_all_teams_for_admin(cls):
+    def get_all_teams_for_admin(cls) -> list[Team]:
         """Gets all teams for admin purposes.
 
         Returns:
@@ -181,7 +181,7 @@ class Team(db.Model):
         return cls.query.order_by(cls.id).all()
 
     @classmethod
-    def find_by_id(cls, team_id: int):
+    def find_by_id(cls, team_id: int) -> Team | None:
         """Find a team by ID.
 
         Args:
@@ -193,7 +193,7 @@ class Team(db.Model):
         return cls.query.get(team_id)
 
     @classmethod
-    def find_by_invite_code(cls, invite_code: str):
+    def find_by_invite_code(cls, invite_code: str) -> Team | None:
         """Find a team by invite code.
 
         Args:
@@ -205,7 +205,7 @@ class Team(db.Model):
         return cls.query.filter_by(invite_code=invite_code).first()
 
     @classmethod
-    def find_by_name_and_event(cls, name: str, event_id: int):
+    def find_by_name_and_event(cls, name: str, event_id: int) -> Team | None:
         """Find a team by name within a specific event.
 
         Args:
@@ -218,7 +218,7 @@ class Team(db.Model):
         return cls.query.filter_by(name=name, event_id=event_id).first()
 
     @classmethod
-    def find_all_by_event(cls, event_id: int) -> list["Team"]:
+    def find_all_by_event(cls, event_id: int) -> list[Team]:
         """Find all teams in a specific event.
 
         Args:
@@ -326,8 +326,9 @@ class Team(db.Model):
         name: str,
         event_id: int,
         creator_id: int,
-        invite_code: str,
-        ranked: bool = False,
+        invite_code: str | None = None,
+        ranked: bool = True,
+        commit: bool = True
     ) -> Team:
         """
         Creates a team, assigns the creator as captain, and creates a demographic
@@ -343,7 +344,7 @@ class Team(db.Model):
                 event_id=event_id,
                 ranked=ranked,
                 invite_code=invite_code,
-                commit=False,
+                commit=commit,
             )
 
             TeamMember.create_team_member(
@@ -351,21 +352,16 @@ class Team(db.Model):
                 team_id=team.id,
                 event_id=event_id,
                 role=TeamRole.CAPTAIN,
-                commit=False,
+                commit=commit,
             )
 
-            db.session.commit()
+            if commit:
+                db.session.commit()
             return team
 
-        except IntegrityError as e:
+        except Exception as e:
             db.session.rollback()
-            if "uq_team_event_name" in str(e.orig):
-                raise ConflictError(f"A team with the name '{name}' already exists in this event.")
             raise e
-
-        except Exception:
-            db.session.rollback()
-            raise
 
     def remove_member_and_regenerate_code(self, member_id: int) -> None:
         """Remove a team member and regenerate invite code in single transaction."""

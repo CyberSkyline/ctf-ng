@@ -68,9 +68,9 @@ class EventDetail(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
     @events_namespace.doc(**GET_EVENT_DOC)
-    def get(self, event_id):
+    def get(self, event):
         """Get event details"""
-        result = get_event_info(event_id)
+        result = get_event_info(event)
         return success_response(result)
 
     @admin_endpoint(json_required=True, validation_func=Event.validate)
