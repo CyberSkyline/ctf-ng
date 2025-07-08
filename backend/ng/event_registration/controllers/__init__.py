@@ -6,6 +6,9 @@ from .join_event_existing_team import join_event_existing_team
 from .join_event_new_team import join_event_new_team
 from .get_user_demographic import get_user_demographic
 from .create_event_registration import create_event_registration
+from .get_event_registration import get_event_registration
+from .update_event_registration import update_event_registration
+from .get_events_available_for_registration import get_events_available_for_registration
 
 
 __all__ = [
@@ -13,4 +16,7 @@ __all__ = [
     "join_event_existing_team",
     "join_event_new_team",
     "get_user_demographic",
+    "get_event_registration",
+    "update_event_registration",
+    "get_events_available_for_registration"
 ]

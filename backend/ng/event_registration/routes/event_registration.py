@@ -3,8 +3,9 @@ from ...core.utils.logger import get_logger
 from CTFd.utils.decorators import authed_only
 from flask import g
 from ...core.middleware import json_body_required, handle_integrity_error, authed_user_required, event_joinable
-from ..controllers import join_event_new_team, join_event_existing_team, create_event_registration
+from ..controllers import join_event_new_team, join_event_existing_team, create_event_registration, get_event_registration, update_event_registration
 from ..controllers.get_user_demographic import get_user_demographic
+from ..controllers.get_events_available_for_registration import get_events_available_for_registration
 from ...core.utils.domain_validators import validate_join_event, validate_event_registration_creation
 from CTFd.utils.decorators import admins_only
 
@@ -180,4 +181,111 @@ class CreateRegistrationPeriod(Resource):
         return {
             "success": True,
             "event_registration": response["event_registration"].serialize(),
+        }, 200
+
+@event_reg_namespace.route("/<int:event_id>/registration")
+class EventRegistration(Resource):
+    @authed_only
+    @authed_user_required
+    @event_reg_namespace.doc(
+        description="Get the registration period for an event",
+        params={"event_id": "The ID of the event to get the registration period for"},
+        responses={
+            200: "Success - Registration period retrieved",
+            400: "Bad Request - Missing parameters or error in retrieval",
+            403: "Forbidden - User not authenticated",
+            404: "Not Found - Event does not exist"
+        }
+    )
+    def get(self, event_id):
+        """Get the registration period for an event"""
+        if not event_id:
+            return {"success": False, "error": "Missing event_id"}, 400
+
+        response = get_event_registration(event_id)
+
+        if not response["success"]:
+            logger.warning(
+                "Get event registration failed",
+                extra={"context": {"event_id": event_id, "error": response["error"]}},
+            )
+            return {"success": False, "error": response["error"]}, 400
+
+        return {
+            "success": True,
+            "event_registration": response["event_registration"].serialize(),
+        }, 200
+    @authed_only
+    @authed_user_required
+    @admins_only
+    @json_body_required
+    @event_reg_namespace.doc(
+        description="Update the registration period for an event",
+        params={"event_id": "The ID of the event to update the registration period for"},
+        responses={
+            200: "Success - Registration period updated",
+            400: "Bad Request - Missing parameters or error in update",
+            403: "Forbidden - User not authenticated or not an admin",
+            404: "Not Found - Event does not exist"
+        }
+    )
+    def patch(self, event_id):
+        """Update the registration period for an event"""
+        data = g.json_data
+
+        if not event_id:
+            return {"success": False, "error": "Missing event_id"}, 400
+
+
+        is_valid, errors = validate_event_registration_creation(data)
+        if not is_valid:
+            logger.warning(
+                "Update event registration failed - validation errors",
+                extra={"context": {"event_id": event_id, "errors": errors}},
+            )
+            return {"success": False, "error": errors}, 400
+
+
+        response = update_event_registration(event_id, data)
+
+        if not response["success"]:
+            logger.warning(
+                "Update event registration failed",
+                extra={"context": {"event_id": event_id, "error": response["error"]}},
+            )
+            return {"success": False, "error": response["error"]}, 400
+
+        return {
+            "success": True,
+            "event_registration": response["event_registration"].serialize(),
+        }, 200
+
+
+@event_reg_namespace.route("/events_available")
+class EventsAvailable(Resource):
+    @authed_only
+    @authed_user_required
+    @event_reg_namespace.doc(
+        description="Get all events available for registration",
+        responses={
+            200: "Success - List of events available for registration",
+            403: "Forbidden - User not authenticated"
+        }
+    )
+    def get(self):
+        """Get all events available for registration"""
+
+        response = get_events_available_for_registration()
+
+
+        if not response["success"]:
+            logger.warning(
+                "Get available events failed",
+                extra={"context": {"error": response["error"]}},
+            )
+            return {"success": False, "error": response["error"]}, 400
+
+        return {
+            "success": True,
+            "events": [event.serialize() for event in response["events"]],
         }, 200

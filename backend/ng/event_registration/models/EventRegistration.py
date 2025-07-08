@@ -10,6 +10,8 @@ class EventRegistration(db.Model):
     reg_start_date = db.Column(db.DateTime, nullable=True)
     reg_end_date = db.Column(db.DateTime, nullable=True)
 
+    event = db.relationship('Event', backref='registration', lazy='joined')
+
 
 
     __table_args__ = (
@@ -52,6 +54,57 @@ class EventRegistration(db.Model):
         db.session.add(registration)
         db.session.commit()
         return registration
+
+
+    @classmethod
+    def get_event_registration_by_event_id(cls, event_id):
+        """Retrieve an event registration by its event ID.
+
+        Args:
+            event_id (int): The ID of the event to retrieve registration for.
+
+        Returns:
+            EventRegistration: The event registration instance or None if not found.
+        """
+        return cls.query.filter_by(event_id=event_id).first()
+
+
+    @classmethod
+    def get_events_available_for_registration(cls):
+        """Retrieve all events that are available for registration.
+
+        Returns:
+            list: A list of EventRegistration instances that have registration open and valid date ranges.
+        """
+        return cls.query.filter_by(reg_open=True).filter(
+            (cls.reg_start_date.is_(None) | (cls.reg_start_date <= db.func.now())) &
+            (cls.reg_end_date.is_(None) | (cls.reg_end_date >= db.func.now()))
+        ).all()
+
+
+    def update_registration(self, public=None, reg_open=None, reg_start_date=None, reg_end_date=None):
+        """Update the event registration instance with new values.
+
+        Args:
+            public (bool, optional): Whether registration is public
+            reg_open (bool, optional): Whether registration is open
+            reg_start_date (datetime, optional): Registration start date
+            reg_end_date (datetime, optional): Registration end date
+
+        Returns:
+            EventRegistration: The updated event registration instance.
+        """
+        if public is not None:
+            self.public = public
+        if reg_open is not None:
+            self.reg_open = reg_open
+        if reg_start_date is not None:
+            self.reg_start_date = reg_start_date
+        if reg_end_date is not None:
+            self.reg_end_date = reg_end_date
+
+        db.session.commit()
+        return self
 
     def serialize(self):
         """Serialize an event registration instance to a dictionary.

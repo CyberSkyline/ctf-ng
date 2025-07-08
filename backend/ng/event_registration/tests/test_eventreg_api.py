@@ -133,3 +133,79 @@ def test_create_registration_only_admin(logged_in_client, event):
     response = logged_in_client.post("/ng/event_registration/create_registration_period", json=data)
     assert response.status_code == 403  # Forbidden
     assert "You don't have the permission" in response.get_json()["message"]
+
+
+def test_get_event_registration(logged_in_client, event_registration):
+    """Check that getting event registration details works."""
+    print(event_registration.event_id)
+    response = logged_in_client.get(f"/ng/event_registration/{event_registration.event_id}/registration")
+    assert response.status_code == 200
+    data = response.get_json()
+    print(data)
+    assert data["success"] is True
+    assert "event_registration" in data
+    assert data["event_registration"]["event_id"] == event_registration.event_id
+    assert data["event_registration"]["reg_open"] is True
+
+def test_patch_event_registration(admin_client, event_registration):
+    """Check that patching event registration details works."""
+    data = {
+        "reg_open": False,
+        "reg_start_date": (datetime.utcnow() + timedelta(days=1)).isoformat(),
+        "reg_end_date": (datetime.utcnow() + timedelta(days=2)).isoformat()
+    }
+    response = admin_client.patch(f"/ng/event_registration/{event_registration.event_id}/registration", json=data)
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["event_registration"]["reg_open"] is False
+
+def test_patch_event_registration_invalid_dates(admin_client, event_registration):
+    """Check that patching event registration with invalid dates fails."""
+    data = {
+        "reg_open": True,
+        "reg_start_date": (datetime.utcnow() + timedelta(days=2)).isoformat(),
+        "reg_end_date": (datetime.utcnow() + timedelta(days=1)).isoformat()  # End date before start date
+    }
+    response = admin_client.patch(f"/ng/event_registration/{event_registration.event_id}/registration", json=data)
+    assert response.status_code == 400
+    assert "Start time must be before end time" in response.get_json()["error"]["reg_end_date"]
+
+
+def test_patch_event_registration_not_admin(logged_in_client, event_registration):
+    """Check that non-admin users cannot patch event registration details."""
+    data = {
+        "reg_open": False,
+        "reg_start_date": (datetime.utcnow() + timedelta(days=1)).isoformat(),
+        "reg_end_date": (datetime.utcnow() + timedelta(days=2)).isoformat()
+    }
+    response = logged_in_client.patch(f"/ng/event_registration/{event_registration.event_id}/registration", json=data)
+    assert response.status_code == 403  # Forbidden
+    assert "You don't have the permission" in response.get_json()["message"]
+
+def test_patch_event_invalid_date_format(admin_client, event_registration):
+    """Check that patching event registration with invalid date format fails."""
+    data = {
+        "reg_open": True,
+        "reg_start_date": "invalid-date-format",
+    }
+    response = admin_client.patch(f"/ng/event_registration/{event_registration.event_id}/registration", json=data)
+    print(response.get_json())
+    assert response.status_code == 400
+    assert "valid datetime" in response.get_json()["error"]["reg_start_date"]
+
+
+def test_get_events_available_for_registration(logged_in_client, event_registration, past_event_registration, closed_event_registration):
+    """Check that getting events available for registration works."""
+    response = logged_in_client.get("/ng/event_registration/events_available")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert "events" in data
+    assert len(data["events"]) > 0
+    # Check if the event_registration is in the list of events
+    assert any(event["id"] == event_registration.event_id for event in data["events"])
+    # Check if the past_event_registration is not in the list of events
+    assert not any(event["id"] == past_event_registration.event_id for event in data["events"])
+    # Check if the closed_event_registration is not in the list of events
+    assert not any(event["id"] == closed_event_registration.event_id for event in data["events"])

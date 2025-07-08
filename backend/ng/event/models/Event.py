@@ -262,3 +262,19 @@ class Event(db.Model):
             int: Total number of events
         """
         return cls.query.count()
+
+    def serialize(self) -> dict[str, Any]:
+        """Serialize the event instance to a dictionary.
+
+        Returns:
+            dict: Serialized event data.
+        """
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "max_team_size": self.max_team_size,
+            "start_time": self.start_time.isoformat() if self.start_time else None,
+            "end_time": self.end_time.isoformat() if self.end_time else None,
+            "locked": self.locked,
+        }

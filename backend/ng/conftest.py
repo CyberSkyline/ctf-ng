@@ -232,6 +232,17 @@ def event2(db_session):
     return event
 
 @pytest.fixture
+def event3(db_session):
+    """Creates a third event for multi-event tests."""
+    if db_session is None:
+        return None
+
+    event = Event(name="Third Event", description="A third event for testing")
+    db_session.add(event)
+    db_session.commit()
+    return event
+
+@pytest.fixture
 def event_registration(event, db_session):
     """Creates an event registration for the given event."""
     if db_session is None:
@@ -244,24 +255,24 @@ def event_registration(event, db_session):
     return result["event_registration"]
 
 @pytest.fixture
-def closed_event_registration(event, db_session):
+def closed_event_registration(event3, db_session):
     """Creates a closed event registration for the given event."""
     if db_session is None:
         return None
 
-    result = create_event_registration(event_id=event.id, reg_open=False)
+    result = create_event_registration(event_id=event3.id, reg_open=False)
     if not result["success"]:
         raise Exception(f"Failed to create event registration: {result.get('error')}")
 
     return result["event_registration"]
 
 @pytest.fixture
-def past_event_registration(event, db_session):
+def past_event_registration(event2, db_session):
     """Creates an event registration for the given event with a past registration period."""
     if db_session is None:
         return None
 
-    result = create_event_registration(event_id=event.id, reg_open=True, reg_start_date=datetime(2020, 1, 1), reg_end_date=datetime(2020, 1, 2))
+    result = create_event_registration(event_id=event2.id, reg_open=True, reg_start_date=datetime(2020, 1, 1), reg_end_date=datetime(2020, 1, 2))
     if not result["success"]:
         raise Exception(f"Failed to create past event registration: {result.get('error')}")
 
