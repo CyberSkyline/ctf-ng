@@ -42,7 +42,6 @@ class Team(db.Model):
     # Required SQLAlchemy pattern: the expression must be named after the property.
     @member_count.expression
     def member_count(cls):
-        # Lazy imports to prevent circular dependencies (needed)
         from .TeamMember import TeamMember
 
         return select(func.count(TeamMember.id)).where(TeamMember.team_id == cls.id).scalar_subquery()
@@ -120,7 +119,7 @@ class Team(db.Model):
     def disband_team(self, commit=True):
         """Delete this team and all its members from the database."""
 
-        # TODO - Throw an error if the team has members
+        # TODO - Throw an error if the team still has remaining members
 
         db.session.delete(self)
         if commit:
@@ -307,28 +306,19 @@ class Team(db.Model):
         empty_teams_query = db.session.query(cls.id, cls.name, cls.event_id).filter(cls.member_count == 0).all()
         return empty_teams_query
 
-    @classmethod
-    def get_full_team_details(cls, team_id: int):
+    def get_full_team_details(self):
         """Gets all details for a team, including event info and member list.
 
-        Args:
-            team_id (int): The ID of the team to fetch.
-
         Returns:
-            dict | None: Team object with related data, or None if not found
+            dict: Team object with related data
         """
-        team = cls.query.get(team_id)
-        if not team:
-            return None
-
-        # Lazy imports to prevent circular dependencies (needed)
         from ...event.models.Event import Event
         from .TeamMember import TeamMember
 
-        event = Event.find_by_id(team.event_id)
-        team_members = TeamMember.find_all_by_team(team_id)
+        event = Event.find_by_id(self.event_id)
+        team_members = TeamMember.find_all_by_team(self.id)
 
-        return {"team": team, "event": event, "team_members": team_members}
+        return {"team": self, "event": event, "team_members": team_members}
 
     @classmethod
     def create_team_with_captain(

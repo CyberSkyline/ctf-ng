@@ -9,7 +9,6 @@ from .get_team_info import get_team_info
 from .join_team import join_team
 from .leave_team import leave_team
 from .list_all_teams import list_all_teams
-from .list_teams_in_event import list_teams_in_event
 from .remove_member import remove_member
 from .transfer_captaincy import transfer_captaincy
 from .update_team import update_team
@@ -18,7 +17,6 @@ __all__ = [
     "create_team",
     "join_team",
     "leave_team",
-    "list_teams_in_event",
     "get_team_info",
     "update_team",
     "disband_team",

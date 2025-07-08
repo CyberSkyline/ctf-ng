@@ -30,11 +30,9 @@ from .resources import (
     load_tags_from_request,
 )
 
-from .check import (
-    require_user_access,
+from .checks import (
     require_ticket_access,
     require_ticket_update,
-    require_team_captain,
     check_team_join_eligibility,
     require_event_is_joinable,
     check_demographic_eligibility,
@@ -65,10 +63,8 @@ __all__ = [
     "load_current_user_as_target",
     "load_tags_from_request",
     # Permission & Logic Checkers
-    "require_user_access",
     "require_ticket_access",
     "require_ticket_update",
-    "require_team_captain",
     "check_team_join_eligibility",
     "require_event_is_joinable",
     "check_demographic_eligibility",

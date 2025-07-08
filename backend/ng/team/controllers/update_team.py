@@ -2,28 +2,22 @@
 Updates team information with proper authorization checks.
 """
 
-from flask import g
-from typing import Any
-
 from ...core.validation import validate_unique_name
 from ...core.utils import build_conditional_update_data
 
 from ..models.Team import Team
 
-
 def update_team(
-    team_id: int,
+    team: Team,
     actor_id: int,
     new_name: str | None = None,
     is_admin: bool = False,
-) -> dict[str, Any]:
+) -> None:
     """Updates team info with auth checks.
 
     Returns:
         dict: Success status and updated team object.
     """
-    team = g.team
-
     if new_name:
         validate_unique_name(
             Team,
@@ -40,8 +34,3 @@ def update_team(
 
     if update_data:
         team.update_name(new_name, commit=True)
-
-    return {
-        "team": team,
-        "updated": True,
-    }

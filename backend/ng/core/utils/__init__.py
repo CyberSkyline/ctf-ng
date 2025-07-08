@@ -36,6 +36,8 @@ def get_models():
     from ...support.models.Ticket import Ticket
     from ...team.models.TeamMember import TeamMember
     from ...support.models.TicketTag import TicketTag
+    from ...event_registration.models.Demographic import Demographic
+    from ...event_registration.models.EventRegistration import EventRegistration
 
     return {
         "User": User,
@@ -44,6 +46,8 @@ def get_models():
         "Ticket": Ticket,
         "TeamMember": TeamMember,
         "TicketTag": TicketTag,
+        "Demographic": Demographic,
+        "EventRegistration": EventRegistration,
     }
 
 __all__ = [

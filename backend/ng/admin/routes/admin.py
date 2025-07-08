@@ -12,9 +12,13 @@ from ..controllers import (
     reset_event_data,
 )
 from ...core.utils import success_response
+from ...core.middleware.loaders import (
+    LoaderType,
+    load_event,
+)
+
 from ...core.middleware import (
     admin_endpoint,
-    load_event,
 )
 from ..docs.api import (
     GET_DETAILED_STATS_DOC,
@@ -57,7 +61,7 @@ class AdminReset(Resource):
 
 @admin_namespace.route("/events/<int:event_id>/reset")
 class AdminEventReset(Resource):
-    @load_event()
+    @load_event(LoaderType.PARAM)
     @admin_namespace.doc(**RESET_EVENT_DATA_DOC)
     def post(self, event_id):
         """Reset event data"""
