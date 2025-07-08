@@ -36,7 +36,6 @@ from ...core.middleware import (
     admin_endpoint,
     load_ticket,
     load_tag,
-    load_associations_from_request,
     load_tags_from_request,
 )
 from ._admin_tickets_docs import (
@@ -89,7 +88,6 @@ class AdminTicketDetail(Resource):
 
     @admin_endpoint(json_required=True, validation_func=validate_ticket_update)
     @load_ticket()
-    @load_associations_from_request()
     @admin_tickets_namespace.doc(**ADMIN_UPDATE_TICKET_DOC)
     def patch(self, ticket_id):
         """Update any ticket"""

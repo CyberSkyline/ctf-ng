@@ -2,10 +2,8 @@
 Contains the business logic for creating and persisting a new event.
 """
 
-from typing import Any
 from datetime import datetime
 
-from ...core.validation import validate_unique_name
 from ..models.Event import Event
 
 
@@ -16,14 +14,12 @@ def create_event(
     start_time: datetime | None = None,
     end_time: datetime | None = None,
     locked: bool = False,
-) -> dict[str, Any]:
+) -> Event:
     """Creates a new training event with the given config.
 
     Returns:
-        dict: Created event data
+        Event: Created event instance
     """
-
-    validate_unique_name(Event, name, error_message=f"Event '{name}' already exists")
 
     event = Event.create_event(
         name=name,

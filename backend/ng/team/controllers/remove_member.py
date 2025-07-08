@@ -3,10 +3,6 @@ Removes a member from a team with captain handling.
 """
 
 # from ...core import BusinessLogicError
-# from ...core.validation import (
-#     validate_event_locked_state,
-#     validate_event_timing,
-# )
 # from ..models.TeamMember import TeamMember
 # from ..models.enums import TeamRole
 
@@ -22,8 +18,6 @@ def remove_member(team_id: int, member_to_remove_id: int, actor_id: int, is_admi
     # team_member_to_remove = g.target_member
 
     # if not is_admin:
-    #     validate_event_locked_state(event, "removing team members")
-    #     validate_event_timing(event)
 
     #     if team.locked:
     #         raise BusinessLogicError(f"Team '{team.name}' is locked and members cannot be removed")

@@ -2,7 +2,6 @@
 Utility functions for common plugin functionality.
 """
 
-from flask import g
 from datetime import datetime, timezone
 
 from .emitters import emit_event

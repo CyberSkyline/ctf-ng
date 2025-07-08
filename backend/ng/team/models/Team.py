@@ -8,7 +8,6 @@ from typing import Any
 from CTFd.models import db
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError
 
 from ... import config
 from ...core.exceptions import ConflictError, ValidationError
@@ -104,12 +103,9 @@ class Team(db.Model):
         Returns:
             Team: The created team instance
         """
-        team = cls(
-            name=name,
-            event_id=event_id,
-            ranked=ranked,
-            invite_code=invite_code,
-        )
+        validated_data = cls.validate(data = { "name": name, "event_id": event_id, "invite_code": invite_code, "ranked": ranked })
+
+        team = cls(**validated_data)
 
         db.session.add(team)
         if commit:
@@ -167,6 +163,7 @@ class Team(db.Model):
             role=role,
         )
 
+        db.session.add(member)
         if commit:
             db.session.commit()
         return member

@@ -9,7 +9,7 @@ from sqlalchemy.engine import Row
 from CTFd.utils.user import is_admin
 
 
-def serialize_model_for_api(obj: Any, is_admin_request: bool = False) -> Any:
+def serialize_model_for_api(obj: Any, is_admin_request: bool | None = False) -> Any:
     """
     Recursively serializes an object for API response with proper datetime handling.
 
@@ -61,12 +61,8 @@ def success_response(data: dict[str, Any] | list[Any] | bool | None = None, stat
         clean_data = data
     else:
         clean_data = { "data" : data}
-    try:
-        user_is_admin = is_admin()
-    except RuntimeError:
-        user_is_admin = False
 
-    serialized_data = serialize_model_for_api(clean_data, is_admin_request=user_is_admin)
+    serialized_data = serialize_model_for_api(clean_data, is_admin_request=is_admin())
 
     return {"success": True, "data": serialized_data}, status_code
 

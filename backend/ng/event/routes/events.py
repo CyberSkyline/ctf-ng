@@ -8,10 +8,8 @@ from flask_restx import Namespace, Resource
 from ..controllers import (
     create_event,
     list_events,
-    get_event_info,
-    update_event,
 )
-from ...team.controllers import list_teams_in_event
+
 from ...core.utils import success_response
 
 from ...event.models.Event import Event
@@ -52,14 +50,7 @@ class EventList(Resource):
     def post(self):
         """Create event"""
         data = g.validated_data
-        result = create_event(
-            data["name"],
-            data.get("description"),
-            data.get("max_team_size"),
-            data.get("start_time"),
-            data.get("end_time"),
-            data.get("locked", False),
-        )
+        result = create_event(**data)
         return success_response(result, status_code=201)
 
 
@@ -70,33 +61,23 @@ class EventDetail(Resource):
     @events_namespace.doc(**GET_EVENT_DOC)
     def get(self, event):
         """Get event details"""
-        result = get_event_info(event)
-        return success_response(result)
+        return success_response(event)
 
     @admin_endpoint(json_required=True, validation_func=Event.validate)
     @load_event(source=LoaderType.PARAM)
     @events_namespace.doc(**UPDATE_EVENT_DOC)
-    def patch(self, event_id):
+    def patch(self, event):
         """Update event"""
         data = g.validated_data
-        result = update_event(
-            event_id,
-            data.get("name"),
-            data.get("description"),
-            data.get("max_team_size"),
-            data.get("start_time"),
-            data.get("end_time"),
-            data.get("locked"),
-        )
-        return success_response(result)
-
+        updated_event = event.update_event(**data, commit=True)
+        return success_response(updated_event)
 
 @events_namespace.route("/<int:event_id>/teams")
 class EventTeams(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
     @events_namespace.doc(**GET_EVENT_TEAMS_DOC)
-    def get(self, event_id):
+    def get(self, event):
         """Get teams in event"""
-        result = list_teams_in_event(event_id)
+        result = event.get_all_teams()
         return success_response(result)

@@ -2,7 +2,6 @@
 Team management API routes.
 """
 
-from flask import g
 from flask_restx import Namespace, Resource
 from backend.ng.core.middleware.loaders import load_team_by_invite_code
 
@@ -53,7 +52,6 @@ class TeamList(Resource):
     # TODO - This should be an admin-only endpoint. Users would create their team via the event registration page
     # @user_endpoint(json_required=True, validation_func=Team.validate)
     # @load_event(LoaderType.BODY)
-    # @check_team_join_eligibility()
     # @teams_namespace.doc(**CREATE_TEAM_DOC)
     # def post(self):
     #     """Create team"""

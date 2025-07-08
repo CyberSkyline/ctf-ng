@@ -6,7 +6,7 @@ from functools import wraps
 from flask import g
 from CTFd.utils.user import get_current_user, is_admin
 from ..exceptions import PermissionError, BusinessLogicError
-from ...core.utils import utc_now, get_models
+from ...core.utils import get_models
 
 def require_ticket_access():
     """Check if current user can access the loaded ticket"""
@@ -46,63 +46,6 @@ def require_ticket_update():
         return decorated_function
 
     return decorator
-
-def require_event_is_joinable():
-    """Ensures the loaded event (in g.event) is open for registration."""
-
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            models = get_models()
-
-            if not hasattr(g, "event"):
-                raise ValueError("Event must be loaded before checking joinability.")
-            event_reg = models["EventRegistration"].query.filter_by(event_id=g.event.id).first()
-            if not event_reg:
-                raise BusinessLogicError("Event registration has not been configured for this event.")
-            if not event_reg.reg_open:
-                raise BusinessLogicError("Event registration is currently closed.")
-            now = utc_now()
-            if event_reg.reg_start_date and now < event_reg.reg_start_date:
-                raise BusinessLogicError("Event registration has not yet started.")
-            if event_reg.reg_end_date and now > event_reg.reg_end_date:
-                raise BusinessLogicError("Event registration has ended.")
-            return f(*args, **kwargs)
-
-        return decorated_function
-
-    return decorator
-
-
-def check_team_join_eligibility():
-    """Special permission check for team joining - loads eligibility data"""
-
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            models = get_models()
-            if not hasattr(g, "event"):
-                raise ValueError("Team and event must be loaded first")
-            current_user = get_current_user()
-            if not current_user:
-                raise PermissionError("Authentication required")
-            can_join = models["User"].check_can_join_team_in_event(current_user.id, g.event.id)
-            current_team_name = None
-            if not can_join:
-                existing_member = models["TeamMember"].find_by_user_and_event(current_user.id, g.event.id)
-                if existing_member:
-                    existing_team = models["Team"].find_by_id(existing_member.team_id)
-                    current_team_name = existing_team.name if existing_team else "Unknown"
-            g.user_eligibility = {
-                "can_join": can_join,
-                "current_team_name": current_team_name,
-            }
-            return f(*args, **kwargs)
-
-        return decorated_function
-
-    return decorator
-
 
 def check_demographic_eligibility():
     """Check if user can register for the event (no existing demographic)"""

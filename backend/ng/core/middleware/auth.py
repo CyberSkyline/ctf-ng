@@ -30,7 +30,6 @@ def api_endpoint(auth_required=True, admin_required=False, json_required=False, 
     Usage:
         @api_endpoint(auth_required=True, json_required=True, validation_func=validate_team_creation)
         @load_event()  # Loads event from route params
-        @check_team_join_eligibility()  # Checks if user can join teams in this event
         def create_team(self, event_id):
             data = g.validated_data  # Already parsed and validated
             event = g.event  # Already loaded

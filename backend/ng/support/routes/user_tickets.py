@@ -27,7 +27,6 @@ from ...core.middleware import (
     user_endpoint,
     load_ticket,
     require_ticket_access,
-    load_associations_from_request,
 )
 from ._user_tickets_docs import (
     GET_MY_TICKETS_DOC,
@@ -52,7 +51,6 @@ class TicketList(Resource):
         return success_response(result)
 
     @user_endpoint(json_required=True, validation_func=validate_ticket_creation)
-    @load_associations_from_request()
     @user_tickets_namespace.doc(**CREATE_NEW_TICKET_DOC)
     def post(self):
         """Create ticket"""

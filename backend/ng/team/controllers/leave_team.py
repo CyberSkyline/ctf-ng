@@ -3,11 +3,6 @@ Removes a user from their current team in an event.
 """
 
 # from ...core import BusinessLogicError
-# from ...core.validation import (
-#     validate_event_locked_state,
-#     validate_captain_leave_rules,
-#     validate_event_timing,
-# )
 # from ..models.TeamMember import TeamMember
 # from ..models.enums import TeamRole
 
@@ -23,13 +18,8 @@ def leave_team() -> None:
     # team = g.team
     # event = g.event
 
-    # validate_event_locked_state(event, "leaving teams")
-    # validate_event_timing(event)
-
     # if team.locked:
     #     raise BusinessLogicError(f"Team '{team.name}' is locked and members cannot leave")
-
-    # validate_captain_leave_rules(team_member, team)
 
     # if team_member.role == TeamRole.CAPTAIN:
     #     other_members_count = TeamMember.count_other_members_in_team(team.id, team_member.id)

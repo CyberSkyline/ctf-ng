@@ -113,7 +113,7 @@ class Event(db.Model):
         cls,
         name: str,
         description: str = "",
-        max_team_size: int = config.MAX_TEAM_SIZE,
+        max_team_size: int | None = config.MAX_TEAM_SIZE,
         start_time=None,
         end_time=None,
         locked: bool = False,
@@ -145,7 +145,7 @@ class Event(db.Model):
         db.session.commit()
         return event
 
-    def update_event(self, commit=True, **kwargs):
+    def update_event(self, commit=True, **kwargs) -> Event:
         """Update event properties and persist to database.
 
         Args:
@@ -163,8 +163,7 @@ class Event(db.Model):
 
         if commit:
             db.session.commit()
-
-        return True
+        return self
 
     def get_all_teams(self):
         from ...team.models.Team import Team
@@ -196,41 +195,14 @@ class Event(db.Model):
         return cls.query.filter_by(name=name).first()
 
     @classmethod
-    def get_events_with_stats(cls):
-        """Gets all events with their team and member stats.
+    def get_all_events(cls) -> list[Event]:
+        """Gets all events
 
         Returns:
-            list: Raw query results (Row objects) with event stats
+            list: List of all <Event> objects in the database.
         """
-        # Lazy imports to prevent circular dependencies (needed)
-        from ...team.models.Team import Team
-        from ...team.models.TeamMember import TeamMember
 
-        event_stats = (
-            db.session.query(
-                cls.id,
-                cls.name,
-                cls.description,
-                cls.start_time,
-                cls.end_time,
-                cls.locked,
-                func.count(Team.id.distinct()).label("team_count"),
-                func.count(TeamMember.id).label("total_members"),
-            )
-            .outerjoin(Team, cls.id == Team.event_id)
-            .outerjoin(TeamMember, cls.id == TeamMember.event_id)
-            .group_by(
-                cls.id,
-                cls.name,
-                cls.description,
-                cls.start_time,
-                cls.end_time,
-                cls.locked,
-            )
-            .all()
-        )
-
-        return event_stats
+        return cls.query.filter_by().all()
 
     def get_event_details_with_teams(self) -> dict[str, Any]:
         """

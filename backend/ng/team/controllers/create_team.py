@@ -6,7 +6,6 @@ from ..models.Team import Team
 # from ...core import BusinessLogicError
 # from ...core.validation import (
 #     validate_unique_name,
-#     validate_event_locked_state,
 # )
 # from ._generate_invite_code import _generate_invite_code
 
@@ -21,8 +20,6 @@ def create_team(name: str, ranked: bool = False) -> Team:
     # event = g.event
     # user = g.user
     # eligibility = g.user_eligibility
-
-    # validate_event_locked_state(event, "new teams")
 
     # if not eligibility["can_join"]:
     #     raise BusinessLogicError("You are already in a team for this event.")

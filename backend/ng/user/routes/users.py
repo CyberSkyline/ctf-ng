@@ -10,19 +10,19 @@ from ..controllers import (
     get_user_team_for_event,
     can_join_event,
     list_users,
-    get_user_info,
 )
 from ...core.utils import success_response
 from ...core.middleware import (
     user_endpoint,
     admin_endpoint,
-    load_user,
-    load_event,
     load_current_user_as_target,
     load_user_teams,
     load_user_event_team_data,
-    load_user_details,
-    check_team_join_eligibility,
+)
+from ...core.middleware.loaders import (
+    LoaderType,
+    load_event,
+    load_user,
 )
 from ..docs.api import (
     LIST_ALL_USERS_DOC,
@@ -34,7 +34,6 @@ from ..docs.api import (
 )
 
 users_namespace = Namespace("users", description="user team operations")
-
 
 @users_namespace.route("/me/teams")
 class UserTeams(Resource):
@@ -52,7 +51,7 @@ class UserTeams(Resource):
 class UserEventTeams(Resource):
     @user_endpoint()
     @load_current_user_as_target()
-    @load_event()
+    @load_event(LoaderType.PARAM)
     @load_user_event_team_data()
     @users_namespace.doc(**GET_MY_EVENT_TEAM_DOC)
     def get(self, event_id):
@@ -65,8 +64,7 @@ class UserEventTeams(Resource):
 class UserEventEligibility(Resource):
     @user_endpoint()
     @load_current_user_as_target()
-    @load_event()
-    @check_team_join_eligibility()
+    @load_event(LoaderType.PARAM)
     @users_namespace.doc(**GET_MY_ELIGIBILITY_DOC)
     def get(self, event_id):
         """Check eligibility"""
@@ -78,13 +76,11 @@ class UserEventEligibility(Resource):
 @users_namespace.route("/<int:user_id>")
 class UserDetails(Resource):
     @admin_endpoint()
-    @load_user()
-    @load_user_details()
+    @load_user(LoaderType.PARAM, input_key="user_id", output_key="target_user")
     @users_namespace.doc(**GET_USER_DETAILS_DOC)
-    def get(self, user_id):
+    def get(self, target_user):
         """Get user details"""
-        result = get_user_info(user_id)
-        return success_response(result)
+        return success_response(target_user)
 
 @users_namespace.route("/all")
 class UserList(Resource):
@@ -99,10 +95,9 @@ class UserList(Resource):
 @users_namespace.route("/<int:user_id>/teams")
 class AdminUserTeams(Resource):
     @admin_endpoint()
-    @load_user()
+    @load_user(LoaderType.PARAM, input_key="user_id", output_key="target_user")
     @load_user_teams()
     @users_namespace.doc(**GET_USER_TEAMS_DOC)
-    def get(self, user_id):
+    def get(self, target_user):
         """Get any user's teams"""
-        result = get_user_teams(user_id)
-        return success_response(result)
+        return success_response(target_user.get_all_team_memberships())

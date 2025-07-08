@@ -3,11 +3,7 @@ Reusable validators for common resource validation patterns.
 """
 
 from typing import Any
-from ...team.models.enums import TeamRole
-from ...team.models.TeamMember import TeamMember
 from ..exceptions import ConflictError, BusinessLogicError
-from ..utils import utc_now
-
 
 # General
 def validate_unique_name(
@@ -33,33 +29,9 @@ def validate_unique_name(
             error_message = f"Name '{new_name}' already exists{scope_text}"
         raise ConflictError(error_message)
 
-def validate_captain_leave_rules(team_member, team) -> None:
-    """Check if captain can leave team"""
-    if team_member.role == TeamRole.CAPTAIN:
-        other_members_count = TeamMember.count_other_members_in_team(team.id, team_member.id)
-        if other_members_count > 0:
-            raise BusinessLogicError("Captains cannot leave a team that has other members")
-
-def validate_event_timing(event) -> None:
-    """Check if operation is allowed based on event timing"""
-    now = utc_now()
-
-    if event.start_time and now < event.start_time:
-        raise BusinessLogicError(f"Event '{event.name}' hasn't started yet")
-
-    if event.end_time and now > event.end_time:
-        raise BusinessLogicError(f"Event '{event.name}' has already ended")
-
 
 # Support
 def validate_ticket_reply_allowed(ticket, is_admin: bool) -> None:
     """Check if replies are allowed on this ticket"""
     if ticket.status == "closed" and not is_admin:
         raise BusinessLogicError("Cannot reply to a closed ticket")
-
-
-# Events
-def validate_event_locked_state(event, operation: str) -> None:
-    """Check if operation is allowed on locked event"""
-    if event.locked:
-        raise BusinessLogicError(f"Event '{event.name}' is locked and not accepting {operation}")

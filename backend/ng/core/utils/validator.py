@@ -120,7 +120,7 @@ class BaseValidator:
         if value is None and not required:
             return
 
-        int_value = self.parsed_data.get(field)
+        int_value = int(self.parsed_data.get(field))
         if not (min_val <= int_value <= max_val):
             self.errors[field] = ValidationErrorMessages.FIELD_OUT_OF_RANGE.format(
                 field=name, min_val=min_val, max_val=max_val

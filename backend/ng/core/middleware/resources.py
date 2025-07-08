@@ -69,25 +69,6 @@ def load_tags_from_request(field_name="tag_ids"):
 # ============ COMPOSITE LOADERS ============
 
 
-def load_team_and_event():
-    """Load team from URL and its associated event"""
-
-    def decorator(f):
-        @load_team()
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            models = get_models()
-            event = models["Event"].find_by_id(g.team.event_id)
-            if not event:
-                raise NotFoundError(f"Event with ID {g.team.event_id} not found")
-            g.event = event
-            return f(*args, **kwargs)
-
-        return decorated_function
-
-    return decorator
-
-
 def load_user_team_in_event():
     """Load user's team membership in the specified event with related objects"""
 
@@ -119,50 +100,7 @@ def load_user_team_in_event():
     return decorator
 
 
-def load_team_and_event_by_invite():
-    """Load team by invite code and its associated event"""
-
-    def decorator(f):
-        @load_team_by_invite_code()
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            models = get_models()
-            event = models["Event"].find_by_id(g.team.event_id)
-            if not event:
-                raise NotFoundError(f"Event with ID {g.team.event_id} not found")
-            g.event = event
-            return f(*args, **kwargs)
-
-        return decorated_function
-
-    return decorator
-
-
 # ============ COMPLEX VALIDATION ============
-
-
-def load_associations_from_request():
-    """Validate optional event_id, team_id, challenge_id in request body"""
-
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            models = get_models()
-            if not hasattr(g, "json_data"):
-                return f(*args, **kwargs)
-            data = g.json_data
-            if "event_id" in data and data["event_id"] and data["event_id"] != 0:
-                if not models["Event"].find_by_id(data["event_id"]):
-                    raise NotFoundError(f"Event with ID {data['event_id']} not found")
-
-            if "team_id" in data and data["team_id"] and data["team_id"] != 0:
-                if not models["Team"].find_by_id(data["team_id"]):
-                    raise NotFoundError(f"Team with ID {data['team_id']} not found")
-            return f(*args, **kwargs)
-
-        return decorated_function
-
-    return decorator
 
 def load_user_teams():
     """Load user teams for user routes"""
