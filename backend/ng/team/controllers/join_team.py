@@ -14,7 +14,6 @@ from ...user.models.User import User
 
 from ...core.validation import (
     validate_event_locked_state,
-    validate_team_capacity,
     validate_event_timing,
 )
 
@@ -34,8 +33,6 @@ def join_team(user_id: int, invite_code: str) -> dict[str, Any]:
 
     if team.locked:
         raise BusinessLogicError(f"Team '{team.name}' is locked and not accepting new members")
-
-    validate_team_capacity(team, event)
 
     if not eligibility["can_join"]:
         existing_team_name = eligibility.get("current_team_name", "Unknown")

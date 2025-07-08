@@ -184,17 +184,6 @@ class BaseValidator:
             self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_DATETIME.format(field=name)
             return None
 
-    def validate_confirmation(self, data: dict[str, Any], required_value: str) -> None:
-        confirmation = data.get("confirm")
-        if not confirmation:
-            self.errors["confirmation"] = "Confirmation is required"
-        elif confirmation != required_value:
-            self.errors["confirmation"] = ValidationErrorMessages.CONFIRMATION_INVALID.format(
-                required_value=required_value
-            )
-        else:
-            self._add_parsed_data("confirm", confirmation)
-
     def is_valid(self) -> tuple[bool, dict[str, str], dict[str, Any]]:
         """
         Return the validation results and the dictionary of parsed, valid data.

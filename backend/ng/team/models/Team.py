@@ -11,8 +11,8 @@ from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 
 from ... import config
-from ...core.exceptions import ConflictError
-
+from ...core.exceptions import ConflictError, ValidationError
+from .enums import TeamRole
 
 class Team(db.Model):
     __tablename__ = "ng_teams"
@@ -71,7 +71,28 @@ class Team(db.Model):
         return data
 
     @classmethod
-    def create_team(cls, name, event_id, invite_code, ranked=False, flush_only=False):
+    def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
+        """Validate team creation data. Raises ValidationError on failure."""
+        from ...core.validation import BaseValidator
+
+        validator = BaseValidator()
+        validator.validate_string(
+            data,
+            "name",
+            config.TEAM_NAME_MAX_LENGTH,
+            required=True,
+            friendly_name="Team name",
+        )
+        validator.validate_positive_integer(data, "event_id", required=True, friendly_name="Event ID")
+        validator.validate_boolean(data, "ranked", friendly_name="Ranked status")
+
+        is_valid, errors, parsed_data = validator.is_valid()
+        if not is_valid:
+            raise ValidationError("Validation failed.", errors=errors)
+        return parsed_data
+
+    @classmethod
+    def create_team(cls, name, event_id, invite_code, ranked=False, commit=True):
         """Create and persist a new team to the database.
 
         Args:
@@ -79,7 +100,7 @@ class Team(db.Model):
             event_id (int): Associated event ID
             invite_code (str): Team invite code
             ranked (bool, optional): Whether team is ranked
-            flush_only (bool, optional): If True, only flush, don't commit
+            commit (bool, optional)
 
         Returns:
             Team: The created team instance
@@ -92,14 +113,15 @@ class Team(db.Model):
         )
 
         db.session.add(team)
-        if flush_only:
-            db.session.flush()
-        else:
+        if commit:
             db.session.commit()
         return team
 
     def disband_team(self, commit=True):
         """Delete this team and all its members from the database."""
+
+        # TODO - Throw an error if the team has members
+
         db.session.delete(self)
         if commit:
             db.session.commit()
@@ -119,6 +141,36 @@ class Team(db.Model):
         self.name = new_name
         if commit:
             db.session.commit()
+
+    def add_member(self, user_id: int, role: TeamRole, commit=True):
+        """Add a member to the team.
+
+        Args:
+            user_id (int): The user ID to add
+            role (TeamRole): The role of the member in the team
+            commit (bool): Whether to commit the transaction
+
+        Returns:
+            TeamMember: The created team member instance
+        """
+        from .TeamMember import TeamMember
+        from ...event.models.Event import Event
+
+        event = Event.find_by_id(self.event_id)
+
+        if self.member_count >= event.max_team_size:
+            raise ConflictError(f"Cannot add member: team '{self.name}' is full ({self.member_count}/{event.max_team_size})")
+
+        member = TeamMember.create_team_member(
+            user_id=user_id,
+            team_id=self.id,
+            event_id=self.event_id,
+            role=role,
+        )
+
+        if commit:
+            db.session.commit()
+        return member
 
     @classmethod
     def get_all_teams_for_admin(cls):
@@ -279,27 +331,6 @@ class Team(db.Model):
         return {"team": team, "event": event, "team_members": team_members}
 
     @classmethod
-    def get_all_teams_in_event_for_public(cls, event_id: int):
-        """Gets a list of all teams in a specific event.
-
-        Args:
-            event_id (int): The event ID
-
-        Returns:
-            dict | None: Event and teams data, or None if event not found
-        """
-        # Lazy import to prevent circular dependencies (needed)
-        from ...event.models.Event import Event
-
-        event = Event.find_by_id(event_id)
-        if not event:
-            return None
-
-        teams = cls.find_all_by_event(event_id)
-
-        return {"event": event, "teams": teams}
-
-    @classmethod
     def create_team_with_captain(
         cls,
         name: str,
@@ -312,22 +343,18 @@ class Team(db.Model):
         Creates a team, assigns the creator as captain, and creates a demographic
         record in a single, atomic transaction.
         """
+        
+        from .TeamMember import TeamMember
+        from .enums import TeamRole
+
         try:
             team = cls.create_team(
                 name=name,
                 event_id=event_id,
                 ranked=ranked,
                 invite_code=invite_code,
-                flush_only=True,
+                commit=False,
             )
-
-            from ...user.models.User import User
-
-            if not User.find_by_id(creator_id):
-                User.create_user(creator_id, commit=False)
-
-            from .TeamMember import TeamMember
-            from .enums import TeamRole
 
             TeamMember.create_team_member(
                 user_id=creator_id,
@@ -384,64 +411,6 @@ class Team(db.Model):
 
             db.session.commit()
             return True
-        except Exception:
-            db.session.rollback()
-            raise
-
-    @classmethod
-    def fix_headless_teams(cls) -> int:
-        """Finds and fixes teams without a captain due to user deletion.
-
-        Returns:
-            int: Number of teams fixed
-        """
-        from .TeamMember import TeamMember
-        from .enums import TeamRole
-
-        try:
-            teams_with_members = (
-                db.session.query(cls.id)
-                .join(TeamMember)
-                .group_by(cls.id)
-                .having(db.func.count(TeamMember.id) > 0)
-                .subquery()
-            )
-
-            teams_without_captain = (
-                db.session.query(cls.id)
-                .outerjoin(
-                    TeamMember,
-                    db.and_(
-                        cls.id == TeamMember.team_id,
-                        TeamMember.role == TeamRole.CAPTAIN,
-                    ),
-                )
-                .group_by(cls.id)
-                .having(db.func.count(TeamMember.id) == 0)
-                .subquery()
-            )
-
-            headless_team_ids = (
-                db.session.query(teams_with_members.c.id)
-                .join(
-                    teams_without_captain,
-                    teams_with_members.c.id == teams_without_captain.c.id,
-                )
-                .all()
-            )
-
-            fixed_count = 0
-            for (team_id,) in headless_team_ids:
-                members = TeamMember.find_all_by_team_ordered_by_join_date(team_id)
-                if members:
-                    new_captain = members[0]
-                    new_captain.update_role(TeamRole.CAPTAIN, commit=False)
-                    fixed_count += 1
-
-            if fixed_count > 0:
-                db.session.commit()
-
-            return fixed_count
         except Exception:
             db.session.rollback()
             raise

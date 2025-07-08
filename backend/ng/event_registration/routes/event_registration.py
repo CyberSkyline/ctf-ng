@@ -14,12 +14,13 @@ from ..controllers import (
     join_event_controller,
 )
 
+from ...core.middleware.body_loaders import load_event_from_body
+
 from ...core.utils import success_response
 from ...core.middleware import (
     user_endpoint,
     admin_endpoint,
     load_event,
-    load_event_from_request,
     require_event_is_joinable,
     check_demographic_eligibility,
     check_team_join_eligibility,
@@ -83,7 +84,7 @@ class JoinEvent(Resource):
 @event_reg_namespace.route("/create_registration_period")
 class CreateRegistrationPeriod(Resource):
     @admin_endpoint(json_required=True, validation_func=EventRegistration.validate)
-    @load_event_from_request()
+    @load_event_from_body()
     @event_reg_namespace.doc(**CREATE_EVENT_REGISTRATION_DOC)
     def post(self):
         """Create event registration period"""

@@ -166,6 +166,11 @@ class Event(db.Model):
 
         return True
 
+    def get_all_teams(self):
+        from ...team.models.Team import Team
+
+        return Team.query.filter_by(event_id=self.id).all()
+
     @classmethod
     def find_by_id(cls, event_id: int):
         """Find an event by ID.

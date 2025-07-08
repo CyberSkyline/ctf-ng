@@ -28,6 +28,23 @@ def utc_now() -> datetime:
     """
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
+def get_models():
+    """Lazy import of models to avoid SQLAlchemy table creation during import."""
+    from ...user.models.User import User
+    from ...team.models.Team import Team
+    from ...event.models.Event import Event
+    from ...support.models.Ticket import Ticket
+    from ...team.models.TeamMember import TeamMember
+    from ...support.models.TicketTag import TicketTag
+
+    return {
+        "User": User,
+        "Team": Team,
+        "Event": Event,
+        "Ticket": Ticket,
+        "TeamMember": TeamMember,
+        "TicketTag": TicketTag,
+    }
 
 __all__ = [
     "get_logger",

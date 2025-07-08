@@ -221,28 +221,6 @@ class TestBooleanValidation:
         assert is_valid
         assert parsed_data["flag"] is False
 
-
-class TestConfirmationValidation:
-    """Test confirmation validation."""
-
-    def test_confirmation_validation_case_sensitivity(self):
-        """Test that confirmation is case-sensitive."""
-        validator = BaseValidator()
-
-        required_value = "DELETE ALL DATA"
-
-        validator.validate_confirmation({"confirm": "DELETE ALL DATA"}, required_value)
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert is_valid
-        assert parsed_data["confirm"] == "DELETE ALL DATA"
-
-        validator = BaseValidator()
-        validator.validate_confirmation({"confirm": "delete all data"}, required_value)
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert not is_valid
-        assert "confirmation" in errors
-
-
 class TestIntegerRangeValidation:
     """Test integer range validation."""
 

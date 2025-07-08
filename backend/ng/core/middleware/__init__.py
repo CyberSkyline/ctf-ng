@@ -18,7 +18,6 @@ from .resources import (
     load_event,
     load_user,
     load_tag,
-    load_event_from_request,
     load_team_by_invite_code,
     load_target_member,
     load_associations_from_request,
@@ -31,12 +30,12 @@ from .resources import (
     load_current_user_as_target,
     load_tags_from_request,
 )
-from .permissions import (
+
+from .checks import (
     require_user_access,
     require_ticket_access,
     require_ticket_update,
     require_team_captain,
-    require_team_member_management,
     check_team_join_eligibility,
     require_event_is_joinable,
     check_demographic_eligibility,
@@ -56,7 +55,6 @@ __all__ = [
     "load_event",
     "load_user",
     "load_tag",
-    "load_event_from_request",
     "load_team_by_invite_code",
     "load_team_and_event_by_invite",
     "load_target_member",
@@ -73,7 +71,6 @@ __all__ = [
     "require_ticket_access",
     "require_ticket_update",
     "require_team_captain",
-    "require_team_member_management",
     "check_team_join_eligibility",
     "require_event_is_joinable",
     "check_demographic_eligibility",

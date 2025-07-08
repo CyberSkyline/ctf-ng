@@ -8,25 +8,6 @@ from ..utils.validator import BaseValidator
 from ... import config
 
 
-def validate_team_creation(data: dict[str, Any]) -> dict[str, Any]:
-    """Validate team creation data. Raises ValidationError on failure."""
-    validator = BaseValidator()
-    validator.validate_string(
-        data,
-        "name",
-        config.TEAM_NAME_MAX_LENGTH,
-        required=True,
-        friendly_name="Team name",
-    )
-    validator.validate_positive_integer(data, "event_id", required=True, friendly_name="Event ID")
-    validator.validate_boolean(data, "ranked", friendly_name="Ranked status")
-
-    is_valid, errors, parsed_data = validator.is_valid()
-    if not is_valid:
-        raise ValidationError("Validation failed.", errors=errors)
-    return parsed_data
-
-
 def validate_team_update(data: dict[str, Any]) -> dict[str, Any]:
     """Validate team update data. Raises ValidationError on failure."""
     validator = BaseValidator()

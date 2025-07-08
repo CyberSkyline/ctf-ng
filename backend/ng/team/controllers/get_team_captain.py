@@ -17,10 +17,6 @@ def get_team_captain(team_id: int) -> dict[str, Any]:
     team = g.team
 
     captain = TeamMember.find_captain_by_team(team.id)
-    if captain:
-        return {
-            "captain": captain,
-            "has_captain": True,
-        }
-    else:
-        return {"captain": None, "has_captain": False}
+
+    return captain
+

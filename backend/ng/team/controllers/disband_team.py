@@ -3,10 +3,8 @@ Disbands a team and removes all its members.
 """
 
 from flask import g
-from typing import Any
 
-
-def disband_team(team_id: int, actor_id: int, is_admin: bool = False) -> dict[str, Any]:
+def disband_team(team_id: int, actor_id: int, is_admin: bool = False) -> None:
     """Deletes a team and all its team members.
 
     Returns:
@@ -14,10 +12,5 @@ def disband_team(team_id: int, actor_id: int, is_admin: bool = False) -> dict[st
     """
     team = g.team
 
-    team_name = team.name
     team.disband_team()
 
-    return {
-        "team_disbanded": True,
-        "team_name": team_name,
-    }

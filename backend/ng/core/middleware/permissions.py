@@ -109,31 +109,6 @@ def require_team_captain():
 
     return decorator
 
-
-def require_team_member_management():
-    """Check if user can manage members of the loaded team"""
-
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            models = _get_models()
-            if not hasattr(g, "team"):
-                raise ValueError("No team loaded - use @load_team first")
-            if is_admin():
-                return f(*args, **kwargs)
-            current_user = get_current_user()
-            if not current_user:
-                raise PermissionError("Authentication required")
-            is_captain = models["TeamMember"].find_captain_by_team_and_user(g.team.id, current_user.id)
-            if not is_captain:
-                raise PermissionError("You must be the team captain to manage team members")
-            return f(*args, **kwargs)
-
-        return decorated_function
-
-    return decorator
-
-
 def require_event_is_joinable():
     """Ensures the loaded event (in g.event) is open for registration."""
 

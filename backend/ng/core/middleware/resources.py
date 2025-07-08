@@ -135,30 +135,6 @@ def load_tag(param_name="tag_id"):
 
 # ============ REQUEST BODY LOADING ============
 
-
-def load_event_from_request(field_name="event_id"):
-    """Load event from request body data[field_name]"""
-
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            models = _get_models()
-            if not hasattr(g, "json_data"):
-                raise ValueError("JSON data required for event loading")
-            event_id = g.json_data.get(field_name)
-            if not event_id:
-                raise ValueError(f"Field '{field_name}' is required in request body")
-            event = models["Event"].find_by_id(event_id)
-            if not event:
-                raise NotFoundError(f"Event with ID {event_id} not found")
-            g.event = event
-            return f(*args, **kwargs)
-
-        return decorated_function
-
-    return decorator
-
-
 def load_team_by_invite_code():
     """Load team from request body data['invite_code']"""
 

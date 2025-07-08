@@ -41,4 +41,4 @@ def create_team(name: str, ranked: bool = False) -> dict[str, Any]:
         ranked=ranked,
     )
 
-    return {"team": team}
+    return team

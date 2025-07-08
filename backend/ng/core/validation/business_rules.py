@@ -5,7 +5,7 @@ Reusable validators for common resource validation patterns.
 from typing import Any
 from ...team.models.enums import TeamRole
 from ...team.models.TeamMember import TeamMember
-from ..exceptions import ConflictError, ValidationError, BusinessLogicError
+from ..exceptions import ConflictError, BusinessLogicError
 from ..utils import utc_now
 
 
@@ -32,20 +32,6 @@ def validate_unique_name(
             scope_text = f" in this {scope_field.replace('_id', '')}" if scope_field else ""
             error_message = f"Name '{new_name}' already exists{scope_text}"
         raise ConflictError(error_message)
-
-
-def validate_update_has_fields(data, required_fields):
-    """Business rule: updates must change something"""
-    if not any(key in data for key in required_fields):
-        raise ValidationError("At least one field must be provided for an update.")
-
-
-# Team
-def validate_team_capacity(team, event) -> None:
-    """Check if team has room for new members"""
-    if team.member_count >= event.max_team_size:
-        raise BusinessLogicError(f"Team {team.name} is full ({team.member_count}/{event.max_team_size})")
-
 
 def validate_captain_leave_rules(team_member, team) -> None:
     """Check if captain can leave team"""

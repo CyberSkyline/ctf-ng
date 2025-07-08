@@ -11,7 +11,7 @@ from ..models.Event import Event
 
 def create_event(
     name: str,
-    description: str | None = None,
+    description: str = "",
     max_team_size: int | None = None,
     start_time: datetime | None = None,
     end_time: datetime | None = None,
