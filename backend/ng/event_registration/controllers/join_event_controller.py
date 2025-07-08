@@ -28,7 +28,7 @@ def join_event_controller(event: Event, user : User, invite_code : str | None, t
             Team.create_team_with_captain(
                 name=team_name,
                 event_id=event._id,
-                creator_id=user.id,
+                captain_id=user.id,
                 ranked=True,
                 commit=False,
             )

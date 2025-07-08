@@ -20,8 +20,6 @@ from ..controllers.admin_actions import (
     update_tag,
     delete_tag,
     list_tags,
-    add_tags_to_ticket,
-    remove_tags_from_ticket,
 )
 from ...core.validation import (
     validate_ticket_update,
@@ -34,11 +32,14 @@ from ...core.validation import (
 from ...core.utils import success_response
 from ...core.middleware import (
     admin_endpoint,
-    load_ticket,
-    load_tag,
     load_tags_from_request,
 )
-from ._admin_tickets_docs import (
+from ...core.middleware.loaders import (
+    LoaderType,
+    load_ticket,
+    load_ticket_tag,
+)
+from ..docs.admin_tickets_docs import (
     ADMIN_GET_ALL_TICKETS_DOC,
     ADMIN_GET_TICKET_DETAILS_DOC,
     ADMIN_UPDATE_TICKET_DOC,
@@ -79,7 +80,7 @@ class AdminTicketList(Resource):
 @admin_tickets_namespace.route("/tickets/<int:ticket_id>")
 class AdminTicketDetail(Resource):
     @admin_endpoint()
-    @load_ticket()
+    @load_ticket(LoaderType.PARAM)
     @admin_tickets_namespace.doc(**ADMIN_GET_TICKET_DETAILS_DOC)
     def get(self, ticket_id):
         """Get any ticket"""
@@ -87,7 +88,7 @@ class AdminTicketDetail(Resource):
         return success_response(result)
 
     @admin_endpoint(json_required=True, validation_func=validate_ticket_update)
-    @load_ticket()
+    @load_ticket(LoaderType.PARAM)
     @admin_tickets_namespace.doc(**ADMIN_UPDATE_TICKET_DOC)
     def patch(self, ticket_id):
         """Update any ticket"""
@@ -107,7 +108,7 @@ class AdminTicketDetail(Resource):
 @admin_tickets_namespace.route("/tickets/<int:ticket_id>/assign")
 class AdminTicketAssign(Resource):
     @admin_endpoint(json_required=True, validation_func=validate_ticket_assignment)
-    @load_ticket()
+    @load_ticket(LoaderType.PARAM)
     @admin_tickets_namespace.doc(**ADMIN_ASSIGN_TICKET_DOC)
     def post(self, ticket_id):
         """Assign ticket"""
@@ -119,7 +120,7 @@ class AdminTicketAssign(Resource):
 @admin_tickets_namespace.route("/tickets/<int:ticket_id>/unassign")
 class AdminTicketUnassign(Resource):
     @admin_endpoint()
-    @load_ticket()
+    @load_ticket(LoaderType.PARAM)
     @admin_tickets_namespace.doc(**ADMIN_UNASSIGN_TICKET_DOC)
     def post(self, ticket_id):
         """Unassign ticket"""
@@ -130,7 +131,7 @@ class AdminTicketUnassign(Resource):
 @admin_tickets_namespace.route("/tickets/<int:ticket_id>/close")
 class AdminTicketClose(Resource):
     @admin_endpoint()
-    @load_ticket()
+    @load_ticket(LoaderType.PARAM)
     @admin_tickets_namespace.doc(**ADMIN_CLOSE_TICKET_DOC)
     def post(self, ticket_id):
         """Close ticket"""
@@ -141,7 +142,7 @@ class AdminTicketClose(Resource):
 @admin_tickets_namespace.route("/tickets/<int:ticket_id>/reopen")
 class AdminTicketReopen(Resource):
     @admin_endpoint()
-    @load_ticket()
+    @load_ticket(LoaderType.PARAM)
     @admin_tickets_namespace.doc(**ADMIN_REOPEN_TICKET_DOC)
     def post(self, ticket_id):
         """Reopen ticket"""
@@ -170,28 +171,30 @@ class AdminTagList(Resource):
 @admin_tickets_namespace.route("/tickets/<int:ticket_id>/tags")
 class AdminTicketTags(Resource):
     @admin_endpoint(json_required=True, validation_func=validate_ticket_tags_update)
-    @load_ticket()
+    @load_ticket(LoaderType.PARAM)
     @load_tags_from_request()
     @admin_tickets_namespace.doc(**ADMIN_ADD_TAGS_TO_TICKET_DOC)
     def post(self, ticket_id):
-        """Add tags to ticket"""
-        result = add_tags_to_ticket(ticket_id)
-        return success_response(result)
+        raise Exception("Not implemented yet")
+        # """Add tags to ticket"""
+        # result = add_tags_to_ticket(ticket_id)
+        # return success_response(result)
 
     @admin_endpoint(json_required=True, validation_func=validate_ticket_tags_update)
-    @load_ticket()
+    @load_ticket(LoaderType.PARAM)
     @load_tags_from_request()
     @admin_tickets_namespace.doc(**ADMIN_REMOVE_TAGS_FROM_TICKET_DOC)
     def delete(self, ticket_id):
-        """Remove tags from ticket"""
-        result = remove_tags_from_ticket(ticket_id)
-        return success_response(result)
+        raise Exception("Not implemented yet")
+        # """Remove tags from ticket"""
+        # result = remove_tags_from_ticket(ticket_id)
+        # return success_response(result)
 
 
 @admin_tickets_namespace.route("/tags/<int:tag_id>")
 class AdminTagDetail(Resource):
     @admin_endpoint(json_required=True, validation_func=validate_tag_update)
-    @load_tag()
+    @load_ticket_tag(LoaderType.PARAM)
     @admin_tickets_namespace.doc(**ADMIN_UPDATE_TAG_DOC)
     def patch(self, tag_id):
         """Update tag"""
@@ -200,7 +203,7 @@ class AdminTagDetail(Resource):
         return success_response(result)
 
     @admin_endpoint()
-    @load_tag()
+    @load_ticket_tag(LoaderType.PARAM)
     @admin_tickets_namespace.doc(**ADMIN_DELETE_TAG_DOC)
     def delete(self, tag_id):
         """Delete tag"""

@@ -3,6 +3,7 @@ from .load_event import load_event
 from .load_team import load_team
 from .load_user import load_user
 from .load_ticket import load_ticket
+from .load_ticket_tag import load_ticket_tag
 from .load_team_by_invite_code import load_team_by_invite_code
 
 __all__ = [
@@ -11,5 +12,6 @@ __all__ = [
     "load_team",
     "load_user",
     "load_ticket",
+    "load_ticket_tag",
     "load_team_by_invite_code"
 ]

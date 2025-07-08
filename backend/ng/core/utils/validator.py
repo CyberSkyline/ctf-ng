@@ -47,6 +47,7 @@ class BaseValidator:
         self,
         data: dict[str, Any],
         field: str,
+        min_length : int | None = 1,
         max_length: int | None = None,
         required: bool = False,
         friendly_name: str | None = None,
@@ -147,6 +148,29 @@ class BaseValidator:
 
         if not isinstance(value, bool):
             self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_BOOLEAN.format(field=name)
+            return
+
+        self._add_parsed_data(field, value)
+
+    def validate_enum(
+        self,
+        data: dict[str, Any],
+        field: str,
+        enum_class: type,
+        required: bool = False,
+        friendly_name: str | None = None,
+    ) -> None:
+        name = friendly_name or field.replace("_", " ").title()
+        value = data.get(field)
+
+        if required and not self.require_field(data, field, name):
+            return
+
+        if value is None:
+            return
+
+        if not isinstance(value, enum_class):
+            self.errors[field] = f"{name} must be one of {', '.join(e.name for e in enum_class)}"
             return
 
         self._add_parsed_data(field, value)

@@ -3,7 +3,6 @@ Team management API routes.
 """
 
 from flask_restx import Namespace, Resource
-from backend.ng.core.middleware.loaders import load_team_by_invite_code
 
 from ..controllers import (
     get_team_info,
@@ -14,6 +13,7 @@ from ..controllers import (
 from ...core.middleware.loaders import (
     LoaderType,
     load_team,
+    load_team_by_invite_code,
 )
 
 from ...core.middleware.checks import (

@@ -4,14 +4,20 @@ Defines the Team database model and its properties
 
 from __future__ import annotations
 from typing import Any
+import string
+import random
 
 from CTFd.models import db
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import select, func
 
 from ... import config
+from ...core.validation import BaseValidator
 from ...core.exceptions import ConflictError, ValidationError
 from .enums import TeamRole
+
+HEX_CHARS = string.hexdigits.lower()[:16]  # '0123456789abcdef'
 
 class Team(db.Model):
     __tablename__ = "ng_teams"
@@ -71,7 +77,6 @@ class Team(db.Model):
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
         """Validate team creation data. Raises ValidationError on failure."""
-        from ...core.validation import BaseValidator
 
         validator = BaseValidator()
         validator.validate_string(
@@ -83,14 +88,46 @@ class Team(db.Model):
         )
         validator.validate_positive_integer(data, "event_id", required=True, friendly_name="Event ID")
         validator.validate_boolean(data, "ranked", friendly_name="Ranked status")
+        validator.validate_string(
+            data,
+            "invite_code",
+            config.INVITE_CODE_MAX_LENGTH,
+            required=False,
+            friendly_name="Invite code",
+        )
+
+        # TODO - Check if invite code is unique
+        # TODO - Check if team name is unique within event
 
         is_valid, errors, parsed_data = validator.is_valid()
         if not is_valid:
             raise ValidationError("Validation failed.", errors=errors)
         return parsed_data
+    
+    def self_validate(self) -> None:
+        """Validate the current team instance's data.
+
+        Raises:
+            ValidationError: If validation fails
+        """
+        try:
+            Team.validate(data=self.serialize(include_admin_fields=True))
+        except ValidationError as e:
+            raise ValidationError(f"Team validation failed: {e.errors}") from e
+    
+    @classmethod
+    def get_unique_invite_code(cls) -> str:
+        """Generate a unique invite code for a new team."""
+        # TODO - Raise an exception if this loops too many times
+        while True:
+            invite_code = ''.join(random.choices(HEX_CHARS, k=config.INVITE_CODE_MAX_LENGTH))
+            existing = cls.query.filter_by(invite_code=invite_code).first()
+            if existing is None:
+                return invite_code
+
 
     @classmethod
-    def create_team(cls, name, event_id, invite_code, ranked=False, commit=True):
+    def create_team(cls, name : str, event_id : int, invite_code : str | None = None, ranked : bool = True, commit : bool = True):
         """Create and persist a new team to the database.
 
         Args:
@@ -103,13 +140,23 @@ class Team(db.Model):
         Returns:
             Team: The created team instance
         """
+        if invite_code is None:
+            invite_code = cls.get_unique_invite_code()
+
         validated_data = cls.validate(data = { "name": name, "event_id": event_id, "invite_code": invite_code, "ranked": ranked })
 
         team = cls(**validated_data)
 
         db.session.add(team)
         if commit:
-            db.session.commit()
+            try:
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+                if "uq_team_event_name" in str(IntegrityError):
+                    raise ConflictError(f"Team name '{name}' already exists for event ID {event_id}.")
+                raise
+
         return team
 
     def disband_team(self, commit=True):
@@ -121,19 +168,22 @@ class Team(db.Model):
         if commit:
             db.session.commit()
 
-    def update_invite_code(self, new_code=None, commit=True):
+    def update_invite_code(self, new_code: str | None = None, commit=True):
         """Update team invite code and persist to database."""
         if new_code is None:
-            from ..team.controllers._generate_invite_code import _generate_invite_code
+            new_code = Team.get_unique_invite_code()
 
-            new_code = _generate_invite_code()
         self.invite_code = new_code
+
+        self.self_validate()
+
         if commit:
             db.session.commit()
 
     def update_name(self, new_name, commit=True):
         """Update team name and persist to database."""
         self.name = new_name
+
         if commit:
             db.session.commit()
 
@@ -293,16 +343,6 @@ class Team(db.Model):
         db.session.commit()
         return count
 
-    @classmethod
-    def find_empty_teams(cls):
-        """Find all teams that have no members.
-
-        Returns:
-            list: Raw query results (Row objects) with team info
-        """
-        empty_teams_query = db.session.query(cls.id, cls.name, cls.event_id).filter(cls.member_count == 0).all()
-        return empty_teams_query
-
     def get_full_team_details(self):
         """Gets all details for a team, including event info and member list.
 
@@ -322,7 +362,7 @@ class Team(db.Model):
         cls,
         name: str,
         event_id: int,
-        creator_id: int,
+        captain_id: int,
         invite_code: str | None = None,
         ranked: bool = True,
         commit: bool = True
@@ -345,7 +385,7 @@ class Team(db.Model):
             )
 
             TeamMember.create_team_member(
-                user_id=creator_id,
+                user_id=captain_id,
                 team_id=team.id,
                 event_id=event_id,
                 role=TeamRole.CAPTAIN,
@@ -360,17 +400,18 @@ class Team(db.Model):
             db.session.rollback()
             raise e
 
-    def remove_member_and_regenerate_code(self, member_id: int) -> None:
+    def remove_member_and_regenerate_code(self, user_id: int, commit = True) -> None:
         """Remove a team member and regenerate invite code in single transaction."""
 
         from .TeamMember import TeamMember
 
         try:
-            member = TeamMember.query.get(member_id)
+            member = TeamMember.find_by_user_and_event(user_id=user_id, event_id=self.event_id)
             if member:
                 member.remove_team_member(commit=False)
                 self.update_invite_code(commit=False)
-                db.session.commit()
+                if commit:
+                    db.session.commit()
         except Exception:
             db.session.rollback()
             raise

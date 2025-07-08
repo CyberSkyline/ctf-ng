@@ -25,10 +25,12 @@ from ...core.validation import (
 from ...core.utils import success_response
 from ...core.middleware import (
     user_endpoint,
-    load_ticket,
-    require_ticket_access,
 )
-from ._user_tickets_docs import (
+from ...core.middleware.loaders import (
+    LoaderType,
+    load_ticket,
+)
+from ..docs.user_tickets_docs import (
     GET_MY_TICKETS_DOC,
     CREATE_NEW_TICKET_DOC,
     GET_MY_TICKET_DETAILS_DOC,
@@ -68,8 +70,7 @@ class TicketList(Resource):
 @user_tickets_namespace.route("/<int:ticket_id>")
 class TicketDetail(Resource):
     @user_endpoint()
-    @load_ticket()
-    @require_ticket_access()
+    @load_ticket(LoaderType.PARAM)
     @user_tickets_namespace.doc(**GET_MY_TICKET_DETAILS_DOC)
     def get(self, ticket_id):
         """Get ticket details"""
@@ -77,8 +78,7 @@ class TicketDetail(Resource):
         return success_response(result)
 
     @user_endpoint(json_required=True, validation_func=validate_ticket_update)
-    @load_ticket()
-    @require_ticket_access()
+    @load_ticket(LoaderType.PARAM)
     @user_tickets_namespace.doc(**UPDATE_MY_TICKET_DOC)
     def patch(self, ticket_id):
         """Update ticket"""
@@ -90,8 +90,7 @@ class TicketDetail(Resource):
 @user_tickets_namespace.route("/<int:ticket_id>/messages")
 class TicketMessages(Resource):
     @user_endpoint(json_required=True, validation_func=validate_ticket_message)
-    @load_ticket()
-    @require_ticket_access()
+    @load_ticket(LoaderType.PARAM)
     @user_tickets_namespace.doc(**CREATE_TICKET_REPLY_DOC)
     def post(self, ticket_id):
         """Reply to ticket"""
