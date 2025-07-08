@@ -1,11 +1,12 @@
 from ..models.Role import Role
 from ..models.Permission import Permission
-def create_role(name: str, permissions: list[str] = None):
+from ..models.enums import PermissionEnum
+def create_role(name: str, permissions: list[PermissionEnum] = None):
     """Create a new role with optional permissions.
 
     Args:
         name (str): Name of the role
-        permissions (list[str], optional): List of permission names to assign to the role
+        permissions (list[PermissionEnum], optional): List of permission enums to assign to the role
 
     Returns:
         Role: The created role instance
@@ -14,7 +15,6 @@ def create_role(name: str, permissions: list[str] = None):
 
     if Role.get_role_by_name(name):
         return {"success": False, "error": f"Role '{name}' already exists"}
-
     permissions_obj = []
     if permissions:
         for perm_name in permissions:

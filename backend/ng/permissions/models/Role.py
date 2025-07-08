@@ -2,6 +2,7 @@ from CTFd.models import db
 from sqlalchemy.ext.associationproxy import association_proxy
 from .RolePermission import RolePermission
 from .Permission import Permission
+from .enums import RoleEnum
 
 class Role(db.Model):
     __tablename__ = "ng_roles"
@@ -43,11 +44,11 @@ class Role(db.Model):
 
 
     @classmethod
-    def get_users_with_role(cls, role_name: str):
+    def get_users_with_role(cls, role_name: RoleEnum):
         """Get all users who have a specific role.
 
         Args:
-            role_name (str): Name of the role to check
+            role_name (RoleEnum): Name of the role to check
 
         Returns:
             list: List of User instances with the specified permission
@@ -55,14 +56,14 @@ class Role(db.Model):
         #need to import UserRole and User here to avoid circular imports
         from .UserRole import UserRole
         from ...user.models.User import User
-        return User.query.join(User.user_roles).join(UserRole.role).filter(Role.name == role_name).all()
+        return User.query.join(User.user_roles).join(UserRole.role).filter(Role.name == role_name.value).all()
 
     @classmethod
-    def get_role_by_name(cls, name: str):
+    def get_role_by_name(cls, name: RoleEnum):
         """Retrieve a role by its name.
 
         Args:
-            name (str): Name of the role
+            name (RoleEnum): Name of the role
 
         Returns:
             Role: The role instance if found, else None

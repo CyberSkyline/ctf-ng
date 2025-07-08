@@ -1,5 +1,6 @@
 from ..models.UserRole import UserRole
 from ..models.Role import Role
+from ..models.enums import RoleEnum
 
 def update_user_roles(user_id, data):
     """
@@ -17,15 +18,17 @@ def update_user_roles(user_id, data):
             "message": "No role names provided"
         }, 400
 
+    role_enums = []
     for role_name in role_names:
-        role = Role.query.filter_by(name=role_name).first()
-        if not role:
+        try:
+            role_enums.append(RoleEnum(role_name))
+        except ValueError:
             return {
                 "success": False,
-                "error": f"Role '{role_name}' does not exist"
+                "error": f"Invalid role name: {role_name}"
             }
-    user_roles = UserRole.update_user_roles(user_id, role_names)
-    
+
+    user_roles = UserRole.update_user_roles(user_id, role_enums)
 
     return {
         "success": True,

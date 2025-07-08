@@ -1,4 +1,5 @@
 from CTFd.models import db
+from .enums import PermissionEnum
 
 class Permission(db.Model):
     __tablename__ = "ng_permissions"
@@ -42,7 +43,7 @@ class Permission(db.Model):
 
 
     @classmethod
-    def get_permission_by_name(cls, name: str):
+    def get_permission_by_name(cls, name: PermissionEnum):
         """Retrieve a permission by its name.
 
         Args:
@@ -51,7 +52,7 @@ class Permission(db.Model):
         Returns:
             Permission: The permission instance if found, else None
         """
-        return cls.query.filter_by(name=name).first()
+        return cls.query.filter_by(name=name.value).first()
 
     def serialize(self):
         """Serialize a Permission instance to a dictionary.

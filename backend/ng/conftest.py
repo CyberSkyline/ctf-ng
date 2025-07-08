@@ -370,8 +370,8 @@ def user_with_roles(db_session):
     db_session.commit()
 
     # Assign multiple roles to the user
-    role1 = Role.create_role("Test Role 1")
-    role2 = Role.create_role("Test Role 2")
+    role1 = Role.create_role("admin")
+    role2 = Role.create_role("support")
     assign_role_to_user(user.id, role1.name)
     assign_role_to_user(user.id, role2.name)
 

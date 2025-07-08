@@ -1,5 +1,6 @@
 from CTFd.models import db
 from .Role import Role
+from .enums import RoleEnum
 
 class UserRole(db.Model):
     __tablename__ = "ng_user_roles"
@@ -62,8 +63,8 @@ class UserRole(db.Model):
         return cls.create_user_role(user_id, role_id)
 
     @classmethod
-    def assign_role_to_user_by_name(cls, user_id: int, role_name: str):
-        role = Role.query.filter_by(name=role_name).first()
+    def assign_role_to_user_by_name(cls, user_id: int, role_name: RoleEnum):
+        role = Role.query.filter_by(name=role_name.value).first()
 
         return cls.assign_role_to_user_by_id(user_id, role.id)
 

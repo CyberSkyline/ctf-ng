@@ -9,7 +9,7 @@ def update_role(role_id, data):
     
     Args:
         role_id (int): The ID of the role to update.
-        data (dict): The new data for the role, including 'name' and 'description'.
+        data (dict): The new data for the role, including name and permissions.
     
     Returns:
         dict: The updated role details or an error message.
@@ -24,7 +24,7 @@ def update_role(role_id, data):
     permissions = []
     if permission_names:
         for name in permission_names:
-            permission = Permission.query.filter_by(name=name).first()
+            permission = Permission.get_permission_by_name(name)
             if not permission:
                 return {
                     "success": False,
