@@ -12,7 +12,7 @@ import ChallengesTab from './OverviewTabs/ChallengesTab';
 import TeamTab from './OverviewTabs/TeamTab';
 
 export default function Overview() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [ searchParams, setSearchParams ] = useSearchParams();
   const currentTab = searchParams.get('tab') ?? 'challenges';
 
   return (

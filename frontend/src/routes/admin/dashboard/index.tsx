@@ -28,7 +28,7 @@ export default function AdminDashboard() {
         </Callout.Text>
       </Callout.Root>
 
-      <Flex direction={{ initial: 'column', lg: 'row' }} gap="4">
+      <Flex direction={{ initial : 'column', lg : 'row' }} gap="4">
         <Flex direction="column" gap="4" className="flex-grow basis-1/2 h-full">
           <AdminOverviewCard />
           <AdminActivityCard />

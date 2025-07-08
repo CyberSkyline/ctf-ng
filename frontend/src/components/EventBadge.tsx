@@ -11,30 +11,30 @@ const EVENT_STATES: {
         icon: IconType;
     };
 } = {
-  upcoming: {
-    color: 'blue',
-    label: 'Upcoming',
-    icon: TbClock,
+  upcoming : {
+    color : 'blue',
+    label : 'Upcoming',
+    icon : TbClock,
   },
-  waiting: {
-    color: 'yellow',
-    label: 'Waiting for team',
-    icon: TbClock,
+  waiting : {
+    color : 'yellow',
+    label : 'Waiting for team',
+    icon : TbClock,
   },
-  live: {
-    color: 'lime',
-    label: 'Happening Now',
-    icon: TbPlayerPlayFilled,
+  live : {
+    color : 'lime',
+    label : 'Happening Now',
+    icon : TbPlayerPlayFilled,
   },
-  ended: {
-    color: 'gray',
-    label: 'Ended',
-    icon: TbCheck,
+  ended : {
+    color : 'gray',
+    label : 'Ended',
+    icon : TbCheck,
   },
 };
 
 export default function EventBadge({ state }: { state: 'upcoming' | 'waiting' | 'live' | 'ended' }) {
-  const { color, label, icon: Icon } = EVENT_STATES[state];
+  const { color, label, icon : Icon } = EVENT_STATES[state];
   return (
     <Badge color={color} variant="soft" size="3">
       {Icon && <Icon className="inline" />}

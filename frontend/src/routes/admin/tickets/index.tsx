@@ -11,17 +11,17 @@ import { radixTheme } from '@/grid';
 export default function AdminTickets() {
   const rowData = [
     {
-      subject: 'Help!!!', user: 'user123', status: 'Open', created: 'xxxx-yy-zz', updated: 'aaaa-bb-cc', event: 'pc7-teams', challenge: null,
+      subject : 'Help!!!', user : 'user123', status : 'Open', created : 'xxxx-yy-zz', updated : 'aaaa-bb-cc', event : 'pc7-teams', challenge : null,
     },
   ];
   const colDefs: ColDef<typeof rowData[number]>[] = [
-    { field: 'subject' },
-    { field: 'user' },
-    { field: 'status', width: 100 },
-    { field: 'created', width: 150 },
-    { field: 'updated', width: 150 },
-    { field: 'event' },
-    { field: 'challenge' },
+    { field : 'subject' },
+    { field : 'user' },
+    { field : 'status', width : 100 },
+    { field : 'created', width : 150 },
+    { field : 'updated', width : 150 },
+    { field : 'event' },
+    { field : 'challenge' },
   ];
 
   return (
@@ -32,10 +32,10 @@ export default function AdminTickets() {
         rowData={rowData}
         columnDefs={colDefs}
         gridOptions={{
-          rowSelection: {
-            mode: 'singleRow',
-            checkboxes: false,
-            enableClickSelection: true,
+          rowSelection : {
+            mode : 'singleRow',
+            checkboxes : false,
+            enableClickSelection : true,
           },
         }}
       />
