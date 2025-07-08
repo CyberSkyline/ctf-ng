@@ -34,4 +34,4 @@ def create_event(
         locked=locked,
     )
 
-    return {"event": event}
+    return event

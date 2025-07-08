@@ -18,7 +18,6 @@ from .resources import (
     load_event,
     load_user,
     load_tag,
-    load_team_by_invite_code,
     load_target_member,
     load_associations_from_request,
     load_team_and_event,
@@ -31,7 +30,7 @@ from .resources import (
     load_tags_from_request,
 )
 
-from .checks import (
+from .check import (
     require_user_access,
     require_ticket_access,
     require_ticket_update,
@@ -55,7 +54,6 @@ __all__ = [
     "load_event",
     "load_user",
     "load_tag",
-    "load_team_by_invite_code",
     "load_team_and_event_by_invite",
     "load_target_member",
     "load_associations_from_request",

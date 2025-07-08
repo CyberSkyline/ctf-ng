@@ -16,11 +16,16 @@ from ...core.utils import success_response
 
 from ...event.models.Event import Event
 
+from ...core.middleware.loaders import (
+    LoaderType,
+    load_event
+)
+
 from ...core.middleware import (
     user_endpoint,
     admin_endpoint,
-    load_event,
 )
+
 from ._docs import (
     LIST_EVENTS_DOC,
     CREATE_EVENT_DOC,
@@ -61,7 +66,7 @@ class EventList(Resource):
 @events_namespace.route("/<int:event_id>")
 class EventDetail(Resource):
     @user_endpoint()
-    @load_event()
+    @load_event(source=LoaderType.PARAM)
     @events_namespace.doc(**GET_EVENT_DOC)
     def get(self, event_id):
         """Get event details"""
@@ -69,7 +74,7 @@ class EventDetail(Resource):
         return success_response(result)
 
     @admin_endpoint(json_required=True, validation_func=Event.validate)
-    @load_event()
+    @load_event(source=LoaderType.PARAM)
     @events_namespace.doc(**UPDATE_EVENT_DOC)
     def patch(self, event_id):
         """Update event"""
@@ -89,7 +94,7 @@ class EventDetail(Resource):
 @events_namespace.route("/<int:event_id>/teams")
 class EventTeams(Resource):
     @user_endpoint()
-    @load_event()
+    @load_event(source=LoaderType.PARAM)
     @events_namespace.doc(**GET_EVENT_TEAMS_DOC)
     def get(self, event_id):
         """Get teams in event"""

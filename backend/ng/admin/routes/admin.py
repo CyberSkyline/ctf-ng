@@ -61,8 +61,8 @@ class AdminEventReset(Resource):
     @admin_namespace.doc(**RESET_EVENT_DATA_DOC)
     def post(self, event_id):
         """Reset event data"""
-        result = reset_event_data(event_id)
-        return success_response(result)
+        reset_event_data(event_id)
+        return success_response()
 
 @admin_namespace.route("/health")
 class AdminHealth(Resource):
@@ -73,11 +73,10 @@ class AdminHealth(Resource):
         counts = get_data_counts()
         detailed = get_detailed_stats()
         health_report = {
-            "status": "healthy",
             "timestamp": utc_now().isoformat(),
             "data_counts": counts,
             "events_count": counts["events"],
             "empty_teams_count": detailed.get("total_empty_teams", 0),
         }
-        return success_response({"success": True, **health_report})
+        return success_response(health_report)
 

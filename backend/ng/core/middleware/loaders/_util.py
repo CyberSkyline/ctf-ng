@@ -8,43 +8,50 @@ class LoaderType(str, enum.Enum):
     PARAM = "param"
     BODY = "body"
 
-def _generate_loader_decorator(source: LoaderType, model_name: str, input_key: str, output_key: str):
-    def _body():
-        # Check for JSON data
-        if not hasattr(g, "json_data"):
-            raise ValueError("JSON data not found in request context")
+def check_output_exists(kwargs: dict, output_key: str):
+    """Check if the output_key already exists in kwargs."""
+    if output_key in kwargs:
+        raise ValueError(f"Argument '{output_key}' already exists in kwargs")
+    return True
 
-        # Check if the key is in the JSON
-        if input_key not in g.json_data:
-            raise ValidationError(f"Missing required key in JSON data: {input_key}")
-        
-        return g.json_data[input_key]
+def get_model_class(model_name: str):
+    """Select the corresponding model class based on the model_name"""
+    models = get_models()
+    model_class = models.get(model_name)
+    if not model_class:
+        raise ValueError(f"Model '{model_name}' not found")
+    return model_class
 
-    def _param(kwargs):
-        if input_key not in kwargs:
-            raise ValidationError(f"Missing required parameter: {input_key}")
-        
-        return kwargs[input_key]
+def get_json_val(input_key: str):
+    """Get the value from JSON data in the request context."""
+    if not hasattr(g, "json_data"):
+        raise ValueError("JSON data not found in request context")
+    
+    if input_key not in g.json_data:
+        raise ValidationError(f"Missing required key in JSON data: {input_key}")
+    
+    return g.json_data[input_key]
 
+def get_param_val(kwargs: dict, input_key: str):
+    """Get the value from kwargs based on the input_key."""
+    if input_key not in kwargs:
+        raise ValidationError(f"Missing required parameter: {input_key}")
+    
+    return kwargs[input_key]
+
+def generate_loader_decorator(source: LoaderType, model_name: str, input_key: str, output_key: str):
     """Generate a loader decorator for a given model."""
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            # Check if the output_key is already in kwargs, error if it is
-            if output_key in kwargs:
-                raise ValueError(f"Argument '{output_key}' already exists in kwargs")
-
-            # Select the corresponding model class based on the model_name
-            models = get_models()
-            model_class = models.get(model_name)
-            if not model_class:
-                raise ValueError(f"Model '{model_name}' not found")
+            check_output_exists(kwargs, output_key)
+            model_class = get_model_class(model_name)
         
             # Get the model ID based on the source type
             if source == LoaderType.BODY:
-                model_id = _body()
+                model_id = get_json_val(input_key)
             elif source == LoaderType.PARAM:
-                model_id = _param(kwargs)
+                model_id = get_param_val(kwargs, input_key)
             else:
                 raise ValueError(f"Invalid loader type: {source}")
             
