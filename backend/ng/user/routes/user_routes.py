@@ -10,17 +10,17 @@ users_user_namespace = Namespace("/users", description="user endpoints for users
 @users_user_namespace.route("/me")
 class UserProfile(Resource):
     @user_endpoint()
-    def get(self, user):
+    def get(self, current_user):
         """Get my user information"""
-        return success_response(user)
+        return success_response(current_user)
 
 @users_user_namespace.route("/me/events")
 class UserEvents(Resource):
     @user_endpoint()
-    def get(self, user):
+    def get(self, current_user):
         """Get my events"""
-        # TODO - implement
-        return success_response([ ])
+        events = current_user.get_events()
+        return success_response(events)
     
 # @users_user_namespace.route("/me/teams")
 # class UserTeams(Resource):

@@ -10,7 +10,7 @@ from CTFd.utils.user import get_current_user, is_admin as is_admin_ctfd
 from CTFd.utils.decorators import admins_only, authed_only
 from ..exceptions import PermissionError, ValidationError
 from .error_handler import handle_exceptions
-
+from ...user.models.User import User
 
 def api_endpoint(auth_required=True, admin_required=False, json_required=False, validation_func=None):
     """
@@ -67,7 +67,7 @@ def _auth_handler(f, auth_required, json_required, validation_func):
                 raise PermissionError("Authentication is required to access this resource.")
             g.user = current_user
             if "current_user" in sig.parameters:
-                kwargs["current_user"] = current_user
+                kwargs["current_user"] = User.find_or_create_by_ctfd_id(current_user.id)
         if json_required:
             if not request.is_json:
                 raise ValidationError("Request must have a JSON body.")
