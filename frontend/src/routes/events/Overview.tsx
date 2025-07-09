@@ -5,11 +5,6 @@ import {
 
 import { TbCube, TbStar, TbUsersGroup } from 'react-icons/tb';
 import { useSearchParams } from 'react-router';
-import EventHeader from 'components/event/EventHeader';
-
-import ChallengesTab from './OverviewTabs/ChallengesTab';
-import LeaderboardTab from './OverviewTabs/LeaderboardTab';
-import TeamTab from './OverviewTabs/TeamTab';
 
 import EventHeader from 'components/EventHeader';
 import HeaderContainer from 'components/HeaderContainer';
