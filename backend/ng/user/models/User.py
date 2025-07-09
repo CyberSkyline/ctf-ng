@@ -121,7 +121,7 @@ class User(db.Model):
         """Gets all users with their basic details.
         """
 
-        return cls.query().all()
+        return cls.query.all()
 
     @classmethod
     def delete_all(cls) -> None:
