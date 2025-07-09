@@ -27,6 +27,7 @@ import AdminReports from 'routes/admin/reports';
 import AdminSettings from 'routes/admin/settings';
 import AdminApiTest from 'routes/admin/api-test';
 import AvailableEvents from 'routes/events/AvailableEvents';
+import ImportChallenge from 'routes/admin/import';
 
 function Routes() {
   const routes = useRoutes([
@@ -68,6 +69,7 @@ function Routes() {
         { path : 'tickets', element : <AdminTickets /> },
         { path : 'settings', element : <AdminSettings /> },
         { path : 'api-test', element : <AdminApiTest /> },
+        { path : 'import', element : <ImportChallenge /> },
       ],
     },
   ]);
