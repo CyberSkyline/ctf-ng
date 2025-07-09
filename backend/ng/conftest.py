@@ -1,12 +1,5 @@
 """
-Defines shared Pytest fixtures for application setup.
-/backend/ng/conftest.py
-
-Conftest.py is now located in plugin/ instead of plugin/core/testing/
-because to make its fixtures, like the database session and app client,
-globally available to all tests in every domain subdirectory. Placing it here
-ensures that tests in /team/tests, user/tests, etc., can all access the same
-shared testing setup, which is a pytest best practice for project wide fixtures.
+Ctf-ng Pytest Fixtures
 """
 
 import pytest
@@ -46,295 +39,202 @@ def create_app():
 @pytest.fixture(scope="session")
 def app():
     """
-    Session wide test Flask application.
-    This is created only once for the test run.
+    Creates and configures a new Flask application for the entire test session.
     """
-    _app = create_app()
+    from .core.tests.helpers import create_ctfd, destroy_ctfd
 
-    yield _app
+    app = create_ctfd()
+    yield app
+    destroy_ctfd(app)
 
-    with _app.app_context():
-        destroy_ctfd_original(_app)
 
 
 @pytest.fixture(scope="function")
-def middleware_client():
-    """
-    Creates an isolated, authenticated Flask app for testing middleware.
-    It uses an in-memory database and cleans up after itself.
-    Only used by tests marked with @pytest.mark.middleware.
-    """
-    from .core.testing.system.middleware_test_routes import middleware_test_routes
-
-    app = create_ctfd_original(enable_plugins=True, setup=False)
-
-    # Override the database configuration to use in memory sqlite for isolation
-    app.config.update(
-        {
-            "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
-            "TESTING": True,
-            "SECRET_KEY": "test-secret-key-for-sessions",
-            "WTF_CSRF_ENABLED": False,
-            "SERVER_NAME": None,
-        }
-    )
-
-    with app.app_context():
-        # Load our plugin isolated
-        plugin_load(app)
-
-        # Register ONLY our temporary test routes
-        app.register_blueprint(middleware_test_routes)
-
-        # Create the tables but in the sqlite db
-        _db.create_all()
-
-        # Minimal ctfd config
-        from CTFd.models import Configs
-
-        setup_config = Configs(key="setup", value="true")
-        _db.session.add(setup_config)
-        _db.session.commit()
-
-        # Isolated context
-        user_to_login = gen_user(_db, name="tempuser", email="tempuser@example.com")
-        ng_user = NgUser(id=user_to_login.id)
-        _db.session.add(ng_user)
-        _db.session.commit()
-
-        Role.create_role(RoleEnum.ADMIN)
-        Role.create_role(RoleEnum.SUPPORT)
-        Permission.create_permission(PermissionEnum.CAN_EDIT_TEAM, "Edit team details")
-        RolePermission.create_role_permission(1, 1)  # Admin role with all permissions
-
-        assign_role_to_user(user_to_login.id, RoleEnum.ADMIN)
-
-        user2 = gen_user(_db, name="tempuser2", email="user2@example.com")
-        ng_user2 = NgUser(id=user2.id)
-        _db.session.add(ng_user2)
-        _db.session.commit()
-
-        event = Event(name="Temp Event", description="Temporary event for testing")
-        _db.session.add(event)
-        _db.session.commit()
-
-        event2 = Event(
-            name="Second Temp Event",
-            description="Another temporary event for testing",
-            locked=True,
-            start_time=datetime(2023, 1, 1),
-            end_time=datetime(2023, 12, 31),
-        )
-        _db.session.add(event2)
-        _db.session.commit()
-
-        create_team(name="Temp Team", event_id=event.id, creator_id=user_to_login.id)
-        create_team(name="Second Team", event_id=event.id, creator_id=user2.id)
-
-        client = app.test_client()
-        login_as(client, user_to_login)
-
-        # Yield the authenticated client to the test
-        yield client
-
-    # Teardown happens automatically after yield
-
-
-@pytest.fixture(scope="function")
-def db_session(app, request):
+def db_session(app):
     """
     Provides a clean database transaction for each test function
     that is marked with @pytest.mark.db.
     For tests not marked, it does nothing.
     """
-    if "db" not in request.node.keywords:
-        yield None
-        return
 
     with app.app_context():
         connection = _db.engine.connect()
         transaction = connection.begin()
-
-        session = _db.create_scoped_session(options={"bind": connection, "binds": {}})
-        _db.session = session
-
-        # Clear any cached user data before test
-        cache.clear()
-
-        yield session
-
-        session.remove()
+        db.session.close()
+        db.session = db.create_scoped_session(options={"bind": connection, "binds": {}})
+        yield db.session
         transaction.rollback()
         connection.close()
-
-        # Clear cache after test to prevent state leakage
-        cache.clear()
+        db.session.remove()
 
 
-@pytest.fixture
-def client(app):
-    """A test client for the app."""
+@pytest.fixture(scope="function")
+def client(app, db_session):
+    """A test client for making unauthenticated requests."""
     return app.test_client()
 
 
-@pytest.fixture
-def logged_in_client(client, normal_user):
-    """A test client that is logged in as a normal user."""
-    login_as(client, normal_user)
-    print(f"Logged in as user: {normal_user.name} (ID: {normal_user.id})")
+@pytest.fixture(scope="function")
+def user(db_session):
+    """Creates a regular user in the database for testing."""
+    user = Users(name="testuser", email="test@example.com", password="password")
+    user.verified = True
+    db_session.add(user)
+    db_session.commit()
+    from .user.models.User import User as NgUser
+
+    NgUser.create_user(user_id=user.id, commit=False)
+    db_session.commit()
+    return user
+
+
+@pytest.fixture(scope="function")
+def admin(db_session):
+    """Creates an admin user in the database for testing."""
+    admin = Users(name="admin", email="admin@example.com", password="password", type="admin")
+    admin.verified = True
+    db_session.add(admin)
+    db_session.commit()
+    from .user.models.User import User as NgUser
+
+    NgUser.create_user(user_id=admin.id, commit=False)
+    db_session.commit()
+    return admin
+
+
+@pytest.fixture(scope="function")
+def logged_in_client(app, db_session, user):
+    """A test client logged in as a regular user."""
+    # Clear any cached user data to prevent cross-test contamination
+    from CTFd.cache import cache
+    cache.clear()
+    
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        # Completely clear the session and set only what we need
+        sess.clear()
+        sess["id"] = user.id
+        sess["name"] = user.name
+        sess["type"] = user.type
+        sess["nonce"] = generate_nonce()
+        sess.permanent = False
+    return client
+
+
+@pytest.fixture(scope="function") 
+def admin_client(app, db_session, admin):
+    """A test client logged in as an admin."""
+    # Clear any cached user data to prevent cross-test contamination
+    from CTFd.cache import cache
+    cache.clear()
+    
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        # Completely clear the session and set only what we need
+        sess.clear()
+        sess["id"] = admin.id
+        sess["name"] = admin.name
+        sess["type"] = admin.type
+        sess["nonce"] = generate_nonce()
+        sess.permanent = False
     return client
 
 
 @pytest.fixture
-def admin_client(client, admin_user):
-    """A test client that is logged in as an admin user."""
-    login_as(client, admin_user)
-    return client
+def event_factory(db_session):
+    """A factory function to create Event objects for tests."""
+    from .event.models.Event import Event
 
+    def _factory(**kwargs):
+        defaults = {
+            "name": f"Test Event {db_session.query(Event).count() + 1}",
+            "description": "A test event.",
+            "max_team_size": 4,
+            "locked": False,
+        }
+        defaults.update(kwargs)
+        event = Event.create_event(**defaults)
+        return event
 
-# Data Factory Fixtures
+    return _factory
 
 
 @pytest.fixture
-def normal_user(db_session):
-    """Creates a basic CTFd user and our plugin user."""
-    if db_session is None:
-        return None
+def team_factory(db_session, event_factory):
+    """A factory function to create Team objects for tests."""
+    from .team.models.Team import Team
+    from .team.models.TeamMember import TeamMember
 
-    ctfd_user = gen_user(_db, name="testuser", email="test@example.com")
-    ng_user = NgUser(id=ctfd_user.id)
-    db_session.add(ng_user)
+    def _factory(event=None, **kwargs):
+        members_to_add = kwargs.pop("members", [])
+
+        if event is None:
+            event = event_factory()
+
+        defaults = {
+            "name": f"Test Team {db_session.query(Team).count() + 1}",
+            "event_id": event.id,
+        }
+        defaults.update(kwargs)
+        team = Team.create_team(**defaults)
+
+        for member_user in members_to_add:
+            TeamMember.create_team_member(user_id=member_user.id, team_id=team.id, event_id=event.id)
+        return team
+
+    return _factory
+
+
+@pytest.fixture
+def event(event_factory):
+    """Simple fixture to get a single event."""
+    return event_factory()
+
+
+@pytest.fixture
+def open_event_reg(event, event_registration_factory, db_session):
+    """An open event registration."""
+    reg = event_registration_factory(event=event, reg_open=True)
+    reg._test_event_id = event.id
+    return reg
+
+
+@pytest.fixture
+def closed_event_reg(event, event_registration_factory, db_session):
+    """A closed event registration."""
+    reg = event_registration_factory(event=event, reg_open=False)
+    reg._test_event_id = event.id
+    return reg
+
+
+@pytest.fixture
+def past_event_reg(event, event_registration_factory, db_session):
+    """An event registration with a registration window in the past."""
+    reg = event_registration_factory(
+        event=event,
+        reg_start_date=datetime.utcnow() - timedelta(days=2),
+        reg_end_date=datetime.utcnow() - timedelta(days=1),
+    )
+    db_session.expunge_all()
+    db_session.add(reg)
+    db_session.add(reg.event)
     db_session.commit()
-    return ctfd_user
+    return reg
 
 
 @pytest.fixture
-def admin_user(db_session):
-    """Creates an admin CTFd user and our plugin user."""
-    if db_session is None:
-        return None
-
-    ctfd_user = gen_user(_db, name="admin", email="admin@example.com", type="admin")
-    ng_user = NgUser(id=ctfd_user.id)
-    db_session.add(ng_user)
+def future_event_reg(event, event_registration_factory, db_session):
+    """An event registration with a registration window in the future."""
+    reg = event_registration_factory(
+        event=event,
+        reg_start_date=datetime.utcnow() + timedelta(days=1),
+        reg_end_date=datetime.utcnow() + timedelta(days=2),
+    )
+    db_session.expunge_all()
+    db_session.add(reg)
+    db_session.add(reg.event)
     db_session.commit()
-    return ctfd_user
-
-
-@pytest.fixture
-def event(db_session):
-    """Creates a basic event."""
-    if db_session is None:
-        return None
-
-    event = Event(name="Test Event", description="A event for testing")
-    db_session.add(event)
-    db_session.commit()
-    return event
-
-
-@pytest.fixture
-def event2(db_session):
-    """Creates a second event for multi-event tests."""
-    if db_session is None:
-        return None
-
-    event = Event(name="Second Event", description="A second event for testing")
-    db_session.add(event)
-    db_session.commit()
-    return event
-
-@pytest.fixture
-def event_registration(event, db_session):
-    """Creates an event registration for the given event."""
-    if db_session is None:
-        return None
-
-    result = create_event_registration(event_id=event.id, reg_open=True)
-    if not result["success"]:
-        raise Exception(f"Failed to create event registration: {result.get('error')}")
-
-    return result["event_registration"]
-
-@pytest.fixture
-def closed_event_registration(event, db_session):
-    """Creates a closed event registration for the given event."""
-    if db_session is None:
-        return None
-
-    result = create_event_registration(event_id=event.id, reg_open=False)
-    if not result["success"]:
-        raise Exception(f"Failed to create event registration: {result.get('error')}")
-
-    return result["event_registration"]
-
-@pytest.fixture
-def past_event_registration(event, db_session):
-    """Creates an event registration for the given event with a past registration period."""
-    if db_session is None:
-        return None
-
-    result = create_event_registration(event_id=event.id, reg_open=True, reg_start_date=datetime(2020, 1, 1), reg_end_date=datetime(2020, 1, 2))
-    if not result["success"]:
-        raise Exception(f"Failed to create past event registration: {result.get('error')}")
-
-    return result["event_registration"]
-
-@pytest.fixture
-def future_event_registration(event, db_session):
-    """Creates an event registration for the given event with a future registration period."""
-    if db_session is None:
-        return None
-
-    result = create_event_registration(event_id=event.id, reg_open=True, reg_start_date=datetime(2125, 1, 1), reg_end_date=datetime(2125, 1, 2))
-    if not result["success"]:
-        raise Exception(f"Failed to create future event registration: {result.get('error')}")
-
-    return result["event_registration"]
-
-
-
-@pytest.fixture
-def team(db_session, event, normal_user):
-    """Creates a team with a normal user as the captain."""
-    if db_session is None:
-        return None
-
-    result = create_team(name="Test Team", event_id=event.id, creator_id=normal_user.id)
-
-    return result["team"]
-
-
-@pytest.fixture
-def team_with_members(db_session, event):
-    """Creates a team with a captain and a regular member."""
-    if db_session is None:
-        return None
-
-    # Create captain user (CTFd + plugin user)
-    captain_ctfd = gen_user(_db, name="captain", email="captain@example.com")
-    captain_ng = NgUser(id=captain_ctfd.id)
-    db_session.add(captain_ng)
-    db_session.commit()
-
-    # Create member user (CTFd + plugin user)
-    member_ctfd = gen_user(_db, name="member", email="member@example.com")
-    member_ng = NgUser(id=member_ctfd.id)
-    db_session.add(member_ng)
-    db_session.commit()
-
-    # Create team with captain as creator
-    team_result = create_team(name="Test Team with Members", event_id=event.id, creator_id=captain_ctfd.id)
-    team = team_result["team"]
-
-    # Add member to the team using invite code
-    invite_code = team_result["invite_code"]
-    join_result = join_team(member_ctfd.id, invite_code)
-    if not join_result["success"]:
-        raise Exception(f"Failed to add member to team: {join_result.get('error')}")
-
-    return {"team": team, "captain": captain_ctfd, "member": member_ctfd}
-
+    return reg
 
 @pytest.fixture
 def role_with_permissions(db_session):

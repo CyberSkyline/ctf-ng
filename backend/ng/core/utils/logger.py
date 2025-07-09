@@ -1,13 +1,18 @@
 """
 Configures a JSON logger for machine readable app logging.
-/backend/ng/core/utils/logger.py
 """
 
 import os
 import json
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
+
+
+def utc_now() -> datetime:
+    """Get current UTC datetime. Replacement for deprecated datetime.utcnow()."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
 
 PLUGIN_LOGGER_NAME = "ctfd_ng_plugin"
 logger = logging.getLogger(PLUGIN_LOGGER_NAME)
@@ -16,7 +21,7 @@ logger = logging.getLogger(PLUGIN_LOGGER_NAME)
 class JSONFormatter(logging.Formatter):
     def format(self, record):
         log_entry = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": utc_now().isoformat() + "Z",
             "level": record.levelname,
             "message": record.getMessage(),
             "module": record.filename,

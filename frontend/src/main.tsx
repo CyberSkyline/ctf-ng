@@ -22,7 +22,7 @@ createRoot(document.getElementById('root')!).render(
         accentColor="lime"
       >
         <SWRConfig
-          value={{ fetcher: apiFetcher }}
+          value={{ fetcher : apiFetcher }}
         >
           <NavBar />
           <Routes />

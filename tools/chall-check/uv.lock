@@ -106,7 +106,7 @@ toml = [
 
 [[package]]
 name = "cyber-skyline-chall-check"
-version = "0.1.6"
+version = "0.1.8"
 source = { editable = "." }
 dependencies = [
     { name = "cattrs" },
@@ -137,7 +137,7 @@ dev = [
 
 [[package]]
 name = "cyber-skyline-chall-parser"
-version = "0.1.6"
+version = "0.1.8"
 source = { directory = "../../lib/parser" }
 dependencies = [
     { name = "attrs" },

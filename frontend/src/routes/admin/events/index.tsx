@@ -10,17 +10,17 @@ import { radixTheme } from '@/grid';
 export default function AdminEvents() {
   const rowData = [
     {
-      name: 'PC7 Teams Round 1', start: 'date', end: 'date', teamSize: '5', registeredTeams: '10', registeredUsers: '50',
+      name : 'PC7 Teams Round 1', start : 'date', end : 'date', teamSize : '5', registeredTeams : '10', registeredUsers : '50',
     },
   ];
 
   const colDefs: ColDef<typeof rowData[number]>[] = [
-    { field: 'name' },
-    { field: 'start' },
-    { field: 'end' },
-    { field: 'teamSize', headerName: 'Max Team Size' },
-    { field: 'registeredTeams' },
-    { field: 'registeredUsers' },
+    { field : 'name' },
+    { field : 'start' },
+    { field : 'end' },
+    { field : 'teamSize', headerName : 'Max Team Size' },
+    { field : 'registeredTeams' },
+    { field : 'registeredUsers' },
   ];
 
   return (
@@ -31,10 +31,10 @@ export default function AdminEvents() {
         rowData={rowData}
         columnDefs={colDefs}
         gridOptions={{
-          rowSelection: {
-            mode: 'singleRow',
-            checkboxes: false,
-            enableClickSelection: true,
+          rowSelection : {
+            mode : 'singleRow',
+            checkboxes : false,
+            enableClickSelection : true,
           },
         }}
       />

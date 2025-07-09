@@ -22,7 +22,7 @@ export default function EventCard({
           <Inset side="left" className="w-32 shrink-0">
             <AspectRatio ratio={3 / 4}>
               {/* Placeholder for event card graphic */}
-              <Box className="h-full w-full" style={{ backgroundColor: `var(--${color}-8)` }} />
+              <Box className="h-full w-full" style={{ backgroundColor : `var(--${color}-8)` }} />
             </AspectRatio>
           </Inset>
           <Flex direction="column" gap="2" className="flex-grow" justify="between">

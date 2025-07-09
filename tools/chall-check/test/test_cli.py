@@ -44,9 +44,9 @@ x-challenge:
   icon: TbTest
   questions:
     - name: flag
-      question: What is the flag?
+      body: What is the flag?
       points: 100
-      answer: CTF{test}
+      answer: CTF\\{test\\}
       max_attempts: 3
 services:
   web:

@@ -11,7 +11,7 @@ export default function ChallengeCard({
   description,
   points,
   completed = false,
-  icon: Icon = undefined,
+  icon : Icon = undefined,
 }: {
   id: string;
   name: string;

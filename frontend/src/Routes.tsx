@@ -5,7 +5,11 @@ import Dashboard from 'routes/dashboard';
 import Notifications from 'routes/notifications';
 import Profile from 'routes/profile';
 import Scoreboard from 'routes/scoreboard';
+
+// Support tickets
 import Support from 'routes/support';
+import CreateTicket from 'routes/support/CreateTicket';
+import TicketDetail from 'routes/support/Detail';
 
 // events
 import Overview from 'routes/events/Overview';
@@ -27,37 +31,44 @@ import AdminSettings from 'routes/admin/settings';
 function Routes() {
   const routes = useRoutes([
     {
-      path: '*',
-      element: <NotFound />, // Catch-all route for 404 page
+      path : '*',
+      element : <NotFound />, // Catch-all route for 404 page
     },
-    { path: '/', element: <Dashboard /> },
+    { path : '/', element : <Dashboard /> },
     {
-      path: '/events/:idEvent',
-      children: [
-        { index: true, element: <Overview /> },
-        { path: 'registration', element: <Registration /> },
-        { path: 'challenge/:idChallenge', element: <Challenge /> },
+      path : '/events/:idEvent',
+      children : [
+        { index : true, element : <Overview /> },
+        { path : 'registration', element : <Registration /> },
+        { path : 'challenge/:idChallenge', element : <Challenge /> },
       ],
     },
-    { path: '/notifications/:idNotif', element: <Notifications /> },
-    { path: '/profile', element: <Profile /> },
-    { path: '/scoreboard/:idEvent', element: <Scoreboard /> },
-    { path: '/support', element: <Support /> },
+    { path : '/notifications/:idNotif', element : <Notifications /> },
+    { path : '/profile', element : <Profile /> },
+    { path : '/scoreboard/:idEvent', element : <Scoreboard /> },
+    {
+      path : '/support',
+      children : [
+        { index : true, element : <Support /> },
+        { path : 'createTicket', element : <CreateTicket /> },
+        { path : ':idTicket', element : <TicketDetail /> },
+      ],
+    },
 
     {
-      path: '/admin',
-      element: <AdminLayout />,
-      children: [
-        { path: '*', element: <NotFound /> }, // Catch-all for admin routes
-        { index: true, element: <AdminDashboard /> },
-        { path: 'reports', element: <AdminReports /> },
-        { path: 'events', element: <AdminEvents /> },
-        { path: 'containers', element: <AdminContainers /> },
-        { path: 'users', element: <AdminUsers /> },
-        { path: 'teams', element: <AdminTeams /> },
-        { path: 'notifications', element: <AdminNotifications /> },
-        { path: 'tickets', element: <AdminTickets /> },
-        { path: 'settings', element: <AdminSettings /> },
+      path : '/admin',
+      element : <AdminLayout />,
+      children : [
+        { path : '*', element : <NotFound /> }, // Catch-all for admin routes
+        { index : true, element : <AdminDashboard /> },
+        { path : 'reports', element : <AdminReports /> },
+        { path : 'events', element : <AdminEvents /> },
+        { path : 'containers', element : <AdminContainers /> },
+        { path : 'users', element : <AdminUsers /> },
+        { path : 'teams', element : <AdminTeams /> },
+        { path : 'notifications', element : <AdminNotifications /> },
+        { path : 'tickets', element : <AdminTickets /> },
+        { path : 'settings', element : <AdminSettings /> },
       ],
     },
 
