@@ -10,7 +10,7 @@ class Challenge(db.Model):
     summary = db.Column(db.String(255), nullable=True)
 
     hints = db.relationship('Hint', back_populates='challenge', cascade='all, delete-orphan')
-    tags = db.relationship('Tag', back_populates='challenge', cascade='all, delete-orphan')
+    tags = db.relationship('ChallengeTag', back_populates='challenge', cascade='all, delete-orphan')
     questions = db.relationship('Question', back_populates='challenge', cascade='all, delete-orphan')
 
     @classmethod

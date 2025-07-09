@@ -13,7 +13,7 @@ def app():
     """
     Creates and configures a new Flask application for the entire test session.
     """
-    from .core.testing.helpers import create_ctfd, destroy_ctfd
+    from .core.tests.helpers import create_ctfd, destroy_ctfd
 
     app = create_ctfd()
     yield app
@@ -70,25 +70,41 @@ def admin(db_session):
     return admin
 
 
-@pytest.fixture
-def logged_in_client(app, client, user):
+@pytest.fixture(scope="function")
+def logged_in_client(app, db_session, user):
     """A test client logged in as a regular user."""
+    # Clear any cached user data to prevent cross-test contamination
+    from CTFd.cache import cache
+    cache.clear()
+    
+    client = app.test_client()
     with client.session_transaction() as sess:
+        # Completely clear the session and set only what we need
+        sess.clear()
         sess["id"] = user.id
         sess["name"] = user.name
         sess["type"] = user.type
         sess["nonce"] = generate_nonce()
+        sess.permanent = False
     return client
 
 
-@pytest.fixture
-def admin_client(app, client, admin):
+@pytest.fixture(scope="function") 
+def admin_client(app, db_session, admin):
     """A test client logged in as an admin."""
+    # Clear any cached user data to prevent cross-test contamination
+    from CTFd.cache import cache
+    cache.clear()
+    
+    client = app.test_client()
     with client.session_transaction() as sess:
+        # Completely clear the session and set only what we need
+        sess.clear()
         sess["id"] = admin.id
         sess["name"] = admin.name
         sess["type"] = admin.type
         sess["nonce"] = generate_nonce()
+        sess.permanent = False
     return client
 
 

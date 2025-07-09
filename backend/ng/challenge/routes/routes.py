@@ -1,14 +1,13 @@
 from flask import request
 import base64
 from flask_restx import Namespace, Resource
-from CTFd.utils.decorators import authed_only
 
 from ..controllers.import_yaml import import_yaml
 from ...core.middleware import (
-        authed_user_required,
+    admin_endpoint,
 )
 
-from ...core.utils.api_responses import (
+from ...core.utils import (
     error_response,
     success_response,
 )
@@ -18,8 +17,7 @@ challenge_namespace = Namespace('challenges', description='challenge managment')
 
 @challenge_namespace.route('/import')
 class ImportChallenge(Resource):
-    @authed_only
-    @authed_user_required
+    @admin_endpoint()
     @challenge_namespace.doc(
         description='Import a ng yaml definition',
         responses={
@@ -27,6 +25,8 @@ class ImportChallenge(Resource):
             400: 'Bad request - Returns Yaml Parser Error',
         },
     )
+
+    @admin_endpoint(json_required=True)
     def post(self):
         data = request.get_json()
         payload = base64.urlsafe_b64decode(data['yaml'])

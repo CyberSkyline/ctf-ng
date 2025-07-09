@@ -230,7 +230,7 @@ class Team(db.Model):
         return member
 
     @classmethod
-    def get_all_teams_for_admin(cls) -> list[Team]:
+    def get_all_teams(cls) -> list[Team]:
         """Gets all teams for admin purposes.
 
         Returns:

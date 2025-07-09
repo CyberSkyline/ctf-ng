@@ -18,7 +18,7 @@
     "frontend"
   ],
   "scripts": {
-    "setup-ctfd" : ".yarn-scripts/default_ctfd_setup.sh",
+    "setup-ctfd": ".yarn-scripts/default_ctfd_setup.sh",
     "lint": "yarn workspaces foreach --all run lint",
     "test": "yarn workspaces foreach --all run test",
     "outdated": "yarn upgrade-interactive",

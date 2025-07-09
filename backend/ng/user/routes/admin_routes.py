@@ -14,11 +14,12 @@ from ..models.User import User
 
 users_admin_namespace = Namespace("/admin/users", description="user endpoints for admins")
 
-# @users_admin_namespace.route("/users")
-# class UsersAdminResource(Resource):
-#     @admin_endpoint()
-#     def get(self):
-#         return success_response(User.get_all_users())
+@users_admin_namespace.route("/users")
+class UsersAdminResource(Resource):
+    @admin_endpoint()
+    def get(self):
+        """Get all users on the system"""
+        return success_response(User.get_all_users())
 
 #     @admin_endpoint(json_required=True, validation_func=User.validate)
 #     def post(self, validated_data):
@@ -26,7 +27,7 @@ users_admin_namespace = Namespace("/admin/users", description="user endpoints fo
 #         data = validated_data
 #         return User.create_user(**data)
 
-@users_admin_namespace.route("/users/<int:user_id>")
+@users_admin_namespace.route("/<int:user_id>")
 class UserAdminResource(Resource):
     @admin_endpoint()
     @load_user(source=LoaderType.PARAM, output_key="target_user")

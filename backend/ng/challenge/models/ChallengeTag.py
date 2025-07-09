@@ -1,6 +1,6 @@
 from CTFd.models import db
 
-class Tag(db.Model):
+class ChallengeTag(db.Model):
     __tablename__ = 'ng_challengetag'
     id = db.Column(db.Integer, primary_key=True)
     challenge_id = db.Column(db.Integer, db.ForeignKey('ng_challenge.id'), nullable=False, index=True)

@@ -21,3 +21,11 @@ class UserEvents(Resource):
         """Get my events"""
         # TODO - implement
         return success_response([ ])
+    
+# @users_user_namespace.route("/me/teams")
+# class UserTeams(Resource):
+#     @user_endpoint()
+#     def get(self, user):
+#         """Get my teams"""
+#         # TODO - implement
+#         return success_response([ ])

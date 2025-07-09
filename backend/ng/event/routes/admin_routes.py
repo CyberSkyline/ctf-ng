@@ -1,4 +1,3 @@
-from flask import g
 from flask_restx import Namespace, Resource
 
 from ...core.utils import success_response
@@ -21,13 +20,13 @@ class EventList(Resource):
     @admin_endpoint()
     def get(self):
         """Get all events"""
-        result = Event.get_all_events(public_only=False)
-        return success_response(result)
+        events = Event.get_all_events(public_only=False)
+        return success_response(events)
 
     @admin_endpoint(json_required=True, validation_func=Event.validate)
-    def post(self):
+    def post(self, validated_data):
         """Create event"""
-        data = g.validated_data
+        data = validated_data
         result = Event.create_event(**data)
         return success_response(result, status_code=201)
 
@@ -35,14 +34,14 @@ class EventList(Resource):
 class EventDetail(Resource):
     @admin_endpoint()
     @load_event(source=LoaderType.PARAM)
-    def get(self, event):
+    def get(self, event_id, event):
         """Get an event"""
         return success_response(event)
 
     @admin_endpoint(json_required=True, validation_func=Event.validate)
     @load_event(source=LoaderType.PARAM)
-    def put(self, event):
+    def put(self, event_id, event, validated_data):
         """Update event"""
-        data = g.validated_data
+        data = validated_data
         updated_event = event.update_event(**data)
         return success_response(updated_event)
