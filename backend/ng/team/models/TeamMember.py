@@ -3,7 +3,7 @@ Defines the TeamMember model, link between users, teams, and events.
 """
 
 from __future__ import annotations
-from typing import Any
+from typing import Any, TypedDict
 from datetime import datetime
 
 from CTFd.models import db
@@ -12,6 +12,15 @@ from ...core.utils import utc_now
 from .enums import TeamRole
 from ...core.utils.validator import BaseValidator
 from ...core.exceptions import ValidationError
+
+class TeamMemberSerialized(TypedDict):
+    id: int
+    user_id: int
+    user_name: str
+    team_id: int
+    event_id: int
+    joined_at: str | None
+    role: str
 
 class TeamMember(db.Model):
     __tablename__ = "ng_team_members"
@@ -35,7 +44,8 @@ class TeamMember(db.Model):
     def __repr__(self):
         return f"<TeamMember user={self.user_id} team={self.team_id} event={self.event_id}>"
 
-    def serialize(self, include_admin_fields: bool = False) -> dict[str, Any]:
+    def serialize(self, include_admin_fields: bool = False) -> TeamMemberSerialized:
+        from ...user.models.User import User
         """Serialize team member for API response.
 
         Args:
@@ -44,16 +54,22 @@ class TeamMember(db.Model):
         Returns:
             dict: Serialized team member data
         """
+        user = User.find_by_id(self.user_id)
+        
+        if user.ctfd_user:
+            user_name = user.ctfd_user.name if user.ctfd_user.name else f"User {self.user_id} (Data Inconsistency)"
+
         data = {
             "id": self.id,
             "user_id": self.user_id,
+            "user_name": user_name,
             "team_id": self.team_id,
             "event_id": self.event_id,
             "joined_at": self.joined_at.isoformat() if self.joined_at else None,
             "role": self.role.value,
         }
 
-        return data
+        return TeamMemberSerialized(**data)
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
@@ -77,9 +93,9 @@ class TeamMember(db.Model):
     @classmethod
     def create_team_member(
         cls,
-        user_id,
-        team_id,
-        event_id,
+        user_id: int,
+        team_id: int,
+        event_id: int,
         role: TeamRole = TeamRole.MEMBER,
         joined_at: datetime | None = None,
         commit=True,
@@ -100,7 +116,7 @@ class TeamMember(db.Model):
         if joined_at is None:
             joined_at = utc_now()
 
-        validated_data = cls.validate({
+        validated_data = cls.validate(data = {
             "user_id": user_id,
             "team_id": team_id,
             "event_id": event_id,

@@ -3,6 +3,7 @@ Simplified main decorators - just handle auth and input validation.
 Resource loading and permissions are handled by separate decorators.
 """
 
+import inspect
 from functools import wraps
 from flask import request, g
 from CTFd.utils.user import get_current_user, is_admin as is_admin_ctfd
@@ -55,6 +56,8 @@ def api_endpoint(auth_required=True, admin_required=False, json_required=False, 
 def _auth_handler(f, auth_required, json_required, validation_func):
     """Internal helper to handle the actual endpoint logic"""
 
+    sig = inspect.signature(f)
+
     @handle_exceptions
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -63,12 +66,16 @@ def _auth_handler(f, auth_required, json_required, validation_func):
             if not current_user:
                 raise PermissionError("Authentication is required to access this resource.")
             g.user = current_user
+            if "current_user" in sig.parameters:
+                kwargs["current_user"] = current_user
         if json_required:
             if not request.is_json:
                 raise ValidationError("Request must have a JSON body.")
             data = request.get_json()
             if not data:
                 raise ValidationError("JSON body is malformed or empty.")
+            if "json_data" in sig.parameters:
+                kwargs["json_data"] = data
             g.json_data = data
             if validation_func:
                 try:

@@ -3,6 +3,7 @@ from flask import g
 from ...exceptions import ValidationError, NotFoundError
 from ...utils import get_models
 import enum
+import inspect
 
 class LoaderType(str, enum.Enum):
     PARAM = "param"
@@ -42,6 +43,8 @@ def get_param_val(kwargs: dict, input_key: str):
 def generate_loader_decorator(source: LoaderType, model_name: str, input_key: str, output_key: str):
     """Generate a loader decorator for a given model."""
     def decorator(f):
+        sig = inspect.signature(f)
+
         @wraps(f)
         def decorated_function(*args, **kwargs):
             check_output_exists(kwargs, output_key)
@@ -61,7 +64,8 @@ def generate_loader_decorator(source: LoaderType, model_name: str, input_key: st
                 raise NotFoundError(f"{model_name} with ID {model_id} not found")
             
             # Set value on kwargs
-            kwargs[output_key] = instance
+            if output_key in sig.parameters:
+                kwargs[output_key] = instance
             return f(*args, **kwargs)
 
         return decorated_function

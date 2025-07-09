@@ -12,15 +12,6 @@ from .auth import (
     admin_endpoint,
     public_endpoint,
 )
-from .resources import (
-    load_target_member,
-    load_user_team_in_event,
-    load_user_teams,
-    load_user_event_team_data,
-    load_user_details,
-    load_current_user_as_target,
-    load_tags_from_request,
-)
 
 __all__ = [
     # Core Decorators
@@ -29,12 +20,4 @@ __all__ = [
     "user_endpoint",
     "admin_endpoint",
     "public_endpoint",
-    # Resource & Data Loaders
-    "load_target_member",
-    "load_user_team_in_event",
-    "load_user_teams",
-    "load_user_event_team_data",
-    "load_user_details",
-    "load_current_user_as_target",
-    "load_tags_from_request",
 ]

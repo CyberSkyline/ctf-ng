@@ -38,9 +38,6 @@ test-team:
 test-event:
 	$(PYTHON_EXEC) -m pytest ./event/tests/ -v
 
-test-event-registration:
-	$(PYTHON_EXEC) -m pytest event_registration/tests/ -v
-
 test-admin:
 	$(PYTHON_EXEC) -m pytest ./admin/tests/ -v
 

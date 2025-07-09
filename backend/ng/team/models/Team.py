@@ -3,7 +3,7 @@ Defines the Team database model and its properties
 """
 
 from __future__ import annotations
-from typing import Any
+from typing import Any, TypedDict, cast
 import string
 import random
 
@@ -18,6 +18,15 @@ from ...core.exceptions import ConflictError, ValidationError
 from .enums import TeamRole
 
 HEX_CHARS = string.hexdigits.lower()[:16]  # '0123456789abcdef'
+
+class SerializedTeam(TypedDict):
+    id: int
+    name: str
+    event_id: int
+    member_count: int
+    ranked: bool
+    locked: bool
+    invite_code: str | None  # Optional for non-admin views
 
 class Team(db.Model):
     __tablename__ = "ng_teams"
@@ -51,7 +60,7 @@ class Team(db.Model):
 
         return select(func.count(TeamMember.id)).where(TeamMember.team_id == cls.id).scalar_subquery()
 
-    def serialize(self, include_admin_fields: bool = False) -> dict[str, Any]:
+    def serialize(self, include_admin_fields: bool = False) -> SerializedTeam:
         """Serialize team for API response.
 
         Args:
@@ -72,7 +81,7 @@ class Team(db.Model):
         if include_admin_fields:
             data["invite_code"] = self.invite_code
 
-        return data
+        return SerializedTeam(**data)
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
@@ -100,6 +109,7 @@ class Team(db.Model):
         # TODO - Check if team name is unique within event
 
         is_valid, errors, parsed_data = validator.is_valid()
+
         if not is_valid:
             raise ValidationError("Validation failed.", errors=errors)
         return parsed_data
@@ -111,7 +121,7 @@ class Team(db.Model):
             ValidationError: If validation fails
         """
         try:
-            Team.validate(data=self.serialize(include_admin_fields=True))
+            Team.validate(data=cast(dict[str, Any], self.serialize(include_admin_fields=True)))
         except ValidationError as e:
             raise ValidationError(f"Team validation failed: {e.errors}") from e
     
@@ -148,6 +158,7 @@ class Team(db.Model):
         team = cls(**validated_data)
 
         db.session.add(team)
+        db.session.flush()
         if commit:
             try:
                 db.session.commit()
@@ -263,6 +274,15 @@ class Team(db.Model):
             Team or None: The team instance if found, None otherwise
         """
         return cls.query.filter_by(name=name, event_id=event_id).first()
+
+    @classmethod
+    def find_by_user_and_event(cls, user_id: int, event_id: int) -> Team | None:
+        from .TeamMember import TeamMember
+
+        return cls.query.join(TeamMember).filter(
+            TeamMember.user_id == user_id,
+            cls.event_id == event_id
+        ).first()
 
     @classmethod
     def find_all_by_event(cls, event_id: int) -> list[Team]:

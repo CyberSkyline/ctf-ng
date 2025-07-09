@@ -1,3 +1,0 @@
-"""
-Team API routes package.
-"""

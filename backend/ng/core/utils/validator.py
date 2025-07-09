@@ -4,8 +4,8 @@ Base validation framework - reusable across domains.
 
 from typing import Any
 from datetime import datetime
+from enum import Enum
 from . import utc_now
-
 
 class ValidationErrorMessages:
     """Consistent error messages throughout the system."""
@@ -47,7 +47,7 @@ class BaseValidator:
         self,
         data: dict[str, Any],
         field: str,
-        min_length : int | None = 1,
+        # min_length : int | None = 1, # TODO - implement min_length
         max_length: int | None = None,
         required: bool = False,
         friendly_name: str | None = None,
@@ -156,7 +156,7 @@ class BaseValidator:
         self,
         data: dict[str, Any],
         field: str,
-        enum_class: type,
+        enum_class: type[Enum],
         required: bool = False,
         friendly_name: str | None = None,
     ) -> None:

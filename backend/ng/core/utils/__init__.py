@@ -15,7 +15,6 @@ from .api import (
     serialize_model_for_api,
 )
 from .update import (
-    build_update_data,
     build_conditional_update_data,
 )
 
@@ -32,11 +31,10 @@ def get_models():
     from ...user.models.User import User
     from ...team.models.Team import Team
     from ...event.models.Event import Event
+    from ...event.models.Demographic import Demographic
     from ...support.models.Ticket import Ticket
     from ...team.models.TeamMember import TeamMember
     from ...support.models.TicketTag import TicketTag
-    from ...event_registration.models.Demographic import Demographic
-    from ...event_registration.models.EventRegistration import EventRegistration
 
     return {
         "User": User,
@@ -46,7 +44,6 @@ def get_models():
         "TeamMember": TeamMember,
         "TicketTag": TicketTag,
         "Demographic": Demographic,
-        "EventRegistration": EventRegistration,
     }
 
 __all__ = [
@@ -56,7 +53,6 @@ __all__ = [
     "serialize_model_for_api",
     "success_response",
     "error_response",
-    "build_update_data",
     "build_conditional_update_data",
     "emit_event",
 ]

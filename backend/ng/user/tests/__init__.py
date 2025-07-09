@@ -1,3 +1,0 @@
-"""
-User Domain Test Suite
-"""

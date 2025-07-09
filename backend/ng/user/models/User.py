@@ -3,11 +3,16 @@ Defines the User extension model.
 """
 
 from __future__ import annotations
-from typing import Any
+from typing import Any, TypedDict
 
 from CTFd.models import db
-from sqlalchemy import func
 
+class SerializedUser(TypedDict):
+    id: int
+    name: str
+    email: str
+    role: str
+    registered_at: str
 
 class User(db.Model):
     __tablename__ = "ng_users"
@@ -31,10 +36,9 @@ class User(db.Model):
             return {
                 "id": self.id,
                 "name": f"User {self.id} (Data Inconsistency)",
-                "email": None,
+                "email": "",
                 "role": "unknown",
-                "registered_at": None,
-                "team_count": len(self.team_members),
+                "registered_at": "",
             }
 
         return {
@@ -43,39 +47,12 @@ class User(db.Model):
             "email": self.ctfd_user.email,
             "role": self.ctfd_user.type,
             "registered_at": self.ctfd_user.created,
-            "team_count": len(self.team_members),
         }
 
-    def get_all_team_memberships(self):
-        """Gets all team members for a user across all events with optimized query.
-
-        Args:
-            user_id (int): The user ID to get teams for.
-
-        Returns:
-            list: Raw query results (Row objects), empty list if user not found
-        """
-        # Lazy imports to prevent circular dependencies (needed)
-        from ...event.models.Event import Event
-        from ...team.models.Team import Team
-        from ...team.models.TeamMember import TeamMember
-
-        team_members_query = (
-            db.session.query(
-                TeamMember.joined_at,
-                Team.id.label("team_id"),
-                Team.name.label("team_name"),
-                Event.max_team_size.label("max_team_size"),
-                Event.id.label("event_id"),
-                Event.name.label("event_name"),
-                func.count(TeamMember.id).over(partition_by=Team.id).label("team_member_count"),
-            )
-            .join(Team, TeamMember.team_id == Team.id)
-            .join(Event, TeamMember.event_id == Event.id)
-            .filter(TeamMember.user_id == self.id)
-            .all()
-        )
-        return team_members_query
+    @classmethod
+    def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
+        # TODO - implement
+        return data
 
     @classmethod
     def create_user(cls, user_id, commit=True):
@@ -107,92 +84,11 @@ class User(db.Model):
         return cls.query.get(user_id)
 
     @classmethod
-    def get_user_teams_in_event_data(cls, user_id: int, event_id: int) -> dict[str, Any]:
-        """Gets a user's team membership in a event with all related data.
-
-        Args:
-            user_id (int): The user ID.
-            event_id (int): The event ID to check.
-
-        Returns:
-            dict: Contains event, team_member, team data or None values if not found.
-        """
-        # Lazy imports to prevent circular dependencies (needed)
-        from ...event.models.Event import Event
-        from ...team.models.Team import Team
-        from ...team.models.TeamMember import TeamMember
-
-        event = Event.query.get(event_id)
-        if not event:
-            return {"event": None, "team_member": None, "team": None}
-
-        team_member = TeamMember.query.filter_by(user_id=user_id, event_id=event_id).first()
-        if not team_member:
-            return {"event": event, "team_member": None, "team": None}
-
-        team = Team.query.get(team_member.team_id)
-        return {"event": event, "team_member": team_member, "team": team}
-
-    @classmethod
-    def check_can_join_team_in_event(cls, user_id: int, event_id: int) -> bool:
-        """Checks if a user can join a team in the event.
-
-        Args:
-            user_id (int): The user ID.
-            event_id (int): The event ID to check eligibility for.
-
-        Returns:
-            bool: True if user can join, False if already in a team.
-        """
-        # Lazy import to prevent circular dependencies (needed)
-        from ...team.models.TeamMember import TeamMember
-
-        existing_team_member = TeamMember.query.filter_by(user_id=user_id, event_id=event_id).first()
-        return existing_team_member is None
-
-    @classmethod
-    def get_total_count(cls) -> int:
-        """Get the total count of all users.
-
-        Returns:
-            int: Total number of users
-        """
-        return cls.query.count()
-
-    @classmethod
-    def find_orphaned_users_query(cls):
-        """Find users that have no team member associations (orphaned users).
-
-        Returns:
-            Query: SQLAlchemy query object for orphaned users (can be used for .all() or .delete())
-        """
-        # Lazy imports to prevent circular dependencies (needed)
-        from ...team.models.TeamMember import TeamMember
-
-        return cls.query.outerjoin(TeamMember, cls.id == TeamMember.user_id).filter(TeamMember.id.is_(None))
-
-    @classmethod
-    def get_all_users_with_details(cls):
-        """Gets a list of all users with their core CTFd data and extended plugin data.
-
-        Returns:
-            list[User]: List of User objects with loaded relationships
+    def get_all_users(cls):
+        """Gets all users with their basic details.
         """
 
-        return cls.query.options(db.joinedload(cls.team_members)).all()
-
-    @classmethod
-    def get_user_details_by_id(cls, user_id: int) -> "User" | None:
-        """Gets detailed info for a single user by their ID.
-
-        Args:
-            user_id: The ID of the user to fetch.
-
-        Returns:
-            User: The User object with loaded relationships, or None if not found
-        """
-
-        return cls.query.options(db.joinedload(cls.team_members)).filter_by(id=user_id).first()
+        return cls.query().all()
 
     @classmethod
     def delete_all(cls) -> None:

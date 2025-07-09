@@ -6,13 +6,13 @@ from typing import Any
 from flask import Blueprint
 from flask_restx import Api
 
-from ...team.routes.teams import teams_namespace
-from ...event.routes.events import events_namespace
-from ...user.routes.users import users_namespace
-from ...admin.routes.admin import admin_namespace
-from ...support.routes.user_tickets import user_tickets_namespace
-from ...support.routes.admin_tickets import admin_tickets_namespace
-from ...event_registration.routes.event_registration import event_reg_namespace
+# from ...team.routes.teams import teams_namespace
+from ...event.routes import (events_user_namespace, events_admin_namespace)
+from ...user.routes import (users_user_namespace, users_admin_namespace)
+# from ...admin.routes.admin import admin_namespace
+# from ...support.routes.user_tickets import user_tickets_namespace
+# from ...support.routes.admin_tickets import admin_tickets_namespace
+# from ...event_registration.routes.event_registration import event_reg_namespace
 from ...challenge.routes.routes import challenge_namespace
 
 api_blueprint = Blueprint("plugin_api", __name__)
@@ -36,12 +36,15 @@ api_v1 = Api(
     security=["sessionAuth"],
 )
 
-
-api_v1.add_namespace(teams_namespace, path="/teams")
-api_v1.add_namespace(events_namespace, path="/events")
-api_v1.add_namespace(users_namespace, path="/users")
-api_v1.add_namespace(admin_namespace, path="/admin")
-api_v1.add_namespace(user_tickets_namespace, path="/support/tickets")
-api_v1.add_namespace(admin_tickets_namespace, path="/support/admin")
-api_v1.add_namespace(event_reg_namespace, path="/event_registration")
+# User namespaces
+api_v1.add_namespace(events_user_namespace, path="/events")
+api_v1.add_namespace(users_user_namespace, path="/users")
 api_v1.add_namespace(challenge_namespace, path="/challenge")
+
+# api_v1.add_namespace(user_tickets_namespace, path="/support/tickets")
+# api_v1.add_namespace(admin_tickets_namespace, path="/support/admin")
+
+# Admin namespaces
+api_v1.add_namespace(events_admin_namespace, path="/admin/events")
+api_v1.add_namespace(users_admin_namespace, path="/admin/users")
+

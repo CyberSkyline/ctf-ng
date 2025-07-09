@@ -116,7 +116,6 @@ def team_factory(db_session, event_factory):
     """A factory function to create Team objects for tests."""
     from .team.models.Team import Team
     from .team.models.TeamMember import TeamMember
-    from .team.controllers._generate_invite_code import _generate_invite_code
 
     def _factory(event=None, **kwargs):
         members_to_add = kwargs.pop("members", [])
@@ -127,7 +126,6 @@ def team_factory(db_session, event_factory):
         defaults = {
             "name": f"Test Team {db_session.query(Team).count() + 1}",
             "event_id": event.id,
-            "invite_code": _generate_invite_code(),
         }
         defaults.update(kwargs)
         team = Team.create_team(**defaults)
@@ -135,36 +133,6 @@ def team_factory(db_session, event_factory):
         for member_user in members_to_add:
             TeamMember.create_team_member(user_id=member_user.id, team_id=team.id, event_id=event.id)
         return team
-
-    return _factory
-
-
-@pytest.fixture
-def event_registration_factory(db_session, event_factory):
-    """A factory to create EventRegistration objects."""
-    from .event_registration.models.EventRegistration import EventRegistration
-
-    def _factory(event=None, **kwargs):
-        if event is None:
-            event = event_factory()
-
-        if event not in db_session:
-            event = db_session.merge(event)
-
-        defaults = {
-            "event_id": event.id,
-            "reg_open": True,
-            "public": True,
-            "reg_start_date": None,
-            "reg_end_date": None,
-        }
-        defaults.update(kwargs)
-        reg = EventRegistration(**defaults)
-        db_session.add(reg)
-        db_session.commit()
-
-        db_session.refresh(reg)
-        return reg
 
     return _factory
 
