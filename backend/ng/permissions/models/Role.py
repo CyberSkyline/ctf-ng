@@ -16,7 +16,7 @@ class Role(db.Model):
         return f"<Role {self.name}>"
 
     @classmethod
-    def create_role(cls, name: str, permissions: list[Permission] = None):
+    def create_role(cls, name: RoleEnum, permissions: list[Permission] = None):
         """Create and persist a new role to the database.
 
         Args:
@@ -25,7 +25,7 @@ class Role(db.Model):
         Returns:
             Role: The created role instance
         """
-        role = cls(name=name, permissions=permissions or [])
+        role = cls(name=name.value, permissions=permissions or [])
         db.session.add(role)
         db.session.commit()
         return role

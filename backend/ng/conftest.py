@@ -30,6 +30,8 @@ from tests.helpers import (
     gen_user,
 )
 from .core.testing.helpers import login_as
+from .permissions.models.enums import PermissionEnum
+from .permissions.models.enums import RoleEnum
 
 
 def create_app():
@@ -100,12 +102,12 @@ def middleware_client():
         _db.session.add(ng_user)
         _db.session.commit()
 
-        Role.create_role("Admin")
-        Role.create_role("User")
-        Permission.create_permission("CAN_EDIT_TEAM", "Edit team details")
+        Role.create_role(RoleEnum.ADMIN)
+        Role.create_role(RoleEnum.SUPPORT)
+        Permission.create_permission(PermissionEnum.CAN_EDIT_TEAM, "Edit team details")
         RolePermission.create_role_permission(1, 1)  # Admin role with all permissions
 
-        assign_role_to_user(user_to_login.id, "Admin")
+        assign_role_to_user(user_to_login.id, RoleEnum.ADMIN)
 
         user2 = gen_user(_db, name="tempuser2", email="user2@example.com")
         ng_user2 = NgUser(id=user2.id)
@@ -341,12 +343,12 @@ def role_with_permissions(db_session):
         return None
 
     # Create a role
-    role = Role.create_role("Test Role")
+    role = Role.create_role(RoleEnum.SUPPORT)
 
     # Create some permissions
-    permission1 = Permission.create_permission("TEST_PERMISSION_1", "Test Permission 1")
-    permission2 = Permission.create_permission("TEST_PERMISSION_2", "Test Permission 2")
-    permission3 = Permission.create_permission("TEST_PERMISSION_3", "Test Permission 3")
+    permission1 = Permission.create_permission(PermissionEnum.CAN_EDIT_TEAM, "Edit team details")
+    permission2 = Permission.create_permission(PermissionEnum.CAN_EDIT_USER, "Edit user details")
+    permission3 = Permission.create_permission(PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS, "Manage support tickets")
 
     # Assign permissions to the role
     RolePermission.create_role_permission(role.id, permission1.id)
@@ -370,8 +372,8 @@ def user_with_roles(db_session):
     db_session.commit()
 
     # Assign multiple roles to the user
-    role1 = Role.create_role("admin")
-    role2 = Role.create_role("support")
+    role1 = Role.create_role(RoleEnum.ADMIN)
+    role2 = Role.create_role(RoleEnum.SUPPORT)
     assign_role_to_user(user.id, role1.name)
     assign_role_to_user(user.id, role2.name)
 
@@ -384,9 +386,9 @@ def permissions(db_session):
         return None
 
     # Create some permissions
-    permission1 = Permission.create_permission("TEST_PERMISSION_1", "Test Permission 1")
-    permission2 = Permission.create_permission("TEST_PERMISSION_2", "Test Permission 2")
-    permission3 = Permission.create_permission("TEST_PERMISSION_3", "Test Permission 3")
+    permission1 = Permission.create_permission(PermissionEnum.CAN_EDIT_TEAM, "Edit team details")
+    permission2 = Permission.create_permission(PermissionEnum.CAN_EDIT_USER, "Edit user details")
+    permission3 = Permission.create_permission(PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS, "Manage support tickets")
 
     db_session.commit()
 

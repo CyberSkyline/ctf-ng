@@ -22,7 +22,7 @@ def test_role_endpoints_not_authenticated(client, role_with_permissions):
     response = client.get(f"/ng/permissions/{role.id}/details")
     assert response.status_code == 302 
     response = client.patch(f"/ng/permissions/{role.id}/details", json={
-        "permissions": ["TEST_PERMISSION_1", "TEST_PERMISSION_2"]
+        "permissions": ["can_edit_team", "can_edit_user"]
     })
     assert response.status_code == 403 
 
@@ -31,7 +31,7 @@ def test_change_role_permissions(admin_client, role_with_permissions):
     role = role_with_permissions
     response = admin_client.patch(f"/ng/permissions/{role.id}/details", json=
     {
-        "permissions": ["TEST_PERMISSION_1", "TEST_PERMISSION_2", "TEST_PERMISSION_3"]
+        "permissions": ["CAN_EDIT_TEAM", "CAN_EDIT_USER", "CAN_MANAGE_SUPPORT_TICKETS"]
     })
     assert response.status_code == 200
     data = response.get_json()

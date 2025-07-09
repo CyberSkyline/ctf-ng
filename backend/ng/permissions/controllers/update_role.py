@@ -1,6 +1,7 @@
 from CTFd.models import db
 from ..models.Role import Role
 from ..models.Permission import Permission
+from ..models.enums import PermissionEnum
 
 
 def update_role(role_id, data):
@@ -24,14 +25,13 @@ def update_role(role_id, data):
     permissions = []
     if permission_names:
         for name in permission_names:
-            permission = Permission.get_permission_by_name(name)
-            if not permission:
+            try:
+                permission = Permission.get_permission_by_name(PermissionEnum(name))
+            except ValueError:
                 return {
                     "success": False,
                     "error": f"Permission '{name}' does not exist",
                 }
-
-            permissions.append(permission)
     role.permissions = permissions
     db.session.commit()
 

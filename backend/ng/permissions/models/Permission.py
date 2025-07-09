@@ -13,7 +13,7 @@ class Permission(db.Model):
         return f"<Permission {self.name}>"
 
     @classmethod
-    def create_permission(cls, name: str, description: str = None):
+    def create_permission(cls, name: PermissionEnum, description: str = None):
         """Create and persist a new permission to the database.
 
         Args:
@@ -23,7 +23,7 @@ class Permission(db.Model):
         Returns:
             Permission: The created permission instance
         """
-        permission = cls(name=name, description=description)
+        permission = cls(name=name.value, description=description)
         db.session.add(permission)
         db.session.commit()
         return permission
