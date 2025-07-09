@@ -1,4 +1,3 @@
-from flask import g
 from flask_restx import Namespace, Resource
 
 from ...core.utils import success_response
@@ -22,9 +21,9 @@ users_admin_namespace = Namespace("/admin/users", description="user endpoints fo
 #         return success_response(User.get_all_users())
 
 #     @admin_endpoint(json_required=True, validation_func=User.validate)
-#     def post(self):
+#     def post(self, validated_data):
 #         """Create a new user"""
-#         data = g.validated_data
+#         data = validated_data
 #         return User.create_user(**data)
 
 @users_admin_namespace.route("/users/<int:user_id>")
