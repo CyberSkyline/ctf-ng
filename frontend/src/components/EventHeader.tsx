@@ -6,6 +6,7 @@ import {
   Heading,
 } from '@radix-ui/themes';
 import type { ReactNode } from 'react';
+import { TbCalendar, TbUser } from 'react-icons/tb';
 import EventBadge from './EventBadge';
 import RadixMarkdown from './RadixMarkdown';
 
@@ -49,6 +50,20 @@ export default function EventHeader({
             {description || ''}
           </RadixMarkdown>
         </Box>
+        <Flex direction="row" gap="2" align="center">
+          {dateRange && (
+          <Text as="span" color="gray">
+            <TbCalendar className="inline me-1" title="Date range" />
+            {dateRange}
+          </Text>
+          )}
+          {maxTeamSize && (
+            <Text as="span" color="gray">
+              <TbUser className="inline me-1" />
+              {maxTeamSize === 1 ? 'Individual' : `Teams of 2-${maxTeamSize}`}
+            </Text>
+          )}
+        </Flex>
         {children}
       </Flex>
     </Flex>

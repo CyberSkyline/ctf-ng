@@ -27,6 +27,7 @@ import AdminEvents from 'routes/admin/events';
 import AdminReports from 'routes/admin/reports';
 import AdminSettings from 'routes/admin/settings';
 import AdminApiTest from 'routes/admin/api-test';
+import AvailableEvents from 'routes/events/AvailableEvents';
 
 function Routes() {
   const routes = useRoutes([
@@ -35,6 +36,7 @@ function Routes() {
       element : <NotFound />, // Catch-all route for 404 page
     },
     { path : '/', element : <Dashboard /> },
+    { path : '/events', element : <AvailableEvents /> },
     {
       path : '/events/:idEvent',
       children : [
@@ -53,7 +55,6 @@ function Routes() {
         { path : ':idTicket', element : <TicketDetail /> },
       ],
     },
-
     {
       path : '/admin',
       element : <AdminLayout />,
@@ -71,7 +72,6 @@ function Routes() {
         { path : 'api-test', element : <AdminApiTest /> },
       ],
     },
-
   ]);
 
   return (
