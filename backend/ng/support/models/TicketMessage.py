@@ -25,6 +25,8 @@ class TicketMessage(db.Model):
     def __repr__(self):
         return f"<TicketMessage {self.id} on Ticket {self.ticket_id}>"
 
+    # TODO - create validate function
+
     def serialize(self, include_admin_fields: bool = False) -> dict[str, Any]:
         """Serialize message for API response.
 
@@ -53,6 +55,7 @@ class TicketMessage(db.Model):
 
         return data
 
+    # TODO - Fix return typing. It should be TicketMessage without the quotes. Also check for other places where this happens.
     @classmethod
     def create(cls, text: str, ticket_id: int, author_id: int, commit: bool = True) -> "TicketMessage":
         """Create and persist a new ticket message.
@@ -66,6 +69,7 @@ class TicketMessage(db.Model):
         Returns:
             TicketMessage: The created message instance
         """
+        # TODO - call validate function before creating
         message = cls(text=text, ticket_id=ticket_id, author_id=author_id, created_at=utc_now())
 
         db.session.add(message)
@@ -85,6 +89,7 @@ class TicketMessage(db.Model):
         """
         return cls.query.get(message_id)
 
+    # TODO - Move logic to an instance method on Ticket
     @classmethod
     def find_by_ticket(cls, ticket_id: int) -> list[TicketMessage]:
         """Find all messages for a specific ticket.
@@ -97,6 +102,7 @@ class TicketMessage(db.Model):
         """
         return cls.query.filter_by(ticket_id=ticket_id).order_by(cls.created_at.asc()).all()
 
+    # TODO - Remove, not needed
     @classmethod
     def find_by_author(cls, author_id: int) -> list[TicketMessage]:
         """Find all messages by a specific author.
@@ -109,6 +115,7 @@ class TicketMessage(db.Model):
         """
         return cls.query.filter_by(author_id=author_id).order_by(cls.created_at.desc()).all()
 
+    # TODO - Remove, this information is already available from the Ticket itself
     @classmethod
     def count_by_ticket(cls, ticket_id: int) -> int:
         """Count messages in a ticket.

@@ -32,7 +32,6 @@ from ...core.validation import (
 from ...core.utils import success_response
 from ...core.middleware import (
     admin_endpoint,
-    load_tags_from_request,
 )
 from ...core.middleware.loaders import (
     LoaderType,
@@ -172,7 +171,6 @@ class AdminTagList(Resource):
 class AdminTicketTags(Resource):
     @admin_endpoint(json_required=True, validation_func=validate_ticket_tags_update)
     @load_ticket(LoaderType.PARAM)
-    @load_tags_from_request()
     @admin_tickets_namespace.doc(**ADMIN_ADD_TAGS_TO_TICKET_DOC)
     def post(self, ticket_id):
         raise Exception("Not implemented yet")
@@ -182,7 +180,6 @@ class AdminTicketTags(Resource):
 
     @admin_endpoint(json_required=True, validation_func=validate_ticket_tags_update)
     @load_ticket(LoaderType.PARAM)
-    @load_tags_from_request()
     @admin_tickets_namespace.doc(**ADMIN_REMOVE_TAGS_FROM_TICKET_DOC)
     def delete(self, ticket_id):
         raise Exception("Not implemented yet")

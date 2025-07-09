@@ -2,7 +2,6 @@
 Model tests for TicketTag
 """
 
-import pytest
 from unittest.mock import patch
 from ..models.TicketTag import TicketTag
 
@@ -66,6 +65,7 @@ class TestUpdateTag:
         )
         
         refreshed_tag = TicketTag.find_by_id(tag_id)
+        assert refreshed_tag is not None
         assert refreshed_tag.description == "Updated description"
         assert refreshed_tag.description != original_description
 
@@ -123,6 +123,9 @@ class TestGetAllTags:
         
         tag_names = [tag.name for tag in all_tags]
         assert tag_names == sorted(tag_names)
+
+        # TODO - Verify the returned tags match the created tags
+        assert tags is not None # placeholder
 
 
 class TestSearchTags:

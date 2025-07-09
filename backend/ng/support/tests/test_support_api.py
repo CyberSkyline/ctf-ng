@@ -3,7 +3,6 @@ Support domain - API endpoint testing
 """
 
 import json
-import pytest
 
 
 class TestUserTicketEndpoints:
@@ -30,6 +29,10 @@ class TestUserTicketEndpoints:
         assert "data" in data
         assert "tickets" in data["data"]
         assert len(data["data"]["tickets"]) >= 2
+
+        # TODO - Check that the tickets returned match. You can use .serialize to compare
+        assert ticket1 is not None # placeholder
+        assert ticket2 is not None # placeholder
 
     def test_get_my_tickets_filtered(self, logged_in_client, user, closed_ticket, muted_ticket, ticket):
         """Test getting filtered tickets."""

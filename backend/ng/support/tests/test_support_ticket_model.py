@@ -2,14 +2,8 @@
 Model tests for Ticket
 """
 
-import pytest
 from unittest.mock import patch
-from datetime import datetime, timedelta
-from ...core.exceptions import ValidationError
-from ...core.utils import utc_now
 from ..models.Ticket import Ticket
-from ..models.TicketMessage import TicketMessage
-from ..models.TicketTag import TicketTag
 
 
 class TestTicketRepr:
@@ -92,6 +86,7 @@ class TestCloseTicket:
         ticket.close_ticket()
         
         refreshed_ticket = Ticket.find_by_id(ticket_id)
+        assert refreshed_ticket is not None
         assert refreshed_ticket.status == "closed"
         assert refreshed_ticket.closed_timestamp is not None
 
@@ -115,6 +110,7 @@ class TestReopenTicket:
         closed_ticket.reopen_ticket()
         
         refreshed_ticket = Ticket.find_by_id(ticket_id)
+        assert refreshed_ticket is not None
         assert refreshed_ticket.status == "open"
         assert refreshed_ticket.closed_timestamp is None
         assert refreshed_ticket.muted is False
@@ -139,12 +135,14 @@ class TestToggleMute:
         ticket.toggle_mute(True)
         
         refreshed_ticket = Ticket.find_by_id(ticket_id)
+        assert refreshed_ticket is not None
         assert refreshed_ticket.muted is True
         assert refreshed_ticket.status == "muted"
         
         ticket.toggle_mute(False)
         
         refreshed_ticket = Ticket.find_by_id(ticket_id)
+        assert refreshed_ticket is not None
         assert refreshed_ticket.muted is False
         assert refreshed_ticket.status == "open"
 
@@ -168,6 +166,7 @@ class TestAssignUnassignTicket:
         ticket.assign_to_user(admin.id)
         
         refreshed_ticket = Ticket.find_by_id(ticket_id)
+        assert refreshed_ticket is not None
         assert refreshed_ticket.assigned_to == admin.id
 
     def test_unassign(self, ticket, admin, db_session):
@@ -179,6 +178,7 @@ class TestAssignUnassignTicket:
         ticket.unassign()
         
         refreshed_ticket = Ticket.find_by_id(ticket_id)
+        assert refreshed_ticket is not None
         assert refreshed_ticket.assigned_to is None
 
     def test_assign_respects_commit_flag(self, ticket, admin, db_session):
@@ -308,6 +308,7 @@ class TestAddTags:
         ticket.add_tags([tag1, tag2])
         
         refreshed_ticket = Ticket.find_by_id(ticket_id)
+        assert refreshed_ticket is not None
         assert len(refreshed_ticket.tags) == 2
         tag_names = [tag.name for tag in refreshed_ticket.tags]
         assert "urgent" in tag_names
@@ -338,6 +339,7 @@ class TestRemoveTags:
         ticket_with_tags.remove_tags([tag_to_remove])
         
         refreshed_ticket = Ticket.find_by_id(ticket_id)
+        assert refreshed_ticket is not None
         assert len(refreshed_ticket.tags) == initial_count - 1
         tag_names = [tag.name for tag in refreshed_ticket.tags]
         assert tag_to_remove.name not in tag_names

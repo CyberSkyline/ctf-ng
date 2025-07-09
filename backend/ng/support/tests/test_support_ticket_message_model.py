@@ -2,9 +2,7 @@
 Model tests for TicketMessage
 """
 
-import pytest
 from unittest.mock import patch
-from ...core.utils import utc_now
 from ..models.TicketMessage import TicketMessage
 
 

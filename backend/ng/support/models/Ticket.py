@@ -28,7 +28,7 @@ class Ticket(db.Model):
     assigned_to = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True, index=True)
     event_id = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=True, index=True)
     team_id = db.Column(db.Integer, db.ForeignKey("ng_teams.id"), nullable=True, index=True)
-    challenge_id = db.Column(db.Integer, nullable=True, index=True)  # Placeholder for future challenge integration TODO
+    challenge_id = db.Column(db.Integer, nullable=True, index=True)
     muted = db.Column(db.Boolean, default=False, nullable=False)
     first_admin_response_timestamp = db.Column(db.DateTime, nullable=True)
 
@@ -46,6 +46,8 @@ class Ticket(db.Model):
 
     def __repr__(self):
         return f"<Ticket {self.id}: {self.subject}>"
+
+    # TODO - Create validate method (use Event model as reference)
 
     @hybrid_property
     def status(self):
@@ -104,6 +106,7 @@ class Ticket(db.Model):
 
         return data
 
+    # TODO - perform validate on input data. Rename to create_ticket
     @classmethod
     def create(
         cls,
@@ -147,6 +150,7 @@ class Ticket(db.Model):
             db.session.commit()
         return ticket
 
+    # TODO - should not have a return value
     def update_ticket(self, commit=True, **kwargs):
         """Update ticket properties and persist to database.
 
@@ -201,6 +205,7 @@ class Ticket(db.Model):
         if commit:
             db.session.commit()
 
+    # TODO - Move logic into the add_message function. This doesn't need to be its own function since no one else calls it
     def set_first_admin_response(self, timestamp: datetime | None = None, commit: bool = True) -> None:
         """Set the first admin response timestamp if not already set."""
         if self.first_admin_response_timestamp is None:
@@ -208,7 +213,7 @@ class Ticket(db.Model):
             if commit:
                 db.session.commit()
 
-    def add_tags(self, tags: list["TicketTag"], commit: bool = True) -> None:
+    def add_tags(self, tags: list[TicketTag], commit: bool = True) -> None:
         """Add tags to the ticket."""
         for tag in tags:
             if tag not in self.tags:
@@ -217,7 +222,7 @@ class Ticket(db.Model):
         if commit:
             db.session.commit()
 
-    def remove_tags(self, tags: list["TicketTag"], commit: bool = True) -> None:
+    def remove_tags(self, tags: list[TicketTag], commit: bool = True) -> None:
         """Remove tags from the ticket."""
         for tag in tags:
             if tag in self.tags:
@@ -238,6 +243,7 @@ class Ticket(db.Model):
         """
         return cls.query.get(ticket_id)
 
+    # TODO - Remove, use find_filtered_tickets directly
     @classmethod
     def find_by_author(cls, author_id: int) -> list["Ticket"]:
         """Find all tickets by a specific author.
@@ -250,6 +256,7 @@ class Ticket(db.Model):
         """
         return cls.query.filter_by(author_id=author_id).order_by(cls.last_updated.desc()).all()
 
+    # TODO - Remove, use find_filtered_tickets directly
     @classmethod
     def find_by_assigned_user(cls, user_id: int) -> list["Ticket"]:
         """Find all tickets assigned to a user.
@@ -262,6 +269,7 @@ class Ticket(db.Model):
         """
         return cls.query.filter_by(assigned_to=user_id).order_by(cls.last_updated.desc()).all()
 
+    # TODO - Remove, use find_filtered_tickets directly
     @classmethod
     def find_open_tickets(cls) -> list["Ticket"]:
         """Find all open tickets."""
@@ -271,16 +279,19 @@ class Ticket(db.Model):
             .all()
         )
 
+    # TODO - Remove, use find_filtered_tickets directly
     @classmethod
     def find_by_event(cls, event_id: int) -> list["Ticket"]:
         """Find all tickets for a specific event."""
         return cls.query.filter_by(event_id=event_id).order_by(cls.last_updated.desc()).all()
 
+    # TODO - Remove, use find_filtered_tickets directly
     @classmethod
     def find_by_team(cls, team_id: int) -> list["Ticket"]:
         """Find all tickets for a specific team."""
         return cls.query.filter_by(team_id=team_id).order_by(cls.last_updated.desc()).all()
 
+    # TODO - Remove, use find_filtered_tickets directly
     @classmethod
     def find_unassigned_open_tickets(cls) -> list["Ticket"]:
         """Find all open tickets that are not assigned."""
@@ -294,6 +305,7 @@ class Ticket(db.Model):
             .all()
         )
 
+    # TODO - Remove, there are no defined requirements for this function
     @classmethod
     def get_ticket_stats(cls) -> dict[str, Any]:
         """Get overall ticket statistics."""
@@ -380,6 +392,7 @@ class Ticket(db.Model):
 
         return query.order_by(cls.last_updated.desc()).all()
 
+    # TODO - Remove create_with_validate and just use create_ticket directly. create_ticket should validate itself
     @classmethod
     def create_with_validation(
         cls,
@@ -443,6 +456,7 @@ class Ticket(db.Model):
             db.session.rollback()
             return {"success": False, "ticket": None, "error": str(e)}
 
+    # TODO - Remove assign_to_user_with_validation and just use assign_to_user directly. assign_to_user should validate itself
     def assign_to_user_with_validation(self, user_id: int) -> dict[str, Any]:
         """Assign ticket to a user with validation.
 
@@ -464,6 +478,8 @@ class Ticket(db.Model):
             db.session.rollback()
             return {"success": False, "user_name": None, "error": str(e)}
 
+    # TODO - rename to just "add_message"
+    # TODO - Return value should None
     def add_message_with_updates(self, text: str, author_id: int, is_admin: bool = False) -> dict[str, Any]:
         """Add a message and handle ticket state updates.
 
@@ -488,6 +504,7 @@ class Ticket(db.Model):
 
         return {"message": message, "ticket_reopened": ticket_reopened}
 
+    # TODO - Write an instance method to return the list of messages for a ticket
 
 # Junction table for many to many relationship between tickets and tags
 ticket_tags_junction = db.Table(

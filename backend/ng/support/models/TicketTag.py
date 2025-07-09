@@ -40,6 +40,8 @@ class TicketTag(db.Model):
 
         return data
 
+    # TODO - create validate function
+
     @classmethod
     def create(
         cls,
@@ -59,6 +61,7 @@ class TicketTag(db.Model):
         Returns:
             TicketTag: The created tag instance
         """
+        # TODO - call validate
         tag = cls(name=name, color=color, description=description)
 
         db.session.add(tag)
@@ -66,6 +69,7 @@ class TicketTag(db.Model):
             db.session.commit()
         return tag
 
+    # TODO - should not have a return val
     def update_tag(self, **kwargs) -> bool:
         """Update tag properties and persist to database.
 
