@@ -1,5 +1,5 @@
 """
-Integration tests for support domain - API endpoint testing
+Support domain - API endpoint testing
 """
 
 import json
@@ -411,8 +411,6 @@ class TestTagManagementEndpoints:
 
 
 class TestStatisticsEndpoints:
-    """Tests for statistics endpoints."""
-
     def test_admin_get_ticket_stats(self, admin_client, multiple_tickets):
         """Test admin getting ticket statistics."""
 

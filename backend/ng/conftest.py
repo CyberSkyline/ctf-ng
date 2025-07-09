@@ -13,7 +13,7 @@ def app():
     """
     Creates and configures a new Flask application for the entire test session.
     """
-    from .core.testing.helpers import create_ctfd, destroy_ctfd
+    from .core.tests.helpers import create_ctfd, destroy_ctfd
 
     app = create_ctfd()
     yield app
@@ -70,25 +70,41 @@ def admin(db_session):
     return admin
 
 
-@pytest.fixture
-def logged_in_client(app, client, user):
+@pytest.fixture(scope="function")
+def logged_in_client(app, db_session, user):
     """A test client logged in as a regular user."""
+    # Clear any cached user data to prevent cross-test contamination
+    from CTFd.cache import cache
+    cache.clear()
+    
+    client = app.test_client()
     with client.session_transaction() as sess:
+        # Completely clear the session and set only what we need
+        sess.clear()
         sess["id"] = user.id
         sess["name"] = user.name
         sess["type"] = user.type
         sess["nonce"] = generate_nonce()
+        sess.permanent = False
     return client
 
 
-@pytest.fixture
-def admin_client(app, client, admin):
+@pytest.fixture(scope="function") 
+def admin_client(app, db_session, admin):
     """A test client logged in as an admin."""
+    # Clear any cached user data to prevent cross-test contamination
+    from CTFd.cache import cache
+    cache.clear()
+    
+    client = app.test_client()
     with client.session_transaction() as sess:
+        # Completely clear the session and set only what we need
+        sess.clear()
         sess["id"] = admin.id
         sess["name"] = admin.name
         sess["type"] = admin.type
         sess["nonce"] = generate_nonce()
+        sess.permanent = False
     return client
 
 
@@ -116,7 +132,6 @@ def team_factory(db_session, event_factory):
     """A factory function to create Team objects for tests."""
     from .team.models.Team import Team
     from .team.models.TeamMember import TeamMember
-    from .team.controllers._generate_invite_code import _generate_invite_code
 
     def _factory(event=None, **kwargs):
         members_to_add = kwargs.pop("members", [])
@@ -127,7 +142,6 @@ def team_factory(db_session, event_factory):
         defaults = {
             "name": f"Test Team {db_session.query(Team).count() + 1}",
             "event_id": event.id,
-            "invite_code": _generate_invite_code(),
         }
         defaults.update(kwargs)
         team = Team.create_team(**defaults)
@@ -135,36 +149,6 @@ def team_factory(db_session, event_factory):
         for member_user in members_to_add:
             TeamMember.create_team_member(user_id=member_user.id, team_id=team.id, event_id=event.id)
         return team
-
-    return _factory
-
-
-@pytest.fixture
-def event_registration_factory(db_session, event_factory):
-    """A factory to create EventRegistration objects."""
-    from .event_registration.models.EventRegistration import EventRegistration
-
-    def _factory(event=None, **kwargs):
-        if event is None:
-            event = event_factory()
-
-        if event not in db_session:
-            event = db_session.merge(event)
-
-        defaults = {
-            "event_id": event.id,
-            "reg_open": True,
-            "public": True,
-            "reg_start_date": None,
-            "reg_end_date": None,
-        }
-        defaults.update(kwargs)
-        reg = EventRegistration(**defaults)
-        db_session.add(reg)
-        db_session.commit()
-
-        db_session.refresh(reg)
-        return reg
 
     return _factory
 
@@ -220,8 +204,6 @@ def future_event_reg(event, event_registration_factory, db_session):
     db_session.commit()
     return reg
 
-
-
 @pytest.fixture
 def ticket_tag(db_session):
     """Creates a ticket tag for testing."""
@@ -245,7 +227,7 @@ def ticket_tag_factory(db_session):
     
     def _factory(**kwargs):
         defaults = {
-            "name": f"tag_{datetime.now().timestamp()}",
+            "name": f"tag_{datetime.utcnow().timestamp()}",
             "color": "#0000FF",
             "description": "Test tag"
         }
@@ -342,7 +324,7 @@ def ticket_with_messages(db_session, ticket, user, admin):
         commit=False
     )
     
-    ticket.set_first_admin_response(admin_msg.created_at, commit=False)
+    ticket.first_admin_response_timestamp = admin_msg.created_at
     
     db_session.add_all([user_msg, admin_msg])
     db_session.commit()
@@ -368,7 +350,7 @@ def ticket_factory(db_session):
     
     def _factory(**kwargs):
         defaults = {
-            "subject": f"Test Ticket {datetime.now().timestamp()}",
+            "subject": f"Test Ticket {datetime.utcnow().timestamp()}",
             "author_id": kwargs.get("author_id", 1),
         }
         defaults.update(kwargs)
@@ -403,8 +385,10 @@ def ticket_message_factory(db_session):
 
 
 @pytest.fixture
-def multiple_tickets(db_session, user, admin, event, team, ticket_factory):
+def multiple_tickets(db_session, user, admin, event, team_factory, ticket_factory):
     """Creates multiple tickets with various states for testing filters."""
+    
+    team = team_factory(event=event)
 
     tickets = {
         "open_unassigned": ticket_factory(

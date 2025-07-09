@@ -5,7 +5,7 @@ Controller tests for support domain
 import pytest
 from flask import g
 
-from ...core.exceptions import ValidationError, NotFoundError, ForbiddenError
+from ...core.exceptions import ValidationError, NotFoundError
 from ..models.Ticket import Ticket
 from ..models.TicketMessage import TicketMessage
 from ..models.TicketTag import TicketTag
@@ -64,7 +64,7 @@ class TestAllActionControllers:
             assert all(isinstance(t, Ticket) for t in result)
             assert all(t.author_id == user.id for t in result)
 
-            user_ticket_count = Ticket.find_all(author_id=user.id).count()
+            user_ticket_count = Ticket.query.filter_by(author_id=user.id).count()
             assert len(result) == user_ticket_count
 
             for ticket in result:
@@ -86,7 +86,7 @@ class TestAllActionControllers:
             assert isinstance(result, list)
             assert len(result) >= 4
             
-            total_tickets = Ticket.find_all().count()
+            total_tickets = Ticket.query.count()
             assert len(result) == total_tickets
 
             author_ids = set(t.author_id for t in result)
@@ -177,7 +177,7 @@ class TestAllActionControllers:
         from ..controllers.all_actions.create_ticket_message import create_ticket_message
         
         assert closed_ticket.status == "closed"
-        assert closed_ticket.closed_at is not None
+        assert closed_ticket.closed_timestamp is not None
         
         with app.test_request_context():
             result = create_ticket_message(
@@ -191,7 +191,7 @@ class TestAllActionControllers:
             
             db_session.refresh(closed_ticket)
             assert closed_ticket.status == "open"
-            assert closed_ticket.closed_at is None
+            assert closed_ticket.closed_timestamp is None
             
             admin_message = closed_ticket.messages[-1]
             assert admin_message.text == "Admin follow-up"
@@ -289,7 +289,7 @@ class TestAdminActionControllers:
         from ..controllers.admin_actions.close_ticket import close_ticket
         
         assert ticket.status == "open"
-        assert ticket.closed_at is None
+        assert ticket.closed_timestamp is None
         
         with app.test_request_context():
             result = close_ticket(ticket_id=ticket.id)
@@ -299,14 +299,14 @@ class TestAdminActionControllers:
             
             db_session.refresh(ticket)
             assert ticket.status == "closed"
-            assert ticket.closed_at is not None
+            assert ticket.closed_timestamp is not None
 
     def test_reopen_ticket_controller(self, app, closed_ticket, db_session):
         """Test reopening a ticket clears closed timestamp."""
         from ..controllers.admin_actions.reopen_ticket import reopen_ticket
         
         assert closed_ticket.status == "closed"
-        assert closed_ticket.closed_at is not None
+        assert closed_ticket.closed_timestamp is not None
         
         with app.test_request_context():
             result = reopen_ticket(ticket_id=closed_ticket.id)
@@ -316,15 +316,15 @@ class TestAdminActionControllers:
             
             db_session.refresh(closed_ticket)
             assert closed_ticket.status == "open"
-            assert closed_ticket.closed_at is None
+            assert closed_ticket.closed_timestamp is None
 
     def test_get_ticket_statistics_controller(self, app, multiple_tickets):
         """Test getting ticket statistics reflects actual database counts."""
         from ..controllers.admin_actions.get_ticket_statistics import get_ticket_statistics
         
-        total_count = Ticket.find_all().count()
-        open_count = Ticket.find_all(status="open").count()
-        closed_count = Ticket.find_all(status="closed").count()
+        total_count = Ticket.query.count()
+        open_count = Ticket.query.filter_by(closed_timestamp=None, muted=False).count()
+        closed_count = Ticket.query.filter(Ticket.closed_timestamp.isnot(None)).count()
         
         with app.test_request_context():
             result = get_ticket_statistics()
@@ -436,7 +436,7 @@ class TestTagManagementControllers:
             assert "tag1" in tag_names
             assert "tag2" in tag_names
 
-            db_tag_count = TicketTag.find_all().count()
+            db_tag_count = TicketTag.query.count()
             assert len(result["tags"]) == db_tag_count
 
     def test_add_tags_to_ticket_controller(self, app, ticket, ticket_tag_factory, db_session):
