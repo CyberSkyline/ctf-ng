@@ -1,12 +1,26 @@
 """
-/backend/ctfd/plugin/team/models/TeamMember.py
 Defines the TeamMember model, link between users, teams, and events.
 """
 
-from CTFd.models import db
+from __future__ import annotations
+from typing import Any, TypedDict
 from datetime import datetime
-from .enums import TeamRole
 
+from CTFd.models import db
+
+from ...core.utils import utc_now
+from .enums import TeamRole
+from ...core.utils.validator import BaseValidator
+from ...core.exceptions import ValidationError
+
+class TeamMemberSerialized(TypedDict):
+    id: int
+    user_id: int
+    user_name: str
+    team_id: int
+    event_id: int
+    joined_at: str | None
+    role: str
 
 class TeamMember(db.Model):
     __tablename__ = "ng_team_members"
@@ -15,7 +29,7 @@ class TeamMember(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("ng_users.id"), nullable=False, index=True)
     event_id = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
     team_id = db.Column(db.Integer, db.ForeignKey("ng_teams.id"), nullable=False, index=True)
-    joined_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    joined_at = db.Column(db.DateTime, nullable=False, default=utc_now)
     role = db.Column(db.Enum(TeamRole), default=TeamRole.MEMBER, nullable=False)
 
     __table_args__ = (
@@ -30,14 +44,60 @@ class TeamMember(db.Model):
     def __repr__(self):
         return f"<TeamMember user={self.user_id} team={self.team_id} event={self.event_id}>"
 
+    def serialize(self, include_admin_fields: bool = False) -> TeamMemberSerialized:
+        from ...user.models.User import User
+        """Serialize team member for API response.
+
+        Args:
+            include_admin_fields: Whether to include admin-only fields
+
+        Returns:
+            dict: Serialized team member data
+        """
+        user = User.find_by_id(self.user_id)
+        
+        if user.ctfd_user:
+            user_name = user.ctfd_user.name if user.ctfd_user.name else f"User {self.user_id} (Data Inconsistency)"
+
+        data = {
+            "id": self.id,
+            "user_id": self.user_id,
+            "user_name": user_name,
+            "team_id": self.team_id,
+            "event_id": self.event_id,
+            "joined_at": self.joined_at.isoformat() if self.joined_at else None,
+            "role": self.role.value,
+        }
+
+        return TeamMemberSerialized(**data)
+
+    @classmethod
+    def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
+        validator = BaseValidator()
+        validator.validate_positive_integer(data, "user_id", required=True, friendly_name="User ID")
+        validator.validate_positive_integer(data, "team_id", required=True, friendly_name="Team ID")
+        validator.validate_positive_integer(data, "event_id", required=True, friendly_name="Event ID")
+        validator.validate_enum(data, "role", TeamRole, required=True, friendly_name="Role")
+
+        existing_member = cls.find_by_user_and_event(data["user_id"], data["event_id"])
+        if existing_member:
+            raise ValidationError(f"User {data['user_id']} is already a member of the event {data['event_id']}.")
+        
+        # TODO - Check to ensure that max team size is not exceeded
+
+        is_valid, errors, parsed_data = validator.is_valid()
+        if not is_valid:
+            raise ValidationError("Validation failed.", errors=errors)
+        return parsed_data
+
     @classmethod
     def create_team_member(
         cls,
-        user_id,
-        team_id,
-        event_id,
-        role=TeamRole.MEMBER,
-        joined_at=None,
+        user_id: int,
+        team_id: int,
+        event_id: int,
+        role: TeamRole = TeamRole.MEMBER,
+        joined_at: datetime | None = None,
         commit=True,
     ):
         """Create and persist a new team member to the database.
@@ -54,15 +114,17 @@ class TeamMember(db.Model):
             TeamMember: The created team member instance
         """
         if joined_at is None:
-            joined_at = datetime.utcnow()
+            joined_at = utc_now()
 
-        team_member = cls(
-            user_id=user_id,
-            team_id=team_id,
-            event_id=event_id,
-            joined_at=joined_at,
-            role=role,
-        )
+        validated_data = cls.validate(data = {
+            "user_id": user_id,
+            "team_id": team_id,
+            "event_id": event_id,
+            "role": role,
+            "joined_at": joined_at,
+        })
+
+        team_member = cls(**validated_data)
 
         db.session.add(team_member)
         if commit:
@@ -93,6 +155,18 @@ class TeamMember(db.Model):
             TeamMember or None: The team member instance if found, None otherwise
         """
         return cls.query.filter_by(user_id=user_id, event_id=event_id).first()
+
+    @classmethod
+    def count_by_event(cls, event_id: int) -> int:
+        """Get the count of team members in a specific event.
+
+        Args:
+            event_id (int): The event ID to count team members for
+
+        Returns:
+            int: Number of team members in the event
+        """
+        return cls.query.filter_by(event_id=event_id).count()
 
     @classmethod
     def find_captain_by_team(cls, team_id: int):
@@ -157,47 +231,35 @@ class TeamMember(db.Model):
         """
         return cls.query.filter(cls.team_id == team_id, cls.id != exclude_member_id).count()
 
-    @classmethod
-    def find_remaining_members_for_captain_removal(cls, team_id: int, captain_id: int) -> list["TeamMember"]:
-        """Find remaining members when removing a captain (for auto-promotion).
+    # @classmethod
+    # def find_remaining_members_for_captain_removal(cls, team_id: int, captain_id: int) -> list["TeamMember"]:
+    #     """Find remaining members when removing a captain (for auto-promotion).
 
-        Args:
-            team_id (int): The team ID to search in
-            captain_id (int): The captain member ID being removed
+    #     Args:
+    #         team_id (int): The team ID to search in
+    #         captain_id (int): The captain member ID being removed
 
-        Returns:
-            list[TeamMember]: List of remaining members ordered by join date
-        """
-        return (
-            cls.query.filter(
-                cls.team_id == team_id,
-                cls.id != captain_id,
-                cls.role == TeamRole.MEMBER,
-            )
-            .order_by(cls.joined_at.asc())
-            .all()
-        )
+    #     Returns:
+    #         list[TeamMember]: List of remaining members ordered by join date
+    #     """
+    #     return (
+    #         cls.query.filter(
+    #             cls.team_id == team_id,
+    #             cls.id != captain_id,
+    #             cls.role == TeamRole.MEMBER,
+    #         )
+    #         .order_by(cls.joined_at.asc())
+    #         .all()
+    #     )
 
-    @classmethod
-    def get_total_count(cls) -> int:
-        """Get the total count of all team members.
+    # @classmethod
+    # def get_total_count(cls) -> int:
+    #     """Get the total count of all team members.
 
-        Returns:
-            int: Total number of team members
-        """
-        return cls.query.count()
-
-    @classmethod
-    def count_by_event(cls, event_id: int) -> int:
-        """Get the count of team members in a specific event.
-
-        Args:
-            event_id (int): The event ID to count team members for
-
-        Returns:
-            int: Number of team members in the event
-        """
-        return cls.query.filter_by(event_id=event_id).count()
+    #     Returns:
+    #         int: Total number of team members
+    #     """
+    #     return cls.query.count()
 
     @classmethod
     def delete_by_event(cls, event_id: int) -> int:
@@ -224,3 +286,30 @@ class TeamMember(db.Model):
             list[TeamMember]: List of team members ordered by join date
         """
         return cls.query.filter_by(team_id=team_id).order_by(cls.joined_at.asc()).all()
+
+    @classmethod
+    def transfer_captain_role(cls, team_id: int, old_captain_id: int, new_captain_id: int) -> bool:
+        """Transfer captain role in a single transaction."""
+        try:
+            old_captain = cls.query.get(old_captain_id)
+            new_captain = cls.query.get(new_captain_id)
+
+            if old_captain:
+                old_captain.role = TeamRole.MEMBER
+            new_captain.role = TeamRole.CAPTAIN
+
+            db.session.commit()
+            return True
+        except Exception:
+            db.session.rollback()
+            raise
+
+    @classmethod
+    def delete_all(cls) -> None:
+        """Delete all team members from the database."""
+        try:
+            cls.query.delete()
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise

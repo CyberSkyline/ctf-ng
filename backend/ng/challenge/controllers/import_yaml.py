@@ -3,7 +3,7 @@ from cyber_skyline.chall_parser.yaml_parser import parse_compose_string
 from attrs import asdict
 from ..models.ContainerBlueprint import ContainerBlueprint
 from ..models.Hint import Hint
-from ..models.Tag import Tag
+from ..models.ChallengeTag import ChallengeTag
 from ..models.Question import Question
 from ..models.Challenge import Challenge
 
@@ -23,7 +23,7 @@ def import_yaml(yaml):
         ## Need list conversion because of sql alchemey lazing loading relationships
         list(map(lambda hint: Hint.create_hint(challenge_id=challenge.id, **hint), parsed_yaml['challenge']['hints']))
         list(map(lambda question: Question.create_question(challenge_id=challenge.id, **question), parsed_yaml['challenge']['questions']))
-        list(map(lambda name: Tag.create_tag(challenge_id=challenge.id, name=name), parsed_yaml['challenge']['tags']))
+        list(map(lambda name: ChallengeTag.create_tag(challenge_id=challenge.id, name=name), parsed_yaml['challenge']['tags']))
         list(map(lambda kv: ContainerBlueprint.create_container_blueprint(challenge_id=challenge.id, **kv[1]), parsed_yaml['services'].items()))
 
         return {

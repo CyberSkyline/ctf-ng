@@ -1,5 +1,4 @@
 """
-/backend/ng/config.py
 Defines static, system wide config values and constants
 """
 
@@ -17,9 +16,7 @@ INVITE_CODE_MAX_LENGTH = 32
 INVITE_CODE_LENGTH = 8
 INVITE_CODE_GENERATION_ATTEMPTS = 10
 
-# Admin Operation Confirmations
-ADMIN_RESET_CONFIRMATION = "--confirm-reset"
-ADMIN_EVENT_RESET_CONFIRMATION = "--delete-event"
-
-# Health Check Thresholds
-EMPTY_TEAMS_WARNING_THRESHOLD = 0.5
+# TODO
+# TAG_NAME_MAX_LENGTH = 50
+# TICKET_SUBJECT_MAX_LENGTH = 128
+# .... and so on (for support models)

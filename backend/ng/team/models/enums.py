@@ -1,5 +1,4 @@
 """
-/backend/ng/team/models/enums.py
 Enumerations to ensure type safety and prevent magic string bugs
 """
 

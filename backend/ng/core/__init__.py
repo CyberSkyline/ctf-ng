@@ -1,4 +1,21 @@
 """
-Core package containing shared components like middleware, routes, utils, and testing infrastructure.
-/backend/ng/core/__init__.py
+Core utilities and shared components for the CTF-NG plugin.
 """
+
+from .exceptions import (
+    APIException,
+    NotFoundError,
+    ConflictError,
+    PermissionError,
+    ValidationError,
+    BusinessLogicError,
+)
+
+__all__ = [
+    "APIException",
+    "NotFoundError",
+    "ConflictError",
+    "PermissionError",
+    "ValidationError",
+    "BusinessLogicError",
+]
