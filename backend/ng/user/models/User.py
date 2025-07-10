@@ -87,6 +87,16 @@ class User(db.Model):
         # Get all events for those teams
         events = Event.query.filter(Event.id.in_(event_ids)).all()
         return events
+    
+    def get_teams(self):
+        """Get all teams the user is a member of.
+
+        Returns:
+            list: List of teams the user is a member of
+        """
+
+        # Get all team members for this user
+        return [tm.team for tm in self.team_members]
 
     @classmethod
     def find_by_id(cls, user_id: int):

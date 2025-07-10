@@ -31,13 +31,13 @@ class UsersAdminResource(Resource):
 class UserAdminResource(Resource):
     @admin_endpoint()
     @load_user(source=LoaderType.PARAM, output_key="target_user")
-    def get(self, target_user):
+    def get(self, user_id, target_user):
         """Get a specific user by ID"""
         return success_response(target_user)
 
     @admin_endpoint(json_required=True, validation_func=User.validate)
     @load_user(source=LoaderType.PARAM, output_key="target_user")
-    def put(self, target_user, validated_data):
+    def put(self, user_id, target_user, validated_data):
         """Update a specific user"""
         target_user.update(**validated_data)
         return success_response()
@@ -47,3 +47,21 @@ class UserAdminResource(Resource):
     # def delete(self, target_user):
     #     # TODO implement
     #     return success_response()
+
+@users_admin_namespace.route("/<int:user_id>/events")
+class UserEventsAdminResource(Resource):
+    @admin_endpoint()
+    @load_user(source=LoaderType.PARAM, output_key="target_user")
+    def get(self, user_id, target_user):
+        """Get events for a specific user"""
+        events = target_user.get_events()
+        return success_response(events)
+    
+@users_admin_namespace.route("/<int:user_id>/teams")
+class UserTeamsAdminResource(Resource):
+    @admin_endpoint()
+    @load_user(source=LoaderType.PARAM, output_key="target_user")
+    def get(self, user_id, target_user):
+        """Get teams for a specific user"""
+        teams = target_user.get_teams()
+        return success_response(teams)
