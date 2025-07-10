@@ -26,20 +26,21 @@ supporting the x-challenge extension for CTF-specific metadata.
 """
 
 from typing import Literal, NewType, Dict
-from attrs import define, field, validators
+import attr
+import attr.validators as v
 
 from cyber_skyline.chall_parser.compose.service import Service
 from cyber_skyline.chall_parser.compose.challenge_info import ChallengeInfo
 from cyber_skyline.chall_parser.compose.validators import validate_compose_name_pattern
 
-@define
+@attr.s
 class Network:
     """Represents a Docker Compose network configuration for CTF challenges.
     
     This is a heavily simplified network definition that only supports internal networks.
     External network access is explicitly disabled for security reasons.
     """
-    internal: Literal[True]  # All networks must be internal (no external access)
+    internal: Literal[True] = attr.ib(validator=v.in_([True]))  # All networks must be internal (no external access)
 
 # Custom types for pattern-validated dictionaries
 # These provide type safety while enforcing naming constraints
@@ -47,7 +48,7 @@ ComposeResourceName = NewType('ComposeResourceName', str)
 ServicesDict = Dict[ComposeResourceName, Service]
 NetworksDict = Dict[ComposeResourceName, Network]
 
-@define
+@attr.s
 class ComposeFile:
     """Main Docker Compose file structure for CTF challenges.
     
@@ -56,23 +57,23 @@ class ComposeFile:
     """
     
     # CTF-specific extension - this is the core purpose of our custom format
-    challenge: ChallengeInfo  # Required x-challenge block with CTF metadata
+    challenge: ChallengeInfo = attr.ib() # Required x-challenge block with CTF metadata
     # Every compose file must define challenge information since this is
     # specifically for CTF challenge deployment, not general Docker orchestration
     
     # Core Docker Compose sections with security constraints
-    services: ServicesDict = field(
+    services: ServicesDict = attr.ib(
         default=None, 
-        validator=validators.optional(validate_compose_name_pattern)
+        validator=v.optional(validate_compose_name_pattern)
     )
     # Container services that make up the challenge infrastructure
     # - Names must follow Docker naming conventions
     # - Each service is constrained to CTF-appropriate configurations
     # TODO: Consider if we should require at least one service
-    
-    networks: NetworksDict | None = field(
+
+    networks: NetworksDict | None = attr.ib(
         default=None,
-        validator=validators.optional(validate_compose_name_pattern)
+        validator=v.optional(validate_compose_name_pattern)
     )
     # Network definitions for service communication
     # - All networks are internal-only for security

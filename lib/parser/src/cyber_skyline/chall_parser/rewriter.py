@@ -122,6 +122,7 @@ class Rewriter:
                 return
             yield from self.rewrite_variable(variable_key.value)
 
+    # TODO: Refactor this to utilize a pipeline type architecture instead
     def rewrite(self) -> Generator[Event, None, None]:
         logger.debug("Entering rewrite_aliases")
         while True:
