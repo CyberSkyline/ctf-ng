@@ -80,8 +80,8 @@ class Ticket(db.Model):
             "subject": self.subject,
             "author_id": self.author_id,
             "status": self.status,
-            "opened_timestamp": self.opened_timestamp.isoformat() if self.opened_timestamp else None,
-            "last_updated": self.last_updated.isoformat() if self.last_updated else None,
+            "opened_timestamp": self.opened_timestamp.isoformat() + "Z" if self.opened_timestamp else None,
+            "last_updated": self.last_updated.isoformat() + "Z" if self.last_updated else None,
             "event_id": self.event_id,
             "team_id": self.team_id,
             "challenge_id": self.challenge_id,
@@ -91,12 +91,12 @@ class Ticket(db.Model):
 
         if include_admin_fields:
             first_admin_response_timestamp = (
-                self.first_admin_response_timestamp.isoformat() if self.first_admin_response_timestamp else None
+                self.first_admin_response_timestamp.isoformat() + "Z" if self.first_admin_response_timestamp else None
             )
             data.update(
                 {
                     "assigned_to": self.assigned_to,
-                    "closed_timestamp": self.closed_timestamp.isoformat() if self.closed_timestamp else None,
+                    "closed_timestamp": self.closed_timestamp.isoformat() + "Z" if self.closed_timestamp else None,
                     "muted": self.muted,
                     "first_admin_response_timestamp": first_admin_response_timestamp,
                 }

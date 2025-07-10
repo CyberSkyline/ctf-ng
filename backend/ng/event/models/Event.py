@@ -69,13 +69,13 @@ class Event(db.Model):
             "name": self.name,
             "description": self.description,
             "max_team_size": self.max_team_size,
-            "start_time": self.start_time,
-            "end_time": self.end_time,
+            "start_time": self.start_time.isoformat() + "Z" if self.start_time else None,
+            "end_time": self.end_time.isoformat() + "Z" if self.end_time else None,
             "locked": self.locked,
             "public": self.public,
             "registration_open": self.registration_open,
-            "registration_start_date": self.registration_start_date,
-            "registration_end_date": self.registration_end_date,
+            "registration_start_date": self.registration_start_date.isoformat() + "Z" if self.registration_start_date else None,
+            "registration_end_date": self.registration_end_date.isoformat() + "Z" if self.registration_end_date else None,
         }
 
         return data
