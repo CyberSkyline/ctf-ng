@@ -1,0 +1,23 @@
+{
+  "include": [
+    "ng"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/node_modules",
+    "**/venv",
+    "**/env",
+    "external"
+  ],
+  "stubPath": "typings",
+  "reportMissingImports": false,
+  "reportMissingTypeStubs": false,
+  "reportAttributeAccessIssue": false,
+  "reportOptionalMemberAccess": false,
+  "reportGeneralTypeIssues": false,
+  "reportUnknownMemberType": false,
+  "reportUnknownVariableType": false,
+  "strictParameterNoneValue": false,
+  "useLibraryCodeForTypes": true,
+  "typeCheckingMode": "basic"
+}

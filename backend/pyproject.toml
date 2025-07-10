@@ -1,0 +1,83 @@
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = false
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+# SQLAlchemy plugin for better type checking
+plugins = ["sqlalchemy.ext.mypy.plugin"]
+
+# Add typings folder for type stubs
+mypy_path = "typings"
+
+# Ignore missing imports for CTFd modules
+[[tool.mypy.overrides]]
+module = "CTFd.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_missing_imports = true
+
+# Specific configuration for scoped_session attributes
+[[tool.mypy.overrides]]
+module = "*"
+# Allow accessing any attribute on db.session (scoped_session)
+disable_error_code = ["attr-defined", "name-defined"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+# Enable recommended rule sets
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings  
+    "F",   # pyflakes
+    "I",   # isort (import sorting)
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+]
+
+ignore = [
+    "E203",  # whitespace before ':'
+    "E501",  # line too long (handled by line-length setting)
+    "N801",  # class name should use CapWords convention
+    "N806",  # variable in function should be lowercase (for SQLAlchemy models)
+    "I001",  # import block is unsorted or un-formatted
+    "W292",  # no newline at end of file
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/test_*.py" = ["F401", "F811"]  # Allow unused imports in tests
+"**/conftest.py" = ["F401", "F811"]  # Allow unused imports in pytest config
+"**/scripts/*.py" = ["T201"]  # Allow print statements in scripts
+
+[tool.ruff.format]
+# Use double quotes for strings
+quote-style = "double"
+# Indent with 4 spaces 
+indent-style = "space"
+# Respect line length
+line-ending = "auto"
+
+[tool.pyright]
+include = ["ng"]
+exclude = ["**/__pycache__", "**/node_modules"]
+reportMissingImports = false
+reportMissingTypeStubs = false
+# Ignore attribute errors for SQLAlchemy session
+reportAttributeAccessIssue = false
+reportOptionalMemberAccess = false
