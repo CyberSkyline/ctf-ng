@@ -1,5 +1,4 @@
 import pytest
-from ..models.Permission import Permission
 
 
 pytestmark = pytest.mark.db

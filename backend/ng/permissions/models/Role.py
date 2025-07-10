@@ -4,6 +4,7 @@ from .RolePermission import RolePermission
 from .Permission import Permission
 from .enums import RoleEnum
 from ...core.utils.validator import BaseValidator
+from ...core.exceptions import ValidationError
 
 class Role(db.Model):
     __tablename__ = "ng_roles"

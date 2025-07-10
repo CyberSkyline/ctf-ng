@@ -19,10 +19,6 @@ from ...middleware.loaders import (
     load_ticket_tag,
 )
 from ...middleware.loaders._util import LoaderType
-from ....user.models.User import User
-from ....event.models.Event import Event
-from ....team.models.Team import Team
-from ....team.models.TeamMember import TeamMember
 
 middleware_test_routes = Blueprint("middleware_test_routes", __name__)
 

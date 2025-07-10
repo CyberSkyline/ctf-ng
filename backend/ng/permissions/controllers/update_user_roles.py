@@ -1,5 +1,4 @@
 from ..models.UserRole import UserRole
-from ..models.Role import Role
 from ..models.enums import RoleEnum
 
 def update_user_roles(user_id, data):

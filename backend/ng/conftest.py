@@ -7,6 +7,7 @@ from datetime import datetime
 from CTFd.models import db, Users
 from CTFd.cache import cache
 from CTFd.utils.security.csrf import generate_nonce
+from CTFd.models import Configs
 from . import load as plugin_load
 from .user.models.User import User as NgUser
 from .event.models.Event import Event
@@ -20,12 +21,13 @@ from .support.models.Ticket import Ticket
 from .support.models.TicketTag import TicketTag
 from tests.helpers import (
     create_ctfd as create_ctfd_original,
-    destroy_ctfd as destroy_ctfd_original,
     setup_ctfd,
     gen_user,
 )
+from .core.tests.helpers import create_ctfd, destroy_ctfd
 from .permissions.models.enums import PermissionEnum
 from .permissions.models.enums import RoleEnum
+from datetime import timedelta
 
 
 def create_app():
@@ -42,7 +44,7 @@ def app():
     """
     Creates and configures a new Flask application for the entire test session.
     """
-    from .core.tests.helpers import create_ctfd, destroy_ctfd
+    
 
     app = create_ctfd()
     yield app
@@ -101,7 +103,7 @@ def middleware_client():
         db.create_all()
 
         # Minimal ctfd config
-        from CTFd.models import Configs
+        
 
         setup_config = Configs(key="setup", value="true")
         db.session.add(setup_config)
@@ -199,7 +201,6 @@ def admin(db_session):
 def logged_in_client(app, db_session, user):
     """A test client logged in as a regular user."""
     # Clear any cached user data to prevent cross-test contamination
-    from CTFd.cache import cache
     cache.clear()
     
     client = app.test_client()

@@ -2,6 +2,7 @@ from CTFd.models import db
 from .Role import Role
 from .enums import RoleEnum
 from ...core.utils.validator import BaseValidator
+from ...core.exceptions import ValidationError
 
 class UserRole(db.Model):
     __tablename__ = "ng_user_roles"

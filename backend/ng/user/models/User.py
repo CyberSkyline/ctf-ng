@@ -3,14 +3,9 @@ Defines the User extension model.
 """
 
 from CTFd.models import db
-from CTFd.models import Users as CTFdUsers
-from sqlalchemy import func
-from typing import Any
 from sqlalchemy.ext.associationproxy import association_proxy
 from ...permissions.models.UserRole import UserRole
 from typing import Any, TypedDict
-
-from CTFd.models import db
 
 class SerializedUser(TypedDict):
     id: int

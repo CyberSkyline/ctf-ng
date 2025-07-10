@@ -1,13 +1,12 @@
 from flask_restx import Namespace, Resource
 from flask import g
-from CTFd.utils.decorators import authed_only, admins_only
 from ...core.utils.logger import get_logger
 from ...core.utils.api import error_response
 from ...core.middleware.auth import api_endpoint, admin_endpoint
 from ..models.Role import Role
 from ...user.models.User import User
 from ..models.UserRole import UserRole
-from ..controllers import get_role_details, update_role, get_user_roles, update_user_roles, create_role
+from ..controllers import get_role_details, update_role, get_user_roles, update_user_roles
 
 
 permissions_admin_namespace = Namespace("/admin/permissions", description="Permissions management endpoints for admins")

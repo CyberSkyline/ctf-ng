@@ -26,13 +26,8 @@ def test_admin_endpoint_decorator(middleware_client):
     This checks if the decorator correctly restricts access to admin users.
     """
     response = middleware_client.get("/admin_decorator_test", query_string={"team_id": 1, "user_id": 1})
-    print(response.get_json())
 
     assert response.status_code == 302
-    data = response.get_json()
-    #assert data["success"] is False
-    #assert "error" in data
-
 
 
 def test_loading(middleware_client):
