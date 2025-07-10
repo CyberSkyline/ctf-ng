@@ -18,92 +18,99 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
 # IN THE SOFTWARE.
 from typing import Literal
-from attrs import define, field
-
-import attrs
+import attr.validators as v
+import attr
 from cyber_skyline.chall_parser.compose.answer import Answer
 from cyber_skyline.chall_parser.rewriter import Template
-from cyber_skyline.chall_parser.compose.validators import validate_answer, validate_regex, validate_tabler_icon, validate_template_evals
+from cyber_skyline.chall_parser.compose.validators import validate_answer, validate_regex, validate_tabler_icon, validate_template_evals, or_
 
-@define
+@attr.s
 class Question:
     """Represents a single question in the challenge.
     
     Each question defines what the player needs to answer and how many points it's worth.
     """
-    name: str  # Developer facing name for the question (e.g., "flag", "password")
-    body: str  # The actual question text presented to players
-    points: int  # Point value for correctly answering this question (e.g., 10, 100)
-    answer: str | Answer | Template = field(validator=attrs.validators.or_(
-        attrs.validators.and_(attrs.validators.instance_of(str), validate_regex),
-        attrs.validators.and_ (attrs.validators.instance_of(Answer), validate_answer), # type: ignore
-        attrs.validators.instance_of(Template) # type: ignore
-    ))  # The correct answer (can be a regex pattern)
+    name: str = attr.ib(validator=v.instance_of(str))  # Developer facing name for the question (e.g., "flag", "password")
+    body: str = attr.ib(validator=v.instance_of(str))  # The actual question text presented to players
+    points: int = attr.ib(validator=v.instance_of(int))  # Point value for correctly answering this question (e.g., 10, 100)
+    answer: str | Answer | Template = attr.ib(validator=or_(
+        v.and_(v.instance_of(str), validate_regex),
+        v.and_(v.instance_of(Answer), validate_answer),  # type: ignore
+        v.instance_of(Template)  # type: ignore
+    ))  # The correct answer
 
-    max_attempts: int  # Maximum number of attempts allowed (e.g., 20)
+    max_attempts: int = attr.ib(validator=v.instance_of(int))  # Maximum number of attempts allowed (e.g., 20)
 
-@define
+@attr.s
 class TextBody:
     """A text-based hint for players."""
-    type: Literal['text']
-    content: str  # The actual hint text content
+    type: Literal['text'] = attr.ib(validator=v.in_(['text']))
+    content: str = attr.ib(validator=v.instance_of(str))  # The actual hint text content
 
 # @define
 # class ImageBody:
 #     type: Literal['image']
 #     source: str
 
-@define
+@attr.s
 class Hint:
     """A hint that players can open to get help solving the challenge.
     
     Hints can be either structured (TextHint) or simple strings.
     Each hint has a preview and costs points when opened.
     """
-    body: TextBody | str  # The hint content - can be structured or simple text, may in the future support more complex hint types
-    preview: str  # Short preview text shown before opening the hint
-    deduction: int  # Points deducted when this hint is opened (e.g., 10)
+    body: TextBody | str = attr.ib(validator=or_(
+        v.instance_of(TextBody),
+        v.instance_of(str)
+    ))  # The hint content - can be structured or simple text, may in the future support more complex hint types
+    preview: str = attr.ib(validator=v.instance_of(str))  # Short preview text shown before opening the hint
+    deduction: int = attr.ib(validator=v.instance_of(int))  # Points deducted when this hint is opened (e.g., 10)
 
-@define
+@attr.s
 class Variable:
     """Template variable that can be randomized for each challenge instance.
     
     Variables use the Faker library for generation and can be referenced
     throughout the compose file using YAML anchors and aliases.
     """
-    template: Template = field(validator=validate_template_evals)
+    template: Template = attr.ib(validator=validate_template_evals)
                        # Python code fragment using Faker library functions
                        # e.g., "fake.bothify('SKY-????-####', letters=string.ascii_uppercase)"
-    default: str  # Default value with YAML anchor for referencing elsewhere
+    default: str = attr.ib(validator=v.instance_of(str))  # Default value with YAML anchor for referencing elsewhere
                  # This anchor can be used in services like: environment: VARIABLE1: *var1
 
-@define
+@attr.s
 class ChallengeInfo:
     """Container for all challenge development information.
     
     This is the main x-challenge block that defines everything about the CTF challenge.
     """
     # Required fields
-    name: str  # Name of the challenge
-    description: str  # The description presented to players
-    questions: list[Question]  # List of questions players must answer
-    
+    name: str = attr.ib(validator=v.instance_of(str))  # Name of the challenge
+    description: str = attr.ib(validator=v.instance_of(str))  # The description presented to players
+    questions: list[Question] = attr.ib(validator=v.deep_iterable(v.instance_of(Question), v.instance_of(list)))  # List of questions players must answer
+
     # Optional fields
-    icon: str | None = field(
+    icon: str | None = attr.ib(
         default=None, 
         validator=validate_tabler_icon
     )  # Tabler icon name (validated against known icons)
-    hints: list[Hint] | None = None  # List of hints players can access
-    summary: str | None = None  # Optional summary text
-    
+    hints: list[Hint] | None = attr.ib(
+        default=None, validator=v.optional(v.deep_iterable(v.instance_of(Hint), v.instance_of(list))))  # List of hints players can access
+    summary: str | None = attr.ib(
+        default=None, validator=v.optional(v.instance_of(str)))  # Optional summary text
+
     # Template and variable system
-    templates: dict[str, str] | None = None  # Centralized location for reusable templates
+    templates: dict[str, str] | None = attr.ib(
+        default=None, validator=v.optional(v.instance_of(dict)))  # Centralized location for reusable templates
                                            # e.g., flag-tmpl: &flag_tmpl "fake.bothify('CTF{????-####}')"
-    variables: dict[str, Variable] | None = None  # Variables for randomization
+    variables: dict[str, Variable] | None = attr.ib(
+        default=None, validator=v.optional(v.instance_of(dict)))  # Variables for randomization
                                                  # You can name variables anything that's a valid YAML key
     
     # Categorization
-    tags: list[str] | None = None  # Category tags (e.g., ["web", "easy"], ["crypto", "hard"])
+    tags: list[str] | None = attr.ib(
+        default=None, validator=v.optional(v.deep_iterable(v.instance_of(str), v.instance_of(list))))  # Category tags (e.g., ["web", "easy"], ["crypto", "hard"])
 
 # Usage example in compose file:
 # x-challenge:
