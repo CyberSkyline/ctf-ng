@@ -1,21 +1,23 @@
 """
-Middleware package for authentication, authorization, and request processing.
-/backend/ng/core/middleware/__init__.py
+Middleware System for the CTF-NG plugin.
+
+This package provides a suite of decorators to handle authentication,
+resource loading, and permission checking for API endpoints.
 """
 
-from .middleware import (
-    lookup,
-    authed_user_required,
-    handle_integrity_error,
-    json_body_required,
-    event_joinable
+from .error_handler import handle_exceptions
+from .auth import (
+    api_endpoint,
+    user_endpoint,
+    admin_endpoint,
+    public_endpoint,
 )
 
-
 __all__ = [
-    "event_joinable",
-    "lookup",
-    "authed_user_required",
-    "handle_integrity_error",
-    "json_body_required",
+    # Core Decorators
+    "handle_exceptions",
+    "api_endpoint",
+    "user_endpoint",
+    "admin_endpoint",
+    "public_endpoint",
 ]

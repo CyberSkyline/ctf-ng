@@ -13,9 +13,9 @@ export default function ChallengesTab() {
         </TextField.Root>
       </Container>
       <Container size="4">
-        <Grid columns={{ xs: '1', sm: '2', md: '3' }} gap="4">
+        <Grid columns={{ xs : '1', sm : '2', md : '3' }} gap="4">
           {/* Placeholder challenges to demo UI */}
-          {[...Array(8)].map((_, index) => (
+          {[ ...Array(8) ].map((_, index) => (
             <ChallengeCard
               id={index.toString()}
               name="Challenge Name"

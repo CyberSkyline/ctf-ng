@@ -3,6 +3,10 @@ import { DropdownMenu } from '@radix-ui/themes';
 import { NavLink } from 'react-router';
 
 export default function NavBar() {
+  function logout() {
+    // perform a logout
+  }
+
   return (
     <NavigationMenu.Root className="h-[var(--NavBarHeight)]">
       <NavigationMenu.List className="flex p-1 shadow-md pr-4">
@@ -65,7 +69,7 @@ export default function NavBar() {
               <DropdownMenu.Item asChild>
                 <button
                   type="button"
-                  onClick={() => alert('Logged out')}
+                  onClick={() => logout()}
                   className="w-full flex items-center gap-2 px-2 py-1.5 rounded"
                 >
                   Log Out

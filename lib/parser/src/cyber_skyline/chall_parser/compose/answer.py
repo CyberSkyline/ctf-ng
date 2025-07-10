@@ -20,3 +20,4 @@ class AnswerTestCase:
 class Answer:
     body: str = attr.ib(validator=v.instance_of(str))  # The regex pattern
     test_cases: list[AnswerTestCase] | None = attr.ib(default=None, validator=v.optional(v.deep_iterable(v.instance_of(AnswerTestCase), v.instance_of(list))))  # Optional test cases for validating the answer
+

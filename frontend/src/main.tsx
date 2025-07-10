@@ -8,8 +8,9 @@ import { SWRConfig } from 'swr';
 import Routes from './Routes';
 
 import './index.css';
-import { ROUTEPREFIX } from './constants';
 import './grid';
+import { ROUTEPREFIX } from './constants';
+import { apiFetcher } from './fetchers';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -21,9 +22,7 @@ createRoot(document.getElementById('root')!).render(
         accentColor="lime"
       >
         <SWRConfig
-          value={{
-            fetcher: (resource, init) => fetch(resource, init).then((res) => res.json()),
-          }}
+          value={{ fetcher : apiFetcher }}
         >
           <NavBar />
           <Routes />

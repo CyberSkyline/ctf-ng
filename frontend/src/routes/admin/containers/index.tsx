@@ -16,23 +16,23 @@ import { radixTheme } from '@/grid';
 export default function AdminContainers() {
   const rowData = [
     {
-      challenge: 'challengename1', event: 'pc7-teams', team: 'teamname', containers: '2/2', workspaces: '1', cpu: '10%', memory: '512MiB',
+      challenge : 'challengename1', event : 'pc7-teams', team : 'teamname', containers : '2/2', workspaces : '1', cpu : '10%', memory : '512MiB',
     },
   ];
   const colDefs: ColDef<typeof rowData[number]>[] = [
-    { field: 'challenge' },
-    { field: 'event' },
-    { field: 'team' },
+    { field : 'challenge' },
+    { field : 'event' },
+    { field : 'team' },
     {
-      field: 'containers',
-      width: 120,
+      field : 'containers',
+      width : 120,
     },
     {
-      field: 'workspaces',
-      headerName: 'Attached Workspaces',
+      field : 'workspaces',
+      headerName : 'Attached Workspaces',
     },
-    { field: 'cpu' },
-    { field: 'memory' },
+    { field : 'cpu' },
+    { field : 'memory' },
   ];
 
   return (
@@ -43,10 +43,10 @@ export default function AdminContainers() {
         rowData={rowData}
         columnDefs={colDefs}
         gridOptions={{
-          rowSelection: {
-            mode: 'singleRow',
-            checkboxes: false,
-            enableClickSelection: true,
+          rowSelection : {
+            mode : 'singleRow',
+            checkboxes : false,
+            enableClickSelection : true,
           },
         }}
       />

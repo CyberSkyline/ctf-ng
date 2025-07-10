@@ -13,29 +13,29 @@ import { radixTheme } from '@/grid';
  * User management page for admins.
  */
 export default function AdminUsers() {
-  const [rowData] = useState([
+  const [ rowData ] = useState([
     {
-      name: 'Alice', role: 'Admin', uuid: '550e8400-e29b-41d4-a716-446655440000', lastLogin: 'xxxx-yy-zz',
+      name : 'Alice', role : 'Admin', uuid : '550e8400-e29b-41d4-a716-446655440000', lastLogin : 'xxxx-yy-zz',
     },
     {
-      name: 'Bob', role: 'User', uuid: '550e8400-e29b-41d4-a716-446655440001', lastLogin: 'xxxx-yy-zz',
+      name : 'Bob', role : 'User', uuid : '550e8400-e29b-41d4-a716-446655440001', lastLogin : 'xxxx-yy-zz',
     },
     {
-      name: 'Charlie', role: 'Support', uuid: '550e8400-e29b-41d4-a716-446655440002', lastLogin: 'xxxx-yy-zz',
+      name : 'Charlie', role : 'Support', uuid : '550e8400-e29b-41d4-a716-446655440002', lastLogin : 'xxxx-yy-zz',
     },
     {
-      name: 'David', role: 'User', uuid: '550e8400-e29b-41d4-a716-446655440003', lastLogin: 'xxxx-yy-zz',
+      name : 'David', role : 'User', uuid : '550e8400-e29b-41d4-a716-446655440003', lastLogin : 'xxxx-yy-zz',
     },
     {
-      name: 'Eve', role: 'Admin', uuid: '550e8400-e29b-41d4-a716-446655440004', lastLogin: 'xxxx-yy-zz',
+      name : 'Eve', role : 'Admin', uuid : '550e8400-e29b-41d4-a716-446655440004', lastLogin : 'xxxx-yy-zz',
     },
   ]);
 
-  const [colDefs] = useState<ColDef<typeof rowData[number]>[]>([
-    { field: 'name' },
-    { field: 'role' },
-    { field: 'uuid' },
-    { field: 'lastLogin', width: 150 },
+  const [ colDefs ] = useState<ColDef<typeof rowData[number]>[]>([
+    { field : 'name' },
+    { field : 'role' },
+    { field : 'uuid' },
+    { field : 'lastLogin', width : 150 },
   ]);
 
   return (
@@ -46,10 +46,10 @@ export default function AdminUsers() {
         rowData={rowData}
         columnDefs={colDefs}
         gridOptions={{
-          rowSelection: {
-            mode: 'singleRow',
-            checkboxes: false,
-            enableClickSelection: true,
+          rowSelection : {
+            mode : 'singleRow',
+            checkboxes : false,
+            enableClickSelection : true,
           },
         }}
 

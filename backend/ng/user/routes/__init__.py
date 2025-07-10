@@ -1,4 +1,7 @@
-"""
-/backend/ng/user/routes/__init__.py
-User API routes package.
-"""
+from .admin_routes import users_admin_namespace
+from .user_routes import users_user_namespace
+
+__all__ = [
+    "users_admin_namespace",
+    "users_user_namespace",
+]

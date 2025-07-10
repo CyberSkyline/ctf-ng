@@ -18,21 +18,24 @@
     "frontend"
   ],
   "scripts": {
+    "setup-ctfd": ".yarn-scripts/default_ctfd_setup.sh",
     "lint": "yarn workspaces foreach --all run lint",
     "test": "yarn workspaces foreach --all run test",
     "outdated": "yarn upgrade-interactive",
     "build": "cd ./frontend && vite build",
-    "prod-start": "yarn build && ENV_FILE=.env.prod docker compose up ctfd --build",
+    "start-prod": "yarn build && ENV_FILE=.env.prod docker compose up ctfd --build",
     "start": "ENV_FILE=.env.dev docker compose up ctfd --build",
     "stop": "docker compose down",
     "reload": "docker exec -it ng-ctfd supervisorctl restart ctfd",
     "restart": "docker exec -it ng-ctfd supervisorctl restart ctfd",
-    "restart-nginx": "docker exec -it ng-nginx service nginx restart",
-    "logs-nginx": "docker compose logs -f nginx",
-    "logs-vite": "docker compose logs -f vite",
-    "logs-ctfd": "docker compose logs -f ctfd",
+    "logs-nginx": "docker logs --tail=1000 ng-nginx -f",
+    "logs-ctfd": "docker logs --tail=1000 ng-ctfd -f",
+    "logs-vite": "docker logs --tail=1000 ng-vite -f",
+    "errors-ctfd": "docker exec -it ng-ctfd cat /var/log/supervisor/ctfd.error.log",
     "nuke": "rm -rf ./node_modules && yarn install",
-    "chall-check": "backend/venv/bin/chall-check"
+    "chall-check": "backend/venv/bin/chall-check",
+    "support-test": "docker compose -f websockets/docker-compose.yml.support up --build",
+    "support-down": "docker compose -f websockets/docker-compose.yml.support down"
   },
   "packageManager": "yarn@4.9.2"
 }

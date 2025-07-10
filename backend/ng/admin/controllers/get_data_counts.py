@@ -1,6 +1,6 @@
 """
-Contains the business logic to efficiently query and retrieve basic data counts for all plugin entities.
-/backend/ng/admin/controllers/get_data_counts.py
+Contains the business logic to efficiently query
+and retrieve basic data counts for all plugin entities.
 """
 
 from typing import Any
