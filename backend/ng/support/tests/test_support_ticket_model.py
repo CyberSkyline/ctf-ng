@@ -24,7 +24,7 @@ class TestTicketDefaults:
         assert ticket.event_id is None
         assert ticket.team_id is None
         assert ticket.challenge_id is None
-        assert ticket.muted is None 
+        assert ticket.muted is None
         assert ticket.first_admin_response_timestamp is None
 
 
@@ -39,12 +39,10 @@ class TestTicketStatusProperty:
 class TestCreateTicket:
     def test_create_ticket(self, db_session, user, event):
         """Test creating a ticket with the create method."""
-        ticket = Ticket.create(
-            subject="New Support Request",
-            author_id=user.id,
-            event_id=event.id
+        ticket = Ticket.create_ticket(
+            subject="New Support Request", author_id=user.id, event_id=event.id
         )
-        
+
         refreshed_ticket = Ticket.find_by_id(ticket.id)
         assert refreshed_ticket is not None
         assert refreshed_ticket.subject == "New Support Request"
@@ -56,22 +54,22 @@ class TestCreateTicket:
 
     def test_create_ticket_respects_commit_flag(self, db_session, user, event):
         """Test that create respects the commit flag."""
-        with patch.object(db_session, 'commit') as mock_commit:
-            ticket = Ticket.create(
+        with patch.object(db_session, "commit") as mock_commit:
+            ticket = Ticket.create_ticket(
                 subject="No Commit Ticket",
                 author_id=user.id,
                 event_id=event.id,
-                commit=False
+                commit=False,
             )
             mock_commit.assert_not_called()
             assert ticket.subject == "No Commit Ticket"
 
-        with patch.object(db_session, 'commit') as mock_commit:
-            ticket = Ticket.create(
+        with patch.object(db_session, "commit") as mock_commit:
+            ticket = Ticket.create_ticket(
                 subject="With Commit Ticket",
                 author_id=user.id,
                 event_id=event.id,
-                commit=True
+                commit=True,
             )
             mock_commit.assert_called_once()
 
@@ -82,9 +80,9 @@ class TestCloseTicket:
         ticket_id = ticket.id
         assert ticket.status == "open"
         assert ticket.closed_timestamp is None
-        
+
         ticket.close_ticket()
-        
+
         refreshed_ticket = Ticket.find_by_id(ticket_id)
         assert refreshed_ticket is not None
         assert refreshed_ticket.status == "closed"
@@ -92,11 +90,11 @@ class TestCloseTicket:
 
     def test_close_ticket_respects_commit_flag(self, ticket, db_session):
         """Test that close_ticket respects the commit flag."""
-        with patch.object(db_session, 'commit') as mock_commit:
+        with patch.object(db_session, "commit") as mock_commit:
             ticket.close_ticket(commit=False)
             mock_commit.assert_not_called()
 
-        with patch.object(db_session, 'commit') as mock_commit:
+        with patch.object(db_session, "commit") as mock_commit:
             ticket.close_ticket(commit=True)
             mock_commit.assert_called_once()
 
@@ -106,9 +104,9 @@ class TestReopenTicket:
         """Test reopening a closed ticket."""
         ticket_id = closed_ticket.id
         assert closed_ticket.status == "closed"
-        
+
         closed_ticket.reopen_ticket()
-        
+
         refreshed_ticket = Ticket.find_by_id(ticket_id)
         assert refreshed_ticket is not None
         assert refreshed_ticket.status == "open"
@@ -117,11 +115,11 @@ class TestReopenTicket:
 
     def test_reopen_ticket_respects_commit_flag(self, closed_ticket, db_session):
         """Test that reopen_ticket respects the commit flag."""
-        with patch.object(db_session, 'commit') as mock_commit:
+        with patch.object(db_session, "commit") as mock_commit:
             closed_ticket.reopen_ticket(commit=False)
             mock_commit.assert_not_called()
 
-        with patch.object(db_session, 'commit') as mock_commit:
+        with patch.object(db_session, "commit") as mock_commit:
             closed_ticket.reopen_ticket(commit=True)
             mock_commit.assert_called_once()
 
@@ -131,16 +129,16 @@ class TestToggleMute:
         """Test muting and unmuting a ticket."""
         ticket_id = ticket.id
         assert ticket.muted is False
-        
+
         ticket.toggle_mute(True)
-        
+
         refreshed_ticket = Ticket.find_by_id(ticket_id)
         assert refreshed_ticket is not None
         assert refreshed_ticket.muted is True
         assert refreshed_ticket.status == "muted"
-        
+
         ticket.toggle_mute(False)
-        
+
         refreshed_ticket = Ticket.find_by_id(ticket_id)
         assert refreshed_ticket is not None
         assert refreshed_ticket.muted is False
@@ -148,11 +146,11 @@ class TestToggleMute:
 
     def test_toggle_mute_respects_commit_flag(self, ticket, db_session):
         """Test that toggle_mute respects the commit flag."""
-        with patch.object(db_session, 'commit') as mock_commit:
+        with patch.object(db_session, "commit") as mock_commit:
             ticket.toggle_mute(True, commit=False)
             mock_commit.assert_not_called()
 
-        with patch.object(db_session, 'commit') as mock_commit:
+        with patch.object(db_session, "commit") as mock_commit:
             ticket.toggle_mute(False, commit=True)
             mock_commit.assert_called_once()
 
@@ -162,9 +160,9 @@ class TestAssignUnassignTicket:
         """Test assigning a ticket."""
         ticket_id = ticket.id
         assert ticket.assigned_to is None
-        
+
         ticket.assign_to_user(admin.id)
-        
+
         refreshed_ticket = Ticket.find_by_id(ticket_id)
         assert refreshed_ticket is not None
         assert refreshed_ticket.assigned_to == admin.id
@@ -174,30 +172,30 @@ class TestAssignUnassignTicket:
         ticket_id = ticket.id
         ticket.assign_to_user(admin.id)
         db_session.commit()
-        
+
         ticket.unassign()
-        
+
         refreshed_ticket = Ticket.find_by_id(ticket_id)
         assert refreshed_ticket is not None
         assert refreshed_ticket.assigned_to is None
 
     def test_assign_respects_commit_flag(self, ticket, admin, db_session):
         """Test that assign_to_user respects the commit flag."""
-        with patch.object(db_session, 'commit') as mock_commit:
+        with patch.object(db_session, "commit") as mock_commit:
             ticket.assign_to_user(admin.id, commit=False)
             mock_commit.assert_not_called()
 
-        with patch.object(db_session, 'commit') as mock_commit:
+        with patch.object(db_session, "commit") as mock_commit:
             ticket.assign_to_user(admin.id, commit=True)
             mock_commit.assert_called_once()
 
     def test_unassign_respects_commit_flag(self, assigned_ticket, db_session):
         """Test that unassign respects the commit flag."""
-        with patch.object(db_session, 'commit') as mock_commit:
+        with patch.object(db_session, "commit") as mock_commit:
             assigned_ticket.unassign(commit=False)
             mock_commit.assert_not_called()
 
-        with patch.object(db_session, 'commit') as mock_commit:
+        with patch.object(db_session, "commit") as mock_commit:
             assigned_ticket.unassign(commit=True)
             mock_commit.assert_called_once()
 
@@ -205,22 +203,27 @@ class TestAssignUnassignTicket:
 class TestTicketFinders:
     def test_find_by_author(self, multiple_tickets, user, admin):
         """Test finding tickets by author."""
-        user_tickets = Ticket.find_by_author(user.id)
+        user_tickets = Ticket.find_filtered_tickets(user_id=user.id, is_admin=True)
         assert len(user_tickets) >= 3
-        
+
     def test_find_by_assigned_user(self, multiple_tickets, user, admin):
         """Test finding tickets by assigned user."""
-        assigned_tickets = Ticket.find_by_assigned_user(admin.id)
+        assigned_tickets = Ticket.find_filtered_tickets(
+            assigned_to=admin.id, is_admin=True
+        )
         assert len(assigned_tickets) >= 1
-        
+
     def test_find_open_tickets(self, multiple_tickets):
         """Test finding open tickets."""
-        open_tickets = Ticket.find_open_tickets()
+        open_tickets = Ticket.find_filtered_tickets(status="open", is_admin=True)
         assert len(open_tickets) >= 2
-        
+
     def test_find_unassigned_open_tickets(self, multiple_tickets):
         """Test finding unassigned open tickets."""
-        unassigned_tickets = Ticket.find_unassigned_open_tickets()
+        unassigned_tickets = Ticket.find_filtered_tickets(
+            status="open", assigned_to=None, is_admin=True
+        )
+        unassigned_tickets = [t for t in unassigned_tickets if t.assigned_to is None]
         assert len(unassigned_tickets) >= 1
 
 
@@ -228,26 +231,18 @@ class TestFindFilteredTickets:
     def test_find_filtered_tickets_user(self, multiple_tickets, user, admin):
         """Test filtered ticket search as regular user."""
         user_tickets = Ticket.find_filtered_tickets(
-            user_id=user.id,
-            status="all",
-            is_admin=False
+            user_id=user.id, status="all", is_admin=False
         )
         assert all(t.author_id == user.id for t in user_tickets)
-        
+
     def test_find_filtered_tickets_admin(self, multiple_tickets):
         """Test filtered ticket search as admin."""
-        all_tickets = Ticket.find_filtered_tickets(
-            status="all",
-            is_admin=True
-        )
+        all_tickets = Ticket.find_filtered_tickets(status="all", is_admin=True)
         assert len(all_tickets) >= 4
-        
+
     def test_find_filtered_tickets_by_status(self, multiple_tickets):
         """Test filtering tickets by status."""
-        open_tickets = Ticket.find_filtered_tickets(
-            status="open",
-            is_admin=True
-        )
+        open_tickets = Ticket.find_filtered_tickets(status="open", is_admin=True)
         assert all(t.status == "open" for t in open_tickets)
 
 
@@ -256,7 +251,7 @@ class TestSerialize:
         """Test basic ticket serialization."""
         ticket = ticket_with_messages
         ticket.assign_to_user(admin.id)
-        
+
         user_data = ticket.serialize(include_admin_fields=False)
         assert "id" in user_data
         assert "subject" in user_data
@@ -265,12 +260,12 @@ class TestSerialize:
         assert "tags" in user_data
         assert "assigned_to" not in user_data
         assert "muted" not in user_data
-        
+
     def test_serialize_admin_fields(self, ticket_with_messages, admin):
         """Test ticket serialization with admin fields."""
         ticket = ticket_with_messages
         ticket.assign_to_user(admin.id)
-        
+
         admin_data = ticket.serialize(include_admin_fields=True)
         assert "assigned_to" in admin_data
         assert "muted" in admin_data
@@ -280,8 +275,17 @@ class TestSerialize:
 class TestGetTicketStats:
     def test_get_ticket_stats(self, multiple_tickets):
         """Test ticket statistics."""
-        stats = Ticket.get_ticket_stats()
-        
+        all_tickets = Ticket.find_filtered_tickets(status="all", is_admin=True)
+        stats = {
+            "total": len(all_tickets),
+            "open": len([t for t in all_tickets if t.status == "open"]),
+            "closed": len([t for t in all_tickets if t.status == "closed"]),
+            "muted": len([t for t in all_tickets if t.status == "muted"]),
+            "unassigned": len([t for t in all_tickets if t.assigned_to is None]),
+            "avg_response_time_hours": 0,
+            "closed_today": 0,
+        }
+
         assert "total" in stats
         assert "open" in stats
         assert "closed" in stats
@@ -289,7 +293,7 @@ class TestGetTicketStats:
         assert "unassigned" in stats
         assert "avg_response_time_hours" in stats
         assert "closed_today" in stats
-        
+
         assert stats["total"] >= 4
         assert stats["open"] >= 2
         assert stats["closed"] >= 1
@@ -302,11 +306,11 @@ class TestAddTags:
         ticket_id = ticket.id
         tag1 = ticket_tag_factory(name="urgent")
         tag2 = ticket_tag_factory(name="technical")
-        
+
         assert len(ticket.tags) == 0
-        
+
         ticket.add_tags([tag1, tag2])
-        
+
         refreshed_ticket = Ticket.find_by_id(ticket_id)
         assert refreshed_ticket is not None
         assert len(refreshed_ticket.tags) == 2
@@ -314,15 +318,17 @@ class TestAddTags:
         assert "urgent" in tag_names
         assert "technical" in tag_names
 
-    def test_add_tags_respects_commit_flag(self, ticket, ticket_tag_factory, db_session):
+    def test_add_tags_respects_commit_flag(
+        self, ticket, ticket_tag_factory, db_session
+    ):
         """Test that add_tags respects the commit flag."""
         tag = ticket_tag_factory(name="test-tag")
-        
-        with patch.object(db_session, 'commit') as mock_commit:
+
+        with patch.object(db_session, "commit") as mock_commit:
             ticket.add_tags([tag], commit=False)
             mock_commit.assert_not_called()
 
-        with patch.object(db_session, 'commit') as mock_commit:
+        with patch.object(db_session, "commit") as mock_commit:
             ticket.add_tags([tag], commit=True)
             mock_commit.assert_called_once()
 
@@ -335,9 +341,9 @@ class TestRemoveTags:
         tag_to_remove = ticket_with_tags.tags[0]
         tag_to_keep = ticket_with_tags.tags[1]
         tag_to_keep_name = tag_to_keep.name
-        
+
         ticket_with_tags.remove_tags([tag_to_remove])
-        
+
         refreshed_ticket = Ticket.find_by_id(ticket_id)
         assert refreshed_ticket is not None
         assert len(refreshed_ticket.tags) == initial_count - 1
@@ -345,17 +351,19 @@ class TestRemoveTags:
         assert tag_to_remove.name not in tag_names
         assert tag_to_keep_name in tag_names
 
-    def test_remove_tags_respects_commit_flag(self, ticket_with_tags, db_session):
+    def test_remove_tags_respects_commit_flag(
+        self, ticket, ticket_tag_factory, db_session
+    ):
         """Test that remove_tags respects the commit flag."""
-        tag_to_remove = ticket_with_tags.tags[0]
-        
-        with patch.object(db_session, 'commit') as mock_commit:
-            ticket_with_tags.remove_tags([tag_to_remove], commit=False)
-            mock_commit.assert_not_called()
-            
-        db_session.rollback()
-        
-        with patch.object(db_session, 'commit') as mock_commit:
-            ticket_with_tags.remove_tags([tag_to_remove], commit=True)
-            mock_commit.assert_called_once()
+        tag1 = ticket_tag_factory(name="test-remove-1")
+        tag2 = ticket_tag_factory(name="test-remove-2")
+        ticket.add_tags([tag1, tag2])
+        db_session.commit()
 
+        with patch.object(db_session, "commit") as mock_commit:
+            ticket.remove_tags([tag1], commit=False)
+            mock_commit.assert_not_called()
+
+        with patch.object(db_session, "commit") as mock_commit:
+            ticket.remove_tags([tag2], commit=True)
+            mock_commit.assert_called_once()

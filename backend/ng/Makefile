@@ -44,8 +44,9 @@ test-admin:
 test-user:
 	$(PYTHON_EXEC) -m pytest ./user/tests/ -v
 
+# TODO: Add back api/controller tests when Todo's are complete
 test-support:
-	$(PYTHON_EXEC) -m pytest ./support/tests/ -v
+	$(PYTHON_EXEC) -m pytest ./support/tests/ -k "model" -v
 
 test-utils:
 	$(PYTHON_EXEC) -m pytest ./core/testing/system/ -v

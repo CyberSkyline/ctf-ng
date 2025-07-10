@@ -209,11 +209,8 @@ def ticket_tag(db_session):
     """Creates a ticket tag for testing."""
     from .support.models.TicketTag import TicketTag
 
-    tag = TicketTag.create(
-        name="bug",
-        color="#FF0000",
-        description="Bug reports",
-        commit=False
+    tag = TicketTag.create_tag(
+        name="bug", color="#FF0000", description="Bug reports", commit=False
     )
     db_session.add(tag)
     db_session.commit()
@@ -229,11 +226,11 @@ def ticket_tag_factory(db_session):
         defaults = {
             "name": f"tag_{datetime.utcnow().timestamp()}",
             "color": "#0000FF",
-            "description": "Test tag"
+            "description": "Test tag",
         }
         defaults.update(kwargs)
 
-        tag = TicketTag.create(**defaults, commit=False)
+        tag = TicketTag.create_tag(**defaults, commit=False)
         db_session.add(tag)
         db_session.commit()
         return tag
@@ -246,11 +243,11 @@ def ticket(db_session, user, event):
     """Creates a basic support ticket."""
     from .support.models.Ticket import Ticket
 
-    ticket = Ticket.create(
+    ticket = Ticket.create_ticket(
         subject="Test Support Request",
         author_id=user.id,
         event_id=event.id,
-        commit=False
+        commit=False,
     )
     db_session.add(ticket)
     db_session.commit()
@@ -262,10 +259,8 @@ def closed_ticket(db_session, user):
     """Creates a closed support ticket."""
     from .support.models.Ticket import Ticket
 
-    ticket = Ticket.create(
-        subject="Resolved Issue",
-        author_id=user.id,
-        commit=False
+    ticket = Ticket.create_ticket(
+        subject="Resolved Issue", author_id=user.id, commit=False
     )
     ticket.close_ticket(commit=False)
     db_session.add(ticket)
@@ -278,10 +273,8 @@ def muted_ticket(db_session, user):
     """Creates a muted support ticket."""
     from .support.models.Ticket import Ticket
 
-    ticket = Ticket.create(
-        subject="Low Priority Issue",
-        author_id=user.id,
-        commit=False
+    ticket = Ticket.create_ticket(
+        subject="Low Priority Issue", author_id=user.id, commit=False
     )
     ticket.toggle_mute(True, commit=False)
     db_session.add(ticket)
@@ -294,10 +287,8 @@ def assigned_ticket(db_session, user, admin):
     """Creates a ticket assigned to an admin."""
     from .support.models.Ticket import Ticket
 
-    ticket = Ticket.create(
-        subject="Assigned Issue",
-        author_id=user.id,
-        commit=False
+    ticket = Ticket.create_ticket(
+        subject="Assigned Issue", author_id=user.id, commit=False
     )
     ticket.assign_to_user(admin.id, commit=False)
     db_session.add(ticket)
@@ -310,18 +301,12 @@ def ticket_with_messages(db_session, ticket, user, admin):
     """Creates a ticket with messages from user and admin."""
     from .support.models.TicketMessage import TicketMessage
 
-    user_msg = TicketMessage.create(
-        text="I'm having an issue",
-        ticket_id=ticket.id,
-        author_id=user.id,
-        commit=False
+    user_msg = TicketMessage.create_message(
+        text="I'm having an issue", ticket_id=ticket.id, author_id=user.id, commit=False
     )
 
-    admin_msg = TicketMessage.create(
-        text="I'll help you",
-        ticket_id=ticket.id,
-        author_id=admin.id,
-        commit=False
+    admin_msg = TicketMessage.create_message(
+        text="I'll help you", ticket_id=ticket.id, author_id=admin.id, commit=False
     )
 
     ticket.first_admin_response_timestamp = admin_msg.created_at
@@ -355,7 +340,7 @@ def ticket_factory(db_session):
         }
         defaults.update(kwargs)
 
-        ticket = Ticket.create(**defaults, commit=False)
+        ticket = Ticket.create_ticket(**defaults, commit=False)
         db_session.add(ticket)
         db_session.commit()
         return ticket
@@ -376,7 +361,7 @@ def ticket_message_factory(db_session):
         }
         defaults.update(kwargs)
 
-        message = TicketMessage.create(**defaults, commit=False)
+        message = TicketMessage.create_message(**defaults, commit=False)
         db_session.add(message)
         db_session.commit()
         return message
@@ -392,23 +377,13 @@ def multiple_tickets(db_session, user, admin, event, team_factory, ticket_factor
 
     tickets = {
         "open_unassigned": ticket_factory(
-            subject="Open Unassigned",
-            author_id=user.id,
-            event_id=event.id
+            subject="Open Unassigned", author_id=user.id, event_id=event.id
         ),
         "open_assigned": ticket_factory(
-            subject="Open Assigned",
-            author_id=user.id,
-            team_id=team.id
+            subject="Open Assigned", author_id=user.id, team_id=team.id
         ),
-        "closed": ticket_factory(
-            subject="Closed Ticket",
-            author_id=admin.id
-        ),
-        "muted": ticket_factory(
-            subject="Muted Ticket",
-            author_id=user.id
-        ),
+        "closed": ticket_factory(subject="Closed Ticket", author_id=admin.id),
+        "muted": ticket_factory(subject="Muted Ticket", author_id=user.id),
     }
 
     tickets["open_assigned"].assign_to_user(admin.id)
