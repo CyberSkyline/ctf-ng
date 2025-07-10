@@ -133,3 +133,8 @@ with app.app_context():
         print(f"   - {event.name} (max_team_size: {event.max_team_size}, public: {event.public})")
     print(f"Admin user registered for {len(admin_teams)} events")
     print(f"Added test user to admin's first team: {admin_teams[0].name if admin_teams else 'None'}")
+
+    print("\n")
+    # ANSI escape code for yellow background: \033[43m, reset: \033[0m
+    print(f"Admin email: \033[43m{DEFAULT_ADMIN_EMAIL}\033[0m")
+    print(f"Admin password: \033[43m{DEFAULT_ADMIN_PASSWORD}\033[0m")

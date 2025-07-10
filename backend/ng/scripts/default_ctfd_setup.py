@@ -49,3 +49,8 @@ with app.app_context():
         user_mode="users",
         ctf_theme=None,
     )
+
+    print("\n")
+    # ANSI escape code for yellow background: \033[43m, reset: \033[0m
+    print(f"Admin email: \033[43m{DEFAULT_ADMIN_EMAIL}\033[0m")
+    print(f"Admin password: \033[43m{DEFAULT_ADMIN_PASSWORD}\033[0m")
