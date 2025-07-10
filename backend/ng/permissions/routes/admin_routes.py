@@ -2,28 +2,27 @@ from flask_restx import Namespace, Resource
 from flask import g
 from CTFd.utils.decorators import authed_only, admins_only
 from ...core.utils.logger import get_logger
-from ...core.utils.api_responses import error_response
-from ...core.middleware import json_body_required, authed_user_required
+from ...core.utils.api import error_response
+from ...core.middleware.auth import api_endpoint, admin_endpoint
 from ..models.Role import Role
 from ...user.models.User import User
-from ...core.utils.domain_validators import validate_role_update, validate_user_role_update
+from ..models.UserRole import UserRole
 from ..controllers import get_role_details, update_role, get_user_roles, update_user_roles, create_role
 
 
-permissions_namespace = Namespace("permissions", description="Permissions management")
+permissions_admin_namespace = Namespace("/admin/permissions", description="Permissions management endpoints for admins")
 logger = get_logger(__name__)
 
 
 6
 
-@permissions_namespace.route("/<int:role_id>/details")
+@permissions_admin_namespace.route("/<int:role_id>/details")
 class RoleDetails(Resource):
     """
     Resource to manage permissions for a specific role.
     """
-    @authed_only
-    @authed_user_required
-    @permissions_namespace.doc(
+    @admin_endpoint()
+    @permissions_admin_namespace.doc(
         description="Get all details for a specific role by ID",
         responses={404: "Role not found", 200: "Success"},
         params={"role_id": "Role ID to retrieve details for"},
@@ -43,11 +42,11 @@ class RoleDetails(Resource):
             "users": [user.serialize() for user in users],
         }
 
-    @authed_only
-    @authed_user_required
-    @admins_only
-    @json_body_required
-    @permissions_namespace.doc(
+    @admin_endpoint(
+        json_required=True,
+        validation_func=Role.validate_role_update
+    )
+    @permissions_admin_namespace.doc(
         description="Update the details of a specific role by ID",
         responses={
             404: "Role not found", 
@@ -76,30 +75,23 @@ class RoleDetails(Resource):
         if not role:
             return error_response("Role not found", "role", 404)
 
-
-        is_valid, errors = validate_role_update(data)
-
-        if not is_valid:
-            return {"success": False, "errors": errors}, 400
-
         response = update_role(role_id, data)
         if "error" in response:
             return error_response(response["error"], "role", 400)
         return {
             "success": True,
-            "roles": response.get("role", {}).serialize(),
+            "role": response.get("role", {}).serialize(),
             "message": response.get("message", "Role updated successfully")
         }
 
 
-@permissions_namespace.route("/<int:user_id>/roles")
+@permissions_admin_namespace.route("/<int:user_id>/roles")
 class UserRoles(Resource):
     """
     Resource to manage roles for a specific user.
     """
-    @authed_only
-    @authed_user_required
-    @permissions_namespace.doc("get_user_roles")
+    @api_endpoint()
+    @permissions_admin_namespace.doc("get_user_roles")
     def get(self, user_id):
         """
         Get all roles for a specific user by ID.
@@ -112,10 +104,11 @@ class UserRoles(Resource):
             "roles": [role.serialize() for role in roles]
         }
 
-    @authed_only
-    @admins_only
-    @json_body_required
-    @permissions_namespace.doc(
+    @admin_endpoint(
+        json_required=True,
+        validation_func=UserRole.validate_user_role_update
+    )
+    @permissions_admin_namespace.doc(
         description="Update roles for a specific user by Name",
         responses={
             404: "User not found",
@@ -139,17 +132,12 @@ class UserRoles(Resource):
 
         User.query.get_or_404(user_id)
 
-        is_valid, errors = validate_user_role_update(data)
-        if not is_valid:
-            return {"success": False, "errors": errors}, 400
-
         response = update_user_roles(user_id, data)
-        print(response)
         if "error" in response:
             return error_response(response["error"], "user", 400)
 
         return {
             "success": True,
             "message": response.get("message", "User roles updated successfully"),
-            "roles": [role.serialize() for role in response.get("roles", [])]
+            "user": response.get("user").serialize(include_admin_fields=True),
         }

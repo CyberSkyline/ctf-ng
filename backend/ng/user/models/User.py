@@ -8,7 +8,6 @@ from sqlalchemy import func
 from typing import Any
 from sqlalchemy.ext.associationproxy import association_proxy
 from ...permissions.models.UserRole import UserRole
-from __future__ import annotations
 from typing import Any, TypedDict
 
 from CTFd.models import db
@@ -51,13 +50,21 @@ class User(db.Model):
                 "registered_at": "",
             }
 
-        return {
-            "id": self.id,
-            "name": self.ctfd_user.name,
-            "email": self.ctfd_user.email,
-            "role": self.ctfd_user.type,
-            "registered_at": self.ctfd_user.created,
-        }
+        if include_admin_fields:
+            return {
+                "id": self.id,
+                "name": self.ctfd_user.name,
+                "email": self.ctfd_user.email,
+                "roles": [role.name for role in self.roles],
+                "registered_at": self.ctfd_user.created.isoformat(),
+            }
+        else:
+            return {
+                "id": self.id,
+                "name": self.ctfd_user.name,
+                "email": self.ctfd_user.email,
+                "registered_at": self.ctfd_user.created.isoformat(),
+            }
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:

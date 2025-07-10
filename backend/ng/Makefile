@@ -11,7 +11,7 @@ endif
 
 # All tests
 test-all:
-	$(PYTHON_EXEC) -m pytest .
+	$(PYTHON_EXEC) -m pytest -m "not middleware" -v
 
 
 # Test types

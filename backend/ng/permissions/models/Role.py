@@ -3,6 +3,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from .RolePermission import RolePermission
 from .Permission import Permission
 from .enums import RoleEnum
+from ...core.utils.validator import BaseValidator
 
 class Role(db.Model):
     __tablename__ = "ng_roles"
@@ -83,3 +84,42 @@ class Role(db.Model):
             "name": self.name,
             "permissions": [permission.serialize() for permission in self.permissions]
         } if self else None
+
+    @classmethod
+    def validate_role_update(cls,data):
+        """Validate role updates."""
+        validator = BaseValidator()
+
+        if not any(
+            data.get(field) is not None
+            for field in ["name", "description", "permissions"]
+        ):
+            raise ValidationError("At least one field must be provided for update")
+
+        if "name" in data:
+            validator.validate_string(
+                data,
+                "name",
+                required=False,
+                friendly_name="Role name",
+            )
+        if "description" in data:
+            validator.validate_string(
+                data,
+                "description",
+                required=False,
+                friendly_name="Role description",
+            )
+        if "permissions" in data:
+            for permission in data["permissions"]:
+                validator.validate_string(
+                    {"permission": permission},
+                    "permission",
+                    required=False,
+                    friendly_name="Permission name",
+                )
+        is_valid,errors, parsed_data = validator.is_valid()
+        if not is_valid:
+            raise ValidationError("Role update data is invalid", errors=errors)
+
+        return parsed_data

@@ -28,9 +28,9 @@ def update_user_roles(user_id, data):
                 "error": f"Invalid role name: {role_name}"
             }
 
-    user_roles = UserRole.update_user_roles(user_id, role_enums)
+    updated_user = UserRole.update_user_roles(user_id, role_enums)
 
     return {
         "success": True,
-        "roles": user_roles
+        "user": updated_user
     }

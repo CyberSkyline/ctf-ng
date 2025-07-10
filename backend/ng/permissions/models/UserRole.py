@@ -1,6 +1,7 @@
 from CTFd.models import db
 from .Role import Role
 from .enums import RoleEnum
+from ...core.utils.validator import BaseValidator
 
 class UserRole(db.Model):
     __tablename__ = "ng_user_roles"
@@ -84,7 +85,13 @@ class UserRole(db.Model):
         db.session.commit()
 
         # Assign new roles
-        return [cls.assign_role_to_user_by_name(user_id, role_name) for role_name in role_names]
+        for role_name in role_names:
+            cls.assign_role_to_user_by_name(user_id, role_name)
+        
+        #need to import User here to avoid circular imports
+        from ...user.models.User import User
+        user = User.find_by_id(user_id)
+        return user
 
     @classmethod
     def get_user_role_by_id(cls, user_id: int):
@@ -107,4 +114,27 @@ class UserRole(db.Model):
             "user": self.user.serialize() if self.user else None,
             "role": self.role.serialize() if self.role else None
         }
+
+    @classmethod
+    def validate_user_role_update(cls,data):
+        """Validate user role updates."""
+        validator = BaseValidator()
+
+        if not data.get("roles"):
+            validator.errors["roles"] = "No role names provided"
+            raise ValidationError("No role names provided")
+
+        for role in data["roles"]:
+            validator.validate_string(
+                {"role": role},
+                "role",
+                required=False,
+                friendly_name="Role name",
+            )
+
+        is_valid, errors, parsed_data = validator.is_valid()
+        if not is_valid:
+            raise ValidationError("User role update data is invalid", errors=errors)
+
+        return parsed_data
 

@@ -4,25 +4,26 @@ Ctf-ng Pytest Fixtures
 
 import pytest
 from datetime import datetime
-from CTFd.models import db as _db
+from CTFd.models import db, Users
 from CTFd.cache import cache
+from CTFd.utils.security.csrf import generate_nonce
 from . import load as plugin_load
 from .user.models.User import User as NgUser
 from .event.models.Event import Event
-from .team.controllers.create_team import create_team
-from .team.controllers.join_team import join_team
+from .team.models.Team import Team
 from .permissions.controllers import assign_role_to_user
 from .permissions.models.Role import Role
 from .permissions.models.RolePermission import RolePermission
 from .permissions.models.Permission import Permission
-from .event_registration.controllers.create_event_registration import create_event_registration
+from .core.tests.system.middleware_test_routes import middleware_test_routes
+from .support.models.Ticket import Ticket
+from .support.models.TicketTag import TicketTag
 from tests.helpers import (
     create_ctfd as create_ctfd_original,
     destroy_ctfd as destroy_ctfd_original,
     setup_ctfd,
     gen_user,
 )
-from .core.testing.helpers import login_as
 from .permissions.models.enums import PermissionEnum
 from .permissions.models.enums import RoleEnum
 
@@ -58,7 +59,7 @@ def db_session(app):
     """
 
     with app.app_context():
-        connection = _db.engine.connect()
+        connection = db.engine.connect()
         transaction = connection.begin()
         db.session.close()
         db.session = db.create_scoped_session(options={"bind": connection, "binds": {}})
@@ -66,6 +67,98 @@ def db_session(app):
         transaction.rollback()
         connection.close()
         db.session.remove()
+
+
+@pytest.fixture(scope="function")
+def middleware_client():
+    """
+    Creates an isolated, authenticated Flask app for testing middleware.
+    It uses an in-memory database and cleans up after itself.
+    Only used by tests marked with @pytest.mark.middleware.
+    """
+
+    app = create_ctfd_original(enable_plugins=True, setup=False)
+
+    # Override the database configuration to use in memory sqlite for isolation
+    app.config.update(
+        {
+            "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+            "TESTING": True,
+            "SECRET_KEY": "test-secret-key-for-sessions",
+            "WTF_CSRF_ENABLED": False,
+            "SERVER_NAME": None,
+        }
+    )
+
+    with app.app_context():
+        # Load our plugin isolated
+        plugin_load(app)
+
+        # Register ONLY our temporary test routes
+        app.register_blueprint(middleware_test_routes)
+
+        # Create the tables but in the sqlite db
+        db.create_all()
+
+        # Minimal ctfd config
+        from CTFd.models import Configs
+
+        setup_config = Configs(key="setup", value="true")
+        db.session.add(setup_config)
+        db.session.commit()
+
+        # Isolated context
+        user_to_login = gen_user(db, name="tempuser", email="tempuser@example.com")
+        ng_user = NgUser(id=user_to_login.id)
+        db.session.add(ng_user)
+        db.session.commit()
+
+        Role.create_role(RoleEnum.ADMIN)
+        Role.create_role(RoleEnum.SUPPORT)
+        Permission.create_permission(PermissionEnum.CAN_EDIT_TEAM, "Edit team details")
+        RolePermission.create_role_permission(1, 1)  # Admin role with all permissions
+
+        assign_role_to_user(user_to_login.id, RoleEnum.ADMIN)
+
+        user2 = gen_user(db, name="tempuser2", email="user2@example.com")
+        ng_user2 = NgUser(id=user2.id)
+        db.session.add(ng_user2)
+        db.session.commit()
+
+        event = Event(name="Temp Event", description="Temporary event for testing")
+        db.session.add(event)
+        db.session.commit()
+
+        event2 = Event(
+            name="Second Temp Event",
+            description="Another temporary event for testing",
+            locked=True,
+            start_time=datetime(2023, 1, 1),
+            end_time=datetime(2023, 12, 31),
+        )
+        db.session.add(event2)
+        db.session.commit()
+
+        Team.create_team_with_captain(name="Temp Team", event_id=event.id, captain_id=user_to_login.id, invite_code="fo67ykug")
+        Team.create_team_with_captain(name="Second Team", event_id=event.id, captain_id=user2.id)
+
+        Ticket.create(
+            subject="Test Ticket",
+            author_id=user_to_login.id,
+        )
+        TicketTag.create(name="Test Tag")
+
+        client = app.test_client()
+        with client.session_transaction() as sess:
+            sess["id"] = user_to_login.id
+            sess["name"] = user_to_login.name
+            sess["type"] = getattr(user_to_login, "type", "user")
+            sess["nonce"] = "test-nonce"
+
+        # Yield the authenticated client to the test
+        yield client
+
+    # Teardown happens automatically after yield
 
 
 @pytest.fixture(scope="function")
@@ -266,7 +359,7 @@ def user_with_roles(db_session):
         return None
 
     # Create a user
-    user = gen_user(_db, name="testuser_with_roles", email="testuser_with_roles@example.com")
+    user = gen_user(db, name="testuser_with_roles", email="testuser_with_roles@example.com")
     ng_user = NgUser(id=user.id)
     db_session.add(ng_user)
     db_session.commit()

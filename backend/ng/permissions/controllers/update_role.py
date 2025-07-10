@@ -32,6 +32,7 @@ def update_role(role_id, data):
                     "success": False,
                     "error": f"Permission '{name}' does not exist",
                 }
+            permissions.append(permission)
     role.permissions = permissions
     db.session.commit()
 

@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import request
 from CTFd.utils.user import get_current_user
-from ..utils.api_responses import error_response
+from ..utils.api import error_response
 from ..utils.logger import get_logger
 from ...permissions.controllers.get_team_management_permissions import get_team_management_permissions
 from ...permissions.controllers.get_user_permissions import get_user_permissions
@@ -51,7 +51,7 @@ def check_user_can_edit_team(f):
         team_id = request.view_args.get('team_id') or request.args.get('team_id')
         if not team_id:
             return error_response("Team ID is required", "bad_request", 400)
-        response = get_team_management_permissions(team_id)
+        response = get_team_management_permissions(team_id,user.id)
         if "error" in response:
             return error_response(response["error"], "team_management", 400)
 

@@ -25,6 +25,8 @@ app = setup_ctfd(
     )
 with app.app_context():
     admin_user = User.query.filter_by(id=1).first()
+    if not admin_user:
+         admin_user = User.create_user(1, commit=True)
 
     create_permission(
         name="CAN_EDIT_TEAMS",
