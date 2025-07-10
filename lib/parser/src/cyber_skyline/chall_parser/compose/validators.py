@@ -26,7 +26,7 @@ use valid values, particularly for UI elements like icons.
 
 import logging
 import re
-from typing import Any, Literal
+from typing import Any
 from cyber_skyline.chall_parser.compose.answer import Answer, AnswerTestCase
 from cyber_skyline.chall_parser.rewriter import Template
 from collections.abc import Callable
@@ -41,7 +41,8 @@ def or_(*validators: Callable[[Any, Any, Any], None]) -> Callable[[Any, Any, Any
             try:
                 validator(instance, attribute, value)
                 return  # If any validator passes, we're done
-            except:
+            except Exception as e:
+                logger.debug(f"Validator {validator.__name__} failed for value '{value}': {e}")
                 continue  # If a validator fails, try the next one
         raise ValueError(f"Value '{value}' did not pass any of the OR validators")
     return validate
