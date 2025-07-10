@@ -46,24 +46,23 @@ user_tickets_namespace = Namespace("tickets", description="support ticket operat
 class TicketList(Resource):
     @user_endpoint()
     @user_tickets_namespace.doc(**GET_MY_TICKETS_DOC)
-    def get(self):
+    def get(self, current_user):
         """Get user tickets"""
         filters = validate_ticket_filters(request.args.to_dict())
-        result = list_tickets(g.user.id, filters.get("status", "all"), is_admin=False)
+        result = list_tickets(current_user.id, filters.get("status", "all"), is_admin=False)
         return success_response(result)
 
     @user_endpoint(json_required=True, validation_func=validate_ticket_creation)
     @user_tickets_namespace.doc(**CREATE_NEW_TICKET_DOC)
-    def post(self):
+    def post(self, validated_data, current_user):
         """Create ticket"""
-        data = g.validated_data
         result = create_ticket(
-            data["subject"],
-            g.user.id,
-            data.get("event_id"),
-            data.get("team_id"),
-            data.get("challenge_id"),
-            data.get("tag_ids"),
+            validated_data["subject"],
+            current_user.id,
+            validated_data.get("event_id"),
+            validated_data.get("team_id"),
+            validated_data.get("challenge_id"),
+            validated_data.get("tag_ids"),
         )
         return success_response(result, status_code=201)
 
@@ -72,18 +71,17 @@ class TicketDetail(Resource):
     @user_endpoint()
     @load_ticket(LoaderType.PARAM)
     @user_tickets_namespace.doc(**GET_MY_TICKET_DETAILS_DOC)
-    def get(self, ticket_id):
+    def get(self, ticket_id, current_user):
         """Get ticket details"""
-        result = get_ticket(ticket_id, g.user.id, is_admin=False)
+        result = get_ticket(ticket_id, current_user.id, is_admin=False)
         return success_response(result)
 
     @user_endpoint(json_required=True, validation_func=validate_ticket_update)
     @load_ticket(LoaderType.PARAM)
     @user_tickets_namespace.doc(**UPDATE_MY_TICKET_DOC)
-    def patch(self, ticket_id):
+    def patch(self, ticket_id, validated_data, current_user):
         """Update ticket"""
-        data = g.validated_data
-        result = update_ticket(ticket_id, g.user.id, is_admin=False, subject=data.get("subject"))
+        result = update_ticket(ticket_id, current_user.id, is_admin=False, subject=validated_data.get("subject"))
         return success_response(result)
 
 
@@ -92,8 +90,7 @@ class TicketMessages(Resource):
     @user_endpoint(json_required=True, validation_func=validate_ticket_message)
     @load_ticket(LoaderType.PARAM)
     @user_tickets_namespace.doc(**CREATE_TICKET_REPLY_DOC)
-    def post(self, ticket_id):
+    def post(self, ticket_id, validated_data, current_user):
         """Reply to ticket"""
-        data = g.validated_data
-        result = create_ticket_message(ticket_id, data["text"], g.user.id, is_admin=False)
+        result = create_ticket_message(ticket_id, validated_data["text"], current_user.id, is_admin=False)
         return success_response(result, status_code=201)
