@@ -14,7 +14,7 @@ from ..models.User import User
 
 users_admin_namespace = Namespace("/admin/users", description="user endpoints for admins")
 
-@users_admin_namespace.route("/users")
+@users_admin_namespace.route("")
 class UsersAdminResource(Resource):
     @admin_endpoint()
     def get(self):
