@@ -3,10 +3,18 @@ import { apiMutation } from '@/fetchers';
 import type { Event } from '../types';
 
 /**
- * Retrieves a list of all events.
+ * Retrieves a list of all public and registerable events.
  */
 export function useEvents() {
-  return useSWR<{events: Event[], total_events: number}, Error>('/events');
+  return useSWR<Event[], Error>('/events');
+}
+
+/**
+ * Retrieves a list of *all* events.
+ * This is an admin-only endpoint.
+ */
+export function useAllEvents() {
+  return useSWR<Event[], Error>('/admin/events');
 }
 
 /**
@@ -14,7 +22,37 @@ export function useEvents() {
  * @param eventId The ID of the event to fetch
  */
 export function useEvent(eventId: number | null) {
-  return useSWR<{event: Event}, Error>(eventId ? `/events/${eventId}` : null);
+  return useSWR<Event, Error>(eventId ? `/events/${eventId}` : null);
+}
+
+/**
+ * Retrieves a specific event by its ID for admin purposes.
+ * This is an admin-only endpoint.
+ * @param eventId The ID of the event to fetch
+ */
+export function useAdminEvent(eventId: number | null) {
+  return useSWR<Event, Error>(eventId ? `/admin/events/${eventId}` : null);
+}
+
+/**
+ * Gets the events a user is registered for.
+ * This is an admin-only endpoint.
+ * @param userId The ID of the user to fetch events for, or null if this should not be fetched.
+ * @returns
+ */
+export function useUserEvents(userId: number | null) {
+  return useSWR<Event[], Error>(
+    userId ? `/admin/users/${userId}/events` : null,
+  );
+}
+
+/**
+ * Gets the events the currently signed in user is registered for.
+ */
+export function useMyEvents() {
+  return useSWR<Event[], Error>(
+    '/users/me/events',
+  );
 }
 
 /**
@@ -22,23 +60,23 @@ export function useEvent(eventId: number | null) {
  * @param event The event object to create
  */
 export function createEvent(event: Omit<Event, 'id'>) {
-  apiMutation('/events', event, {
+  apiMutation('/admin/events', event, {
     method : 'POST',
   }).then(() => {
-    mutate('/events');
+    mutate('/admin/events');
   });
 }
 
 /**
  * Updates an existing event.
  * @param eventId ID of the event to update
- * @param updates Patches to apply to the event data
+ * @param updates New event data to apply
  */
-export function updateEvent(eventId: number, updates: Partial<Omit<Event, 'id'>>) {
-  apiMutation(`/events/${eventId}`, updates, {
-    method : 'PATCH',
+export function updateEvent(eventId: number, updated: Omit<Event, 'id'>) {
+  return apiMutation(`/admin/events/${eventId}`, updated, {
+    method : 'PUT',
   }).then(() => {
-    mutate(`/events/${eventId}`);
-    mutate('/events');
+    mutate(`/admin/events/${eventId}`);
+    mutate('/admin/events');
   });
 }

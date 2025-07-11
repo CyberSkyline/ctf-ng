@@ -83,6 +83,33 @@ class User(db.Model):
             db.session.commit()
         return user
 
+    def get_events(self):
+        """Get all events the user is registered in.
+
+        Returns:
+            list: List of events the user is registered in
+        """
+        from ...team.models.TeamMember import TeamMember
+        from ...event.models.Event import Event
+
+        # Get all teams the user is a member of
+        team_members = TeamMember.query.filter_by(user_id=self.id).all()
+        event_ids = [tm.event_id for tm in team_members]
+
+        # Get all events for those teams
+        events = Event.query.filter(Event.id.in_(event_ids)).all()
+        return events
+    
+    def get_teams(self):
+        """Get all teams the user is a member of.
+
+        Returns:
+            list: List of teams the user is a member of
+        """
+
+        # Get all team members for this user
+        return [tm.team for tm in self.team_members]
+
     @classmethod
     def find_by_id(cls, user_id: int):
         """Find a user by ID.
@@ -94,13 +121,29 @@ class User(db.Model):
             User or None: The user instance if found, None otherwise
         """
         return cls.query.get(user_id)
+    
+    @classmethod
+    def find_or_create_by_ctfd_id(cls, ctfd_user_id: int, commit: bool = True) -> User:
+        """Find or create a user by CTFd user ID.
+
+        Args:
+            ctfd_user_id (int): The CTFd user ID to find or create
+            commit (bool, optional): Whether to commit immediately
+
+        Returns:
+            User: The found or created user instance
+        """
+        user = cls.query.get(ctfd_user_id)
+        if not user:
+            user = cls.create_user(ctfd_user_id, commit=commit)
+        return user
 
     @classmethod
     def get_all_users(cls):
         """Gets all users with their basic details.
         """
 
-        return cls.query().all()
+        return cls.query.all()
 
     @classmethod
     def check_can_join_team_in_event(cls, user_id: int, event_id: int) -> bool:

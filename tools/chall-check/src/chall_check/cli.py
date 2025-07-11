@@ -29,7 +29,7 @@ import sys
 import logging
 from pathlib import Path
 from typing import Annotated, Optional
-import attrs
+import attr
 from cyber_skyline.chall_parser.compose.answer import Answer
 from cyber_skyline.chall_parser.compose.challenge_info import TextBody
 from cyber_skyline.chall_parser.rewriter import Template
@@ -381,7 +381,7 @@ class ChallengeField(Enum):
     """Enum for challenge fields to display."""
     _ignore_ = "ChallengeField field" 
     ChallengeField = vars()
-    for field in attrs.fields_dict(ChallengeInfo).keys():
+    for field in attr.fields_dict(ChallengeInfo).keys():
         ChallengeField[field] = field
 
 @app.command()

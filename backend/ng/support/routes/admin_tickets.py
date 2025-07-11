@@ -82,25 +82,24 @@ class AdminTicketDetail(Resource):
     @admin_endpoint()
     @load_ticket(LoaderType.PARAM)
     @admin_tickets_namespace.doc(**ADMIN_GET_TICKET_DETAILS_DOC)
-    def get(self, ticket_id):
+    def get(self, ticket_id, current_user):
         """Get any ticket"""
-        result = get_ticket(ticket_id, g.user.id, is_admin=True)
+        result = get_ticket(ticket_id, current_user.id, is_admin=True)
         return success_response(result)
 
     @admin_endpoint(json_required=True, validation_func=validate_ticket_update)
     @load_ticket(LoaderType.PARAM)
     @admin_tickets_namespace.doc(**ADMIN_UPDATE_TICKET_DOC)
-    def patch(self, ticket_id):
+    def patch(self, ticket_id, validated_data, current_user):
         """Update any ticket"""
-        data = g.validated_data
         result = update_ticket(
             ticket_id,
-            g.user.id,
+            current_user.id,
             is_admin=True,
-            subject=data.get("subject"),
-            event_id=data.get("event_id"),
-            team_id=data.get("team_id"),
-            challenge_id=data.get("challenge_id"),
+            subject=validated_data.get("subject"),
+            event_id=validated_data.get("event_id"),
+            team_id=validated_data.get("team_id"),
+            challenge_id=validated_data.get("challenge_id"),
         )
         return success_response(result)
 
@@ -110,10 +109,9 @@ class AdminTicketAssign(Resource):
     @admin_endpoint(json_required=True, validation_func=validate_ticket_assignment)
     @load_ticket(LoaderType.PARAM)
     @admin_tickets_namespace.doc(**ADMIN_ASSIGN_TICKET_DOC)
-    def post(self, ticket_id):
+    def post(self, ticket_id, validated_data, current_user):
         """Assign ticket"""
-        data = g.validated_data
-        result = assign_ticket(ticket_id, data["user_id"], g.user.id)
+        result = assign_ticket(ticket_id, validated_data["user_id"], current_user.id)
         return success_response(result)
 
 
@@ -122,9 +120,9 @@ class AdminTicketUnassign(Resource):
     @admin_endpoint()
     @load_ticket(LoaderType.PARAM)
     @admin_tickets_namespace.doc(**ADMIN_UNASSIGN_TICKET_DOC)
-    def post(self, ticket_id):
+    def post(self, ticket_id, current_user):
         """Unassign ticket"""
-        result = unassign_ticket(ticket_id, g.user.id)
+        result = unassign_ticket(ticket_id, current_user.id)
         return success_response(result)
 
 
@@ -133,9 +131,9 @@ class AdminTicketClose(Resource):
     @admin_endpoint()
     @load_ticket(LoaderType.PARAM)
     @admin_tickets_namespace.doc(**ADMIN_CLOSE_TICKET_DOC)
-    def post(self, ticket_id):
+    def post(self, ticket_id, current_user):
         """Close ticket"""
-        result = close_ticket(ticket_id, g.user.id)
+        result = close_ticket(ticket_id, current_user.id)
         return success_response(result)
 
 
@@ -144,9 +142,9 @@ class AdminTicketReopen(Resource):
     @admin_endpoint()
     @load_ticket(LoaderType.PARAM)
     @admin_tickets_namespace.doc(**ADMIN_REOPEN_TICKET_DOC)
-    def post(self, ticket_id):
+    def post(self, ticket_id, current_user):
         """Reopen ticket"""
-        result = reopen_ticket(ticket_id, g.user.id)
+        result = reopen_ticket(ticket_id, current_user.id)
         return success_response(result)
 
 
@@ -161,10 +159,9 @@ class AdminTagList(Resource):
 
     @admin_endpoint(json_required=True, validation_func=validate_tag_creation)
     @admin_tickets_namespace.doc(**ADMIN_CREATE_TAG_DOC)
-    def post(self):
+    def post(self, validated_data):
         """Create tag"""
-        data = g.validated_data
-        result = create_tag(data["name"], data.get("color"), data.get("description"))
+        result = create_tag(validated_data["name"], validated_data.get("color"), validated_data.get("description"))
         return success_response(result, status_code=201)
 
 
@@ -196,10 +193,9 @@ class AdminTagDetail(Resource):
     @admin_endpoint(json_required=True, validation_func=validate_tag_update)
     @load_ticket_tag(LoaderType.PARAM)
     @admin_tickets_namespace.doc(**ADMIN_UPDATE_TAG_DOC)
-    def patch(self, tag_id):
+    def patch(self, tag_id, validated_data):
         """Update tag"""
-        data = g.validated_data
-        result = update_tag(tag_id, data.get("name"), data.get("color"), data.get("description"))
+        result = update_tag(tag_id, validated_data.get("name"), validated_data.get("color"), validated_data.get("description"))
         return success_response(result)
 
     @admin_endpoint()

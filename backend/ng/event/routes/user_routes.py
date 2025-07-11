@@ -28,7 +28,6 @@ class EventList(Resource):
     def get(self):
         """Get all public events"""
         results = Event.get_all_events(public_only=True)
-        print(results)
         return success_response(results)
     
 @events_user_namespace.route("/<int:event_id>")
@@ -37,7 +36,6 @@ class EventDetail(Resource):
     @load_event(source=LoaderType.PARAM)
     def get(self, event_id, event):
         """Get event details"""
-        print(event.serialize())
         return success_response(event)
     
 @events_user_namespace.route("/<int:event_id>/me/eligibility")

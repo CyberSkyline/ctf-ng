@@ -18,19 +18,19 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
 # IN THE SOFTWARE.
 import pytest
-from attrs import define, field
+import attr
 from cyber_skyline.chall_parser.compose.validators import validate_tabler_icon, validate_compose_name_pattern, validate_template_evals
 from cyber_skyline.chall_parser.rewriter import Template
 
-@define
+@attr.s
 class MockChallengeWithIcon:
     """Mock class for testing icon validation."""
-    icon: str | None = field(validator=validate_tabler_icon)
+    icon: str | None = attr.ib(validator=validate_tabler_icon)
 
-@define
+@attr.s
 class MockVariableWithTemplate:
     """Mock class for testing template validation."""
-    template: Template = field(validator=validate_template_evals)
+    template: Template = attr.ib(validator=validate_template_evals)
 
 class TestTablerIconValidator:
     def test_valid_icons_with_tb_prefix(self):
