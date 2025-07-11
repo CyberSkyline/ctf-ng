@@ -9,41 +9,35 @@ import { APIPREFIX } from './constants';
 async function parseResponseData(res: Response) {
   const data = await res.text();
 
-  let parsedData: {
-    success: false;
-    errors: Record<string, string>;
-  } | {
-    success: true;
-    data: unknown;
-  };
+  let parsedData: unknown;
 
   try {
     // Attempt to parse the response as JSON
-    parsedData = JSON.parse(data);
+    parsedData = JSON.parse(data, (_key, value) => {
+      // if the value is an ISO date, parse it into a Date object
+      if (
+        typeof value === 'string'
+        && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/.test(value)
+      ) {
+        return new Date(value);
+      }
+
+      // otherwise, return the value as is
+      return value;
+    });
   } catch {
-    let message = `Failed to parse API response. (${res.status})`;
-
-    // If parsing fails, we likely got an HTML error page from flask.
-    // If we're in debug mode, the plaintext stack trace is included in this page after the closing </html> tag.
-    const stackTrace = data.split('</html>')[1].replace(/<!--/g, '').replace(/-->/g, '').trim();
-
-    // If we got a stack trace, append it to the error message.
-    if (stackTrace) {
-      message += `\n\n${stackTrace}`;
-    }
-
-    throw new Error(message);
+    throw new Error(`Failed to parse API response. (${res.status})`);
   }
 
   // At this point, we should have a success/failure JSON response from the API.
-  if (!parsedData.success) {
-    // If the response indicates failure, throw an error with all errors included in the response.
-    throw new Error(Object.values(parsedData.errors).join(', '));
-  } else {
-    // If the response indicates success, return the data object.
-    // This will end up in the data property when SWR hooks are used.
-    return parsedData.data;
+  if (!res.ok) {
+    // If the response indicates failure, throw it as an error.
+    throw new Error((parsedData as { message: string }).message);
   }
+
+  // If the response indicates success, return the data.
+  // This will end up in the data property when SWR hooks are used.
+  return (parsedData as { data: unknown }).data;
 }
 
 /**

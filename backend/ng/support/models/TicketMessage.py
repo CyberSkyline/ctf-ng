@@ -47,7 +47,7 @@ class TicketMessage(db.Model):
             "author_id": self.author_id,
             "author_name": author_name,
             "author_type": author_type,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "created_at": self.created_at.isoformat() + "Z" if self.created_at else None,
             "ticket_id": self.ticket_id,
         }
 

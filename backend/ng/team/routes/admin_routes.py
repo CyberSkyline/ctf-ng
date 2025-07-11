@@ -30,3 +30,11 @@ class TeamDetail(Resource):
     def get(self, team_id, team):
         """Get a team"""
         return success_response(team)
+
+@teams_admin_namespace.route("/<int:team_id>/members")
+class TeamMembers(Resource):
+    @admin_endpoint()
+    @load_team(source=LoaderType.PARAM)
+    def get(self, team_id, team):
+        """Get all members of a team"""
+        return success_response(team.members)

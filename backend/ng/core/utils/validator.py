@@ -3,7 +3,7 @@ Base validation framework - reusable across domains.
 """
 
 from typing import Any
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from . import utc_now
 
@@ -17,6 +17,7 @@ class ValidationErrorMessages:
     FIELD_MUST_BE_BOOLEAN = "{field} must be true or false"
     FIELD_MUST_BE_POSITIVE = "{field} must be a positive number"
     FIELD_MUST_BE_DATETIME = "{field} must be a valid datetime in ISO format (YYYY-MM-DDTHH:MM:SS)"
+    FIELD_DATETIME_MUST_BE_UTC = "{field} must be specified in UTC (Z or +00:00)"
     FIELD_DATETIME_PAST = "{field} cannot be in the past"
     FIELD_DATETIME_ORDER = "Start time must be before end time"
     FIELD_OUT_OF_RANGE = "{field} must be between {min_val} and {max_val}"
@@ -197,7 +198,16 @@ class BaseValidator:
             return None
 
         try:
-            dt_value = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            dt_value = datetime.fromisoformat(value)
+            
+            # require that tzinfo is set and is UTC
+            if dt_value.tzinfo is not timezone.utc:
+                self.errors[field] = ValidationErrorMessages.FIELD_DATETIME_MUST_BE_UTC.format(field=name)
+                return None
+            
+            # strip tzinfo to allow using this value with naive datetimes from utc_now/db
+            dt_value = dt_value.replace(tzinfo=None)
+            
             if not allow_past and dt_value < utc_now():
                 self.errors[field] = ValidationErrorMessages.FIELD_DATETIME_PAST.format(field=name)
                 return None

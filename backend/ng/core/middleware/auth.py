@@ -10,7 +10,7 @@ from CTFd.utils.user import get_current_user, is_admin as is_admin_ctfd
 from CTFd.utils.decorators import admins_only, authed_only
 from ..exceptions import PermissionError, ValidationError
 from .error_handler import handle_exceptions
-
+from ...user.models.User import User
 
 def api_endpoint(auth_required=True, admin_required=False, json_required=False, validation_func=None):
     """
@@ -31,10 +31,10 @@ def api_endpoint(auth_required=True, admin_required=False, json_required=False, 
     Usage:
         @api_endpoint(auth_required=True, json_required=True, validation_func=validate_team_creation)
         @load_event()  # Loads event from route params
-        def create_team(self, event_id):
-            data = g.validated_data  # Already parsed and validated
-            event = g.event  # Already loaded
-            eligibility = g.user_eligibility  # Already checked
+        def create_team(self, event_id, event, validated_data, current_user):
+            validated_data  # Already parsed and validated
+            event # Already loaded
+            current_user # Already loaded
             # ... business logic
     """
 
@@ -65,9 +65,8 @@ def _auth_handler(f, auth_required, json_required, validation_func):
             current_user = get_current_user()
             if not current_user:
                 raise PermissionError("Authentication is required to access this resource.")
-            g.user = current_user
             if "current_user" in sig.parameters:
-                kwargs["current_user"] = current_user
+                kwargs["current_user"] = User.find_or_create_by_ctfd_id(current_user.id)
         if json_required:
             if not request.is_json:
                 raise ValidationError("Request must have a JSON body.")
@@ -79,7 +78,7 @@ def _auth_handler(f, auth_required, json_required, validation_func):
             g.json_data = data
             if validation_func:
                 try:
-                    g.validated_data = validation_func(data)
+                    kwargs["validated_data"] = validation_func(data)
                 except Exception as e:
                     raise ValidationError(str(e))
         return f(*args, **kwargs)
@@ -134,7 +133,7 @@ def admin_view(f):
             raise PermissionError("You must be logged in to view this page.")
         if not is_admin_ctfd():
             raise PermissionError("You must be an administrator to view this page.")
-        g.user = user
+        kwargs["current_user"] = User.find_or_create_by_ctfd_id(user.id)
         return f(*args, **kwargs)
 
     return decorated_function

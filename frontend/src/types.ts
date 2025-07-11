@@ -1,38 +1,41 @@
-export type Event = {
+export interface Event {
   id: number;
   name: string;
   description?: string | null;
   max_team_size: number;
-  start_time?: string;
-  end_time?: string;
+  start_time?: Date;
+  end_time?: Date;
   locked: boolean;
-  team_count: number;
-  total_members: number;
-};
+  public: boolean;
+  registration_open: boolean;
+  registration_start_date?: Date;
+  registration_end_date?: Date;
+}
 
-export type User = {
+export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'admin' | 'user';
-  registered_at: string;
-  team_count: number;
+  role: string;
+  registered_at: Date;
 }
 
-export type Team = {
+export interface Team {
   id: number;
   name: string;
   event_id: number;
-  event_name: string;
   member_count: number;
-  max_team_size: number;
-  is_full: boolean;
-  invite_code: string;
   ranked: boolean;
+  locked: boolean;
+  invite_code?: string;
 }
 
-export type TeamMember = {
+export interface TeamMember {
+  id: number;
   user_id: number;
-  joined_at: string;
+  user_name: string;
+  team_id: number;
+  event_id: number;
+  joined_at: Date;
   role: 'member' | 'captain';
 }
