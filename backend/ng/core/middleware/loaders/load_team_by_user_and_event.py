@@ -23,8 +23,8 @@ def load_team_by_user_and_event(current_user = User, event = Event, output_key="
             if not team:
                 raise NotFoundError(f"Team not found for user {current_user.id} and event {event.id}")
 
-            if output_key in sig.parameters:
-                kwargs[output_key] = team
+
+            kwargs[output_key] = team
             return f(*args, **kwargs)
 
         return decorated_function

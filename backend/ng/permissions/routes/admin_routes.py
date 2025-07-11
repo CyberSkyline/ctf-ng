@@ -1,12 +1,13 @@
 from flask_restx import Namespace, Resource
-from flask import g
 from ...core.utils.logger import get_logger
-from ...core.utils.api import error_response
-from ...core.middleware.auth import api_endpoint, admin_endpoint
+from ...core.utils.api import error_response, success_response
+from ...core.middleware.auth import user_endpoint, admin_endpoint
 from ..models.Role import Role
-from ...user.models.User import User
 from ..models.UserRole import UserRole
-from ..controllers import get_role_details, update_role, get_user_roles, update_user_roles
+from ..controllers import get_role_details
+from ...core.middleware.loaders.load_role import load_role
+from ...core.middleware.loaders.load_user import load_user
+from ...core.middleware.loaders._util import LoaderType
 
 
 permissions_admin_namespace = Namespace("/admin/permissions", description="Permissions management endpoints for admins")
@@ -34,17 +35,13 @@ class RoleDetails(Resource):
         if not role_details.get("success"):
             return error_response(role_details.get("error", "Role not found"), "role", 404)
         role = role_details.get("role")
-        users = role_details.get("users", [])
-        return {
-            "success": True,
-            "role": role.serialize(),
-            "users": [user.serialize() for user in users],
-        }
+        return success_response(role)
 
     @admin_endpoint(
         json_required=True,
         validation_func=Role.validate_role_update
     )
+    @load_role(source=LoaderType.PARAM, output_key="role")
     @permissions_admin_namespace.doc(
         description="Update the details of a specific role by ID",
         responses={
@@ -62,26 +59,16 @@ class RoleDetails(Resource):
             "permissions": "List of permission names to assign to the role"
         }
     )
-    def patch(self, role_id):
+    def patch(self, role_id, **kwargs):
         """
         Update the details of a specific role by ID.
         """
-        data = g.json_data
+        data = kwargs.get("validated_data")
         if not data:
             return error_response("No data provided", "data", 400)
 
-        role = Role.query.get_or_404(role_id)
-        if not role:
-            return error_response("Role not found", "role", 404)
-
-        response = update_role(role_id, data)
-        if "error" in response:
-            return error_response(response["error"], "role", 400)
-        return {
-            "success": True,
-            "role": response.get("role", {}).serialize(),
-            "message": response.get("message", "Role updated successfully")
-        }
+        role = Role.update_role(kwargs.get("role"), data)
+        return success_response(role)
 
 
 @permissions_admin_namespace.route("/<int:user_id>/roles")
@@ -89,24 +76,22 @@ class UserRoles(Resource):
     """
     Resource to manage roles for a specific user.
     """
-    @api_endpoint()
+    @user_endpoint()
+    @load_user(source=LoaderType.PARAM, output_key="user")
     @permissions_admin_namespace.doc("get_user_roles")
-    def get(self, user_id):
+    def get(self, user_id, **kwargs):
         """
         Get all roles for a specific user by ID.
         """
 
-        response = get_user_roles(user_id)
-        roles = response.get("roles", [])
-        return {
-            "success": True,
-            "roles": [role.serialize() for role in roles]
-        }
+        roles = UserRole.get_user_roles(user_id)
+        return success_response(roles)
 
     @admin_endpoint(
         json_required=True,
         validation_func=UserRole.validate_user_role_update
     )
+    @load_user(source=LoaderType.PARAM, output_key="user")
     @permissions_admin_namespace.doc(
         description="Update roles for a specific user by Name",
         responses={
@@ -121,22 +106,14 @@ class UserRoles(Resource):
             "role_ids": "List of role names to assign to the user"
         }
     )
-    def patch(self, user_id):
+    def patch(self, user_id, **kwargs):
         """
         Update roles for a specific user by ID.
         """
-        data = g.json_data
+        data = kwargs.get("validated_data")
         if not data or "roles" not in data:
             return error_response("No role names provided", "roles", 400)
 
-        User.query.get_or_404(user_id)
+        user = UserRole.update_user_roles(user_id, data)
 
-        response = update_user_roles(user_id, data)
-        if "error" in response:
-            return error_response(response["error"], "user", 400)
-
-        return {
-            "success": True,
-            "message": response.get("message", "User roles updated successfully"),
-            "user": response.get("user").serialize(include_admin_fields=True),
-        }
+        return success_response(user)

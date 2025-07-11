@@ -71,28 +71,34 @@ class UserRole(db.Model):
         return cls.assign_role_to_user_by_id(user_id, role.id)
 
     @classmethod
-    def update_user_roles(cls, user_id: int, role_names: list):
+    def update_user_roles(cls, user_id: int, data):
         """Update roles for a specific user.
 
         Args:
             user_id (int): ID of the user to update roles for.
-            role_names (list): List of role names to assign to the user.
+            data (dict): Dictionary containing role names to assign to the user.
 
         Returns:
             list: List of UserRole instances assigned to the user.
         """
+
+        role_names = data.get("roles", [])
+        if not role_names:
+            raise ValidationError("No role names provided")
+
+
         # Clear existing roles
         cls.query.filter_by(user_id=user_id).delete()
         db.session.commit()
-
         # Assign new roles
         for role_name in role_names:
             cls.assign_role_to_user_by_name(user_id, role_name)
-        
+
         #need to import User here to avoid circular imports
         from ...user.models.User import User
         user = User.find_by_id(user_id)
         return user
+
 
     @classmethod
     def get_user_role_by_id(cls, user_id: int):
@@ -120,22 +126,17 @@ class UserRole(db.Model):
     def validate_user_role_update(cls,data):
         """Validate user role updates."""
         validator = BaseValidator()
-
         if not data.get("roles"):
             validator.errors["roles"] = "No role names provided"
             raise ValidationError("No role names provided")
 
         for role in data["roles"]:
-            validator.validate_string(
-                {"role": role},
-                "role",
-                required=False,
-                friendly_name="Role name",
-            )
+            validator.validate_enum({'roles': role}, "roles", RoleEnum,friendly_name="Role_name")
 
         is_valid, errors, parsed_data = validator.is_valid()
         if not is_valid:
             raise ValidationError("User role update data is invalid", errors=errors)
+
 
         return parsed_data
 

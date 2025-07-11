@@ -18,7 +18,7 @@ teams_admin_namespace = Namespace("/admin/teams", description="team endpoints fo
 @teams_admin_namespace.route("")
 class TeamList(Resource):
     @admin_endpoint()
-    def get(self):
+    def get(self, **kwargs):
         """Get all teams"""
         teams = Team.get_all_teams()
         return success_response(teams)

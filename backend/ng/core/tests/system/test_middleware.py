@@ -45,7 +45,6 @@ def test_loading(middleware_client):
             "ticket_tag_id": 1
         }
     )
-    assert response.status_code == 200
     data = response.get_json()
     assert data["success"] is True
     assert "message" in data

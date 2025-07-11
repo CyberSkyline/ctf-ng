@@ -79,7 +79,7 @@ def _auth_handler(f, auth_required, json_required, validation_func):
             g.json_data = data
             if validation_func:
                 try:
-                    g.validated_data = validation_func(data)
+                    kwargs["validated_data"] = validation_func(data)
                 except Exception as e:
                     raise ValidationError(str(e))
         return f(*args, **kwargs)

@@ -57,10 +57,17 @@ def admin_decorator_test(**kwargs):
 @load_user(source=LoaderType.BODY)
 @load_ticket(source=LoaderType.BODY)
 @load_ticket_tag(source=LoaderType.BODY)
-def loading_model_objects(event, team, team2, team3, user, ticket, ticket_tag, **kwargs):
+def loading_model_objects(**kwargs):
     """
     Endpoint to test the loading of model objects.
     """
+    user = kwargs.get("user")
+    event = kwargs.get("event")
+    team = kwargs.get("team")
+    team2 = kwargs.get("team2")
+    team3 = kwargs.get("team3")
+    ticket = kwargs.get("ticket")
+    ticket_tag = kwargs.get("ticket_tag")
     missing = [name for name, obj in [("user", user), ("event", event), ("team", team), ("team2", team2), ("team3", team3), ("ticket", ticket), ("ticket_tag", ticket_tag)] if obj is None]
     if missing:
         return jsonify({"success": False, "message": f"Missing required model objects: {', '.join(missing)}."}), 400
@@ -78,6 +85,7 @@ def get_user_permissions(**kwargs):
     return jsonify({"success": True, "permissions": kwargs.get("permissions", [])})
 
 @middleware_test_routes.route("/check_user_can_edit_team", methods=["GET"])
+@load_team(source=LoaderType.PARAM, output_key="team")
 @check_user_can_edit_team
 def check_user_can_edit_team(**kwargs):
     """

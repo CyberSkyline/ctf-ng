@@ -2,7 +2,7 @@ from CTFd.models import db
 from sqlalchemy.ext.associationproxy import association_proxy
 from .RolePermission import RolePermission
 from .Permission import Permission
-from .enums import RoleEnum
+from .enums import RoleEnum, PermissionEnum
 from ...core.utils.validator import BaseValidator
 from ...core.exceptions import ValidationError
 
@@ -46,6 +46,19 @@ class Role(db.Model):
 
 
     @classmethod
+    def find_by_id(cls, role_id: int):
+        """Find a role by its ID.
+
+        Args:
+            role_id (int): ID of the role
+
+        Returns:
+            Role: The role instance if found, else None
+        """
+        return cls.query.get(role_id)
+
+
+    @classmethod
     def get_users_with_role(cls, role_name: RoleEnum):
         """Get all users who have a specific role.
 
@@ -74,7 +87,7 @@ class Role(db.Model):
 
 
 
-    def serialize(self):
+    def serialize(self, include_admin_fields=False):
         """Serialize a Role instance to a dictionary.
 
         Returns:
@@ -113,14 +126,41 @@ class Role(db.Model):
             )
         if "permissions" in data:
             for permission in data["permissions"]:
-                validator.validate_string(
-                    {"permission": permission},
-                    "permission",
+                validator.validate_enum(
+                    {'permissions': permission},
+                    "permissions",
+                    PermissionEnum,
                     required=False,
-                    friendly_name="Permission name",
+                    friendly_name="Permission_name"
                 )
         is_valid,errors, parsed_data = validator.is_valid()
         if not is_valid:
             raise ValidationError("Role update data is invalid", errors=errors)
 
         return parsed_data
+
+
+
+    @classmethod
+    def update_role(cls,role, data):
+        """
+        Update the details of a specific role
+        
+        Args:
+            role_id (int): The ID of the role to update.
+            data (dict): The new data for the role, including name and permissions.
+        
+        Returns:
+            dict: The updated role details or an error message.
+        """
+
+        role.name = data.get("name", role.name)
+        permission_names = data.get("permissions", [])
+        permissions = []
+        if permission_names:
+            for name in permission_names:
+                permissions.append(Permission.get_permission_by_name(name))
+        role.permissions = permissions
+        db.session.commit()
+
+        return role
