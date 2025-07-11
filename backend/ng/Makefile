@@ -11,7 +11,7 @@ endif
 
 # All tests
 test-all:
-	$(PYTHON_EXEC) -m pytest .
+	$(PYTHON_EXEC) -m pytest -m "not middleware" -v
 
 
 # Test types
@@ -55,6 +55,9 @@ test-challenge:
 
 test-middleware:
 	$(PYTHON_EXEC) -m pytest -m middleware . -v
+
+test-permissions:
+	$(PYTHON_EXEC) -m pytest permissions/tests/ -v
 
 
 .PHONY: check fix format test-all test-logic test-models test-validation test-controllers test-integration test-team test-event test-admin test-user test-support test-utils test-fast test-middleware test-event-registration

@@ -8,6 +8,12 @@ from CTFd.config import Config
 from CTFd.models import db
 from sqlalchemy_utils import create_database, database_exists, drop_database
 from tests.helpers import setup_ctfd
+import os
+from CTFd.plugins.ng.user.models.User import User
+from CTFd.plugins.ng.permissions.controllers.assign_role_to_user import assign_role_to_user
+from CTFd.plugins.ng.permissions.controllers.create_role import create_role
+from CTFd.plugins.ng.permissions.controllers.create_permission import create_permission
+
 
 if "SCRIPT" not in os.environ:
     raise OSError("This should only be run from a script. DO NOT run this manually.")
@@ -49,6 +55,39 @@ with app.app_context():
         user_mode="users",
         ctf_theme=None,
     )
+with app.app_context():
+    admin_user = User.query.filter_by(id=1).first()
+    if not admin_user:
+         admin_user = User.create_user(1, commit=True)
+
+    create_permission(
+        name="CAN_EDIT_TEAMS",
+        description="Can edit teams",
+    )
+    create_permission(
+        name="CAN_EDIT_USER",
+        description="Can edit users",
+    )
+    create_permission(
+        name="CAN_MANAGE_SUPPORT_TICKETS",
+        description="Can manage support tickets",
+    )
+
+    create_role(
+        name="admin",
+        permissions=[
+            "CAN_EDIT_TEAMS",
+            "CAN_EDIT_USER",
+            "CAN_MANAGE_SUPPORT_TICKETS",
+        ],
+    )
+    create_role(
+        name="support",
+        permissions=[
+            "CAN_MANAGE_SUPPORT_TICKETS",
+        ],
+    )
+    assign_role_to_user(admin_user.id, "admin")
 
     print("\n")
     # ANSI escape code for yellow background: \033[43m, reset: \033[0m

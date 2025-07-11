@@ -35,7 +35,14 @@ class BaseValidator:
     def _add_parsed_data(self, field: str, value: Any) -> None:
         """Internal helper to add data only if validation for that field has passed."""
         if field not in self.errors:
-            self.parsed_data[field] = value
+            if self.parsed_data.get(field) is not None:
+                existing = self.parsed_data[field]
+                if not isinstance(existing, list):
+                    self.parsed_data[field] = [existing, value]
+                else:
+                    self.parsed_data[field].append(value)
+            else:
+                self.parsed_data[field] = value
 
     def require_field(self, data: dict[str, Any], field: str, friendly_name: str | None = None) -> bool:
         name = friendly_name or field.replace("_", " ").title()
@@ -170,11 +177,12 @@ class BaseValidator:
         if value is None:
             return
 
-        if not isinstance(value, enum_class):
-            self.errors[field] = f"{name} must be one of {', '.join(e.name for e in enum_class)}"
+        try:
+            enum_value = enum_class(value)
+        except ValueError:
+            self.errors[field] = f"{name} must be one of: {', '.join(e.name for e in enum_class)}"
             return
-
-        self._add_parsed_data(field, value)
+        self._add_parsed_data(field, enum_value)
 
     def validate_datetime(
         self,

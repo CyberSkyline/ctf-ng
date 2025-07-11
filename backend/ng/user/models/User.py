@@ -2,10 +2,10 @@
 Defines the User extension model.
 """
 
-from __future__ import annotations
-from typing import Any, TypedDict
-
 from CTFd.models import db
+from sqlalchemy.ext.associationproxy import association_proxy
+from ...permissions.models.UserRole import UserRole
+from typing import Any, TypedDict
 
 class SerializedUser(TypedDict):
     id: int
@@ -27,6 +27,10 @@ class User(db.Model):
     )
 
     team_members = db.relationship("TeamMember", back_populates="user", cascade="all, delete-orphan")
+    user_roles = db.relationship("UserRole",back_populates="user",cascade="all, delete-orphan",)
+
+
+    roles = association_proxy("user_roles","role",creator=lambda role: UserRole(role=role))
 
     def __repr__(self):
         return f"<NgUser id={self.id}>"
@@ -41,13 +45,21 @@ class User(db.Model):
                 "registered_at": "",
             }
 
-        return {
-            "id": self.id,
-            "name": self.ctfd_user.name,
-            "email": self.ctfd_user.email,
-            "role": self.ctfd_user.type,
-            "registered_at": self.ctfd_user.created,
-        }
+        if include_admin_fields:
+            return {
+                "id": self.id,
+                "name": self.ctfd_user.name,
+                "email": self.ctfd_user.email,
+                "roles": [role.name for role in self.roles],
+                "registered_at": self.ctfd_user.created.isoformat(),
+            }
+        else:
+            return {
+                "id": self.id,
+                "name": self.ctfd_user.name,
+                "email": self.ctfd_user.email,
+                "registered_at": self.ctfd_user.created.isoformat(),
+            }
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
@@ -134,6 +146,33 @@ class User(db.Model):
         return cls.query.all()
 
     @classmethod
+    def check_can_join_team_in_event(cls, user_id: int, event_id: int) -> bool:
+        """Checks if a user can join a team in the event.
+
+        Args:
+            user_id (int): The user ID.
+            event_id (int): The event ID to check eligibility for.
+
+        Returns:
+            bool: True if user can join, False if already in a team.
+        """
+        from ...team.models.TeamMember import TeamMember
+
+        existing_team_member = TeamMember.query.filter_by(user_id=user_id, event_id=event_id).first()
+        return existing_team_member is None
+
+    def get_permissions(self) -> list[str]:
+        """Get all permissions for the user by aggregating from roles.
+
+        Returns:
+            list[str]: List of permission names assigned to the user
+        """
+        permissions = set()
+        for role in self.roles:
+            for permission in role.permissions:
+                permissions.add(permission.name)
+        return list(permissions)
+
     def delete_all(cls) -> None:
         """Delete all user extensions from the database."""
         try:

@@ -35,6 +35,7 @@ def get_models():
     from ...support.models.Ticket import Ticket
     from ...team.models.TeamMember import TeamMember
     from ...support.models.TicketTag import TicketTag
+    from ...permissions.models.Role import Role
 
     return {
         "User": User,
@@ -44,6 +45,7 @@ def get_models():
         "TeamMember": TeamMember,
         "TicketTag": TicketTag,
         "Demographic": Demographic,
+        "Role": Role,
     }
 
 __all__ = [

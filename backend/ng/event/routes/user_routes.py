@@ -88,7 +88,7 @@ class EventTeam(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
     @load_team_by_user_and_event()
-    def get(self, event_id, team):
+    def get(self, event_id, team, **kwargs):
         """Get team details"""
         return success_response(team)
 
@@ -97,7 +97,7 @@ class EventTeamMembers(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
     @load_team_by_user_and_event()
-    def get(self, event_id, team):
+    def get(self, event_id, team, **kwargs):
         """Get team members"""
         members = team.members
         return success_response(members)
