@@ -46,6 +46,8 @@ from importlib.metadata import version as get_version
 from cyber_skyline.chall_parser.yaml_parser import parse_compose_file, parse_compose_string, ComposeYamlParser
 from cyber_skyline.chall_parser.compose import ComposeFile, ChallengeInfo
 
+from chall_check.md import compose_to_markdown
+
 app = typer.Typer(
     name="chall-check",
     add_completion=True
@@ -286,14 +288,14 @@ class OutputFormat(str, Enum):
     TABLE = "table"
     JSON = "json"
     YAML = "yaml"
-    
+    MARKDOWN = "md"
 
 @app.command()
 def validate(
     file_path: Annotated[Path, typer.Argument(help="Path to the challenge compose file")],
     verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Enable verbose logging")] = False,
     show_summary: Annotated[bool, typer.Option("--summary/--no-summary", help="Show challenge summary")] = True,
-    output_format: Annotated[OutputFormat, typer.Option("--format", "-f", help="Output format: table, json, yaml")] = OutputFormat.TABLE
+    output_format: Annotated[OutputFormat, typer.Option("--format", "-f", help="Output format")] = OutputFormat.TABLE
 ):
     """
     Validate a CTF challenge Docker Compose file.
@@ -326,6 +328,10 @@ def validate(
                 parser = ComposeYamlParser()
                 yaml_output = parser.to_yaml(compose)
                 console.print(Syntax(yaml_output, "yaml"))
+            elif output_format == "md":
+                # Convert to Markdown format
+                md_output = compose_to_markdown(compose)
+                console.print(Syntax(md_output, "markdown"))
         
         typer.Exit(0)
         

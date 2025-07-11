@@ -221,6 +221,31 @@ services:
         finally:
             temp_path.unlink()
 
+    def test_validate_with_markdown(self):
+        """Test validate command with different output formats."""
+        yaml_content = """
+x-challenge:
+  name: Format Test
+  description: Testing output formats
+  questions: []
+services:
+  app:
+    image: test:latest
+    hostname: test-host
+"""
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yml', delete=False) as f:
+            f.write(yaml_content)
+            temp_path = Path(f.name)
+        
+        try:
+            # Test Markdown format
+            result = runner.invoke(app, ["validate", str(temp_path), "--format", "md"])
+            assert result.exit_code == 0
+            
+        finally:
+            temp_path.unlink()
+
 
     def test_validate_with_wrong_challenge_key(self, caplog):
         """Test validate command with different output formats."""
