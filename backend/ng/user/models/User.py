@@ -2,10 +2,15 @@
 Defines the User extension model.
 """
 
+from __future__ import annotations
+
+from typing import Any, TypedDict
+
 from CTFd.models import db
 from sqlalchemy.ext.associationproxy import association_proxy
+
 from ...permissions.models.UserRole import UserRole
-from typing import Any, TypedDict
+
 
 class SerializedUser(TypedDict):
     id: int
@@ -13,6 +18,7 @@ class SerializedUser(TypedDict):
     email: str
     role: str
     registered_at: str
+
 
 class User(db.Model):
     __tablename__ = "ng_users"
@@ -27,10 +33,13 @@ class User(db.Model):
     )
 
     team_members = db.relationship("TeamMember", back_populates="user", cascade="all, delete-orphan")
-    user_roles = db.relationship("UserRole",back_populates="user",cascade="all, delete-orphan",)
+    user_roles = db.relationship(
+        "UserRole",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
-
-    roles = association_proxy("user_roles","role",creator=lambda role: UserRole(role=role))
+    roles = association_proxy("user_roles", "role", creator=lambda role: UserRole(role=role))
 
     def __repr__(self):
         return f"<NgUser id={self.id}>"
@@ -89,8 +98,8 @@ class User(db.Model):
         Returns:
             list: List of events the user is registered in
         """
-        from ...team.models.TeamMember import TeamMember
         from ...event.models.Event import Event
+        from ...team.models.TeamMember import TeamMember
 
         # Get all teams the user is a member of
         team_members = TeamMember.query.filter_by(user_id=self.id).all()
@@ -99,7 +108,7 @@ class User(db.Model):
         # Get all events for those teams
         events = Event.query.filter(Event.id.in_(event_ids)).all()
         return events
-    
+
     def get_teams(self):
         """Get all teams the user is a member of.
 
@@ -121,7 +130,7 @@ class User(db.Model):
             User or None: The user instance if found, None otherwise
         """
         return cls.query.get(user_id)
-    
+
     @classmethod
     def find_or_create_by_ctfd_id(cls, ctfd_user_id: int, commit: bool = True) -> User:
         """Find or create a user by CTFd user ID.
@@ -140,8 +149,7 @@ class User(db.Model):
 
     @classmethod
     def get_all_users(cls):
-        """Gets all users with their basic details.
-        """
+        """Gets all users with their basic details."""
 
         return cls.query.all()
 
@@ -173,6 +181,7 @@ class User(db.Model):
                 permissions.add(permission.name)
         return list(permissions)
 
+    @classmethod
     def delete_all(cls) -> None:
         """Delete all user extensions from the database."""
         try:
