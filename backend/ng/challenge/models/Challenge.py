@@ -58,7 +58,7 @@ class ChallengeYaml(TypedDict):
 
 
 class Challenge(db.Model):
-    __tablename__ = "ng_challenge"
+    __tablename__ = "ng_challenges"
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(MAX_CHALLENGE_NAME_LENGTH), nullable=False)

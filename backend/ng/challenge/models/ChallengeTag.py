@@ -9,9 +9,9 @@ MAX_CHALLENGE_TAG_NAME_LENGTH = 256
 
 
 class ChallengeTag(db.Model):
-    __tablename__ = "ng_challenge_tag"
+    __tablename__ = "ng_challenge_tags"
     id = db.Column(db.Integer, primary_key=True)
-    challenge_id = db.Column(db.Integer, db.ForeignKey("ng_challenge.id"), nullable=False, index=True)
+    challenge_id = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
     name = db.Column(db.String(MAX_CHALLENGE_TAG_NAME_LENGTH), nullable=False, index=True)
 
     challenge = db.relationship("Challenge", back_populates="tags")
@@ -35,9 +35,10 @@ class ChallengeTag(db.Model):
             required=True,
             friendly_name="Challenge Tag Name",
         )
-        validator.validate_positive_integer(
+        validator.validate_model_id(
             data,
             "challenge_id",
+            "Challenge",
             required=True,
             friendly_name="Challenge ID",
         )
@@ -47,6 +48,7 @@ class ChallengeTag(db.Model):
         if not is_valid:
             raise ValidationError("Challenge Tag validation failed", errors)
 
+        # The challenge_id is already an integer from validate_model_id
         return parsed_data
 
     @classmethod

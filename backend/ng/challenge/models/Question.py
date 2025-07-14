@@ -13,14 +13,14 @@ MAX_QUESTION_ANSWER_LENGTH = 512
 
 
 class Question(db.Model):
-    __tablename__ = "ng_challenge_question"
+    __tablename__ = "ng_challenge_questions"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(MAX_QUESTION_NAME_LENGTH), nullable=False)
     body = db.Column(db.String(MAX_QUESTION_BODY_LENGTH), nullable=False)
     points = db.Column(db.Integer, nullable=False)
     answer = db.Column(db.String(MAX_QUESTION_ANSWER_LENGTH), nullable=False)
     max_attempts = db.Column(db.Integer, nullable=False)
-    challenge_id = db.Column(db.Integer, db.ForeignKey("ng_challenge.id"), nullable=False, index=True)
+    challenge_id = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
 
     challenge = db.relationship("Challenge", back_populates="questions")
 

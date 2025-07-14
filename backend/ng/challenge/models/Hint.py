@@ -10,9 +10,9 @@ MAX_HINT_BODY_LENGTH = 1024
 
 
 class Hint(db.Model):
-    __tablename__ = "ng_challenge_hint"
+    __tablename__ = "ng_challenge_hints"
     id = db.Column(db.Integer, primary_key=True)
-    challenge_id = db.Column(db.Integer, db.ForeignKey("ng_challenge.id"), nullable=False, index=True)
+    challenge_id = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
     preview = db.Column(db.String(MAX_HINT_PREVIEW_LENGTH), nullable=False)
     body = db.Column(db.String(MAX_HINT_BODY_LENGTH), nullable=False)
     deduction = db.Column(db.Integer, nullable=False)

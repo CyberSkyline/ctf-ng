@@ -3,15 +3,16 @@ Defines the Event database model.
 """
 
 from __future__ import annotations
-from typing import Any
-from datetime import datetime
 
-from sqlalchemy import CheckConstraint, func
+from datetime import datetime
+from typing import Any
+
 from CTFd.models import db
+from sqlalchemy import CheckConstraint, func
 
 from ... import config
-from ...core.utils.validator import BaseValidator
 from ...core.exceptions import ValidationError
+from ...core.utils.validator import BaseValidator
 
 
 class Event(db.Model):
@@ -74,17 +75,18 @@ class Event(db.Model):
             "locked": self.locked,
             "public": self.public,
             "registration_open": self.registration_open,
-            "registration_start_date": self.registration_start_date.isoformat() + "Z" if self.registration_start_date else None,
-            "registration_end_date": self.registration_end_date.isoformat() + "Z" if self.registration_end_date else None,
+            "registration_start_date": self.registration_start_date.isoformat() + "Z"
+            if self.registration_start_date
+            else None,
+            "registration_end_date": self.registration_end_date.isoformat() + "Z"
+            if self.registration_end_date
+            else None,
         }
 
         return data
 
     @classmethod
-    def validate(
-        cls,
-        data: dict[str, Any]
-    ) -> dict[str, Any]:
+    def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
         validator = BaseValidator()
 
         validator.validate_string(
@@ -156,7 +158,7 @@ class Event(db.Model):
         registration_open: bool = True,
         registration_start_date: datetime | None = None,
         registration_end_date: datetime | None = None,
-        commit: bool = True
+        commit: bool = True,
     ):
         """Create and persist a new event to the database.
 
@@ -244,7 +246,7 @@ class Event(db.Model):
         return cls.query.filter_by(name=name).first()
 
     @classmethod
-    def get_all_events(cls, public_only = True) -> list[Event]:
+    def get_all_events(cls, public_only=True) -> list[Event]:
         """Gets all events
 
         Returns:

@@ -15,7 +15,7 @@ DEFAULT_CONTAINER_BLUEPRINT_CPUS = 1.0
 
 
 class ContainerBlueprint(db.Model):
-    __tablename__ = "ng_container_blueprint"
+    __tablename__ = "ng_container_blueprints"
 
     id = db.Column(db.Integer, primary_key=True)
     image = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_IMAGE_LENGTH), nullable=False)
@@ -31,7 +31,7 @@ class ContainerBlueprint(db.Model):
     memswap_limit = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_MEMSWAP_LIMIT_LENGTH), nullable=True)
     cpus = db.Column(db.Numeric, nullable=True)
     user = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_USER_LENGTH), nullable=True)
-    challenge_id = db.Column(db.Integer, db.ForeignKey("ng_challenge.id"), nullable=False, index=True)
+    challenge_id = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
 
     def __repr__(self):
         return f"<ContainerBlueprint {self.id}>"
