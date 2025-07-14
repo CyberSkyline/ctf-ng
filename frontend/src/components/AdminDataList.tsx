@@ -1,4 +1,5 @@
 import { DataList } from '@radix-ui/themes';
+import RoleBadge from './RoleBadge';
 
 /**
  * Presents key-value pairs of the given object in a formatted list.
@@ -7,11 +8,21 @@ import { DataList } from '@radix-ui/themes';
 export default function AdminDataList({ data }: {data: Record<string, unknown>}) {
   return (
     <DataList.Root>
-      {Object.entries(data).map(([key, value]) => (
+      {Object.entries(data).map(([ key, value ]) => (
         <DataList.Item key={key}>
-          <DataList.Label>{key}</DataList.Label>
+          <DataList.Label>
+            {key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ')}
+          </DataList.Label>
           <DataList.Value className="whitespace-pre-wrap">
-            {value?.toString()}
+            {(() => {
+              if (value instanceof Date) {
+                return value.toLocaleString();
+              }
+              if (key === 'role') {
+                return <RoleBadge value={value!.toString()} />;
+              }
+              return value?.toString();
+            })()}
           </DataList.Value>
         </DataList.Item>
       ))}
