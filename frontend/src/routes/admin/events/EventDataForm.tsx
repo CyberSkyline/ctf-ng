@@ -46,8 +46,6 @@ export default function EventDataForm({
       registration_end_date : closeTime,
     } = Object.fromEntries(formData.entries());
 
-    console.log(Object.fromEntries(formData.entries()));
-
     return onSubmit?.({
       name : name as string,
       description : description as string,
@@ -63,7 +61,6 @@ export default function EventDataForm({
   }
 
   return (
-
     <Form.Root
       className="flex flex-col gap-2"
       onSubmitCapture={(e) => handleSubmit(e)}
@@ -159,6 +156,7 @@ export default function EventDataForm({
           <Form.Message match="badInput" />
         </Form.Field>
       </Flex>
+
       <Form.Field name="max_team_size">
         <Form.Label>Max Team Size</Form.Label>
         <Form.Control asChild>
@@ -172,7 +170,6 @@ export default function EventDataForm({
         <Form.Message match="valueMissing" />
         <Form.Message match="rangeOverflow" />
         <Form.Message match="rangeUnderflow" />
-
       </Form.Field>
 
       <Flex direction="row" gap="2" className="*:grow *:basis-0 my-1" wrap="wrap">
@@ -201,7 +198,6 @@ export default function EventDataForm({
           </Form.Control>
           <Form.Label>Registration Open</Form.Label>
         </Form.Field>
-
       </Flex>
 
       <Flex direction="row-reverse" gap="2">
@@ -213,7 +209,6 @@ export default function EventDataForm({
             {initial ? 'Save' : 'Create '}
           </Button>
         </Form.Submit>
-
         <Button
           variant="soft"
           type="reset"
@@ -222,7 +217,6 @@ export default function EventDataForm({
         >
           {initial ? 'Revert' : 'Clear'}
         </Button>
-
       </Flex>
     </Form.Root>
   );
