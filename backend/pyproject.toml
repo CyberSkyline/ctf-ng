@@ -56,6 +56,7 @@ ignore = [
     "E501",  # line too long (handled by line-length setting)
     "N801",  # class name should use CapWords convention
     "N806",  # variable in function should be lowercase (for SQLAlchemy models)
+    "N999",  # module names should use snake_case
     "I001",  # import block is unsorted or un-formatted
     "W292",  # no newline at end of file
 ]

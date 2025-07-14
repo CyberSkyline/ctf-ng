@@ -1,25 +1,65 @@
+from typing import Any
+
 from CTFd.models import db
 
-class ChallengeTag(db.Model):
-    __tablename__ = 'ng_challengetag'
-    id = db.Column(db.Integer, primary_key=True)
-    challenge_id = db.Column(db.Integer, db.ForeignKey('ng_challenge.id'), nullable=False, index=True)
-    name = db.Column(db.String(255), nullable=False, index=True)
+from ...core.exceptions import ValidationError
+from ...core.validation import BaseValidator
 
-    challenge = db.relationship('Challenge', back_populates='tags')
+MAX_CHALLENGE_TAG_NAME_LENGTH = 256
+
+
+class ChallengeTag(db.Model):
+    __tablename__ = "ng_challenge_tag"
+    id = db.Column(db.Integer, primary_key=True)
+    challenge_id = db.Column(db.Integer, db.ForeignKey("ng_challenge.id"), nullable=False, index=True)
+    name = db.Column(db.String(MAX_CHALLENGE_TAG_NAME_LENGTH), nullable=False, index=True)
+
+    challenge = db.relationship("Challenge", back_populates="tags")
 
     def __repr__(self):
-        return f'<NgChallengeTag {self.id}>'
+        return f"<NgChallengeTag {self.id}, name={self.name}>"
 
     @classmethod
-    def create_tag(cls, commit=True, **kwargs):
+    def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
+        """
+        Validate the challenge tag data.
+        :param data: The challenge tag data to validate.
+        :return: The validated data.
+        """
+        validator = BaseValidator()
+
+        validator.validate_string(
+            data,
+            "name",
+            MAX_CHALLENGE_TAG_NAME_LENGTH,
+            required=True,
+            friendly_name="Challenge Tag Name",
+        )
+        validator.validate_positive_integer(
+            data,
+            "challenge_id",
+            required=True,
+            friendly_name="Challenge ID",
+        )
+
+        is_valid, errors, parsed_data = validator.is_valid()
+
+        if not is_valid:
+            raise ValidationError("Challenge Tag validation failed", errors)
+
+        return parsed_data
+
+    @classmethod
+    def create_tag(cls, challenge_id: int, name: str, commit=True):
         try:
-            tag = cls(**kwargs)
+            validated_data = cls.validate({"name": name, "challenge_id": challenge_id})
+
+            tag = cls(**validated_data)
             db.session.add(tag)
+
             if commit:
                 db.session.commit()
             return tag
         except Exception as e:
             db.session.rollback()
             raise e
-
