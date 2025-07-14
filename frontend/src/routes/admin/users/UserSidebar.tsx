@@ -1,82 +1,93 @@
 import {
-  Flex, Heading, Spinner, Table,
+  Button, Flex, Heading, Table,
 } from '@radix-ui/themes';
 import {
-  TbUser,
+  TbPlus,
   TbUsersGroup,
 } from 'react-icons/tb';
-import { useSearchParams } from 'react-router';
-import { useUserTeams } from '@/hooks/team';
-import { useUsers } from '@/hooks/users';
 import Entity from 'components/Entity';
 import { ErrorCallout } from 'components/Callouts';
 import { EventIcon } from '@/constants';
 import AdminDataList from 'components/AdminDataList';
+import { useTeamMembers, useUserTeams } from '@/hooks/team';
+import { useUserEvents } from '@/hooks/events';
+import _ from 'lodash';
+import type { Event, Team, User } from '@/types';
+import AdminSidebar from 'components/AdminSidebar';
+import RoleBadge from 'components/RoleBadge';
 
-export default function UserSidebar() {
-  const [searchParams] = useSearchParams();
-
-  const userId = Number(searchParams.get('id'));
-
-  // Temporary lookup into all users since the useUser endpoint has not merged yet.
-  const { data : allUsers, error, isLoading } = useUsers();
-  const data = allUsers?.users.find((u) => u.id === userId);
-
-  const { data : teamData, error : teamError, isLoading : teamLoading } = useUserTeams(userId);
-
-  if (isLoading) {
-    return <Spinner />;
+function RegistrationRow({ userId, team, event }: { userId: number, team: Team, event: Event }) {
+  const { data : teamMembers } = useTeamMembers(team.id);
+  if (!teamMembers) {
+    return null;
   }
 
-  if (error) {
-    return <ErrorCallout>{error.message}</ErrorCallout>;
-  }
-
-  if (!userId || !data) {
-    return (
-      <Flex direction="column" align="center" justify="center" className="w-full h-full">
-        <TbUser className="text-(--gray-9) text-9xl" />
-        <Heading className="text-(--gray-9)" size="4">
-          Select a user to view details.
-        </Heading>
-      </Flex>
-    );
+  const membership = teamMembers.find((member) => member.user_id === userId);
+  if (!membership) {
+    return null;
   }
 
   return (
-    <>
-      <Heading>{data.name}</Heading>
-      <AdminDataList data={data} />
-      <Heading>Registrations</Heading>
-      {teamError && <ErrorCallout>{teamError.message}</ErrorCallout> }
-      {teamLoading && <Spinner />}
-      {teamData && (
+    <Table.Row key={team.id}>
+      <Table.Cell>
+        <Entity label={event.name} icon={EventIcon} to={`/admin/events?id=${event.id}`} />
+      </Table.Cell>
+      <Table.Cell>
+        <Entity label={team.name} icon={TbUsersGroup} to={`/admin/teams?event=${team.event_id}&id=${team.id}`} />
+      </Table.Cell>
+      <Table.Cell>
+        <RoleBadge value={membership.role} />
+      </Table.Cell>
+      <Table.Cell>
+        {membership?.joined_at.toLocaleString()}
+      </Table.Cell>
+    </Table.Row>
+  );
+}
+
+export default function UserSidebar({ entity }: { entity: User }) {
+  const { data : teamsData, error : teamsError } = useUserTeams(entity.id);
+  const { data : eventsData, error : eventsError } = useUserEvents(entity.id);
+
+  const eventsMap = _.keyBy(eventsData, 'id');
+
+  return (
+    <AdminSidebar title="User Details">
+      <AdminDataList data={{ ...entity }} />
+
+      <Flex direction="row" gap="4" justify="between" align="center">
+        <Heading>Registrations</Heading>
+        <Button variant="soft">
+          <TbPlus />
+          Register
+        </Button>
+      </Flex>
+      {teamsError && <ErrorCallout>{teamsError.message}</ErrorCallout> }
+      {eventsError && <ErrorCallout>{eventsError.message}</ErrorCallout> }
+      {teamsData && eventsData && (
         <Table.Root>
           <Table.Header>
             <Table.Row>
               <Table.ColumnHeaderCell>Event</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Team</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell>Joined At</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell>Role</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell>Joined</Table.ColumnHeaderCell>
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {/* Need consistent serialization from the backend for types to match here - these should really be TeamMember objects */}
-            {teamData?.teams.map((team) => (
-              <Table.Row key={team.id}>
-                <Table.Cell>
-                  <Entity label={team.event_name} icon={EventIcon} to={`/admin/events?id=${team.event_id}`} />
-                </Table.Cell>
-                <Table.Cell>
-                  <Entity label={team.team_name} icon={TbUsersGroup} to={`/admin/teams?event=${team.event_id}&id=${team.team_id}`} />
-                </Table.Cell>
-                <Table.Cell>
-                  {new Date(team.joined_at).toLocaleString()}
-                </Table.Cell>
-              </Table.Row>
+            {teamsData?.map((team) => (
+              <RegistrationRow
+                key={team.id}
+                userId={entity.id}
+                team={team}
+                event={eventsMap[team.event_id]}
+              />
             ))}
           </Table.Body>
         </Table.Root>
       )}
-    </>
+
+      <Heading>Workspace</Heading>
+    </AdminSidebar>
   );
 }

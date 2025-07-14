@@ -1,87 +1,81 @@
 import {
-  Flex, Heading, Spinner, Table,
+  Button, Flex, Heading, Table,
 } from '@radix-ui/themes';
 import {
+  TbDoorExit, TbPlusMinus, TbStar,
   TbUser,
-  TbUsersGroup,
 } from 'react-icons/tb';
-import { useSearchParams } from 'react-router';
-import { useTeam } from '@/hooks/team';
-import { useUsers } from '@/hooks/users';
+import { useTeamMembers } from '@/hooks/team';
 import Entity from 'components/Entity';
-import type { TeamMember } from '@/types';
-import { ErrorCallout } from 'components/Callouts';
+import type { Team } from '@/types';
+import { ErrorCallout, InfoCallout } from 'components/Callouts';
+import AdminSidebar from 'components/AdminSidebar';
+import RoleBadge from 'components/RoleBadge';
+import AdminDataList from 'components/AdminDataList';
 
-function TeamMemberRow({ member }: { member: TeamMember}) {
-  // Temporary lookup into all users since the useUser endpoint has not merged yet.
-  const { data } = useUsers();
-  return (
-    <Table.Row>
-      <Table.Cell>
-        <Entity
-          label={data?.users.find((u) => u.id === member.user_id)?.name ?? 'Unknown User'}
-          to={`/admin/users?id=${member.user_id}`}
-          icon={TbUser}
-        />
-      </Table.Cell>
-      <Table.Cell>{member.role}</Table.Cell>
-      <Table.Cell>{new Date(member.joined_at).toLocaleString()}</Table.Cell>
-    </Table.Row>
-  );
-}
-
-export default function TeamSidebar() {
-  const [searchParams] = useSearchParams();
-  const teamId = Number(searchParams.get('id'));
-
-  const { data, error, isLoading } = useTeam(teamId);
-
-  if (error) {
-    return (
-      <ErrorCallout>{error.message}</ErrorCallout>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <Flex direction="column" align="center" justify="center" className="w-full h-full">
-        <Spinner />
-      </Flex>
-    );
-  }
-
-  if (!teamId || !data) {
-    return (
-      <Flex direction="column" align="center" justify="center" className="w-full h-full">
-        <TbUsersGroup className="text-(--gray-9) text-9xl" />
-        <Heading className="text-(--gray-9)" size="4">
-          Select a team to view details.
-        </Heading>
-      </Flex>
-    );
-  }
+export default function TeamSidebar({ entity }: { entity: Team }) {
+  const { data : members, error : membersError } = useTeamMembers(entity.id);
 
   return (
-    <>
-      <Heading>{data.team.name}</Heading>
+    <AdminSidebar title="Team Details">
+      <AdminDataList data={{ ...entity }} />
 
       <Heading>Members</Heading>
 
-      <Table.Root className="w-full">
-        <Table.Header>
-          <Table.Row>
-            <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
-            <Table.ColumnHeaderCell>Role</Table.ColumnHeaderCell>
-            <Table.ColumnHeaderCell>Joined</Table.ColumnHeaderCell>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {data.team_members.map((member) => (
-            <TeamMemberRow key={member.user_id} member={member} />
-          ))}
-        </Table.Body>
-      </Table.Root>
-
-    </>
+      {membersError && <ErrorCallout>{membersError.message}</ErrorCallout> }
+      {members && (
+        <Table.Root className="w-full">
+          <Table.Header>
+            <Table.Row>
+              <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell>Role</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell>Joined</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell />
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {members.map((member) => (
+              <Table.Row key={member.id}>
+                <Table.Cell>
+                  <Entity
+                    label={member.user_name}
+                    to={`/admin/users?id=${member.user_id}`}
+                    icon={TbUser}
+                  />
+                </Table.Cell>
+                <Table.Cell><RoleBadge value={member.role} /></Table.Cell>
+                <Table.Cell>{member.joined_at.toLocaleString()}</Table.Cell>
+                <Table.Cell>
+                  <Flex direction="row" align="center" justify="end" className="h-full *:!m-0">
+                    <Button variant="ghost" color="red" disabled={member.role === 'captain'}>
+                      <TbDoorExit />
+                      Kick
+                    </Button>
+                    <Button variant="ghost" color="amber" disabled={member.role === 'captain'}>
+                      <TbStar />
+                      Promote
+                    </Button>
+                  </Flex>
+                </Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table.Root>
+      )}
+      <Flex direction="row" gap="2" justify="between" align="center">
+        <Heading>Activity</Heading>
+        <Button variant="soft" color="amber">
+          <TbPlusMinus />
+          Point Adjust
+        </Button>
+      </Flex>
+      <InfoCallout>
+        Attempts, hint redemptions, and manual awards for this team.
+      </InfoCallout>
+      <Heading>Challenges</Heading>
+      <InfoCallout>
+        Deployed challenge instances for this team.
+      </InfoCallout>
+    </AdminSidebar>
   );
 }

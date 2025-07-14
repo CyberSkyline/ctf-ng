@@ -1,7 +1,8 @@
 import {
-  Heading, Text, Flex, Box, AspectRatio,
+  Heading, Flex, Box, AspectRatio,
 } from '@radix-ui/themes';
 import EventBadge from './EventBadge';
+import RadixMarkdown from './RadixMarkdown';
 
 export default function EventHeader({
   name,
@@ -28,7 +29,9 @@ export default function EventHeader({
         )}
         <Box>
           <Heading size="9">{name}</Heading>
-          <Text as="p" color="gray">{description}</Text>
+          <RadixMarkdown>
+            {description}
+          </RadixMarkdown>
         </Box>
         {children}
       </Flex>

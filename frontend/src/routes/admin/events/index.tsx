@@ -1,64 +1,119 @@
 import {
-  Button, Flex,
+  Button, Dialog, Flex,
 } from '@radix-ui/themes';
 import type { ColDef } from 'ag-grid-community';
 import { TbPlus } from 'react-icons/tb';
-import { apiMutation } from '@/fetchers';
-import { useEvents } from '@/hooks/events';
-import { useSearchParams } from 'react-router';
+import { createEvent, useAllEvents } from '@/hooks/events';
 import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
+import { useState } from 'react';
 import EventSidebar from './EventSidebar';
+import EventDataForm from './EventDataForm';
 
 /**
  * Event management page for admins, will also include challenge YAML uploading.
  */
 export default function AdminEvents() {
-  const { data, error, isLoading } = useEvents();
-  const [ searchParams ] = useSearchParams();
-
-  const eventId = searchParams.get('id');
-
-  const rowData = data?.events ?? [];
+  const { data, error, isLoading } = useAllEvents();
+  const rowData = data ?? [];
 
   const colDefs: ColDef<typeof rowData[number]>[] = [
-    { field : 'id', width : 100, headerName : 'ID' },
-    { field : 'name', width : 250 },
-    { field : 'description', flex : 1 },
     {
-      field : 'start_time', headerName : 'Start Time', sort : 'desc', valueFormatter : (params) => params.value && new Date(params.value).toLocaleString(),
+      field : 'name', width : 250, filter : true, floatingFilter : true,
     },
     {
-      field : 'end_time', headerName : 'End Time', valueFormatter : (params) => params.value && new Date(params.value).toLocaleString(),
+      field : 'description', width : 300, filter : true, floatingFilter : true,
     },
     {
-      field : 'locked', width : 100,
+      field : 'start_time',
+      headerName : 'Start Time',
+      sort : 'desc',
+      valueFormatter : (params) => params.value && params.value.toLocaleString(),
+      filter : true,
+      floatingFilter : true,
+    },
+    {
+      field : 'end_time',
+      headerName : 'End Time',
+      valueFormatter : (params) => params.value && params.value.toLocaleString(),
+      filter : true,
+      floatingFilter : true,
+    },
+    {
+      field : 'registration_start_date',
+      headerName : 'Registration Start',
+      valueFormatter : (params) => params.value && params.value.toLocaleString(),
+      filter : true,
+      floatingFilter : true,
+    },
+    {
+      field : 'registration_end_date',
+      headerName : 'Registration End',
+      valueFormatter : (params) => params.value && params.value.toLocaleString(),
+      filter : true,
+      floatingFilter : true,
+    },
+    {
+      field : 'max_team_size',
+      width : 150,
+      headerName : 'Max Team Size',
+      filter : true,
+      floatingFilter : true,
+    },
+    {
+      field : 'public',
+      width : 100,
+      filter : true,
+      floatingFilter : true,
+    },
+    {
+      field : 'registration_open',
+      width : 100,
+      filter : true,
+      floatingFilter : true,
+    },
+    {
+      field : 'locked',
+      width : 100,
+      filter : true,
+      floatingFilter : true,
+    },
+    {
+      field : 'id',
+      width : 100,
+      headerName : 'ID',
+      filter : true,
+      floatingFilter : true,
     },
   ];
 
+  const [ open, setOpen ] = useState(false);
+
   if (error) {
-    return (<ErrorCallout>{error.message}</ErrorCallout>);
+    return <ErrorCallout>{error.message}</ErrorCallout>;
   }
 
   return (
     <Flex direction="column" gap="4" className="h-full w-full">
       <Flex direction="row" gap="4" className="shrink-0">
-        <Button onClick={() => {
-          apiMutation('/events', {
-            name : 'New Event',
-            description : 'Event description',
-            start_time : '2025-07-04T12:00:00',
-            end_time : '2025-07-04T14:00:00',
-            max_team_size : 5,
-            locked : false,
-          }, {
-            method : 'POST',
-          });
-        }}
-        >
-          <TbPlus />
-          Create Event
-        </Button>
+        <Dialog.Root open={open} onOpenChange={setOpen}>
+          <Dialog.Trigger>
+            <Button variant="solid">
+              <TbPlus />
+              Create Event
+            </Button>
+          </Dialog.Trigger>
+          <Dialog.Content>
+            <Dialog.Title>Create New Event</Dialog.Title>
+            <EventDataForm onSubmit={(d) => {
+              createEvent(d);
+
+              // close the dialog after submission
+              setOpen(false);
+            }}
+            />
+          </Dialog.Content>
+        </Dialog.Root>
       </Flex>
       <Flex direction="row" gap="4" className="grow">
         <AdminGrid
@@ -66,10 +121,8 @@ export default function AdminEvents() {
           columnDefs={colDefs}
           loading={isLoading}
           getRowId={(params) => params.data.id.toString()}
+          sidebarComponent={EventSidebar}
         />
-        <Flex direction="column" gap="4" className="w-128 grow-0 shrink-0 overflow-y-auto">
-          <EventSidebar key={eventId} />
-        </Flex>
       </Flex>
     </Flex>
   );
