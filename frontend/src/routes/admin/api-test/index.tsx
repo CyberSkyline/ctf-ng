@@ -9,11 +9,11 @@ import { useState } from 'react';
  * API test page for development.
  */
 export default function AdminApiTest() {
-  const [method, setMethod] = useState<'GET' | 'POST' | 'PATCH' | 'DELETE'>('GET');
-  const [route, setRoute] = useState('');
-  const [body, setBody] = useState('');
-  const [response, setResponse] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [ method, setMethod ] = useState<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'>('GET');
+  const [ route, setRoute ] = useState('');
+  const [ body, setBody ] = useState('');
+  const [ response, setResponse ] = useState<string | null>(null);
+  const [ error, setError ] = useState<string | null>(null);
 
   return (
     <Container size="4">
@@ -21,7 +21,7 @@ export default function AdminApiTest() {
         <Flex direction="row" gap="4">
           <Select.Root
             onValueChange={(value) => {
-              setMethod(value as 'GET' | 'POST' | 'PATCH' | 'DELETE');
+              setMethod(value as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE');
             }}
             defaultValue={method}
           >
@@ -29,6 +29,7 @@ export default function AdminApiTest() {
             <Select.Content>
               <Select.Item value="GET">GET</Select.Item>
               <Select.Item value="POST">POST</Select.Item>
+              <Select.Item value="PUT">PUT</Select.Item>
               <Select.Item value="PATCH">PATCH</Select.Item>
               <Select.Item value="DELETE">DELETE</Select.Item>
             </Select.Content>
