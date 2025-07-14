@@ -2,7 +2,7 @@ import {
   Container, Tabs,
 } from '@radix-ui/themes';
 
-import { TbCube, TbStar, TbUsersGroup } from 'react-icons/tb';
+import { TbCube, TbStar } from 'react-icons/tb';
 import { useSearchParams } from 'react-router';
 
 import EventHeader from 'components/EventHeader';
