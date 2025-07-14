@@ -3,8 +3,9 @@ Tests for generic validation utility functions
 """
 
 from datetime import timedelta
-from ...validation import BaseValidator
+
 from ...utils import utc_now
+from ...validation import BaseValidator
 
 
 class ValidationError(Exception):
@@ -55,7 +56,7 @@ class TestDatetimeValidationEdgeCases:
         """Test datetime validation with various ISO formats."""
         validator = BaseValidator()
 
-        dt = validator.validate_datetime({"time": "2024-12-25T10:30:00"}, "time")
+        dt = validator.validate_datetime({"time": "2024-12-25T10:30:00Z"}, "time")
         assert dt is not None
         assert dt.year == 2024
         assert dt.month == 12
@@ -64,14 +65,14 @@ class TestDatetimeValidationEdgeCases:
         dt = validator.validate_datetime({"time": "2024-12-25T10:30:00Z"}, "time")
         assert dt is not None
 
-        dt = validator.validate_datetime({"time": "2024-12-25T10:30:00.123456"}, "time")
+        dt = validator.validate_datetime({"time": "2024-12-25T10:30:00.123456Z"}, "time")
         assert dt is not None
         assert dt.microsecond == 123456
 
     def test_datetime_validation_invalid_formats(self):
         """Test datetime validation with invalid formats."""
         validator = BaseValidator()
-        invalid_formats = ["not a date", "2024-99-99", "invalid", ""]
+        invalid_formats = ["not a date", "2024-99-99", "invalid", "", "2024-12-25T10:30:00"]
 
         for invalid_format in invalid_formats:
             dt = validator.validate_datetime({"time": invalid_format}, "time")
@@ -83,14 +84,61 @@ class TestDatetimeValidationEdgeCases:
         """Test datetime past validation."""
         validator = BaseValidator()
 
-        future_date = (utc_now() + timedelta(days=1)).isoformat()
+        future_date = (utc_now() + timedelta(days=1)).isoformat() + "Z"
         dt = validator.validate_datetime({"time": future_date}, "time", allow_past=False)
         assert dt is not None
 
-        past_date = (utc_now() - timedelta(days=1)).isoformat()
+        past_date = (utc_now() - timedelta(days=1)).isoformat() + "Z"
         dt = validator.validate_datetime({"time": past_date}, "time", allow_past=False)
         assert dt is None
         assert "time" in validator.errors
+
+    def test_datetime_timezone_formats(self):
+        """Test datetime validation with both Z and +00:00 timezone formats."""
+        validator = BaseValidator()
+
+        # Test Z format
+        dt_z = validator.validate_datetime({"time": "2024-12-25T10:30:00Z"}, "time")
+        assert dt_z is not None
+        assert dt_z.year == 2024
+        assert dt_z.month == 12
+        assert dt_z.day == 25
+        assert dt_z.hour == 10
+        assert dt_z.minute == 30
+
+        # Clear validator for next test
+        validator = BaseValidator()
+
+        # Test +00:00 format
+        dt_plus = validator.validate_datetime({"time": "2024-12-25T10:30:00+00:00"}, "time")
+        assert dt_plus is not None
+        assert dt_plus.year == 2024
+        assert dt_plus.month == 12
+        assert dt_plus.day == 25
+        assert dt_plus.hour == 10
+        assert dt_plus.minute == 30
+
+        # Both should result in the same datetime value
+        assert dt_z == dt_plus
+
+        # Clear validator for next test
+        validator = BaseValidator()
+
+        # Test microseconds with Z format
+        dt_micro_z = validator.validate_datetime({"time": "2024-12-25T10:30:00.555777Z"}, "time")
+        assert dt_micro_z is not None
+        assert dt_micro_z.microsecond == 555777
+
+        # Clear validator for next test
+        validator = BaseValidator()
+
+        # Test microseconds with +00:00 format
+        dt_micro_plus = validator.validate_datetime({"time": "2024-12-25T10:30:00.555777+00:00"}, "time")
+        assert dt_micro_plus is not None
+        assert dt_micro_plus.microsecond == 555777
+
+        # Both microsecond formats should result in the same datetime value
+        assert dt_micro_z == dt_micro_plus
 
 
 class TestPositiveIntegerEdgeCases:
@@ -220,6 +268,7 @@ class TestBooleanValidation:
         is_valid, errors, parsed_data = validator.is_valid()
         assert is_valid
         assert parsed_data["flag"] is False
+
 
 class TestIntegerRangeValidation:
     """Test integer range validation."""

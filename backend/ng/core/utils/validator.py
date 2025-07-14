@@ -2,10 +2,12 @@
 Base validation framework - reusable across domains.
 """
 
-from typing import Any
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
+from typing import Any
+
 from . import utc_now
+
 
 class ValidationErrorMessages:
     """Consistent error messages throughout the system."""
@@ -83,6 +85,29 @@ class BaseValidator:
             return
 
         self._add_parsed_data(field, stripped_value)
+
+    def validate_model_id(
+        self,
+        data: dict[str, Any],
+        field: str,
+        model_name: str,
+        required: bool = False,
+        friendly_name: str | None = None,
+    ) -> None:
+        name = friendly_name or field.replace("_", " ").title()
+        value = data.get(field)
+
+        if required and not self.require_field(data, field, name):
+            return
+
+        if value is None:
+            return
+
+        if not isinstance(value, int) or value <= 0:
+            self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_NUMBER.format(field=name)
+            return
+
+        self._add_parsed_data(field, value)
 
     def validate_positive_integer(
         self,
@@ -207,15 +232,15 @@ class BaseValidator:
 
         try:
             dt_value = datetime.fromisoformat(value)
-            
+
             # require that tzinfo is set and is UTC
-            if dt_value.tzinfo is not timezone.utc:
+            if dt_value.tzinfo is not UTC:
                 self.errors[field] = ValidationErrorMessages.FIELD_DATETIME_MUST_BE_UTC.format(field=name)
                 return None
-            
+
             # strip tzinfo to allow using this value with naive datetimes from utc_now/db
             dt_value = dt_value.replace(tzinfo=None)
-            
+
             if not allow_past and dt_value < utc_now():
                 self.errors[field] = ValidationErrorMessages.FIELD_DATETIME_PAST.format(field=name)
                 return None
@@ -249,11 +274,13 @@ class BaseValidator:
         has_end = end_field in data and data.get(end_field) is not None
 
         if has_start ^ has_end:  # XOR
-            self.errors["time_constraint"] = (f"Both {start_field} and {end_field} must be provided together, or neither.")
+            self.errors["time_constraint"] = (
+                f"Both {start_field} and {end_field} must be provided together, or neither."
+            )
             return
 
         if start_time and end_time and start_time >= end_time:
-            self.errors[end_field] = (f"{end_field.replace('_', ' ').title()} must be after {start_field.replace('_', ' ')}.")
+            self.errors[end_field] = (
+                f"{end_field.replace('_', ' ').title()} must be after {start_field.replace('_', ' ')}."
+            )
             return
-        
-        
