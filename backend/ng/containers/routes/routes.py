@@ -22,4 +22,4 @@ class ImportChallenge(Resource):
     )
     def get(self, **kwargs):
         res = start_containers(kwargs['challenge_id'], 1)
-        return success_response(res)
+        return success_response({ 'started': res })
