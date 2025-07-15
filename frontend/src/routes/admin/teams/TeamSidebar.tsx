@@ -1,10 +1,10 @@
 import {
-  Button, Flex, Heading, Table,
+  Button,
+  Flex,
+  Heading,
+  Table,
 } from '@radix-ui/themes';
-import {
-  TbDoorExit, TbPlusMinus, TbStar,
-  TbUser,
-} from 'react-icons/tb';
+import { TbDoorExit, TbPlusMinus, TbStar } from 'react-icons/tb';
 import { useTeamMembers } from '@/hooks/team';
 import Entity from 'components/Entity';
 import type { Team } from '@/types';
