@@ -16,6 +16,14 @@ INVITE_CODE_MAX_LENGTH = 32
 INVITE_CODE_LENGTH = 8
 INVITE_CODE_GENERATION_ATTEMPTS = 10
 
+# Docker host config
+# This will eventually be an array but just single host for mvp
+DOCKER_HOST = "10.100.20.246"
+
+# This is a place holder vnc image
+NOVNC_CONTAINER = "theasp/novnc"
+NOVNC_PORT = 8080
+
 # TODO
 # TAG_NAME_MAX_LENGTH = 50
 # TICKET_SUBJECT_MAX_LENGTH = 128

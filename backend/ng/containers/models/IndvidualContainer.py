@@ -1,4 +1,5 @@
 from CTFd.models import db
+from ... import config
 from ..utils.get_client import get_client
 
 class IndvidualContainer(db.Model):
@@ -13,17 +14,24 @@ class IndvidualContainer(db.Model):
 
     @classmethod
     def create_indvidual_container(cls, user):
-        client = get_client('10.100.20.246')
+        client = get_client(config.DOCKER_HOST)
         container_name = f'{user}-indv'
         exists = client.containers.get(container_name)
-        if (exists):
+        if exists:
             return exists
 
-        ctr = client.containers.run('vnc-image', name=container_name, detach=True)
+        # Auto publish ports tagged in expose
+        # For the indvidual container this means the vnc port
+        ctr = client.containers.run(
+            config.NOVNC_CONTAINER,
+            name=container_name,
+            detach=True,
+            publish_all_ports=True,
+        )
 
         indvidual_container = cls(
             user=user,
-            hostip='10.100.20.246',
+            hostip=config.DOCKER_HOST,
             dockerid=ctr.id,
         )
 
@@ -32,7 +40,16 @@ class IndvidualContainer(db.Model):
         return indvidual_container
 
     def connect_to_network(self, network):
-        return
+        client = get_client(self.hostip)
+        ctr = client.containers.get(self.dockerid)
+        network.connect(ctr)
 
     def get_novnc_port(self):
-        return
+        client = get_client(self.hostip)
+
+        ctr_info = client.api.inspect_container(self.dockerid)
+        ports = ctr_info['NetworkSettings']['Ports']
+
+        host_port = ports[f'{config.NOVNC_PORT}/tcp']['HostPort']
+
+        return host_port

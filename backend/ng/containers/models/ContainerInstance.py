@@ -1,6 +1,7 @@
 from CTFd.models import db
 import docker
 from ..utils.get_client import get_client
+from ... import config
 from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 
 class ContainerInstance(db.Model):
@@ -24,7 +25,7 @@ class ContainerInstance(db.Model):
         if (exists):
             return exists
 
-        client = get_client('10.100.20.246')
+        client = get_client(config.DOCKER_HOST)
 
         ctr = None
         try:
@@ -51,7 +52,7 @@ class ContainerInstance(db.Model):
         container_instance = cls(
             blueprint=blueprint,
             team=team,
-            hostip='10.100.20.247',
+            hostip=config.DOCKER_HOST,
             dockerid=ctr.id,
         )
 
