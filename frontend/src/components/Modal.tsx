@@ -1,6 +1,4 @@
-import {
-  Button, Dialog, Flex,
-} from '@radix-ui/themes';
+import { Button, Dialog, Flex } from '@radix-ui/themes';
 import { useState, type ReactNode } from 'react';
 import { TbX } from 'react-icons/tb';
 
