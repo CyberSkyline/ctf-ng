@@ -1,7 +1,7 @@
 import { Flex, Heading } from '@radix-ui/themes';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 
-export default function AdminSidebar({ children, title }: {children: React.ReactNode, title: string}) {
+export default function AdminSidebar({ children, title }: {children: ReactNode, title: string}) {
   const headerRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {

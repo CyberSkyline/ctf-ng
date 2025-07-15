@@ -1,7 +1,8 @@
 import { Callout } from '@radix-ui/themes';
+import type { ReactNode } from 'react';
 import { TbAlertTriangle, TbCancel, TbInfoCircle } from 'react-icons/tb';
 
-export function ErrorCallout({ children }: {children: React.ReactNode}) {
+export function ErrorCallout({ children }: {children: ReactNode}) {
   return (
     <Callout.Root variant="surface" color="red">
       <Callout.Icon>
@@ -14,7 +15,7 @@ export function ErrorCallout({ children }: {children: React.ReactNode}) {
   );
 }
 
-export function WarningCallout({ children }: {children: React.ReactNode}) {
+export function WarningCallout({ children }: {children: ReactNode}) {
   return (
     <Callout.Root variant="surface" color="amber">
       <Callout.Icon>
@@ -26,7 +27,7 @@ export function WarningCallout({ children }: {children: React.ReactNode}) {
     </Callout.Root>
   );
 }
-export function InfoCallout({ children }: {children: React.ReactNode}) {
+export function InfoCallout({ children }: {children: ReactNode}) {
   return (
     <Callout.Root variant="surface" color="jade">
       <Callout.Icon>
