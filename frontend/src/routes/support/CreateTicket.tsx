@@ -1,5 +1,8 @@
 import {
-  Box, Button, Flex, Heading,
+  Box,
+  Button,
+  Flex,
+  Heading,
 } from '@radix-ui/themes';
 import { TbArrowLeft } from 'react-icons/tb';
 import { useNavigate } from 'react-router';

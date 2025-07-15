@@ -1,7 +1,4 @@
-import {
-  Container,
-  Tabs,
-} from '@radix-ui/themes';
+import { Container, Tabs } from '@radix-ui/themes';
 
 import { TbStar } from 'react-icons/tb';
 import { useSearchParams } from 'react-router';

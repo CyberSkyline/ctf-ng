@@ -1,5 +1,8 @@
 import {
-  Button, Flex, Heading, Table,
+  Button,
+  Flex,
+  Heading,
+  Table,
 } from '@radix-ui/themes';
 import { TbPlus } from 'react-icons/tb';
 import Entity from 'components/Entity';

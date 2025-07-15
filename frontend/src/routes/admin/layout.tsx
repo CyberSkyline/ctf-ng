@@ -3,7 +3,13 @@ import { Card, Flex } from '@radix-ui/themes';
 import { NavigationMenu } from 'radix-ui';
 import type { IconType } from 'react-icons';
 import {
-  TbBell, TbBraces, TbChartPie, TbLayoutDashboard, TbMessage, TbPackages, TbSettings,
+  TbBell,
+  TbBraces,
+  TbChartPie,
+  TbLayoutDashboard,
+  TbMessage,
+  TbPackages,
+  TbSettings,
 } from 'react-icons/tb';
 import { NavLink, Outlet } from 'react-router';
 

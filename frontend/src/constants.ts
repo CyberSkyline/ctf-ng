@@ -1,8 +1,12 @@
 import type { IconType } from 'react-icons';
 import {
-  TbCalendarEvent, TbCube,
-  TbLifebuoy, TbStarFilled, TbTools,
-  TbUser, TbUsersGroup,
+  TbCalendarEvent,
+  TbCube,
+  TbLifebuoy,
+  TbStarFilled,
+  TbTools,
+  TbUser,
+  TbUsersGroup,
 } from 'react-icons/tb';
 import type { accentColors } from '@radix-ui/themes/props';
 

@@ -1,5 +1,9 @@
 import {
-  Box, Callout, Container, Flex, Heading,
+  Box,
+  Callout,
+  Container,
+  Flex,
+  Heading,
 } from '@radix-ui/themes';
 import { TbInfoCircle } from 'react-icons/tb';
 

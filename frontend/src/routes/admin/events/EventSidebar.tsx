@@ -1,8 +1,5 @@
 import { updateEvent } from '@/hooks/events';
-import {
-  Button,
-  Flex, Heading,
-} from '@radix-ui/themes';
+import { Button, Flex, Heading } from '@radix-ui/themes';
 import { Link } from 'react-router';
 import AdminSidebar from 'components/AdminSidebar';
 import type { Event } from '@/types';
