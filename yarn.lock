@@ -860,10 +860,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@eslint/js@npm:8.57.1, @eslint/js@npm:^8.57.1":
+"@eslint/js@npm:8.57.1":
   version: 8.57.1
   resolution: "@eslint/js@npm:8.57.1"
   checksum: 10/7562b21be10c2adbfa4aa5bb2eccec2cb9ac649a3569560742202c8d1cb6c931ce634937a2f0f551e078403a1c1285d6c2c0aa345dafc986149665cd69fe8b59
+  languageName: node
+  linkType: hard
+
+"@eslint/js@npm:^9.25.0":
+  version: 9.31.0
+  resolution: "@eslint/js@npm:9.31.0"
+  checksum: 10/83b45c707d9a6c62b79a9fb69b7ebcb31e8163647c0fdcae5972b4b2fcbbb1e8eac543986e0cca3582f8462a6587f6b6dc48e362b2ce3feb74282606c3d425ea
   languageName: node
   linkType: hard
 
@@ -3266,7 +3273,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tailwindcss/vite@npm:^4.1.11":
+"@tailwindcss/vite@npm:^4.1.6":
   version: 4.1.11
   resolution: "@tailwindcss/vite@npm:4.1.11"
   dependencies:
@@ -3413,7 +3420,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:*":
+"@types/lodash@npm:*, @types/lodash@npm:^4.17.17":
   version: 4.17.20
   resolution: "@types/lodash@npm:4.17.20"
   checksum: 10/8cd8ad3bd78d2e06a93ae8d6c9907981d5673655fec7cb274a4d9a59549aab5bb5b3017361280773b8990ddfccf363e14d1b37c97af8a9fe363de677f9a61524
@@ -3436,16 +3443,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^24.0.7":
-  version: 24.0.14
-  resolution: "@types/node@npm:24.0.14"
+"@types/node@npm:^22.15.18":
+  version: 22.16.4
+  resolution: "@types/node@npm:22.16.4"
   dependencies:
-    undici-types: "npm:~7.8.0"
-  checksum: 10/60e546f905734ab37f02f5c30eeb98e350c97837c96e2191972fba0638aa0d414489fad989245a9f106b0a0405410e56fab769fdcfb6504341fc2286d9e1f496
+    undici-types: "npm:~6.21.0"
+  checksum: 10/6d2c133bf1ac498b78f15f8a13b2d5a5853e62606feaec1c9d2c93088f038d4ef94dc869a9a1155554e77643e2f4630afb3697daca5471843e08684ee9a1cc8a
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:^19.1.6":
+"@types/react-dom@npm:^19.1.2":
   version: 19.1.6
   resolution: "@types/react-dom@npm:19.1.6"
   peerDependencies:
@@ -3454,7 +3461,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:^19.1.8":
+"@types/react@npm:^19.1.2":
   version: 19.1.8
   resolution: "@types/react@npm:19.1.8"
   dependencies:
@@ -3484,7 +3491,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/eslint-plugin@npm:8.37.0, @typescript-eslint/eslint-plugin@npm:^8.35.0":
+"@typescript-eslint/eslint-plugin@npm:8.37.0, @typescript-eslint/eslint-plugin@npm:^8.32.1":
   version: 8.37.0
   resolution: "@typescript-eslint/eslint-plugin@npm:8.37.0"
   dependencies:
@@ -3505,7 +3512,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/parser@npm:8.37.0, @typescript-eslint/parser@npm:^8.35.0":
+"@typescript-eslint/parser@npm:8.37.0, @typescript-eslint/parser@npm:^8.32.1":
   version: 8.37.0
   resolution: "@typescript-eslint/parser@npm:8.37.0"
   dependencies:
@@ -3763,7 +3770,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vitejs/plugin-react@npm:^4.6.0":
+"@vitejs/plugin-react@npm:^4.4.1":
   version: 4.6.0
   resolution: "@vitejs/plugin-react@npm:4.6.0"
   dependencies:
@@ -4625,9 +4632,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.5.173":
-  version: 1.5.183
-  resolution: "electron-to-chromium@npm:1.5.183"
-  checksum: 10/c09088abfdd1c1e1e06d45a89aef19a5f8a627d327ba0453138e783bc963f565065a8b4e91cbf5638a08da3e09b3766fa8f1d8d1ec11ee32c0b5f674966b3284
+  version: 1.5.184
+  resolution: "electron-to-chromium@npm:1.5.184"
+  checksum: 10/518db4b8dd882f88e7068c4efa8bcdcd5e9badafa471eace79a636dd741e74316e2973d6558687163f977bc642e2402d87ea9881bca2eee205511cc3a0236df7
   languageName: node
   linkType: hard
 
@@ -5412,20 +5419,21 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "frontend@workspace:frontend"
   dependencies:
-    "@eslint/js": "npm:^8.57.1"
+    "@eslint/js": "npm:^9.25.0"
     "@milkdown/crepe": "npm:^7.15.0"
     "@milkdown/plugin-automd": "npm:^7.15.0"
     "@milkdown/plugin-listener": "npm:^7.15.0"
     "@milkdown/react": "npm:^7.15.0"
     "@milkdown/theme-nord": "npm:^7.15.0"
     "@radix-ui/themes": "npm:^3.2.1"
-    "@tailwindcss/vite": "npm:^4.1.11"
-    "@types/node": "npm:^24.0.7"
-    "@types/react": "npm:^19.1.8"
-    "@types/react-dom": "npm:^19.1.6"
-    "@typescript-eslint/eslint-plugin": "npm:^8.35.0"
-    "@typescript-eslint/parser": "npm:^8.35.0"
-    "@vitejs/plugin-react": "npm:^4.6.0"
+    "@tailwindcss/vite": "npm:^4.1.6"
+    "@types/lodash": "npm:^4.17.17"
+    "@types/node": "npm:^22.15.18"
+    "@types/react": "npm:^19.1.2"
+    "@types/react-dom": "npm:^19.1.2"
+    "@typescript-eslint/eslint-plugin": "npm:^8.32.1"
+    "@typescript-eslint/parser": "npm:^8.32.1"
+    "@vitejs/plugin-react": "npm:^4.4.1"
     ag-grid-community: "npm:^33.3.2"
     ag-grid-react: "npm:^33.3.2"
     eslint: "npm:^8.2.0"
@@ -9054,10 +9062,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici-types@npm:~7.8.0":
-  version: 7.8.0
-  resolution: "undici-types@npm:7.8.0"
-  checksum: 10/fcff3fbab234f067fbd69e374ee2c198ba74c364ceaf6d93db7ca267e784457b5518cd01d0d2329b075f412574205ea3172a9a675facb49b4c9efb7141cd80b7
+"undici-types@npm:~6.21.0":
+  version: 6.21.0
+  resolution: "undici-types@npm:6.21.0"
+  checksum: 10/ec8f41aa4359d50f9b59fa61fe3efce3477cc681908c8f84354d8567bb3701fafdddf36ef6bff307024d3feb42c837cf6f670314ba37fc8145e219560e473d14
   languageName: node
   linkType: hard
 
