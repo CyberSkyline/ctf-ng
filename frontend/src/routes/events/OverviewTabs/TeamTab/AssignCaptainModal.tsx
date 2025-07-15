@@ -7,9 +7,9 @@ interface AssignCaptainModalProps {
 }
 
 export default function AssignCaptainModal({ id, name }:AssignCaptainModalProps) {
-  function assignCaptain() {
+  const assignCaptain = () => {
     console.log('assign captain', id);
-  }
+  };
 
   return (
     <Modal

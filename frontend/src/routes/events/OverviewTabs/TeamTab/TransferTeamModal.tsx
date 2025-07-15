@@ -19,14 +19,14 @@ interface TransferTeamModalProps {
 }
 
 export default function TransferTeamModal({ transferCaptain, membersList }: TransferTeamModalProps) {
-  const [newCaptain, setNewCaptain] = useState<string | undefined>(undefined);
-  const [inviteCode, setInviteCode] = useState<string>('');
+  const [ newCaptain, setNewCaptain ] = useState<string | undefined>(undefined);
+  const [ inviteCode, setInviteCode ] = useState<string>('');
 
-  function transferTeam() {
+  const transferTeam = () => {
     console.log('transferTeam action', newCaptain, inviteCode);
     // action for selecting a new captain
     // action for leaving team
-  }
+  };
 
   return (
     <Modal
@@ -56,7 +56,7 @@ export default function TransferTeamModal({ transferCaptain, membersList }: Tran
             </Select.Root>
           </>
         )}
-        <Text>{`Enter your new team\'s invite code to transfer teams.`}</Text>
+        <Text>{'Enter your new team\'s invite code to transfer teams.'}</Text>
         <TextField.Root
           placeholder="Invite Code"
           defaultValue=""

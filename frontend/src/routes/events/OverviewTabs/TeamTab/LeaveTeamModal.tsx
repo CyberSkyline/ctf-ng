@@ -18,13 +18,13 @@ interface LeaveTeamModalProps {
 }
 
 export default function LeaveTeamModal({ transferCaptain, membersList }: LeaveTeamModalProps) {
-  const [newCaptain, setNewCaptain] = useState<string | undefined>(undefined);
+  const [ newCaptain, setNewCaptain ] = useState<string | undefined>(undefined);
 
-  function leaveTeam() {
+  const leaveTeam = () => {
     console.log('leaveTeam action', newCaptain);
     // action for selecting a new captain
     // action for leaving team
-  }
+  };
 
   return (
     <Modal

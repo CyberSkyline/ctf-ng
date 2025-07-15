@@ -11,8 +11,8 @@ export default function TeamManagement() {
   const selfId = '1'; // its a me, Mario
   const inviteCode = 'httptempcode';
   const membersList = [
-    { id: '1', name: 'cj', role: 'captain' },
-    { id: '2', name: 'md', role: 'captain' },
+    { id : '1', name : 'cj', role : 'captain' },
+    { id : '2', name : 'md', role : 'captain' },
   ];
 
   const transferCaptain = true;

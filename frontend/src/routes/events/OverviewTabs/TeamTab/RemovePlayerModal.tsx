@@ -7,9 +7,9 @@ interface RemovePlayerModalProps {
 }
 
 export default function RemovePlayerModal({ id, name }:RemovePlayerModalProps) {
-  function removePlayer() {
+  const removePlayer = () => {
     console.log('remove the player', id);
-  }
+  };
 
   return (
     <Modal

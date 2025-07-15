@@ -16,7 +16,7 @@ interface ModalProps {
 export default function Modal({
   title, buttonText, children, onSubmit, onSubmitText, onSubmitColor = 'lime',
 }:ModalProps) {
-  const [open, setOpen] = useState<boolean>(false);
+  const [ open, setOpen ] = useState<boolean>(false);
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>

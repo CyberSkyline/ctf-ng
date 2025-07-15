@@ -16,7 +16,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter basename={ROUTEPREFIX}>
       <Theme
-        //appearance="dark"
+        appearance="dark"
         panelBackground="solid" // disable blur effect on surfaces for performance
         grayColor="olive"
         accentColor="lime"

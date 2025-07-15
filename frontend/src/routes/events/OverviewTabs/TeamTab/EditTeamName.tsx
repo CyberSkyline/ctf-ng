@@ -8,13 +8,13 @@ import {
 import { TbPencil } from 'react-icons/tb';
 
 export default function EditTeamName() {
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [teamName, setTeamName] = useState<string>('blah');
+  const [ isEditing, setIsEditing ] = useState<boolean>(false);
+  const [ teamName, setTeamName ] = useState<string>('blah');
 
-  function updateName() {
+  const updateName = () => {
     // api call here
     setIsEditing(false);
-  }
+  };
 
   return (
     <Box maxWidth="280px">

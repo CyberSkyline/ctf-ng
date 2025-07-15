@@ -13,7 +13,7 @@ interface AddMemberModalProps {
 }
 
 export default function AddMemberModal({ inviteCode }: AddMemberModalProps) {
-  const [open, setOpen] = useState<boolean>(false);
+  const [ open, setOpen ] = useState<boolean>(false);
   const inviteURL = `${window.location.origin}/teamSetup/invite/${inviteCode}`;
 
   return (
