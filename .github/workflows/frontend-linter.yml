@@ -20,7 +20,8 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'yarn'
-        cache-dependency-path: ./frontend/yarn.lock
+        # yarn command works with project root yarn.lock, even when in ./frontend
+        cache-dependency-path: ./yarn.lock
 
     - name: Install
       run: |
