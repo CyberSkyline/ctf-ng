@@ -1,13 +1,10 @@
 import {
   Button, Flex, Heading, Table,
 } from '@radix-ui/themes';
-import {
-  TbPlus,
-  TbUsersGroup,
-} from 'react-icons/tb';
+import { TbPlus } from 'react-icons/tb';
 import Entity from 'components/Entity';
 import { ErrorCallout } from 'components/Callouts';
-import { EventIcon } from '@/constants';
+import { EventIcon, TeamIcon } from '@/constants';
 import AdminDataList from 'components/AdminDataList';
 import { useTeamMembers, useUserTeams } from '@/hooks/team';
 import { useUserEvents } from '@/hooks/events';
@@ -33,7 +30,7 @@ function RegistrationRow({ userId, team, event }: { userId: number, team: Team, 
         <Entity label={event.name} icon={EventIcon} to={`/admin/events?id=${event.id}`} />
       </Table.Cell>
       <Table.Cell>
-        <Entity label={team.name} icon={TbUsersGroup} to={`/admin/teams?event=${team.event_id}&id=${team.id}`} />
+        <Entity label={team.name} icon={TeamIcon} to={`/admin/teams?event=${team.event_id}&id=${team.id}`} />
       </Table.Cell>
       <Table.Cell>
         <RoleBadge value={membership.role} />

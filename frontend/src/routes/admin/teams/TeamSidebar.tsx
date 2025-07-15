@@ -12,6 +12,7 @@ import { ErrorCallout, InfoCallout } from 'components/Callouts';
 import AdminSidebar from 'components/AdminSidebar';
 import RoleBadge from 'components/RoleBadge';
 import AdminDataList from 'components/AdminDataList';
+import { UserIcon } from '@/constants';
 
 export default function TeamSidebar({ entity }: { entity: Team }) {
   const { data : members, error : membersError } = useTeamMembers(entity.id);
@@ -40,7 +41,7 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
                   <Entity
                     label={member.user_name}
                     to={`/admin/users?id=${member.user_id}`}
-                    icon={TbUser}
+                    icon={UserIcon}
                   />
                 </Table.Cell>
                 <Table.Cell><RoleBadge value={member.role} /></Table.Cell>
@@ -49,11 +50,11 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
                   <Flex direction="row" align="center" justify="end" className="h-full *:!m-0">
                     <Button variant="ghost" color="red" disabled={member.role === 'captain'}>
                       <TbDoorExit />
-                      Kick
+                      Remove
                     </Button>
                     <Button variant="ghost" color="amber" disabled={member.role === 'captain'}>
                       <TbStar />
-                      Promote
+                      Assign Captain
                     </Button>
                   </Flex>
                 </Table.Cell>

@@ -2,12 +2,12 @@ import {
   Container, Tabs,
 } from '@radix-ui/themes';
 
-import { TbCube, TbStar } from 'react-icons/tb';
+import { TbStar } from 'react-icons/tb';
 import { useSearchParams } from 'react-router';
 
 import EventHeader from 'components/EventHeader';
 import HeaderContainer from 'components/HeaderContainer';
-import { TeamIcon } from '@/constants';
+import { ChallengeIcon, TeamIcon } from '@/constants';
 import LeaderboardTab from './OverviewTabs/LeaderboardTab';
 import ChallengesTab from './OverviewTabs/ChallengesTab';
 import TeamTab from './OverviewTabs/TeamTab';
@@ -38,7 +38,7 @@ export default function Overview() {
         <Container size="2" mb="4">
           <Tabs.List className="*:!basis-0 *:!grow" loop={false}>
             <Tabs.Trigger value="challenges">
-              <TbCube className="mr-1" />
+              <ChallengeIcon className="mr-1" />
               Challenges
             </Tabs.Trigger>
             <Tabs.Trigger value="leaderboard">
