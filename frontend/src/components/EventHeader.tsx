@@ -1,7 +1,9 @@
 import {
-  Heading, Text, Flex, Box, AspectRatio,
+  Heading, Flex, Box, AspectRatio,
 } from '@radix-ui/themes';
+import type { ReactNode } from 'react';
 import EventBadge from './EventBadge';
+import RadixMarkdown from './RadixMarkdown';
 
 export default function EventHeader({
   name,
@@ -12,7 +14,7 @@ export default function EventHeader({
     name: string;
     description: string;
     state: 'upcoming' | 'waiting' | 'live' | 'ended';
-    children?: React.ReactNode;
+    children?: ReactNode;
 }) {
   return (
     <Flex direction="row" gap="6" align="start">
@@ -28,7 +30,9 @@ export default function EventHeader({
         )}
         <Box>
           <Heading size="9">{name}</Heading>
-          <Text as="p" color="gray">{description}</Text>
+          <RadixMarkdown>
+            {description}
+          </RadixMarkdown>
         </Box>
         {children}
       </Flex>

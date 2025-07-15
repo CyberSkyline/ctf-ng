@@ -1,82 +1,106 @@
-import { Callout, Flex, Heading } from '@radix-ui/themes';
-import { TbInfoCircle } from 'react-icons/tb';
-import { AgGridReact } from 'ag-grid-react';
 import type { ColDef } from 'ag-grid-community';
-import { radixTheme } from '@/grid';
+import AdminGrid from 'components/AdminGrid';
+import { ErrorCallout } from 'components/Callouts';
+import type { Team } from '@/types';
+import { useEvent } from '@/hooks/events';
+import Entity from 'components/Entity';
+import { useAllTeams } from '@/hooks/team';
+import { useSearchParams } from 'react-router';
+import { EventIcon } from '@/constants';
+import MemberCountBadge from 'components/MemberCountBadge';
+import TeamSidebar from './TeamSidebar';
+
+function EventCellRenderer({ value }: { value: number }) {
+  const { data, error, isLoading } = useEvent(value);
+
+  if (isLoading) {
+    return <span>Loading...</span>;
+  }
+
+  if (error) {
+    return (
+      <span>
+        Error:
+        {error.message}
+      </span>
+    );
+  }
+
+  return (
+    <Entity icon={EventIcon} to={`/admin/events?id=${value}`} label={data?.name ?? 'Unknown Event'} />
+  );
+}
 
 /**
  * Team management page for admins.
  */
 export default function AdminTeams() {
-  const rowData = [
-    {
-      name : 'Team 1234', event : 'pc7-teams', status : 'Started', members : '5/5', submissions : '10', score : '150', challenges : '3',
-    },
-    {
-      name : 'Team 5678', event : 'pc7-teams', status : 'Not Started', members : '2/5', submissions : '0', score : '0', challenges : '0',
-    },
-    {
-      name : 'user123', event : 'pc7-individual', status : 'Started', members : '1/1', submissions : '5', score : '75', challenges : '2',
-    },
-  ];
+  const [ searchParams ] = useSearchParams();
+  const eventId = searchParams.get('event');
+
+  const { data, error, isLoading } = useAllTeams();
+
+  if (error) {
+    return <ErrorCallout>{error.message}</ErrorCallout>;
+  }
+
+  const rowData = data ?? [];
+
   const colDefs: ColDef<typeof rowData[number]>[] = [
-    { field : 'name' },
-    { field : 'event' },
-    { field : 'status', width : 150 },
-    { field : 'members', width : 100 },
-    { field : 'submissions' },
-    { field : 'score', width : 100 },
-    { field : 'challenges', headerName : 'Active Challenges' },
+    {
+      field : 'name',
+      width : 250,
+      filter : true,
+      floatingFilter : true,
+    },
+    {
+      field : 'event_id',
+      headerName : 'Event',
+      width : 200,
+      filter : 'agNumberColumnFilter',
+      floatingFilter : true,
+      cellRenderer : EventCellRenderer,
+    },
+    {
+      headerName : 'Members',
+      width : 100,
+      field : 'member_count',
+      cellRenderer : (params: { data: Team }) => MemberCountBadge({ team : params.data }),
+      filter : true,
+      floatingFilter : true,
+    },
+    {
+      field : 'ranked',
+      width : 100,
+      filter : true,
+      floatingFilter : true,
+    },
+    {
+      field : 'invite_code',
+      headerName : 'Invite Code',
+      width : 300,
+      filter : true,
+      floatingFilter : true,
+    },
   ];
 
   return (
-    <Flex direction="row" gap="4" className="h-full w-full">
-      <AgGridReact
-        className="grow basis-2/3"
-        theme={radixTheme}
-        rowData={rowData}
-        columnDefs={colDefs}
-        gridOptions={{
-          rowSelection : {
-            mode : 'singleRow',
-            checkboxes : false,
-            enableClickSelection : true,
+    <AdminGrid
+      rowData={rowData}
+      columnDefs={colDefs}
+      loading={isLoading}
+      getRowId={(params) => params.data.id.toString()}
+      initialState={{
+        filter : {
+          filterModel : {
+            event_id : {
+              type : 'equals',
+              filter : eventId ?? '',
+            },
           },
-        }}
-      />
-      <Flex direction="column" gap="4" className="grow basis-1/3">
-        <Heading>Members</Heading>
-        <Callout.Root variant="surface" color="jade">
-          <Callout.Icon>
-            <TbInfoCircle />
-          </Callout.Icon>
-          <Callout.Text>
-            List of team members linking to user entries. Also controls to add/drop team members.
-          </Callout.Text>
-        </Callout.Root>
-
-        <Heading>Submissions</Heading>
-        <Callout.Root variant="surface" color="jade">
-          <Callout.Icon>
-            <TbInfoCircle />
-          </Callout.Icon>
-          <Callout.Text>
-            Recent flag submissions made by the team.
-          </Callout.Text>
-        </Callout.Root>
-
-        <Heading>
-          Challenges
-        </Heading>
-        <Callout.Root variant="surface" color="jade">
-          <Callout.Icon>
-            <TbInfoCircle />
-          </Callout.Icon>
-          <Callout.Text>
-            Challenge instances provisioned for this team.
-          </Callout.Text>
-        </Callout.Root>
-      </Flex>
-    </Flex>
+        },
+      }}
+      sidebarComponent={TeamSidebar}
+    />
   );
 }

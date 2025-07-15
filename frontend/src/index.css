@@ -25,3 +25,19 @@
     --default-font-family: InterVariable, sans-serif;
   }
 }
+
+form label {
+  @apply text-sm text-(--gray-11);
+}
+
+form label[data-invalid="true"] {
+  @apply text-(--red-11);
+}
+
+form span {
+  @apply text-(--red-11) block;
+}
+
+[data-invalid="true"] .rt-TextFieldRoot {
+  box-shadow: inset 0 0 0 var(--text-field-border-width) var(--red-a7);
+}

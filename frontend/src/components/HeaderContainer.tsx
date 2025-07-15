@@ -1,7 +1,8 @@
 import { Container } from '@radix-ui/themes';
+import type { ReactNode } from 'react';
 
 export default function HeaderContainer({ children = undefined }: {
-  children?: React.ReactNode
+  children?: ReactNode
 }) {
   return (
     children && (

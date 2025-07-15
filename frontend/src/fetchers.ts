@@ -31,8 +31,27 @@ async function parseResponseData(res: Response) {
 
   // At this point, we should have a success/failure JSON response from the API.
   if (!res.ok) {
-    // If the response indicates failure, throw it as an error.
-    throw new Error((parsedData as { message: string }).message);
+    // Failures can look a little different depending on where they're coming from.
+    if (
+      typeof parsedData === 'object'
+      && parsedData !== null
+      && 'message' in parsedData
+    ) {
+      // If the response has a message field, use it as the error message.
+      throw new Error((parsedData as { message: string }).message);
+    } else if (
+      typeof parsedData === 'object'
+      && parsedData !== null
+      && 'errors' in parsedData
+    ) {
+      // If the response has an errors field, join the error messages.
+      throw new Error(
+        Object.values((parsedData as { errors: Record<string, string> }).errors).join(', '),
+      );
+    } else {
+      // If no specific error message is provided, throw a generic error.
+      throw new Error(`API request failed with status ${res.status}`);
+    }
   }
 
   // If the response indicates success, return the data.

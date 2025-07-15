@@ -1,9 +1,5 @@
-import {
-  Callout, Flex,
-} from '@radix-ui/themes';
-import {
-  TbAlertTriangle,
-} from 'react-icons/tb';
+import { Flex } from '@radix-ui/themes';
+import { WarningCallout } from 'components/Callouts';
 import AdminEventCard from './AdminEventCard';
 import AdminProvisionerCard from './AdminProvisionerCard';
 import AdminActivityCard from './AdminActivityCard';
@@ -15,20 +11,9 @@ import AdminOverviewCard from './AdminOverviewCard';
 export default function AdminDashboard() {
   return (
     <>
-      <Callout.Root
-        color="amber"
-        variant="surface"
-        mb="4"
-      >
-        <Callout.Icon>
-          <TbAlertTriangle />
-        </Callout.Icon>
-        <Callout.Text>
-          Something bad happened!
-        </Callout.Text>
-      </Callout.Root>
+      <WarningCallout>Something bad happened!</WarningCallout>
 
-      <Flex direction={{ initial : 'column', lg : 'row' }} gap="4">
+      <Flex direction={{ initial : 'column', lg : 'row' }} gap="4" mt="4">
         <Flex direction="column" gap="4" className="flex-grow basis-1/2 h-full">
           <AdminOverviewCard />
           <AdminActivityCard />

@@ -1,9 +1,9 @@
+import { EventIcon, TeamIcon, UserIcon } from '@/constants';
 import { Card, Flex } from '@radix-ui/themes';
 import { NavigationMenu } from 'radix-ui';
 import type { IconType } from 'react-icons';
 import {
-  TbBell, TbCalendarEvent, TbChartPie, TbLayoutDashboard, TbMessage,
-  TbPackages, TbSettings, TbUser, TbUsersGroup,
+  TbBell, TbBraces, TbChartPie, TbLayoutDashboard, TbMessage, TbPackages, TbSettings,
 } from 'react-icons/tb';
 import { NavLink, Outlet } from 'react-router';
 
@@ -25,8 +25,12 @@ function NavItem({
         <NavLink
           to={to}
           end
-          className="flex items-center gap-2 [&[aria-current='page']]:bg-[var(--lime-9)]
-            [&[aria-current='page']]:text-[var(--accent-contrast)] p-2 rounded overflow-hidden"
+          className="
+            flex items-center gap-2
+            [&[aria-current='page']]:bg-[var(--lime-9)]
+            [&[aria-current='page']]:text-[var(--accent-contrast)]
+            p-2 rounded overflow-hidden
+          "
         >
           {Icon && <Icon className="text-xl shrink-0" />}
           <span>{label}</span>
@@ -50,13 +54,14 @@ export default function AdminLayout() {
             <NavigationMenu.List>
               <NavItem to="/admin" label="Dashboard" icon={TbLayoutDashboard} />
               <NavItem to="/admin/reports" label="Reports" icon={TbChartPie} />
-              <NavItem to="/admin/events" label="Events" icon={TbCalendarEvent} />
+              <NavItem to="/admin/events" label="Events" icon={EventIcon} />
               <NavItem to="/admin/containers" label="Containers" icon={TbPackages} />
-              <NavItem to="/admin/users" label="Users" icon={TbUser} />
-              <NavItem to="/admin/teams" label="Teams" icon={TbUsersGroup} />
+              <NavItem to="/admin/users" label="Users" icon={UserIcon} />
+              <NavItem to="/admin/teams" label="Teams" icon={TeamIcon} />
               <NavItem to="/admin/notifications" label="Notifications" icon={TbBell} />
               <NavItem to="/admin/tickets" label="Tickets" icon={TbMessage} />
               <NavItem to="/admin/settings" label="Settings" icon={TbSettings} />
+              <NavItem to="/admin/api-test" label="API Test" icon={TbBraces} />
             </NavigationMenu.List>
           </NavigationMenu.Root>
         </Card>
