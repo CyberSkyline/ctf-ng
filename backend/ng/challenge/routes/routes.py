@@ -10,12 +10,12 @@ from ...core.middleware import (
 )
 from ..models.Challenge import Challenge, ChallengeYaml
 
-challenge_namespace = Namespace("challenges", description="challenge managment")
+challenge_admin_namespace = Namespace("challenges", description="challenge managment")
 
 
-@challenge_namespace.route("/import")
+@challenge_admin_namespace.route("/import")
 class ImportChallenge(Resource):
-    @challenge_namespace.doc(
+    @challenge_admin_namespace.doc(
         description="Import a ng yaml definition",
         responses={
             200: "Success",
@@ -26,6 +26,9 @@ class ImportChallenge(Resource):
     def post(self, json_data):
         payload = base64.urlsafe_b64decode(json_data["yaml"])
 
-        parsed_yaml = asdict(parse_compose_string(payload.decode("utf-8")), filter=lambda y, x: x is not None)
-
-        return Challenge.create_from_yaml(yaml=cast(ChallengeYaml, parsed_yaml))
+        try:
+            parsed_yaml = asdict(parse_compose_string(payload.decode("utf-8")), filter=lambda y, x: x is not None)
+            return Challenge.create_from_yaml(yaml=cast(ChallengeYaml, parsed_yaml))
+        except Exception as e:
+            print(f"Error parsing YAML: {e}")
+            return {"error": "Invalid YAML format"}, 400
