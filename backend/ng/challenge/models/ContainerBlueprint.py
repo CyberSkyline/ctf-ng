@@ -113,6 +113,7 @@ class ContainerBlueprint(db.Model):
             )
             blueprint = cls(**validated_data)
             db.session.add(blueprint)
+            db.session.flush()
             if commit:
                 db.session.commit()
             return blueprint

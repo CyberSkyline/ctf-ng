@@ -73,6 +73,7 @@ class Hint(db.Model):
             )
             hint = cls(**validated_data)
             db.session.add(hint)
+            db.session.flush()
             if commit:
                 db.session.commit()
             return hint

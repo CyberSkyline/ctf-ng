@@ -21,42 +21,6 @@ class SerializedChallenge(TypedDict):
     summary: str = ""
 
 
-class QuestionYaml(TypedDict):
-    name: str
-    body: str
-    points: int
-    answer: str
-    max_attempts: int
-
-
-class HintYaml(TypedDict):
-    body: str
-    preview: str = ""
-    deduction: int = 0
-
-
-class ServiceYaml(TypedDict):
-    image: str
-    hostname: str
-    networks: list[str]
-
-
-class NetworkYaml(TypedDict):
-    internal: bool
-
-
-class ChallengeYaml(TypedDict):
-    name: str
-    icon: str = ""
-    description: str = ""
-    summary: str = ""
-    questions: list[QuestionYaml]
-    hints: list[HintYaml]
-    tags: list[str]
-    services: dict[str, ServiceYaml]
-    networks: dict[str, NetworkYaml]
-
-
 class Challenge(db.Model):
     __tablename__ = "ng_challenges"
 
@@ -69,6 +33,24 @@ class Challenge(db.Model):
     hints = db.relationship("Hint", back_populates="challenge", cascade="all, delete-orphan")
     tags = db.relationship("ChallengeTag", back_populates="challenge", cascade="all, delete-orphan")
     questions = db.relationship("Question", back_populates="challenge", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<Challenge {self.id}, name={self.name}, icon={self.icon}>"
+
+    def serialize(self, include_admin_fields=False) -> SerializedChallenge:
+        """
+        Serialize the challenge to a dictionary.
+        :return: A dictionary representation of the challenge.
+        """
+        data = {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description or "",
+            "icon": self.icon or "",
+            "summary": self.summary or "",
+        }
+
+        return SerializedChallenge(**data)
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
@@ -130,43 +112,7 @@ class Challenge(db.Model):
             )
             challenge = cls(**validated_data)
             db.session.add(challenge)
-            if commit:
-                db.session.commit()
-            return challenge
-        except Exception as e:
-            db.session.rollback()
-            raise e
-
-    @classmethod
-    def create_from_yaml(cls, yaml: ChallengeYaml, commit=True) -> Challenge:
-        """
-        Create a challenge from a YAML file.
-        :param commit: Whether to commit the session after adding the challenge.
-        :param kwargs: Keyword arguments for challenge attributes.
-        :return: The created challenge instance.
-        """
-        from .ChallengeTag import ChallengeTag
-        from .ContainerBlueprint import ContainerBlueprint
-        from .Hint import Hint
-
-        try:
-            challenge = cls.create_challenge(
-                name=yaml["name"],
-                icon=yaml["icon"],
-                description=yaml["description"],
-                summary=yaml["summary"],
-                commit=False,
-            )
-
-            for hint in yaml["hints"]:
-                Hint.create_hint(challenge_id=challenge.id, **hint, commit=False)
-
-            for tag in yaml["tags"]:
-                ChallengeTag.create_tag(challenge_id=challenge.id, name=tag, commit=False)
-
-            for blueprint in yaml["services"].items():
-                ContainerBlueprint.create_container_blueprint(challenge_id=challenge.id, **blueprint[1], commit=False)
-
+            db.session.flush()
             if commit:
                 db.session.commit()
             return challenge

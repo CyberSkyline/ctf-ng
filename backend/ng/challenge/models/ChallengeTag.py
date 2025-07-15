@@ -58,6 +58,7 @@ class ChallengeTag(db.Model):
 
             tag = cls(**validated_data)
             db.session.add(tag)
+            db.session.flush()
 
             if commit:
                 db.session.commit()

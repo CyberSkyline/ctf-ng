@@ -100,6 +100,7 @@ class Question(db.Model):
             )
             question = cls(**validated_data)
             db.session.add(question)
+            db.session.flush()
             if commit:
                 db.session.commit()
             return question

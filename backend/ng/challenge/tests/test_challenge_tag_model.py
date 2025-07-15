@@ -157,13 +157,6 @@ class Test_Create_Tag:
         tags = ChallengeTag.query.filter_by(name="test").all()
         assert len(tags) == 0
 
-    def test_create_tag_with_commit_false_should_not_commit(self, challenge):
-        """Test that tag is not committed when commit=False."""
-        tag = ChallengeTag.create_tag(challenge_id=challenge.id, name="reversing", commit=False)
-
-        # Tag should exist in session but not be committed
-        assert tag.id is None  # ID is only assigned after commit
-
     def test_challenge_tag_repr_should_return_correct_format(self, challenge):
         """Test that __repr__ returns the expected format."""
         tag = ChallengeTag.create_tag(challenge_id=challenge.id, name="forensics", commit=True)
