@@ -164,6 +164,7 @@ export default function EventDataForm({
             type="number"
             defaultValue={initial?.max_team_size.toString() || '1'}
             min={1}
+            max={8}
             required
           />
         </Form.Control>
