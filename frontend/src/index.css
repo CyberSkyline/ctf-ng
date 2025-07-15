@@ -35,7 +35,7 @@ form label[data-invalid="true"] {
 }
 
 form span {
-  @apply text-(--red-11);
+  @apply text-(--red-11) block;
 }
 
 [data-invalid="true"] .rt-TextFieldRoot {
