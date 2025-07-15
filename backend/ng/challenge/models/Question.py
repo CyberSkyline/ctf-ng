@@ -69,9 +69,10 @@ class Question(db.Model):
             required=True,
             friendly_name="Max Attempts",
         )
-        validator.validate_positive_integer(
+        validator.validate_model_id(
             data,
             "challenge_id",
+            "Challenge",
             required=True,
             friendly_name="Challenge ID",
         )

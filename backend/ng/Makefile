@@ -48,7 +48,7 @@ test-support:
 	$(PYTHON_EXEC) -m pytest ./support/tests/ -v
 
 test-utils:
-	$(PYTHON_EXEC) -m pytest ./core/testing/system/ -v
+	$(PYTHON_EXEC) -m pytest ./core/tests/system/ -v
 
 test-challenge:
 	$(PYTHON_EXEC) -m pytest -s challenge/tests/ -v

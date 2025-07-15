@@ -51,9 +51,10 @@ class Hint(db.Model):
             required=True,
             friendly_name="Hint Deduction",
         )
-        validator.validate_positive_integer(
+        validator.validate_model_id(
             data,
             "challenge_id",
+            "Challenge",
             required=True,
             friendly_name="Challenge ID",
         )

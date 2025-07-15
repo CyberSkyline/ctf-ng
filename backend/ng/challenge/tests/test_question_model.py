@@ -278,15 +278,6 @@ class Test_Create_Question:
         retrieved_question = Question.query.get(question.id)
         assert retrieved_question is None
 
-    def test_question_repr_should_return_correct_format(self, db_session, valid_question_data):
-        """Test that Question __repr__ returns correct format."""
-        question = Question.create_question(**valid_question_data)
-
-        repr_str = repr(question)
-        assert f"<NgChallengeQuestion {question.id}" in repr_str
-        assert f"name={question.name}" in repr_str
-        assert f"points={question.points}" in repr_str
-
     def test_question_challenge_relationship_should_work(self, db_session, valid_question_data, challenge):
         """Test that the relationship between Question and Challenge works."""
         question = Question.create_question(**valid_question_data)

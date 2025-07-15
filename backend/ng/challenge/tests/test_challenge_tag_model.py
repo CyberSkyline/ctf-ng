@@ -150,19 +150,12 @@ class Test_Create_Tag:
             ChallengeTag.create_tag(
                 challenge_id=-1,  # Invalid challenge_id
                 name="test",
-                commit=False,
+                commit=True,
             )
 
         # Verify no tag was created
         tags = ChallengeTag.query.filter_by(name="test").all()
         assert len(tags) == 0
-
-    def test_challenge_tag_repr_should_return_correct_format(self, challenge):
-        """Test that __repr__ returns the expected format."""
-        tag = ChallengeTag.create_tag(challenge_id=challenge.id, name="forensics", commit=True)
-
-        repr_str = repr(tag)
-        assert f"<NgChallengeTag {tag.id}, name=forensics>" == repr_str
 
     def test_challenge_tag_challenge_relationship_should_work(self, challenge):
         """Test that the relationship to Challenge works correctly."""

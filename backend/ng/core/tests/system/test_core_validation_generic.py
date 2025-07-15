@@ -84,11 +84,11 @@ class TestDatetimeValidationEdgeCases:
         """Test datetime past validation."""
         validator = BaseValidator()
 
-        future_date = (utc_now() + timedelta(days=1)).isoformat() + "Z"
+        future_date = (utc_now() + timedelta(days=1)).isoformat()
         dt = validator.validate_datetime({"time": future_date}, "time", allow_past=False)
         assert dt is not None
 
-        past_date = (utc_now() - timedelta(days=1)).isoformat() + "Z"
+        past_date = (utc_now() - timedelta(days=1)).isoformat()
         dt = validator.validate_datetime({"time": past_date}, "time", allow_past=False)
         assert dt is None
         assert "time" in validator.errors

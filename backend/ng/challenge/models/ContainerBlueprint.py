@@ -11,8 +11,6 @@ MAX_CONTAINER_BLUEPRINT_MEM_LIMIT_LENGTH = 256
 MAX_CONTAINER_BLUEPRINT_MEMSWAP_LIMIT_LENGTH = 256
 MAX_CONTAINER_BLUEPRINT_USER_LENGTH = 256
 
-DEFAULT_CONTAINER_BLUEPRINT_CPUS = 1.0
-
 
 class ContainerBlueprint(db.Model):
     __tablename__ = "ng_container_blueprints"
@@ -59,12 +57,27 @@ class ContainerBlueprint(db.Model):
             required=True,
             friendly_name="Container Hostname",
         )
-        validator.validate_positive_integer(
+        validator.validate_model_id(
             data,
             "challenge_id",
+            "Challenge",
             required=True,
             friendly_name="Challenge ID",
         )
+        validator.validate_boolean(
+            data,
+            "stdin_open",
+            required=False,
+            friendly_name="Stdin Open",
+        )
+        validator.validate_boolean(
+            data,
+            "tty",
+            required=False,
+            friendly_name="TTY",
+        )
+
+        # TODO - Validate all of the remaining optional fields
 
         is_valid, errors, parsed_data = validator.is_valid()
 
@@ -88,7 +101,7 @@ class ContainerBlueprint(db.Model):
         cap_add: list[str] | None = None,
         mem_limit: str | None = None,
         memswap_limit: str | None = None,
-        cpus: float = DEFAULT_CONTAINER_BLUEPRINT_CPUS,
+        cpus: float | None = None,
         user: str | None = None,
         commit=True,
     ):

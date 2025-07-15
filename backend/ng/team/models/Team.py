@@ -29,7 +29,7 @@ class SerializedTeam(TypedDict):
     member_count: int
     ranked: bool
     locked: bool
-    seed: str
+    seed: str | None
     invite_code: str | None  # Optional for non-admin views
 
 
@@ -83,11 +83,11 @@ class Team(db.Model):
             "member_count": self.member_count,
             "ranked": self.ranked,
             "locked": self.locked,
-            "seed": self.seed,
         }
 
         if include_admin_fields:
             data["invite_code"] = self.invite_code
+            data["seed"] = self.seed
 
         return SerializedTeam(**data)
 

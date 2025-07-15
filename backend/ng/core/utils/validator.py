@@ -275,9 +275,6 @@ class BaseValidator:
                 self.errors[field] = ValidationErrorMessages.FIELD_DATETIME_MUST_BE_UTC.format(field=friendly_name)
                 return None
 
-            # strip tzinfo to allow using this value with naive datetimes from utc_now/db
-            dt_value = dt_value.replace(tzinfo=None)
-
             if not allow_past and dt_value < utc_now():
                 self.errors[field] = ValidationErrorMessages.FIELD_DATETIME_PAST.format(field=friendly_name)
                 return None

@@ -28,23 +28,23 @@ def import_challenge_from_yaml(json_data) -> Challenge:
     try:
         challenge_yaml = yaml["challenge"]
         challenge = Challenge.create_challenge(
-            name=challenge_yaml["name"],
-            icon=challenge_yaml["icon"],
-            description=challenge_yaml["description"],
-            summary=challenge_yaml["summary"],
+            name=challenge_yaml.get("name", None),
+            icon=challenge_yaml.get("icon", None),
+            description=challenge_yaml.get("description", None),
+            summary=challenge_yaml.get("summary", None),
             commit=False,
         )
 
-        for hint in challenge_yaml["hints"]:
+        for hint in challenge_yaml.get("hints", []):
             Hint.create_hint(challenge_id=challenge.id, **hint, commit=False)
 
-        for tag in challenge_yaml["tags"]:
+        for tag in challenge_yaml.get("tags", []):
             ChallengeTag.create_tag(challenge_id=challenge.id, name=tag, commit=False)
 
-        for question in challenge_yaml["questions"]:
+        for question in challenge_yaml.get("questions", []):
             Question.create_question(challenge_id=challenge.id, **question, commit=False)
 
-        services_yaml = yaml["services"]
+        services_yaml = yaml.get("services", {})
         for blueprint in services_yaml.items():
             ContainerBlueprint.create_container_blueprint(challenge_id=challenge.id, **blueprint[1], commit=False)
 

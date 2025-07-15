@@ -1,3 +1,3 @@
-"""
-User domain data models.
-"""
+from .User import User
+
+__all__ = ["User"]
