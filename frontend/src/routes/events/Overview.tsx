@@ -1,5 +1,6 @@
 import {
-  Container, Tabs,
+  Container,
+  Tabs,
 } from '@radix-ui/themes';
 
 import { TbStar } from 'react-icons/tb';
