@@ -3,11 +3,13 @@ Hypothetical Validation tests for event creation
 """
 
 from datetime import timedelta
+
 import pytest
-from ...core.exceptions import ValidationError
-from ..models.Event import Event
+
 from ... import config
+from ...core.exceptions import ValidationError
 from ...core.utils import utc_now
+from ..models.Event import Event
 
 
 class TestEventTimeConstraints:
@@ -17,8 +19,8 @@ class TestEventTimeConstraints:
         """Test that start_time < end_time constraint is understood."""
 
         now = utc_now()
-        future_start = (now + timedelta(hours=1)).isoformat()
-        future_end = (now + timedelta(hours=2)).isoformat()
+        future_start = (now + timedelta(hours=1)).isoformat() + "Z"
+        future_end = (now + timedelta(hours=2)).isoformat() + "Z"
 
         result = Event.validate(
             {
@@ -46,7 +48,7 @@ class TestEventTimeConstraints:
         """Test that both times must be provided together or neither."""
 
         now = utc_now()
-        future_time = (now + timedelta(hours=1)).isoformat()
+        future_time = (now + timedelta(hours=1)).isoformat() + "Z"
 
         result = Event.validate({"name": "Test Event", "max_team_size": 4})
         assert result is not None
@@ -205,8 +207,8 @@ class TestEventValidationEdgeCases:
         now = utc_now()
 
         # Very close times (1 second apart)
-        start_time = (now + timedelta(hours=1)).isoformat()
-        end_time = (now + timedelta(hours=1, seconds=1)).isoformat()
+        start_time = (now + timedelta(hours=1)).isoformat() + "Z"
+        end_time = (now + timedelta(hours=1, seconds=1)).isoformat() + "Z"
 
         result = Event.validate(
             {
@@ -219,7 +221,7 @@ class TestEventValidationEdgeCases:
         assert result is not None
 
         # Exactly same times (should fail)
-        same_time = (now + timedelta(hours=1)).isoformat()
+        same_time = (now + timedelta(hours=1)).isoformat() + "Z"
         with pytest.raises(ValidationError) as exc_info:
             Event.validate(
                 {
@@ -232,7 +234,7 @@ class TestEventValidationEdgeCases:
         assert "end_time" in exc_info.value.errors
 
         # Long duration event
-        long_end = (now + timedelta(days=365)).isoformat()
+        long_end = (now + timedelta(days=365)).isoformat() + "Z"
         result = Event.validate(
             {
                 "name": "Long Event",
@@ -262,8 +264,8 @@ class TestEventValidationEdgeCases:
     def test_comprehensive_validation_combinations(self):
         """Test various field combinations and their validation."""
         now = utc_now()
-        future_start = (now + timedelta(hours=2)).isoformat()
-        future_end = (now + timedelta(hours=4)).isoformat()
+        future_start = (now + timedelta(hours=2)).isoformat() + "Z"
+        future_end = (now + timedelta(hours=4)).isoformat() + "Z"
 
         # All fields provided
         result = Event.validate(
@@ -305,8 +307,8 @@ class TestEventAdvancedDatetimeValidation:
             {
                 "name": "Timezone Event",
                 "max_team_size": 4,
-                "start_time": future_start_tz.isoformat(),
-                "end_time": future_end_tz.isoformat(),
+                "start_time": future_start_tz.isoformat() + "Z",
+                "end_time": future_end_tz.isoformat() + "Z",
             }
         )
         assert result is not None
@@ -320,10 +322,10 @@ class TestEventAdvancedDatetimeValidation:
         base_end = now + timedelta(hours=2)
 
         valid_formats = [
-            (base_start.isoformat(), base_end.isoformat()),
+            (base_start.isoformat() + "Z", base_end.isoformat() + "Z"),
             (
-                base_start.strftime("%Y-%m-%dT%H:%M:%S"),
-                base_end.strftime("%Y-%m-%dT%H:%M:%S"),
+                base_start.strftime("%Y-%m-%dT%H:%M:%S") + "Z",
+                base_end.strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             ),
         ]
 
