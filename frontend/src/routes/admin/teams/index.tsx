@@ -1,6 +1,3 @@
-import {
-  Badge,
-} from '@radix-ui/themes';
 import type { ColDef } from 'ag-grid-community';
 import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
@@ -9,40 +6,9 @@ import { useEvent } from '@/hooks/events';
 import Entity from 'components/Entity';
 import { useAllTeams } from '@/hooks/team';
 import { useSearchParams } from 'react-router';
-import type { accentColors } from '@radix-ui/themes/props';
 import { EventIcon } from '@/constants';
+import MemberCountBadge from 'components/MemberCountBadge';
 import TeamSidebar from './TeamSidebar';
-
-function MemberCountBadge({ team }: { team: Team }) {
-  const { data : event } = useEvent(team.event_id);
-
-  if (!event) {
-    return <Badge variant="soft" color="gray">Loading...</Badge>;
-  }
-
-  let badgeColor: (typeof accentColors[number]) = 'lime';
-  if (team.member_count > event.max_team_size) {
-    badgeColor = 'red';
-  } else if (team.member_count === 1) {
-    if (event.max_team_size > 1) {
-      badgeColor = 'red';
-    } else {
-      badgeColor = 'jade';
-    }
-  } else if (team.member_count === event.max_team_size) {
-    badgeColor = 'amber';
-  } else if (team.member_count === 0) {
-    badgeColor = 'red';
-  }
-
-  return (
-    <Badge variant="soft" color={badgeColor} size="2">
-      {team.member_count}
-      /
-      {event.max_team_size}
-    </Badge>
-  );
-}
 
 function EventCellRenderer({ value }: { value: number }) {
   const { data, error, isLoading } = useEvent(value);
