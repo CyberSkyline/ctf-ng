@@ -2,7 +2,7 @@ import {
   Button, Dialog, Flex,
 } from '@radix-ui/themes';
 import { useState, type ReactNode } from 'react';
-import { FaXmark } from 'react-icons/fa6';
+import { TbX } from 'react-icons/tb';
 
 interface ModalProps {
   title: string,
@@ -33,7 +33,7 @@ export default function Modal({
           </Dialog.Title>
           <Dialog.Close>
             <button type="button" aria-label="Close" className="absolute left-auto right-4 top-4">
-              <FaXmark />
+              <TbX />
             </button>
           </Dialog.Close>
         </Flex>

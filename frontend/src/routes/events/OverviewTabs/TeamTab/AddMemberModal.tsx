@@ -6,7 +6,7 @@ import {
   Flex,
   TextField,
 } from '@radix-ui/themes';
-import { FaXmark } from 'react-icons/fa6';
+import { TbX } from 'react-icons/tb';
 
 interface AddMemberModalProps {
   inviteCode: string,
@@ -32,7 +32,7 @@ export default function AddMemberModal({ inviteCode }: AddMemberModalProps) {
             </Dialog.Title>
             <Dialog.Close>
               <button type="button" aria-label="Close" className="absolute left-auto right-4 top-4">
-                <FaXmark />
+                <TbX />
               </button>
             </Dialog.Close>
           </Flex>
