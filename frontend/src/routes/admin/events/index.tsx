@@ -1,6 +1,4 @@
-import {
-  Button, Dialog, Flex,
-} from '@radix-ui/themes';
+import { Button, Dialog, Flex } from '@radix-ui/themes';
 import type { ColDef } from 'ag-grid-community';
 import { TbPlus } from 'react-icons/tb';
 import { createEvent, useAllEvents } from '@/hooks/events';

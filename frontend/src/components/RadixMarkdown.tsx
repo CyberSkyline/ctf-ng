@@ -1,6 +1,13 @@
 import ReactMarkdown, { type Components } from 'react-markdown';
 import {
-  Text, Heading, Link, Table, Code, Em, Strong, Blockquote,
+  Text,
+  Heading,
+  Link,
+  Table,
+  Code,
+  Em,
+  Strong,
+  Blockquote,
 } from '@radix-ui/themes';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';

@@ -1,6 +1,9 @@
 import Statistic from 'components/Statistic';
 import {
-  Card, Flex, Heading, Table,
+  Card,
+  Flex,
+  Heading,
+  Table,
 } from '@radix-ui/themes';
 
 export default function AdminProvisionerCard() {

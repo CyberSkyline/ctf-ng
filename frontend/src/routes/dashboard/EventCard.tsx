@@ -1,5 +1,11 @@
 import {
-  AspectRatio, Box, Card, Flex, Heading, Inset, Text,
+  AspectRatio,
+  Box,
+  Card,
+  Flex,
+  Heading,
+  Inset,
+  Text,
 } from '@radix-ui/themes';
 import { Link } from 'react-router';
 import type { accentColors } from '@radix-ui/themes/props';

@@ -1,10 +1,6 @@
 import { useState } from 'react';
 import { map } from 'lodash';
-import {
-  Flex,
-  Text,
-  Select,
-} from '@radix-ui/themes';
+import { Flex, Text, Select } from '@radix-ui/themes';
 import Modal from 'components/Modal';
 
 type memberListType = {

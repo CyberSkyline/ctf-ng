@@ -1,6 +1,4 @@
-import {
-  Card, Grid, Heading,
-} from '@radix-ui/themes';
+import { Card, Grid, Heading } from '@radix-ui/themes';
 import { InfoCallout } from 'components/Callouts';
 
 /**

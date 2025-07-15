@@ -1,5 +1,8 @@
 import {
-  Heading, Flex, Box, AspectRatio,
+  Heading,
+  Flex,
+  Box,
+  AspectRatio,
 } from '@radix-ui/themes';
 import type { ReactNode } from 'react';
 import EventBadge from './EventBadge';

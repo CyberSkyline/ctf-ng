@@ -1,5 +1,11 @@
 import {
-  Box, Button, Card, Flex, Heading, Separator, Text,
+  Box,
+  Button,
+  Card,
+  Flex,
+  Heading,
+  Separator,
+  Text,
 } from '@radix-ui/themes';
 import { TbArrowLeft } from 'react-icons/tb';
 import { useNavigate } from 'react-router';
