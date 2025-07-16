@@ -19,6 +19,6 @@ class ImportChallenge(Resource):
         },
     )
     @admin_endpoint(json_required=True)
-    def post(self, json_data):
+    def post(self, json_data, **kwargs):
         challenge = import_challenge_from_yaml(json_data)
         return success_response(challenge)

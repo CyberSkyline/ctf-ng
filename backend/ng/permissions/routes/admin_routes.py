@@ -13,8 +13,6 @@ permissions_admin_namespace = Namespace("/admin/permissions", description="Permi
 logger = get_logger(__name__)
 
 
-6
-
 @permissions_admin_namespace.route("/<int:role_id>/details")
 class RoleDetails(Resource):
     """

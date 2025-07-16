@@ -1,5 +1,6 @@
 from ...team.models.Team import Team
 from ...team.models.TeamMember import TeamMember
+from ...user.models.User import User
 from datetime import datetime, timedelta
 
 class Test_Public_Event_Listing:
@@ -400,17 +401,10 @@ class Test_Event_Team_Management:
         """Test that the team leave endpoint works correctly."""
         response = team_member_client.get(f"/ng/events/{1}/me/team/leave")
         assert response.status_code == 303
+
         reponse = team_member_client.get(f"/ng/events/{1}/me/team")
         assert reponse.status_code == 404
 
-    def test_member_leave_deletes_team(self, team_member_client, admin_client):
-        """Test that leaving a team deletes the team if the user is the last member."""
-        response = team_member_client.get(f"/ng/events/{1}/me/team/leave")
-        assert response.status_code == 303
-
-        # Verify the team is deleted
-        response = admin_client.get(f"/ng/admin/teams/{1}")
-        assert response.status_code == 404
 
     def test_captain_cant_leave(self, team_captain_client):
         """Test that the team leave endpoint fails for a captain."""

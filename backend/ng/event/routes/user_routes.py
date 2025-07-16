@@ -7,9 +7,7 @@ from ...event.models.Event import Event
 from ...core.utils.validator import BaseValidator
 from ...core.exceptions import ValidationError
 
-from ...user.models.User import User
 from ...team.models.TeamMember import TeamMember
-from ...team.models.Team import Team
 
 from ...core.middleware.loaders import (
     LoaderType,
@@ -177,8 +175,7 @@ class EventTeamLeave(Resource):
         team_member = TeamMember.find_by_user_and_team(current_user.id, team.id)
         if team_member.role == TeamRole.CAPTAIN:
             return error_response("You cannot leave the team as a captain. Please promote another member first.", "forbidden", 403)
-        result = team_member.remove_team_member(commit=True)
-        print(TeamMember.find_all_by_team_ordered_by_join_date(team.id))
+        team_member.remove_team_member(commit=True)
         if len(team.members) == 0:
             team.delete()
         

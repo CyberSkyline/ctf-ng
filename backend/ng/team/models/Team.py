@@ -14,9 +14,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from ... import config
-from ...core.exceptions import ConflictError, ValidationError
+from ...core.exceptions import ConflictError, ValidationError, BusinessLogicError
 from ...user.models.User import User
 from .enums import TeamRole
+from ...core.utils.validator import BaseValidator
+from .TeamMember import TeamMember
 
 HEX_CHARS = string.hexdigits.lower()[:16]  # '0123456789abcdef'
 SEED_LENGTH = 16  # 8 bytes for random seed
@@ -470,7 +472,7 @@ class Team(db.Model):
                 if commit:
                     db.session.commit()
                 return True
-        except Exception as e:
+        except Exception:
             db.session.rollback()
             raise
 

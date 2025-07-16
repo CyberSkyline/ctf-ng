@@ -12,7 +12,6 @@ from sqlalchemy import CheckConstraint, func
 
 from ... import config
 from ...core.utils.validator import BaseValidator
-from ...core.exceptions import ValidationError
 from ...event.models.Demographic import Demographic
 from ...core import BusinessLogicError
 

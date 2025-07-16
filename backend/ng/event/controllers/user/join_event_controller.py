@@ -1,11 +1,10 @@
 from CTFd.models import db
 
-from ....core import NotFoundError, ValidationError, BusinessLogicError
+from ....core import NotFoundError, ValidationError
 from ....team.models.Team import Team
 from ....event.models.Demographic import Demographic
 from ...models.Event import Event
 from ....user.models.User import User
-from datetime import datetime
 
 def join_event_controller(event: Event, user : User, invite_code : str = "", team_name : str = "") -> Team:
     """Main controller for the event joining process.
