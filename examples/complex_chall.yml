@@ -49,12 +49,14 @@ x-challenge:
   questions:
     - name: "SQL Injection Flag"
       body: "What is the flag hidden in the users table?"
+      placeholder: "Enter the flag"
       points: 150
       answer: *db_flag_default
       max_attempts: 5
     
     - name: "Admin Panel Flag" 
       body: "What flag is displayed on the admin dashboard?"
+      placeholder: "CTF{...}"
       points: 200
       answer: *admin_flag_default
       max_attempts: 3

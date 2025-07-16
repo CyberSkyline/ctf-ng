@@ -42,7 +42,7 @@ def or_(*validators: Callable[[Any, Any, Any], None]) -> Callable[[Any, Any, Any
                 validator(instance, attribute, value)
                 return  # If any validator passes, we're done
             except Exception as e:
-                logger.debug(f"Validator {validator.__name__} failed for value '{value}': {e}")
+                logger.debug(f"Validator {validator} failed for value '{value}': {e}")
                 continue  # If a validator fails, try the next one
         raise ValueError(f"Value '{value}' did not pass any of the OR validators")
     return validate

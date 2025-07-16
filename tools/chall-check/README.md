@@ -307,6 +307,7 @@ x-challenge:
 
   questions:                               # List[Question]: Questions/objectives (required)
     - name: "flag 1"                       # String: Developer-facing identifier
+      placeholder: "CTF{...}"              # String: Placeholder text in answer box
       body: "What is the flag?"            # String: Question text for participants  
       points: 100                          # Integer: Points awarded for correct answer
       answer: "CTF\\{.*\\}"                # String|Answer|Template: Regex pattern or exact answer
