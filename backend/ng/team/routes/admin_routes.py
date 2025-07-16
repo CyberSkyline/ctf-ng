@@ -77,7 +77,7 @@ class TeamKick(Resource):
 
         success = team.remove_member_and_regenerate_code(user_id)
         if not success:
-            return success_response({"message": "Kick failed"}, status_code=400)
+            return error_response({"message": "Kick failed"}, status_code=400)
         return success_response()
 
 @teams_admin_namespace.route("/<int:team_id>/promote")
