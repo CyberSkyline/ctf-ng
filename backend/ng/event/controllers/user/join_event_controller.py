@@ -13,17 +13,7 @@ def join_event_controller(event: Event, user : User, invite_code : str = "", tea
     if (not invite_code) and (not team_name):
         raise ValidationError("Either invite_code or team_name must be provided")
 
-    if event.registration_open is False:
-        raise BusinessLogicError("Event registration is closed.")
-
-    if event.registration_end_date and datetime.utcnow() > event.registration_end_date:
-        raise BusinessLogicError("Event registration has ended.")
-
-    if event.registration_start_date and datetime.utcnow() < event.registration_start_date:
-        raise BusinessLogicError("Event registration has not started yet.")
-
-    if Demographic.find_by_user_and_event(user.id, event.id):
-        raise BusinessLogicError("User is already registered for this event.")
+    Event.check_eligibility(event, user)
     
     try:
         Demographic.create_demographic(user_id=user.id, event_id=event.id, commit=False)

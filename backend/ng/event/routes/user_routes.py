@@ -46,6 +46,8 @@ class EventDetail(Resource):
     @load_event(source=LoaderType.PARAM)
     def get(self, event_id, event, **kwargs):
         """Get event details"""
+        if not event.public:
+            return error_response("Event not found", "not_found", 404)
         return success_response(event)
 
 
@@ -55,12 +57,14 @@ class EventEligibility(Resource):
     @load_event(source=LoaderType.PARAM)
     def get(self, event_id, event, **kwargs):
         """Check event eligibility"""
-        # TODO - Actually implement eligibility check
-        # event.registration_open = True
-        # current time is inbetween registration start and end dates (if set)
-        # user is not already in the event (i.e. does not have a demographic or is on a team)
-        if not event.registration_open:
-            return error_response("Event registration is closed.", "forbidden", 403)
+
+        if not event.public:
+            return error_response("Event not found", "not_found", 404)
+
+        try:
+            Event.check_eligibility(event, kwargs.get("current_user"))
+        except ValidationError as e:
+            return error_response(str(e), "eligibility", 400)
         
         
         return success_response(True)
@@ -70,16 +74,21 @@ class EventEligibility(Resource):
 class EventRegistration(Resource):
     @user_endpoint(json_required=True)
     @load_event(source=LoaderType.PARAM)
-    def post(self, event_id: str, current_user: User, json_data, event):
+    def post(self, event_id, current_user, json_data, event):
         """Register for event"""
         has_invite = "invite_code" in json_data
         has_name = "team_name" in json_data
+
+        if not event.public:
+            return error_response("Event not found", "not_found", 404)
 
         if (not has_invite) and (not has_name):
             raise ValidationError("Either invite_code or team_name must be provided.")
         if has_invite and has_name:
             raise ValidationError("Only one of invite_code or team_name can be provided.")
 
+
+        #Catch Unique team name validation
         validator = BaseValidator()
         if has_invite:
             validator.validate_string(json_data, "invite_code", 32, required=False, friendly_name="Invite code")

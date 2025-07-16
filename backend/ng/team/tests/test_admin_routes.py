@@ -64,6 +64,7 @@ def test_team_kick(admin_client, team_with_member):
 
     # Verify that the user is no longer a member of the team
     response = admin_client.get(f"/ng/admin/teams/{team.id}/members")
+    print(response.get_json())
     assert response.status_code == 200
     members_data = response.get_json()['data']
     assert len(members_data) == 0  # User should be kicked out

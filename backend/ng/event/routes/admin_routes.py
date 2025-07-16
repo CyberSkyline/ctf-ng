@@ -20,7 +20,7 @@ events_admin_namespace = Namespace("/admin/events", description="event endpoints
 @events_admin_namespace.route("")
 class EventList(Resource):
     @admin_endpoint()
-    def get(self):
+    def get(self, **kwargs):
         """Get all events"""
         events = Event.get_all_events(public_only=False)
         return success_response(events)
@@ -36,13 +36,13 @@ class EventList(Resource):
 class EventDetail(Resource):
     @admin_endpoint()
     @load_event(source=LoaderType.PARAM)
-    def get(self, event_id, event):
+    def get(self, event_id, event, **kwargs):
         """Get an event"""
         return success_response(event)
 
     @admin_endpoint(json_required=True, validation_func=Event.validate)
     @load_event(source=LoaderType.PARAM)
-    def put(self, event_id, event, validated_data):
+    def put(self, event_id, event, validated_data, **kwargs):
         """Update event"""
         data = validated_data
         updated_event = event.update_event(**data)

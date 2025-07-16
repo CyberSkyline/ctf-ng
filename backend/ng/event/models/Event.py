@@ -12,6 +12,9 @@ from sqlalchemy import CheckConstraint, func
 
 from ... import config
 from ...core.utils.validator import BaseValidator
+from ...core.exceptions import ValidationError
+from ...event.models.Demographic import Demographic
+from ...core import BusinessLogicError
 
 
 class Event(db.Model):
@@ -329,3 +332,28 @@ class Event(db.Model):
         except Exception:
             db.session.rollback()
             raise
+
+    @classmethod
+    def check_eligibility(cls, event, user):
+        """Check if a user is eligible to register for an event.
+
+        Args:
+            event_id (int): The ID of the event
+            user_id (int): The ID of the user
+
+        Returns:
+            bool: True if eligible, False otherwise
+        """
+        if event.registration_open is False:
+            raise BusinessLogicError("Event registration is closed.")
+
+        if event.registration_end_date and datetime.utcnow() > event.registration_end_date:
+            raise BusinessLogicError("Event registration has ended.")
+
+        if event.registration_start_date and datetime.utcnow() < event.registration_start_date:
+            raise BusinessLogicError("Event registration has not started yet.")
+
+        if Demographic.find_by_user_and_event(user.id, event.id):
+            raise BusinessLogicError("User is already registered for this event.")
+
+        return True

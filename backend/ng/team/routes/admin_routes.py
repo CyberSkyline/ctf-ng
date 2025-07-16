@@ -30,7 +30,7 @@ class TeamDetail(Resource):
         json_required=False, validation_func=Team.validate
     )
     @load_team(source=LoaderType.PARAM)
-    def get(self, team_id, team):
+    def get(self, team_id, team, **kwargs):
         """Get a team"""
         return success_response(team)
 
@@ -61,7 +61,7 @@ class TeamDetail(Resource):
 class TeamMembers(Resource):
     @admin_endpoint()
     @load_team(source=LoaderType.PARAM)
-    def get(self, team_id, team):
+    def get(self, team_id, team, **kwargs):
         """Get all members of a team"""
         return success_response(team.members)
 

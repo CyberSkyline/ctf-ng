@@ -18,6 +18,17 @@ class Test_Public_Event_Listing:
         assert data["data"][0] == event1.serialize()
         assert data["data"][1] == event2.serialize()
 
+    def test_list_no_private_events(self, logged_in_client, event_factory):
+        event1 = event_factory(name="Private Event 1", public=False)
+        event2 = event_factory(name="Private Event 2", public=True)
+
+        response = logged_in_client.get(self.endpoint)
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert len(data["data"]) == 1
+        assert data["data"][0] == event2.serialize()
+
 class Test_Public_Event_Detail:
     def get_endpoint(self, event_id: int) -> str:
         return f"/ng/events/{event_id}"
@@ -35,6 +46,15 @@ class Test_Public_Event_Detail:
 
     def test_get_nonexistent_event(self, logged_in_client):
         response = logged_in_client.get(self.get_endpoint(9999))
+
+        assert response.status_code == 404
+        data = response.get_json()
+        assert data["success"] is False
+
+    def test_get_private_event(self, logged_in_client, event_factory):
+        event = event_factory(name="Private Event for Detail Test", public=False)
+
+        response = logged_in_client.get(self.get_endpoint(event.id))
 
         assert response.status_code == 404
         data = response.get_json()
@@ -60,6 +80,55 @@ class Test_Event_Eligibility:
         assert response.status_code == 404
         data = response.get_json()
         assert data["success"] is False
+
+    def test_check_event_eligibility_not_open(self, logged_in_client, event_factory):
+        event = event_factory(name="Closed Event", public=True, registration_open=False)
+
+        response = logged_in_client.get(self.get_endpoint(event.id))
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        assert "errors" in data
+        assert "Event registration is closed." in data["errors"]["business_logic"]
+    
+    def test_check_event_eligibility_before_start(self, logged_in_client, event_factory):
+        event = event_factory(name="Event Before Start", public=True, registration_start_date=datetime.utcnow() + timedelta(days=1), registration_end_date=datetime.utcnow() + timedelta(days=2))
+
+        response = logged_in_client.get(self.get_endpoint(event.id))
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        assert "errors" in data
+        assert "Event registration has not started yet." in data["errors"]["business_logic"]
+
+    def test_check_event_eligibility_after_end(self, logged_in_client, event_factory):
+        event = event_factory(name="Event After End", public=True, registration_end_date=datetime.utcnow() - timedelta(days=1), registration_start_date=datetime.utcnow() - timedelta(days=2))
+
+        response = logged_in_client.get(self.get_endpoint(event.id))
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        assert "errors" in data
+        assert "Event registration has ended." in data["errors"]["business_logic"]
+
+    def test_check_event_eligibility_already_registered(self, logged_in_client, user, event_factory, team_factory):
+        event = event_factory(name="Already Registered Event", public=True)
+
+
+        response = logged_in_client.post(f"/ng/events/{event.id}/me/register", json={
+            "team_name": "Test Team",
+        })
+
+        response = logged_in_client.get(self.get_endpoint(event.id))
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        assert "errors" in data
+        assert "User is already registered for this event." in data["errors"]["business_logic"]
 
 class Test_Event_Registration:
     def get_endpoint(self, event_id: int) -> str:
@@ -110,7 +179,6 @@ class Test_Event_Registration:
 
         assert response.status_code == 400
         data = response.get_json()
-        print(data)
         assert data["success"] is False
         assert "errors" in data
         assert "Team name cannot include a member's name." in data["errors"]["validation"]
@@ -140,13 +208,22 @@ class Test_Event_Registration:
         response = logged_in_client.post(self.get_endpoint(event.id), json={
             "team_name": "Test Team",
         })
-        print(response.get_json())
-
         assert response.status_code == 400
         data = response.get_json()
         assert data["success"] is False
         assert "errors" in data
         assert "Event registration is closed." in data["errors"]["business_logic"]
+
+    def test_register_private_event(self, logged_in_client, event_factory):
+        event = event_factory(name="Private Event for Registration", public=False)
+
+        response = logged_in_client.post(self.get_endpoint(event.id), json={
+            "team_name": "Test Team",
+        })
+
+        assert response.status_code == 404
+        data = response.get_json()
+        assert data["success"] is False
 
     def test_register_event_before_start(self, logged_in_client, event_factory):
         event = event_factory(name="Event Before Start", public=True, registration_start_date=datetime.utcnow() + timedelta(days=1),registration_end_date=datetime.utcnow() + timedelta(days=2))
@@ -249,7 +326,6 @@ class Test_Event_Team_Management:
 
 
         response = team_captain_client.post(f"/ng/events/{1}/me/team/promote", json={"user_id": 3})
-        print(response.get_json())
         assert response.status_code == 200
         data = response.get_json()
         assert data['success']
@@ -327,12 +403,14 @@ class Test_Event_Team_Management:
         reponse = team_member_client.get(f"/ng/events/{1}/me/team")
         assert reponse.status_code == 404
 
-        
-
     def test_member_leave_deletes_team(self, team_member_client, admin_client):
         """Test that leaving a team deletes the team if the user is the last member."""
-        #Figure this out later
-        pass
+        response = team_member_client.get(f"/ng/events/{1}/me/team/leave")
+        assert response.status_code == 303
+
+        # Verify the team is deleted
+        response = admin_client.get(f"/ng/admin/teams/{1}")
+        assert response.status_code == 404
 
     def test_captain_cant_leave(self, team_captain_client):
         """Test that the team leave endpoint fails for a captain."""

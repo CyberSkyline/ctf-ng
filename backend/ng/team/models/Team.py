@@ -117,9 +117,18 @@ class Team(db.Model):
                 required=False,
                 friendly_name="Invite code",
             )
+            if not Team.is_invite_code_unique(data["invite_code"]):
+                raise ValidationError(f"Invite code '{data['invite_code']}' already exists.")
 
-        # TODO - Check if invite code is unique
-        # TODO - Check if team name is unique within event
+        # Check if team name is unique within event
+        if "name" in data and "event_id" in data:
+            res = Team.name_exists_in_event_excluding_self(
+                event_id=data["event_id"],
+                name=data["name"],
+                exclude_team_id=data.get("id", 0)  # Exclude current team if updating
+            )
+            if res:
+                raise ValidationError(f"Team name '{data['name']}' already exists in event ID {data['event_id']}.")
 
         return validator.validate()
 
@@ -198,7 +207,8 @@ class Team(db.Model):
     def disband_team(self, commit=True):
         """Delete this team and all its members from the database."""
 
-        # TODO - Throw an error if the team still has remaining members
+        if self.member_count > 0:
+            raise BusinessLogicError("Cannot disband team with members. Remove all members first.")
 
         db.session.delete(self)
         if commit:
@@ -211,7 +221,6 @@ class Team(db.Model):
 
         self.invite_code = new_code
 
-        self.self_validate()
 
         if commit:
             db.session.commit()
