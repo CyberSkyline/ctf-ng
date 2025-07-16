@@ -1,11 +1,10 @@
 [project]
 name = "cyber-skyline-chall-check"
-version = "0.1.10"
+version = "0.2.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "cattrs==23.1.0",
     "cyber-skyline-chall-parser",
     "pyyaml>=6.0.2",
     "typer>=0.16.0",

@@ -45,7 +45,6 @@ import json
 from importlib.metadata import version as get_version
 from cyber_skyline.chall_parser.yaml_parser import parse_compose_file, parse_compose_string, ComposeYamlParser
 from cyber_skyline.chall_parser.compose import ComposeFile, ChallengeInfo
-
 from chall_check.md import compose_to_markdown
 
 app = typer.Typer(
@@ -289,6 +288,7 @@ class OutputFormat(str, Enum):
     JSON = "json"
     YAML = "yaml"
     MARKDOWN = "md"
+    
 
 @app.command()
 def validate(
@@ -317,22 +317,21 @@ def validate(
         console.print()
         
         if show_summary:
-            if output_format == "table":
+            if output_format == OutputFormat.TABLE:
                 display_challenge_summary(compose.challenge)
                 display_services_summary(compose)
-            elif output_format == "json":
+            elif output_format == OutputFormat.JSON:
                 parser = ComposeYamlParser()
                 data = parser.converter.unstructure(compose)
                 console.print(Syntax(json.dumps(data, indent=2), "json"))
-            elif output_format == "yaml":
+            elif output_format == OutputFormat.YAML:
                 parser = ComposeYamlParser()
                 yaml_output = parser.to_yaml(compose)
                 console.print(Syntax(yaml_output, "yaml"))
-            elif output_format == "md":
-                # Convert to Markdown format
-                md_output = compose_to_markdown(compose)
-                console.print(Syntax(md_output, "markdown"))
-        
+            elif output_format == OutputFormat.MARKDOWN:
+                markdown_output = compose_to_markdown(compose)
+                console.print(Syntax(markdown_output, "md"))
+
         typer.Exit(0)
         
     except Exception as e:

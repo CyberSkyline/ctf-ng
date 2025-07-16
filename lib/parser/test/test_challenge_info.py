@@ -87,7 +87,8 @@ class TestChallengeInfo:
             body="Test question?",
             points=50,
             answer="test_answer",
-            max_attempts=10
+            max_attempts=10,
+            placeholder="Enter your answer here"  # Optional field added
         )
         
         hint = Hint(
