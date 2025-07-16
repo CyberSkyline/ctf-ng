@@ -27,7 +27,7 @@ class User(db.Model):
 
     ctfd_user = db.relationship(
         "Users",
-        backref=db.backref("ng_user", uselist=False, cascade="all, delete-orphan"),
+        backref=db.backref("ng_users", uselist=False, cascade="all, delete-orphan"),
         lazy="joined",
         foreign_keys=[id],
     )

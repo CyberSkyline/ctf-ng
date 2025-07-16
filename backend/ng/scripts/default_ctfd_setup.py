@@ -8,12 +8,6 @@ from CTFd.config import Config
 from CTFd.models import db
 from sqlalchemy_utils import create_database, database_exists, drop_database
 from tests.helpers import setup_ctfd
-import os
-from CTFd.plugins.ng.user.models.User import User
-from CTFd.plugins.ng.permissions.controllers.assign_role_to_user import assign_role_to_user
-from CTFd.plugins.ng.permissions.controllers.create_role import create_role
-from CTFd.plugins.ng.permissions.controllers.create_permission import create_permission
-
 
 if "SCRIPT" not in os.environ:
     raise OSError("This should only be run from a script. DO NOT run this manually.")
@@ -55,10 +49,24 @@ with app.app_context():
         user_mode="users",
         ctf_theme=None,
     )
+
 with app.app_context():
+    # Import plugin modules after app initialization
+    # This script is designed to run in production via 'yarn populate-data'
+    # where the plugin is properly located at /opt/CTFd/CTFd/plugins/ng
+    try:
+        from CTFd.plugins.ng.permissions.controllers.assign_role_to_user import assign_role_to_user  # type: ignore
+        from CTFd.plugins.ng.permissions.controllers.create_permission import create_permission  # type: ignore
+        from CTFd.plugins.ng.permissions.controllers.create_role import create_role  # type: ignore
+        from CTFd.plugins.ng.user.models.User import User  # type: ignore
+    except ImportError as e:
+        print(f"Failed to import plugin modules: {e}")
+        print("This script should be run via 'yarn populate-data' from the project root.")
+        raise
+
     admin_user = User.query.filter_by(id=1).first()
     if not admin_user:
-         admin_user = User.create_user(1, commit=True)
+        admin_user = User.create_user(1, commit=True)
 
     create_permission(
         name="CAN_EDIT_TEAMS",

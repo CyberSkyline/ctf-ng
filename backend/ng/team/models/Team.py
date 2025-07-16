@@ -3,21 +3,24 @@ Defines the Team database model and its properties
 """
 
 from __future__ import annotations
-from typing import Any, TypedDict, cast
-import string
+
 import random
+import string
+from typing import Any, TypedDict, cast
 
 from CTFd.models import db
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy import select, func
 
 from ... import config
-from ...core.validation import BaseValidator
 from ...core.exceptions import ConflictError, ValidationError
+from ...core.validation import BaseValidator
 from .enums import TeamRole
 
 HEX_CHARS = string.hexdigits.lower()[:16]  # '0123456789abcdef'
+SEED_LENGTH = 16  # 8 bytes for random seed
+
 
 class SerializedTeam(TypedDict):
     id: int
@@ -26,7 +29,9 @@ class SerializedTeam(TypedDict):
     member_count: int
     ranked: bool
     locked: bool
+    seed: str | None
     invite_code: str | None  # Optional for non-admin views
+
 
 class Team(db.Model):
     __tablename__ = "ng_teams"
@@ -35,6 +40,7 @@ class Team(db.Model):
     name = db.Column(db.String(config.TEAM_NAME_MAX_LENGTH), nullable=False)
     ranked = db.Column(db.Boolean, default=False, nullable=False)
     invite_code = db.Column(db.String(config.INVITE_CODE_MAX_LENGTH), nullable=False, unique=True)
+    seed = db.Column(db.String(SEED_LENGTH), nullable=False, default=lambda: Team.generate_random_seed())
     event_id = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
     locked = db.Column(db.Boolean, default=False, nullable=False)
 
@@ -46,7 +52,7 @@ class Team(db.Model):
     members = db.relationship("TeamMember", back_populates="team", cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<Team {self.name}>"
+        return f"<NgTeam {self.id}, name={self.name}, invite_code={self.invite_code}, seed={self.seed}>"
 
     # Avoids a separate query for every team's member count
     @hybrid_property
@@ -54,8 +60,9 @@ class Team(db.Model):
         return len(self.members)
 
     # Required SQLAlchemy pattern: the expression must be named after the property.
-    @member_count.expression
-    def member_count(cls):
+    @member_count.expression  # type: ignore[misc]
+    @classmethod
+    def _member_count_expression(cls):
         from .TeamMember import TeamMember
 
         return select(func.count(TeamMember.id)).where(TeamMember.team_id == cls.id).scalar_subquery()
@@ -80,6 +87,7 @@ class Team(db.Model):
 
         if include_admin_fields:
             data["invite_code"] = self.invite_code
+            data["seed"] = self.seed
 
         return SerializedTeam(**data)
 
@@ -104,16 +112,19 @@ class Team(db.Model):
             required=False,
             friendly_name="Invite code",
         )
+        validator.validate_string(
+            data,
+            "seed",
+            SEED_LENGTH,
+            required=False,
+            friendly_name="Seed",
+        )
 
         # TODO - Check if invite code is unique
         # TODO - Check if team name is unique within event
 
-        is_valid, errors, parsed_data = validator.is_valid()
+        return validator.validate()
 
-        if not is_valid:
-            raise ValidationError("Validation failed.", errors=errors)
-        return parsed_data
-    
     def self_validate(self) -> None:
         """Validate the current team instance's data.
 
@@ -124,20 +135,32 @@ class Team(db.Model):
             Team.validate(data=cast(dict[str, Any], self.serialize(include_admin_fields=True)))
         except ValidationError as e:
             raise ValidationError(f"Team validation failed: {e.errors}") from e
-    
+
     @classmethod
     def get_unique_invite_code(cls) -> str:
         """Generate a unique invite code for a new team."""
         # TODO - Raise an exception if this loops too many times
         while True:
-            invite_code = ''.join(random.choices(HEX_CHARS, k=config.INVITE_CODE_MAX_LENGTH))
+            invite_code = "".join(random.choices(HEX_CHARS, k=config.INVITE_CODE_MAX_LENGTH))
             existing = cls.query.filter_by(invite_code=invite_code).first()
             if existing is None:
                 return invite_code
 
+    @classmethod
+    def generate_random_seed(cls) -> str:
+        """Generate a random 8-byte seed for team creation."""
+        return "".join(random.choices(HEX_CHARS, k=SEED_LENGTH))
 
     @classmethod
-    def create_team(cls, name : str, event_id : int, invite_code : str | None = None, ranked : bool = True, commit : bool = True):
+    def create_team(
+        cls,
+        name: str,
+        event_id: int,
+        invite_code: str | None = None,
+        seed: str | None = None,
+        ranked: bool = True,
+        commit: bool = True,
+    ):
         """Create and persist a new team to the database.
 
         Args:
@@ -152,8 +175,12 @@ class Team(db.Model):
         """
         if invite_code is None:
             invite_code = cls.get_unique_invite_code()
+        if seed is None:
+            seed = cls.generate_random_seed()
 
-        validated_data = cls.validate(data = { "name": name, "event_id": event_id, "invite_code": invite_code, "ranked": ranked })
+        validated_data = cls.validate(
+            data={"name": name, "event_id": event_id, "invite_code": invite_code, "seed": seed, "ranked": ranked}
+        )
 
         team = cls(**validated_data)
 
@@ -162,10 +189,10 @@ class Team(db.Model):
         if commit:
             try:
                 db.session.commit()
-            except IntegrityError:
+            except IntegrityError as e:
                 db.session.rollback()
-                if "uq_team_event_name" in str(IntegrityError):
-                    raise ConflictError(f"Team name '{name}' already exists for event ID {event_id}.")
+                if "uq_team_event_name" in str(e):
+                    raise ConflictError(f"Team name '{name}' already exists for event ID {event_id}.") from e
                 raise
 
         return team
@@ -209,13 +236,15 @@ class Team(db.Model):
         Returns:
             TeamMember: The created team member instance
         """
-        from .TeamMember import TeamMember
         from ...event.models.Event import Event
+        from .TeamMember import TeamMember
 
         event = Event.find_by_id(self.event_id)
 
         if self.member_count >= event.max_team_size:
-            raise ConflictError(f"Cannot add member: team '{self.name}' is full ({self.member_count}/{event.max_team_size})")
+            raise ConflictError(
+                f"Cannot add member: team '{self.name}' is full ({self.member_count}/{event.max_team_size})"
+            )
 
         member = TeamMember.create_team_member(
             user_id=user_id,
@@ -279,10 +308,7 @@ class Team(db.Model):
     def find_by_user_and_event(cls, user_id: int, event_id: int) -> Team | None:
         from .TeamMember import TeamMember
 
-        return cls.query.join(TeamMember).filter(
-            TeamMember.user_id == user_id,
-            cls.event_id == event_id
-        ).first()
+        return cls.query.join(TeamMember).filter(TeamMember.user_id == user_id, cls.event_id == event_id).first()
 
     @classmethod
     def find_all_by_event(cls, event_id: int) -> list[Team]:
@@ -385,15 +411,15 @@ class Team(db.Model):
         captain_id: int,
         invite_code: str | None = None,
         ranked: bool = True,
-        commit: bool = True
+        commit: bool = True,
     ) -> Team:
         """
         Creates a team, assigns the creator as captain, and creates a demographic
         record in a single, atomic transaction.
         """
-        
-        from .TeamMember import TeamMember
+
         from .enums import TeamRole
+        from .TeamMember import TeamMember
 
         try:
             team = cls.create_team(
@@ -420,7 +446,7 @@ class Team(db.Model):
             db.session.rollback()
             raise e
 
-    def remove_member_and_regenerate_code(self, user_id: int, commit = True) -> None:
+    def remove_member_and_regenerate_code(self, user_id: int, commit=True) -> None:
         """Remove a team member and regenerate invite code in single transaction."""
 
         from .TeamMember import TeamMember
@@ -439,8 +465,8 @@ class Team(db.Model):
     def remove_captain_and_promote(self, captain_id: int, new_captain_user_id: int) -> bool:
         """Remove captain and promote new one in single transaction."""
 
-        from .TeamMember import TeamMember
         from .enums import TeamRole
+        from .TeamMember import TeamMember
 
         try:
             captain = TeamMember.query.get(captain_id)

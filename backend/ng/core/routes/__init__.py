@@ -3,13 +3,16 @@ Main API blueprint and namespace configuration for the plugin.
 """
 
 from typing import Any
+
 from flask import Blueprint
 from flask_restx import Api
 
-from ...permissions.routes import (permissions_admin_namespace)
-from ...team.routes import (teams_admin_namespace)
-from ...event.routes import (events_user_namespace, events_admin_namespace)
-from ...user.routes import (users_user_namespace, users_admin_namespace)
+from ...challenge.routes import challenge_admin_namespace
+from ...event.routes import events_admin_namespace, events_user_namespace
+from ...permissions.routes import permissions_admin_namespace
+from ...team.routes import teams_admin_namespace
+from ...user.routes import users_admin_namespace, users_user_namespace
+
 # from ...admin.routes.admin import admin_namespace
 # from ...support.routes.user_tickets import user_tickets_namespace
 # from ...support.routes.admin_tickets import admin_tickets_namespace
@@ -40,7 +43,7 @@ api_v1 = Api(
 # User namespaces
 api_v1.add_namespace(events_user_namespace, path="/events")
 api_v1.add_namespace(users_user_namespace, path="/users")
-# api_v1.add_namespace(challenge_namespace, path="/challenge")
+#
 
 # api_v1.add_namespace(user_tickets_namespace, path="/support/tickets")
 # api_v1.add_namespace(admin_tickets_namespace, path="/support/admin")
@@ -50,3 +53,4 @@ api_v1.add_namespace(events_admin_namespace, path="/admin/events")
 api_v1.add_namespace(users_admin_namespace, path="/admin/users")
 api_v1.add_namespace(teams_admin_namespace, path="/admin/teams")
 api_v1.add_namespace(permissions_admin_namespace, path="/admin/permissions")
+api_v1.add_namespace(challenge_admin_namespace, path="/admin/challenge")

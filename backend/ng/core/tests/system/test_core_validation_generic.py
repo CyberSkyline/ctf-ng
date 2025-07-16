@@ -3,15 +3,12 @@ Tests for generic validation utility functions
 """
 
 from datetime import timedelta
-from ...validation import BaseValidator
+
+import pytest
+
+from ...exceptions import ValidationError
 from ...utils import utc_now
-
-
-class ValidationError(Exception):
-    def __init__(self, message, errors=None):
-        self.message = message
-        self.errors = errors or {}
-        super().__init__(message)
+from ...validation import BaseValidator
 
 
 class TestBaseValidator:
@@ -22,30 +19,28 @@ class TestBaseValidator:
         validator = BaseValidator()
 
         validator.validate_string({"name": "Valid"}, "name", max_length=10, required=True)
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert is_valid is True
+        parsed_data = validator.validate()
         assert parsed_data["name"] == "Valid"
 
         validator = BaseValidator()
         validator.validate_string({"name": "Too long"}, "name", max_length=5, required=True)
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert is_valid is False
-        assert "name" in errors
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate()
+        assert "name" in exc_info.value.errors
 
     def test_validate_positive_integer(self):
         """Test positive integer validation."""
         validator = BaseValidator()
 
         validator.validate_positive_integer({"num": 5}, "num", required=True)
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert is_valid is True
+        parsed_data = validator.validate()
         assert parsed_data["num"] == 5
 
         validator = BaseValidator()
         validator.validate_positive_integer({"num": -1}, "num", required=True)
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert is_valid is False
-        assert "num" in errors
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate()
+        assert "num" in exc_info.value.errors
 
 
 class TestDatetimeValidationEdgeCases:
@@ -55,7 +50,7 @@ class TestDatetimeValidationEdgeCases:
         """Test datetime validation with various ISO formats."""
         validator = BaseValidator()
 
-        dt = validator.validate_datetime({"time": "2024-12-25T10:30:00"}, "time")
+        dt = validator.validate_datetime({"time": "2024-12-25T10:30:00Z"}, "time")
         assert dt is not None
         assert dt.year == 2024
         assert dt.month == 12
@@ -64,14 +59,14 @@ class TestDatetimeValidationEdgeCases:
         dt = validator.validate_datetime({"time": "2024-12-25T10:30:00Z"}, "time")
         assert dt is not None
 
-        dt = validator.validate_datetime({"time": "2024-12-25T10:30:00.123456"}, "time")
+        dt = validator.validate_datetime({"time": "2024-12-25T10:30:00.123456Z"}, "time")
         assert dt is not None
         assert dt.microsecond == 123456
 
     def test_datetime_validation_invalid_formats(self):
         """Test datetime validation with invalid formats."""
         validator = BaseValidator()
-        invalid_formats = ["not a date", "2024-99-99", "invalid", ""]
+        invalid_formats = ["not a date", "2024-99-99", "invalid", "", "2024-12-25T10:30:00"]
 
         for invalid_format in invalid_formats:
             dt = validator.validate_datetime({"time": invalid_format}, "time")
@@ -92,6 +87,53 @@ class TestDatetimeValidationEdgeCases:
         assert dt is None
         assert "time" in validator.errors
 
+    def test_datetime_timezone_formats(self):
+        """Test datetime validation with both Z and +00:00 timezone formats."""
+        validator = BaseValidator()
+
+        # Test Z format
+        dt_z = validator.validate_datetime({"time": "2024-12-25T10:30:00Z"}, "time")
+        assert dt_z is not None
+        assert dt_z.year == 2024
+        assert dt_z.month == 12
+        assert dt_z.day == 25
+        assert dt_z.hour == 10
+        assert dt_z.minute == 30
+
+        # Clear validator for next test
+        validator = BaseValidator()
+
+        # Test +00:00 format
+        dt_plus = validator.validate_datetime({"time": "2024-12-25T10:30:00+00:00"}, "time")
+        assert dt_plus is not None
+        assert dt_plus.year == 2024
+        assert dt_plus.month == 12
+        assert dt_plus.day == 25
+        assert dt_plus.hour == 10
+        assert dt_plus.minute == 30
+
+        # Both should result in the same datetime value
+        assert dt_z == dt_plus
+
+        # Clear validator for next test
+        validator = BaseValidator()
+
+        # Test microseconds with Z format
+        dt_micro_z = validator.validate_datetime({"time": "2024-12-25T10:30:00.555777Z"}, "time")
+        assert dt_micro_z is not None
+        assert dt_micro_z.microsecond == 555777
+
+        # Clear validator for next test
+        validator = BaseValidator()
+
+        # Test microseconds with +00:00 format
+        dt_micro_plus = validator.validate_datetime({"time": "2024-12-25T10:30:00.555777+00:00"}, "time")
+        assert dt_micro_plus is not None
+        assert dt_micro_plus.microsecond == 555777
+
+        # Both microsecond formats should result in the same datetime value
+        assert dt_micro_z == dt_micro_plus
+
 
 class TestPositiveIntegerEdgeCases:
     """Test positive integer validation edge cases."""
@@ -101,21 +143,20 @@ class TestPositiveIntegerEdgeCases:
         validator = BaseValidator()
 
         validator.validate_positive_integer({"num": 0}, "num")
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert not is_valid
-        assert "num" in errors
-        assert "positive" in errors["num"].lower()
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate()
+        assert "num" in exc_info.value.errors
+        assert "positive" in exc_info.value.errors["num"].lower()
 
         validator = BaseValidator()
         validator.validate_positive_integer({"num": -1}, "num")
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert not is_valid
-        assert "num" in errors
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate()
+        assert "num" in exc_info.value.errors
 
         validator = BaseValidator()
         validator.validate_positive_integer({"num": 5.0}, "num")
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert is_valid
+        parsed_data = validator.validate()
         assert parsed_data["num"] == 5
 
     def test_positive_integer_invalid_types(self):
@@ -132,25 +173,24 @@ class TestPositiveIntegerEdgeCases:
         for invalid_value in invalid_values:
             validator = BaseValidator()
             validator.validate_positive_integer({"num": invalid_value}, "num", required=True)
-            is_valid, errors, parsed_data = validator.is_valid()
-            assert not is_valid
-            assert "num" in errors
+            with pytest.raises(ValidationError) as exc_info:
+                validator.validate()
+            assert "num" in exc_info.value.errors
 
         validator = BaseValidator()
         validator.validate_positive_integer({"num": None}, "num", required=True)
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert not is_valid
-        assert "num" in errors
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate()
+        assert "num" in exc_info.value.errors
 
         validator = BaseValidator()
         validator.validate_positive_integer({"num": None}, "num", required=False)
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert is_valid
+        parsed_data = validator.validate()
+        assert parsed_data == {}
 
         validator = BaseValidator()
         validator.validate_positive_integer({"num": 1}, "num")
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert is_valid
+        parsed_data = validator.validate()
         assert parsed_data["num"] == 1
 
 
@@ -163,31 +203,29 @@ class TestStringValidationUnicode:
 
         unicode_text = "café"
         validator.validate_string({"text": unicode_text}, "text", max_length=5, required=True)
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert is_valid
+        parsed_data = validator.validate()
         assert parsed_data["text"] == unicode_text
 
         validator = BaseValidator()
         long_unicode = "café" * 10
         validator.validate_string({"text": long_unicode}, "text", max_length=5, required=True)
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert not is_valid
-        assert "text" in errors
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate()
+        assert "text" in exc_info.value.errors
 
     def test_string_whitespace_handling(self):
         """Test string validation with whitespace handling."""
         validator = BaseValidator()
 
         validator.validate_string({"text": "  valid content  "}, "text", required=True)
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert is_valid
+        parsed_data = validator.validate()
         assert parsed_data["text"] == "valid content"
 
         validator = BaseValidator()
         validator.validate_string({"text": "   "}, "text", required=True)
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert not is_valid
-        assert "text" in errors
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate()
+        assert "text" in exc_info.value.errors
 
 
 class TestBooleanValidation:
@@ -202,24 +240,23 @@ class TestBooleanValidation:
         for string_value in string_values:
             validator = BaseValidator()
             validator.validate_boolean({"flag": string_value}, "flag")
-            is_valid, errors, parsed_data = validator.is_valid()
-            assert not is_valid
-            assert "flag" in errors
+            with pytest.raises(ValidationError) as exc_info:
+                validator.validate()
+            assert "flag" in exc_info.value.errors
 
     def test_boolean_validation_proper_types(self):
         """Test boolean validation with proper boolean types."""
         validator = BaseValidator()
 
         validator.validate_boolean({"flag": True}, "flag")
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert is_valid
+        parsed_data = validator.validate()
         assert parsed_data["flag"] is True
 
         validator = BaseValidator()
         validator.validate_boolean({"flag": False}, "flag")
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert is_valid
+        parsed_data = validator.validate()
         assert parsed_data["flag"] is False
+
 
 class TestIntegerRangeValidation:
     """Test integer range validation."""
@@ -229,24 +266,22 @@ class TestIntegerRangeValidation:
         validator = BaseValidator()
 
         validator.validate_integer_range({"size": 1}, "size", 1, 10)
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert is_valid
+        parsed_data = validator.validate()
         assert parsed_data["size"] == 1
 
         validator = BaseValidator()
         validator.validate_integer_range({"size": 10}, "size", 1, 10)
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert is_valid
+        parsed_data = validator.validate()
         assert parsed_data["size"] == 10
 
         validator = BaseValidator()
         validator.validate_integer_range({"size": 0}, "size", 1, 10)
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert not is_valid
-        assert "size" in errors
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate()
+        assert "size" in exc_info.value.errors
 
         validator = BaseValidator()
         validator.validate_integer_range({"size": 11}, "size", 1, 10)
-        is_valid, errors, parsed_data = validator.is_valid()
-        assert not is_valid
-        assert "size" in errors
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate()
+        assert "size" in exc_info.value.errors

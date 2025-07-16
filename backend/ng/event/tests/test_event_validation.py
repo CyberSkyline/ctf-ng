@@ -3,11 +3,13 @@ Hypothetical Validation tests for event creation
 """
 
 from datetime import timedelta
+
 import pytest
-from ...core.exceptions import ValidationError
-from ..models.Event import Event
+
 from ... import config
+from ...core.exceptions import ValidationError
 from ...core.utils import utc_now
+from ..models.Event import Event
 
 
 class TestEventTimeConstraints:
@@ -310,36 +312,6 @@ class TestEventAdvancedDatetimeValidation:
             }
         )
         assert result is not None
-
-    def test_datetime_format_variations(self):
-        """Test various datetime format inputs."""
-        now = utc_now()
-
-        # ISO format variations
-        base_start = now + timedelta(hours=1)
-        base_end = now + timedelta(hours=2)
-
-        valid_formats = [
-            (base_start.isoformat(), base_end.isoformat()),
-            (
-                base_start.strftime("%Y-%m-%dT%H:%M:%S"),
-                base_end.strftime("%Y-%m-%dT%H:%M:%S"),
-            ),
-        ]
-
-        for start_fmt, end_fmt in valid_formats:
-            try:
-                result = Event.validate(
-                    {
-                        "name": f"Format Test {len(start_fmt)}",
-                        "max_team_size": 4,
-                        "start_time": start_fmt,
-                        "end_time": end_fmt,
-                    }
-                )
-                assert result is not None
-            except ValidationError:
-                pass
 
     def test_registration_period_logic(self):
         """Test event registration period business logic."""

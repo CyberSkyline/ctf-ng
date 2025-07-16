@@ -2,10 +2,52 @@
 Base validation framework - reusable across domains.
 """
 
-from typing import Any
-from datetime import datetime, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime
 from enum import Enum
+from functools import wraps
+from typing import Any
+
 from . import utc_now
+
+
+def validation_field(func: Callable) -> Callable:
+    """
+    Decorator to handle common validation patterns:
+    - Extract and format friendly_name
+    - Handle required field validation
+    - Early return for None values on non-required fields
+    """
+
+    @wraps(func)
+    def wrapper(
+        self,
+        data: dict[str, Any],
+        field: str,
+        *args,
+        required: bool = False,
+        friendly_name: str | None = None,
+        **kwargs,
+    ):
+        # Extract friendly name
+        name = friendly_name or field.replace("_", " ").title()
+        value = data.get(field)
+
+        # Handle required field validation
+        if required:
+            if field not in data or data.get(field) in [None, ""]:
+                self.errors[field] = ValidationErrorMessages.FIELD_REQUIRED.format(field=name)
+                return None
+
+        # Early return for None values on non-required fields
+        if value is None and not required:
+            return None
+
+        # Call the original function with the processed parameters
+        return func(self, data, field, *args, required=required, friendly_name=name, value=value, **kwargs)
+
+    return wrapper
+
 
 class ValidationErrorMessages:
     """Consistent error messages throughout the system."""
@@ -22,7 +64,6 @@ class ValidationErrorMessages:
     FIELD_DATETIME_ORDER = "Start time must be before end time"
     FIELD_OUT_OF_RANGE = "{field} must be between {min_val} and {max_val}"
     FIELD_TOO_LONG = "{field} cannot be longer than {max_length} characters"
-    CONFIRMATION_INVALID = "You must send 'confirm': '{required_value}' to proceed with this operation"
 
 
 class BaseValidator:
@@ -44,13 +85,7 @@ class BaseValidator:
             else:
                 self.parsed_data[field] = value
 
-    def require_field(self, data: dict[str, Any], field: str, friendly_name: str | None = None) -> bool:
-        name = friendly_name or field.replace("_", " ").title()
-        if field not in data or data.get(field) in [None, ""]:
-            self.errors[field] = ValidationErrorMessages.FIELD_REQUIRED.format(field=name)
-            return False
-        return True
-
+    @validation_field
     def validate_string(
         self,
         data: dict[str, Any],
@@ -59,56 +94,108 @@ class BaseValidator:
         max_length: int | None = None,
         required: bool = False,
         friendly_name: str | None = None,
+        value: Any = None,  # Injected by decorator
     ) -> None:
-        name = friendly_name or field.replace("_", " ").title()
-        value = data.get(field)
-
-        if required and not self.require_field(data, field, name):
-            return
-
-        if value is None:
-            return
-
         if not isinstance(value, str):
-            self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_STRING.format(field=name)
+            self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_STRING.format(field=friendly_name)
             return
 
         stripped_value = value.strip()
         if len(stripped_value) == 0 and required:
-            self.errors[field] = ValidationErrorMessages.FIELD_EMPTY.format(field=name)
+            self.errors[field] = ValidationErrorMessages.FIELD_EMPTY.format(field=friendly_name)
             return
 
         if max_length and len(stripped_value) > max_length:
-            self.errors[field] = ValidationErrorMessages.FIELD_TOO_LONG.format(field=name, max_length=max_length)
+            self.errors[field] = ValidationErrorMessages.FIELD_TOO_LONG.format(
+                field=friendly_name, max_length=max_length
+            )
             return
 
         self._add_parsed_data(field, stripped_value)
 
+    @validation_field
+    def validate_model_id(
+        self,
+        data: dict[str, Any],
+        field: str,
+        model_name: str,
+        required: bool = False,
+        friendly_name: str | None = None,
+        value: Any = None,  # Injected by decorator - must be last
+    ) -> None:
+        if not isinstance(value, int) or value <= 0:
+            self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_NUMBER.format(field=friendly_name)
+            return
+
+        # Import here to avoid circular imports
+        from CTFd.models import get_class_by_tablename
+
+        # Map model names to table names
+        model_table_mapping = {
+            "Challenge": "ng_challenges",
+            "Demographic": "ng_demographics",
+            "Question": "ng_questions",
+            "Hint": "ng_hints",
+            "ChallengeTag": "ng_challenge_tags",
+            "ContainerBlueprint": "ng_container_blueprints",
+            "Team": "ng_teams",
+            "TeamMember": "ng_team_members",
+            "User": "ng_users",
+            "Event": "ng_events",
+            "Ticket": "ng_tickets",
+            "Permission": "ng_permissions",
+            "Role": "ng_roles",
+        }
+
+        # Get the table name for the model
+        table_name = model_table_mapping.get(model_name)
+        if not table_name:
+            self.errors[field] = f"{friendly_name} references an unknown model: {model_name}"
+            return
+
+        # Get the SQLAlchemy model class
+        model_class = get_class_by_tablename(table_name)
+        if not model_class:
+            self.errors[field] = f"{friendly_name} references an unknown model: {model_name}"
+            return
+
+        # Check if an object with the given ID exists
+        try:
+            obj = model_class.query.filter_by(id=value).first()
+            if not obj:
+                self.errors[field] = f"{friendly_name} with ID {value} does not exist"
+                return
+
+            self._add_parsed_data(field, value)
+
+        except Exception as e:
+            self.errors[field] = f"Error validating {friendly_name}: {str(e)}"
+            return
+
+    @validation_field
     def validate_positive_integer(
         self,
         data: dict[str, Any],
         field: str,
         required: bool = False,
         friendly_name: str | None = None,
+        value: Any = None,  # Injected by decorator
     ) -> None:
-        name = friendly_name or field.replace("_", " ").title()
-        value = data.get(field)
-
-        if required and not self.require_field(data, field, name):
-            return
-
         if value is None:
+            # This should never happen due to decorator logic, but for type safety
             return
 
         try:
-            int_value = int(value)
+            int_value = int(value)  # type: ignore[arg-type]
             if int_value <= 0:
-                self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_POSITIVE.format(field=name)
+                self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_POSITIVE.format(field=friendly_name)
                 return
             self._add_parsed_data(field, int_value)
         except (ValueError, TypeError):
-            self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_NUMBER.format(field=name)
+            self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_NUMBER.format(field=friendly_name)
+            return
 
+    @validation_field
     def validate_integer_range(
         self,
         data: dict[str, Any],
@@ -117,49 +204,39 @@ class BaseValidator:
         max_val: int,
         required: bool = False,
         friendly_name: str | None = None,
+        value: Any = None,  # Injected by decorator
     ) -> None:
-        name = friendly_name or field.replace("_", " ").title()
-
-        self.validate_positive_integer(data, field, required, name)
+        # First validate as positive integer
+        self.validate_positive_integer(data, field, required=required, friendly_name=friendly_name)
 
         if field in self.errors:
             return
 
-        value = data.get(field)
-        if value is None and not required:
-            return
-
-        int_value = int(self.parsed_data.get(field))
+        # The value should now be in parsed_data if validation passed
+        int_value = int(self.parsed_data.get(field))  # type: ignore[arg-type]
         if not (min_val <= int_value <= max_val):
             self.errors[field] = ValidationErrorMessages.FIELD_OUT_OF_RANGE.format(
-                field=name, min_val=min_val, max_val=max_val
+                field=friendly_name, min_val=min_val, max_val=max_val
             )
             if field in self.parsed_data:
                 del self.parsed_data[field]
 
+    @validation_field
     def validate_boolean(
         self,
         data: dict[str, Any],
         field: str,
         required: bool = False,
         friendly_name: str | None = None,
+        value: Any = None,  # Injected by decorator
     ) -> None:
-        name = friendly_name or field.replace("_", " ").title()
-        value = data.get(field)
-
-        if required and not self.require_field(data, field, name):
-            if value is not False:
-                return
-
-        if value is None:
-            return
-
         if not isinstance(value, bool):
-            self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_BOOLEAN.format(field=name)
+            self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_BOOLEAN.format(field=friendly_name)
             return
 
         self._add_parsed_data(field, value)
 
+    @validation_field
     def validate_enum(
         self,
         data: dict[str, Any],
@@ -167,70 +244,62 @@ class BaseValidator:
         enum_class: type[Enum],
         required: bool = False,
         friendly_name: str | None = None,
+        value: Any = None,  # Injected by decorator
     ) -> None:
-        name = friendly_name or field.replace("_", " ").title()
-        value = data.get(field)
-
-        if required and not self.require_field(data, field, name):
-            return
-
-        if value is None:
-            return
-
         try:
             enum_value = enum_class(value)
         except ValueError:
-            self.errors[field] = f"{name} must be one of: {', '.join(e.name for e in enum_class)}"
+            self.errors[field] = f"{friendly_name} must be one of: {', '.join(e.name for e in enum_class)}"
             return
         self._add_parsed_data(field, enum_value)
 
+    @validation_field
     def validate_datetime(
         self,
         data: dict[str, Any],
         field: str,
-        required: bool = False,
         allow_past: bool = True,
+        required: bool = False,
         friendly_name: str | None = None,
+        value: Any = None,  # Injected by decorator
     ) -> datetime | None:
-        name = friendly_name or field.replace("_", " ").title()
-        value = data.get(field)
-
-        if not required and value is None:
-            return None
-
-        if required and not self.require_field(data, field, name):
-            return None
-
         if not isinstance(value, str):
-            self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_DATETIME.format(field=name)
+            self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_DATETIME.format(field=friendly_name)
             return None
 
         try:
             dt_value = datetime.fromisoformat(value)
-            
+
             # require that tzinfo is set and is UTC
-            if dt_value.tzinfo is not timezone.utc:
-                self.errors[field] = ValidationErrorMessages.FIELD_DATETIME_MUST_BE_UTC.format(field=name)
+            if dt_value.tzinfo is not UTC:
+                self.errors[field] = ValidationErrorMessages.FIELD_DATETIME_MUST_BE_UTC.format(field=friendly_name)
                 return None
-            
-            # strip tzinfo to allow using this value with naive datetimes from utc_now/db
-            dt_value = dt_value.replace(tzinfo=None)
-            
+
             if not allow_past and dt_value < utc_now():
-                self.errors[field] = ValidationErrorMessages.FIELD_DATETIME_PAST.format(field=name)
+                self.errors[field] = ValidationErrorMessages.FIELD_DATETIME_PAST.format(field=friendly_name)
                 return None
 
             self._add_parsed_data(field, dt_value)
             return dt_value
         except (ValueError, TypeError):
-            self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_DATETIME.format(field=name)
+            self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_DATETIME.format(field=friendly_name)
             return None
 
-    def is_valid(self) -> tuple[bool, dict[str, str], dict[str, Any]]:
+    def validate(self) -> dict[str, Any]:
         """
-        Return the validation results and the dictionary of parsed, valid data.
+        Validate and return parsed data if successful, or raise ValidationError if not.
+
+        Returns:
+            dict[str, Any]: The parsed and validated data
+
+        Raises:
+            ValidationError: If there are any validation errors
         """
-        return len(self.errors) == 0, self.errors, self.parsed_data
+        from ..exceptions import ValidationError
+
+        if self.errors:
+            raise ValidationError("Validation failed", errors=self.errors)
+        return self.parsed_data
 
     def validate_time_window(
         self,
@@ -249,11 +318,13 @@ class BaseValidator:
         has_end = end_field in data and data.get(end_field) is not None
 
         if has_start ^ has_end:  # XOR
-            self.errors["time_constraint"] = (f"Both {start_field} and {end_field} must be provided together, or neither.")
+            self.errors["time_constraint"] = (
+                f"Both {start_field} and {end_field} must be provided together, or neither."
+            )
             return
 
         if start_time and end_time and start_time >= end_time:
-            self.errors[end_field] = (f"{end_field.replace('_', ' ').title()} must be after {start_field.replace('_', ' ')}.")
+            self.errors[end_field] = (
+                f"{end_field.replace('_', ' ').title()} must be after {start_field.replace('_', ' ')}."
+            )
             return
-        
-        

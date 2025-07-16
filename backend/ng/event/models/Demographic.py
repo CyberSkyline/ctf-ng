@@ -3,10 +3,12 @@ Defines the Demographic model for tracking user event registrations.
 """
 
 from __future__ import annotations
-from typing import Any
+
 from datetime import datetime
+from typing import Any
 
 from CTFd.models import db
+
 from ...core.utils import utc_now
 
 
@@ -14,7 +16,7 @@ class Demographic(db.Model):
     __tablename__ = "ng_demographics"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("ng_users.id"), nullable=False, index=True)
     event_id = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
     reg_timestamp = db.Column(db.DateTime, default=utc_now, nullable=False)
 

@@ -3,15 +3,17 @@ Defines the TeamMember model, link between users, teams, and events.
 """
 
 from __future__ import annotations
-from typing import Any, TypedDict
+
 from datetime import datetime
+from typing import Any, TypedDict
 
 from CTFd.models import db
 
-from ...core.utils import utc_now
-from .enums import TeamRole
-from ...core.utils.validator import BaseValidator
 from ...core.exceptions import ValidationError
+from ...core.utils import utc_now
+from ...core.utils.validator import BaseValidator
+from .enums import TeamRole
+
 
 class TeamMemberSerialized(TypedDict):
     id: int
@@ -21,6 +23,7 @@ class TeamMemberSerialized(TypedDict):
     event_id: int
     joined_at: str | None
     role: str
+
 
 class TeamMember(db.Model):
     __tablename__ = "ng_team_members"
@@ -46,6 +49,7 @@ class TeamMember(db.Model):
 
     def serialize(self, include_admin_fields: bool = False) -> TeamMemberSerialized:
         from ...user.models.User import User
+
         """Serialize team member for API response.
 
         Args:
@@ -55,7 +59,7 @@ class TeamMember(db.Model):
             dict: Serialized team member data
         """
         user = User.find_by_id(self.user_id)
-        
+
         if user.ctfd_user:
             user_name = user.ctfd_user.name if user.ctfd_user.name else f"User {self.user_id} (Data Inconsistency)"
 
@@ -82,13 +86,10 @@ class TeamMember(db.Model):
         existing_member = cls.find_by_user_and_event(data["user_id"], data["event_id"])
         if existing_member:
             raise ValidationError(f"User {data['user_id']} is already a member of the event {data['event_id']}.")
-        
+
         # TODO - Check to ensure that max team size is not exceeded
 
-        is_valid, errors, parsed_data = validator.is_valid()
-        if not is_valid:
-            raise ValidationError("Validation failed.", errors=errors)
-        return parsed_data
+        return validator.validate()
 
     @classmethod
     def create_team_member(
@@ -116,13 +117,15 @@ class TeamMember(db.Model):
         if joined_at is None:
             joined_at = utc_now()
 
-        validated_data = cls.validate(data = {
-            "user_id": user_id,
-            "team_id": team_id,
-            "event_id": event_id,
-            "role": role,
-            "joined_at": joined_at,
-        })
+        validated_data = cls.validate(
+            data={
+                "user_id": user_id,
+                "team_id": team_id,
+                "event_id": event_id,
+                "role": role,
+                "joined_at": joined_at,
+            }
+        )
 
         team_member = cls(**validated_data)
 
@@ -207,7 +210,7 @@ class TeamMember(db.Model):
         return cls.query.filter_by(user_id=user_id, team_id=team_id).first()
 
     @classmethod
-    def find_all_by_team(cls, team_id: int) -> list["TeamMember"]:
+    def find_all_by_team(cls, team_id: int) -> list[TeamMember]:
         """Find all team members in a team.
 
         Args:
@@ -276,7 +279,7 @@ class TeamMember(db.Model):
         return count
 
     @classmethod
-    def find_all_by_team_ordered_by_join_date(cls, team_id: int) -> list["TeamMember"]:
+    def find_all_by_team_ordered_by_join_date(cls, team_id: int) -> list[TeamMember]:
         """Find all team members in a team ordered by join date (oldest first).
 
         Args:

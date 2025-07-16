@@ -2,32 +2,34 @@
 Ctf-ng Pytest Fixtures
 """
 
+from datetime import datetime, timedelta
+
 import pytest
-from datetime import datetime
-from CTFd.models import db, Users
 from CTFd.cache import cache
+from CTFd.models import Configs, Users, db
 from CTFd.utils.security.csrf import generate_nonce
-from CTFd.models import Configs
-from . import load as plugin_load
-from .user.models.User import User as NgUser
-from .event.models.Event import Event
-from .team.models.Team import Team
-from .permissions.controllers import assign_role_to_user
-from .permissions.models.Role import Role
-from .permissions.models.RolePermission import RolePermission
-from .permissions.models.Permission import Permission
-from .core.tests.system.middleware_test_routes import middleware_test_routes
-from .support.models.Ticket import Ticket
-from .support.models.TicketTag import TicketTag
 from tests.helpers import (
     create_ctfd as create_ctfd_original,
-    setup_ctfd,
-    gen_user,
 )
+from tests.helpers import (
+    gen_user,
+    setup_ctfd,
+)
+
+from . import load as plugin_load
+from .challenge.models.Challenge import Challenge
 from .core.tests.helpers import create_ctfd, destroy_ctfd
-from .permissions.models.enums import PermissionEnum
-from .permissions.models.enums import RoleEnum
-from datetime import timedelta
+from .core.tests.system.middleware_test_routes import middleware_test_routes
+from .event.models.Event import Event
+from .permissions.controllers import assign_role_to_user
+from .permissions.models.enums import PermissionEnum, RoleEnum
+from .permissions.models.Permission import Permission
+from .permissions.models.Role import Role
+from .permissions.models.RolePermission import RolePermission
+from .support.models.Ticket import Ticket
+from .support.models.TicketTag import TicketTag
+from .team.models.Team import Team
+from .user.models.User import User as NgUser
 
 
 def create_app():
@@ -44,12 +46,10 @@ def app():
     """
     Creates and configures a new Flask application for the entire test session.
     """
-    
 
     app = create_ctfd()
     yield app
     destroy_ctfd(app)
-
 
 
 @pytest.fixture(scope="function")
@@ -103,7 +103,6 @@ def middleware_client():
         db.create_all()
 
         # Minimal ctfd config
-        
 
         setup_config = Configs(key="setup", value="true")
         db.session.add(setup_config)
@@ -141,7 +140,9 @@ def middleware_client():
         db.session.add(event2)
         db.session.commit()
 
-        Team.create_team_with_captain(name="Temp Team", event_id=event.id, captain_id=user_to_login.id, invite_code="fo67ykug")
+        Team.create_team_with_captain(
+            name="Temp Team", event_id=event.id, captain_id=user_to_login.id, invite_code="fo67ykug"
+        )
         Team.create_team_with_captain(name="Second Team", event_id=event.id, captain_id=user2.id)
 
         Ticket.create(
@@ -202,7 +203,7 @@ def logged_in_client(app, db_session, user):
     """A test client logged in as a regular user."""
     # Clear any cached user data to prevent cross-test contamination
     cache.clear()
-    
+
     client = app.test_client()
     with client.session_transaction() as sess:
         # Completely clear the session and set only what we need
@@ -215,13 +216,14 @@ def logged_in_client(app, db_session, user):
     return client
 
 
-@pytest.fixture(scope="function") 
+@pytest.fixture(scope="function")
 def admin_client(app, db_session, admin):
     """A test client logged in as an admin."""
     # Clear any cached user data to prevent cross-test contamination
     from CTFd.cache import cache
+
     cache.clear()
-    
+
     client = app.test_client()
     with client.session_transaction() as sess:
         # Completely clear the session and set only what we need
@@ -330,6 +332,7 @@ def future_event_reg(event, event_registration_factory, db_session):
     db_session.commit()
     return reg
 
+
 @pytest.fixture
 def role_with_permissions(db_session):
     """Creates a role with permissions for testing."""
@@ -353,6 +356,7 @@ def role_with_permissions(db_session):
 
     return role
 
+
 @pytest.fixture
 def user_with_roles(db_session):
     """Creates a user with multiple roles for testing."""
@@ -373,9 +377,9 @@ def user_with_roles(db_session):
 
     return user
 
+
 @pytest.fixture
 def permissions(db_session):
-
     if db_session is None:
         return None
 
@@ -387,3 +391,17 @@ def permissions(db_session):
     db_session.commit()
 
     return [permission1, permission2, permission3]
+
+
+@pytest.fixture
+def challenge(db_session):
+    """Create a test challenge for testing purposes."""
+    challenge = Challenge(
+        name="Test Challenge",
+        description="A test challenge for question testing",
+        icon="test-icon",
+        summary="Test summary",
+    )
+    db_session.add(challenge)
+    db_session.commit()
+    return challenge
