@@ -40,7 +40,7 @@ class Question:
     ))  # The correct answer
 
     max_attempts: int = attr.ib(validator=v.instance_of(int))  # Maximum number of attempts allowed (e.g., 20)
-    placeholder: str | None = attr.ib(default=None, validator=v.optional(v.instance_of(str)))  # Optional placeholder text for input fields
+    placeholder: str | None = attr.ib(default=None, validator=v.optional(v.instance_of(str)))  # Optional placeholder text for answer input fields (e.g., 'CTF{...}' or 'Enter your answer here')
 
 @attr.s
 class TextBody:
