@@ -5,8 +5,8 @@ Test routes for middleware testing isolated in a separate Flask app instance.
 
 from flask import Blueprint, jsonify
 from ...middleware.permission_middleware import (
-    get_user_role_permissions,
-    check_user_can_edit_team,
+    get_permissions,
+
 )
 from ...middleware.auth import user_endpoint, admin_endpoint
 from ...middleware.loaders import (
@@ -76,7 +76,7 @@ def loading_model_objects(**kwargs):
 
 
 @middleware_test_routes.route("/get_user_permissions", methods=["GET"])
-@get_user_role_permissions
+@get_permissions
 def get_user_permissions(**kwargs):
     """
     Endpoint to retrieve user permissions.
@@ -84,12 +84,3 @@ def get_user_permissions(**kwargs):
     """
     return jsonify({"success": True, "permissions": kwargs.get("permissions", [])})
 
-@middleware_test_routes.route("/check_user_can_edit_team", methods=["GET"])
-@load_team(source=LoaderType.PARAM, output_key="team")
-@check_user_can_edit_team
-def check_user_can_edit_team(**kwargs):
-    """
-    Endpoint to check if the user can edit the specified team.
-    The check is performed by the decorator.
-    """
-    return jsonify({"success": True, "message": "User can edit the team."}) 

@@ -73,8 +73,8 @@ class Test_Create_Team_With_Captain:
             assert team2 is None
 
 class Test_Update_Invite_Code:
-    def test_should_choose_unique_invite_code(self, event, team_factory):
-        team = team_factory(event=event)
+    def test_should_choose_unique_invite_code(self, event, team_factory, user):
+        team = team_factory(event=event, members=[user])
         old_code = team.invite_code
 
         team.update_invite_code()
@@ -84,8 +84,8 @@ class Test_Update_Invite_Code:
         assert refreshed_team.invite_code == team.invite_code
         assert refreshed_team.invite_code != old_code
 
-    def test_should_update_specified_invite_code(self, event, team_factory):
-        team = team_factory(event=event)
+    def test_should_update_specified_invite_code(self, event, team_factory, user):
+        team = team_factory(event=event, members=[user])
         old_code = team.invite_code
         new_code = Team.get_unique_invite_code()
 
@@ -108,8 +108,8 @@ class Test_Update_Invite_Code:
     #         mock_commit.assert_called_once()
 
 class Test_Update_Name:
-    def test_should_update_team_name(self, event, team_factory):
-        team = team_factory(event=event)
+    def test_should_update_team_name(self, event, team_factory, user):
+        team = team_factory(event=event, members=[user])
         old_name = team.name
         new_name = "Updated Team Name"
 
@@ -133,8 +133,8 @@ class Test_Update_Name:
     #         mock_commit.assert_called_once()
 
 class Test_Find_By_Id:
-    def test_should_find_team_by_id(self, event, team_factory):
-        team = team_factory(event=event)
+    def test_should_find_team_by_id(self, event, team_factory, user):
+        team = team_factory(event=event, members=[user])
 
         found_team = Team.find_by_id(team.id)
 
@@ -147,8 +147,8 @@ class Test_Find_By_Id:
 
 
 class Test_Find_By_Invite_Code:
-    def test_should_find_team_by_invite_code(self, event, team_factory):
-        team = team_factory(event=event)
+    def test_should_find_team_by_invite_code(self, event, team_factory,user):
+        team = team_factory(event=event, members=[user])
 
         found_team = Team.find_by_invite_code(team.invite_code)
 

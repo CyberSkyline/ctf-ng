@@ -18,7 +18,4 @@ def get_user_permissions(user):
         role_permissions = Role.get_permissions(role.id)
         permissions.extend(role_permissions)
 
-    return {
-        "success": True,
-        "permissions": list(set(permissions))
-    }
+    return list(set(permissions))

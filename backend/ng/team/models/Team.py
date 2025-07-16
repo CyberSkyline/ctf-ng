@@ -15,7 +15,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 from ... import config
 from ...core.exceptions import ConflictError, ValidationError
-from ...core.validation import BaseValidator
+from ...user.models.User import User
 from .enums import TeamRole
 
 HEX_CHARS = string.hexdigits.lower()[:16]  # '0123456789abcdef'
@@ -43,6 +43,7 @@ class Team(db.Model):
     seed = db.Column(db.String(SEED_LENGTH), nullable=False, default=lambda: Team.generate_random_seed())
     event_id = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
     locked = db.Column(db.Boolean, default=False, nullable=False)
+    start_timestamp = db.Column(db.DateTime, nullable=True)
 
     __table_args__ = (
         db.UniqueConstraint("event_id", "name", name="uq_team_event_name"),
@@ -96,29 +97,26 @@ class Team(db.Model):
         """Validate team creation data. Raises ValidationError on failure."""
 
         validator = BaseValidator()
-        validator.validate_string(
-            data,
-            "name",
-            config.TEAM_NAME_MAX_LENGTH,
-            required=True,
-            friendly_name="Team name",
-        )
-        validator.validate_positive_integer(data, "event_id", required=True, friendly_name="Event ID")
-        validator.validate_boolean(data, "ranked", friendly_name="Ranked status")
-        validator.validate_string(
-            data,
-            "invite_code",
-            config.INVITE_CODE_MAX_LENGTH,
-            required=False,
-            friendly_name="Invite code",
-        )
-        validator.validate_string(
-            data,
-            "seed",
-            SEED_LENGTH,
-            required=False,
-            friendly_name="Seed",
-        )
+        if "name" in data:
+            validator.validate_string(
+                data,
+                "name",
+                config.TEAM_NAME_MAX_LENGTH,
+                required=True,
+                friendly_name="Team name",
+            )
+        if "event_id" in data:
+            validator.validate_positive_integer(data, "event_id", required=True, friendly_name="Event ID")
+        if "ranked" in data:
+            validator.validate_boolean(data, "ranked", friendly_name="Ranked status")
+        if "invite_code" in data:
+            validator.validate_string(
+                data,
+                "invite_code",
+                config.INVITE_CODE_MAX_LENGTH,
+                required=False,
+                friendly_name="Invite code",
+            )
 
         # TODO - Check if invite code is unique
         # TODO - Check if team name is unique within event
@@ -419,7 +417,9 @@ class Team(db.Model):
         """
 
         from .enums import TeamRole
-        from .TeamMember import TeamMember
+        captain = User.find_by_id(captain_id)
+        if captain.ctfd_user.name in name:
+            raise ValidationError("Team name cannot include a member's name.")
 
         try:
             team = cls.create_team(
@@ -453,23 +453,26 @@ class Team(db.Model):
 
         try:
             member = TeamMember.find_by_user_and_event(user_id=user_id, event_id=self.event_id)
+            if not member:
+                raise ValidationError(f"User {user_id} is not a member of team {self.id}.")
             if member:
                 member.remove_team_member(commit=False)
                 self.update_invite_code(commit=False)
                 if commit:
                     db.session.commit()
-        except Exception:
+                return True
+        except Exception as e:
             db.session.rollback()
             raise
 
-    def remove_captain_and_promote(self, captain_id: int, new_captain_user_id: int) -> bool:
+    def remove_captain_and_promote(self, new_captain_user_id: int) -> bool:
         """Remove captain and promote new one in single transaction."""
 
         from .enums import TeamRole
         from .TeamMember import TeamMember
 
         try:
-            captain = TeamMember.query.get(captain_id)
+            captain = TeamMember.query.filter_by(team_id=self.id, role=TeamRole.CAPTAIN).first()
             if captain:
                 captain.remove_team_member(commit=False)
 

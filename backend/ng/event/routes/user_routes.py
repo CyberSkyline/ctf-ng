@@ -1,18 +1,31 @@
 from flask_restx import Namespace, Resource
+from flask import redirect
 
+from ...core.utils import success_response, error_response
+
+from ...event.models.Event import Event
+from ...core.utils.validator import BaseValidator
 from ...core.exceptions import ValidationError
-from ...core.middleware import (
-    user_endpoint,
-)
+
+from ...user.models.User import User
+from ...team.models.TeamMember import TeamMember
+from ...team.models.Team import Team
+
 from ...core.middleware.loaders import (
     LoaderType,
     load_event,
+    load_user,
     load_team_by_user_and_event,
 )
-from ...core.utils import success_response
-from ...core.utils.validator import BaseValidator
-from ...event.models.Event import Event
-from ...user.models.User import User
+
+from ...core.middleware import (
+    user_endpoint,
+)
+
+from ...core.middleware.permission_middleware import get_permissions
+from ...permissions.models.enums import PermissionEnum
+from ...team.models.enums import TeamRole
+
 from ..controllers.user import join_event_controller
 
 events_user_namespace = Namespace("/events", description="event endpoints for users")
@@ -21,7 +34,7 @@ events_user_namespace = Namespace("/events", description="event endpoints for us
 @events_user_namespace.route("")
 class EventList(Resource):
     @user_endpoint()
-    def get(self):
+    def get(self, **kwargs):
         """Get all public events"""
         results = Event.get_all_events(public_only=True)
         return success_response(results)
@@ -31,7 +44,7 @@ class EventList(Resource):
 class EventDetail(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
-    def get(self, event_id, event):
+    def get(self, event_id, event, **kwargs):
         """Get event details"""
         return success_response(event)
 
@@ -40,13 +53,16 @@ class EventDetail(Resource):
 class EventEligibility(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
-    def get(self, event_id, event):
+    def get(self, event_id, event, **kwargs):
         """Check event eligibility"""
         # TODO - Actually implement eligibility check
         # event.registration_open = True
         # current time is inbetween registration start and end dates (if set)
         # user is not already in the event (i.e. does not have a demographic or is on a team)
-
+        if not event.registration_open:
+            return error_response("Event registration is closed.", "forbidden", 403)
+        
+        
         return success_response(True)
 
 
@@ -94,5 +110,69 @@ class EventTeamMembers(Resource):
     @load_team_by_user_and_event()
     def get(self, event_id, team, **kwargs):
         """Get team members"""
-        members = team.members
+        members = team.get_full_team_details()['team_members']
         return success_response(members)
+
+
+@events_user_namespace.route("/<int:event_id>/me/team/kick")
+class EventTeamKick(Resource):
+    @user_endpoint(json_required=True)
+    @load_event(source=LoaderType.PARAM)
+    @load_user(source=LoaderType.BODY)
+    @load_team_by_user_and_event()
+    @get_permissions
+    def post(self, event_id, **kwargs):
+        """Kick a user from the user's team in the event"""
+        json_data = kwargs.get("json_data", {})
+        user_id = json_data.get("user_id")
+        team = kwargs.get("team")
+        permissions = kwargs.get("permissions", [])
+        if user_id == kwargs.get("current_user").id:
+            return error_response("You cannot kick yourself from the team.", "validation", 400)
+        if PermissionEnum.CAN_EDIT_TEAM not in permissions:
+            return error_response("You do not have permission to kick team members", "forbidden", 403)
+
+
+        team.remove_member_and_regenerate_code(user_id)
+        return success_response()
+
+@events_user_namespace.route("/<int:event_id>/me/team/promote")
+class EventTeamPromote(Resource):
+    @user_endpoint(json_required=True)
+    @load_event(source=LoaderType.PARAM)
+    @load_user(source=LoaderType.BODY)
+    @load_team_by_user_and_event()
+    @get_permissions
+    def post(self, event_id, team, json_data, **kwargs):
+        """Promote a user to team leader in the user's team in the event"""
+        user = kwargs.get("user")
+        permissions = kwargs.get("permissions", [])
+
+        if user.id == kwargs.get("current_user").id:
+            return error_response("You cannot promote yourself.", "validation", 400)
+
+        if PermissionEnum.CAN_EDIT_TEAM not in permissions:
+            return error_response("You do not have permission to promote team members", "forbidden", 403)
+
+        result = team.remove_captain_and_promote(user.id)
+        return success_response(result)
+
+@events_user_namespace.route("/<int:event_id>/me/team/leave")
+class EventTeamLeave(Resource):
+    @user_endpoint()
+    @load_event(source=LoaderType.PARAM)
+    @load_team_by_user_and_event()
+    def get(self, event_id, current_user,**kwargs):
+        """Leave the user's team in the event"""
+        team = kwargs.get("team")
+        team_member = TeamMember.find_by_user_and_team(current_user.id, team.id)
+        if team_member.role == TeamRole.CAPTAIN:
+            return error_response("You cannot leave the team as a captain. Please promote another member first.", "forbidden", 403)
+        result = team_member.remove_team_member(commit=True)
+        print(TeamMember.find_all_by_team_ordered_by_join_date(team.id))
+        if len(team.members) == 0:
+            team.delete()
+        
+
+
+        return redirect(f"/ng/events/{event_id}/me/register", code=303)

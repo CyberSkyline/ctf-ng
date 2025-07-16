@@ -263,6 +263,7 @@ def team_factory(db_session, event_factory):
 
     def _factory(event=None, **kwargs):
         members_to_add = kwargs.pop("members", [])
+        captain = members_to_add.pop(0)
 
         if event is None:
             event = event_factory()
@@ -270,15 +271,82 @@ def team_factory(db_session, event_factory):
         defaults = {
             "name": f"Test Team {db_session.query(Team).count() + 1}",
             "event_id": event.id,
+            "captain_id": captain.id,
         }
         defaults.update(kwargs)
-        team = Team.create_team(**defaults)
+        team = Team.create_team_with_captain(**defaults)
 
         for member_user in members_to_add:
             TeamMember.create_team_member(user_id=member_user.id, team_id=team.id, event_id=event.id)
         return team
 
     return _factory
+
+@pytest.fixture
+def user_factory(db_session):
+    """A factory function to create User objects for tests."""
+    from .user.models.User import User
+
+    def _factory(name="Test User", email="testuser@example.com", password="password"):
+        user = Users(name=name, email=email)
+        db_session.add(user)
+        db_session.commit()
+
+        ng_user = User(id=user.id)
+        db_session.add(ng_user)
+        db_session.commit()
+        return ng_user
+
+    return _factory
+
+
+@pytest.fixture
+def team_with_member(db_session, team_factory, user):
+    """Creates a team with members for testing."""
+    team = team_factory(members=[user])
+    return team
+
+@pytest.fixture
+def team_with_members(db_session, team_factory, user_factory):
+    """Creates a team with multiple members for testing."""
+    users = [user_factory(name=f"User {i}", email=f"user{i}@example.com") for i in range(1, 4)]
+    team = team_factory(members=users)
+    return team
+
+@pytest.fixture
+def team_captain_client(app, db_session, team_with_members, role_with_permissions):
+    """A test client logged in as a team captain."""
+    # Clear any cached user data to prevent cross-test contamination
+    from CTFd.cache import cache
+    cache.clear()
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        # Completely clear the session and set only what we need
+        sess.clear()
+        sess["id"] = team_with_members.members[0].user_id
+        sess["name"] = team_with_members.members[0].user.ctfd_user.name
+        sess["type"] = "team"
+        sess["nonce"] = generate_nonce()
+        sess.permanent = False
+    return client
+
+@pytest.fixture
+def team_member_client(app, db_session, team_with_members, role_with_permissions):
+    """A test client logged in as a team member."""
+    # Clear any cached user data to prevent cross-test contamination
+    from CTFd.cache import cache
+    cache.clear()
+    
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        # Completely clear the session and set only what we need
+        sess.clear()
+        sess["id"] = team_with_members.members[1].user_id
+        sess["name"] = team_with_members.members[1].user.ctfd_user.name
+        sess["type"] = "team"
+        sess["nonce"] = generate_nonce()
+        sess.permanent = False
+    return client
 
 
 @pytest.fixture
@@ -287,50 +355,6 @@ def event(event_factory):
     return event_factory()
 
 
-@pytest.fixture
-def open_event_reg(event, event_registration_factory, db_session):
-    """An open event registration."""
-    reg = event_registration_factory(event=event, reg_open=True)
-    reg._test_event_id = event.id
-    return reg
-
-
-@pytest.fixture
-def closed_event_reg(event, event_registration_factory, db_session):
-    """A closed event registration."""
-    reg = event_registration_factory(event=event, reg_open=False)
-    reg._test_event_id = event.id
-    return reg
-
-
-@pytest.fixture
-def past_event_reg(event, event_registration_factory, db_session):
-    """An event registration with a registration window in the past."""
-    reg = event_registration_factory(
-        event=event,
-        reg_start_date=datetime.utcnow() - timedelta(days=2),
-        reg_end_date=datetime.utcnow() - timedelta(days=1),
-    )
-    db_session.expunge_all()
-    db_session.add(reg)
-    db_session.add(reg.event)
-    db_session.commit()
-    return reg
-
-
-@pytest.fixture
-def future_event_reg(event, event_registration_factory, db_session):
-    """An event registration with a registration window in the future."""
-    reg = event_registration_factory(
-        event=event,
-        reg_start_date=datetime.utcnow() + timedelta(days=1),
-        reg_end_date=datetime.utcnow() + timedelta(days=2),
-    )
-    db_session.expunge_all()
-    db_session.add(reg)
-    db_session.add(reg.event)
-    db_session.commit()
-    return reg
 
 
 @pytest.fixture

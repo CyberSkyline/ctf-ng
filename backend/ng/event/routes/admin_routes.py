@@ -6,12 +6,14 @@ from ...event.models.Event import Event
 
 from ...core.middleware.loaders import (
     LoaderType,
-    load_event
+    load_event,
+    load_user,
 )
 
 from ...core.middleware import (
     admin_endpoint,
 )
+from ..controllers.user import join_event_controller
 
 events_admin_namespace = Namespace("/admin/events", description="event endpoints for admins")
 
@@ -45,3 +47,18 @@ class EventDetail(Resource):
         data = validated_data
         updated_event = event.update_event(**data)
         return success_response(updated_event)
+
+@events_admin_namespace.route("/<int:event_id>/<int:user_id>/register")
+class EventRegister(Resource):
+    @admin_endpoint(json_required=True)
+    @load_event(source=LoaderType.PARAM)
+    @load_user(source=LoaderType.PARAM)
+    def post(self, event_id, user_id, **kwargs):
+        """Register a user for an event"""
+        json_data = kwargs.get("json_data", {})
+        if "invite_code" in json_data:
+            result = join_event_controller(kwargs.get("event"), kwargs.get("user"), json_data["invite_code"])
+        elif "team_name" in json_data:
+            result = join_event_controller(kwargs.get("event"), kwargs.get("user"), team_name=json_data["team_name"])
+
+        return success_response(result)
