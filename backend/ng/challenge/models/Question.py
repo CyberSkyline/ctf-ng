@@ -4,7 +4,6 @@ from typing import Any
 
 from CTFd.models import db
 
-from ...core.exceptions import ValidationError
 from ...core.validation import BaseValidator
 
 MAX_QUESTION_NAME_LENGTH = 256
@@ -77,12 +76,7 @@ class Question(db.Model):
             friendly_name="Challenge ID",
         )
 
-        is_valid, errors, parsed_data = validator.is_valid()
-
-        if not is_valid:
-            raise ValidationError("Question validation failed", errors)
-
-        return parsed_data
+        return validator.validate()
 
     @classmethod
     def create_question(

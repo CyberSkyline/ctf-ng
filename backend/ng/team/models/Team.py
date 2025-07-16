@@ -123,11 +123,7 @@ class Team(db.Model):
         # TODO - Check if invite code is unique
         # TODO - Check if team name is unique within event
 
-        is_valid, errors, parsed_data = validator.is_valid()
-
-        if not is_valid:
-            raise ValidationError("Validation failed.", errors=errors)
-        return parsed_data
+        return validator.validate()
 
     def self_validate(self) -> None:
         """Validate the current team instance's data.

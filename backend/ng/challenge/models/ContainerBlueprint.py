@@ -2,7 +2,6 @@ from typing import Any
 
 from CTFd.models import db
 
-from ...core.exceptions import ValidationError
 from ...core.validation import BaseValidator
 
 MAX_CONTAINER_BLUEPRINT_IMAGE_LENGTH = 1024
@@ -79,12 +78,7 @@ class ContainerBlueprint(db.Model):
 
         # TODO - Validate all of the remaining optional fields
 
-        is_valid, errors, parsed_data = validator.is_valid()
-
-        if not is_valid:
-            raise ValidationError("Container Blueprint validation failed", errors)
-
-        return parsed_data
+        return validator.validate()
 
     @classmethod
     def create_container_blueprint(

@@ -4,7 +4,6 @@ from typing import Any, TypedDict
 
 from CTFd.models import db
 
-from ...core.exceptions import ValidationError
 from ...core.validation import BaseValidator
 
 MAX_CHALLENGE_NAME_LENGTH = 128
@@ -90,12 +89,7 @@ class Challenge(db.Model):
             friendly_name="Challenge Summary",
         )
 
-        is_valid, errors, parsed_data = validator.is_valid()
-
-        if not is_valid:
-            raise ValidationError("Challenge validation failed", errors)
-
-        return parsed_data
+        return validator.validate()
 
     @classmethod
     def create_challenge(

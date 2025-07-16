@@ -285,11 +285,21 @@ class BaseValidator:
             self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_DATETIME.format(field=friendly_name)
             return None
 
-    def is_valid(self) -> tuple[bool, dict[str, str], dict[str, Any]]:
+    def validate(self) -> dict[str, Any]:
         """
-        Return the validation results and the dictionary of parsed, valid data.
+        Validate and return parsed data if successful, or raise ValidationError if not.
+
+        Returns:
+            dict[str, Any]: The parsed and validated data
+
+        Raises:
+            ValidationError: If there are any validation errors
         """
-        return len(self.errors) == 0, self.errors, self.parsed_data
+        from ..exceptions import ValidationError
+
+        if self.errors:
+            raise ValidationError("Validation failed", errors=self.errors)
+        return self.parsed_data
 
     def validate_time_window(
         self,

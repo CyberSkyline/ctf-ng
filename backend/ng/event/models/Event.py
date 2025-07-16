@@ -11,7 +11,6 @@ from CTFd.models import db
 from sqlalchemy import CheckConstraint, func
 
 from ... import config
-from ...core.exceptions import ValidationError
 from ...core.utils.validator import BaseValidator
 
 
@@ -140,10 +139,7 @@ class Event(db.Model):
             end_field="registration_end_date",
         )
 
-        is_valid, errors, parsed_data = validator.is_valid()
-        if not is_valid:
-            raise ValidationError("Event data is invalid.", errors=errors)
-        return parsed_data
+        return validator.validate()
 
     @classmethod
     def create_event(

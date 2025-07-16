@@ -1,8 +1,10 @@
 from CTFd.models import db
-from .Role import Role
-from .enums import RoleEnum
-from ...core.utils.validator import BaseValidator
+
 from ...core.exceptions import ValidationError
+from ...core.utils.validator import BaseValidator
+from .enums import RoleEnum
+from .Role import Role
+
 
 class UserRole(db.Model):
     __tablename__ = "ng_user_roles"
@@ -12,8 +14,6 @@ class UserRole(db.Model):
 
     user = db.relationship("User", back_populates="user_roles")
     role = db.relationship("Role", backref="user_roles")
-
-    
 
     def __repr__(self):
         return f"<UserRole user_id={self.user_id} role_id={self.role_id}>"
@@ -33,7 +33,6 @@ class UserRole(db.Model):
         db.session.add(user_role)
         db.session.commit()
         return user_role
-    
 
     @classmethod
     def get_user_roles(cls, user_id: int):
@@ -61,7 +60,7 @@ class UserRole(db.Model):
         existing_user_role = cls.query.filter_by(user_id=user_id, role_id=role_id).first()
         if existing_user_role:
             return existing_user_role
-        
+
         return cls.create_user_role(user_id, role_id)
 
     @classmethod
@@ -86,7 +85,6 @@ class UserRole(db.Model):
         if not role_names:
             raise ValidationError("No role names provided")
 
-
         # Clear existing roles
         cls.query.filter_by(user_id=user_id).delete()
         db.session.commit()
@@ -94,11 +92,11 @@ class UserRole(db.Model):
         for role_name in role_names:
             cls.assign_role_to_user_by_name(user_id, role_name)
 
-        #need to import User here to avoid circular imports
+        # need to import User here to avoid circular imports
         from ...user.models.User import User
+
         user = User.find_by_id(user_id)
         return user
-
 
     @classmethod
     def get_user_role_by_id(cls, user_id: int):
@@ -119,11 +117,11 @@ class UserRole(db.Model):
             "user_id": self.user_id,
             "role_id": self.role_id,
             "user": self.user.serialize() if self.user else None,
-            "role": self.role.serialize() if self.role else None
+            "role": self.role.serialize() if self.role else None,
         }
 
     @classmethod
-    def validate_user_role_update(cls,data):
+    def validate_user_role_update(cls, data):
         """Validate user role updates."""
         validator = BaseValidator()
         if not data.get("roles"):
@@ -131,12 +129,6 @@ class UserRole(db.Model):
             raise ValidationError("No role names provided")
 
         for role in data["roles"]:
-            validator.validate_enum({'roles': role}, "roles", RoleEnum,friendly_name="Role_name")
+            validator.validate_enum({"roles": role}, "roles", RoleEnum, friendly_name="Role_name")
 
-        is_valid, errors, parsed_data = validator.is_valid()
-        if not is_valid:
-            raise ValidationError("User role update data is invalid", errors=errors)
-
-
-        return parsed_data
-
+        return validator.validate()

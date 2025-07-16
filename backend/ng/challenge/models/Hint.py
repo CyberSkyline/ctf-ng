@@ -2,7 +2,6 @@ from typing import Any
 
 from CTFd.models import db
 
-from ...core.exceptions import ValidationError
 from ...core.validation import BaseValidator
 
 MAX_HINT_PREVIEW_LENGTH = 256
@@ -59,12 +58,7 @@ class Hint(db.Model):
             friendly_name="Challenge ID",
         )
 
-        is_valid, errors, parsed_data = validator.is_valid()
-
-        if not is_valid:
-            raise ValidationError("Hint validation failed", errors)
-
-        return parsed_data
+        return validator.validate()
 
     @classmethod
     def create_hint(cls, challenge_id: int, body: str, preview: str = "", deduction: int = 0, commit=True):

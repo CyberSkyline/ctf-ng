@@ -1,10 +1,7 @@
-"""
-Support Domain Validation
-"""
-
 from typing import Any
-from ..exceptions import ValidationError
+
 from ..utils.validator import BaseValidator
+
 
 def validate_ticket_creation(data: dict[str, Any]) -> dict[str, Any]:
     """Validate ticket creation data. Raises ValidationError on failure."""
@@ -22,9 +19,7 @@ def validate_ticket_creation(data: dict[str, Any]) -> dict[str, Any]:
                 if not isinstance(tag_id, int) or tag_id <= 0:
                     validator.errors[f"tag_ids.{idx}"] = "Each tag ID must be a positive integer"
 
-    is_valid, errors, parsed_data = validator.is_valid()
-    if not is_valid:
-        raise ValidationError("Ticket creation data is invalid.", errors=errors)
+    parsed_data = validator.validate()
     return parsed_data
 
 
@@ -33,9 +28,7 @@ def validate_ticket_message(data: dict[str, Any]) -> dict[str, Any]:
     validator = BaseValidator()
     validator.validate_string(data, "text", 4096, required=True, friendly_name="Message text")
 
-    is_valid, errors, parsed_data = validator.is_valid()
-    if not is_valid:
-        raise ValidationError("Ticket message data is invalid.", errors=errors)
+    parsed_data = validator.validate()
     return parsed_data
 
 
@@ -51,9 +44,7 @@ def validate_ticket_update(data: dict[str, Any]) -> dict[str, Any]:
     if "challenge_id" in data:
         validator.validate_positive_integer(data, "challenge_id", required=False, friendly_name="Challenge ID")
 
-    is_valid, errors, parsed_data = validator.is_valid()
-    if not is_valid:
-        raise ValidationError("Ticket update data is invalid.", errors=errors)
+    parsed_data = validator.validate()
     return parsed_data
 
 
@@ -62,9 +53,7 @@ def validate_ticket_assignment(data: dict[str, Any]) -> dict[str, Any]:
     validator = BaseValidator()
     validator.validate_positive_integer(data, "user_id", required=True, friendly_name="User ID")
 
-    is_valid, errors, parsed_data = validator.is_valid()
-    if not is_valid:
-        raise ValidationError("Ticket assignment data is invalid.", errors=errors)
+    parsed_data = validator.validate()
     return parsed_data
 
 
@@ -79,9 +68,7 @@ def validate_tag_creation(data: dict[str, Any]) -> dict[str, Any]:
     if "description" in data:
         validator.validate_string(data, "description", 200, required=False, friendly_name="Tag description")
 
-    is_valid, errors, parsed_data = validator.is_valid()
-    if not is_valid:
-        raise ValidationError("Tag creation data is invalid.", errors=errors)
+    parsed_data = validator.validate()
     return parsed_data
 
 
@@ -97,9 +84,7 @@ def validate_tag_update(data: dict[str, Any]) -> dict[str, Any]:
     if "description" in data:
         validator.validate_string(data, "description", 200, required=False, friendly_name="Tag description")
 
-    is_valid, errors, parsed_data = validator.is_valid()
-    if not is_valid:
-        raise ValidationError("Tag update data is invalid.", errors=errors)
+    parsed_data = validator.validate()
     return parsed_data
 
 
@@ -116,9 +101,7 @@ def validate_ticket_filters(data: dict[str, Any]) -> dict[str, Any]:
     if "team_id" in data:
         validator.validate_positive_integer(data, "team_id", required=False, friendly_name="Team ID")
 
-    is_valid, errors, parsed_data = validator.is_valid()
-    if not is_valid:
-        raise ValidationError("Ticket filter data is invalid.", errors=errors)
+    parsed_data = validator.validate()
     return parsed_data
 
 
@@ -142,7 +125,5 @@ def validate_ticket_tags_update(data: dict[str, Any]) -> dict[str, Any]:
         if not validator.errors:
             validator._add_parsed_data("tag_ids", valid_tag_ids)
 
-    is_valid, errors, parsed_data = validator.is_valid()
-    if not is_valid:
-        raise ValidationError("Tag update data is invalid.", errors=errors)
+    parsed_data = validator.validate()
     return parsed_data

@@ -2,7 +2,6 @@ from typing import Any
 
 from CTFd.models import db
 
-from ...core.exceptions import ValidationError
 from ...core.validation import BaseValidator
 
 MAX_CHALLENGE_TAG_NAME_LENGTH = 256
@@ -43,13 +42,7 @@ class ChallengeTag(db.Model):
             friendly_name="Challenge ID",
         )
 
-        is_valid, errors, parsed_data = validator.is_valid()
-
-        if not is_valid:
-            raise ValidationError("Challenge Tag validation failed", errors)
-
-        # The challenge_id is already an integer from validate_model_id
-        return parsed_data
+        return validator.validate()
 
     @classmethod
     def create_tag(cls, challenge_id: int, name: str, commit=True):

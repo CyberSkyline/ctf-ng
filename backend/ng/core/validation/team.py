@@ -3,9 +3,9 @@ Team Domain Validation
 """
 
 from typing import Any
-from ..exceptions import ValidationError
-from ..utils.validator import BaseValidator
+
 from ... import config
+from ..utils.validator import BaseValidator
 
 
 def validate_team_update(data: dict[str, Any]) -> dict[str, Any]:
@@ -21,10 +21,7 @@ def validate_team_update(data: dict[str, Any]) -> dict[str, Any]:
     validator.validate_boolean(data, "ranked", friendly_name="Ranked status")
     validator.validate_boolean(data, "locked", friendly_name="Locked status")
 
-    is_valid, errors, parsed_data = validator.is_valid()
-    if not is_valid:
-        raise ValidationError("Validation failed.", errors=errors)
-    return parsed_data
+    return validator.validate()
 
 
 def validate_team_leave(data: dict[str, Any]) -> dict[str, Any]:
@@ -32,17 +29,12 @@ def validate_team_leave(data: dict[str, Any]) -> dict[str, Any]:
     validator = BaseValidator()
     validator.validate_positive_integer(data, "event_id", required=True, friendly_name="Event ID")
 
-    is_valid, errors, parsed_data = validator.is_valid()
-    if not is_valid:
-        raise ValidationError("Validation failed.", errors=errors)
-    return parsed_data
+    return validator.validate()
+
 
 def validate_captain_assignment(data: dict[str, Any]) -> dict[str, Any]:
     """Validate captain assignment data. Raises ValidationError on failure."""
     validator = BaseValidator()
     validator.validate_positive_integer(data, "user_id", required=True, friendly_name="User ID")
 
-    is_valid, errors, parsed_data = validator.is_valid()
-    if not is_valid:
-        raise ValidationError("Captain assignment data is invalid.", errors=errors)
-    return parsed_data
+    return validator.validate()
