@@ -8,6 +8,8 @@ from ..controllers.import_challenge_from_yaml import import_challenge_from_yaml
 
 challenge_admin_namespace = Namespace("challenges", description="challenge managment")
 
+# /admin/events/event_id/import
+
 
 @challenge_admin_namespace.route("/import")
 class ImportChallenge(Resource):

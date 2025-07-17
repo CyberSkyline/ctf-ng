@@ -1,6 +1,7 @@
 from typing import Any
 
 from CTFd.models import db
+from cyber_skyline.chall_parser.compose.challenge_info import Hint as HintAttr
 
 from ...core.validation import BaseValidator
 
@@ -75,3 +76,14 @@ class Hint(db.Model):
         except Exception as e:
             db.session.rollback()
             raise e
+
+    def as_attr(self) -> HintAttr:
+        """
+        Convert the Hint model to a HintAttr object.
+        :return: A HintAttr object representing the hint.
+        """
+        return HintAttr(
+            body=self.body,  # type: ignore
+            preview=self.preview,  # type: ignore
+            deduction=self.deduction,  # type: ignore
+        )

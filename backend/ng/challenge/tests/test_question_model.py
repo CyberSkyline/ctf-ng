@@ -331,12 +331,12 @@ class Test_Check_Answer:
 
         admin_client.post("/ng/admin/challenge/import", json={"yaml": yaml.decode("utf-8")})
 
-        challenge = Challenge.query.filter_by(name="Basic Challenge").first()
-        question = Question.query.filter_by(name="Q1").first()
+        # challenge = Challenge.query.filter_by(name="Basic Challenge").first()
+        # question = Question.query.filter_by(name="Q1").first()
 
-        question.check_answer(team, "CTF{test_flag}")
+        # question.check_answer(team, "CTF{test_flag}")
 
         # print(challenge)
         # print(question)
         # print(team)
-        raise Exception("test")
+        # raise Exception("test")

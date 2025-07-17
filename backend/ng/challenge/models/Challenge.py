@@ -93,7 +93,7 @@ class Challenge(db.Model):
 
     @classmethod
     def create_challenge(
-        cls, name: str, icon: str = "", description: str = "", summary: str = "", commit=True
+        cls, name: str, icon: str | None = "", description: str | None = "", summary: str | None = "", commit=True
     ) -> Challenge:
         try:
             validated_data = cls.validate(
