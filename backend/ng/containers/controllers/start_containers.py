@@ -1,11 +1,19 @@
 from ..models.ContainerInstance import ContainerInstance
+from ..models.IndvidualContainer import IndvidualContainer
 from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 
-def start_containers(challenge_id, team_id):
+def start_containers(challenge_id, team_id, current_user):
     blueprints = ContainerBlueprint.query.filter_by(challenge_id=challenge_id).all()
 
     ctrs = []
+    networks = []
     for blueprint in blueprints:
         ctrs.append(ContainerInstance.create_container_instance(blueprint.id, team_id))
+        networks.append(*blueprint.networks)
+
+    indvidual_ctr = IndvidualContainer.create_indvidual_container(1)
+
+    for network in set(networks):
+        indvidual_ctr.connect_to_network(f'{network}-{team_id}-{challenge_id}')
 
     return True
