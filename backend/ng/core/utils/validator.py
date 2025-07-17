@@ -8,8 +8,10 @@ from enum import Enum
 from functools import wraps
 from typing import Any
 
-from . import utc_now
+from CTFd.models import get_class_by_tablename
 
+from . import utc_now
+from ..exceptions import ValidationError
 
 def validation_field(func: Callable) -> Callable:
     """
@@ -127,24 +129,26 @@ class BaseValidator:
             self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_NUMBER.format(field=friendly_name)
             return
 
-        # Import here to avoid circular imports
-        from CTFd.models import get_class_by_tablename
-
         # Map model names to table names
         model_table_mapping = {
+            "Attempt": "ng_attempts",
             "Challenge": "ng_challenges",
-            "Demographic": "ng_demographics",
-            "Question": "ng_questions",
-            "Hint": "ng_hints",
             "ChallengeTag": "ng_challenge_tags",
             "ContainerBlueprint": "ng_container_blueprints",
+            "Demographic": "ng_demographics",
+            "Event": "ng_events",
+            "Hint": "ng_challenge_hints",
+            "HintRedemption": "ng_hint_redemptions",
+            "ManualPointAward": "ng_manual_point_awards",
+            "Permission": "ng_permissions",
+            "Question": "ng_challenge_questions",
+            "Role": "ng_roles",
+            "Score": "ng_scores",
+            "ScoreEvent": "ng_score_events",
             "Team": "ng_teams",
             "TeamMember": "ng_team_members",
-            "User": "ng_users",
-            "Event": "ng_events",
             "Ticket": "ng_tickets",
-            "Permission": "ng_permissions",
-            "Role": "ng_roles",
+            "User": "ng_users",
         }
 
         # Get the table name for the model
@@ -295,7 +299,6 @@ class BaseValidator:
         Raises:
             ValidationError: If there are any validation errors
         """
-        from ..exceptions import ValidationError
 
         if self.errors:
             raise ValidationError("Validation failed", errors=self.errors)
@@ -328,3 +331,10 @@ class BaseValidator:
                 f"{end_field.replace('_', ' ').title()} must be after {start_field.replace('_', ' ')}."
             )
             return
+
+    def validate_optional_timestamp(self, data: dict[str, Any], field: str = "timestamp", allow_past: bool = True) -> None:
+        """Optional scoring timestamp validation."""
+        if field in data and data[field] is not None:
+            self.validate_datetime(data, field, allow_past=allow_past, required=False)
+
+
