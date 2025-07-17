@@ -1,8 +1,8 @@
 from flask_restx import Namespace, Resource
 from ..controllers.start_containers import start_containers
+from ..controllers.vnc import forward_vnc
 
 from ...core.utils import (
-    error_response,
     success_response,
 )
 
@@ -23,13 +23,14 @@ class ImportChallenge(Resource):
             400: "Bad request",
         },
     )
-    def get(self, **kwargs):
-        res = start_containers(kwargs["challenge_id"], 1, 1)
+    @user_endpoint()
+    def get(self, current_user, **kwargs):
+        res = start_containers(kwargs["challenge_id"], 1, current_user)
         return success_response({ "started": res })
 
 
 @container_namespace.route("/<int:user_id>/vnc")
-@contianer_namespace.param("user_id", "User Id")
+@container_namespace.param("user_id", "User Id")
 class VncForward(Resource):
     @container_namespace.doc(
         description="Forward no vnc info to nginx. This should only be called by nginx",
@@ -39,3 +40,5 @@ class VncForward(Resource):
             400: "Bad request"
         }
     )
+    def get(self, user_id):
+        return forward_vnc(user_id)
