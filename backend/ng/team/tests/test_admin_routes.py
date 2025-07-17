@@ -40,7 +40,7 @@ def test_teamdetail_update_invalid_name(admin_client, event, team_factory, user)
     response = admin_client.patch(f"/ng/admin/teams/{team.id}", json={"name": user.name})
     assert response.status_code == 400
     data = response.get_json()
-    assert data['errors']['validation'] == "You cannot include a team member's name in the team name."
+    assert data['errors']['validation'] == "Team name cannot include a member's name."
 
 def test_teammembers(admin_client, team_with_member):
     """Test that the team members endpoint returns the correct data."""
@@ -67,10 +67,10 @@ def test_team_kick(admin_client, team_with_member):
     members_data = response.get_json()['data']
     assert len(members_data) == 0  # User should be kicked out
 
-def test_team_promote(admin_client, team_with_member, user_with_roles):
+def test_team_promote(admin_client, team_with_members):
     """Test that the team promote endpoint works correctly."""
-    team = team_with_member
-    response = admin_client.post(f"/ng/admin/teams/{team.id}/promote", json={"user_id": user_with_roles.id})
+    team = team_with_members
+    response = admin_client.post(f"/ng/admin/teams/{team.id}/promote", json={"user_id": team.members[0].user_id})
     assert response.status_code == 200
     data = response.get_json()
     assert data['success']

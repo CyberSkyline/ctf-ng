@@ -20,9 +20,12 @@ from ...core.middleware import (
     user_endpoint,
 )
 
-from ...core.middleware.permission_middleware import get_permissions
+from ...core.middleware.permission_middleware import get_permissions, event_only_public
 from ...permissions.models.enums import PermissionEnum
 from ...team.models.enums import TeamRole
+from ...event.models.Demographic import Demographic
+from ...team.models.Team import Team
+from ...user.models.User import User
 
 from ..controllers.user import join_event_controller
 
@@ -42,10 +45,10 @@ class EventList(Resource):
 class EventDetail(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
+    @event_only_public
     def get(self, event_id, event, **kwargs):
         """Get event details"""
-        if not event.public:
-            return error_response("Event not found", "not_found", 404)
+
         return success_response(event)
 
 
@@ -53,14 +56,12 @@ class EventDetail(Resource):
 class EventEligibility(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
-    def get(self, event_id, event, **kwargs):
+    @event_only_public
+    def get(self, event_id, event, current_user, **kwargs):
         """Check event eligibility"""
 
-        if not event.public:
-            return error_response("Event not found", "not_found", 404)
-
         try:
-            Event.check_eligibility(event, kwargs.get("current_user"))
+            Event.check_eligibility(event, current_user)
         except ValidationError as e:
             return error_response(str(e), "eligibility", 400)
         
@@ -72,13 +73,12 @@ class EventEligibility(Resource):
 class EventRegistration(Resource):
     @user_endpoint(json_required=True)
     @load_event(source=LoaderType.PARAM)
-    def post(self, event_id, current_user, json_data, event):
+    @event_only_public
+    def post(self, event_id: str, current_user: User, json_data, event):
         """Register for event"""
         has_invite = "invite_code" in json_data
         has_name = "team_name" in json_data
 
-        if not event.public:
-            return error_response("Event not found", "not_found", 404)
 
         if (not has_invite) and (not has_name):
             raise ValidationError("Either invite_code or team_name must be provided.")
@@ -92,8 +92,17 @@ class EventRegistration(Resource):
             validator.validate_string(json_data, "invite_code", 32, required=False, friendly_name="Invite code")
         if has_name:
             validator.validate_string(json_data, "team_name", 128, required=False, friendly_name="Team name")
+            if Team.team_name_contains_member_name(name=json_data["team_name"], member_names=[current_user.ctfd_user.name]):
+                return error_response(
+                    "Team name cannot include a member's name.",
+                    "validation",
+                    400,
+                )
+
 
         parsed_data = validator.validate()
+
+        Event.check_eligibility(event, current_user)
 
         team = join_event_controller(event=event, user=current_user, **parsed_data)
 
@@ -117,8 +126,26 @@ class EventTeamMembers(Resource):
     @load_team_by_user_and_event()
     def get(self, event_id, team, **kwargs):
         """Get team members"""
-        members = team.get_full_team_details()['team_members']
-        return success_response(members)
+        return success_response(team.members)
+
+@events_user_namespace.route("/<int:event_id>/me/team/update_name")
+class EventTeamUpdateName(Resource):
+    @user_endpoint(json_required=True)
+    @load_event(source=LoaderType.PARAM)
+    @load_team_by_user_and_event()
+    def put(self, event_id, team, json_data, **kwargs):
+        """Update team name"""
+        new_name = json_data.get("name")
+
+        if Team.team_name_contains_member_name(name=new_name, member_names=[member.user.ctfd_user.name for member in team.members]):
+            return error_response(
+                "Team name cannot include a member's name.",
+                "validation",
+                400,
+            )
+
+        team.update_name(new_name)
+        return success_response(team)
 
 
 @events_user_namespace.route("/<int:event_id>/me/team/kick")
@@ -128,19 +155,18 @@ class EventTeamKick(Resource):
     @load_user(source=LoaderType.BODY)
     @load_team_by_user_and_event()
     @get_permissions
-    def post(self, event_id, **kwargs):
+    def post(self, event_id, json_data, team, permissions, current_user, **kwargs):
         """Kick a user from the user's team in the event"""
-        json_data = kwargs.get("json_data", {})
         user_id = json_data.get("user_id")
-        team = kwargs.get("team")
-        permissions = kwargs.get("permissions", [])
-        if user_id == kwargs.get("current_user").id:
+        if user_id == current_user.id:
             return error_response("You cannot kick yourself from the team.", "validation", 400)
         if PermissionEnum.CAN_EDIT_TEAM not in permissions:
             return error_response("You do not have permission to kick team members", "forbidden", 403)
 
 
         team.remove_member_and_regenerate_code(user_id)
+        demographic = Demographic.find_by_user_and_event(user_id, event_id)
+        demographic.delete(commit=True)
         return success_response()
 
 @events_user_namespace.route("/<int:event_id>/me/team/promote")
@@ -150,12 +176,10 @@ class EventTeamPromote(Resource):
     @load_user(source=LoaderType.BODY)
     @load_team_by_user_and_event()
     @get_permissions
-    def post(self, event_id, team, json_data, **kwargs):
+    def post(self, event_id, team, user, permissions, json_data, current_user, **kwargs):
         """Promote a user to team leader in the user's team in the event"""
-        user = kwargs.get("user")
-        permissions = kwargs.get("permissions", [])
 
-        if user.id == kwargs.get("current_user").id:
+        if user.id == current_user.id:
             return error_response("You cannot promote yourself.", "validation", 400)
 
         if PermissionEnum.CAN_EDIT_TEAM not in permissions:
@@ -169,16 +193,15 @@ class EventTeamLeave(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
     @load_team_by_user_and_event()
-    def get(self, event_id, current_user,**kwargs):
+    def get(self, event_id, team, current_user,**kwargs):
         """Leave the user's team in the event"""
-        team = kwargs.get("team")
         team_member = TeamMember.find_by_user_and_team(current_user.id, team.id)
         if team_member.role == TeamRole.CAPTAIN:
             return error_response("You cannot leave the team as a captain. Please promote another member first.", "forbidden", 403)
         team_member.remove_team_member(commit=True)
+        demographic = Demographic.find_by_user_and_event(current_user.id, event_id)
+        demographic.delete(commit=True)
         if len(team.members) == 0:
-            team.delete()
-        
-
+            team.delete(commit=True)
 
         return redirect(f"/ng/events/{event_id}/me/register", code=303)

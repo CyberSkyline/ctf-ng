@@ -12,7 +12,6 @@ def join_event_controller(event: Event, user : User, invite_code : str = "", tea
     if (not invite_code) and (not team_name):
         raise ValidationError("Either invite_code or team_name must be provided")
 
-    Event.check_eligibility(event, user)
     
     try:
         Demographic.create_demographic(user_id=user.id, event_id=event.id, commit=False)
@@ -33,6 +32,5 @@ def join_event_controller(event: Event, user : User, invite_code : str = "", tea
         db.session.commit()
         return team
     except Exception as e:
-        print(e)
         db.session.rollback()
         raise e

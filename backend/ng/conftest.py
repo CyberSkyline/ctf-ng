@@ -30,6 +30,7 @@ from .support.models.Ticket import Ticket
 from .support.models.TicketTag import TicketTag
 from .team.models.Team import Team
 from .user.models.User import User as NgUser
+from .event.models.Demographic import Demographic
 
 
 def create_app():
@@ -278,6 +279,9 @@ def team_factory(db_session, event_factory):
 
         for member_user in members_to_add:
             TeamMember.create_team_member(user_id=member_user.id, team_id=team.id, event_id=event.id)
+            Demographic.create_demographic(
+                user_id=member_user.id, event_id=event.id, commit=False
+            )
         return team
 
     return _factory

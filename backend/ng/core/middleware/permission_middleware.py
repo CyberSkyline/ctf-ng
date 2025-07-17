@@ -30,3 +30,15 @@ def get_permissions(f):
         return f(*args, **kwargs)
     return wrapped
 
+def event_only_public(f):
+    """Decorator to ensure the event is public."""
+
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        event = kwargs.get('event')
+        if not event or not event.public:
+            return error_response("Event not found", "not_found", 404)
+        return f(*args, **kwargs)
+    return wrapped
+
+

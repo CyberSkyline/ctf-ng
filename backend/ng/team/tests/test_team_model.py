@@ -158,3 +158,42 @@ class Test_Find_By_Invite_Code:
     def test_should_return_none_if_invite_code_not_found(self, db_session):
         found_team = Team.find_by_invite_code("nonexistentcode")
         assert found_team is None
+
+class Test_Team_Name_Contains_Member_Name:
+    def test_should_return_true_if_name_contains_member_name(self, event, team_factory, user):
+        team = team_factory(event=event, members=[user])
+        team.name = f"{user.name} Team"
+
+        assert Team.team_name_contains_member_name(team.name, [user.name]) is True
+
+    def test_should_return_false_if_name_does_not_contain_member_name(self, event, team_factory, user):
+        team = team_factory(event=event, members=[user])
+        team.name = "Some Other Team Name"
+
+        assert Team.team_name_contains_member_name(team.name, [user.name]) is False
+
+    def test_name_checks(self,event, team_factory, user_factory):
+        user = user_factory(name="Alex John Smith")
+        team = team_factory(event=event, members=[user])
+        team.name = "Alex Smith"
+
+        assert Team.team_name_contains_member_name(team.name, [user.ctfd_user.name]) is True
+
+    def test_more_name_checks(self, event, team_factory, user_factory):
+        user1 = user_factory(name="Alex Ng")
+        team1 = team_factory(event=event, members=[user1])
+        team1.name = "pwning"
+
+        assert Team.team_name_contains_member_name(team1.name, [user1.ctfd_user.name]) is False
+
+        team1.name = "pwni ng"
+
+        assert Team.team_name_contains_member_name(team1.name, [user1.ctfd_user.name]) is True
+
+
+    def test_even_more_name_checks(self, event, team_factory, user_factory):
+        user = user_factory(name="A Smith")
+        team = team_factory(event=event, members=[user])
+        team.name = "a hacker"
+
+        assert Team.team_name_contains_member_name(team.name, [user.ctfd_user.name]) is False

@@ -7,7 +7,8 @@ from ...user.models.User import User
 
 from ...core.middleware.loaders import (
     LoaderType,
-    load_team
+    load_team,
+    load_user,
 )
 
 from ...core.middleware import (
@@ -36,24 +37,19 @@ class TeamDetail(Resource):
 
     @admin_endpoint(json_required=True, validation_func=Team.validate)
     @load_team(source=LoaderType.PARAM)
-    def patch(self, team_id, **kwargs):
+    def patch(self, team_id, team, validated_data, **kwargs):
         """Update a team"""
-        json_data = kwargs.get("validated_data", None)
-        if not json_data:
-            return success_response({"message": "Invalid data"}, status_code=400)
+        
 
-        team = kwargs.get("team")
-
-        member_names = [member.user.ctfd_user.name for member in team.members]
-        new_name = json_data.get("name")
-        if any(s in new_name for s in member_names):
+        new_name = validated_data.get("name", team.name)
+        if Team.team_name_contains_member_name(name=new_name, member_names=[m.user.ctfd_user.name for m in team.members]):
             return error_response(
-                "You cannot include a team member's name in the team name.",
+                "Team name cannot include a member's name.",
                 "validation",
-                400
+                400,
             )
 
-        team = team.update_name(team_id, json_data.get("name"))
+        team = team.update_name(team_id, new_name)
 
         return success_response(team)
 
@@ -70,25 +66,21 @@ class TeamMembers(Resource):
 class TeamKick(Resource):
     @admin_endpoint(json_required=True, validation_func=User.validate)
     @load_team(source=LoaderType.PARAM)
-    def post(self, team_id, **kwargs):
+    @load_user(source=LoaderType.BODY)
+    def post(self, team_id, user, team, **kwargs):
         """Kick a user from a team"""
-        user_id = kwargs.get("validated_data", {}).get("user_id")
-        team = kwargs.get("team")
 
-        success = team.remove_member_and_regenerate_code(user_id)
-        if not success:
-            return error_response({"message": "Kick failed"}, status_code=400)
+        team.remove_member_and_regenerate_code(user.id)
         return success_response()
 
 @teams_admin_namespace.route("/<int:team_id>/promote")
 class TeamPromote(Resource):
     @admin_endpoint(json_required=True)
     @load_team(source=LoaderType.PARAM)
-    def post(self, team_id, **kwargs):
+    @load_user(source=LoaderType.BODY)
+    def post(self, team_id, user, team, **kwargs):
         """Promote a user to team leader"""
-        user_id = kwargs.get("validated_data", {}).get("user_id")
-        team = kwargs.get("team")
 
-        team.remove_captain_and_promote(user_id)
+        team.remove_captain_and_promote(user.id)
         return success_response()
 

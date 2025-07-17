@@ -132,7 +132,7 @@ class User(db.Model):
         return cls.query.get(user_id)
 
     @classmethod
-    def find_or_create_by_ctfd_id(cls, ctfd_user_id: int, commit: bool = True):
+    def find_or_create_by_ctfd_id(cls, ctfd_user_id: int, commit: bool = True) -> User:
         """Find or create a user by CTFd user ID.
 
         Args:

@@ -397,6 +397,17 @@ class Test_Event_Team_Management:
         assert not data['success']
         assert "errors" in data
 
+    def test_cant_kick_from_other_teams(self, team_captain_client, team_factory, user_factory):
+        """Test that the team kick endpoint fails when trying to kick a user not in the team."""
+        other_team = team_factory(event_id=1, members=[user_factory(name="Other User")])
+        response = team_captain_client.post(f"/ng/events/{1}/me/team/kick", json={"user_id": other_team.members[0].user_id})
+        print(response.get_json())
+        assert response.status_code == 400
+        data = response.get_json()
+        assert not data['success']
+        assert "errors" in data
+        assert "not a member of team" in data['errors']['validation']
+
     def test_member_leave(self, team_member_client):
         """Test that the team leave endpoint works correctly."""
         response = team_member_client.get(f"/ng/events/{1}/me/team/leave")
@@ -415,6 +426,14 @@ class Test_Event_Team_Management:
         assert "errors" in data
         assert "You cannot leave the team as a captain. Please promote another member first." in data['errors']['forbidden']
 
+    def test_update_name(self, team_captain_client):
+        """Test that the team name can be updated."""
+        new_name = "Updated Team Name"
+        response = team_captain_client.put(f"/ng/events/{1}/me/team/update_name", json={"name": new_name})
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['success']
+        assert data['data']['name'] == new_name
 
 class Test_Event_Admin_Register:
     def post_endpoint(self, event_id: int, user_id: int) -> str:
