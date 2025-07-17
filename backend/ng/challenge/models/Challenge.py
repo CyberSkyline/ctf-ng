@@ -34,7 +34,7 @@ class Challenge(db.Model):
     questions = db.relationship("Question", back_populates="challenge", cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<Challenge {self.id}, name={self.name}, icon={self.icon}>"
+        return f"<NgChallenge {self.id}, name={self.name}, icon={self.icon}>"
 
     def serialize(self, include_admin_fields=False) -> SerializedChallenge:
         """

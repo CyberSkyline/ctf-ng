@@ -1,14 +1,21 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from CTFd.models import db
+from faker import Faker
 
 from ...core.validation import BaseValidator
+
+if TYPE_CHECKING:
+    from ...team.models.Team import Team
+
 
 MAX_QUESTION_NAME_LENGTH = 256
 MAX_QUESTION_BODY_LENGTH = 1024
 MAX_QUESTION_ANSWER_LENGTH = 512
+
+SEED_FORMAT_STRING = "{event_id}:{challenge_id}:{question_id}:{team_seed}"
 
 
 class Question(db.Model):
@@ -103,11 +110,24 @@ class Question(db.Model):
             db.session.rollback()
             raise e
 
-    def check_answer(self, answer: str, team) -> bool:
+    def check_answer(self, team: Team, answer: str) -> bool:
         """
         Check if the provided answer matches the stored answer.
         :param answer: The answer to check.
         :return: True if the answer matches, False otherwise.
         """
+        # Seed faker
+        faker = Faker()
+        faker.seed_instance(
+            SEED_FORMAT_STRING.format(
+                event_id=team.event_id, challenge_id=self.challenge, question_id=self.id, team_seed=team.seed
+            )
+        )
+
+        # Answers can be a string|Answer|Template
+
+        # Render the answer template
+        # evaluated_answer =
+        # print(self.answer)
+
         return False
-        # return self.answer.strip().lower() == answer.strip().lower()

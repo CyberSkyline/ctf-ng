@@ -1,6 +1,5 @@
 import base64
 
-from attrs import asdict
 from CTFd.models import db
 from cyber_skyline.chall_parser.yaml_parser import parse_compose_string
 
@@ -20,12 +19,13 @@ def import_challenge_from_yaml(json_data) -> Challenge:
     payload = base64.urlsafe_b64decode(json_data["yaml"])
 
     try:
-        yaml = asdict(parse_compose_string(payload.decode("utf-8")), filter=lambda y, x: x is not None)
+        yaml = parse_compose_string(payload.decode("utf-8"))
     except Exception as e:
         print(e)
         raise ValidationError(f"Invalid YAML format: {e}") from e
 
     try:
+        print(yaml)
         challenge_yaml = yaml["challenge"]
         challenge = Challenge.create_challenge(
             name=challenge_yaml.get("name", None),
