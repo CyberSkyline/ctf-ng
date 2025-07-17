@@ -51,6 +51,7 @@ class Event(db.Model):
     )
 
     teams = db.relationship("Team", backref="event", cascade="all, delete-orphan")
+    challenges = db.relationship("Challenge", back_populates="event", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Event {self.name}>"

@@ -1,15 +1,21 @@
+from __future__ import annotations
+
 import base64
+from typing import TYPE_CHECKING
 
 from CTFd.models import db
 from cyber_skyline.chall_parser.compose.answer import Answer
 from cyber_skyline.chall_parser.compose.challenge_info import TextBody
 from cyber_skyline.chall_parser.yaml_parser import parse_compose_string
 
-from ...core.exceptions import ValidationError
-from ..models import Challenge, ChallengeTag, ContainerBlueprint, Hint, Question
+from ....challenge.models import Challenge, ChallengeTag, ContainerBlueprint, Hint, Question
+from ....core.exceptions import ValidationError
+
+if TYPE_CHECKING:
+    from ....event.models.Event import Event
 
 
-def import_challenge_from_yaml(json_data) -> Challenge:
+def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
     """
     Import a challenge from a YAML definition.
     :return: The imported challenge.
@@ -25,6 +31,7 @@ def import_challenge_from_yaml(json_data) -> Challenge:
     try:
         challenge_info = compose_file.challenge
         challenge = Challenge.create_challenge(
+            event_id=event.id,
             name=challenge_info.name,
             icon=challenge_info.icon,
             description=challenge_info.description,

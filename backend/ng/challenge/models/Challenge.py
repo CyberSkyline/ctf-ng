@@ -14,6 +14,7 @@ MAX_CHALLENGE_ICON_LENGTH = 64
 
 class SerializedChallenge(TypedDict):
     id: int
+    event_id: int
     name: str
     description: str = ""
     icon: str = ""
@@ -28,7 +29,9 @@ class Challenge(db.Model):
     description = db.Column(db.String(MAX_CHALLENGE_DESCRIPTION_LENGTH), nullable=True)
     icon = db.Column(db.String(MAX_CHALLENGE_ICON_LENGTH), nullable=True)
     summary = db.Column(db.String(MAX_CHALLENGE_SUMMARY_LENGTH), nullable=True)
+    event_id = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
 
+    event = db.relationship("Event", back_populates="challenges")
     hints = db.relationship("Hint", back_populates="challenge", cascade="all, delete-orphan")
     tags = db.relationship("ChallengeTag", back_populates="challenge", cascade="all, delete-orphan")
     questions = db.relationship("Question", back_populates="challenge", cascade="all, delete-orphan")
@@ -43,6 +46,7 @@ class Challenge(db.Model):
         """
         data = {
             "id": self.id,
+            "event_id": self.event_id,
             "name": self.name,
             "description": self.description or "",
             "icon": self.icon or "",
@@ -88,12 +92,25 @@ class Challenge(db.Model):
             required=False,
             friendly_name="Challenge Summary",
         )
+        validator.validate_model_id(
+            data,
+            "event_id",
+            "Event",
+            required=True,
+            friendly_name="Event ID",
+        )
 
         return validator.validate()
 
     @classmethod
     def create_challenge(
-        cls, name: str, icon: str | None = "", description: str | None = "", summary: str | None = "", commit=True
+        cls,
+        name: str,
+        icon: str | None = "",
+        description: str | None = "",
+        summary: str | None = "",
+        event_id: int | None = None,
+        commit=True,
     ) -> Challenge:
         try:
             validated_data = cls.validate(
@@ -102,6 +119,7 @@ class Challenge(db.Model):
                     "icon": icon,
                     "description": description,
                     "summary": summary,
+                    "event_id": event_id,
                 }
             )
             challenge = cls(**validated_data)

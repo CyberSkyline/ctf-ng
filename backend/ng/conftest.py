@@ -394,9 +394,10 @@ def permissions(db_session):
 
 
 @pytest.fixture
-def challenge(db_session):
+def challenge(db_session, event):
     """Create a test challenge for testing purposes."""
     challenge = Challenge(
+        event_id=event.id,
         name="Test Challenge",
         description="A test challenge for question testing",
         icon="test-icon",

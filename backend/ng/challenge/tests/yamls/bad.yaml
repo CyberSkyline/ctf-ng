@@ -1,0 +1,25 @@
+x-challenge:
+  description: A simple challenge to test parsing
+  icon: TbPuzzle
+  questions:
+    - name: flag
+      question: What is the flag?
+      points: 100
+      answer: CTF{test_flag}
+      max_attempts: 3
+  hints:
+    - hint: Check the logs
+      preview: Log hint
+      deduction: 10
+  tags:
+    - test
+    - beginner
+  services:
+  web:
+    image: nginx:latest
+    hostname: web-server
+    networks:
+      - boop
+  networks:
+  boop:
+    internal: true
