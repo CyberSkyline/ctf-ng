@@ -181,10 +181,6 @@ class BaseValidator:
         friendly_name: str | None = None,
         value: Any = None,  # Injected by decorator
     ) -> None:
-        if value is None:
-            # This should never happen due to decorator logic, but for type safety
-            return
-
         try:
             int_value = int(value)  # type: ignore[arg-type]
             if int_value <= 0:

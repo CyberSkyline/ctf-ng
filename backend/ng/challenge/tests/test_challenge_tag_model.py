@@ -181,7 +181,7 @@ class Test_Create_Tag:
         assert "web" in tag_names
         assert "sql-injection" in tag_names
 
-    def test_create_tag_with_different_challenge_ids(self, challenge):
+    def test_create_tag_with_different_challenge_ids(self, challenge, event):
         """Test creating tags with different challenge IDs."""
         # We only have one challenge fixture, so we'll test with different valid IDs
         tag1 = ChallengeTag.create_tag(challenge_id=challenge.id, name="misc", commit=True)
@@ -190,7 +190,10 @@ class Test_Create_Tag:
         from ..models.Challenge import Challenge
 
         challenge2 = Challenge.create_challenge(
-            name="Test Challenge 2", description="Another test challenge", commit=True
+            event_id=event.id,  # Use the same event
+            name="Test Challenge 2",
+            description="Another test challenge",
+            commit=True,
         )
 
         tag2 = ChallengeTag.create_tag(challenge_id=challenge2.id, name="misc", commit=True)

@@ -422,9 +422,10 @@ def permissions(db_session):
 
 
 @pytest.fixture
-def challenge(db_session):
+def challenge(db_session, event):
     """Create a test challenge for testing purposes."""
     challenge = Challenge(
+        event_id=event.id,
         name="Test Challenge",
         description="A test challenge for question testing",
         icon="test-icon",
@@ -433,3 +434,72 @@ def challenge(db_session):
     db_session.add(challenge)
     db_session.commit()
     return challenge
+
+
+@pytest.fixture
+def challenge_factory(db_session, event_factory):
+    """A factory function to create Challenge objects for tests, with 2 questions."""
+
+    from .challenge.models.Question import Question
+
+    def _factory(event=None, **kwargs):
+        if event is None:
+            event = event_factory()
+        defaults = {
+            "event_id": event.id,
+            "name": f"Test Challenge {db_session.query(Challenge).count() + 1}",
+            "description": "A test challenge for question testing",
+            "icon": "test-icon",
+            "summary": "Test summary",
+        }
+        defaults.update(kwargs)
+        challenge = Challenge(**defaults)
+        db_session.add(challenge)
+        db_session.commit()
+
+        # Create 2 questions for this challenge
+        for i in range(2):
+            question = Question(
+                challenge_id=challenge.id,
+                name=f"Test Question {i + 1} for Challenge {challenge.id}",
+                body=f"test question body_{i + 1}",
+                answer=f"answer_{i + 1}",
+                points=100 * (i + 1),
+                placeholder=f"placeholder_{i + 1}",
+                max_attempts=3,
+            )
+            db_session.add(question)
+        db_session.commit()
+
+        return challenge
+
+    return _factory
+
+
+@pytest.fixture
+def question_factory(db_session, challenge_factory):
+    """A factory function to create Question objects for tests."""
+
+    from .challenge.models.Question import Question
+
+    def _factory(challenge=None, **kwargs):
+        if challenge is None:
+            challenge = challenge_factory()
+        count = db_session.query(Question).count() + 1
+
+        defaults = {
+            "challenge_id": challenge.id,
+            "name": f"Test Question {count} for Challenge {challenge.id}",
+            "body": f"test question body_{count}",
+            "answer": f"answer_{count}",
+            "points": 100 * count,
+            "placeholder": f"placeholder_{count}",
+            "max_attempts": 3,
+        }
+        defaults.update(kwargs)
+        question = Question(**defaults)
+        db_session.add(question)
+        db_session.commit()
+        return question
+
+    return _factory

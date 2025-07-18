@@ -35,11 +35,12 @@ class Question:
     points: int = attr.ib(validator=v.instance_of(int))  # Point value for correctly answering this question (e.g., 10, 100)
     answer: str | Answer | Template = attr.ib(validator=or_(
         v.and_(v.instance_of(str), validate_regex),
-        v.and_(v.instance_of(Answer), validate_answer),  # type: ignore
-        v.instance_of(Template)  # type: ignore
+        v.and_(v.instance_of(Answer), validate_answer),
+        v.instance_of(Template)
     ))  # The correct answer
 
     max_attempts: int = attr.ib(validator=v.instance_of(int))  # Maximum number of attempts allowed (e.g., 20)
+    placeholder: str | None = attr.ib(default=None, validator=v.optional(v.instance_of(str)))  # Optional placeholder text for answer input fields (e.g., 'CTF{...}' or 'Enter your answer here')
 
 @attr.s
 class TextBody:

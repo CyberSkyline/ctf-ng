@@ -1,5 +1,6 @@
 from flask_restx import Namespace, Resource
 
+
 from ...core.utils import success_response
 
 from ...event.models.Event import Event
@@ -15,7 +16,16 @@ from ...core.middleware import (
 )
 from ..controllers.user import join_event_controller
 
+from ...core.middleware import (
+    admin_endpoint,
+)
+from ...core.middleware.loaders import LoaderType, load_event
+from ...core.utils import success_response
+from ...event.models.Event import Event
+from ..controllers.admin.import_challenge_from_yaml import import_challenge_from_yaml
+
 events_admin_namespace = Namespace("/admin/events", description="event endpoints for admins")
+
 
 @events_admin_namespace.route("")
 class EventList(Resource):
@@ -31,6 +41,7 @@ class EventList(Resource):
         data = validated_data
         result = Event.create_event(**data)
         return success_response(result, status_code=201)
+
 
 @events_admin_namespace.route("/<int:event_id>")
 class EventDetail(Resource):
@@ -62,3 +73,19 @@ class EventRegister(Resource):
             result = join_event_controller(kwargs.get("event"), kwargs.get("user"), team_name=json_data["team_name"])
 
         return success_response(result)
+
+@events_admin_namespace.route("/<int:event_id>/challenges")
+class EventChallenges(Resource):
+    @events_admin_namespace.doc(
+        description="Create a challenge for an event",
+        responses={
+            200: "Success",
+            400: "Bad request",
+        },
+    )
+    @admin_endpoint(json_required=True)
+    @load_event(source=LoaderType.PARAM)
+    def post(self, event_id, event, json_data):
+        """Create a challenge for an event"""
+        challenge = import_challenge_from_yaml(event, json_data)
+        return success_response(challenge)

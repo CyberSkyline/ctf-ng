@@ -1,7 +1,12 @@
+import base64
+import os
+
+from ...challenge.models.Challenge import Challenge
 from ...team.models.Team import Team
 from ...team.models.TeamMember import TeamMember
 from ...user.models.User import User
 from datetime import datetime, timedelta
+
 
 class Test_Public_Event_Listing:
     endpoint = "/ng/events"
@@ -18,6 +23,7 @@ class Test_Public_Event_Listing:
         assert len(data["data"]) == 2
         assert data["data"][0] == event1.serialize()
         assert data["data"][1] == event2.serialize()
+
 
     def test_list_no_private_events(self, logged_in_client, event_factory):
         event1 = event_factory(name="Private Event 1", public=False)
@@ -36,7 +42,7 @@ class Test_Public_Event_Detail:
 
     def test_get_event_details(self, logged_in_client, event_factory):
         event = event_factory(name="Event for Detail Test", public=True)
-        
+
         response = logged_in_client.get(self.get_endpoint(event.id))
 
         assert response.status_code == 200
@@ -61,6 +67,7 @@ class Test_Public_Event_Detail:
         data = response.get_json()
         assert data["success"] is False
 
+
 class Test_Event_Eligibility:
     def get_endpoint(self, event_id: int) -> str:
         return f"/ng/events/{event_id}/me/eligibility"
@@ -81,6 +88,7 @@ class Test_Event_Eligibility:
         assert response.status_code == 404
         data = response.get_json()
         assert data["success"] is False
+
 
     def test_check_event_eligibility_not_open(self, logged_in_client, event_factory):
         event = event_factory(name="Closed Event", public=True, registration_open=False)
@@ -131,6 +139,7 @@ class Test_Event_Eligibility:
         assert "errors" in data
         assert "User is already registered for this event." in data["errors"]["business_logic"]
 
+
 class Test_Event_Registration:
     def get_endpoint(self, event_id: int) -> str:
         return f"/ng/events/{event_id}/me/register"
@@ -138,14 +147,17 @@ class Test_Event_Registration:
     def test_register_for_event_with_new_team(self, logged_in_client, user, event_factory):
         event = event_factory(name="Event for Registration", public=True)
 
-        response = logged_in_client.post(self.get_endpoint(event.id), json={
-            "team_name": "Test Team",
-        })
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json={
+                "team_name": "Test Team",
+            },
+        )
 
         assert response.status_code == 201
         data = response.get_json()
         assert data["success"] is True
-        
+
         team = Team.query.filter_by(name="Test Team", event_id=event.id).first()
         assert data["data"] == team.serialize()
 
@@ -157,14 +169,17 @@ class Test_Event_Registration:
         user = user_factory(name="testuser", email="testuser@example.com")
         existing_team = team_factory(event=event, members=[user])
 
-        response = logged_in_client.post(self.get_endpoint(event.id), json={
-            "invite_code": existing_team.invite_code,
-        })
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json={
+                "invite_code": existing_team.invite_code,
+            },
+        )
 
         assert response.status_code == 201
         data = response.get_json()
         assert data["success"] is True
-        
+
         team = Team.query.filter_by(id=existing_team.id).first()
         assert data["data"] == team.serialize()
 
@@ -275,6 +290,7 @@ class Test_Event_Registration:
         assert "errors" in data
         assert "User is already registered for this event." in data["errors"]["business_logic"]
 
+
 class Test_Event_Team_Lookup:
     def get_endpoint(self, event_id: int) -> str:
         return f"/ng/events/{event_id}/me/team"
@@ -297,6 +313,7 @@ class Test_Event_Team_Lookup:
         data = response.get_json()
         assert data["success"] is False
 
+
 class Test_Event_TeamMember_Lookup:
     def get_endpoint(self, event_id: int) -> str:
         return f"/ng/events/{event_id}/me/team/members"
@@ -318,6 +335,7 @@ class Test_Event_TeamMember_Lookup:
         assert response.status_code == 404
         data = response.get_json()
         assert data["success"] is False
+
 
 
 class Test_Event_Team_Management:
@@ -459,7 +477,89 @@ class Test_Event_Admin_Register:
             "team_name": "Admin Created Team",
         })
 
+class Test_Event_Challenge_Import:
+    def get_endpoint(self, event) -> str:
+        return f"/ng/admin/events/{event.id}/challenges"
+
+    def test_challenge_import_endpoint(self, admin_client, event):
+        with open(os.path.join(os.path.dirname(__file__), "../../challenge/tests/yamls/default.yaml"), "rb") as f:
+            yaml = base64.urlsafe_b64encode(f.read())
+
+        response = admin_client.post(self.get_endpoint(event), json={"yaml": yaml.decode("utf-8")})
+
+        challenge = Challenge.query.filter_by(name="Basic Challenge").first()
+
+        assert response.status_code == 200
+        assert len(challenge.hints) == 1
+        assert len(challenge.questions) == 1
+
+    def test_challenge_import_endpoint_bad_yaml(self, admin_client, event):
+        with open(os.path.join(os.path.dirname(__file__), "../../challenge/tests/yamls/bad.yaml"), "rb") as f:
+            yaml = base64.urlsafe_b64encode(f.read())
+
+        response = admin_client.post(self.get_endpoint(event), json={"yaml": yaml.decode("utf-8")})
+        assert response.status_code == 400
+
+
+class Test_Event_Challenge_List:
+    def get_endpoint(self, event_id: int) -> str:
+        return f"/ng/events/{event_id}/challenges"
+
+    def test_list_challenges_for_event(self, logged_in_client, event_factory, challenge_factory):
+        event = event_factory(name="Event for Challenge Listing", public=True)
+        challenge1 = challenge_factory(event=event, name="Challenge 1")
+        challenge2 = challenge_factory(event=event, name="Challenge 2")
+
+        response = logged_in_client.get(self.get_endpoint(event.id))
+
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
-        assert "data" in data
+        assert len(data["data"]) == 2
+        assert data["data"][0]["name"] == challenge1.name
+        assert data["data"][1]["name"] == challenge2.name
+
+
+class Test_Event_Challenge_Render:
+    def get_endpoint(self, event_id: int, challenge_id: int) -> str:
+        return f"/ng/events/{event_id}/challenges/{challenge_id}"
+
+    def test_render_challenge_for_event(self, logged_in_client, user, event_factory, team_factory, challenge_factory):
+        event = event_factory(name="Event for Challenge Rendering", public=True)
+        team_factory(event=event, members=[user])
+        challenge = challenge_factory(event=event, name="Challenge to Render")
+
+        response = logged_in_client.get(self.get_endpoint(event.id, challenge.id))
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["challenge"] == challenge.serialize()
+
+        # TODO - Add more assertions to check the rendered challenge data
+
+
+class Test_Event_Challenge_Statuses:
+    def get_endpoint(self, event_id: int) -> str:
+        return f"/ng/events/{event_id}/me/challenges"
+
+    def test_get_challenge_statuses_for_event(
+        self, logged_in_client, user, event_factory, team_factory, challenge_factory
+    ):
+        event = event_factory(name="Event for Challenge Statuses", public=True)
+        team_factory(event=event, members=[user])
+        challenge1 = challenge_factory(event=event, name="Challenge 1")
+        challenge2 = challenge_factory(event=event, name="Challenge 2")
+
+        response = logged_in_client.get(self.get_endpoint(event.id))
+
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+
+        assert len(data["data"]) == 2
+        assert data["data"][0]["challenge_id"] == challenge1.id
+        assert data["data"][1]["challenge_id"] == challenge2.id
+
+        # TODO - Add more assertions to check the results

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import base64
 import os
 
 from CTFd import create_app
@@ -54,6 +55,9 @@ with app.app_context():
     # This script is designed to run in production via 'yarn populate-data'
     # where the plugin is properly located at /opt/CTFd/CTFd/plugins/ng
     try:
+        from CTFd.plugins.ng.event.controllers.admin.import_challenge_from_yaml import (  # type: ignore
+            import_challenge_from_yaml,  # type: ignore
+        )
         from CTFd.plugins.ng.event.controllers.user.join_event_controller import join_event_controller  # type: ignore
         from CTFd.plugins.ng.event.models.Event import Event  # type: ignore
         from CTFd.plugins.ng.user.models.User import User as NgUser  # type: ignore
@@ -125,6 +129,14 @@ with app.app_context():
     if admin_teams:
         first_team = admin_teams[0]
         first_team.add_member(test_user.id, commit=True)
+
+    # Import sample challenge from default yaml
+    with open(os.path.join(os.path.dirname(__file__), "../challenge/tests/yamls/default.yaml"), "rb") as f:
+        yaml = base64.urlsafe_b64encode(f.read())
+
+    for event in events:
+        # Import the challenge for each event
+        import_challenge_from_yaml(event=event, json_data={"yaml": yaml.decode("utf-8")})
 
     print("Database reset and sample data creation completed!")
     print(f"Admin user created: {DEFAULT_ADMIN_EMAIL} ({DEFAULT_ADMIN_PASSWORD})")

@@ -1,7 +1,3 @@
-"""
-Utility functions for common plugin functionality.
-"""
-
 from datetime import UTC, datetime
 
 from .api import (

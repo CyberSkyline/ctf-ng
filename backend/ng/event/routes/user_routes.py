@@ -1,16 +1,20 @@
 from flask_restx import Namespace, Resource
 from flask import redirect
 
+
 from ...core.utils import success_response, error_response
 
 from ...event.models.Event import Event
 from ...core.utils.validator import BaseValidator
+from ...challenge.models.Challenge import Challenge
+
 from ...core.exceptions import ValidationError
 
 from ...team.models.TeamMember import TeamMember
 
 from ...core.middleware.loaders import (
     LoaderType,
+    load_challenge,
     load_event,
     load_user,
     load_team_by_user_and_event,
@@ -24,6 +28,9 @@ from ...core.middleware.permission_middleware import get_permissions, event_only
 from ...permissions.models.enums import PermissionEnum
 from ...team.models.enums import TeamRole
 from ...event.models.Demographic import Demographic
+from ...core.utils import success_response
+from ...core.utils.validator import BaseValidator
+from ...event.models.Event import Event
 from ...team.models.Team import Team
 from ...user.models.User import User
 
@@ -58,6 +65,7 @@ class EventEligibility(Resource):
     @load_event(source=LoaderType.PARAM)
     @event_only_public
     def get(self, event_id, event, current_user, **kwargs):
+
         """Check event eligibility"""
 
         try:
@@ -75,6 +83,7 @@ class EventRegistration(Resource):
     @load_event(source=LoaderType.PARAM)
     @event_only_public
     def post(self, event_id: str, current_user: User, json_data, event):
+
         """Register for event"""
         has_invite = "invite_code" in json_data
         has_name = "team_name" in json_data
@@ -114,7 +123,7 @@ class EventTeam(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
     @load_team_by_user_and_event()
-    def get(self, event_id, team, **kwargs):
+    def get(self, event_id: int, team: Team, **kwargs):
         """Get team details"""
         return success_response(team)
 
@@ -124,7 +133,7 @@ class EventTeamMembers(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
     @load_team_by_user_and_event()
-    def get(self, event_id, team, **kwargs):
+    def get(self, event_id: int, team: Team, **kwargs):
         """Get team members"""
         return success_response(team.members)
 
@@ -209,3 +218,48 @@ class EventTeamLeave(Resource):
             team.delete(commit=True)
 
         return redirect(f"/ng/events/{event_id}/me/register", code=303)
+
+
+
+@events_user_namespace.route("/<int:event_id>/challenges")
+class EventChallenges(Resource):
+    @user_endpoint()
+    @load_event(source=LoaderType.PARAM)
+    def get(self, event_id: int, event: Event):
+        """Get all of the challenges within an event"""
+        challenges = event.get_all_challenges()
+        return success_response(challenges)
+
+
+@events_user_namespace.route("/<int:event_id>/challenges/<int:challenge_id>")
+class EventChallengeRender(Resource):
+    @user_endpoint()
+    @load_event(source=LoaderType.PARAM)
+    @load_challenge(source=LoaderType.PARAM)
+    @load_team_by_user_and_event()
+    def get(self, event_id: int, challenge_id: int, event: Event, challenge: Challenge, team: Team):
+        return success_response(challenge.render(team))
+
+
+@events_user_namespace.route("/<int:event_id>/me/challenges")
+class EventChallengeStatuses(Resource):
+    @user_endpoint()
+    @load_event(source=LoaderType.PARAM)
+    @load_team_by_user_and_event()
+    def get(self, event_id: int, event: Event, team: Team):
+        """Get all challenges and their statuses for the current user's team in the event"""
+        results = []
+
+        for challenge in event.get_all_challenges():
+            results.append(
+                {
+                    "challenge_id": challenge.id,
+                    "total_points_available": sum(q.points for q in challenge.questions),
+                    "total_points_scored": 100,  # TODO: Implement actual points scoring logic
+                    "num_questions_solved": 1,  # TODO: Implement actual questions solved logic
+                    "num_questions_available": len(challenge.questions),
+                    "num_attempts_made": 5,  # TODO: Implement actual attempts made logic
+                }
+            )
+
+        return success_response(results)

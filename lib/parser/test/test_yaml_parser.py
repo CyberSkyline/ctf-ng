@@ -924,3 +924,46 @@ services:
         assert isinstance(chall.challenge.questions[0].answer, Template)
         assert chall.challenge.variables["test_var"].template == chall.challenge.questions[0].answer
 
+    def test_body_has_string(self):
+        """Test that question bodies are strings."""
+        yaml_content = """
+x-challenge:
+  name: Basic Challenge
+  description: A simple challenge to test parsing
+  summary: A simple challenge to test parsing
+  icon: TbPuzzle
+  templates:
+    flag-template: &flag_tmpl "fake.bothify('CTF{????-####}', letters='ABCDEF')"
+  variables:
+    db_password:
+      template: "fake.password(length=12)"
+      default: &db_pass "SecureP4ss!"
+    session_id:
+      template: "fake.uuid4()"
+      default: &session_id "123e4567-e89b-12d3-a456-426614174000"
+  questions:
+    - name: Q1
+      body: What is the flag?
+      points: 100
+      answer: CTF{test_flag}
+      max_attempts: 3
+  hints:
+    - body: Check the logs
+      preview: Log hint
+      deduction: 10
+  tags:
+    - test
+    - beginner
+services:
+  web:
+    image: nginx:latest
+    hostname: web-server
+    networks:
+      - boop
+networks:
+  boop:
+    internal: true
+"""
+        chall = parse_compose_string(yaml_content)
+        assert chall.challenge is not None
+        assert chall.challenge.questions is not None
