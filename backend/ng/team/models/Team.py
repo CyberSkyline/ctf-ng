@@ -571,6 +571,8 @@ class Team(db.Model):
             new_captain = TeamMember.query.filter_by(team_id=self.id, user_id=new_captain_user_id).first()
             if new_captain:
                 new_captain.update_role(TeamRole.CAPTAIN, commit=False)
+            else:
+                raise ValidationError(f"User {new_captain_user_id} is not a member of team {self.id}.")
 
             self.update_invite_code(commit=False)
 
@@ -589,4 +591,19 @@ class Team(db.Model):
         except Exception:
             db.session.rollback()
             raise
+            
+    @classmethod
+    def team_name_contains_member_name(cls,name, member_names) -> bool:
+        """Check if the team name contains any member's name.
 
+        Returns:
+            bool: True if team name contains a member's name, False otherwise
+        """
+
+        name_split = [part for part in name.lower().split() if len(part) > 1]
+        for member_name in member_names:
+            member_name_parts = [part for part in member_name.lower().split() if len(part) > 1]
+            if any(part in name_split for part in member_name_parts):
+                return True
+
+        return False

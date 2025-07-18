@@ -12,6 +12,8 @@ from sqlalchemy import CheckConstraint, func
 
 from ... import config
 from ...core.utils.validator import BaseValidator
+from ...event.models.Demographic import Demographic
+from ...core import BusinessLogicError
 
 
 class Event(db.Model):
@@ -51,6 +53,7 @@ class Event(db.Model):
     )
 
     teams = db.relationship("Team", backref="event", cascade="all, delete-orphan")
+    challenges = db.relationship("Challenge", back_populates="event", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Event {self.name}>"
@@ -217,6 +220,11 @@ class Event(db.Model):
 
         return Team.query.filter_by(event_id=self.id).all()
 
+    def get_all_challenges(self):
+        from ...challenge.models.Challenge import Challenge
+
+        return Challenge.query.filter_by(event_id=self.id).all()
+
     @classmethod
     def find_by_id(cls, event_id: int):
         """Find an event by ID.
@@ -329,3 +337,26 @@ class Event(db.Model):
         except Exception:
             db.session.rollback()
             raise
+
+    def check_eligibility(self, user):
+        """Check if a user is eligible to register for an event.
+
+        Args:
+            user (User): The user object
+
+        Returns:
+            bool: True if eligible, False otherwise
+        """
+        if self.registration_open is False:
+            raise BusinessLogicError("Event registration is closed.")
+
+        if self.registration_end_date and datetime.utcnow() > self.registration_end_date:
+            raise BusinessLogicError("Event registration has ended.")
+
+        if self.registration_start_date and datetime.utcnow() < self.registration_start_date:
+            raise BusinessLogicError("Event registration has not started yet.")
+
+        if Demographic.find_by_user_and_event(user.id, self.id):
+            raise BusinessLogicError("User is already registered for this event.")
+
+        return True

@@ -6,18 +6,18 @@ from ...exceptions import NotFoundError
 from ....user.models.User import User
 from ....event.models.Event import Event
 
-def load_team_by_user_and_event(current_user = User, event = Event, output_key="team") -> Callable:
+def load_team_by_user_and_event(output_key="team") -> Callable:
     def decorator(f):
-        sig = inspect.signature(f)
 
         @wraps(f)
         def decorated_function(*args, **kwargs):
             check_output_exists(kwargs, output_key)
             Team = get_model_class("Team")
 
+            current_user = kwargs.get("current_user")
+            event = kwargs.get("event")
             if not current_user or not event:
                 raise ValueError("User and event must be loaded first")
-
             team = Team.find_by_user_and_event(user_id=current_user.id, event_id=event.id)
 
             if not team:

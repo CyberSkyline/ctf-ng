@@ -30,6 +30,7 @@ from .support.models.Ticket import Ticket
 from .support.models.TicketTag import TicketTag
 from .team.models.Team import Team
 from .user.models.User import User as NgUser
+from .event.models.Demographic import Demographic
 
 
 def create_app():
@@ -263,6 +264,7 @@ def team_factory(db_session, event_factory):
 
     def _factory(event=None, **kwargs):
         members_to_add = kwargs.pop("members", [])
+        captain = members_to_add.pop(0)
 
         if event is None:
             event = event_factory()
@@ -270,15 +272,85 @@ def team_factory(db_session, event_factory):
         defaults = {
             "name": f"Test Team {db_session.query(Team).count() + 1}",
             "event_id": event.id,
+            "captain_id": captain.id,
         }
         defaults.update(kwargs)
-        team = Team.create_team(**defaults)
+        team = Team.create_team_with_captain(**defaults)
 
         for member_user in members_to_add:
             TeamMember.create_team_member(user_id=member_user.id, team_id=team.id, event_id=event.id)
+            Demographic.create_demographic(
+                user_id=member_user.id, event_id=event.id, commit=False
+            )
         return team
 
     return _factory
+
+@pytest.fixture
+def user_factory(db_session):
+    """A factory function to create User objects for tests."""
+    from .user.models.User import User
+
+    def _factory(name="Test User", email="testuser@example.com", password="password"):
+        user = Users(name=name, email=email)
+        db_session.add(user)
+        db_session.commit()
+
+        ng_user = User(id=user.id)
+        db_session.add(ng_user)
+        db_session.commit()
+        return ng_user
+
+    return _factory
+
+
+@pytest.fixture
+def team_with_member(db_session, team_factory, user):
+    """Creates a team with members for testing."""
+    team = team_factory(members=[user])
+    return team
+
+@pytest.fixture
+def team_with_members(db_session, team_factory, user_factory):
+    """Creates a team with multiple members for testing."""
+    users = [user_factory(name=f"User {i}", email=f"user{i}@example.com") for i in range(1, 4)]
+    team = team_factory(members=users)
+    return team
+
+@pytest.fixture
+def team_captain_client(app, db_session, team_with_members, role_with_permissions):
+    """A test client logged in as a team captain."""
+    # Clear any cached user data to prevent cross-test contamination
+    from CTFd.cache import cache
+    cache.clear()
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        # Completely clear the session and set only what we need
+        sess.clear()
+        sess["id"] = team_with_members.members[0].user_id
+        sess["name"] = team_with_members.members[0].user.ctfd_user.name
+        sess["type"] = "team"
+        sess["nonce"] = generate_nonce()
+        sess.permanent = False
+    return client
+
+@pytest.fixture
+def team_member_client(app, db_session, team_with_members, role_with_permissions):
+    """A test client logged in as a team member."""
+    # Clear any cached user data to prevent cross-test contamination
+    from CTFd.cache import cache
+    cache.clear()
+    
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        # Completely clear the session and set only what we need
+        sess.clear()
+        sess["id"] = team_with_members.members[1].user_id
+        sess["name"] = team_with_members.members[1].user.ctfd_user.name
+        sess["type"] = "team"
+        sess["nonce"] = generate_nonce()
+        sess.permanent = False
+    return client
 
 
 @pytest.fixture
@@ -287,50 +359,6 @@ def event(event_factory):
     return event_factory()
 
 
-@pytest.fixture
-def open_event_reg(event, event_registration_factory, db_session):
-    """An open event registration."""
-    reg = event_registration_factory(event=event, reg_open=True)
-    reg._test_event_id = event.id
-    return reg
-
-
-@pytest.fixture
-def closed_event_reg(event, event_registration_factory, db_session):
-    """A closed event registration."""
-    reg = event_registration_factory(event=event, reg_open=False)
-    reg._test_event_id = event.id
-    return reg
-
-
-@pytest.fixture
-def past_event_reg(event, event_registration_factory, db_session):
-    """An event registration with a registration window in the past."""
-    reg = event_registration_factory(
-        event=event,
-        reg_start_date=datetime.utcnow() - timedelta(days=2),
-        reg_end_date=datetime.utcnow() - timedelta(days=1),
-    )
-    db_session.expunge_all()
-    db_session.add(reg)
-    db_session.add(reg.event)
-    db_session.commit()
-    return reg
-
-
-@pytest.fixture
-def future_event_reg(event, event_registration_factory, db_session):
-    """An event registration with a registration window in the future."""
-    reg = event_registration_factory(
-        event=event,
-        reg_start_date=datetime.utcnow() + timedelta(days=1),
-        reg_end_date=datetime.utcnow() + timedelta(days=2),
-    )
-    db_session.expunge_all()
-    db_session.add(reg)
-    db_session.add(reg.event)
-    db_session.commit()
-    return reg
 
 
 @pytest.fixture
@@ -428,9 +456,10 @@ def permissions(db_session):
 
 
 @pytest.fixture
-def challenge(db_session):
+def challenge(db_session, event):
     """Create a test challenge for testing purposes."""
     challenge = Challenge(
+        event_id=event.id,
         name="Test Challenge",
         description="A test challenge for question testing",
         icon="test-icon",
@@ -603,6 +632,41 @@ def ticket_message_factory(db_session):
         db_session.commit()
         return message
 
+def challenge_factory(db_session, event_factory):
+    """A factory function to create Challenge objects for tests, with 2 questions."""
+
+    from .challenge.models.Question import Question
+
+    def _factory(event=None, **kwargs):
+        if event is None:
+            event = event_factory()
+        defaults = {
+            "event_id": event.id,
+            "name": f"Test Challenge {db_session.query(Challenge).count() + 1}",
+            "description": "A test challenge for question testing",
+            "icon": "test-icon",
+            "summary": "Test summary",
+        }
+        defaults.update(kwargs)
+        challenge = Challenge(**defaults)
+        db_session.add(challenge)
+        db_session.commit()
+
+        # Create 2 questions for this challenge
+        for i in range(2):
+            question = Question(
+                challenge_id=challenge.id,
+                name=f"Test Question {i + 1} for Challenge {challenge.id}",
+                body=f"test question body_{i + 1}",
+                answer=f"answer_{i + 1}",
+                points=100 * (i + 1),
+                placeholder=f"placeholder_{i + 1}",
+                max_attempts=3,
+            )
+            db_session.add(question)
+        db_session.commit()
+
+        return challenge
     return _factory
 
 
@@ -886,3 +950,30 @@ def multiple_teams_with_scores(db_session, event, team_factory, score_factory):
         })
 
     return teams_data
+  
+def question_factory(db_session, challenge_factory):
+    """A factory function to create Question objects for tests."""
+
+    from .challenge.models.Question import Question
+
+    def _factory(challenge=None, **kwargs):
+        if challenge is None:
+            challenge = challenge_factory()
+        count = db_session.query(Question).count() + 1
+
+        defaults = {
+            "challenge_id": challenge.id,
+            "name": f"Test Question {count} for Challenge {challenge.id}",
+            "body": f"test question body_{count}",
+            "answer": f"answer_{count}",
+            "points": 100 * count,
+            "placeholder": f"placeholder_{count}",
+            "max_attempts": 3,
+        }
+        defaults.update(kwargs)
+        question = Question(**defaults)
+        db_session.add(question)
+        db_session.commit()
+        return question
+
+    return _factory

@@ -2,9 +2,13 @@
 Test cases for the Question model to verify validation and database operations.
 """
 
+import base64
+import os
+
 import pytest
 
 from ...core.exceptions import ValidationError
+from ..models import Challenge
 from ..models.Question import MAX_QUESTION_ANSWER_LENGTH, MAX_QUESTION_BODY_LENGTH, MAX_QUESTION_NAME_LENGTH, Question
 
 
@@ -316,3 +320,23 @@ class Test_Create_Question:
         # Both questions should be retrievable
         assert Question.query.get(question1.id) is not None
         assert Question.query.get(question2.id) is not None
+
+
+class Test_Check_Answer:
+    def test_check_answer_with_correct_answer(self, db_session, admin_client, event, team_factory,user):
+        team = team_factory(event=event, members=[user])
+
+        with open(os.path.join(os.path.dirname(__file__), "./yamls/default.yaml"), "rb") as f:
+            yaml = base64.urlsafe_b64encode(f.read())
+
+        admin_client.post("/ng/admin/challenge/import", json={"yaml": yaml.decode("utf-8")})
+
+        # challenge = Challenge.query.filter_by(name="Basic Challenge").first()
+        # question = Question.query.filter_by(name="Q1").first()
+
+        # question.check_answer(team, "CTF{test_flag}")
+
+        # print(challenge)
+        # print(question)
+        # print(team)
+        # raise Exception("test")

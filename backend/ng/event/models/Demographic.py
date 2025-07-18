@@ -88,3 +88,13 @@ class Demographic(db.Model):
             Demographic or None: The demographic if found
         """
         return cls.query.filter_by(user_id=user_id, event_id=event_id).first()
+
+    def delete(self, commit: bool = True) -> None:
+        """Delete this demographic entry.
+
+        Args:
+            commit: Whether to commit immediately
+        """
+        db.session.delete(self)
+        if commit:
+            db.session.commit()

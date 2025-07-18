@@ -14,10 +14,13 @@ MAX_CHALLENGE_ICON_LENGTH = 64
 
 class SerializedChallenge(TypedDict):
     id: int
+    event_id: int
     name: str
     description: str = ""
     icon: str = ""
     summary: str = ""
+    num_questions: int = 0
+    total_points: int = 0
 
 
 class Challenge(db.Model):
@@ -28,13 +31,15 @@ class Challenge(db.Model):
     description = db.Column(db.String(MAX_CHALLENGE_DESCRIPTION_LENGTH), nullable=True)
     icon = db.Column(db.String(MAX_CHALLENGE_ICON_LENGTH), nullable=True)
     summary = db.Column(db.String(MAX_CHALLENGE_SUMMARY_LENGTH), nullable=True)
+    event_id = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
 
+    event = db.relationship("Event", back_populates="challenges")
     hints = db.relationship("Hint", back_populates="challenge", cascade="all, delete-orphan")
     tags = db.relationship("ChallengeTag", back_populates="challenge", cascade="all, delete-orphan")
     questions = db.relationship("Question", back_populates="challenge", cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<Challenge {self.id}, name={self.name}, icon={self.icon}>"
+        return f"<NgChallenge {self.id}, name={self.name}, icon={self.icon}>"
 
     def serialize(self, include_admin_fields=False) -> SerializedChallenge:
         """
@@ -43,10 +48,13 @@ class Challenge(db.Model):
         """
         data = {
             "id": self.id,
+            "event_id": self.event_id,
             "name": self.name,
             "description": self.description or "",
             "icon": self.icon or "",
             "summary": self.summary or "",
+            "num_questions": len(self.questions),
+            "total_points": sum(q.points for q in self.questions),
         }
 
         return SerializedChallenge(**data)
@@ -88,12 +96,25 @@ class Challenge(db.Model):
             required=False,
             friendly_name="Challenge Summary",
         )
+        validator.validate_model_id(
+            data,
+            "event_id",
+            "Event",
+            required=True,
+            friendly_name="Event ID",
+        )
 
         return validator.validate()
 
     @classmethod
     def create_challenge(
-        cls, name: str, icon: str = "", description: str = "", summary: str = "", commit=True
+        cls,
+        name: str,
+        icon: str | None = "",
+        description: str | None = "",
+        summary: str | None = "",
+        event_id: int | None = None,
+        commit=True,
     ) -> Challenge:
         try:
             validated_data = cls.validate(
@@ -102,6 +123,7 @@ class Challenge(db.Model):
                     "icon": icon,
                     "description": description,
                     "summary": summary,
+                    "event_id": event_id,
                 }
             )
             challenge = cls(**validated_data)
@@ -113,3 +135,32 @@ class Challenge(db.Model):
         except Exception as e:
             db.session.rollback()
             raise e
+
+    @classmethod
+    def find_by_id(cls, challenge_id: int) -> Challenge | None:
+        """
+        Find a challenge by its ID.
+        :param challenge_id: The ID of the challenge to find.
+        :return: The challenge if found, otherwise None.
+        """
+        return cls.query.filter_by(id=challenge_id).first()
+
+    def render(self, team):
+        """
+        Render the challenge for a specific team.
+        :param team: The team to render the challenge for.
+        :return: A dictionary representation of the challenge for the team.
+        """
+        from .Hint import Hint
+        from .Question import Question
+
+        data = {
+            "challenge": self.serialize(),
+            "questions": Question.query.filter_by(challenge_id=self.id).all(),
+            "hints": Hint.query.filter_by(
+                challenge_id=self.id
+            ).all(),  # TODO - Selectivly hide/reveal hints based on if they were redeemed
+            "attempts": [],  # TODO - implement
+        }
+
+        return data

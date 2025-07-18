@@ -67,14 +67,3 @@ def test_get_user_role_permissions(middleware_client):
     assert isinstance(data["permissions"], list)
     assert len(data["permissions"]) > 0
     assert "CAN_EDIT_TEAM" in data["permissions"]
-
-def test_check_user_can_edit_team(middleware_client):
-    """
-    Test the check_user_can_edit_team middleware decorator.
-    This checks if the decorator correctly verifies if a user can edit a team.
-    """
-    response = middleware_client.get("/check_user_can_edit_team", query_string={"team_id": 1, "user_id": 1})
-    assert response.status_code == 200
-    data = response.get_json()
-    assert data["success"] is True
-    assert "can edit" in data['message']

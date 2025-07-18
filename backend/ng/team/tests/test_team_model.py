@@ -73,8 +73,8 @@ class Test_Create_Team_With_Captain:
             assert team2 is None
 
 class Test_Update_Invite_Code:
-    def test_should_choose_unique_invite_code(self, event, team_factory):
-        team = team_factory(event=event)
+    def test_should_choose_unique_invite_code(self, event, team_factory, user):
+        team = team_factory(event=event, members=[user])
         old_code = team.invite_code
 
         team.update_invite_code()
@@ -84,8 +84,8 @@ class Test_Update_Invite_Code:
         assert refreshed_team.invite_code == team.invite_code
         assert refreshed_team.invite_code != old_code
 
-    def test_should_update_specified_invite_code(self, event, team_factory):
-        team = team_factory(event=event)
+    def test_should_update_specified_invite_code(self, event, team_factory, user):
+        team = team_factory(event=event, members=[user])
         old_code = team.invite_code
         new_code = Team.get_unique_invite_code()
 
@@ -108,8 +108,8 @@ class Test_Update_Invite_Code:
     #         mock_commit.assert_called_once()
 
 class Test_Update_Name:
-    def test_should_update_team_name(self, event, team_factory):
-        team = team_factory(event=event)
+    def test_should_update_team_name(self, event, team_factory, user):
+        team = team_factory(event=event, members=[user])
         old_name = team.name
         new_name = "Updated Team Name"
 
@@ -133,8 +133,8 @@ class Test_Update_Name:
     #         mock_commit.assert_called_once()
 
 class Test_Find_By_Id:
-    def test_should_find_team_by_id(self, event, team_factory):
-        team = team_factory(event=event)
+    def test_should_find_team_by_id(self, event, team_factory, user):
+        team = team_factory(event=event, members=[user])
 
         found_team = Team.find_by_id(team.id)
 
@@ -147,8 +147,8 @@ class Test_Find_By_Id:
 
 
 class Test_Find_By_Invite_Code:
-    def test_should_find_team_by_invite_code(self, event, team_factory):
-        team = team_factory(event=event)
+    def test_should_find_team_by_invite_code(self, event, team_factory,user):
+        team = team_factory(event=event, members=[user])
 
         found_team = Team.find_by_invite_code(team.invite_code)
 
@@ -158,3 +158,53 @@ class Test_Find_By_Invite_Code:
     def test_should_return_none_if_invite_code_not_found(self, db_session):
         found_team = Team.find_by_invite_code("nonexistentcode")
         assert found_team is None
+
+class Test_Team_Name_Contains_Member_Name:
+    def test_should_return_true_if_name_contains_member_name(self, event, team_factory, user):
+        team = team_factory(event=event, members=[user])
+        team.name = f"{user.name} Team"
+
+        assert Team.team_name_contains_member_name(team.name, [user.name]) is True
+
+    def test_should_return_false_if_name_does_not_contain_member_name(self, event, team_factory, user):
+        team = team_factory(event=event, members=[user])
+        team.name = "Some Other Team Name"
+
+        assert Team.team_name_contains_member_name(team.name, [user.name]) is False
+
+    def test_name_checks(self,event, team_factory, user_factory):
+        user = user_factory(name="Alex John Smith")
+        team = team_factory(event=event, members=[user])
+        team.name = "Alex Smith"
+
+        assert Team.team_name_contains_member_name(team.name, [user.ctfd_user.name]) is True
+
+    def test_more_name_checks(self, event, team_factory, user_factory):
+        user1 = user_factory(name="Alex Ng")
+        team1 = team_factory(event=event, members=[user1])
+        team1.name = "pwning"
+
+        assert Team.team_name_contains_member_name(team1.name, [user1.ctfd_user.name]) is False
+
+        team1.name = "pwni ng"
+
+        assert Team.team_name_contains_member_name(team1.name, [user1.ctfd_user.name]) is True
+
+
+    def test_even_more_name_checks(self, event, team_factory, user_factory):
+        user = user_factory(name="A Smith")
+        team = team_factory(event=event, members=[user])
+        team.name = "a hacker"
+
+        assert Team.team_name_contains_member_name(team.name, [user.ctfd_user.name]) is False
+
+#Partial matches like this fail using the current logic, but adjusting the logic to allow for partial matches
+#Would cause false positives such as "Alex Ng" "pwning"
+"""
+    def test_partial_match(self, event, team_factory, user_factory):
+        user = user_factory(name="Jonathan Doe")
+        team = team_factory(event=event, members=[user])
+        team.name = "Jon Squad"
+
+        assert Team.team_name_contains_member_name(team.name, [user.ctfd_user.name]) is True
+"""
