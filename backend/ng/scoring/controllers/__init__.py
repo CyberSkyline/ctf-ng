@@ -2,11 +2,11 @@
 Scoring controlles combined Package
 """
 
-from .user_actions (
+from .user_actions import (
     submit_answer,
     redeem_hint,
 )
-from .all_actions (
+from .all_actions import (
     get_leaderboard,
     get_team_score,
 )
@@ -18,11 +18,10 @@ from .admin_actions import (
 
 __all__ = [
     "award_manual_points",
-    "get_score_history", 
+    "get_score_history",
     "recalculate_score",
     "get_leaderboard",
     "get_team_score",
     "submit_answer",
     "redeem_hint",
 ]
-

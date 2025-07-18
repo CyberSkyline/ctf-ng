@@ -188,14 +188,12 @@ class Team(db.Model):
         commit: bool = True,
     ):
         """Create and persist a new team to the database.
-
         Args:
             name (str): Team name
             event_id (int): Associated event ID
             invite_code (str): Team invite code
             ranked (bool, optional): Whether team is ranked
             commit (bool, optional)
-
         Returns:
             Team: The created team instance
         """
@@ -203,15 +201,23 @@ class Team(db.Model):
             invite_code = cls.get_unique_invite_code()
         if seed is None:
             seed = cls.generate_random_seed()
-
         validated_data = cls.validate(
             data={"name": name, "event_id": event_id, "invite_code": invite_code, "seed": seed, "ranked": ranked}
         )
-
         team = cls(**validated_data)
-
         db.session.add(team)
         db.session.flush()
+
+        # LAZY-IMPORT
+        from ...scoring.models.Score import Score
+
+        score = Score.create_score(
+            team_id=team.id,
+            event_id=event_id,
+            team_name=name,
+            commit=False
+        )
+
         if commit:
             try:
                 db.session.commit()
@@ -220,7 +226,6 @@ class Team(db.Model):
                 if "uq_team_event_name" in str(e):
                     raise ConflictError(f"Team name '{name}' already exists for event ID {event_id}.") from e
                 raise
-
         return team
 
     def disband_team(self, commit=True):
@@ -249,11 +254,11 @@ class Team(db.Model):
         """
         # LAZY-IMPORT
         from ...scoring.models.Score import Score
-    
+
         # Delegate's cache update to the Score model
         self.name = new_name
         Score.update_team_name(team_id=self.id, new_name=new_name, commit=False)
-    
+
         if commit:
             db.session.commit()
 

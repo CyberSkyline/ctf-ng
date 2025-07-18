@@ -8,6 +8,6 @@ from .recalculate_score import recalculate_score
 
 __all__ = [
     "award_manual_points",
-    "get_score_history", 
+    "get_score_history",
     "recalculate_score",
 ]

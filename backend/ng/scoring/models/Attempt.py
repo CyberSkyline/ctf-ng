@@ -3,18 +3,19 @@ Defines the Attempt model for tracking answer submissions.
 """
 
 from __future__ import annotations
+from typing import Any, TypedDict
 
 from datetime import datetime
-from typing import Any, TypedDict
 
 from CTFd.models import db
 
+from ... import config
 from ...core.utils import utc_now
 from ...core.exceptions import (
-    ValidationError, 
+    ValidationError,
     BusinessLogicError,
 )
-from ...core.validation import BaseValidator
+from ...core.utils.validator import BaseValidator
 
 
 class SerializedAttempt(TypedDict):
@@ -61,7 +62,6 @@ class Attempt(db.Model):
     def __repr__(self):
         return f"<Attempt {self.id}: user={self.user_id} question={self.question_id} correct={self.is_correct}>"
 
-
     def serialize(self, include_admin_fields: bool = False) -> SerializedAttempt:
         """
         Serialize attempt for API response
@@ -88,23 +88,19 @@ class Attempt(db.Model):
         Validate attempt data
         """
         validator = BaseValidator()
-        
+
         validator.validate_model_id(data, "user_id", "User", required=True)
         validator.validate_model_id(data, "team_id", "Team", required=True)
         validator.validate_model_id(data, "event_id", "Event", required=True)
         validator.validate_model_id(data, "challenge_id", "Challenge", required=True)
-        validator.validate_model_id(data, "question_id", "Question", required=True) 
-        
+        validator.validate_model_id(data, "question_id", "Question", required=True)
+
         validator.validate_string(
-            data,
-            "submission",
-            max_length=config.MAX_SUBMISSION_LENGTH,
-            required=True,
-            friendly_name="Submission"
+            data, "submission", max_length=config.MAX_SUBMISSION_LENGTH, required=True, friendly_name="Submission"
         )
-        
+
         validator.validate_optional_timestamp(data)
-            
+
         if "points" in data:
             try:
                 points = int(data["points"])
@@ -114,9 +110,9 @@ class Attempt(db.Model):
                     validator._add_parsed_data("points", points)
             except (ValueError, TypeError):
                 validator.errors["points"] = "Points must be a valid integer"
-        
+
         validator.validate_boolean(data, "is_correct", required=False)
-        
+
         return validator.validate()
 
     @classmethod
@@ -125,20 +121,17 @@ class Attempt(db.Model):
         Validate answer submission from API (partial data)
         """
         validator = BaseValidator()
-        
-        validator.validate_model_id(data, "question_id", "Question", required=True)
+
         validator.validate_string(
-            data, 
-            "submission", 
-            config.MAX_SUBMISSION_LENGTH, 
-            required=True,
-            friendly_name="Submission"
+            data, "submission", config.MAX_SUBMISSION_LENGTH, required=True, friendly_name="Submission"
         )
-        
+
         return validator.validate()
 
     @classmethod
-    def validate_attempt_allowed(cls, user_id: int, team_id: int, event_id: int, challenge_id: int, question_id: int) -> None:
+    def validate_attempt_allowed(
+        cls, user_id: int, team_id: int, event_id: int, challenge_id: int, question_id: int
+    ) -> None:
         """
         Validate that an attempt is allowed
         """
@@ -146,33 +139,30 @@ class Attempt(db.Model):
         from ...challenge.models.Question import Question
         from ...event.models.Event import Event
         from ...team.models.TeamMember import TeamMember
-        
+
         event = Event.find_by_id(event_id)
         if event and event.locked:
             raise BusinessLogicError("Cannot submit answers for a locked event")
-            
-        if event and event.end_time and event.end_time < utc_now():
+
+        if event and event.end_time and event.end_time < utc_now().replace(tzinfo=None):
             raise BusinessLogicError("Cannot submit answers after event has ended")
-        
+
         member = TeamMember.find_by_user_and_team(user_id, team_id)
         if not member:
             raise BusinessLogicError("User is not a member of this team")
-            
+
         if member.event_id != event_id:
             raise BusinessLogicError("Team is not participating in this event")
-        
+
         question = Question.query.get(question_id)
         if not question:
             raise ValidationError(f"Question {question_id} not found")
-        
+
         if question.challenge_id != challenge_id:
             raise BusinessLogicError("This question does not belong to the specified challenge")
-        
-        existing_attempts = cls.query.filter_by(
-            team_id=team_id,
-            question_id=question_id
-        ).count()
-        
+
+        existing_attempts = cls.query.filter_by(team_id=team_id, question_id=question_id).count()
+
         if existing_attempts >= question.max_attempts:
             raise BusinessLogicError(f"Maximum attempts ({question.max_attempts}) exceeded for this question")
 
@@ -189,7 +179,7 @@ class Attempt(db.Model):
         commit: bool = True,
     ) -> Attempt:
         """Create an attempt and associated score event if needed.
-        
+
         Args:
             user_id: ID of the user submitting
             team_id: ID of the team
@@ -199,37 +189,36 @@ class Attempt(db.Model):
             submission: The submitted answer
             timestamp: When submitted (defaults to now)
             commit: Whether to commit immediately
-            
+
         Returns:
             Attempt: The created attempt
         """
         cls.validate_attempt_allowed(user_id, team_id, event_id, challenge_id, question_id)
-        
+
         if timestamp is None:
-            timestamp = utc_now() # TODO
-            
+            timestamp = utc_now()
+
         # LAZY-IMPORT
         from ...challenge.models.Question import Question
 
         question = Question.query.get(question_id)
         if not question:
             raise ValidationError(f"Question {question_id} not found")
-            
+
         is_correct = submission.strip().lower() == question.answer.strip().lower()
         points = question.points if is_correct else 0
-        
-        validated_data = cls.validate({
-            "user_id": user_id,
-            "team_id": team_id,
-            "event_id": event_id,
-            "challenge_id": challenge_id,
-            "question_id": question_id,
-            "submission": submission,
-            "timestamp": timestamp,
-            "points": points,
-            "is_correct": is_correct,
-        })
-        
+
+        validated_data = cls.validate(
+            {
+                "user_id": user_id,
+                "team_id": team_id,
+                "event_id": event_id,
+                "challenge_id": challenge_id,
+                "question_id": question_id,
+                "submission": submission,
+            }
+        )
+
         attempt = cls(
             user_id=validated_data["user_id"],
             team_id=validated_data["team_id"],
@@ -237,38 +226,33 @@ class Attempt(db.Model):
             challenge_id=validated_data["challenge_id"],
             question_id=validated_data["question_id"],
             submission=validated_data["submission"],
-            timestamp=validated_data.get("timestamp", timestamp),
-            points=validated_data.get("points", points),
-            is_correct=validated_data.get("is_correct", is_correct),
+            timestamp=timestamp,
+            points=points,
+            is_correct=is_correct,
         )
-        
+
         db.session.add(attempt)
         db.session.flush()
-        
-        if points != 0:
 
+        if points != 0:
             # LAZY-IMPORT
             from .Score import Score
             from .ScoreEvent import ScoreEvent
-            
+
             score = Score.find_by_team_and_event(team_id, event_id)
             if score:
                 score_event = ScoreEvent.create_score_event(
-                    score_id=score.id,
-                    team_id=team_id,
-                    points=points,
-                    timestamp=timestamp,
-                    commit=False
+                    score_id=score.id, team_id=team_id, points=points, timestamp=timestamp, commit=False
                 )
                 attempt.score_event_id = score_event.id
-        
+
         if commit:
             try:
                 db.session.commit()
             except Exception:
                 db.session.rollback()
                 raise
-                
+
         return attempt
 
     @classmethod
@@ -285,7 +269,7 @@ class Attempt(db.Model):
         Find attempts based on filters
         """
         query = cls.query
-        
+
         if user_id is not None:
             query = query.filter_by(user_id=user_id)
         if team_id is not None:
@@ -297,8 +281,8 @@ class Attempt(db.Model):
         if question_id is not None:
             query = query.filter_by(question_id=question_id)
         if is_correct is not None:
-            query = query.filter_by(is_correct=is_correct)   
-         
+            query = query.filter_by(is_correct=is_correct)
+
         return query.order_by(cls.timestamp.desc()).all()
 
     def delete_attempt(self, commit: bool = True) -> None:
@@ -307,8 +291,7 @@ class Attempt(db.Model):
         """
         if self.score_event:
             self.score_event.delete_event(commit=False)
-            
+
         db.session.delete(self)
         if commit:
             db.session.commit()
-

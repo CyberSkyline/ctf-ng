@@ -2,7 +2,7 @@
 User facing API routes for support ticket operations.
 """
 
-from flask import request, g
+from flask import request
 from flask_restx import Namespace, Resource
 
 from ..controllers.all_actions import (

@@ -21,7 +21,7 @@ def get_score_history(
         limit=limit,
         eager_load_source=True,
     )
-    
+
     return {
         "total_events": len(events),
         "events": events,

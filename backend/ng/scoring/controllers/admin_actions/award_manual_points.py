@@ -21,9 +21,9 @@ def award_manual_points(
     score = Score.find_by_team_and_event(team_id=team_id, event_id=event_id)
     if not score:
         raise NotFoundError(f"Team {team_id} has no score in event {event_id}")
-    
+
     previous_points = score.points
-    
+
     award = ManualPointAward.create_award(
         admin_id=admin_id,
         team_id=team_id,
@@ -31,7 +31,7 @@ def award_manual_points(
         reason=reason,
         event_id=event_id,
     )
-    
+
     return {
         "award": award,
         "updated_score": score,

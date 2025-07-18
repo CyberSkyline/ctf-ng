@@ -13,7 +13,7 @@ def get_user_permissions(user):
     """
     user_roles = UserRole.get_user_roles(user.id)
     permissions = []
-    
+
     for role in user_roles:
         role_permissions = Role.get_permissions(role.id)
         permissions.extend(role_permissions)

@@ -15,7 +15,7 @@ def get_user_role_permissions(f):
 
     The retrieved permissions are attached to kwargs as 'permissions'.
     """
-    
+
     @wraps(f)
     def wrapped(*args, **kwargs):
         user = get_current_user()

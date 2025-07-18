@@ -5,7 +5,7 @@ Scoring RESTX Documentation
 # ============ COMMON RESPONSES ============
 COMMON_RESPONSES = {
     200: "Success - Operation completed successfully",
-    201: "Success - Resource created successfully", 
+    201: "Success - Resource created successfully",
     400: "Bad request - Invalid data or validation failed",
     401: "Unauthorized - Authentication required",
     403: "Forbidden - Insufficient permissions",
@@ -90,5 +90,3 @@ GET_SCORE_HISTORY_DOC = {
         **ADMIN_REQUIRED_RESPONSES,
     },
 }
-
-

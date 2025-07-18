@@ -32,7 +32,7 @@ class Test_Create_Team:
             )
 
     # def test_should_not_commit_team_if_set_to_false(self, event, db_session):
-    #     with patch.object(db_session, 'commit') as mock_commit:           
+    #     with patch.object(db_session, 'commit') as mock_commit:
     #         Team.create_team(
     #             name="Test Team",
     #             event_id=event.id,

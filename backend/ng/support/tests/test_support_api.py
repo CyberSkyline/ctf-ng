@@ -11,7 +11,7 @@ class TestUserTicketEndpoints:
     def test_support_routes_loaded(self, app):
         """Test that support routes are registered."""
         ticket_routes = [rule for rule in app.url_map.iter_rules() if "tickets" in rule.rule or "support" in rule.rule]
-        
+
         assert len(ticket_routes) > 0, "No support routes found"
 
     def test_get_my_tickets(self, logged_in_client, ticket_factory, user):
@@ -19,9 +19,9 @@ class TestUserTicketEndpoints:
 
         ticket1 = ticket_factory(subject="First Issue", author_id=user.id)
         ticket2 = ticket_factory(subject="Second Issue", author_id=user.id)
-        
+
         response = logged_in_client.get("/ng/tickets")
-        
+
         assert response.status_code == 200
         data = response.get_json()
         assert "success" in data
@@ -42,7 +42,7 @@ class TestUserTicketEndpoints:
         data = response.get_json()
         tickets = data["data"]["tickets"]
         assert all(t["status"] == "open" for t in tickets)
-        
+
         response = logged_in_client.get("/ng/tickets?status=closed")
         assert response.status_code == 200
         data = response.get_json()
@@ -56,13 +56,13 @@ class TestUserTicketEndpoints:
             "event_id": event.id,
             "team_id": team.id
         }
-        
+
         response = logged_in_client.post(
             "/ng/tickets",
             data=json.dumps(ticket_data),
             content_type="application/json"
         )
-        
+
         assert response.status_code == 201
         data = response.get_json()
         assert data["success"] is True
@@ -75,18 +75,18 @@ class TestUserTicketEndpoints:
 
         tag1 = ticket_tag_factory(name="help-needed")
         tag2 = ticket_tag_factory(name="challenge-issue")
-        
+
         ticket_data = {
             "subject": "Tagged ticket",
             "tag_ids": [tag1.id, tag2.id]
         }
-        
+
         response = logged_in_client.post(
             "/ng/tickets",
             data=json.dumps(ticket_data),
             content_type="application/json"
         )
-        
+
         assert response.status_code == 201
         data = response.get_json()
         assert len(data["data"]["ticket"]["tags"]) == 2
@@ -99,7 +99,7 @@ class TestUserTicketEndpoints:
             data=json.dumps({}),
             content_type="application/json"
         )
-        
+
         assert response.status_code == 400
         data = response.get_json()
         assert data["success"] is False
@@ -108,7 +108,7 @@ class TestUserTicketEndpoints:
         """Test getting ticket details."""
 
         response = logged_in_client.get(f"/ng/tickets/{ticket_with_messages.id}")
-        
+
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -121,9 +121,9 @@ class TestUserTicketEndpoints:
         """Test accessing another user's ticket."""
 
         other_ticket = ticket_factory(subject="Admin's ticket", author_id=admin.id)
-        
+
         response = logged_in_client.get(f"/ng/tickets/{other_ticket.id}")
-        
+
         assert response.status_code == 403
         data = response.get_json()
         assert data["success"] is False
@@ -133,13 +133,13 @@ class TestUserTicketEndpoints:
         update_data = {
             "subject": "Updated subject"
         }
-        
+
         response = logged_in_client.patch(
             f"/ng/tickets/{ticket.id}",
             data=json.dumps(update_data),
             content_type="application/json"
         )
-        
+
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -151,13 +151,13 @@ class TestUserTicketEndpoints:
         message_data = {
             "text": "Here's some additional information"
         }
-        
+
         response = logged_in_client.post(
             f"/ng/tickets/{ticket.id}/messages",
             data=json.dumps(message_data),
             content_type="application/json"
         )
-        
+
         assert response.status_code == 201
         data = response.get_json()
         assert data["success"] is True
@@ -168,13 +168,13 @@ class TestUserTicketEndpoints:
         """Test replying to another user's ticket."""
 
         other_ticket = ticket_factory(subject="Not my ticket", author_id=admin.id)
-        
+
         response = logged_in_client.post(
             f"/ng/tickets/{other_ticket.id}/messages",
             data=json.dumps({"text": "Trying to reply"}),
             content_type="application/json"
         )
-        
+
         assert response.status_code == 403
 
 
@@ -185,7 +185,7 @@ class TestAdminTicketEndpoints:
         """Test admin getting all tickets."""
 
         response = admin_client.get("/ng/admin/support/tickets")
-        
+
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -199,7 +199,7 @@ class TestAdminTicketEndpoints:
         assert response.status_code == 200
         data = response.get_json()
         assert all(t["status"] == "open" for t in data["data"]["tickets"])
-        
+
         response = admin_client.get(f"/ng/admin/support/tickets?user_id={user.id}")
         assert response.status_code == 200
         data = response.get_json()
@@ -209,7 +209,7 @@ class TestAdminTicketEndpoints:
         """Test admin getting any ticket details."""
 
         response = admin_client.get(f"/ng/admin/support/tickets/{ticket_with_messages.id}")
-        
+
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -226,13 +226,13 @@ class TestAdminTicketEndpoints:
             "subject": "Admin updated this",
             "muted": True
         }
-        
+
         response = admin_client.patch(
             f"/ng/admin/support/tickets/{ticket.id}",
             data=json.dumps(update_data),
             content_type="application/json"
         )
-        
+
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -245,13 +245,13 @@ class TestAdminTicketEndpoints:
         assign_data = {
             "user_id": admin.id
         }
-        
+
         response = admin_client.post(
             f"/ng/admin/support/tickets/{ticket.id}/assign",
             data=json.dumps(assign_data),
             content_type="application/json"
         )
-        
+
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -261,7 +261,7 @@ class TestAdminTicketEndpoints:
         """Test admin unassigning ticket."""
 
         response = admin_client.post(f"/ng/admin/support/tickets/{assigned_ticket.id}/unassign")
-        
+
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -271,7 +271,7 @@ class TestAdminTicketEndpoints:
         """Test admin closing ticket."""
 
         response = admin_client.post(f"/ng/admin/support/tickets/{ticket.id}/close")
-        
+
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -281,7 +281,7 @@ class TestAdminTicketEndpoints:
         """Test admin reopening ticket."""
 
         response = admin_client.post(f"/ng/admin/support/tickets/{closed_ticket.id}/reopen")
-        
+
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -293,13 +293,13 @@ class TestAdminTicketEndpoints:
         message_data = {
             "text": "Following up on this"
         }
-        
+
         response = admin_client.post(
             f"/ng/admin/support/tickets/{closed_ticket.id}/messages",
             data=json.dumps(message_data),
             content_type="application/json"
         )
-        
+
         assert response.status_code == 201
         data = response.get_json()
         assert data["success"] is True
@@ -316,13 +316,13 @@ class TestTagManagementEndpoints:
             "name": "new",
             "description": "new tag"
         }
-        
+
         response = admin_client.post(
             "/ng/admin/support/tags",
             data=json.dumps(tag_data),
             content_type="application/json"
         )
-        
+
         assert response.status_code == 201
         data = response.get_json()
         assert data["success"] is True
@@ -333,9 +333,9 @@ class TestTagManagementEndpoints:
 
         ticket_tag_factory(name="test-tags1")
         ticket_tag_factory(name="test-tags2")
-        
+
         response = admin_client.get("/ng/admin/support/tags")
-        
+
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -349,13 +349,13 @@ class TestTagManagementEndpoints:
             "color": "#00FF00",
             "description": "Updated bug reports"
         }
-        
+
         response = admin_client.patch(
             f"/ng/admin/support/tags/{ticket_tag.id}",
             data=json.dumps(update_data),
             content_type="application/json"
         )
-        
+
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -366,7 +366,7 @@ class TestTagManagementEndpoints:
 
         tag = ticket_tag_factory(name="to-be-deleted")
         response = admin_client.delete(f"/ng/admin/support/tags/{tag.id}")
-        
+
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -376,17 +376,17 @@ class TestTagManagementEndpoints:
 
         tag1 = ticket_tag_factory(name="priority-high")
         tag2 = ticket_tag_factory(name="needs-review")
-        
+
         tag_data = {
             "tag_ids": [tag1.id, tag2.id]
         }
-        
+
         response = admin_client.post(
             f"/ng/admin/support/tickets/{ticket.id}/tags",
             data=json.dumps(tag_data),
             content_type="application/json"
         )
-        
+
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -396,17 +396,17 @@ class TestTagManagementEndpoints:
         """Test admin removing tags from ticket."""
 
         tag_to_remove = ticket_with_tags.tags[0]
-        
+
         tag_data = {
             "tag_ids": [tag_to_remove.id]
         }
-        
+
         response = admin_client.delete(
             f"/ng/admin/support/tickets/{ticket_with_tags.id}/tags",
             data=json.dumps(tag_data),
             content_type="application/json"
         )
-        
+
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -418,12 +418,12 @@ class TestStatisticsEndpoints:
         """Test admin getting ticket statistics."""
 
         response = admin_client.get("/ng/admin/support/tickets/stats")
-        
+
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
         assert "stats" in data["data"]
-        
+
         stats = data["data"]["stats"]
         assert "total" in stats
         assert "open" in stats

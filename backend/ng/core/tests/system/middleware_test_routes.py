@@ -92,4 +92,4 @@ def check_user_can_edit_team(**kwargs):
     Endpoint to check if the user can edit the specified team.
     The check is performed by the decorator.
     """
-    return jsonify({"success": True, "message": "User can edit the team."}) 
+    return jsonify({"success": True, "message": "User can edit the team."})

@@ -3,18 +3,21 @@ Defines the Score model for tracking team scores per event.
 """
 
 from __future__ import annotations
-
-from functools import wraps
-from datetime import datetime
 from typing import Any, TypedDict
+
+from datetime import datetime
 
 from CTFd.models import db
 from sqlalchemy import func
 
 from ... import config
 from ...core.utils import utc_now
-from ...core.utils.cache import memoize
-from ...core.validation import BaseValidator
+from ...core.utils.validator import BaseValidator
+from ...core.utils.cache import (
+    memoize,
+    clear_cache_for_function,
+    clear_cache_for_function_with_prefix,
+)
 
 
 class SerializedScore(TypedDict):
@@ -34,8 +37,8 @@ class Score(db.Model):
     event_id = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
     points = db.Column(db.Integer, default=0, nullable=False)
     last_update = db.Column(db.DateTime, nullable=False, default=utc_now, onupdate=utc_now)
-    
-    team_name = db.Column(db.String(config.TEAM_NAME_MAX_LENGTH), nullable=False)
+
+    team_name = db.Column(db.String(config.TEAM_NAME_MAX_LENGTH), nullable=False)  # Cached for leaderboard performance
 
     __table_args__ = (
         db.UniqueConstraint("team_id", "event_id", name="uq_score_team_event"),
@@ -70,27 +73,23 @@ class Score(db.Model):
         Validate score data.
         """
         validator = BaseValidator()
-        
+
         validator.validate_model_id(data, "team_id", "Team", required=True)
         validator.validate_model_id(data, "event_id", "Event", required=True)
-        
+
         if "points" in data:
             try:
                 points = int(data["points"])
                 validator._add_parsed_data("points", points)
             except (ValueError, TypeError):
                 validator.errors["points"] = "Points must be a valid integer"
-        
+
         validator.validate_string(
-            data,
-            "team_name",
-            config.TEAM_NAME_MAX_LENGTH,
-            required=True,
-            friendly_name="Team name"
+            data, "team_name", config.TEAM_NAME_MAX_LENGTH, required=True, friendly_name="Team name"
         )
-        
+
         validator.validate_optional_timestamp(data)
-        
+
         return validator.validate()
 
     @classmethod
@@ -104,7 +103,7 @@ class Score(db.Model):
         commit: bool = True,
     ) -> Score:
         """Create a new score record for a team in an event.
-        
+
         Args:
             team_id: ID of the team
             event_id: ID of the event
@@ -112,29 +111,30 @@ class Score(db.Model):
             points: Initial points (defaults to 0)
             last_update: Timestamp (defaults to now)
             commit: Whether to commit immediately
-            
+
         Returns:
             Score: The created score instance
         """
         if last_update is None:
             last_update = utc_now()
-            
-        validated_data = cls.validate({
-            "team_id": team_id,
-            "event_id": event_id,
-            "team_name": team_name,
-            "points": points,
-            "last_update": last_update,
-        })
-        
+
+        validated_data = cls.validate(
+            {
+                "team_id": team_id,
+                "event_id": event_id,
+                "team_name": team_name,
+                "points": points,
+            }
+        )
+
         score = cls(
             team_id=validated_data["team_id"],
             event_id=validated_data["event_id"],
             team_name=validated_data["team_name"],
             points=validated_data.get("points", 0),
-            last_update=validated_data.get("last_update", last_update),
+            last_update=last_update,
         )
-        
+
         db.session.add(score)
         if commit:
             try:
@@ -142,56 +142,58 @@ class Score(db.Model):
             except Exception:
                 db.session.rollback()
                 raise
-                
+
         return score
 
     def adjust(self, delta: int, commit: bool = True) -> None:
         """Adjust the score by a delta value.
-        
+
         Args:
             delta: Points to add (can be negative)
             commit: Whether to commit immediately
         """
         self.points += delta
         self.last_update = utc_now()
-        
+
         if commit:
             db.session.commit()
+
+        Score.clear_leaderboard_cache(event_id=self.event_id)
 
     def recalculate(self, commit: bool = True) -> None:
         """
         Recalculate score by summing all ScoreEvents.
         """
-        # LAZY-IMPORT: Tagging all necessary lazy imports for easy searchability & visibility.
+        # LAZY-IMPORT
         from .ScoreEvent import ScoreEvent
-        
-        total = db.session.query(
-            func.sum(ScoreEvent.points)
-        ).filter_by(score_id=self.id).scalar() or 0
-        
+
+        total = db.session.query(func.sum(ScoreEvent.points)).filter_by(score_id=self.id).scalar() or 0
+
         self.points = total
         self.last_update = utc_now()
-        
+
         if commit:
             db.session.commit()
 
+        Score.clear_leaderboard_cache(event_id=self.event_id)
+
     @classmethod
-    @memoize(timeout=config.LEADERBOARD_CACHE_TIMEOUT if hasattr(config, 'LEADERBOARD_CACHE_TIMEOUT') else 60)
+    @memoize(timeout=config.LEADERBOARD_CACHE_TIMEOUT if hasattr(config, "LEADERBOARD_CACHE_TIMEOUT") else 60)
     def get_leaderboard(cls, event_id: int, limit: int | None = None) -> list[SerializedScore]:
         """Get the leaderboard for an event, sorted by points descending
-        
+
         Args:
             event_id: The event to get leaderboard for
             limit: Optional limit on number of results
-            
+
         Returns:
             List of serialized scores ordered by points
         """
         query = cls.query.filter_by(event_id=event_id).order_by(cls.points.desc())
-        
+
         if limit:
             query = query.limit(limit)
-            
+
         scores = query.all()
         return [score.serialize() for score in scores]
 
@@ -201,26 +203,23 @@ class Score(db.Model):
         Update cached team name across all scores for a team
         """
         cls.query.filter_by(team_id=team_id).update({"team_name": new_name})
-        
+
         if commit:
             db.session.commit()
 
     @classmethod
     def get_team_rank(cls, team_id: int, event_id: int) -> int | None:
         """Get the rank of a team in an event.
-        
+
         Returns:
             Rank (1-indexed) or None if team not found
         """
         score = cls.find_by_team_and_event(team_id, event_id)
         if not score:
             return None
-            
-        higher_scores = cls.query.filter(
-            cls.event_id == event_id,
-            cls.points > score.points
-        ).count()
-        
+
+        higher_scores = cls.query.filter(cls.event_id == event_id, cls.points > score.points).count()
+
         return higher_scores + 1
 
     @classmethod
@@ -241,27 +240,25 @@ class Score(db.Model):
         """
         Finds a list of scores based on filters
         """
-        query = cls.query    
+        query = cls.query
 
         if event_id is not None:
-            query = query.filter_by(event_id=event_id)        
+            query = query.filter_by(event_id=event_id)
         if team_id is not None:
-            query = query.filter_by(team_id=team_id)    
+            query = query.filter_by(team_id=team_id)
         if order_by_points:
             query = query.order_by(cls.points.desc())
         else:
             query = query.order_by(cls.id.asc())
-            
+
         if limit is not None:
-            query = query.limit(limit)    
+            query = query.limit(limit)
         return query.all()
 
     @classmethod
-    def clear_leaderboard_cache(cls) -> None:
-        """
-        Clear the leaderboard cache
-        """
-        global _cache
-        _cache.clear()
-
-
+    def clear_leaderboard_cache(cls, event_id: int | None = None) -> None:
+        """Clear leaderboard cache for specific event or all events"""
+        if event_id is None:
+            clear_cache_for_function("get_leaderboard")
+        else:
+            clear_cache_for_function_with_prefix("get_leaderboard", f"({event_id},")

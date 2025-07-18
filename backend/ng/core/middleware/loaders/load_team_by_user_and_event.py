@@ -1,6 +1,6 @@
 import inspect
 from functools import wraps
-from typing import Callable
+from collections.abc import Callable
 from ._util import check_output_exists, get_model_class
 from ...exceptions import NotFoundError
 from ....user.models.User import User

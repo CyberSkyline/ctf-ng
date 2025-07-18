@@ -23,7 +23,7 @@ class Test_Public_Event_Detail:
 
     def test_get_event_details(self, logged_in_client, event_factory):
         event = event_factory(name="Event for Detail Test", public=True)
-        
+
         response = logged_in_client.get(self.get_endpoint(event.id))
 
         assert response.status_code == 200
@@ -74,7 +74,7 @@ class Test_Event_Registration:
         assert response.status_code == 201
         data = response.get_json()
         assert data["success"] is True
-        
+
         team = Team.query.filter_by(name="Test Team", event_id=event.id).first()
         assert data["data"] == team.serialize()
 
@@ -92,7 +92,7 @@ class Test_Event_Registration:
         assert response.status_code == 201
         data = response.get_json()
         assert data["success"] is True
-        
+
         team = Team.query.filter_by(id=existing_team.id).first()
         assert data["data"] == team.serialize()
 

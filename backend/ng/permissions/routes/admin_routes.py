@@ -43,7 +43,7 @@ class RoleDetails(Resource):
     @permissions_admin_namespace.doc(
         description="Update the details of a specific role by ID",
         responses={
-            404: "Role not found", 
+            404: "Role not found",
             200: "Success",
             400: "Bad Request - Invalid data",
             500: "Internal Server Error - Could not update role",

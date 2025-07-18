@@ -3,14 +3,14 @@ Defines the ScoreEvent model for tracking all scoring changes.
 """
 
 from __future__ import annotations
+from typing import Any, TypedDict
 
 from datetime import datetime
-from typing import Any, TypedDict
 
 from CTFd.models import db
 
 from ...core.utils import utc_now
-from ...core.validation import BaseValidator
+from ...core.utils.validator import BaseValidator
 
 
 class SerializedScoreEvent(TypedDict):
@@ -33,9 +33,9 @@ class ScoreEvent(db.Model):
     score = db.relationship("Score", back_populates="events")
     team = db.relationship("Team", backref="score_events")
 
-    attempts = db.relationship("Attempt", back_populates="score_event", cascade="all, delete-orphan")
-    hint_redemptions = db.relationship("HintRedemption", back_populates="score_event", cascade="all, delete-orphan")
-    manual_awards = db.relationship("ManualPointAward", back_populates="score_event", cascade="all, delete-orphan")
+    attempts = db.relationship("Attempt", back_populates="score_event")
+    hint_redemptions = db.relationship("HintRedemption", back_populates="score_event")
+    manual_awards = db.relationship("ManualPointAward", back_populates="score_event")
 
     def __repr__(self):
         return f"<ScoreEvent {self.id}: team={self.team_id} points={self.points}>"
@@ -60,10 +60,10 @@ class ScoreEvent(db.Model):
         Validate score event data
         """
         validator = BaseValidator()
-        
+
         validator.validate_model_id(data, "score_id", "Score", required=True)
         validator.validate_model_id(data, "team_id", "Team", required=True)
-        
+
         if "points" not in data:
             validator.errors["points"] = "Points value is required"
         elif not isinstance(data.get("points"), int):
@@ -72,9 +72,9 @@ class ScoreEvent(db.Model):
             validator.errors["points"] = "Points cannot be zero"
         else:
             validator._add_parsed_data("points", data["points"])
-        
+
         validator.validate_optional_timestamp(data)
-        
+
         return validator.validate()
 
     @classmethod
@@ -87,51 +87,52 @@ class ScoreEvent(db.Model):
         commit: bool = True,
     ) -> ScoreEvent:
         """Create a score event and update the associated score.
-        
+
         Args:
             score_id: ID of the associated Score
             team_id: ID of the team
             points: Points to add/subtract (can be negative)
             timestamp: When the event occurred (defaults to now)
             commit: Whether to commit immediately
-            
+
         Returns:
             ScoreEvent: The created score event
         """
         if timestamp is None:
             timestamp = utc_now()
-            
-        validated_data = cls.validate({
-            "score_id": score_id,
-            "team_id": team_id,
-            "points": points,
-            "timestamp": timestamp,
-        })
-        
+
+        validated_data = cls.validate(
+            {
+                "score_id": score_id,
+                "team_id": team_id,
+                "points": points,
+            }
+        )
+
         event = cls(
             score_id=validated_data["score_id"],
             team_id=validated_data["team_id"],
             points=validated_data["points"],
-            timestamp=validated_data.get("timestamp", timestamp),
+            timestamp=timestamp,
         )
-        
+
         db.session.add(event)
         db.session.flush()
-        
+
         # LAZY-IMPORT: Tagging all necessary lazy imports for easy searchability & visibility.
         from .Score import Score
 
         score = Score.query.get(score_id)
         if score:
-            score.adjust(points)
-        
+            score.adjust(points, commit=False)
+
         if commit:
             try:
                 db.session.commit()
             except Exception:
                 db.session.rollback()
-                raise       
-         
+                raise
+
         return event
 
     @classmethod
@@ -141,25 +142,41 @@ class ScoreEvent(db.Model):
         team_id: int | None = None,
         event_id: int | None = None,
         limit: int | None = None,
+        eager_load_source: bool = False,
     ) -> list[ScoreEvent]:
         """
         Finds a list of score events based on filters.
+
+        Args:
+            score_id: Filter by score ID
+            team_id: Filter by team ID
+            event_id: Filter by event ID
+            limit: Maximum number of results
+            eager_load_source: If True, eagerly loads the source relationships
+                              (attempts, hint_redemptions, manual_awards)
         """
         # LAZY-IMPORT
-        from .Score import Score   
- 
+        from .Score import Score
+        from sqlalchemy.orm import selectinload
+
         query = cls.query
-    
+
         if score_id is not None:
-            query = query.filter_by(score_id=score_id)    
+            query = query.filter_by(score_id=score_id)
         if team_id is not None:
-            query = query.filter_by(team_id=team_id)    
+            query = query.filter_by(team_id=team_id)
         if event_id is not None:
-            query = query.join(Score).filter(Score.event_id == event_id) 
-   
-        query = query.order_by(cls.timestamp.desc())    
+            query = query.join(Score).filter(Score.event_id == event_id)
+
+        # Eager load source relationships if requested
+        if eager_load_source:
+            query = query.options(
+                selectinload(cls.attempts), selectinload(cls.hint_redemptions), selectinload(cls.manual_awards)
+            )
+
+        query = query.order_by(cls.timestamp.desc())
         if limit is not None:
-            query = query.limit(limit)    
+            query = query.limit(limit)
         return query.all()
 
     def delete_event(self, commit: bool = True) -> None:
@@ -167,9 +184,8 @@ class ScoreEvent(db.Model):
         Delete this score event and adjust the associated score
         """
         if self.score:
-            self.score.adjust(-self.points)
-            
+            self.score.adjust(-self.points, commit=commit)
+
         db.session.delete(self)
         if commit:
             db.session.commit()
-

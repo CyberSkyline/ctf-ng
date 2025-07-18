@@ -334,6 +334,40 @@ def future_event_reg(event, event_registration_factory, db_session):
 
 
 @pytest.fixture
+def locked_event(db_session):
+    """Create a locked event for testing restrictions."""
+    from .event.models.Event import Event
+
+    event = Event(
+        name="Locked Event",
+        description="This event is locked",
+        locked=True,
+        start_time=datetime.utcnow() - timedelta(days=10),
+        end_time=datetime.utcnow() - timedelta(days=5)
+    )
+    db_session.add(event)
+    db_session.commit()
+    return event
+
+
+@pytest.fixture
+def future_event(db_session):
+    """Create a future event that hasn't started yet."""
+    from .event.models.Event import Event
+
+    event = Event(
+        name="Future Event",
+        description="This event hasn't started",
+        locked=False,
+        start_time=datetime.utcnow() + timedelta(days=5),
+        end_time=datetime.utcnow() + timedelta(days=10)
+    )
+    db_session.add(event)
+    db_session.commit()
+    return event
+
+
+@pytest.fixture
 def role_with_permissions(db_session):
     """Creates a role with permissions for testing."""
     if db_session is None:
@@ -596,4 +630,259 @@ def multiple_tickets(db_session, user, admin, event, team_factory, ticket_factor
     return tickets
 
 
+# Scoring Module Fixtures
 
+
+@pytest.fixture
+def question(db_session, challenge):
+    """Create a test question for scoring tests."""
+    from .challenge.models.Question import Question
+
+    question = Question(
+        challenge_id=challenge.id,
+        name="Test Question",
+        body="What is 2+2?",
+        answer="4",
+        points=100,
+        max_attempts=5
+    )
+    db_session.add(question)
+    db_session.commit()
+    return question
+
+
+@pytest.fixture
+def hint(db_session, challenge):
+    """Create a test hint for scoring tests."""
+    from .challenge.models.Hint import Hint
+
+    hint = Hint(
+        challenge_id=challenge.id,
+        preview="Single digit hint",
+        body="The answer is a single digit",
+        deduction=20
+    )
+    db_session.add(hint)
+    db_session.commit()
+    return hint
+
+
+@pytest.fixture
+def team_with_member(db_session, event, user):
+    """Create a team with a member for scoring tests."""
+    from .team.models.Team import Team
+
+    team = Team.create_team_with_captain(
+        name="Test Scoring Team",
+        event_id=event.id,
+        captain_id=user.id,
+        invite_code="test123"
+    )
+    return team
+
+
+@pytest.fixture
+def score(db_session, team_with_member, event):
+    """Create a Score record for testing."""
+    from .scoring.models.Score import Score
+
+    existing_score = Score.query.filter_by(
+        team_id=team_with_member.id,
+        event_id=event.id
+    ).first()
+
+    if existing_score:
+        return existing_score
+
+    score = Score.create_score(
+        team_id=team_with_member.id,
+        event_id=event.id,
+        team_name=team_with_member.name,
+        commit=False
+    )
+    db_session.commit()
+    return score
+
+
+@pytest.fixture
+def score_event(db_session, score, team_with_member):
+    """Create a ScoreEvent for testing."""
+    from .scoring.models.ScoreEvent import ScoreEvent
+
+    score_event = ScoreEvent(
+        score_id=score.id,
+        team_id=team_with_member.id,
+        points=50,
+        timestamp=datetime.utcnow()
+    )
+    db_session.add(score_event)
+    db_session.commit()
+    score.adjust(50, commit=True)
+    return score_event
+
+
+@pytest.fixture
+def attempt_factory(db_session):
+    """Factory to create attempts."""
+    from .scoring.models.Attempt import Attempt
+
+    def _factory(**kwargs):
+        defaults = {
+            "user_id": kwargs.get("user_id", 1),
+            "team_id": kwargs.get("team_id", 1),
+            "event_id": kwargs.get("event_id", 1),
+            "challenge_id": kwargs.get("challenge_id", 1),
+            "question_id": kwargs.get("question_id", 1),
+            "submission": kwargs.get("submission", "test answer"),
+            "is_correct": kwargs.get("is_correct", False),
+            "points": kwargs.get("points", 0),
+            "timestamp": kwargs.get("timestamp", datetime.utcnow())
+        }
+        defaults.update(kwargs)
+
+        attempt = Attempt(**defaults)
+        db_session.add(attempt)
+        if kwargs.get("commit", True):
+            db_session.commit()
+        return attempt
+
+    return _factory
+
+
+@pytest.fixture
+def hint_redemption_factory(db_session):
+    """Factory to create hint redemptions."""
+    from .scoring.models.HintRedemption import HintRedemption
+
+    def _factory(**kwargs):
+        defaults = {
+            "hint_id": kwargs.get("hint_id", 1),
+            "user_id": kwargs.get("user_id", 1),
+            "team_id": kwargs.get("team_id", 1),
+            "points": kwargs.get("points", 0),
+            "timestamp": kwargs.get("timestamp", datetime.utcnow())
+        }
+        defaults.update(kwargs)
+
+        redemption = HintRedemption(**defaults)
+        db_session.add(redemption)
+        if kwargs.get("commit", True):
+            db_session.commit()
+        return redemption
+
+    return _factory
+
+
+@pytest.fixture
+def manual_award_factory(db_session):
+    """Factory to create manual point awards."""
+    from .scoring.models.ManualPointAward import ManualPointAward
+
+    def _factory(**kwargs):
+        defaults = {
+            "admin_id": kwargs.get("admin_id", 1),
+            "team_id": kwargs.get("team_id", 1),
+            "points": kwargs.get("points", 100),
+            "reason": kwargs.get("reason", "Test award"),
+            "timestamp": kwargs.get("timestamp", datetime.utcnow())
+        }
+        defaults.update(kwargs)
+
+        award = ManualPointAward(**defaults)
+        db_session.add(award)
+        if kwargs.get("commit", True):
+            db_session.commit()
+        return award
+
+    return _factory
+
+
+@pytest.fixture
+def score_factory(db_session):
+    """Factory to create Score records."""
+    from .scoring.models.Score import Score
+
+    def _factory(**kwargs):
+        defaults = {
+            "team_id": kwargs.get("team_id", 1),
+            "event_id": kwargs.get("event_id", 1),
+            "points": kwargs.get("points", 0),
+            "last_update": kwargs.get("last_update", datetime.utcnow()),
+            "team_name": kwargs.get("team_name", "Test Team")
+        }
+        defaults.update(kwargs)
+
+        score = Score(**defaults)
+        db_session.add(score)
+        if kwargs.get("commit", True):
+            db_session.commit()
+        return score
+
+    return _factory
+
+
+@pytest.fixture
+def score_event_factory(db_session):
+    """Factory to create ScoreEvent records."""
+    from .scoring.models.ScoreEvent import ScoreEvent
+
+    def _factory(**kwargs):
+        defaults = {
+            "score_id": kwargs.get("score_id", 1),
+            "team_id": kwargs.get("team_id", 1),
+            "points": kwargs.get("points", 100),
+            "timestamp": kwargs.get("timestamp", datetime.utcnow())
+        }
+        defaults.update(kwargs)
+
+        score_event = ScoreEvent(**defaults)
+        db_session.add(score_event)
+        if kwargs.get("commit", True):
+            db_session.commit()
+        return score_event
+
+    return _factory
+
+
+@pytest.fixture
+def multiple_teams_with_scores(db_session, event, team_factory, score_factory):
+    """Create multiple teams with different scores for leaderboard testing."""
+    from .scoring.models.Score import Score
+
+    teams_data = []
+
+    user_ids = []
+    for i in range(5):
+        user = Users(
+            name=f"scoreuser{i}",
+            email=f"scoreuser{i}@example.com",
+            password="password"
+        )
+        user.verified = True
+        db_session.add(user)
+        db_session.commit()
+
+        ng_user = NgUser(id=user.id)
+        db_session.add(ng_user)
+        db_session.commit()
+        user_ids.append(user.id)
+
+    for i in range(5):
+        team = Team.create_team_with_captain(
+            name=f"Score Team {i}",
+            event_id=event.id,
+            captain_id=user_ids[i],
+            invite_code=f"score{i}123"
+        )
+
+        score = Score.query.filter_by(team_id=team.id, event_id=event.id).first()
+        score.points = (i + 1) * 100
+        db_session.commit()
+
+        teams_data.append({
+            "user_id": user_ids[i],
+            "team": team,
+            "score": score
+        })
+
+    return teams_data

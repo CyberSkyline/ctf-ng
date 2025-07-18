@@ -27,10 +27,10 @@ def get_json_val(input_key: str):
     """Get the value from JSON data in the request context."""
     if not hasattr(g, "json_data"):
         raise ValueError("JSON data not found in request context")
-    
+
     if input_key not in g.json_data:
         raise ValidationError(f"Missing required key in JSON data: {input_key}")
-    
+
     return g.json_data[input_key]
 
 def get_param_val(kwargs: dict, input_key: str):
@@ -50,7 +50,7 @@ def generate_loader_decorator(source: LoaderType, model_name: str, input_key: st
         def decorated_function(*args, **kwargs):
             check_output_exists(kwargs, output_key)
             model_class = get_model_class(model_name)
-        
+
             # Get the model ID based on the source type
             if source == LoaderType.BODY:
                 model_id = get_json_val(input_key)
@@ -58,7 +58,7 @@ def generate_loader_decorator(source: LoaderType, model_name: str, input_key: st
                 model_id = get_param_val(kwargs, input_key)
             else:
                 raise ValueError(f"Invalid loader type: {source}")
-            
+
             # Look up the object in the database
             instance = model_class.find_by_id(model_id)
             if not instance:
