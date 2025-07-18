@@ -197,3 +197,14 @@ class Test_Team_Name_Contains_Member_Name:
         team.name = "a hacker"
 
         assert Team.team_name_contains_member_name(team.name, [user.ctfd_user.name]) is False
+
+#Partial matches like this fail using the current logic, but adjusting the logic to allow for partial matches
+#Would cause false positives such as "Alex Ng" "pwning"
+"""
+    def test_partial_match(self, event, team_factory, user_factory):
+        user = user_factory(name="Jonathan Doe")
+        team = team_factory(event=event, members=[user])
+        team.name = "Jon Squad"
+
+        assert Team.team_name_contains_member_name(team.name, [user.ctfd_user.name]) is True
+"""

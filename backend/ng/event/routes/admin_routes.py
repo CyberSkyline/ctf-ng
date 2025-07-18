@@ -85,7 +85,7 @@ class EventChallenges(Resource):
     )
     @admin_endpoint(json_required=True)
     @load_event(source=LoaderType.PARAM)
-    def post(self, event_id, event, json_data):
+    def post(self, event_id, event, json_data, **kwargs):
         """Create a challenge for an event"""
         challenge = import_challenge_from_yaml(event, json_data)
         return success_response(challenge)

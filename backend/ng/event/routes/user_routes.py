@@ -225,7 +225,7 @@ class EventTeamLeave(Resource):
 class EventChallenges(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
-    def get(self, event_id: int, event: Event):
+    def get(self, event_id: int, event: Event, **kwargs):
         """Get all of the challenges within an event"""
         challenges = event.get_all_challenges()
         return success_response(challenges)
@@ -237,7 +237,7 @@ class EventChallengeRender(Resource):
     @load_event(source=LoaderType.PARAM)
     @load_challenge(source=LoaderType.PARAM)
     @load_team_by_user_and_event()
-    def get(self, event_id: int, challenge_id: int, event: Event, challenge: Challenge, team: Team):
+    def get(self, event_id: int, challenge_id: int, event: Event, challenge: Challenge, team: Team, **kwargs):
         return success_response(challenge.render(team))
 
 
@@ -246,7 +246,7 @@ class EventChallengeStatuses(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
     @load_team_by_user_and_event()
-    def get(self, event_id: int, event: Event, team: Team):
+    def get(self, event_id: int, event: Event, team: Team, **kwargs):
         """Get all challenges and their statuses for the current user's team in the event"""
         results = []
 
