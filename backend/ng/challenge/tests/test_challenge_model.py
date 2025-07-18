@@ -15,9 +15,10 @@ from ..models.Challenge import (
 
 
 @pytest.fixture
-def challenge_data():
+def challenge_data(event):
     """Provide valid challenge data for testing."""
     return {
+        "event_id": event.id,
         "name": "Test Challenge",
         "description": "A comprehensive test challenge description",
         "icon": "challenge-icon",
@@ -32,6 +33,8 @@ class TestChallengeValidation:
         """Test that valid challenge data passes validation."""
         validated_data = Challenge.validate(challenge_data)
 
+        assert "event_id" in validated_data
+        assert validated_data["event_id"] == challenge_data["event_id"]
         assert "name" in validated_data
         assert validated_data["name"] == challenge_data["name"]
         assert "description" in validated_data
@@ -155,12 +158,13 @@ class TestChallengeValidation:
 
         assert len(validated_data["name"]) == MAX_CHALLENGE_NAME_LENGTH
 
-    def test_validate_optional_fields_missing_should_pass(self):
+    def test_validate_optional_fields_missing_should_pass(self, event):
         """Test that validation passes when optional fields are missing."""
-        minimal_data = {"name": "Minimal Challenge"}
+        minimal_data = {"event_id": event.id, "name": "Minimal Challenge"}
 
         validated_data = Challenge.validate(minimal_data)
 
+        assert validated_data["event_id"] == event.id
         assert validated_data["name"] == "Minimal Challenge"
         assert "description" not in validated_data
         assert "icon" not in validated_data
@@ -191,9 +195,10 @@ class TestChallengeValidation:
         assert validated_data["name"] == challenge_data["name"]
         # Whitespace should be trimmed for optional fields
 
-    def test_validate_with_maximum_length_fields(self):
+    def test_validate_with_maximum_length_fields(self, event):
         """Test validation with maximum length field values."""
         max_data = {
+            "event_id": event.id,
             "name": "a" * MAX_CHALLENGE_NAME_LENGTH,
             "description": "b" * MAX_CHALLENGE_DESCRIPTION_LENGTH,
             "icon": "c" * MAX_CHALLENGE_ICON_LENGTH,
@@ -207,9 +212,10 @@ class TestChallengeValidation:
         assert len(validated_data["icon"]) == MAX_CHALLENGE_ICON_LENGTH
         assert len(validated_data["summary"]) == MAX_CHALLENGE_SUMMARY_LENGTH
 
-    def test_validate_with_unicode_content(self):
+    def test_validate_with_unicode_content(self, event):
         """Test validation with unicode content."""
         unicode_data = {
+            "event_id": event.id,
             "name": "Unicode チャレンジ",
             "description": "This challenge contains 🔐 unicode characters и кириллицу",
             "icon": "🎯",
@@ -223,7 +229,7 @@ class TestChallengeValidation:
         assert validated_data["icon"] == unicode_data["icon"]
         assert validated_data["summary"] == unicode_data["summary"]
 
-    def test_validate_with_mixed_case_name(self):
+    def test_validate_with_mixed_case_name(self, event):
         """Test validation with mixed case name."""
         mixed_case_names = [
             "CamelCaseChallenge",
@@ -233,11 +239,11 @@ class TestChallengeValidation:
         ]
 
         for name in mixed_case_names:
-            data = {"name": name}
+            data = {"event_id": event.id, "name": name}
             validated_data = Challenge.validate(data)
             assert validated_data["name"] == name
 
-    def test_validate_with_numbers_and_letters(self):
+    def test_validate_with_numbers_and_letters(self, event):
         """Test validation with alphanumeric names."""
         alphanumeric_names = [
             "Challenge1",
@@ -248,13 +254,14 @@ class TestChallengeValidation:
         ]
 
         for name in alphanumeric_names:
-            data = {"name": name}
+            data = {"event_id": event.id, "name": name}
             validated_data = Challenge.validate(data)
             assert validated_data["name"] == name
 
-    def test_validate_with_whitespace_edges(self):
+    def test_validate_with_whitespace_edges(self, event):
         """Test validation with whitespace at edges of fields."""
         whitespace_data = {
+            "event_id": event.id,
             "name": "  Challenge Name  ",
             "description": "  Description with edges  ",
             "icon": "  icon  ",
@@ -273,7 +280,7 @@ class TestChallengeValidation:
 class TestChallengeEdgeCases:
     """Test Challenge model edge cases and error scenarios."""
 
-    def test_challenge_with_newlines_in_description(self):
+    def test_challenge_with_newlines_in_description(self, event):
         """Test challenge with multiline description."""
         multiline_description = """This is a challenge description
         that spans multiple lines
@@ -284,14 +291,15 @@ class TestChallengeEdgeCases:
         - Empty lines
         - Various whitespace"""
 
-        data = {"name": "Multiline Challenge", "description": multiline_description}
+        data = {"event_id": event.id, "name": "Multiline Challenge", "description": multiline_description}
 
         validated_data = Challenge.validate(data)
         assert validated_data["description"] == multiline_description
 
-    def test_challenge_with_html_like_content(self):
+    def test_challenge_with_html_like_content(self, event):
         """Test challenge with HTML-like content in fields."""
         html_data = {
+            "event_id": event.id,
             "name": "Challenge <script>alert('xss')</script>",
             "description": "<p>This looks like HTML but should be treated as text</p>",
             "summary": "<div>Summary with tags</div>",
@@ -304,9 +312,10 @@ class TestChallengeEdgeCases:
         assert validated_data["description"] == html_data["description"]
         assert validated_data["summary"] == html_data["summary"]
 
-    def test_challenge_with_sql_injection_like_content(self):
+    def test_challenge_with_sql_injection_like_content(self, event):
         """Test challenge with SQL injection-like content."""
         sql_data = {
+            "event_id": event.id,
             "name": "Challenge'; DROP TABLE challenges; --",
             "description": "Description with ' OR 1=1 --",
         }
@@ -317,17 +326,17 @@ class TestChallengeEdgeCases:
         assert validated_data["name"] == sql_data["name"]
         assert validated_data["description"] == sql_data["description"]
 
-    def test_challenge_with_very_long_words(self):
+    def test_challenge_with_very_long_words(self, event):
         """Test challenge with very long words (no spaces)."""
         long_word = "a" * (MAX_CHALLENGE_NAME_LENGTH - 10)
-        data = {"name": f"Test{long_word}"}
+        data = {"event_id": event.id, "name": f"Test{long_word}"}
 
         validated_data = Challenge.validate(data)
         assert len(validated_data["name"]) <= MAX_CHALLENGE_NAME_LENGTH
 
-    def test_challenge_validation_with_none_values(self):
+    def test_challenge_validation_with_none_values(self, event):
         """Test challenge validation when None is passed for optional fields."""
-        data = {"name": "Test Challenge", "description": None, "icon": None, "summary": None}
+        data = {"event_id": event.id, "name": "Test Challenge", "description": None, "icon": None, "summary": None}
 
         # None values should be handled gracefully by the validator
         validated_data = Challenge.validate(data)

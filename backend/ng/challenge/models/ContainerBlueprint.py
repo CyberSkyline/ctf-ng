@@ -31,7 +31,7 @@ class ContainerBlueprint(db.Model):
     challenge_id = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
 
     def __repr__(self):
-        return f"<ContainerBlueprint {self.id}>"
+        return f"<NgContainerBlueprint {self.id}>"
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:

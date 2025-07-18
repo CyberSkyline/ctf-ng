@@ -51,6 +51,7 @@ class Event(db.Model):
     )
 
     teams = db.relationship("Team", backref="event", cascade="all, delete-orphan")
+    challenges = db.relationship("Challenge", back_populates="event", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Event {self.name}>"
@@ -216,6 +217,11 @@ class Event(db.Model):
         from ...team.models.Team import Team
 
         return Team.query.filter_by(event_id=self.id).all()
+
+    def get_all_challenges(self):
+        from ...challenge.models.Challenge import Challenge
+
+        return Challenge.query.filter_by(event_id=self.id).all()
 
     @classmethod
     def find_by_id(cls, event_id: int):
