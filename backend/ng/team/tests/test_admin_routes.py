@@ -32,6 +32,7 @@ def test_teamdetail_update(admin_client, event, team_factory,user):
     response = admin_client.patch(f"/ng/admin/teams/{team.id}", json={"name": new_name})
     assert response.status_code == 200
     data = response.get_json()
+    assert data['data']["name"] == new_name
     assert data['success']
 
 def test_teamdetail_update_invalid_name(admin_client, event, team_factory, user):

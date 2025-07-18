@@ -419,7 +419,6 @@ class Test_Event_Team_Management:
         """Test that the team kick endpoint fails when trying to kick a user not in the team."""
         other_team = team_factory(event_id=1, members=[user_factory(name="Other User")])
         response = team_captain_client.post(f"/ng/events/{1}/me/team/kick", json={"user_id": other_team.members[0].user_id})
-        print(response.get_json())
         assert response.status_code == 400
         data = response.get_json()
         assert not data['success']

@@ -39,7 +39,6 @@ class TeamDetail(Resource):
     @load_team(source=LoaderType.PARAM)
     def patch(self, team_id, team, validated_data, **kwargs):
         """Update a team"""
-        
 
         new_name = validated_data.get("name", team.name)
         if Team.team_name_contains_member_name(name=new_name, member_names=[m.user.ctfd_user.name for m in team.members]):
@@ -49,7 +48,7 @@ class TeamDetail(Resource):
                 400,
             )
 
-        team = team.update_name(team_id, new_name)
+        team.update_name(new_name)
 
         return success_response(team)
 

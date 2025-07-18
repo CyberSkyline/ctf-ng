@@ -338,27 +338,25 @@ class Event(db.Model):
             db.session.rollback()
             raise
 
-    @classmethod
-    def check_eligibility(cls, event, user):
+    def check_eligibility(self, user):
         """Check if a user is eligible to register for an event.
 
         Args:
-            event_id (int): The ID of the event
-            user_id (int): The ID of the user
+            user (User): The user object
 
         Returns:
             bool: True if eligible, False otherwise
         """
-        if event.registration_open is False:
+        if self.registration_open is False:
             raise BusinessLogicError("Event registration is closed.")
 
-        if event.registration_end_date and datetime.utcnow() > event.registration_end_date:
+        if self.registration_end_date and datetime.utcnow() > self.registration_end_date:
             raise BusinessLogicError("Event registration has ended.")
 
-        if event.registration_start_date and datetime.utcnow() < event.registration_start_date:
+        if self.registration_start_date and datetime.utcnow() < self.registration_start_date:
             raise BusinessLogicError("Event registration has not started yet.")
 
-        if Demographic.find_by_user_and_event(user.id, event.id):
+        if Demographic.find_by_user_and_event(user.id, self.id):
             raise BusinessLogicError("User is already registered for this event.")
 
         return True

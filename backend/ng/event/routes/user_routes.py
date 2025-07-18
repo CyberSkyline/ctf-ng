@@ -19,6 +19,7 @@ from ...core.middleware.loaders import (
     load_user,
     load_team_by_user_and_event,
 )
+from CTFd.models import db
 
 from ...core.middleware import (
     user_endpoint,
@@ -68,11 +69,9 @@ class EventEligibility(Resource):
 
         """Check event eligibility"""
 
-        try:
-            Event.check_eligibility(event, current_user)
-        except ValidationError as e:
-            return error_response(str(e), "eligibility", 400)
-        
+
+        event.check_eligibility(current_user)
+       
         
         return success_response(True)
 
@@ -111,7 +110,7 @@ class EventRegistration(Resource):
 
         parsed_data = validator.validate()
 
-        Event.check_eligibility(event, current_user)
+        event.check_eligibility(current_user)
 
         team = join_event_controller(event=event, user=current_user, **parsed_data)
 
@@ -176,10 +175,13 @@ class EventTeamKick(Resource):
         if PermissionEnum.CAN_EDIT_TEAM not in permissions:
             return error_response("You do not have permission to kick team members", "forbidden", 403)
 
-
-        team.remove_member_and_regenerate_code(user_id)
-        demographic = Demographic.find_by_user_and_event(user_id, event_id)
-        demographic.delete(commit=True)
+        try:
+            team.remove_member_and_regenerate_code(user_id)
+            demographic = Demographic.find_by_user_and_event(user_id, event_id)
+            demographic.delete(commit=True)
+        except Exception as e:
+            db.session.rollback()
+            return error_response(f"Failed to kick user: {str(e)}", "validation", 400)
         return success_response()
 
 @events_user_namespace.route("/<int:event_id>/me/team/promote")
@@ -211,11 +213,15 @@ class EventTeamLeave(Resource):
         team_member = TeamMember.find_by_user_and_team(current_user.id, team.id)
         if team_member.role == TeamRole.CAPTAIN:
             return error_response("You cannot leave the team as a captain. Please promote another member first.", "forbidden", 403)
-        team_member.remove_team_member(commit=True)
-        demographic = Demographic.find_by_user_and_event(current_user.id, event_id)
-        demographic.delete(commit=True)
-        if len(team.members) == 0:
-            team.delete(commit=True)
+        try:
+            team_member.remove_team_member(commit=True)
+            demographic = Demographic.find_by_user_and_event(current_user.id, event_id)
+            demographic.delete(commit=True)
+            if len(team.members) == 0:
+                team.delete(commit=True)
+        except Exception as e:
+            db.session.rollback()
+            return error_response(f"Failed to leave team: {str(e)}", "internal_error", 500)
 
         return redirect(f"/ng/events/{event_id}/me/register", code=303)
 
