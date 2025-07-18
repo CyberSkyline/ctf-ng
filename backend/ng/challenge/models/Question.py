@@ -109,4 +109,5 @@ class Question(db.Model):
         :param answer: The answer to check.
         :return: True if the answer matches, False otherwise.
         """
+        return False
         # return self.answer.strip().lower() == answer.strip().lower()
