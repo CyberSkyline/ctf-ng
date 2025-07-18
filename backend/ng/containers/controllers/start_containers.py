@@ -9,9 +9,11 @@ def start_containers(challenge_id: int, team_id: int, current_user: int) -> bool
     networks = []
     for blueprint in blueprints:
         ctrs.append(ContainerInstance.create_container_instance(blueprint.id, team_id))
-        networks.append(*blueprint.networks)
+        if blueprint.networks:
+            networks.append(*blueprint.networks)
 
-    indvidual_ctr = IndvidualContainer.create_indvidual_container(current_user)
+    indvidual_ctr = IndvidualContainer.create_indvidual_container(current_user.id)
+    indvidual_ctr.disconnect_from_networks()
 
     for network in set(networks):
         indvidual_ctr.connect_to_network(f'{network}-{team_id}-{challenge_id}')

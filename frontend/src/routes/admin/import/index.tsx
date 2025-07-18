@@ -16,7 +16,7 @@ export default function ImportChallenge() {
 
     const urlencoded = base64.replace(/[+/]/g, (m) => ENC[m]);
     const payload = { yaml : urlencoded };
-    fetch('/ng/challenge/import', {
+    fetch('/ng/admin/challenge/import', {
       headers : {
         'CSRF-Token' : window.init.csrfToken,
         'Content-Type' : 'application/json',

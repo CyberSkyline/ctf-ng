@@ -4,14 +4,14 @@ from ... import config
 from ..utils.get_client import get_client
 
 class IndvidualContainer(db.Model):
-    __tablename__ = 'ng_indvidual_container'
+    __tablename__ = "ng_indvidual_containers"
     id = db.Column(db.Integer, primary_key=True)
     hostip = db.Column(db.String(255), nullable=False)
     dockerid = db.Column(db.String(255), nullable=False)
-    user = db.Column(db.Integer, db.ForeignKey('ng_users.id'), nullable=False)
+    user = db.Column(db.Integer, db.ForeignKey("ng_users.id"), nullable=False)
 
     def __repr__(self):
-        return f'<IndvidualContainer {self.id}>'
+        return f"<IndvidualContainer {self.id}>"
 
     @classmethod
     def create_indvidual_container(cls, user_id: int, commit: bool = True):
@@ -20,9 +20,12 @@ class IndvidualContainer(db.Model):
             return db_exists
 
         client = get_client(config.DOCKER_HOST)
-        container_name = f'{user_id}-indv'
+        container_name = f"{user_id}-indv"
         try:
             exists = client.containers.get(container_name)
+            if exists.status != "running":
+                exists.start()
+
             indv = cls(
                 user=user_id,
                 hostip=config.DOCKER_HOST,
@@ -55,6 +58,17 @@ class IndvidualContainer(db.Model):
                 db.session.commit()
             return indvidual_container
 
+    def disconnect_from_networks(self):
+        # Disconnect your indvidual container from challenge networks
+        # Bridge needs to stay for vnc
+        client = get_client(self.hostip)
+        inspect_results = client.api.inspect_container(self.dockerid)
+        networks = inspect_results["NetworkSettings"]["Networks"]
+        for network in networks:
+            if network != "bridge":
+                fetched_network = client.networks.get(networks[network]["NetworkID"])
+                network.disconnect(self.dockerid)
+
     def connect_to_network(self, network_name: str):
         client = get_client(self.hostip)
         ctr = client.containers.get(self.dockerid)
@@ -67,8 +81,10 @@ class IndvidualContainer(db.Model):
         client = get_client(self.hostip)
 
         ctr_info = client.api.inspect_container(self.dockerid)
-        ports = ctr_info['NetworkSettings']['Ports']
+        ports = ctr_info["NetworkSettings"]["Ports"]
 
-        host_port = ports[f'{config.NOVNC_PORT}/tcp']['HostPort']
+        ## Port entries are an array of two one ipv4 one v6
+        print(ports)
+        host_port = ports[f"{config.NOVNC_PORT}/tcp"][0]["HostPort"]
 
         return host_port
