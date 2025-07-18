@@ -19,9 +19,8 @@ def get_permissions(f):
             return error_response("User not authenticated", "unauthorized", 401)
         permissions = get_user_permissions(user)
         team = kwargs.get('team')
-        if team is None:
-            return error_response("Team is required", "bad_request", 400)
-        permissions.extend(get_team_management_permissions(team, user))
+        if team:
+            permissions.extend(get_team_management_permissions(team, user))
         permissions = list(set([permission.name for permission in permissions]))
         if kwargs.get('permissions') is None:
             kwargs['permissions'] = permissions

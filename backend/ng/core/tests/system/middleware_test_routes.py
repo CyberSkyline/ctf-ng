@@ -76,6 +76,7 @@ def loading_model_objects(**kwargs):
 
 
 @middleware_test_routes.route("/get_user_permissions", methods=["GET"])
+@user_endpoint()
 @get_permissions
 def get_user_permissions(**kwargs):
     """

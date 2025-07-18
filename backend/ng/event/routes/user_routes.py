@@ -133,8 +133,12 @@ class EventTeamUpdateName(Resource):
     @user_endpoint(json_required=True)
     @load_event(source=LoaderType.PARAM)
     @load_team_by_user_and_event()
+    @get_permissions
     def put(self, event_id, team, json_data, **kwargs):
         """Update team name"""
+
+        if PermissionEnum.CAN_EDIT_TEAM not in kwargs.get("permissions", []):
+            return error_response("You do not have permission to update the team name", "forbidden", 403)
         new_name = json_data.get("name")
 
         if Team.team_name_contains_member_name(name=new_name, member_names=[member.user.ctfd_user.name for member in team.members]):
