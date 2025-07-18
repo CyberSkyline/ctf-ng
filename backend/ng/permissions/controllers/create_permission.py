@@ -9,4 +9,4 @@ def create_permission(name, description):
     permission = Permission.create_permission(name, description)
     if not permission:
         return {"success": False, "error": "Failed to create permission"}, 400
-    return {"success": True, "permission": permission}, 20
+    return permission

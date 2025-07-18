@@ -23,4 +23,4 @@ def create_role(name: str, permissions: list[PermissionEnum] = None):
                 return {"success": False, "error": f"Permission '{perm_name}' does not exist"}
             permissions_obj.append(permission)
 
-    return {"success": True, "role": Role.create_role(name=name, permissions=permissions_obj)}
+    return Role.create_role(name=name, permissions=permissions_obj)

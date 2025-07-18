@@ -14,9 +14,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from ... import config
-from ...core.exceptions import ConflictError, ValidationError
-from ...core.validation import BaseValidator
+from ...core.exceptions import ConflictError, ValidationError, BusinessLogicError
+from ...user.models.User import User
 from .enums import TeamRole
+from ...core.utils.validator import BaseValidator
+from .TeamMember import TeamMember
 
 HEX_CHARS = string.hexdigits.lower()[:16]  # '0123456789abcdef'
 SEED_LENGTH = 16  # 8 bytes for random seed
@@ -43,6 +45,7 @@ class Team(db.Model):
     seed = db.Column(db.String(SEED_LENGTH), nullable=False, default=lambda: Team.generate_random_seed())
     event_id = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
     locked = db.Column(db.Boolean, default=False, nullable=False)
+    start_timestamp = db.Column(db.DateTime, nullable=True)
 
     __table_args__ = (
         db.UniqueConstraint("event_id", "name", name="uq_team_event_name"),
@@ -96,32 +99,38 @@ class Team(db.Model):
         """Validate team creation data. Raises ValidationError on failure."""
 
         validator = BaseValidator()
-        validator.validate_string(
-            data,
-            "name",
-            config.TEAM_NAME_MAX_LENGTH,
-            required=True,
-            friendly_name="Team name",
-        )
-        validator.validate_positive_integer(data, "event_id", required=True, friendly_name="Event ID")
-        validator.validate_boolean(data, "ranked", friendly_name="Ranked status")
-        validator.validate_string(
-            data,
-            "invite_code",
-            config.INVITE_CODE_MAX_LENGTH,
-            required=False,
-            friendly_name="Invite code",
-        )
-        validator.validate_string(
-            data,
-            "seed",
-            SEED_LENGTH,
-            required=False,
-            friendly_name="Seed",
-        )
+        if "name" in data:
+            validator.validate_string(
+                data,
+                "name",
+                config.TEAM_NAME_MAX_LENGTH,
+                required=True,
+                friendly_name="Team name",
+            )
+        if "event_id" in data:
+            validator.validate_positive_integer(data, "event_id", required=True, friendly_name="Event ID")
+        if "ranked" in data:
+            validator.validate_boolean(data, "ranked", friendly_name="Ranked status")
+        if "invite_code" in data:
+            validator.validate_string(
+                data,
+                "invite_code",
+                config.INVITE_CODE_MAX_LENGTH,
+                required=False,
+                friendly_name="Invite code",
+            )
+            if not Team.is_invite_code_unique(data["invite_code"]):
+                raise ValidationError(f"Invite code '{data['invite_code']}' already exists.")
 
-        # TODO - Check if invite code is unique
-        # TODO - Check if team name is unique within event
+        # Check if team name is unique within event
+        if "name" in data and "event_id" in data:
+            res = Team.name_exists_in_event_excluding_self(
+                event_id=data["event_id"],
+                name=data["name"],
+                exclude_team_id=data.get("id", 0)  # Exclude current team if updating
+            )
+            if res:
+                raise ValidationError(f"Team name '{data['name']}' already exists in event ID {data['event_id']}.")
 
         return validator.validate()
 
@@ -200,7 +209,8 @@ class Team(db.Model):
     def disband_team(self, commit=True):
         """Delete this team and all its members from the database."""
 
-        # TODO - Throw an error if the team still has remaining members
+        if self.member_count > 0:
+            raise BusinessLogicError("Cannot disband team with members. Remove all members first.")
 
         db.session.delete(self)
         if commit:
@@ -213,7 +223,6 @@ class Team(db.Model):
 
         self.invite_code = new_code
 
-        self.self_validate()
 
         if commit:
             db.session.commit()
@@ -419,7 +428,7 @@ class Team(db.Model):
         """
 
         from .enums import TeamRole
-        from .TeamMember import TeamMember
+        captain = User.find_by_id(captain_id)
 
         try:
             team = cls.create_team(
@@ -452,7 +461,9 @@ class Team(db.Model):
         from .TeamMember import TeamMember
 
         try:
-            member = TeamMember.find_by_user_and_event(user_id=user_id, event_id=self.event_id)
+            member = TeamMember.query.filter_by(team_id=self.id, user_id=user_id).first()
+            if not member:
+                raise ValidationError(f"User {user_id} is not a member of team {self.id}.")
             if member:
                 member.remove_team_member(commit=False)
                 self.update_invite_code(commit=False)
@@ -462,20 +473,22 @@ class Team(db.Model):
             db.session.rollback()
             raise
 
-    def remove_captain_and_promote(self, captain_id: int, new_captain_user_id: int) -> bool:
+    def remove_captain_and_promote(self, new_captain_user_id: int) -> bool:
         """Remove captain and promote new one in single transaction."""
 
         from .enums import TeamRole
         from .TeamMember import TeamMember
 
         try:
-            captain = TeamMember.query.get(captain_id)
+            captain = TeamMember.query.filter_by(team_id=self.id, role=TeamRole.CAPTAIN).first()
             if captain:
-                captain.remove_team_member(commit=False)
+                captain.update_role(TeamRole.MEMBER, commit=False)
 
             new_captain = TeamMember.query.filter_by(team_id=self.id, user_id=new_captain_user_id).first()
             if new_captain:
                 new_captain.update_role(TeamRole.CAPTAIN, commit=False)
+            else:
+                raise ValidationError(f"User {new_captain_user_id} is not a member of team {self.id}.")
 
             self.update_invite_code(commit=False)
 
@@ -494,3 +507,18 @@ class Team(db.Model):
         except Exception:
             db.session.rollback()
             raise
+    @classmethod
+    def team_name_contains_member_name(cls,name, member_names) -> bool:
+        """Check if the team name contains any member's name.
+
+        Returns:
+            bool: True if team name contains a member's name, False otherwise
+        """
+
+        name_split = [part for part in name.lower().split() if len(part) > 1]
+        for member_name in member_names:
+            member_name_parts = [part for part in member_name.lower().split() if len(part) > 1]
+            if any(part in name_split for part in member_name_parts):
+                return True
+
+        return False

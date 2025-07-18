@@ -8,59 +8,36 @@ from ...permissions.controllers.get_user_permissions import get_user_permissions
 logger = get_logger(__name__)
 
 
-def get_user_role_permissions(f):
-    """
-    Decorator to retrieve user role permissions and attach them to the kwargs.
-    This allows access to user permissions in the view function.
 
-    The retrieved permissions are attached to kwargs as 'permissions'.
-    """
-    
+def get_permissions(f):
+    """Decorator to get user permissions and append them to the request context."""
+
     @wraps(f)
     def wrapped(*args, **kwargs):
         user = get_current_user()
         if not user:
             return error_response("User not authenticated", "unauthorized", 401)
-        response = get_user_permissions(user)
-        if "error" in response:
-            return error_response(response["error"], "user_permissions", 400)
+        permissions = get_user_permissions(user)
+        team = kwargs.get('team')
+        if team:
+            permissions.extend(get_team_management_permissions(team, user))
+        permissions = list(set([permission.name for permission in permissions]))
         if kwargs.get('permissions') is None:
-            kwargs['permissions'] = [permission.name for permission in response["permissions"]]
+            kwargs['permissions'] = permissions
         else:
-            kwargs['permissions'].extend([permission.name for permission in response["permissions"]])
+            kwargs['permissions'].extend(permissions)
         return f(*args, **kwargs)
     return wrapped
 
-
-
-
-def check_user_can_edit_team(f):
-    """
-    Decorator to check if the current user can edit the specified team.
-    The team ID is expected to be provided in the request parameters.
-
-    """
+def event_only_public(f):
+    """Decorator to ensure the event is public."""
 
     @wraps(f)
     def wrapped(*args, **kwargs):
-        user = get_current_user()
-        if not user:
-            return error_response("User not authenticated", "unauthorized", 401)
-
-        team = kwargs.get('team')
-        if not team:
-            return error_response("Team is required", "bad_request", 400)
-        response = get_team_management_permissions(team.id,user.id)
-        if "error" in response:
-            return error_response(response["error"], "team_management", 400)
-
-        if kwargs.get('permissions') is None:
-            kwargs['permissions'] = [permission.name for permission in response["permissions"]]
-        else:
-            kwargs['permissions'].extend([permission.name for permission in response["permissions"]])
-
+        event = kwargs.get('event')
+        if not event or not event.public:
+            return error_response("Event not found", "not_found", 404)
         return f(*args, **kwargs)
-
     return wrapped
 
 

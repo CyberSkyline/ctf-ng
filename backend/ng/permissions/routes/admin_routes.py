@@ -4,7 +4,6 @@ from ...core.utils.api import error_response, success_response
 from ...core.middleware.auth import user_endpoint, admin_endpoint
 from ..models.Role import Role
 from ..models.UserRole import UserRole
-from ..controllers import get_role_details
 from ...core.middleware.loaders.load_role import load_role
 from ...core.middleware.loaders.load_user import load_user
 from ...core.middleware.loaders._util import LoaderType
@@ -13,8 +12,6 @@ from ...core.middleware.loaders._util import LoaderType
 permissions_admin_namespace = Namespace("/admin/permissions", description="Permissions management endpoints for admins")
 logger = get_logger(__name__)
 
-
-6
 
 @permissions_admin_namespace.route("/<int:role_id>/details")
 class RoleDetails(Resource):
@@ -27,14 +24,12 @@ class RoleDetails(Resource):
         responses={404: "Role not found", 200: "Success"},
         params={"role_id": "Role ID to retrieve details for"},
     )
-    def get(self, role_id):
+    def get(self, role_id, **kwargs):
         """
         Get all details for a specific role by ID.
         """
-        role_details = get_role_details(role_id)
-        if not role_details.get("success"):
-            return error_response(role_details.get("error", "Role not found"), "role", 404)
-        role = role_details.get("role")
+        role = Role.find_by_id(role_id)
+
         return success_response(role)
 
     @admin_endpoint(
