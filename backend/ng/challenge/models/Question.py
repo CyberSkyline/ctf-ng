@@ -35,6 +35,22 @@ class Question(db.Model):
     def __repr__(self):
         return f"<NgChallengeQuestion {self.id}, name={self.name}, points={self.points}>"
 
+    def serialize(self, include_admin_fields=False) -> dict[str, Any]:
+        """
+        Serialize the question to a dictionary.
+        :return: A dictionary representation of the question.
+        """
+        return {
+            "id": self.id,
+            "name": self.name,
+            "body": self.body,
+            "points": self.points,
+            "answer": self.answer,
+            "placeholder": self.placeholder or "",
+            "max_attempts": self.max_attempts,
+            "challenge_id": self.challenge_id,
+        }
+
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
         """

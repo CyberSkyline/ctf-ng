@@ -218,6 +218,11 @@ class Event(db.Model):
 
         return Team.query.filter_by(event_id=self.id).all()
 
+    def get_all_challenges(self):
+        from ...challenge.models.Challenge import Challenge
+
+        return Challenge.query.filter_by(event_id=self.id).all()
+
     @classmethod
     def find_by_id(cls, event_id: int):
         """Find an event by ID.

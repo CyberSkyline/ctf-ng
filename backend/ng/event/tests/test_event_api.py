@@ -182,3 +182,65 @@ class Test_Event_Challenge_Import:
 
         response = admin_client.post(self.get_endpoint(event), json={"yaml": yaml.decode("utf-8")})
         assert response.status_code == 400
+
+
+class Test_Event_Challenge_List:
+    def get_endpoint(self, event_id: int) -> str:
+        return f"/ng/events/{event_id}/challenges"
+
+    def test_list_challenges_for_event(self, logged_in_client, event_factory, challenge_factory):
+        event = event_factory(name="Event for Challenge Listing", public=True)
+        challenge1 = challenge_factory(event=event, name="Challenge 1")
+        challenge2 = challenge_factory(event=event, name="Challenge 2")
+
+        response = logged_in_client.get(self.get_endpoint(event.id))
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert len(data["data"]) == 2
+        assert data["data"][0]["name"] == challenge1.name
+        assert data["data"][1]["name"] == challenge2.name
+
+
+class Test_Event_Challenge_Render:
+    def get_endpoint(self, event_id: int, challenge_id: int) -> str:
+        return f"/ng/events/{event_id}/challenges/{challenge_id}"
+
+    def test_render_challenge_for_event(self, logged_in_client, user, event_factory, team_factory, challenge_factory):
+        event = event_factory(name="Event for Challenge Rendering", public=True)
+        team_factory(event=event, members=[user])
+        challenge = challenge_factory(event=event, name="Challenge to Render")
+
+        response = logged_in_client.get(self.get_endpoint(event.id, challenge.id))
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["challenge"] == challenge.serialize()
+
+        # TODO - Add more assertions to check the rendered challenge data
+
+
+class Test_Event_Challenge_Statuses:
+    def get_endpoint(self, event_id: int) -> str:
+        return f"/ng/events/{event_id}/me/challenges"
+
+    def test_get_challenge_statuses_for_event(
+        self, logged_in_client, user, event_factory, team_factory, challenge_factory
+    ):
+        event = event_factory(name="Event for Challenge Statuses", public=True)
+        team_factory(event=event, members=[user])
+        challenge1 = challenge_factory(event=event, name="Challenge 1")
+        challenge2 = challenge_factory(event=event, name="Challenge 2")
+
+        response = logged_in_client.get(self.get_endpoint(event.id))
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert len(data["data"]) == 2
+        assert data["data"][0]["challenge_id"] == challenge1.id
+        assert data["data"][1]["challenge_id"] == challenge2.id
+
+        # TODO - Add more assertions to check the results

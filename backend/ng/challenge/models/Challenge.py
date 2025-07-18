@@ -19,6 +19,8 @@ class SerializedChallenge(TypedDict):
     description: str = ""
     icon: str = ""
     summary: str = ""
+    num_questions: int = 0
+    total_points: int = 0
 
 
 class Challenge(db.Model):
@@ -51,6 +53,8 @@ class Challenge(db.Model):
             "description": self.description or "",
             "icon": self.icon or "",
             "summary": self.summary or "",
+            "num_questions": len(self.questions),
+            "total_points": sum(q.points for q in self.questions),
         }
 
         return SerializedChallenge(**data)
@@ -131,3 +135,32 @@ class Challenge(db.Model):
         except Exception as e:
             db.session.rollback()
             raise e
+
+    @classmethod
+    def find_by_id(cls, challenge_id: int) -> Challenge | None:
+        """
+        Find a challenge by its ID.
+        :param challenge_id: The ID of the challenge to find.
+        :return: The challenge if found, otherwise None.
+        """
+        return cls.query.filter_by(id=challenge_id).first()
+
+    def render(self, team):
+        """
+        Render the challenge for a specific team.
+        :param team: The team to render the challenge for.
+        :return: A dictionary representation of the challenge for the team.
+        """
+        from .Hint import Hint
+        from .Question import Question
+
+        data = {
+            "challenge": self.serialize(),
+            "questions": Question.query.filter_by(challenge_id=self.id).all(),
+            "hints": Hint.query.filter_by(
+                challenge_id=self.id
+            ).all(),  # TODO - Selectivly hide/reveal hints based on if they were redeemed
+            "attempts": [],  # TODO - implement
+        }
+
+        return data

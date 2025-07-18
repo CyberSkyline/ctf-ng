@@ -22,6 +22,19 @@ class Hint(db.Model):
     def __repr__(self):
         return f"<NgHint {self.id}, deduction={self.deduction}, preview={self.preview}, body={self.body}>"
 
+    def serialize(self, include_admin_fields=False) -> dict[str, Any]:
+        """
+        Serialize the hint to a dictionary.
+        :return: A dictionary representation of the hint.
+        """
+        return {
+            "id": self.id,
+            "challenge_id": self.challenge_id,
+            "preview": self.preview,
+            "body": self.body,
+            "deduction": self.deduction,
+        }
+
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
         """
