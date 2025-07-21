@@ -1,24 +1,36 @@
+import type { Event } from '@/types';
 import {
-  Heading,
-  Flex,
-  Box,
   AspectRatio,
+  Box,
+  Flex,
+  Heading,
 } from '@radix-ui/themes';
 import type { ReactNode } from 'react';
 import EventBadge from './EventBadge';
 import RadixMarkdown from './RadixMarkdown';
 
 export default function EventHeader({
-  name,
-  description,
-  state,
   children = undefined,
+  event,
 }: {
-    name: string;
-    description: string;
-    state: 'upcoming' | 'waiting' | 'live' | 'ended';
-    children?: ReactNode;
+  children?: ReactNode;
+  event: Event;
 }) {
+  const {
+    name, description, start_time : startTime, end_time : endTime,
+  } = event;
+
+  const now = new Date();
+
+  let state: 'upcoming' | 'live' | 'ended' | 'waiting' | null = null;
+  if (endTime && now > endTime) {
+    state = 'ended';
+  } else if (!startTime || now < startTime) {
+    state = 'upcoming';
+  } else if (startTime && endTime && now >= startTime && now <= endTime) {
+    state = 'live';
+  }
+
   return (
     <Flex direction="row" gap="6" align="start">
       <Box className="w-32" flexShrink="0">
@@ -32,9 +44,9 @@ export default function EventHeader({
           <EventBadge state={state} />
         )}
         <Box>
-          <Heading size="9">{name}</Heading>
+          <Heading size="8">{name}</Heading>
           <RadixMarkdown>
-            {description}
+            {description || ''}
           </RadixMarkdown>
         </Box>
         {children}
