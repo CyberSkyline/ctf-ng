@@ -1,55 +1,53 @@
+import { useMyEvents } from '@/hooks/events';
 import { Button, Container, Flex } from '@radix-ui/themes';
-import PastEvents from 'routes/dashboard/PastEvents';
-import UpcomingEvents from 'routes/dashboard/UpcomingEvents';
+import { ErrorCallout, InfoCallout } from 'components/Callouts';
 import EventHeader from 'components/EventHeader';
 import HeaderContainer from 'components/HeaderContainer';
+import { Link } from 'react-router';
+import PastEvents from 'routes/dashboard/PastEvents';
+import UpcomingEvents from 'routes/dashboard/UpcomingEvents';
 
 export default function Dashboard() {
+  const { data, error } = useMyEvents();
+
+  // Split registered events into past, present, and future
+  const upcomingEvents = data?.filter((event) => !event.start_time || new Date() < event.start_time) || [];
+  const pastEvents = data?.filter((event) => event.end_time && new Date() > event.end_time) || [];
+  const liveEvents = data?.filter(
+    (event) => event.start_time && event.end_time && new Date() >= event.start_time && new Date() <= event.end_time,
+  ) || [];
+
+  if (error) {
+    return <ErrorCallout>{error.message}</ErrorCallout>;
+  }
+
   return (
     <>
       <HeaderContainer>
-        { /* Events that are currently active or starting soon emphasized in the page header. */ }
-        <EventHeader name="PC7 Teams Round 1" description="A brief description of what this event is." state="live">
-          <Button variant="solid" size="2">Button 1</Button>
-        </EventHeader>
+        {liveEvents.length === 0 && (
+          <InfoCallout>
+            No events are currently running. This should eventually be something more interesting, i.e. the first upcoming event or practice area.
+          </InfoCallout>
+        )}
+        {liveEvents.map((event) => (
+          <EventHeader
+            key={event.id}
+            event={event}
+          >
+            <Button asChild>
+              <Link to={`/events/${event.id}`}>
+                Go
+              </Link>
+            </Button>
+          </EventHeader>
+        ))}
       </HeaderContainer>
 
       <Container size="4">
         <Flex direction="column" gap="4" my="8">
-          <UpcomingEvents events={[
-            {
-              id : 'pc7-track-a', name : 'PC7 Track A', color : 'red', description : 'A brief description of what this event is.',
-            },
-            {
-              id : 'pc7-track-b', name : 'PC7 Track B', color : 'jade', description : 'A brief description of what this event is.',
-            },
-          ]}
-          />
+          <UpcomingEvents events={upcomingEvents} />
 
-          <PastEvents events={[
-            {
-              id : 'pc6-team', name : 'PC6 Teams Round 1', color : 'lime', description : 'A brief description of what this event is.',
-            },
-            {
-              id : 'pc5-track-a', name : 'PC5 Track A', color : 'red', description : 'A brief description of what this event is.',
-            },
-            {
-              id : 'pc5-track-b', name : 'PC5 Track B', color : 'jade', description : 'A brief description of what this event is.',
-            },
-            {
-              id : 'pc4-teams-finals', name : 'PC4 Teams Finals', color : 'orange', description : 'A brief description of what this event is.',
-            },
-            {
-              id : 'pc4-track-a', name : 'PC4 Track A', color : 'plum', description : 'A brief description of what this event is.',
-            },
-            {
-              id : 'pc4-track-b', name : 'PC4 Track B', color : 'blue', description : 'A brief description of what this event is.',
-            },
-            {
-              id : 'pc3-teams', name : 'PC3 Teams', color : 'yellow', description : 'A brief description of what this event is.',
-            },
-          ]}
-          />
+          <PastEvents events={pastEvents} />
         </Flex>
       </Container>
     </>

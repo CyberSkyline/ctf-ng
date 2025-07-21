@@ -1,10 +1,10 @@
+import type { Event } from '@/types';
 import {
   Callout,
   Grid,
   Heading,
   Link as RadixLink,
 } from '@radix-ui/themes';
-import type { accentColors } from '@radix-ui/themes/props';
 import { TbInfoCircle } from 'react-icons/tb';
 import { Link } from 'react-router';
 import EventCard from './EventCard';
@@ -12,7 +12,7 @@ import EventCard from './EventCard';
 export default function UpcomingEvents({
   events,
 }: {
-    events: { id: string; name: string; description: string; color?: typeof accentColors[number] }[]
+    events: Event[]
 }) {
   const heading = <Heading size="6">Your Upcoming Events</Heading>;
 
@@ -52,10 +52,7 @@ export default function UpcomingEvents({
         {events.map((event) => (
           <EventCard
             key={event.id}
-            id={event.id}
-            name={event.name}
-            description={event.description}
-            color={event.color}
+            event={event}
           />
         ))}
       </Grid>

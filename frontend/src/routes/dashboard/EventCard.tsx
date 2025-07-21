@@ -1,3 +1,4 @@
+import type { Event } from '@/types';
 import {
   AspectRatio,
   Box,
@@ -8,36 +9,31 @@ import {
   Text,
 } from '@radix-ui/themes';
 import { Link } from 'react-router';
-import type { accentColors } from '@radix-ui/themes/props';
 
 export default function EventCard({
-  id,
-  name,
-  description,
-  color = 'lime',
+  event,
 }: {
-  id: string;
-  name: string;
-  description: string;
-  color?: typeof accentColors[number];
+  event: Event
 }) {
   return (
     <Card asChild>
-      <Link to={`/events/${id}`}>
+      <Link to={`/events/${event.id}`}>
         <Flex direction="row" gap="4">
           <Inset side="left" className="w-32 shrink-0">
             <AspectRatio ratio={3 / 4}>
               {/* Placeholder for event card graphic */}
-              <Box className="h-full w-full" style={{ backgroundColor : `var(--${color}-8)` }} />
+              <Box className="h-full w-full" style={{ backgroundColor : 'var(--lime-8)' }} />
             </AspectRatio>
           </Inset>
           <Flex direction="column" gap="2" className="flex-grow" justify="between">
             <Box>
-              <Heading size="4">{name}</Heading>
-              <Text size="2" color="gray">{description}</Text>
+              <Heading size="4">{event.name}</Heading>
+              <Text size="2" color="gray">{event.description}</Text>
             </Box>
             <Box>
-              <Text size="2" color="gray">Footer</Text>
+              <Text size="2" color="gray">
+                {event.start_time?.toLocaleString()}
+              </Text>
             </Box>
           </Flex>
         </Flex>
