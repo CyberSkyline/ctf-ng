@@ -2,9 +2,7 @@ import type { Event } from '@/types';
 import { Grid, Heading } from '@radix-ui/themes';
 import EventCard from './EventCard';
 
-export default function PastEvents({ events }: {
-    events: Event[]
-}) {
+export default function PastEvents({ events }: { events: Event[] }) {
   if (events.length === 0) {
     return null;
   }

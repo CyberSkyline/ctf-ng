@@ -13,16 +13,21 @@ export default function EventHeader({
   children = undefined,
   event,
 }: {
-  event: Event;
   children?: ReactNode;
+  event: Event;
 }) {
+  const {
+    name, description, start_time : startTime, end_time : endTime,
+  } = event;
+
   const now = new Date();
+
   let state: 'upcoming' | 'live' | 'ended' | 'waiting' | null = null;
-  if (event.end_time && now > event.end_time) {
+  if (endTime && now > endTime) {
     state = 'ended';
-  } else if (!event.start_time || now < event.start_time) {
+  } else if (!startTime || now < startTime) {
     state = 'upcoming';
-  } else if (event.start_time && event.end_time && now >= event.start_time && now <= event.end_time) {
+  } else if (startTime && endTime && now >= startTime && now <= endTime) {
     state = 'live';
   }
 
@@ -39,9 +44,9 @@ export default function EventHeader({
           <EventBadge state={state} />
         )}
         <Box>
-          <Heading size="8">{event.name}</Heading>
+          <Heading size="8">{name}</Heading>
           <RadixMarkdown>
-            {event.description || ''}
+            {description || ''}
           </RadixMarkdown>
         </Box>
         {children}

@@ -10,11 +10,7 @@ import {
 } from '@radix-ui/themes';
 import { Link } from 'react-router';
 
-export default function EventCard({
-  event,
-}: {
-  event: Event
-}) {
+export default function EventCard({ event }: { event: Event }) {
   return (
     <Card asChild>
       <Link to={`/events/${event.id}`}>

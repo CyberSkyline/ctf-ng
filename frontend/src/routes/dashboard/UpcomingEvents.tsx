@@ -9,11 +9,7 @@ import { TbInfoCircle } from 'react-icons/tb';
 import { Link } from 'react-router';
 import EventCard from './EventCard';
 
-export default function UpcomingEvents({
-  events,
-}: {
-    events: Event[]
-}) {
+export default function UpcomingEvents({ events }: { events: Event[] }) {
   const heading = <Heading size="6">Your Upcoming Events</Heading>;
 
   if (events.length === 0) {
