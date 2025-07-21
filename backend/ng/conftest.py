@@ -127,7 +127,7 @@ def middleware_client():
         db.session.add(ng_user2)
         db.session.commit()
 
-        event = Event(name="Temp Event", description="Temporary event for testing")
+        event = Event(name="Temp Event", description="Temporary event for testing",public=True,)
         db.session.add(event)
         db.session.commit()
 
@@ -137,9 +137,25 @@ def middleware_client():
             locked=True,
             start_time=datetime(2023, 1, 1),
             end_time=datetime(2023, 12, 31),
+            public=False,
         )
         db.session.add(event2)
         db.session.commit()
+
+        event3 = Event(
+            name="Third Temp Event",
+            description="Third temporary event for testing",
+            locked=False,
+            start_time=datetime.now() - timedelta(days=1),
+            end_time=datetime.now() + timedelta(days=1),
+            public=False,
+        )
+        db.session.add(event3)
+        db.session.commit()
+
+        Demographic.create_demographic(
+            user_id=user_to_login.id, event_id = event3.id, commit=True
+        )
 
         Team.create_team_with_captain(
             name="Temp Team", event_id=event.id, captain_id=user_to_login.id, invite_code="fo67ykug"
