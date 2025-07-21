@@ -275,6 +275,11 @@ class BaseValidator:
                 self.errors[field] = ValidationErrorMessages.FIELD_DATETIME_PAST.format(field=friendly_name)
                 return None
 
+            # SQLAlchemy expects to work with naive datetime objects (tzinfo=None),
+            # so tzinfo must be removed here before sending this value to the model.
+            # Leaving tzinfo as UTC here instead of changing it to None will break things.
+            dt_value = dt_value.replace(tzinfo=None)
+
             self._add_parsed_data(field, dt_value)
             return dt_value
         except (ValueError, TypeError):

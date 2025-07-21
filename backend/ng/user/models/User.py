@@ -60,14 +60,14 @@ class User(db.Model):
                 "name": self.ctfd_user.name,
                 "email": self.ctfd_user.email,
                 "roles": [role.name for role in self.roles],
-                "registered_at": self.ctfd_user.created.isoformat(),
+                "registered_at": self.ctfd_user.created.isoformat() + "Z",
             }
         else:
             return {
                 "id": self.id,
                 "name": self.ctfd_user.name,
                 "email": self.ctfd_user.email,
-                "registered_at": self.ctfd_user.created.isoformat(),
+                "registered_at": self.ctfd_user.created.isoformat() + "Z",
             }
 
     @classmethod
