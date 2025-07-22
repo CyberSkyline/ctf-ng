@@ -1,11 +1,15 @@
-import type { Event } from '@/types';
 import {
   AspectRatio,
   Box,
   Flex,
   Heading,
+  Text,
 } from '@radix-ui/themes';
 import type { ReactNode } from 'react';
+import { TbCalendar, TbUser } from 'react-icons/tb';
+import { isNull } from 'lodash';
+import type { Event } from '@/types';
+import { DATEFORMAT } from '@/constants';
 import EventBadge from './EventBadge';
 import RadixMarkdown from './RadixMarkdown';
 
@@ -17,7 +21,11 @@ export default function EventHeader({
   event: Event;
 }) {
   const {
-    name, description, start_time : startTime, end_time : endTime,
+    name,
+    description,
+    start_time : startTime,
+    end_time : endTime,
+    max_team_size : maxTeamSize,
   } = event;
 
   const now = new Date();
@@ -30,6 +38,9 @@ export default function EventHeader({
   } else if (startTime && endTime && now >= startTime && now <= endTime) {
     state = 'live';
   }
+
+  const dateRange = (!isNull(startTime) && !isNull(endTime))
+    && new Intl.DateTimeFormat('en', DATEFORMAT.range).formatRange(startTime, endTime);
 
   return (
     <Flex direction="row" gap="6" align="start">
@@ -49,6 +60,20 @@ export default function EventHeader({
             {description || ''}
           </RadixMarkdown>
         </Box>
+        <Flex direction="row" gap="2" align="center">
+          {dateRange && (
+            <Text color="gray">
+              <TbCalendar className="inline me-1" title="Date range" />
+              {dateRange}
+            </Text>
+          )}
+          {maxTeamSize && (
+            <Text color="gray">
+              <TbUser className="inline me-1" />
+              {maxTeamSize === 1 ? 'Individual' : `Teams of 2-${maxTeamSize}`}
+            </Text>
+          )}
+        </Flex>
         {children}
       </Flex>
     </Flex>
