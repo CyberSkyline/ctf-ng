@@ -15,8 +15,7 @@ export default function RegistrationModal({ eventId }: {eventId : Event['id']}) 
   // Todo: alternate case when team game vs individual
 
   const register = () => {
-    console.log('do registration');
-    registerMyEvent(eventId);
+    registerMyEvent(eventId, leaderboardName);
   };
 
   return (

@@ -47,6 +47,19 @@ export function useUserEvents(userId: number | null) {
 }
 
 /**
+ * Registeres user for a specific event
+ * @param event_id The event id
+ * @param team_name The leaderboard name
+ */
+export function registerMyEvent(eventId: number, teamName: string) {
+  apiMutation(`/events/${eventId}/me/register`, { team_name : teamName }, {
+    method : 'POST',
+  }).then(() => {
+    mutate('/users/me/events');
+  });
+}
+
+/**
  * Gets the events the currently signed in user is registered for.
  */
 export function useMyEvents() {
