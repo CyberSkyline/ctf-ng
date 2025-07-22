@@ -4,6 +4,7 @@ from ..utils.api import error_response
 from ..utils.logger import get_logger
 from ...permissions.controllers.get_team_management_permissions import get_team_management_permissions
 from ...permissions.controllers.get_user_permissions import get_user_permissions
+from ...event.models.Demographic import Demographic
 
 logger = get_logger(__name__)
 
@@ -35,8 +36,10 @@ def event_only_public(f):
     @wraps(f)
     def wrapped(*args, **kwargs):
         event = kwargs.get('event')
-        if not event or not event.public:
-            return error_response("Event not found", "not_found", 404)
+        current_user = kwargs.get('current_user')
+        if Demographic.find_by_user_and_event(current_user.id, event.id) is None:
+            if not event.public:
+                return error_response("Event not found", "not_found", 404)
         return f(*args, **kwargs)
     return wrapped
 
