@@ -12,7 +12,6 @@ import TicketDetail from 'routes/support/Detail';
 
 // events
 import Overview from 'routes/events/Overview';
-import Registration from 'routes/events/Registration';
 import Challenge from 'routes/events/Challenge';
 
 // Admin Section
@@ -41,7 +40,6 @@ function Routes() {
       path : '/events/:idEvent',
       children : [
         { index : true, element : <Overview /> },
-        { path : 'registration', element : <Registration /> },
         { path : 'challenge/:idChallenge', element : <Challenge /> },
       ],
     },
