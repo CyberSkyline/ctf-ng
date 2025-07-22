@@ -9,9 +9,9 @@ import type { ReactNode } from 'react';
 import { TbCalendar, TbUser } from 'react-icons/tb';
 import { isNull } from 'lodash';
 import type { Event } from '@/types';
+import { DATEFORMAT } from '@/constants';
 import EventBadge from './EventBadge';
 import RadixMarkdown from './RadixMarkdown';
-import { DATEFORMAT } from '@/constants';
 
 export default function EventHeader({
   children = undefined,

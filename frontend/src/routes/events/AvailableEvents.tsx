@@ -9,8 +9,8 @@ import EventHeader from 'components/EventHeader';
 import HeaderContainer from 'components/HeaderContainer';
 import { some } from 'lodash';
 import { TbCheck } from 'react-icons/tb';
-import RegistrationModal from './RegistrationModal';
 import { useEvents, useMyEvents } from '@/hooks/events';
+import RegistrationModal from './RegistrationModal';
 
 export default function AvailableEvents() {
   const { data : events } = useEvents();
