@@ -38,7 +38,7 @@ def event_only_public(f):
         event = kwargs.get('event')
         current_user = kwargs.get('current_user')
         if Demographic.find_by_user_and_event(current_user.id, event.id) is None:
-            if not event or not event.public:
+            if not event.public:
                 return error_response("Event not found", "not_found", 404)
         return f(*args, **kwargs)
     return wrapped
