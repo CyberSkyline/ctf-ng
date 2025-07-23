@@ -78,19 +78,9 @@ class HintRedemption(db.Model):
         validator.validate_model_id(data, "user_id", "User", required=True)
         validator.validate_model_id(data, "team_id", "Team", required=True)
 
-        if "points" not in data:
-            validator.errors["points"] = "Points value is required"
-        else:
-            try:
-                points = int(data["points"])
-                if points > 0:
-                    validator.errors["points"] = "Hint redemption points must be zero or negative"
-                else:
-                    validator._add_parsed_data("points", points)
-            except (ValueError, TypeError):
-                validator.errors["points"] = "Points must be a valid integer"
+        validator.validate_integer(data, "points", required=True, max_value=0)
 
-        validator.validate_optional_timestamp(data)
+        validator.validate_datetime(data, "timestamp", required=False)
 
         return validator.validate()
 
@@ -106,6 +96,7 @@ class HintRedemption(db.Model):
         from ...team.models.TeamMember import TeamMember
         from ...event.models.Event import Event
 
+       # TODO: Move most logic to permission check system
         member = TeamMember.find_by_user_and_team(user_id, team_id)
         if not member:
             raise BusinessLogicError("User is not a member of this team.")
@@ -196,11 +187,10 @@ class HintRedemption(db.Model):
             member = TeamMember.find_by_user_and_team(user_id, team_id)
             if member:
                 score = Score.find_by_team_and_event(team_id, member.event_id)
-                if score:
-                    score_event = ScoreEvent.create_score_event(
-                        score_id=score.id, team_id=team_id, points=points, timestamp=timestamp, commit=False
-                    )
-                    redemption.score_event_id = score_event.id
+                score_event = ScoreEvent.create_score_event(
+                    score_id=score.id, team_id=team_id, points=points, timestamp=timestamp, commit=False
+                )
+                redemption.score_event_id = score_event.id
 
         if commit:
             try:

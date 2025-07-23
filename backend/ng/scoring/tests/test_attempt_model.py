@@ -327,11 +327,12 @@ class TestFindFilteredAttempts:
         assert all(a.user_id == user.id for a in attempts)
 
     def test_find_by_team_id(
-        self, db_session, attempt_factory, user, team_with_member, team_factory, event, challenge, question
+        self, db_session, attempt_factory, user, team_with_member, team_factory, event, challenge, question, user_factory
     ):
         """Test filtering attempts by team_id"""
         # Create another team
-        other_team = team_factory(event=event)
+        other_captain = user_factory(name="AttemptCapt1", email="attemptcapt1@example.com")
+        other_team = team_factory(event=event, members=[other_captain])
 
         # Create attempts for different teams
         attempt_factory(

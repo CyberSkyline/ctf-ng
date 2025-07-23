@@ -64,16 +64,9 @@ class ScoreEvent(db.Model):
         validator.validate_model_id(data, "score_id", "Score", required=True)
         validator.validate_model_id(data, "team_id", "Team", required=True)
 
-        if "points" not in data:
-            validator.errors["points"] = "Points value is required"
-        elif not isinstance(data.get("points"), int):
-            validator.errors["points"] = "Points must be an integer"
-        elif data["points"] == 0:
-            validator.errors["points"] = "Points cannot be zero"
-        else:
-            validator._add_parsed_data("points", data["points"])
+        validator.validate_integer(data, "points", required=True, allow_zero=False)
 
-        validator.validate_optional_timestamp(data)
+        validator.validate_datetime(data, "timestamp", required=False)
 
         return validator.validate()
 
@@ -122,9 +115,8 @@ class ScoreEvent(db.Model):
         # LAZY-IMPORT: Tagging all necessary lazy imports for easy searchability & visibility.
         from .Score import Score
 
-        score = Score.query.get(score_id)
-        if score:
-            score.adjust(points, commit=False)
+        score = Score.query.get(validated_data["score_id"])
+        score.adjust(validated_data["points"], commit=False)
 
         if commit:
             try:

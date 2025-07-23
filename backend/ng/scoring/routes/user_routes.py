@@ -9,8 +9,13 @@ from ...core.middleware import user_endpoint
 from ...core.middleware.loaders import (
     LoaderType,
     load_event,
+    load_challenge,
+    load_question,
+    load_hint,
     load_team_by_user_and_event,
+    load_score_by_team_and_event,
 )
+from ... import config
 from ...core.utils import success_response
 from ...core.exceptions import ValidationError
 
@@ -42,9 +47,9 @@ class EventLeaderboard(Resource):
         """
         Get event leaderboard
         """
-        limit = request.args.get("limit", 100, type=int)
-        if limit < 1 or limit > 1000:
-            raise ValidationError("Limit must be between 1 and 1000")
+        limit = request.args.get("limit", config.DEFAULT_LEADERBOARD_LIMIT, type=int)
+        if limit < 1 or limit > config.MAX_LEADERBOARD_LIMIT:
+            raise ValidationError(f"Limit must be between 1 and {config.MAX_LEADERBOARD_LIMIT}")
 
         leaderboard_data = get_leaderboard(event_id=event_id, limit=limit)
         return success_response(leaderboard_data)
@@ -56,13 +61,12 @@ class MyTeamScore(Resource):
     @user_endpoint()
     @load_event(LoaderType.PARAM)
     @load_team_by_user_and_event()
-    def get(self, event_id: int, event, team, current_user: User, **kwargs):
+    @load_score_by_team_and_event()
+    def get(self, event_id: int, event, team, score, current_user: User, **kwargs):
         """
         Get my team's score
         """
-        include_history = request.args.get("include_history", "false").lower() == "true"
-
-        result = get_team_score(event_id=event_id, team_id=team.id, include_history=include_history)
+        result = get_team_score(score=score)
         return success_response(result)
 
 
@@ -71,18 +75,23 @@ class SubmitAnswer(Resource):
     @scoring_user_namespace.doc(**SUBMIT_ANSWER_DOC)
     @user_endpoint(json_required=True, validation_func=Attempt.validate_api_submission)
     @load_event(LoaderType.PARAM)
+    @load_challenge(LoaderType.PARAM)
+    @load_question(LoaderType.PARAM)
+    @load_team_by_user_and_event()
     def post(
-        self, event_id: int, challenge_id: int, question_id: int, event, current_user: User, validated_data, **kwargs
+        self, event_id: int, challenge_id: int, question_id: int,
+        event, challenge, question, team, current_user: User, validated_data, **kwargs
     ):
         """
         Submit an answer to a question
         """
         result = submit_answer(
-            event_id=event_id,
-            challenge_id=challenge_id,
-            question_id=question_id,
+            event=event,
+            challenge=challenge,
+            question=question,
+            team=team,
+            current_user=current_user,
             submission=validated_data["submission"],
-            current_user_id=current_user.id,
         )
         return success_response(result, status_code=201)
 
@@ -92,11 +101,19 @@ class RedeemHint(Resource):
     @scoring_user_namespace.doc(**REDEEM_HINT_DOC)
     @user_endpoint(json_required=False)
     @load_event(LoaderType.PARAM)
-    def post(self, event_id: int, challenge_id: int, hint_id: int, event, current_user: User, **kwargs):
+    @load_challenge(LoaderType.PARAM)
+    @load_hint(LoaderType.PARAM)
+    @load_team_by_user_and_event()
+    def post(self, event_id: int, challenge_id: int, hint_id: int,
+             event, challenge, hint, team, current_user: User, **kwargs):
         """
         Redeem a hint
         """
         result = redeem_hint(
-            event_id=event_id, challenge_id=challenge_id, hint_id=hint_id, current_user_id=current_user.id
+            event=event,
+            challenge=challenge,
+            hint=hint,
+            team=team,
+            current_user=current_user,
         )
         return success_response(result, status_code=201)

@@ -53,10 +53,12 @@ class TestCreateScore:
         assert found_score is not None
         assert found_score.id == score.id
 
-    def test_create_score_no_commit(self, db_session, team_factory, event_factory):
+    def test_create_score_no_commit(self, db_session, team_factory, event_factory, user_factory):
         # Create a new team and event to ensure no score exists
         new_event = event_factory()
-        new_team = team_factory(event=new_event)
+        # Create a user to be the team captain
+        captain = user_factory(name="Captain1", email="captain1@example.com")
+        new_team = team_factory(event=new_event, members=[captain])
 
         # Delete the auto-created score to test creation
         existing = Score.query.filter_by(team_id=new_team.id, event_id=new_event.id).first()
@@ -73,10 +75,12 @@ class TestCreateScore:
         # Should still be in session
         assert score in db_session
 
-    def test_create_score_with_commit(self, db_session, team_factory, event_factory):
+    def test_create_score_with_commit(self, db_session, team_factory, event_factory, user_factory):
         # Create a new team and event to ensure no score exists
         new_event = event_factory()
-        new_team = team_factory(event=new_event)
+        # Create a user to be the team captain
+        captain = user_factory(name="Captain2", email="captain2@example.com")
+        new_team = team_factory(event=new_event, members=[captain])
 
         # Delete the auto-created score to test creation
         existing = Score.query.filter_by(team_id=new_team.id, event_id=new_event.id).first()
@@ -196,7 +200,7 @@ class TestGetLeaderboard:
 
         assert leaderboard == []
 
-    def test_get_leaderboard_ordering(self, db_session, event_factory, team_factory):
+    def test_get_leaderboard_ordering(self, db_session, event_factory, team_factory, user_factory):
         """Test leaderboard returns teams in descending score order"""
         from CTFd.cache import cache
 
@@ -208,7 +212,8 @@ class TestGetLeaderboard:
         # Create teams and update their auto-created scores
         teams_and_scores = []
         for i in range(3):
-            team = team_factory(event=fresh_event)
+            captain = user_factory(name=f"Captain{i}", email=f"captain{i}@example.com")
+            team = team_factory(event=fresh_event, members=[captain])
             # Get the auto-created score
             score = Score.query.filter_by(team_id=team.id, event_id=fresh_event.id).first()
             score.points = (i + 1) * 100
@@ -229,7 +234,7 @@ class TestGetLeaderboard:
         assert leaderboard[1]["points"] == 200
         assert leaderboard[2]["points"] == 100
 
-    def test_get_leaderboard_caching(self, db_session, event_factory, team_factory):
+    def test_get_leaderboard_caching(self, db_session, event_factory, team_factory, user_factory):
         """Test that leaderboard is cached"""
         from CTFd.cache import cache
 
@@ -238,7 +243,8 @@ class TestGetLeaderboard:
         fresh_event = event_factory()
 
         # Create initial team and update its score
-        team1 = team_factory(event=fresh_event)
+        captain1 = user_factory(name="CacheCaptain1", email="cachec1@example.com")
+        team1 = team_factory(event=fresh_event, members=[captain1])
         score1 = Score.query.filter_by(team_id=team1.id, event_id=fresh_event.id).first()
         score1.points = 100
         db_session.commit()
@@ -248,7 +254,8 @@ class TestGetLeaderboard:
         assert len(leaderboard1) == 1
 
         # Add another team and update its score
-        team2 = team_factory(event=fresh_event)
+        captain2 = user_factory(name="CacheCaptain2", email="cachec2@example.com")
+        team2 = team_factory(event=fresh_event, members=[captain2])
         score2 = Score.query.filter_by(team_id=team2.id, event_id=fresh_event.id).first()
         score2.points = 200
         db_session.commit()
@@ -266,7 +273,7 @@ class TestGetLeaderboard:
         leaderboard3 = Score.get_leaderboard(fresh_event.id)
         assert len(leaderboard3) == 2  # Now shows both teams
 
-    def test_get_leaderboard_with_tied_scores(self, db_session, event_factory, team_factory):
+    def test_get_leaderboard_with_tied_scores(self, db_session, event_factory, team_factory, user_factory):
         """Test leaderboard handles tied scores correctly"""
         from CTFd.cache import cache
 
@@ -275,9 +282,12 @@ class TestGetLeaderboard:
         fresh_event = event_factory()
 
         # Create teams and update their scores
-        team1 = team_factory(event=fresh_event)
-        team2 = team_factory(event=fresh_event)
-        team3 = team_factory(event=fresh_event)
+        captain1 = user_factory(name="TiedCaptain1", email="tiedc1@example.com")
+        team1 = team_factory(event=fresh_event, members=[captain1])
+        captain2 = user_factory(name="TiedCaptain2", email="tiedc2@example.com")
+        team2 = team_factory(event=fresh_event, members=[captain2])
+        captain3 = user_factory(name="TiedCaptain3", email="tiedc3@example.com")
+        team3 = team_factory(event=fresh_event, members=[captain3])
 
         # Update auto-created scores
         score1 = Score.query.filter_by(team_id=team1.id, event_id=fresh_event.id).first()
@@ -321,8 +331,12 @@ class TestGetTeamRank:
 
     def test_get_team_rank_nonexistent(self, db_session, event):
         """Test rank for team that doesn't exist in event"""
-        rank = Score.get_team_rank(999999, event.id)
-        assert rank is None
+        from ...core.exceptions import NotFoundError
+
+        with pytest.raises(NotFoundError) as exc_info:
+            Score.get_team_rank(999999, event.id)
+
+        assert "Team with ID 999999 not found" in str(exc_info.value)
 
     def test_get_team_rank_uses_cache(self, db_session, event, score):
         """Test that get_team_rank uses cached leaderboard"""
@@ -332,20 +346,6 @@ class TestGetTeamRank:
         # Get rank without mocking to ensure it works
         rank = Score.get_team_rank(score.team_id, event.id)
         assert rank == 1  # Only team, so rank 1
-
-
-class TestUpdateTeamName:
-    """Test the update_team_name class method"""
-
-    def test_update_team_name_no_commit(self, db_session, score):
-        with patch.object(db_session, "commit") as mock_commit:
-            Score.update_team_name(team_id=score.team_id, new_name="Updated Team Name", commit=False)
-            mock_commit.assert_not_called()
-
-    def test_update_team_name_with_commit(self, db_session, score):
-        with patch.object(db_session, "commit") as mock_commit:
-            Score.update_team_name(team_id=score.team_id, new_name="Updated Team Name", commit=True)
-            mock_commit.assert_called_once()
 
 
 class TestScoreSerialization:

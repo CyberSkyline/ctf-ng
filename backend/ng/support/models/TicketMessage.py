@@ -45,23 +45,10 @@ class TicketMessage(db.Model):
             required=True,
             friendly_name="Message text",
         )
-        validator.validate_positive_integer(
-            data,
-            "ticket_id",
-            required=True,
-            friendly_name="Ticket ID",
-        )
-        validator.validate_positive_integer(
-            data,
-            "author_id",
-            required=True,
-            friendly_name="Author ID",
-        )
+        validator.validate_model_id(data, "ticket_id", "Ticket", required=True)
+        validator.validate_model_id(data, "author_id", "Users", required=True)
 
-        is_valid, errors, parsed_data = validator.is_valid()
-        if not is_valid:
-            raise ValidationError("Ticket message data is invalid.", errors=errors)
-        return parsed_data
+        return validator.validate()
 
     def serialize(
         self,
@@ -94,7 +81,7 @@ class TicketMessage(db.Model):
             "author_id": self.author_id,
             "author_name": author_name,
             "author_type": author_type,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "created_at": self.created_at.isoformat() + "Z" if self.created_at else None,
             "ticket_id": self.ticket_id,
         }
 
@@ -123,18 +110,6 @@ class TicketMessage(db.Model):
         }
 
         validated_data = cls.validate(data)
-        # LAZY-IMPORT: Tagging all necessary lazy imports for easy searchability & visibility.
-        from .Ticket import Ticket
-
-        if not Ticket.find_by_id(validated_data["ticket_id"]):
-            raise NotFoundError(
-                f"Ticket with ID {validated_data['ticket_id']} not found"
-            )
-
-        if not Users.query.filter_by(id=validated_data["author_id"]).first():
-            raise NotFoundError(
-                f"Author with ID {validated_data['author_id']} not found"
-            )
 
         message = cls(
             text=validated_data["text"],

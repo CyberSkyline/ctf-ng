@@ -255,9 +255,8 @@ class Team(db.Model):
         # LAZY-IMPORT
         from ...scoring.models.Score import Score
 
-        # Delegate's cache update to the Score model
         self.name = new_name
-        Score.update_team_name(team_id=self.id, new_name=new_name, commit=False)
+        Score.query.filter_by(team_id=self.id).update({"team_name": new_name})
 
         if commit:
             db.session.commit()
@@ -592,18 +591,3 @@ class Team(db.Model):
             db.session.rollback()
             raise
             
-    @classmethod
-    def team_name_contains_member_name(cls,name, member_names) -> bool:
-        """Check if the team name contains any member's name.
-
-        Returns:
-            bool: True if team name contains a member's name, False otherwise
-        """
-
-        name_split = [part for part in name.lower().split() if len(part) > 1]
-        for member_name in member_names:
-            member_name_parts = [part for part in member_name.lower().split() if len(part) > 1]
-            if any(part in name_split for part in member_name_parts):
-                return True
-
-        return False

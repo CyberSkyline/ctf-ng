@@ -206,14 +206,15 @@ class TestDeleteEvent:
 class TestFindFilteredEvents:
     """Test the find_filtered_events method"""
 
-    def test_find_by_score_id(self, db_session, score, score_event_factory, team_factory, event):
+    def test_find_by_score_id(self, db_session, score, score_event_factory, team_factory, event, user_factory):
         """Test filtering events by score_id"""
         # Create multiple events
         score_event_factory(score_id=score.id, team_id=score.team_id, points=10)
         score_event_factory(score_id=score.id, team_id=score.team_id, points=20)
 
         # Create a different team and score for comparison
-        other_team = team_factory(event=event)
+        other_captain = user_factory(name="OtherCapt1", email="othercapt1@example.com")
+        other_team = team_factory(event=event, members=[other_captain])
         # Score already created automatically when team was created
         other_score = Score.query.filter_by(team_id=other_team.id, event_id=event.id).first()
         score_event_factory(score_id=other_score.id, team_id=other_team.id, points=30)
@@ -225,14 +226,15 @@ class TestFindFilteredEvents:
         assert len(events) == 2  # Only the 2 we created for this score
         assert all(e.score_id == score.id for e in events)
 
-    def test_find_by_team_id(self, db_session, score, score_event, score_event_factory, team_factory, event):
+    def test_find_by_team_id(self, db_session, score, score_event, score_event_factory, team_factory, event, user_factory):
         """Test filtering events by team_id"""
         # Create events for same team (in addition to fixture)
         score_event_factory(score_id=score.id, team_id=score.team_id, points=10)
         score_event_factory(score_id=score.id, team_id=score.team_id, points=20)
 
         # Create event for different team
-        other_team = team_factory(event=event)
+        other_captain = user_factory(name="OtherCapt2", email="othercapt2@example.com")
+        other_team = team_factory(event=event, members=[other_captain])
         # Score already created automatically when team was created
         other_score = Score.query.filter_by(team_id=other_team.id, event_id=event.id).first()
         score_event_factory(score_id=other_score.id, team_id=other_team.id, points=30)
@@ -240,11 +242,11 @@ class TestFindFilteredEvents:
         # Find events for specific team
         events = ScoreEvent.find_filtered_events(team_id=score.team_id)
 
-        assert len(events) == 3  # Original fixture + 2 new ones
+        assert len(events) == 3
         assert all(e.team_id == score.team_id for e in events)
 
     def test_find_by_event_id(
-        self, db_session, score, score_event, score_event_factory, event_factory, team_factory, team_with_member
+        self, db_session, score, score_event, score_event_factory, event_factory, team_factory, team_with_member, user_factory
     ):
         """Test filtering events by event_id"""
         # Create events for same event (in addition to fixture)
@@ -253,14 +255,15 @@ class TestFindFilteredEvents:
         # Create score and event for different event
         other_event = event_factory()
         # Need to create a team in the other event to get a score
-        other_team = team_factory(event=other_event)
+        other_captain = user_factory(name="OtherCapt3", email="othercapt3@example.com")
+        other_team = team_factory(event=other_event, members=[other_captain])
         other_score = Score.query.filter_by(team_id=other_team.id, event_id=other_event.id).first()
         score_event_factory(score_id=other_score.id, team_id=other_team.id, points=20)
 
         # Find events for specific event
         events = ScoreEvent.find_filtered_events(event_id=score.event_id)
 
-        assert len(events) == 2  # Original fixture + 1 new one
+        assert len(events) == 2
         assert all(e.score.event_id == score.event_id for e in events)
 
     def test_find_with_limit(self, db_session, score, score_event_factory):
@@ -345,14 +348,12 @@ class TestScoreEventValidation:
 
         timestamp = utc_now()
 
-        # The validator expects the timezone info to be in the string already
-        # utc_now() returns a datetime with tzinfo=UTC
         data = ScoreEvent.validate(
             {
                 "score_id": score.id,
                 "team_id": score.team_id,
                 "points": 100,
-                "timestamp": timestamp.isoformat(),  # This already includes timezone info
+                "timestamp": timestamp.isoformat(),
             }
         )
 
@@ -388,7 +389,7 @@ class TestScoreEventValidation:
             ScoreEvent.validate({"score_id": score.id, "team_id": score.team_id})
 
         assert "points" in exc_info.value.errors
-        assert "Points value is required" in exc_info.value.errors["points"]
+        assert "Points is required" in exc_info.value.errors["points"]
 
     def test_validate_zero_points(self, db_session, score):
         """Test validation fails with zero points"""
@@ -401,20 +402,29 @@ class TestScoreEventValidation:
         assert "Points cannot be zero" in exc_info.value.errors["points"]
 
     def test_validate_non_integer_points(self, db_session, score):
-        """Test validation fails with non-integer points"""
-        from ...core.exceptions import ValidationError
+        """Test validation handles string integer conversion"""
+        validated = ScoreEvent.validate(
+            {
+                "score_id": score.id,
+                "team_id": score.team_id,
+                "points": "100",
+            }
+        )
 
+        assert validated["points"] == 100
+
+        from ...core.exceptions import ValidationError
         with pytest.raises(ValidationError) as exc_info:
             ScoreEvent.validate(
                 {
                     "score_id": score.id,
                     "team_id": score.team_id,
-                    "points": "100",
+                    "points": "not-a-number",
                 }
             )
 
         assert "points" in exc_info.value.errors
-        assert "Points must be an integer" in exc_info.value.errors["points"]
+        assert "must be a valid integer" in exc_info.value.errors["points"]
 
 
 class TestScoreEventRelationships:

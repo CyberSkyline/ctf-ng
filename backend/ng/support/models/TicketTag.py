@@ -73,10 +73,7 @@ class TicketTag(db.Model):
                         f"Tag name '{data['name']}' already exists"
                     )
 
-        is_valid, errors, parsed_data = validator.is_valid()
-        if not is_valid:
-            raise ValidationError("Ticket tag data is invalid.", errors=errors)
-        return parsed_data
+        return validator.validate()
 
     def serialize(self) -> dict[str, Any]:
         """
@@ -116,16 +113,11 @@ class TicketTag(db.Model):
             TicketTag: The created tag instance
         """
 
-        data = {
+        validated_data = cls.validate({
             "name": name,
-        }
-
-        if color is not None:
-            data["color"] = color
-        if description is not None:
-            data["description"] = description
-
-        validated_data = cls.validate(data)
+            "color": color,
+            "description": description,
+        })
 
         tag = cls(
             name=validated_data["name"],

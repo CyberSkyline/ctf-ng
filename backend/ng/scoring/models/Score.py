@@ -12,6 +12,7 @@ from sqlalchemy import func
 
 from ... import config
 from ...core.utils import utc_now
+from ...core.exceptions import NotFoundError
 from ...core.utils.validator import BaseValidator
 from ...core.utils.cache import (
     memoize,
@@ -78,17 +79,13 @@ class Score(db.Model):
         validator.validate_model_id(data, "event_id", "Event", required=True)
 
         if "points" in data:
-            try:
-                points = int(data["points"])
-                validator._add_parsed_data("points", points)
-            except (ValueError, TypeError):
-                validator.errors["points"] = "Points must be a valid integer"
+            validator.validate_integer(data, "points", required=False)
 
         validator.validate_string(
             data, "team_name", config.TEAM_NAME_MAX_LENGTH, required=True, friendly_name="Team name"
         )
 
-        validator.validate_optional_timestamp(data)
+        validator.validate_datetime(data, "timestamp", required=False)
 
         return validator.validate()
 
@@ -198,16 +195,6 @@ class Score(db.Model):
         return [score.serialize() for score in scores]
 
     @classmethod
-    def update_team_name(cls, team_id: int, new_name: str, commit: bool = True) -> None:
-        """
-        Update cached team name across all scores for a team
-        """
-        cls.query.filter_by(team_id=team_id).update({"team_name": new_name})
-
-        if commit:
-            db.session.commit()
-
-    @classmethod
     def get_team_rank(cls, team_id: int, event_id: int) -> int | None:
         """Get the rank of a team in an event.
 
@@ -223,11 +210,28 @@ class Score(db.Model):
         return higher_scores + 1
 
     @classmethod
-    def find_by_team_and_event(cls, team_id: int, event_id: int) -> Score | None:
+    def find_by_team_and_event(cls, team_id: int, event_id: int) -> Score:
         """
-        Find score for a specific team in an event
+        Find score for a specific team in an event. Creates one if it doesn't exist.
         """
-        return cls.query.filter_by(team_id=team_id, event_id=event_id).first()
+        score = cls.query.filter_by(team_id=team_id, event_id=event_id).first()
+
+        if not score:
+            # LAZY-IMPORT
+            from ...team.models.Team import Team
+
+            team = Team.query.get(team_id)
+            if not team:
+                raise NotFoundError(f"Team with ID {team_id} not found")
+
+            score = cls.create_score(
+                team_id=team_id,
+                event_id=event_id,
+                team_name=team.name,
+                points=0
+            )
+
+        return score
 
     @classmethod
     def find_filtered_scores(

@@ -11,10 +11,11 @@ from ...core.middleware.loaders import (
     LoaderType,
     load_event,
     load_team,
+    load_score_by_team_and_event,
 )
+from ... import config
 from ...core.utils import success_response
 
-from ..models import ManualPointAward
 from ..controllers import (
     award_manual_points,
     recalculate_score,
@@ -32,18 +33,20 @@ scoring_admin_namespace = Namespace("admin/scoring", description="Admin scoring 
 @scoring_admin_namespace.route("/events/<int:event_id>/teams/<int:team_id>/award-points")
 class AwardPoints(Resource):
     @scoring_admin_namespace.doc(**AWARD_MANUAL_POINTS_DOC)
-    @admin_endpoint(json_required=True, validation_func=ManualPointAward.validate_api_award)
+    @admin_endpoint(json_required=True)
     @load_event(LoaderType.PARAM)
     @load_team(LoaderType.PARAM)
-    def post(self, event_id: int, team_id: int, event, team, current_user, validated_data, **kwargs):
+    @load_score_by_team_and_event()
+    def post(self, event_id: int, team_id: int, event, team, score, current_user, json_data, **kwargs):
         """
         Award manual points to a team
         """
         result = award_manual_points(
-            event_id=event_id,
-            team_id=team_id,
-            points=validated_data["points"],
-            reason=validated_data["reason"],
+            event=event,
+            team=team,
+            score=score,
+            points=json_data.get("points"),
+            reason=json_data.get("reason"),
             admin_id=current_user.id,
         )
         return success_response(result, status_code=201)
@@ -55,11 +58,12 @@ class RecalculateScore(Resource):
     @admin_endpoint(json_required=False)
     @load_event(LoaderType.PARAM)
     @load_team(LoaderType.PARAM)
-    def post(self, event_id: int, team_id: int, event, team, **kwargs):
+    @load_score_by_team_and_event()
+    def post(self, event_id: int, team_id: int, event, team, score, **kwargs):
         """
         Recalculate a team's score (if needed)
         """
-        result = recalculate_score(event_id=event_id, team_id=team_id)
+        result = recalculate_score(score=score)
         return success_response(result)
 
 
@@ -73,9 +77,9 @@ class ScoreHistory(Resource):
         """
         Get scoring history for a team
         """
-        limit = request.args.get("limit", 50, type=int)
-        if limit < 1 or limit > 500:
-            raise ValidationError("Limit must be between 1 and 500")
+        limit = request.args.get("limit", config.DEFAULT_SCORE_HISTORY_LIMIT, type=int)
+        if limit < 1 or limit > config.MAX_SCORE_HISTORY_LIMIT:
+            raise ValidationError(f"Limit must be between 1 and {config.MAX_SCORE_HISTORY_LIMIT}")
 
-        result = get_score_history(event_id=event_id, team_id=team_id, limit=limit)
+        result = get_score_history(event=event, team=team, limit=limit)
         return success_response(result)

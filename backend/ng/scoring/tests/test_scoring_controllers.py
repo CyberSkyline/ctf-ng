@@ -45,68 +45,45 @@ class TestSubmitAnswer:
     def test_submit_answer_correct(self, db_session, user, team_with_member, event, challenge, question, score):
         """Test submitting a correct answer"""
         result = submit_answer(
-            event_id=event.id,
-            challenge_id=challenge.id,
-            question_id=question.id,
+            event=event,
+            challenge=challenge,
+            question=question,
+            team=team_with_member,
+            current_user=user,
             submission=question.answer,
-            current_user_id=user.id,
         )
 
-        assert result["is_correct"] is True
-        assert result["points_awarded"] == question.points
-        assert result["new_score"] == question.points
+        # Result is now an Attempt object
+        assert isinstance(result, Attempt)
+        assert result.is_correct is True
+        assert result.points == question.points
+        assert result.submission == question.answer
 
-        # Verify attempt was created
-        attempt = Attempt.query.filter_by(user_id=user.id, question_id=question.id).first()
-        assert attempt is not None
-        assert attempt.is_correct is True
-        assert attempt.points == question.points
+        # Verify the score was updated
+        db_session.refresh(score)
+        assert score.points == question.points
 
     def test_submit_answer_incorrect(self, db_session, user, team_with_member, event, challenge, question, score):
         """Test submitting an incorrect answer"""
         result = submit_answer(
-            event_id=event.id,
-            challenge_id=challenge.id,
-            question_id=question.id,
+            event=event,
+            challenge=challenge,
+            question=question,
+            team=team_with_member,
+            current_user=user,
             submission="wrong answer",
-            current_user_id=user.id,
         )
 
-        assert result["is_correct"] is False
-        assert result["points_awarded"] == 0
-        assert result["new_score"] == 0
+        # Result is now an Attempt object
+        assert isinstance(result, Attempt)
+        assert result.is_correct is False
+        assert result.points == 0
+        assert result.submission == "wrong answer"
 
-        # Verify attempt was created
-        attempt = Attempt.query.filter_by(user_id=user.id, question_id=question.id).first()
-        assert attempt is not None
-        assert attempt.is_correct is False
-        assert attempt.points == 0
+        # Verify the score was not updated
+        db_session.refresh(score)
+        assert score.points == 0
 
-    def test_submit_answer_user_not_in_team(self, db_session, admin, event, challenge, question):
-        """Test submitting answer when user is not in a team"""
-        with pytest.raises(BusinessLogicError) as exc_info:
-            submit_answer(
-                event_id=event.id,
-                challenge_id=challenge.id,
-                question_id=question.id,
-                submission="test",
-                current_user_id=admin.id,
-            )
-
-        assert "must be part of a team" in str(exc_info.value)
-
-    def test_submit_answer_team_not_found(self, db_session, user, event, challenge, question):
-        """Test submitting answer when team is not found"""
-        with pytest.raises(BusinessLogicError) as exc_info:
-            submit_answer(
-                event_id=event.id,
-                challenge_id=challenge.id,
-                question_id=question.id,
-                submission="test",
-                current_user_id=user.id,
-            )
-
-        assert "must be part of a team" in str(exc_info.value)
 
     def test_submit_answer_with_existing_score(
         self, db_session, user, team_with_member, event, challenge, question, score
@@ -117,17 +94,21 @@ class TestSubmitAnswer:
         db_session.commit()
 
         result = submit_answer(
-            event_id=event.id,
-            challenge_id=challenge.id,
-            question_id=question.id,
+            event=event,
+            challenge=challenge,
+            question=question,
+            team=team_with_member,
+            current_user=user,
             submission=question.answer,
-            current_user_id=user.id,
         )
 
-        expected_new_score = 50 + question.points
-        assert result["new_score"] == expected_new_score
+        # Result is the Attempt object
+        assert isinstance(result, Attempt)
+        assert result.is_correct is True
+        assert result.points == question.points
 
         # Verify score was updated
+        expected_new_score = 50 + question.points
         db_session.refresh(score)
         assert score.points == expected_new_score
 
@@ -138,14 +119,23 @@ class TestSubmitAnswer:
         db_session.commit()
 
         result = submit_answer(
-            event_id=event.id,
-            challenge_id=challenge.id,
-            question_id=question.id,
+            event=event,
+            challenge=challenge,
+            question=question,
+            team=team_with_member,
+            current_user=user,
             submission=question.answer,
-            current_user_id=user.id,
         )
 
-        assert result["new_score"] == 0  # No score record found
+        # Result is the Attempt object
+        assert isinstance(result, Attempt)
+        assert result.is_correct is True
+        assert result.points == question.points
+
+        # Verify score was created (by Score.find_by_team_and_event)
+        score = Score.query.filter_by(team_id=team_with_member.id, event_id=event.id).first()
+        assert score is not None
+        assert score.points == question.points
 
 
 class TestRedeemHint:
@@ -154,32 +144,20 @@ class TestRedeemHint:
     def test_redeem_hint_success(self, db_session, user, team_with_member, event, challenge, hint):
         """Test successfully redeeming a hint"""
         result = redeem_hint(
-            event_id=event.id,
-            challenge_id=challenge.id,
-            hint_id=hint.id,
-            current_user_id=user.id,
+            event=event,
+            challenge=challenge,
+            hint=hint,
+            team=team_with_member,
+            current_user=user,
         )
 
-        assert "redemption" in result
-        assert result["hint_body"] == hint.body
-        assert result["points_deducted"] == hint.deduction
+        # Result is now a HintRedemption object
+        assert isinstance(result, HintRedemption)
+        assert result.hint_id == hint.id
+        assert result.user_id == user.id
+        assert result.team_id == team_with_member.id
+        assert result.points == -hint.deduction
 
-        # Verify redemption was created
-        redemption = HintRedemption.query.filter_by(user_id=user.id, hint_id=hint.id).first()
-        assert redemption is not None
-        assert redemption.points == -hint.deduction
-
-    def test_redeem_hint_user_not_in_team(self, db_session, admin, event, challenge, hint):
-        """Test redeeming hint when user is not in a team"""
-        with pytest.raises(BusinessLogicError) as exc_info:
-            redeem_hint(
-                event_id=event.id,
-                challenge_id=challenge.id,
-                hint_id=hint.id,
-                current_user_id=admin.id,
-            )
-
-        assert "must be part of a team" in str(exc_info.value)
 
     def test_redeem_hint_already_redeemed(self, db_session, user, team_with_member, event, challenge, hint):
         """Test redeeming hint that was already redeemed"""
@@ -194,10 +172,11 @@ class TestRedeemHint:
 
         with pytest.raises(BusinessLogicError) as exc_info:
             redeem_hint(
-                event_id=event.id,
-                challenge_id=challenge.id,
-                hint_id=hint.id,
-                current_user_id=user.id,
+                event=event,
+                challenge=challenge,
+                hint=hint,
+                team=team_with_member,
+                current_user=user,
             )
 
         assert "already been redeemed" in str(exc_info.value)
@@ -212,14 +191,16 @@ class TestRedeemHint:
         db_session.commit()
 
         result = redeem_hint(
-            event_id=event.id,
-            challenge_id=challenge.id,
-            hint_id=free_hint.id,
-            current_user_id=user.id,
+            event=event,
+            challenge=challenge,
+            hint=free_hint,
+            team=team_with_member,
+            current_user=user,
         )
 
-        assert result["points_deducted"] == 0
-        assert result["hint_body"] == free_hint.body
+        # Result is a HintRedemption object
+        assert isinstance(result, HintRedemption)
+        assert result.points == 0  # No deduction for free hint
 
 
 class TestGetLeaderboard:
@@ -262,42 +243,13 @@ class TestGetTeamScore:
 
     def test_get_team_score_basic(self, db_session, event, team_with_member, score):
         """Test getting basic team score"""
-        result = get_team_score(event.id, team_with_member.id)
+        result = get_team_score(score=score)
 
-        assert "score" in result
-        assert "rank" in result
-        assert result["score"] == score
-        assert result["rank"] == 1  # Only team
-
-    def test_get_team_score_with_history(self, db_session, event, team_with_member, score, score_event):
-        """Test getting team score with history"""
-        result = get_team_score(event.id, team_with_member.id, include_history=True)
-
-        assert "score" in result
-        assert "rank" in result
-        assert "recent_events" in result
-        assert len(result["recent_events"]) >= 1
-
-    def test_get_team_score_not_found(self, db_session, event, team_with_member):
-        """Test getting score for team that doesn't exist in event"""
-        # Delete the score
-        Score.query.filter_by(team_id=team_with_member.id, event_id=event.id).delete()
-        db_session.commit()
-
-        with pytest.raises(NotFoundError) as exc_info:
-            get_team_score(event.id, team_with_member.id)
-
-        assert "No score found" in str(exc_info.value)
-
-    def test_get_team_score_rank_calculation(self, db_session, event, multiple_teams_with_scores):
-        """Test that rank is calculated correctly"""
-        teams_data = multiple_teams_with_scores
-
-        # Get score for the team with lowest points (index 0 = 100 points)
-        lowest_team = teams_data[0]["team"]
-        result = get_team_score(event.id, lowest_team.id)
-
-        assert result["rank"] == 5  # Should be last place
+        # Controller now just returns the score object
+        assert isinstance(result, Score)
+        assert result.team_id == team_with_member.id
+        assert result.event_id == event.id
+        assert result.points == score.points
 
 
 class TestAwardManualPoints:
@@ -308,23 +260,24 @@ class TestAwardManualPoints:
         initial_points = score.points
 
         result = award_manual_points(
-            event_id=event.id,
-            team_id=team_with_member.id,
+            event=event,
+            team=team_with_member,
+            score=score,
             points=100,
             reason="Excellent teamwork",
             admin_id=admin.id,
         )
 
-        assert "award" in result
-        assert "updated_score" in result
-        assert result["previous_points"] == initial_points
-        assert result["new_points"] == initial_points + 100
+        # Result is now a ManualPointAward object
+        assert isinstance(result, ManualPointAward)
+        assert result.team_id == team_with_member.id
+        assert result.admin_id == admin.id
+        assert result.points == 100
+        assert result.reason == "Excellent teamwork"
 
-        # Verify award was created
-        award = ManualPointAward.query.filter_by(team_id=team_with_member.id, admin_id=admin.id).first()
-        assert award is not None
-        assert award.points == 100
-        assert award.reason == "Excellent teamwork"
+        # Verify score was updated
+        db_session.refresh(score)
+        assert score.points == initial_points + 100
 
     def test_award_manual_points_negative(self, db_session, admin, event, team_with_member, score):
         """Test awarding negative manual points (penalty)"""
@@ -332,44 +285,35 @@ class TestAwardManualPoints:
         db_session.commit()
 
         result = award_manual_points(
-            event_id=event.id,
-            team_id=team_with_member.id,
+            event=event,
+            team=team_with_member,
+            score=score,
             points=-50,
             reason="Rule violation",
             admin_id=admin.id,
         )
 
-        assert result["previous_points"] == 200
-        assert result["new_points"] == 150
+        # Result is a ManualPointAward object
+        assert isinstance(result, ManualPointAward)
+        assert result.points == -50
+
+        # Verify score was updated
+        db_session.refresh(score)
+        assert score.points == 150
 
         # Verify award was created with negative points
         award = ManualPointAward.query.filter_by(team_id=team_with_member.id, admin_id=admin.id).first()
         assert award is not None
         assert award.points == -50
 
-    def test_award_manual_points_team_not_found(self, db_session, admin, event, team_with_member):
-        """Test awarding points to team with no score"""
-        # Delete the score
-        Score.query.filter_by(team_id=team_with_member.id, event_id=event.id).delete()
-        db_session.commit()
-
-        with pytest.raises(NotFoundError) as exc_info:
-            award_manual_points(
-                event_id=event.id,
-                team_id=team_with_member.id,
-                points=100,
-                reason="Test",
-                admin_id=admin.id,
-            )
-
-        assert "has no score in event" in str(exc_info.value)
 
     def test_award_manual_points_zero_points_fails(self, db_session, admin, event, team_with_member, score):
         """Test that awarding zero points fails"""
         with pytest.raises(ValidationError) as exc_info:
             award_manual_points(
-                event_id=event.id,
-                team_id=team_with_member.id,
+                event=event,
+                team=team_with_member,
+                score=score,
                 points=0,
                 reason="Test",
                 admin_id=admin.id,
@@ -381,8 +325,9 @@ class TestAwardManualPoints:
         """Test that non-admin cannot award points"""
         with pytest.raises(ValidationError) as exc_info:
             award_manual_points(
-                event_id=event.id,
-                team_id=team_with_member.id,
+                event=event,
+                team=team_with_member,
+                score=score,
                 points=100,
                 reason="Test",
                 admin_id=user.id,
@@ -394,51 +339,49 @@ class TestAwardManualPoints:
 class TestGetScoreHistory:
     """Test the get_score_history controller"""
 
-    def test_get_score_history_basic(self, db_session, event, score_event):
+    def test_get_score_history_basic(self, db_session, event, team_with_member, score_event):
         """Test getting basic score history"""
-        result = get_score_history(event.id)
+        result = get_score_history(event, team_with_member)
 
-        assert "total_events" in result
-        assert "events" in result
-        assert "filters_applied" in result
-        assert result["total_events"] >= 1
-        assert len(result["events"]) >= 1
+        assert isinstance(result, list)
+        assert len(result) >= 1
+        assert all(isinstance(se, ScoreEvent) for se in result)
 
     def test_get_score_history_with_team_filter(self, db_session, event, team_with_member, score_event):
         """Test getting score history filtered by team"""
-        result = get_score_history(event.id, team_id=team_with_member.id)
+        result = get_score_history(event, team_with_member)
 
-        assert result["filters_applied"]["team_id"] == team_with_member.id
-        assert all(event.team_id == team_with_member.id for event in result["events"])
+        # All events should be for the specified team
+        assert all(se.team_id == team_with_member.id for se in result)
 
-    def test_get_score_history_with_limit(self, db_session, event, score_event_factory, score):
+    def test_get_score_history_with_limit(self, db_session, event, team_with_member, score_event_factory, score):
         """Test getting score history with limit"""
         # Create multiple score events
         for i in range(10):
             score_event_factory(score_id=score.id, team_id=score.team_id, points=10 * (i + 1))
 
-        result = get_score_history(event.id, limit=5)
+        result = get_score_history(event, team_with_member, limit=5)
 
-        assert len(result["events"]) == 5
-        assert result["filters_applied"]["limit"] == 5
+        # Should return only 5 events
+        assert len(result) == 5
 
-    def test_get_score_history_eager_loading(self, db_session, event, score_event):
+    def test_get_score_history_eager_loading(self, db_session, event, team_with_member, score_event):
         """Test that eager loading is enabled for score history"""
         with patch.object(ScoreEvent, "find_filtered_events") as mock_find:
             mock_find.return_value = [score_event]
 
-            get_score_history(event.id)
+            get_score_history(event, team_with_member)
 
             mock_find.assert_called_once()
             call_args = mock_find.call_args
             assert call_args[1]["eager_load_source"] is True
 
-    def test_get_score_history_empty(self, db_session, event):
+    def test_get_score_history_empty(self, db_session, event, team_with_member):
         """Test getting score history for event with no events"""
-        result = get_score_history(event.id)
+        result = get_score_history(event, team_with_member)
 
-        assert result["total_events"] == 0
-        assert result["events"] == []
+        # Should return empty list
+        assert result == []
 
 
 class TestRecalculateScore:
@@ -447,16 +390,17 @@ class TestRecalculateScore:
     def test_recalculate_score_basic(self, db_session, event, team_with_member, score):
         """Test basic score recalculation"""
         # Manually set score to wrong value
-        score.points = 999
+        old_points = 999
+        score.points = old_points
         db_session.commit()
 
-        result = recalculate_score(event.id, team_with_member.id)
+        result = recalculate_score(score)
 
-        assert result["team_id"] == team_with_member.id
-        assert result["event_id"] == event.id
-        assert result["old_points"] == 999
-        assert result["new_points"] == 0  # No score events
-        assert result["difference"] == -999
+        # Result is the updated Score object
+        assert isinstance(result, Score)
+        assert result.team_id == team_with_member.id
+        assert result.event_id == event.id
+        assert result.points == 0  # No score events, so should be 0
 
     def test_recalculate_score_with_events(self, db_session, event, team_with_member, score, score_event_factory):
         """Test score recalculation with score events"""
@@ -469,42 +413,28 @@ class TestRecalculateScore:
         score.points = 999
         db_session.commit()
 
-        result = recalculate_score(event.id, team_with_member.id)
+        result = recalculate_score(score)
 
-        assert result["old_points"] == 999
-        assert result["new_points"] == 130  # 100 + 50 - 20
-        assert result["difference"] == -869
+        # Result is the updated Score object
+        assert isinstance(result, Score)
+        assert result.points == 130  # 100 + 50 - 20
 
-    def test_recalculate_score_not_found(self, db_session, event, team_with_member):
-        """Test recalculating score for team that doesn't exist in event"""
-        # Delete the score
-        Score.query.filter_by(team_id=team_with_member.id, event_id=event.id).delete()
-        db_session.commit()
-
-        with pytest.raises(NotFoundError) as exc_info:
-            recalculate_score(event.id, team_with_member.id)
-
-        assert "has no score in event" in str(exc_info.value)
 
     def test_recalculate_score_updates_timestamp(self, db_session, event, team_with_member, score):
         """Test that recalculation updates the last_update timestamp"""
         old_timestamp = score.last_update
 
-        result = recalculate_score(event.id, team_with_member.id)
+        recalculate_score(score)
 
-        assert "last_update" in result
-        # Timestamp should be updated
         db_session.refresh(score)
         assert score.last_update > old_timestamp
 
     def test_recalculate_score_no_change(self, db_session, event, team_with_member, score):
         """Test recalculating score when no change is needed"""
         # Score is already correct (0 points, no events)
-        result = recalculate_score(event.id, team_with_member.id)
+        result = recalculate_score(score)
 
-        assert result["old_points"] == 0
-        assert result["new_points"] == 0
-        assert result["difference"] == 0
+        assert result.points == 0  # Should remain 0
 
 
 class TestControllerIntegration:
@@ -518,36 +448,40 @@ class TestControllerIntegration:
 
         # 1. Submit correct answer
         answer_result = submit_answer(
-            event_id=event.id,
-            challenge_id=challenge.id,
-            question_id=question.id,
+            event=event,
+            challenge=challenge,
+            question=question,
+            team=team_with_member,
+            current_user=user,
             submission=question.answer,
-            current_user_id=user.id,
         )
-        assert answer_result["is_correct"] is True
+        assert answer_result.is_correct is True
 
         # 2. Redeem hint
         hint_result = redeem_hint(
-            event_id=event.id,
-            challenge_id=challenge.id,
-            hint_id=hint.id,
-            current_user_id=user.id,
+            event=event,
+            challenge=challenge,
+            hint=hint,
+            team=team_with_member,
+            current_user=user,
         )
-        assert hint_result["points_deducted"] == hint.deduction
+        assert hint_result.points == -hint.deduction
 
         # 3. Award manual points
-        award_manual_points(
-            event_id=event.id,
-            team_id=team_with_member.id,
+        award_result = award_manual_points(
+            event=event,
+            team=team_with_member,
+            score=score,
             points=50,
             reason="Bonus points",
             admin_id=admin.id,
         )
+        assert award_result.points == 50
 
         # 4. Check final score
-        final_score = get_team_score(event.id, team_with_member.id)
+        db_session.refresh(score)
         expected_total = initial_score + question.points - hint.deduction + 50
-        assert final_score["score"].points == expected_total
+        assert score.points == expected_total
 
         # 5. Check leaderboard
         leaderboard = get_leaderboard(event.id)
@@ -560,40 +494,42 @@ class TestControllerIntegration:
         """Test that score history shows all scoring actions"""
         # Perform various actions
         submit_answer(
-            event_id=event.id,
-            challenge_id=challenge.id,
-            question_id=question.id,
+            event=event,
+            challenge=challenge,
+            question=question,
+            team=team_with_member,
+            current_user=user,
             submission=question.answer,
-            current_user_id=user.id,
         )
 
         redeem_hint(
-            event_id=event.id,
-            challenge_id=challenge.id,
-            hint_id=hint.id,
-            current_user_id=user.id,
+            event=event,
+            challenge=challenge,
+            hint=hint,
+            team=team_with_member,
+            current_user=user,
         )
 
         award_manual_points(
-            event_id=event.id,
-            team_id=team_with_member.id,
+            event=event,
+            team=team_with_member,
+            score=score,
             points=25,
             reason="Good sportsmanship",
             admin_id=admin.id,
         )
 
         # Check history
-        history = get_score_history(event.id, team_id=team_with_member.id)
+        history = get_score_history(event, team_with_member)
 
         # Should have 3 events (answer, hint, manual award)
-        assert history["total_events"] == 3
+        assert len(history) == 3
 
-        # Events should be ordered by timestamp descending
-        events = history["events"]
-        assert len(events) == 3
+        # Events should be ScoreEvent objects
+        assert all(isinstance(se, ScoreEvent) for se in history)
 
         # Verify point values
-        total_points = sum(event.points for event in events)
+        total_points = sum(se.points for se in history)
         expected_total = question.points - hint.deduction + 25
         assert total_points == expected_total
 
@@ -603,34 +539,37 @@ class TestControllerIntegration:
         """Test recalculation after complex scoring operations"""
         # Perform multiple scoring actions
         submit_answer(
-            event_id=event.id,
-            challenge_id=challenge.id,
-            question_id=question.id,
+            event=event,
+            challenge=challenge,
+            question=question,
+            team=team_with_member,
+            current_user=user,
             submission=question.answer,
-            current_user_id=user.id,
         )
 
         redeem_hint(
-            event_id=event.id,
-            challenge_id=challenge.id,
-            hint_id=hint.id,
-            current_user_id=user.id,
+            event=event,
+            challenge=challenge,
+            hint=hint,
+            team=team_with_member,
+            current_user=user,
         )
 
         award_manual_points(
-            event_id=event.id,
-            team_id=team_with_member.id,
+            event=event,
+            team=team_with_member,
+            score=score,
             points=30,
             reason="Creativity bonus",
             admin_id=admin.id,
         )
 
         # Get current score
+        db_session.refresh(score)
         current_score = score.points
 
         # Recalculate should show no difference
-        recalc_result = recalculate_score(event.id, team_with_member.id)
+        recalc_result = recalculate_score(score)
 
-        assert recalc_result["old_points"] == current_score
-        assert recalc_result["new_points"] == current_score
-        assert recalc_result["difference"] == 0
+        # Score should remain the same since it was already correct
+        assert recalc_result.points == current_score

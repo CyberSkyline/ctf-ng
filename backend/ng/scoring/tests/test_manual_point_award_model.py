@@ -172,13 +172,12 @@ class TestCreateAward:
                 event_id=event.id,
             )
 
-    def test_create_award_no_score_in_event_fails(self, db_session, admin, team_factory, event_factory):
-        """Test that creating an award fails when team has no score in event"""
-        from ...core.exceptions import ValidationError
-
+    def test_create_award_creates_score_if_needed(self, db_session, admin, team_factory, event_factory, user_factory):
+        """Test that creating an award automatically creates a score if one doesn't exist"""
         # Create a different event and team without score
         other_event = event_factory()
-        team_without_score = team_factory(event=other_event)
+        captain = user_factory(name="NoScoreCaptain", email="noscorecapt@example.com")
+        team_without_score = team_factory(event=other_event, members=[captain])
 
         # Delete the auto-created score
         score = Score.query.filter_by(team_id=team_without_score.id, event_id=other_event.id).first()
@@ -186,16 +185,27 @@ class TestCreateAward:
             db_session.delete(score)
             db_session.commit()
 
-        with pytest.raises(Exception) as exc_info:
-            ManualPointAward.create_award(
-                admin_id=admin.id,
-                team_id=team_without_score.id,
-                points=100,
-                reason="Test award",
-                event_id=other_event.id,
-            )
+        # Verify no score exists
+        score = Score.query.filter_by(team_id=team_without_score.id, event_id=other_event.id).first()
+        assert score is None
 
-        assert "has no score in event" in str(exc_info.value)
+        # Create the award - should succeed and create a score
+        award = ManualPointAward.create_award(
+            admin_id=admin.id,
+            team_id=team_without_score.id,
+            points=100,
+            reason="Test award",
+            event_id=other_event.id,
+        )
+
+        # Verify award was created
+        assert award is not None
+        assert award.points == 100
+
+        # Verify score was created automatically
+        score = Score.query.filter_by(team_id=team_without_score.id, event_id=other_event.id).first()
+        assert score is not None
+        assert score.points == 100
 
 
 class TestDeleteAward:
@@ -252,10 +262,11 @@ class TestDeleteAward:
 class TestFindFilteredAwards:
     """Test the find_filtered_awards method"""
 
-    def test_find_by_team_id(self, db_session, admin, team_with_member, team_factory, event):
+    def test_find_by_team_id(self, db_session, admin, team_with_member, team_factory, event, user_factory):
         """Test filtering awards by team_id"""
         # Create another team
-        other_team = team_factory(event=event)
+        other_captain = user_factory(name="FilterCapt1", email="filtercapt1@example.com")
+        other_team = team_factory(event=event, members=[other_captain])
 
         # Create awards for different teams
         ManualPointAward.create_award(
@@ -295,11 +306,12 @@ class TestFindFilteredAwards:
         assert len(awards) == 1
         assert awards[0].admin_id == admin.id
 
-    def test_find_by_event_id(self, db_session, admin, team_with_member, team_factory, event, event_factory):
+    def test_find_by_event_id(self, db_session, admin, team_with_member, team_factory, event, event_factory, user_factory):
         """Test filtering awards by event_id"""
         # Create another event and team
         other_event = event_factory()
-        other_team = team_factory(event=other_event)
+        other_captain = user_factory(name="FilterCapt2", email="filtercapt2@example.com")
+        other_team = team_factory(event=other_event, members=[other_captain])
 
         # Create awards for teams in different events
         award1 = ManualPointAward.create_award(
@@ -424,7 +436,7 @@ class TestManualPointAwardValidation:
             ManualPointAward.validate({"team_id": team_with_member.id, "points": 100, "reason": "Test award"})
 
         assert "admin_id" in exc_info.value.errors
-        assert "Admin ID is required" in exc_info.value.errors["admin_id"]
+        assert "Admin Id is required" in exc_info.value.errors["admin_id"]
 
     def test_validate_non_admin_user(self, db_session, user, team_with_member):
         """Test validation fails with non-admin user"""
@@ -451,7 +463,7 @@ class TestManualPointAwardValidation:
             ManualPointAward.validate({"admin_id": admin.id, "team_id": team_with_member.id, "reason": "Test award"})
 
         assert "points" in exc_info.value.errors
-        assert "Points value is required" in exc_info.value.errors["points"]
+        assert "Points is required" in exc_info.value.errors["points"]
 
     def test_validate_zero_points(self, db_session, admin, team_with_member):
         """Test validation fails with zero points"""
@@ -504,46 +516,6 @@ class TestManualPointAwardValidation:
                     "reason": "   ",  # Empty after strip
                 }
             )
-
-        assert "reason" in exc_info.value.errors
-
-
-class TestValidateApiAward:
-    """Test the validate_api_award method"""
-
-    def test_validate_api_award_valid(self):
-        """Test API award validation with valid data"""
-        data = ManualPointAward.validate_api_award({"points": 100, "reason": "Great job"})
-
-        assert data["points"] == 100
-        assert data["reason"] == "Great job"
-
-    def test_validate_api_award_missing_points(self):
-        """Test API award validation fails without points"""
-        from ...core.exceptions import ValidationError
-
-        with pytest.raises(ValidationError) as exc_info:
-            ManualPointAward.validate_api_award({"reason": "Test award"})
-
-        assert "points" in exc_info.value.errors
-        assert "Points value is required" in exc_info.value.errors["points"]
-
-    def test_validate_api_award_zero_points(self):
-        """Test API award validation fails with zero points"""
-        from ...core.exceptions import ValidationError
-
-        with pytest.raises(ValidationError) as exc_info:
-            ManualPointAward.validate_api_award({"points": 0, "reason": "Test award"})
-
-        assert "points" in exc_info.value.errors
-        assert "non-zero integer" in exc_info.value.errors["points"]
-
-    def test_validate_api_award_missing_reason(self):
-        """Test API award validation fails without reason"""
-        from ...core.exceptions import ValidationError
-
-        with pytest.raises(ValidationError) as exc_info:
-            ManualPointAward.validate_api_award({"points": 100})
 
         assert "reason" in exc_info.value.errors
 

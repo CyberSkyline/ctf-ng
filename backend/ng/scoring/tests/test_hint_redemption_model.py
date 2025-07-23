@@ -286,11 +286,12 @@ class TestFindFilteredRedemptions:
     """Test the find_filtered_redemptions method"""
 
     def test_find_by_team_id(
-        self, db_session, hint_redemption_factory, user, team_with_member, team_factory, event, hint
+        self, db_session, hint_redemption_factory, user, team_with_member, team_factory, event, hint, user_factory
     ):
         """Test filtering redemptions by team_id"""
         # Create another team
-        other_team = team_factory(event=event)
+        other_captain = user_factory(name="HintCapt1", email="hintcapt1@example.com")
+        other_team = team_factory(event=event, members=[other_captain])
 
         # Create redemptions for different teams
         hint_redemption_factory(hint_id=hint.id, user_id=user.id, team_id=team_with_member.id)
@@ -328,7 +329,7 @@ class TestFindFilteredRedemptions:
 
         # Create another challenge and hint
         other_challenge = Challenge(
-            name="Other Challenge", description="Another challenge", icon="icon2", summary="Summary 2"
+            name="Other Challenge", description="Another challenge", icon="icon2", summary="Summary 2", event_id=challenge.event_id
         )
         db_session.add(other_challenge)
         db_session.commit()
@@ -464,7 +465,7 @@ class TestHintRedemptionValidation:
             )
 
         assert "points" in exc_info.value.errors
-        assert "must be zero or negative" in exc_info.value.errors["points"]
+        assert "Points must be at most 0" in exc_info.value.errors["points"]
 
     def test_validate_zero_points(self, db_session, hint, user, team_with_member):
         """Test validation passes with zero points"""
@@ -482,7 +483,7 @@ class TestHintRedemptionValidation:
             HintRedemption.validate({"hint_id": hint.id, "user_id": user.id, "team_id": team_with_member.id})
 
         assert "points" in exc_info.value.errors
-        assert "Points value is required" in exc_info.value.errors["points"]
+        assert "Points is required" in exc_info.value.errors["points"]
 
     def test_validate_non_integer_points(self, db_session, hint, user, team_with_member):
         """Test validation fails with non-integer points"""

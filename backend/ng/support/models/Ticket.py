@@ -79,37 +79,12 @@ class Ticket(db.Model):
             required=True,
             friendly_name="Ticket subject",
         )
-        validator.validate_positive_integer(
-            data,
-            "author_id",
-            required=True,
-            friendly_name="Author ID",
-        )
+        validator.validate_model_id(data, "author_id", "Users", required=True)
 
-        validator.validate_positive_integer(
-            data,
-            "event_id",
-            required=False,
-            friendly_name="Event ID",
-        )
-        validator.validate_positive_integer(
-            data,
-            "team_id",
-            required=False,
-            friendly_name="Team ID",
-        )
-        validator.validate_positive_integer(
-            data,
-            "challenge_id",
-            required=False,
-            friendly_name="Challenge ID",
-        )
-        validator.validate_positive_integer(
-            data,
-            "assigned_to",
-            required=False,
-            friendly_name="Assigned to",
-        )
+        validator.validate_model_id(data, "event_id", "Event", required=False)
+        validator.validate_model_id(data, "team_id", "Team", required=False)
+        validator.validate_model_id(data, "challenge_id", "Challenge", required=False)
+        validator.validate_model_id(data, "assigned_to", "Users", required=False)
         validator.validate_boolean(
             data,
             "muted",
@@ -129,34 +104,41 @@ class Ticket(db.Model):
                         )
                     else:
                         valid_tag_ids.append(tag_id)
-                if not validator.errors:
-                    validator._add_parsed_data("tag_ids", valid_tag_ids)
+                
+                if valid_tag_ids and not validator.errors:
+                    # LAZY-IMPORT
+                    from .TicketTag import TicketTag
+                    
+                    requested_tags = TicketTag.query.filter(
+                        TicketTag.id.in_(valid_tag_ids)
+                    ).all()
+                    
+                    if len(requested_tags) != len(valid_tag_ids):
+                        found_ids = {tag.id for tag in requested_tags}
+                        missing_ids = set(valid_tag_ids) - found_ids
+                        validator.errors["tag_ids"] = f"Tag IDs not found: {missing_ids}"
+                    else:
+                        validator._add_parsed_data("tag_ids", valid_tag_ids)
 
-        is_valid, errors, parsed_data = validator.is_valid()
-        if not is_valid:
-            raise ValidationError("Ticket data is invalid.", errors=errors)
-        return parsed_data
+        return validator.validate()
 
     @hybrid_property
     def status(self) -> str:
         """
-        Compute ticket status based on stored fields.
+        Status is only open/closed
         """
         if self.closed_timestamp is not None:
             return "closed"
-        elif self.muted:
-            return "muted"
         else:
             return "open"
-
+    
     @status.expression
     def status(cls):
         """
-        SQLAlchemy expression for status property.
+        SQLAlchemy expression for status property
         """
         return db.case(
             (cls.closed_timestamp.isnot(None), "closed"),
-            (cls.muted.is_(True), "muted"),
             else_="open",
         )
 
@@ -174,10 +156,10 @@ class Ticket(db.Model):
             "subject": self.subject,
             "author_id": self.author_id,
             "status": self.status,
-            "opened_timestamp": self.opened_timestamp.isoformat()
+            "opened_timestamp": self.opened_timestamp.isoformat() + "Z"
             if self.opened_timestamp
             else None,
-            "last_updated": self.last_updated.isoformat()
+            "last_updated": self.last_updated.isoformat() + "Z"
             if self.last_updated
             else None,
             "event_id": self.event_id,
@@ -189,14 +171,14 @@ class Ticket(db.Model):
 
         if include_admin_fields:
             first_admin_response_timestamp = (
-                self.first_admin_response_timestamp.isoformat()
+                self.first_admin_response_timestamp.isoformat() + "Z"
                 if self.first_admin_response_timestamp
                 else None
             )
             data.update(
                 {
                     "assigned_to": self.assigned_to,
-                    "closed_timestamp": self.closed_timestamp.isoformat()
+                    "closed_timestamp": self.closed_timestamp.isoformat() + "Z"
                     if self.closed_timestamp
                     else None,
                     "muted": self.muted,
@@ -233,38 +215,14 @@ class Ticket(db.Model):
             Ticket: The created ticket instance
         """
 
-        data = {
+        validated_data = cls.validate({
             "subject": subject,
             "author_id": author_id,
-        }
-
-        if event_id is not None:
-            data["event_id"] = event_id
-        if team_id is not None:
-            data["team_id"] = team_id
-        if challenge_id is not None:
-            data["challenge_id"] = challenge_id
-        if tag_ids is not None:
-            data["tag_ids"] = tag_ids
-
-        validated_data = cls.validate(data)
-
-        if not Users.query.filter_by(id=validated_data["author_id"]).first():
-            raise NotFoundError(
-                f"Author with ID {validated_data['author_id']} not found"
-            )
-
-        if validated_data.get("event_id"):
-            if not Event.find_by_id(validated_data["event_id"]):
-                raise NotFoundError(
-                    f"Event with ID {validated_data['event_id']} not found"
-                )
-
-        if validated_data.get("team_id"):
-            if not Team.find_by_id(validated_data["team_id"]):
-                raise NotFoundError(
-                    f"Team with ID {validated_data['team_id']} not found"
-                )
+            "event_id": event_id,
+            "team_id": team_id,
+            "challenge_id": challenge_id,
+            "tag_ids": tag_ids,
+        })
 
         ticket = cls(
             subject=validated_data["subject"],
@@ -281,12 +239,6 @@ class Ticket(db.Model):
             requested_tags = TicketTag.query.filter(
                 TicketTag.id.in_(validated_data["tag_ids"])
             ).all()
-
-            if len(requested_tags) != len(validated_data["tag_ids"]):
-                found_ids = {tag.id for tag in requested_tags}
-                missing_ids = set(validated_data["tag_ids"]) - found_ids
-                raise NotFoundError(f"Tag IDs not found: {missing_ids}")
-
             ticket.tags.extend(requested_tags)
 
         db.session.add(ticket)
@@ -330,31 +282,19 @@ class Ticket(db.Model):
                 update_data, "subject", config.TICKET_SUBJECT_MAX_LENGTH
             )
 
-        if "event_id" in update_data and update_data["event_id"] is not None:
-            if not Event.find_by_id(update_data["event_id"]):
-                raise NotFoundError(
-                    f"Event with ID {update_data['event_id']} not found"
-                )
-            validator.validate_positive_integer(update_data, "event_id")
+        if "event_id" in update_data:
+            validator.validate_model_id(update_data, "event_id", "Event")
 
-        if "team_id" in update_data and update_data["team_id"] is not None:
-            if not Team.find_by_id(update_data["team_id"]):
-                raise NotFoundError(f"Team with ID {update_data['team_id']} not found")
-            validator.validate_positive_integer(update_data, "team_id")
+        if "team_id" in update_data:
+            validator.validate_model_id(update_data, "team_id", "Team")
 
-        if "assigned_to" in update_data and update_data["assigned_to"] is not None:
-            if not Users.query.get(update_data["assigned_to"]):
-                raise NotFoundError(
-                    f"User to assign with ID {update_data['assigned_to']} not found"
-                )
-            validator.validate_positive_integer(update_data, "assigned_to")
+        if "assigned_to" in update_data:
+            validator.validate_model_id(update_data, "assigned_to", "Users")
 
         if "muted" in update_data:
             validator.validate_boolean(update_data, "muted")
 
-        is_valid, errors, parsed_data = validator.is_valid()
-        if not is_valid:
-            raise ValidationError("Ticket update data is invalid", errors=errors)
+        parsed_data = validator.validate()
 
         for key, value in parsed_data.items():
             setattr(self, key, value)
@@ -377,7 +317,6 @@ class Ticket(db.Model):
         Reopen a closed ticket.
         """
         self.closed_timestamp = None
-        self.muted = False
         self.last_updated = utc_now()
         if commit:
             db.session.commit()
@@ -482,12 +421,9 @@ class Ticket(db.Model):
             query = query.filter_by(author_id=user_id)
 
         if status == "open":
-            query = query.filter(cls.closed_timestamp.is_(None), cls.muted.is_(False))
+            query = query.filter(cls.closed_timestamp.is_(None))
         elif status == "closed":
             query = query.filter(cls.closed_timestamp.isnot(None))
-        elif status == "muted":
-            query = query.filter(cls.muted.is_(True))
-
         # Additional filters (admin only)
         if is_admin:
             if assigned_to is not None:

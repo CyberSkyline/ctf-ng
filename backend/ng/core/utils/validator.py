@@ -8,7 +8,7 @@ from enum import Enum
 from functools import wraps
 from typing import Any
 
-from CTFd.models import get_class_by_tablename
+from CTFd.models import get_class_by_tablename, Users
 
 from . import utc_now
 from ..exceptions import ValidationError
@@ -149,6 +149,7 @@ class BaseValidator:
             "TeamMember": "ng_team_members",
             "Ticket": "ng_tickets",
             "User": "ng_users",
+            "Users": "users",  # CTFd's main users table
         }
 
         # Get the table name for the model
@@ -176,24 +177,97 @@ class BaseValidator:
             self.errors[field] = f"Error validating {friendly_name}: {str(e)}"
             return
 
-    @validation_field
     def validate_positive_integer(
         self,
         data: dict[str, Any],
         field: str,
         required: bool = False,
         friendly_name: str | None = None,
+    ) -> None:
+        """
+        Validate a positive (greater than zero) integer
+        """
+        return self.validate_integer(
+            data, 
+            field, 
+            min_value=1,
+            required=required,
+            friendly_name=friendly_name
+        )
+
+    @validation_field
+    def validate_admin_id(
+        self,
+        data: dict[str, Any],
+        field: str = "admin_id",
+        required: bool = True,
+        friendly_name: str | None = None,
         value: Any = None,  # Injected by decorator
     ) -> None:
+        """
+        Validate that a user ID belongs to an admin user
+        """
+        if value is None:
+            return
+            
+        try:
+            user_id = int(value)
+            if user_id <= 0:
+                self.errors[field] = f"{friendly_name} must be a positive number"
+                return
+        except (ValueError, TypeError):
+            self.errors[field] = f"{friendly_name} must be a valid number"
+            return
+                
+        user = Users.query.get(user_id)
+        
+        if not user:
+            self.errors[field] = f"{friendly_name} with ID {user_id} does not exist"
+            return
+            
+        if user.type != "admin":
+            self.errors[field] = f"User must be an admin to perform this action"
+            return
+            
+        self._add_parsed_data(field, user_id)
+
+    @validation_field
+    def validate_integer(
+        self,
+        data: dict[str, Any],
+        field: str,
+        min_value: int | None = None,
+        max_value: int | None = None,
+        allow_zero: bool = True,
+        required: bool = False,
+        friendly_name: str | None = None,
+        value: Any = None,  # Injected by decorator
+    ) -> None:
+        """
+        Validate an integer field with optional constraints.
+        """
         try:
             int_value = int(value)  # type: ignore[arg-type]
-            if int_value <= 0:
-                self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_POSITIVE.format(field=friendly_name)
+            
+            # Check zero constraint
+            if not allow_zero and int_value == 0:
+                self.errors[field] = f"{friendly_name} cannot be zero"
                 return
+                
+            # Check min constraint
+            if min_value is not None and int_value < min_value:
+                self.errors[field] = f"{friendly_name} must be at least {min_value}"
+                return
+                
+            # Check max constraint  
+            if max_value is not None and int_value > max_value:
+                self.errors[field] = f"{friendly_name} must be at most {max_value}"
+                return
+                
             self._add_parsed_data(field, int_value)
+            
         except (ValueError, TypeError):
-            self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_NUMBER.format(field=friendly_name)
-            return
+            self.errors[field] = f"{friendly_name} must be a valid integer"
 
     @validation_field
     def validate_integer_range(
@@ -328,9 +402,5 @@ class BaseValidator:
             )
             return
 
-    def validate_optional_timestamp(self, data: dict[str, Any], field: str = "timestamp", allow_past: bool = True) -> None:
-        """Optional scoring timestamp validation."""
-        if field in data and data[field] is not None:
-            self.validate_datetime(data, field, allow_past=allow_past, required=False)
 
 

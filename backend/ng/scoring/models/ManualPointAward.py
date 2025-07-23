@@ -7,11 +7,10 @@ from typing import Any, TypedDict
 
 from datetime import datetime
 
-from CTFd.models import db, Users
+from CTFd.models import db
 
 from ... import config
 from ...core.utils import utc_now
-from ...core.exceptions import ValidationError
 from ...core.utils.validator import BaseValidator
 
 
@@ -69,57 +68,28 @@ class ManualPointAward(db.Model):
         """
         validator = BaseValidator()
 
-        if "admin_id" not in data:
-            validator.errors["admin_id"] = "Admin ID is required"
-        else:
-            admin = Users.query.get(data["admin_id"])
-            if not admin:
-                validator.errors["admin_id"] = f"Admin with ID {data['admin_id']} not found"
-            elif admin.type != "admin":
-                validator.errors["admin_id"] = "User must be an admin to award points"
-            else:
-                validator._add_parsed_data("admin_id", data["admin_id"])
+        validator.validate_admin_id(data, "admin_id", required=True)
 
         validator.validate_model_id(data, "team_id", "Team", required=True)
 
-        if "points" not in data:
-            validator.errors["points"] = "Points value is required"
-        else:
-            try:
-                points = int(data["points"])
-                if points == 0:
-                    validator.errors["points"] = "Points cannot be zero"
-                else:
-                    validator._add_parsed_data("points", points)
-            except (ValueError, TypeError):
-                validator.errors["points"] = "Points must be a valid integer"
-
-        validator.validate_string(
-            data, "reason", max_length=config.MANUAL_AWARD_REASON_MAX_LENGTH, required=True, friendly_name="Reason"
+        validator.validate_integer(
+            data,
+            "points",
+            allow_zero=False,
+            required=True,
+            friendly_name="Points"
         )
 
-        validator.validate_optional_timestamp(data)
-
-        return validator.validate()
-
-    @classmethod
-    def validate_api_award(cls, data: dict[str, Any]) -> dict[str, Any]:
-        """
-        Validate manual point award from API (partial data)
-        """
-        validator = BaseValidator()
-
-        if "points" not in data:
-            validator.errors["points"] = "Points value is required"
-
-        elif not isinstance(data["points"], int) or data["points"] == 0:
-            validator.errors["points"] = "Points must be a non-zero integer"
-        else:
-            validator._add_parsed_data("points", data["points"])
-
         validator.validate_string(
-            data, "reason", config.MANUAL_AWARD_REASON_MAX_LENGTH, required=True, friendly_name="Reason"
+            data,
+            "reason",
+            max_length=config.MANUAL_AWARD_REASON_MAX_LENGTH,
+            required=True,
+            friendly_name="Reason"
         )
+
+        validator.validate_datetime(data, "timestamp", required=False)
+
         return validator.validate()
 
     @classmethod
@@ -164,8 +134,6 @@ class ManualPointAward(db.Model):
         from .ScoreEvent import ScoreEvent
 
         score = Score.find_by_team_and_event(validated_data["team_id"], event_id)
-        if not score:
-            raise ValidationError(f"Team {validated_data['team_id']} has no score in event {event_id}")
 
         score_event = ScoreEvent.create_score_event(
             score_id=score.id,

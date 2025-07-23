@@ -96,20 +96,17 @@ class Attempt(db.Model):
         validator.validate_model_id(data, "question_id", "Question", required=True)
 
         validator.validate_string(
-            data, "submission", max_length=config.MAX_SUBMISSION_LENGTH, required=True, friendly_name="Submission"
+            data,
+            "submission",
+            max_length=config.MAX_SUBMISSION_LENGTH,
+            required=True,
+            friendly_name="Submission"
         )
 
-        validator.validate_optional_timestamp(data)
-
         if "points" in data:
-            try:
-                points = int(data["points"])
-                if points < 0:
-                    validator.errors["points"] = "Points cannot be negative"
-                else:
-                    validator._add_parsed_data("points", points)
-            except (ValueError, TypeError):
-                validator.errors["points"] = "Points must be a valid integer"
+            validator.validate_integer(data, "points", required=False, min_value=0)
+
+        validator.validate_datetime(data, "timestamp", required=False)
 
         validator.validate_boolean(data, "is_correct", required=False)
 
@@ -193,21 +190,6 @@ class Attempt(db.Model):
         Returns:
             Attempt: The created attempt
         """
-        cls.validate_attempt_allowed(user_id, team_id, event_id, challenge_id, question_id)
-
-        if timestamp is None:
-            timestamp = utc_now()
-
-        # LAZY-IMPORT
-        from ...challenge.models.Question import Question
-
-        question = Question.query.get(question_id)
-        if not question:
-            raise ValidationError(f"Question {question_id} not found")
-
-        is_correct = submission.strip().lower() == question.answer.strip().lower()
-        points = question.points if is_correct else 0
-
         validated_data = cls.validate(
             {
                 "user_id": user_id,
@@ -218,6 +200,19 @@ class Attempt(db.Model):
                 "submission": submission,
             }
         )
+
+        cls.validate_attempt_allowed(user_id, team_id, event_id, challenge_id, question_id)
+
+        if timestamp is None:
+            timestamp = utc_now()
+
+        # LAZY-IMPORT
+        from ...challenge.models.Question import Question
+
+        question = Question.query.get(validated_data["question_id"])
+
+        is_correct = submission.strip().lower() == question.answer.strip().lower()
+        points = question.points if is_correct else 0
 
         attempt = cls(
             user_id=validated_data["user_id"],
@@ -240,11 +235,10 @@ class Attempt(db.Model):
             from .ScoreEvent import ScoreEvent
 
             score = Score.find_by_team_and_event(team_id, event_id)
-            if score:
-                score_event = ScoreEvent.create_score_event(
-                    score_id=score.id, team_id=team_id, points=points, timestamp=timestamp, commit=False
-                )
-                attempt.score_event_id = score_event.id
+            score_event = ScoreEvent.create_score_event(
+                score_id=score.id, team_id=team_id, points=points, timestamp=timestamp, commit=False
+            )
+            attempt.score_event_id = score_event.id
 
         if commit:
             try:
