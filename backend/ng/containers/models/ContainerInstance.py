@@ -1,8 +1,8 @@
 from CTFd.models import db
-from typing import Any
 import docker
 from ..utils.get_client import get_client
 from ... import config
+from .. constants import DOCKER_RUNNING
 from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 from ...core.utils.validator import BaseValidator
 
@@ -29,8 +29,10 @@ class ContainerInstance(db.Model):
 
         ctr = None
         try:
-            ctr = client.containers.get(f"{team}-{blueprint_obj.hostname}-{blueprint_obj.challenge_id}")
-            if ctr.status != "running":
+            ctr = client.containers.get(
+                cls.render_container_name(team, blueprint_obj.hostname, blueprint_obj.challenge_id)
+            )
+            if ctr.status != DOCKER_RUNNING:
                 ctr.start()
 
         ## Container Needs created
@@ -38,7 +40,7 @@ class ContainerInstance(db.Model):
             networks = []
             if blueprint_obj.networks:
                 for network in blueprint_obj.networks:
-                    networkname = f"{network}-{team}-{blueprint_obj.challenge_id}"
+                    networkname = cls.render_network_name(team, network, blueprint_obj.challenge_id)
                     net_exists = client.networks.list(names=[networkname])
                     if len(net_exists) == 0:
                         networks.append(client.networks.create(name=networkname, internal=True, attachable=True))
@@ -48,7 +50,11 @@ class ContainerInstance(db.Model):
 
             ## Need To detach or it will hang
             ## (TODO) add in env vars and what not
-            ctr = client.containers.run(blueprint_obj.image, name=f"{team}-{blueprint_obj.hostname}-{blueprint_obj.challenge_id}", detach=True)
+            ctr = client.containers.run(
+                blueprint_obj.image,
+                name=cls.render_container_name(team, blueprint_obj.hostname, blueprint_obj.challenge_id),
+                detach=True
+            )
 
             for network in networks:
                 network.connect(ctr, aliases=[blueprint_obj.hostname])
@@ -64,3 +70,11 @@ class ContainerInstance(db.Model):
         if commit:
             db.session.commit()
         return container_instance
+
+    @staticmethod
+    def render_container_name(team_id: int, hostname: str, challenge_id: int) -> str:
+        return f"{team_id}-{hostname}-{challenge_id}"
+
+    @staticmethod
+    def render_network_name(team_id: int, network_name: str, challenge_id: int) -> str:
+        return f"{network_name}-{team_id}-{challenge_id}"

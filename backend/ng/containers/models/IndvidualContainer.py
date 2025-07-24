@@ -1,6 +1,7 @@
 from CTFd.models import db
 import docker
 from ... import config
+from ..constants import DOCKER_RUNNING, DOCKER_BRIDGE
 from ..utils.get_client import get_client
 
 class IndvidualContainer(db.Model):
@@ -16,14 +17,18 @@ class IndvidualContainer(db.Model):
     @classmethod
     def create_indvidual_container(cls, user_id: int, commit: bool = True):
         db_exists = cls.query.filter_by(user=user_id).first()
+        client = get_client(config.DOCKER_HOST)
         if db_exists:
+            ctr = client.containers.get(db_exists.dockerid)
+            if ctr.status != DOCKER_RUNNING:
+                ctr.start()
+
             return db_exists
 
-        client = get_client(config.DOCKER_HOST)
-        container_name = f"{user_id}-indv"
+        container_name = cls.render_container_name(user_id)
         try:
             exists = client.containers.get(container_name)
-            if exists.status != "running":
+            if exists.status != DOCKER_RUNNING:
                 exists.start()
 
             indv = cls(
@@ -58,6 +63,10 @@ class IndvidualContainer(db.Model):
                 db.session.commit()
             return indvidual_container
 
+    @staticmethod
+    def render_container_name(user_id) -> str:
+        return f"{user_id}-indv"
+
     def disconnect_from_networks(self):
         # Disconnect your indvidual container from challenge networks
         # Bridge needs to stay for vnc
@@ -65,9 +74,9 @@ class IndvidualContainer(db.Model):
         inspect_results = client.api.inspect_container(self.dockerid)
         networks = inspect_results["NetworkSettings"]["Networks"]
         for network in networks:
-            if network != "bridge":
+            if network != DOCKER_BRIDGE:
                 fetched_network = client.networks.get(networks[network]["NetworkID"])
-                network.disconnect(self.dockerid)
+                fetched_network.disconnect(self.dockerid)
 
     def connect_to_network(self, network_name: str):
         client = get_client(self.hostip)
@@ -84,7 +93,6 @@ class IndvidualContainer(db.Model):
         ports = ctr_info["NetworkSettings"]["Ports"]
 
         ## Port entries are an array of two one ipv4 one v6
-        print(ports)
         host_port = ports[f"{config.NOVNC_PORT}/tcp"][0]["HostPort"]
 
         return host_port
