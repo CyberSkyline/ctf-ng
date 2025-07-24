@@ -1,20 +1,16 @@
-import {
-  Button,
-  Flex,
-  Heading,
-  Table,
-} from '@radix-ui/themes';
-import { TbPlus } from 'react-icons/tb';
-import Entity from 'components/Entity';
-import { ErrorCallout } from 'components/Callouts';
 import { EventIcon, TeamIcon } from '@/constants';
-import AdminDataList from 'components/AdminDataList';
-import { useTeamMembers, useUserTeams } from '@/hooks/team';
 import { useUserEvents } from '@/hooks/events';
-import _ from 'lodash';
+import { useTeamMembers, useUserTeams } from '@/hooks/team';
 import type { Event, Team, User } from '@/types';
+import { Button, Table } from '@radix-ui/themes';
+import AdminDataList from 'components/AdminDataList';
 import AdminSidebar from 'components/AdminSidebar';
+import AdminSidebarHeader from 'components/AdminSidebarHeader';
+import { ErrorCallout } from 'components/Callouts';
+import Entity from 'components/Entity';
 import RoleBadge from 'components/RoleBadge';
+import _ from 'lodash';
+import { TbPlus } from 'react-icons/tb';
 
 function RegistrationRow({ userId, team, event }: { userId: number, team: Team, event: Event }) {
   const { data : teamMembers } = useTeamMembers(team.id);
@@ -52,16 +48,17 @@ export default function UserSidebar({ entity }: { entity: User }) {
   const eventsMap = _.keyBy(eventsData, 'id');
 
   return (
-    <AdminSidebar title="User Details">
+    <AdminSidebar>
+      <AdminSidebarHeader title="User Details" />
+
       <AdminDataList data={{ ...entity }} />
 
-      <Flex direction="row" gap="4" justify="between" align="center">
-        <Heading>Registrations</Heading>
+      <AdminSidebarHeader title="Registrations">
         <Button variant="soft">
           <TbPlus />
           Register
         </Button>
-      </Flex>
+      </AdminSidebarHeader>
       {teamsError && <ErrorCallout>{teamsError.message}</ErrorCallout> }
       {eventsError && <ErrorCallout>{eventsError.message}</ErrorCallout> }
       {teamsData && eventsData && (
@@ -87,7 +84,7 @@ export default function UserSidebar({ entity }: { entity: User }) {
         </Table.Root>
       )}
 
-      <Heading>Workspace</Heading>
+      <AdminSidebarHeader title="Workspace" />
     </AdminSidebar>
   );
 }

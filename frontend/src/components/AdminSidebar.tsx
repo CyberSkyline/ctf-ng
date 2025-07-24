@@ -1,8 +1,8 @@
-import { Flex, Heading } from '@radix-ui/themes';
+import { Flex } from '@radix-ui/themes';
 import { useEffect, useRef, type ReactNode } from 'react';
 
-export default function AdminSidebar({ children, title }: {children: ReactNode, title: string}) {
-  const headerRef = useRef<HTMLHeadingElement>(null);
+export default function AdminSidebar({ children }: {children: ReactNode}) {
+  const headerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Steal focus when the sidebar is mounted
@@ -11,8 +11,7 @@ export default function AdminSidebar({ children, title }: {children: ReactNode, 
   }, []);
 
   return (
-    <Flex direction="column" gap="4" className="basis-1/2 min-w-128 grow-0 shrink-0 overflow-y-auto">
-      <Heading ref={headerRef} tabIndex={-1}>{title}</Heading>
+    <Flex direction="column" gap="4" className="basis-1/2 min-w-128 grow-0 shrink-0 overflow-y-auto outline-0" ref={headerRef} tabIndex={-1}>
       {children}
     </Flex>
   );
