@@ -34,6 +34,7 @@ from ...core.utils.validator import BaseValidator
 from ...event.models.Event import Event
 from ...team.models.Team import Team
 from ...user.models.User import User
+from datetime import datetime
 
 from ..controllers.user import join_event_controller
 
@@ -156,6 +157,9 @@ class EventTeamUpdateName(Resource):
                 400,
             )
 
+
+        if team.event.end_time and team.event.end_time < datetime.utcnow():
+            return error_response("Cannot update team name after event has ended.", "forbidden", 403)
         team.update_name(new_name)
         return success_response(team)
 
@@ -174,6 +178,12 @@ class EventTeamKick(Resource):
             return error_response("You cannot kick yourself from the team.", "validation", 400)
         if PermissionEnum.CAN_EDIT_TEAM not in permissions:
             return error_response("You do not have permission to kick team members", "forbidden", 403)
+
+        if team.event.end_time and team.event.end_time < datetime.utcnow():
+            return error_response("Cannot kick user after event has ended.", "forbidden", 403)
+
+        if team.event.locked:
+            return error_response("Cannot change team composition after the event has been locked", "forbidden", 403)
 
         try:
             team.remove_member_and_regenerate_code(user_id)

@@ -84,3 +84,20 @@ class AdminHealth(Resource):
         }
         return success_response(health_report)
 
+
+@admin_namespace.route("/impersonate")
+class AdminImpersonate(Resource):
+    @admin_endpoint()
+    @load_user(LoaderType.BODY)
+    @get_permissions
+    def post(self, user, permissions, **kwargs):
+        """Impersonate a user"""
+
+        if PermissionEnum.CAN_IMPERSONATE_USERS not in permissions:
+            return {"message": "You do not have permission to impersonate users."}, 403
+
+        
+
+        
+
+

@@ -352,11 +352,32 @@ def team_member_client(app, db_session, team_with_members, role_with_permissions
         sess.permanent = False
     return client
 
+@pytest.fixture
+def closed_event_client(app, db_session, event_factory, team_with_members, user):
+    """A test client for a closed event."""
+    # Clear any cached user data to prevent cross-test contamination
+    from CTFd.cache import cache
+    cache.clear()
+
+    event = event_factory(locked=True, start_time=datetime.utcnow() - timedelta(days=1), end_time=datetime.utcnow())
+    
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        # Completely clear the session and set only what we need
+        sess.clear()
+        sess["id"] = team_with_members.members[1].user_id
+        sess["name"] = team_with_members.members[1].user.ctfd_user.name
+        sess["type"] = "team"
+        sess["nonce"] = generate_nonce()
+        sess.permanent = False
+    return client
+
 
 @pytest.fixture
 def event(event_factory):
     """Simple fixture to get a single event."""
     return event_factory()
+
 
 
 
