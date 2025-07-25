@@ -3,7 +3,6 @@ Simplified main decorators - just handle auth and input validation.
 Resource loading and permissions are handled by separate decorators.
 """
 
-import inspect
 from functools import wraps
 
 from CTFd.utils.decorators import admins_only, authed_only
