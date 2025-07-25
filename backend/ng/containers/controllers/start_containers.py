@@ -16,6 +16,6 @@ def start_containers(challenge_id: int, team_id: int, current_user: int) -> bool
     indvidual_ctr.disconnect_from_networks()
 
     for network in set(networks):
-        indvidual_ctr.connect_to_network(f'{network}-{team_id}-{challenge_id}')
+        indvidual_ctr.connect_to_network(ContainerInstance.render_network_name(team_id, network, challenge_id))
 
     return True

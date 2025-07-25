@@ -18,14 +18,25 @@ class IndvidualContainer(db.Model):
     def create_indvidual_container(cls, user_id: int, commit: bool = True):
         db_exists = cls.query.filter_by(user=user_id).first()
         client = get_client(config.DOCKER_HOST)
+        container_name = cls.render_container_name(user_id)
+
         if db_exists:
-            ctr = client.containers.get(db_exists.dockerid)
-            if ctr.status != DOCKER_RUNNING:
-                ctr.start()
+            try:
+                ctr = client.containers.get(db_exists.dockerid)
+                if ctr.status != DOCKER_RUNNING:
+                    ctr.start()
+            except docker.errors.NotFound:
+                ctr = client.containers.run(
+                    config.NOVNC_CONTAINER,
+                    name=container_name,
+                    detach=True,
+                    publish_all_ports=True,
+                )
+                db_exists.dockerid = ctr.id
+                db.session.commit()
 
             return db_exists
 
-        container_name = cls.render_container_name(user_id)
         try:
             exists = client.containers.get(container_name)
             if exists.status != DOCKER_RUNNING:
