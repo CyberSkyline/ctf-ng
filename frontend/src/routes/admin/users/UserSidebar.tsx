@@ -9,7 +9,7 @@ import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import RoleBadge from 'components/RoleBadge';
-import _ from 'lodash';
+import { keyBy } from 'lodash';
 import { TbPlus } from 'react-icons/tb';
 
 function RegistrationRow({ userId, team, event }: { userId: number, team: Team, event: Event }) {
@@ -45,7 +45,7 @@ export default function UserSidebar({ entity }: { entity: User }) {
   const { data : teamsData, error : teamsError } = useUserTeams(entity.id);
   const { data : eventsData, error : eventsError } = useUserEvents(entity.id);
 
-  const eventsMap = _.keyBy(eventsData, 'id');
+  const eventsMap = keyBy(eventsData, 'id');
 
   return (
     <AdminSidebar>

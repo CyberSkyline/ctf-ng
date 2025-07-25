@@ -31,7 +31,7 @@ export default function Modal({
   onSubmit,
   onOpenChange,
   submitVerb = 'Submit',
-  submitColor,
+  submitColor = 'lime',
   submitDisabled = false,
   requireTouchingForm = false,
 } : ModalProps) {

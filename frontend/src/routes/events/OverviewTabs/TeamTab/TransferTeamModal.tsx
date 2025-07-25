@@ -7,6 +7,7 @@ import {
 import Modal from 'components/Modal';
 import { map } from 'lodash';
 import { useState } from 'react';
+import { TbArrowRight } from 'react-icons/tb';
 
 type memberListType = {
   id: string,
@@ -35,7 +36,8 @@ export default function TransferTeamModal({ transferCaptain, membersList }: Tran
       submitVerb="Transfer"
       onSubmit={transferTeam}
       trigger={(
-        <Button variant="soft" color="amber">
+        <Button variant="soft" color="lime">
+          <TbArrowRight />
           Transfer Team
         </Button>
       )}
