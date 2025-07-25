@@ -36,18 +36,17 @@ class UserAdminResource(Resource):
         return success_response(target_user)
 
     @admin_endpoint(json_required=True, validation_func=User.validate)
-    @load_user(source=LoaderType.BODY)
-    def put(self, user_id, user, validated_data, **kwargs):
-        """Update a specific user"""
-        user.update(validated_data)
-        return success_response(user)
-
-    @admin_endpoint()
     @load_user(source=LoaderType.PARAM, output_key="target_user")
-    def delete(self, target_user, **kwargs):
-        """Delete a specific user"""
-        target_user.delete()
+    def put(self, user_id, target_user, validated_data, **kwargs):
+        """Update a specific user"""
+        target_user.update(**validated_data)
         return success_response()
+
+    # @admin_endpoint()
+    # @load_user(source=LoaderType.PARAM, output_key="target_user")
+    # def delete(self, target_user):
+    #     # TODO implement
+    #     return success_response()
 
 @users_admin_namespace.route("/<int:user_id>/events")
 class UserEventsAdminResource(Resource):
