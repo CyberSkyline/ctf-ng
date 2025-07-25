@@ -23,15 +23,15 @@ def get_model_class(model_name: str):
         raise ValueError(f"Model '{model_name}' not found")
     return model_class
 
-def get_json_val(input_key: str):
+def get_json_val(kwargs,input_key: str):
     """Get the value from JSON data in the request context."""
-    if not hasattr(g, "json_data"):
+    if not kwargs.get('json_data'):
         raise ValueError("JSON data not found in request context")
-    
-    if input_key not in g.json_data:
+
+    if input_key not in kwargs['json_data']:
         raise ValidationError(f"Missing required key in JSON data: {input_key}")
-    
-    return g.json_data[input_key]
+
+    return kwargs['json_data'][input_key]
 
 def get_param_val(kwargs: dict, input_key: str):
     """Get the value from kwargs based on the input_key."""
@@ -44,7 +44,6 @@ def get_param_val(kwargs: dict, input_key: str):
 def generate_loader_decorator(source: LoaderType, model_name: str, input_key: str, output_key: str):
     """Generate a loader decorator for a given model."""
     def decorator(f):
-        sig = inspect.signature(f)
 
         @wraps(f)
         def decorated_function(*args, **kwargs):
@@ -53,7 +52,7 @@ def generate_loader_decorator(source: LoaderType, model_name: str, input_key: st
         
             # Get the model ID based on the source type
             if source == LoaderType.BODY:
-                model_id = get_json_val(input_key)
+                model_id = get_json_val(kwargs,input_key)
             elif source == LoaderType.PARAM:
                 model_id = get_param_val(kwargs, input_key)
             else:

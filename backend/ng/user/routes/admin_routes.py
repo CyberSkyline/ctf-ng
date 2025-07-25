@@ -17,7 +17,7 @@ users_admin_namespace = Namespace("/admin/users", description="user endpoints fo
 @users_admin_namespace.route("")
 class UsersAdminResource(Resource):
     @admin_endpoint()
-    def get(self):
+    def get(self, **kwargs):
         """Get all users on the system"""
         return success_response(User.get_all_users())
 
@@ -31,28 +31,29 @@ class UsersAdminResource(Resource):
 class UserAdminResource(Resource):
     @admin_endpoint()
     @load_user(source=LoaderType.PARAM, output_key="target_user")
-    def get(self, user_id, target_user):
+    def get(self, user_id, target_user, **kwargs):
         """Get a specific user by ID"""
         return success_response(target_user)
 
     @admin_endpoint(json_required=True, validation_func=User.validate)
-    @load_user(source=LoaderType.PARAM, output_key="target_user")
-    def put(self, user_id, target_user, validated_data):
+    @load_user(source=LoaderType.BODY)
+    def put(self, user_id, user, validated_data, **kwargs):
         """Update a specific user"""
-        target_user.update(**validated_data)
-        return success_response()
+        user.update(validated_data)
+        return success_response(user)
 
-    # @admin_endpoint()
-    # @load_user(source=LoaderType.PARAM, output_key="target_user")
-    # def delete(self, target_user):
-    #     # TODO implement
-    #     return success_response()
+    @admin_endpoint()
+    @load_user(source=LoaderType.PARAM, output_key="target_user")
+    def delete(self, target_user, **kwargs):
+        """Delete a specific user"""
+        target_user.delete()
+        return success_response()
 
 @users_admin_namespace.route("/<int:user_id>/events")
 class UserEventsAdminResource(Resource):
     @admin_endpoint()
     @load_user(source=LoaderType.PARAM, output_key="target_user")
-    def get(self, user_id, target_user):
+    def get(self, user_id, target_user, **kwargs):
         """Get events for a specific user"""
         events = target_user.get_events()
         return success_response(events)
@@ -61,7 +62,7 @@ class UserEventsAdminResource(Resource):
 class UserTeamsAdminResource(Resource):
     @admin_endpoint()
     @load_user(source=LoaderType.PARAM, output_key="target_user")
-    def get(self, user_id, target_user):
+    def get(self, user_id, target_user, **kwargs):
         """Get teams for a specific user"""
         teams = target_user.get_teams()
         return success_response(teams)
