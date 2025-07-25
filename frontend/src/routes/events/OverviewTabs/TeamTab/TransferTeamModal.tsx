@@ -1,12 +1,13 @@
-import { useState } from 'react';
-import { map } from 'lodash';
 import {
-  Flex,
+  Button,
+  Select,
   Text,
   TextField,
-  Select,
 } from '@radix-ui/themes';
 import Modal from 'components/Modal';
+import { map } from 'lodash';
+import { useState } from 'react';
+import { TbArrowRight } from 'react-icons/tb';
 
 type memberListType = {
   id: string,
@@ -19,10 +20,10 @@ interface TransferTeamModalProps {
 }
 
 export default function TransferTeamModal({ transferCaptain, membersList }: TransferTeamModalProps) {
-  const [ newCaptain, setNewCaptain ] = useState<string | undefined>(undefined);
+  const [ newCaptain, setNewCaptain ] = useState<string>('');
   const [ inviteCode, setInviteCode ] = useState<string>('');
 
-  const transferTeam = () => {
+  const transferTeam = async () => {
     console.log('transferTeam action', newCaptain, inviteCode);
     // action for selecting a new captain
     // action for leaving team
@@ -31,11 +32,25 @@ export default function TransferTeamModal({ transferCaptain, membersList }: Tran
   return (
     <Modal
       title="Are you sure you want to transfer teams?"
-      buttonText="Transfer Team"
+      description="You will no longer have access to participate with this team, and will be moved to a new team."
+      submitVerb="Transfer"
       onSubmit={transferTeam}
-      onSubmitText="Submit"
+      trigger={(
+        <Button variant="soft" color="lime">
+          <TbArrowRight />
+          Transfer Team
+        </Button>
+      )}
+      onOpenChange={(open) => {
+        if (open) {
+          // reset state when modal is closed and reopened
+          setNewCaptain('');
+          setInviteCode('');
+        }
+      }}
+      submitDisabled={(transferCaptain && newCaptain === '') || inviteCode === ''}
     >
-      <Flex gap="4" direction="column">
+      <>
         {transferCaptain && (
           <>
             <Text>
@@ -62,7 +77,7 @@ export default function TransferTeamModal({ transferCaptain, membersList }: Tran
           defaultValue=""
           onChange={(e) => setInviteCode(e.target.value)}
         />
-      </Flex>
+      </>
     </Modal>
   );
 }

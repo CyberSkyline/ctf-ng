@@ -1,5 +1,5 @@
-import useSWR, { mutate } from 'swr';
 import { apiMutation } from '@/fetchers';
+import useSWR, { mutate } from 'swr';
 import type { Event } from '../types';
 
 /**
@@ -52,7 +52,7 @@ export function useUserEvents(userId: number | null) {
  * @param team_name The leaderboard name
  */
 export function registerMyEvent(eventId: number, teamName: string) {
-  apiMutation(`/events/${eventId}/me/register`, { team_name : teamName }, {
+  return apiMutation(`/events/${eventId}/me/register`, { team_name : teamName }, {
     method : 'POST',
   }).then(() => {
     mutate('/users/me/events');
@@ -73,7 +73,7 @@ export function useMyEvents() {
  * @param event The event object to create
  */
 export function createEvent(event: Omit<Event, 'id'>) {
-  apiMutation('/admin/events', event, {
+  return apiMutation('/admin/events', event, {
     method : 'POST',
   }).then(() => {
     mutate('/admin/events');

@@ -1,14 +1,11 @@
 import type { Event } from '@/types';
 import {
-  Button,
   Checkbox,
   Flex,
   TextArea,
   TextField,
 } from '@radix-ui/themes';
-import { ErrorCallout } from 'components/Callouts';
 import { Form } from 'radix-ui';
-import { useState } from 'react';
 
 function adjustDateForInput(date: Date | null): string {
   // Adjust the date to be in the format required by datetime-local input
@@ -21,65 +18,11 @@ function adjustDateForInput(date: Date | null): string {
 
 export default function EventDataForm({
   initial,
-  onSubmit,
-  error,
 }: {
   initial?: Omit<Event, 'id'>,
-  onSubmit?: (event: Omit<Event, 'id'>) => void,
-  error?: string
 }) {
-  // allow reset/submit only if the form has been touched
-  // these buttons being enabled indicates unsaved changes
-  const [ canReset, setCanReset ] = useState(false);
-
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setCanReset(false);
-    const formData = new FormData(e.target as HTMLFormElement);
-
-    const {
-      name,
-      description,
-      start_time : startTime,
-      end_time : endTime,
-      locked : isLocked,
-      public : isPublic,
-      max_team_size : maxTeamSize,
-      registration_open : isOpen,
-      registration_start_date : openTime,
-      registration_end_date : closeTime,
-    } = Object.fromEntries(formData.entries());
-
-    return onSubmit?.({
-      name : name as string,
-      description : description as string,
-      start_time : new Date(startTime as string),
-      end_time : new Date(endTime as string),
-      locked : isLocked === 'on',
-      public : isPublic === 'on',
-      max_team_size : Number(maxTeamSize),
-      registration_open : isOpen === 'on',
-      registration_start_date : new Date(openTime as string),
-      registration_end_date : new Date(closeTime as string),
-    });
-  }
-
   return (
-    <Form.Root
-      className="flex flex-col gap-2"
-      onSubmitCapture={(e) => handleSubmit(e)}
-      onChange={() => {
-        setCanReset(true);
-      }}
-      onReset={() => {
-        setCanReset(false);
-      }}
-    >
-      { error && (
-        <ErrorCallout>
-          {error}
-        </ErrorCallout>
-      ) }
+    <>
       <Form.Field name="Name">
         <Form.Label>Name</Form.Label>
         <Form.Control asChild>
@@ -191,7 +134,7 @@ export default function EventDataForm({
           <Form.Control asChild>
             <Checkbox defaultChecked={initial?.locked} size="3" />
           </Form.Control>
-          <Form.Label>Locked</Form.Label>
+          <Form.Label>Disable Team Management</Form.Label>
 
         </Form.Field>
         <Form.Field name="registration_open" className="flex gap-1">
@@ -204,25 +147,6 @@ export default function EventDataForm({
           <Form.Label>Registration Open</Form.Label>
         </Form.Field>
       </Flex>
-
-      <Flex direction="row-reverse" gap="2">
-        <Form.Submit asChild>
-          <Button
-            type="submit"
-            disabled={!canReset}
-          >
-            {initial ? 'Save' : 'Create '}
-          </Button>
-        </Form.Submit>
-        <Button
-          variant="soft"
-          type="reset"
-          color="gray"
-          disabled={!canReset}
-        >
-          {initial ? 'Revert' : 'Clear'}
-        </Button>
-      </Flex>
-    </Form.Root>
+    </>
   );
 }
