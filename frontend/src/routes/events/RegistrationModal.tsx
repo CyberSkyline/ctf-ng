@@ -21,7 +21,6 @@ export default function RegistrationModal({ eventId }: {eventId : Event['id']}) 
       )}
       onSubmit={register}
       submitVerb="Register"
-      submitColor="lime"
     >
       <Form.Field name="leaderboard_name">
         <Form.Label>
