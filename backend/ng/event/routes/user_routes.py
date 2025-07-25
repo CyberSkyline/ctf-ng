@@ -34,6 +34,7 @@ from ...core.utils.validator import BaseValidator
 from ...event.models.Event import Event
 from ...team.models.Team import Team
 from ...user.models.User import User
+from ...containers.controllers.start_containers import start_containers
 
 from ..controllers.user import join_event_controller
 
@@ -269,3 +270,24 @@ class EventChallengeStatuses(Resource):
             )
 
         return success_response(results)
+
+@events_user_namespace.route("/<int:event_id>/challenge/<int:challenge_id>/containers")
+class EventChallengeStartContainers(Resource):
+    @events_user_namespace.doc(
+        description="Start a challenges containers",
+        params={
+            "event_id": "Event id challenge is in",
+            "challenge_id": "Challenge id to start containers for",
+        },
+        responses={
+            200: "Sucess",
+            400: "Bad request",
+        },
+    )
+ 
+    @user_endpoint()
+    @load_event(source=LoaderType.PARAM)
+    @load_team_by_user_and_event()
+    def get(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event):
+        started = start_containers(challenge_id, team.id, current_user)
+        return success_response(started)
