@@ -180,8 +180,8 @@ prompt_user "Would you like to generate tls certs for docker? You will be prompt
   echo "Copying certs and configs"
   mkdir -p ~/.docker/
   cp ../ca.pem ~/.docker/
-  cp ../cert.pem ~/.docker/
-  cp ../key.pem ~/.docker/
+  cp cert.pem ~/.docker/
+  cp key.pem ~/.docker/
   sudo mkdir -p /var/lib/certs/ssl/
   sudo cp ~/.docker/* /var/lib/certs/ssl/
   cd ../
@@ -189,14 +189,14 @@ prompt_user "Would you like to generate tls certs for docker? You will be prompt
   sudo cp ca.pem /etc/docker/ssl
   sudo cp server-cert.pem /etc/docker/ssl
   sudo cp server-key.pem /etc/docker/ssl
-  echo "{
+  echo '{
     "tlsverify": true,
     "tlscacert": "/etc/docker/ssl/ca.pem",
     "tlscert": "/etc/docker/ssl/server-cert.pem",
     "tlskey": "/etc/docker/ssl/server-key.pem",
     "default-ulimit": "nofile=50:100",
     "hosts": ["unix:///var/run/docker.sock", "tcp://0.0.0.0:2376"]
-  }" > daemon.json
+  }' > daemon.json
   sudo cp daemon.json /etc/docker/
   rm daemon.json
   echo "Please restart your docker daemon. You may have to start it mannually from the cli calling dockerd"

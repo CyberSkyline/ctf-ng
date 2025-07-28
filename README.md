@@ -38,3 +38,5 @@ You might run into an issue that systemd no longer wants to start the docker dae
 Modifying the service definition for the docker systemd service to run as root:root (User and group)
 should fix this.
 
+You will also need to change ng/config.py to make `DOCKER_HOST` point to your docker host.
+
