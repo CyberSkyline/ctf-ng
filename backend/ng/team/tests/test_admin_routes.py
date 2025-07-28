@@ -29,7 +29,7 @@ def test_teamdetail_update(admin_client, event, team_factory,user):
     """Test that the team detail endpoint can update a team."""
     team = team_factory(event=event, members=[user])
     new_name = "Updated Team Name"
-    response = admin_client.patch(f"/ng/admin/teams/{team.id}", json={"name": new_name})
+    response = admin_client.put(f"/ng/admin/teams/{team.id}", json={"name": new_name})
     assert response.status_code == 200
     data = response.get_json()
     assert data['data']["name"] == new_name
@@ -38,7 +38,7 @@ def test_teamdetail_update(admin_client, event, team_factory,user):
 def test_teamdetail_update_invalid_name(admin_client, event, team_factory, user):
     """Test that the team detail endpoint returns an error when trying to update with an invalid name."""
     team = team_factory(event=event, members=[user])
-    response = admin_client.patch(f"/ng/admin/teams/{team.id}", json={"name": user.name})
+    response = admin_client.put(f"/ng/admin/teams/{team.id}", json={"name": user.name})
     assert response.status_code == 400
     data = response.get_json()
     assert data['errors']['validation'] == "Team name cannot include a member's name."
