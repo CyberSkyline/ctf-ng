@@ -11,10 +11,8 @@ from CTFd.models import db, Users
 from ... import config
 from ...core.utils import utc_now
 from ...core.utils.validator import BaseValidator
-from ...core.exceptions import ValidationError, NotFoundError
+from ...core.exceptions import NotFoundError
 
-from ...team.models.Team import Team
-from ...event.models.Event import Event
 
 if TYPE_CHECKING:
     from .TicketTag import TicketTag
@@ -104,15 +102,15 @@ class Ticket(db.Model):
                         )
                     else:
                         valid_tag_ids.append(tag_id)
-                
+
                 if valid_tag_ids and not validator.errors:
                     # LAZY-IMPORT
                     from .TicketTag import TicketTag
-                    
+
                     requested_tags = TicketTag.query.filter(
                         TicketTag.id.in_(valid_tag_ids)
                     ).all()
-                    
+
                     if len(requested_tags) != len(valid_tag_ids):
                         found_ids = {tag.id for tag in requested_tags}
                         missing_ids = set(valid_tag_ids) - found_ids
@@ -131,9 +129,9 @@ class Ticket(db.Model):
             return "closed"
         else:
             return "open"
-    
+
     @status.expression
-    def status(cls):
+    def status(cls): # noqa: N805
         """
         SQLAlchemy expression for status property
         """
@@ -156,12 +154,8 @@ class Ticket(db.Model):
             "subject": self.subject,
             "author_id": self.author_id,
             "status": self.status,
-            "opened_timestamp": self.opened_timestamp.isoformat() + "Z"
-            if self.opened_timestamp
-            else None,
-            "last_updated": self.last_updated.isoformat() + "Z"
-            if self.last_updated
-            else None,
+            "opened_timestamp": self.opened_timestamp.isoformat() + "Z",
+            "last_updated": self.last_updated.isoformat() + "Z",
             "event_id": self.event_id,
             "team_id": self.team_id,
             "challenge_id": self.challenge_id,

@@ -4,11 +4,22 @@ Tests for the HintRedemption model
 
 import pytest
 from unittest.mock import patch
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
-from ..models.HintRedemption import HintRedemption
-from ..models.ScoreEvent import ScoreEvent
-from ..models.Score import Score
+from ...core.exceptions import (
+    ValidationError,
+    BusinessLogicError,
+)
+
+from ...challenge.models.Challenge import Challenge
+from ...challenge.models.Hint import Hint
+from ...team.models.Team import Team
+
+from ..models import (
+    HintRedemption,
+    ScoreEvent,
+    Score,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -40,7 +51,6 @@ class TestCreateRedemption:
                 hint_id=hint.id,
                 user_id=user.id,
                 team_id=team_with_member.id,
-                event_id=event.id,
                 challenge_id=challenge.id,
             )
         except Exception as e:
@@ -54,23 +64,19 @@ class TestCreateRedemption:
         assert redemption.points == -hint.deduction  # Should be negative
         assert isinstance(redemption.timestamp, datetime)
 
-        # Should have created a score event
         assert redemption.score_event_id is not None
         score_event = ScoreEvent.query.get(redemption.score_event_id)
         assert score_event is not None
         assert score_event.points == -hint.deduction
 
-        # Score should be updated
         db_session.refresh(score)
         assert score.points == -hint.deduction
 
-        # Verify it's persisted
         found_redemption = HintRedemption.query.filter_by(id=redemption.id).first()
         assert found_redemption is not None
 
     def test_create_redemption_zero_deduction(self, db_session, user, team_with_member, event, challenge):
         """Test creating a redemption for a hint with zero deduction"""
-        from ...challenge.models.Hint import Hint
 
         # Create hint with zero deduction
         free_hint = Hint(challenge_id=challenge.id, preview="Free hint", body="This is a free hint", deduction=0)
@@ -81,7 +87,6 @@ class TestCreateRedemption:
             hint_id=free_hint.id,
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
         )
 
@@ -91,18 +96,24 @@ class TestCreateRedemption:
 
     def test_create_redemption_with_timestamp(self, db_session, hint, user, team_with_member, event, challenge):
         """Test creating a redemption with custom timestamp"""
-        custom_time = datetime(2024, 1, 1, 12, 0, 0)
+        custom_time = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
 
         redemption = HintRedemption.create_redemption(
             hint_id=hint.id,
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             timestamp=custom_time,
         )
 
-        assert redemption.timestamp == custom_time
+        db_session.flush()
+        db_session.refresh(redemption)
+
+        if custom_time.tzinfo is not None and redemption.timestamp.tzinfo is None:
+            stored_as_utc = redemption.timestamp.replace(tzinfo=UTC)
+            assert custom_time == stored_as_utc, f"Expected {custom_time}, got {stored_as_utc}"
+        else:
+            assert redemption.timestamp == custom_time
 
     def test_create_redemption_no_commit(self, db_session, hint, user, team_with_member, event, challenge):
         """Test creating a redemption without committing"""
@@ -111,7 +122,6 @@ class TestCreateRedemption:
                 hint_id=hint.id,
                 user_id=user.id,
                 team_id=team_with_member.id,
-                event_id=event.id,
                 challenge_id=challenge.id,
                 commit=False,
             )
@@ -127,7 +137,6 @@ class TestCreateRedemption:
                 hint_id=hint.id,
                 user_id=user.id,
                 team_id=team_with_member.id,
-                event_id=event.id,
                 challenge_id=challenge.id,
                 commit=True,
             )
@@ -135,11 +144,9 @@ class TestCreateRedemption:
 
     def test_create_redemption_already_redeemed_fails(self, db_session, hint, user, team_with_member, event, challenge):
         """Test that redeeming same hint twice fails"""
-        from ...core.exceptions import BusinessLogicError
-
         # First redemption should succeed
         HintRedemption.create_redemption(
-            hint_id=hint.id, user_id=user.id, team_id=team_with_member.id, event_id=event.id, challenge_id=challenge.id
+            hint_id=hint.id, user_id=user.id, team_id=team_with_member.id, challenge_id=challenge.id
         )
 
         # Second redemption should fail
@@ -148,7 +155,6 @@ class TestCreateRedemption:
                 hint_id=hint.id,
                 user_id=user.id,
                 team_id=team_with_member.id,
-                event_id=event.id,
                 challenge_id=challenge.id,
             )
 
@@ -156,23 +162,17 @@ class TestCreateRedemption:
 
     def test_create_redemption_invalid_hint_fails(self, db_session, user, team_with_member, event, challenge):
         """Test that creating a redemption with invalid hint fails"""
-        from ...core.exceptions import ValidationError
 
         with pytest.raises(ValidationError):
             HintRedemption.create_redemption(
                 hint_id=999999,  # Non-existent
                 user_id=user.id,
                 team_id=team_with_member.id,
-                event_id=event.id,
                 challenge_id=challenge.id,
             )
 
     def test_create_redemption_for_locked_event_fails(self, db_session, hint, user, locked_event, challenge):
         """Test that creating a redemption for locked event fails"""
-        from ...core.exceptions import BusinessLogicError
-        from ...team.models.Team import Team
-
-        # Create a team for the locked event
         locked_team = Team.create_team_with_captain(
             name="Locked Team", event_id=locked_event.id, captain_id=user.id, invite_code="locked123"
         )
@@ -182,7 +182,6 @@ class TestCreateRedemption:
                 hint_id=hint.id,
                 user_id=user.id,
                 team_id=locked_team.id,
-                event_id=locked_event.id,
                 challenge_id=challenge.id,
             )
 
@@ -198,7 +197,7 @@ class TestDeleteRedemption:
         """Test that deleting a redemption deletes its score event"""
         # Create a redemption
         redemption = HintRedemption.create_redemption(
-            hint_id=hint.id, user_id=user.id, team_id=team_with_member.id, event_id=event.id, challenge_id=challenge.id
+            hint_id=hint.id, user_id=user.id, team_id=team_with_member.id, challenge_id=challenge.id
         )
 
         score_event_id = redemption.score_event_id
@@ -223,8 +222,6 @@ class TestDeleteRedemption:
 
     def test_delete_redemption_without_score_event(self, db_session, user, team_with_member, event, challenge):
         """Test deleting a redemption with no score event (zero deduction)"""
-        from ...challenge.models.Hint import Hint
-
         # Create hint with zero deduction
         free_hint = Hint(challenge_id=challenge.id, preview="Free hint", body="This is a free hint", deduction=0)
         db_session.add(free_hint)
@@ -235,7 +232,6 @@ class TestDeleteRedemption:
             hint_id=free_hint.id,
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
         )
 
@@ -324,12 +320,13 @@ class TestFindFilteredRedemptions:
 
     def test_find_by_challenge_id(self, db_session, hint_redemption_factory, user, team_with_member, hint, challenge):
         """Test filtering redemptions by challenge_id"""
-        from ...challenge.models.Challenge import Challenge
-        from ...challenge.models.Hint import Hint
-
         # Create another challenge and hint
         other_challenge = Challenge(
-            name="Other Challenge", description="Another challenge", icon="icon2", summary="Summary 2", event_id=challenge.event_id
+            name="Other Challenge",
+            description="Another challenge",
+            icon="icon2",
+            summary="Summary 2",
+            event_id=challenge.event_id,
         )
         db_session.add(other_challenge)
         db_session.commit()
@@ -355,8 +352,6 @@ class TestFindFilteredRedemptions:
 
     def test_find_by_user_id(self, db_session, hint_redemption_factory, user, admin, team_with_member, hint, challenge):
         """Test filtering redemptions by user_id"""
-        from ...challenge.models.Hint import Hint
-
         # Create another hint to avoid unique constraint
         other_hint = Hint(challenge_id=challenge.id, preview="Second hint", body="This is a second hint", deduction=10)
         db_session.add(other_hint)
@@ -376,8 +371,6 @@ class TestFindFilteredRedemptions:
         self, db_session, hint_redemption_factory, user, team_with_member, hint, challenge
     ):
         """Test that redemptions are ordered by timestamp descending"""
-        from ...challenge.models.Hint import Hint
-
         # Create multiple hints to avoid unique constraint
         hints = []
         for i in range(3):
@@ -441,66 +434,11 @@ class TestHintRedemptionValidation:
 
     def test_validate_valid_data(self, db_session, hint, user, team_with_member):
         """Test validation with valid data"""
-        data = HintRedemption.validate(
-            {"hint_id": hint.id, "user_id": user.id, "team_id": team_with_member.id, "points": -20}
-        )
+        data = HintRedemption.validate({"hint_id": hint.id, "user_id": user.id, "team_id": team_with_member.id})
 
         assert data["hint_id"] == hint.id
         assert data["user_id"] == user.id
         assert data["team_id"] == team_with_member.id
-        assert data["points"] == -20
-
-    def test_validate_positive_points_fails(self, db_session, hint, user, team_with_member):
-        """Test validation fails with positive points"""
-        from ...core.exceptions import ValidationError
-
-        with pytest.raises(ValidationError) as exc_info:
-            HintRedemption.validate(
-                {
-                    "hint_id": hint.id,
-                    "user_id": user.id,
-                    "team_id": team_with_member.id,
-                    "points": 20,  # Positive
-                }
-            )
-
-        assert "points" in exc_info.value.errors
-        assert "Points must be at most 0" in exc_info.value.errors["points"]
-
-    def test_validate_zero_points(self, db_session, hint, user, team_with_member):
-        """Test validation passes with zero points"""
-        data = HintRedemption.validate(
-            {"hint_id": hint.id, "user_id": user.id, "team_id": team_with_member.id, "points": 0}
-        )
-
-        assert data["points"] == 0
-
-    def test_validate_missing_points(self, db_session, hint, user, team_with_member):
-        """Test validation fails with missing points"""
-        from ...core.exceptions import ValidationError
-
-        with pytest.raises(ValidationError) as exc_info:
-            HintRedemption.validate({"hint_id": hint.id, "user_id": user.id, "team_id": team_with_member.id})
-
-        assert "points" in exc_info.value.errors
-        assert "Points is required" in exc_info.value.errors["points"]
-
-    def test_validate_non_integer_points(self, db_session, hint, user, team_with_member):
-        """Test validation fails with non-integer points"""
-        from ...core.exceptions import ValidationError
-
-        with pytest.raises(ValidationError) as exc_info:
-            HintRedemption.validate(
-                {
-                    "hint_id": hint.id,
-                    "user_id": user.id,
-                    "team_id": team_with_member.id,
-                    "points": "not a number",  # Non-numeric string
-                }
-            )
-
-        assert "points" in exc_info.value.errors
-        assert "Points must be a valid integer" in exc_info.value.errors["points"]
 
 
 class TestValidateRedemptionAllowed:
@@ -515,7 +453,6 @@ class TestValidateRedemptionAllowed:
 
     def test_validate_redemption_locked_event(self, db_session, hint, user, locked_event, challenge):
         """Test validation fails for locked event"""
-        from ...core.exceptions import BusinessLogicError
         from ...team.models.Team import Team
 
         # Create team for locked event
@@ -536,7 +473,6 @@ class TestValidateRedemptionAllowed:
 
     def test_validate_redemption_not_team_member(self, db_session, hint, admin, team_with_member, event, challenge):
         """Test validation fails when user is not team member"""
-        from ...core.exceptions import BusinessLogicError
 
         with pytest.raises(BusinessLogicError) as exc_info:
             HintRedemption.validate_redemption_allowed(
@@ -551,11 +487,10 @@ class TestValidateRedemptionAllowed:
 
     def test_validate_redemption_already_redeemed(self, db_session, hint, user, team_with_member, event, challenge):
         """Test validation fails when hint already redeemed"""
-        from ...core.exceptions import BusinessLogicError
 
         # Create initial redemption
         HintRedemption.create_redemption(
-            hint_id=hint.id, user_id=user.id, team_id=team_with_member.id, event_id=event.id, challenge_id=challenge.id
+            hint_id=hint.id, user_id=user.id, team_id=team_with_member.id, challenge_id=challenge.id
         )
 
         # Try to validate another redemption
@@ -596,7 +531,7 @@ class TestHintRedemptionRelationships:
         """Test the score_event relationship"""
         # Create redemption with deduction
         redemption = HintRedemption.create_redemption(
-            hint_id=hint.id, user_id=user.id, team_id=team_with_member.id, event_id=event.id, challenge_id=challenge.id
+            hint_id=hint.id, user_id=user.id, team_id=team_with_member.id, challenge_id=challenge.id
         )
 
         assert redemption.score_event is not None

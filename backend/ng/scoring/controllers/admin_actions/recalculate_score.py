@@ -11,4 +11,4 @@ def recalculate_score(score) -> Score:
     """
     score.recalculate()
 
-    return score
+    return score  # type: ignore[no-any-return]

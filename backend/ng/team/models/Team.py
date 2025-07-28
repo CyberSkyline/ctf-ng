@@ -213,9 +213,8 @@ class Team(db.Model):
 
         score = Score.create_score(
             team_id=team.id,
-            event_id=event_id,
-            team_name=name,
-            commit=False
+            commit=False,
+            team=team
         )
 
         if commit:

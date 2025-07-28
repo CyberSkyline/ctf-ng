@@ -61,11 +61,11 @@ class HintRedemption(db.Model):
             "user_id": self.user_id,
             "team_id": self.team_id,
             "score_event_id": self.score_event_id,
-            "timestamp": self.timestamp.isoformat() + "Z" if self.timestamp else None,
+            "timestamp": self.timestamp.isoformat() + "Z",
             "points": self.points,
         }
 
-        return SerializedHintRedemption(**data)
+        return SerializedHintRedemption(**data)  # type: ignore[typeddict-item, no-any-return]
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
@@ -78,11 +78,9 @@ class HintRedemption(db.Model):
         validator.validate_model_id(data, "user_id", "User", required=True)
         validator.validate_model_id(data, "team_id", "Team", required=True)
 
-        validator.validate_integer(data, "points", required=True, max_value=0)
-
         validator.validate_datetime(data, "timestamp", required=False)
 
-        return validator.validate()
+        return validator.validate()  # type: ignore[no-any-return]
 
     @classmethod
     def validate_redemption_allowed(
@@ -96,7 +94,7 @@ class HintRedemption(db.Model):
         from ...team.models.TeamMember import TeamMember
         from ...event.models.Event import Event
 
-       # TODO: Move most logic to permission check system
+        # TODO: Move most logic to permission check system
         member = TeamMember.find_by_user_and_team(user_id, team_id)
         if not member:
             raise BusinessLogicError("User is not a member of this team.")
@@ -127,7 +125,6 @@ class HintRedemption(db.Model):
         hint_id: int,
         user_id: int,
         team_id: int,
-        event_id: int,
         challenge_id: int,
         timestamp: datetime | None = None,
         commit: bool = True,
@@ -144,35 +141,39 @@ class HintRedemption(db.Model):
         Returns:
             HintRedemption: The created redemption
         """
-        cls.validate_redemption_allowed(user_id, team_id, hint_id, event_id, challenge_id)
+        # LAZY-IMPORT
+        from ...team.models.Team import Team
+
+        team = db.session.get(Team, team_id)
+        if not team:
+            raise ValidationError(f"Team with ID {team_id} not found")
+
+        cls.validate_redemption_allowed(user_id, team_id, hint_id, team.event_id, challenge_id)
 
         if timestamp is None:
             timestamp = utc_now()
-
-        # LAZY-IMPORT
-        from ...challenge.models.Hint import Hint
-
-        hint = Hint.query.get(hint_id)
-        if not hint:
-            raise ValidationError(f"Hint {hint_id} not found")
-
-        points = -abs(hint.deduction) if hint.deduction > 0 else 0
 
         validated_data = cls.validate(
             {
                 "hint_id": hint_id,
                 "user_id": user_id,
                 "team_id": team_id,
-                "points": points,
+                "timestamp": timestamp.isoformat(),
             }
         )
+
+        # LAZY-IMPORT
+        from ...challenge.models.Hint import Hint
+
+        hint = Hint.find_by_id(validated_data["hint_id"])
+        points = -abs(hint.deduction) if hint.deduction > 0 else 0
 
         redemption = cls(
             hint_id=validated_data["hint_id"],
             user_id=validated_data["user_id"],
             team_id=validated_data["team_id"],
             timestamp=timestamp,
-            points=validated_data["points"],
+            points=points,
         )
 
         db.session.add(redemption)
@@ -180,17 +181,14 @@ class HintRedemption(db.Model):
 
         if points != 0:
             # LAZY-IMPORT
-            from ...team.models.TeamMember import TeamMember
             from .Score import Score
             from .ScoreEvent import ScoreEvent
 
-            member = TeamMember.find_by_user_and_team(user_id, team_id)
-            if member:
-                score = Score.find_by_team_and_event(team_id, member.event_id)
-                score_event = ScoreEvent.create_score_event(
-                    score_id=score.id, team_id=team_id, points=points, timestamp=timestamp, commit=False
-                )
-                redemption.score_event_id = score_event.id
+            score = Score.find_by_team(team_id)
+            score_event = ScoreEvent.create_score_event(
+                score_id=score.id, team_id=team_id, points=points, timestamp=timestamp, commit=False
+            )
+            redemption.score_event = score_event
 
         if commit:
             try:
@@ -206,7 +204,7 @@ class HintRedemption(db.Model):
         """
         Find redemption for a specific team and hint
         """
-        return cls.query.filter_by(team_id=team_id, hint_id=hint_id).first()
+        return cls.query.filter_by(team_id=team_id, hint_id=hint_id).first()  # type: ignore[no-any-return]
 
     @classmethod
     def find_filtered_redemptions(
@@ -233,7 +231,7 @@ class HintRedemption(db.Model):
         if challenge_id is not None:
             query = query.join(Hint).filter(Hint.challenge_id == challenge_id)
 
-        return query.order_by(cls.timestamp.desc()).all()
+        return query.order_by(cls.timestamp.desc()).all()  # type: ignore[no-any-return]
 
     def delete_redemption(self, commit: bool = True) -> None:
         """

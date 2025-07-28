@@ -62,11 +62,11 @@ class Score(db.Model):
             "team_id": self.team_id,
             "event_id": self.event_id,
             "points": self.points,
-            "last_update": self.last_update.isoformat() + "Z" if self.last_update else None,
+            "last_update": self.last_update.isoformat() + "Z",
             "team_name": self.team_name,
         }
 
-        return SerializedScore(**data)
+        return SerializedScore(**data)  # type: ignore[typeddict-item, no-any-return]
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
@@ -85,26 +85,23 @@ class Score(db.Model):
             data, "team_name", config.TEAM_NAME_MAX_LENGTH, required=True, friendly_name="Team name"
         )
 
-        validator.validate_datetime(data, "timestamp", required=False)
+        validator.validate_datetime(data, "last_update", required=False)
 
-        return validator.validate()
+        return validator.validate()  # type: ignore[no-any-return]
 
     @classmethod
     def create_score(
         cls,
         team_id: int,
-        event_id: int,
-        team_name: str,
         points: int = 0,
         last_update: datetime | None = None,
         commit: bool = True,
+        team=None,
     ) -> Score:
-        """Create a new score record for a team in an event.
+        """Create a new score record for a team.
 
         Args:
             team_id: ID of the team
-            event_id: ID of the event
-            team_name: Name of the team (cached for performance)
             points: Initial points (defaults to 0)
             last_update: Timestamp (defaults to now)
             commit: Whether to commit immediately
@@ -115,12 +112,19 @@ class Score(db.Model):
         if last_update is None:
             last_update = utc_now()
 
+        if team is None:
+            # LAZY-IMPORT
+            from ...team.models.Team import Team
+
+            team = db.session.get(Team, team_id)
+
         validated_data = cls.validate(
             {
                 "team_id": team_id,
-                "event_id": event_id,
-                "team_name": team_name,
+                "event_id": team.event_id,
+                "team_name": team.name,
                 "points": points,
+                "last_update": last_update.isoformat(),
             }
         )
 
@@ -195,43 +199,47 @@ class Score(db.Model):
         return [score.serialize() for score in scores]
 
     @classmethod
-    def get_team_rank(cls, team_id: int, event_id: int) -> int | None:
-        """Get the rank of a team in an event.
+    def get_team_rank(cls, team_id: int) -> int | None:
+        """Get the rank of a team in their event.
 
         Returns:
             Rank (1-indexed) or None if team not found
         """
-        score = cls.find_by_team_and_event(team_id, event_id)
+        # LAZY-IMPORT
+        from ...team.models.Team import Team
+
+        team = Team.query.get(team_id)
+        if not team:
+            return None
+
+        score = cls.find_by_team(team_id)
         if not score:
             return None
 
-        higher_scores = cls.query.filter(cls.event_id == event_id, cls.points > score.points).count()
+        higher_scores = cls.query.filter(cls.event_id == team.event_id, cls.points > score.points).count()
 
-        return higher_scores + 1
+        return higher_scores + 1  # type: ignore[no-any-return]
 
     @classmethod
-    def find_by_team_and_event(cls, team_id: int, event_id: int) -> Score:
+    def find_by_team(cls, team_id: int) -> Score:
         """
-        Find score for a specific team in an event. Creates one if it doesn't exist.
+        Find score for a specific team. Creates one if it doesn't exist.
         """
-        score = cls.query.filter_by(team_id=team_id, event_id=event_id).first()
+        # LAZY-IMPORT
+        from ...team.models.Team import Team
 
-        if not score:
-            # LAZY-IMPORT
-            from ...team.models.Team import Team
+        team = db.session.get(Team, team_id)
+        if not team:
+            raise NotFoundError(f"Team with ID {team_id} not found")
 
-            team = Team.query.get(team_id)
-            if not team:
-                raise NotFoundError(f"Team with ID {team_id} not found")
+        score = cls.query.filter_by(team_id=team_id, event_id=team.event_id).first()
 
-            score = cls.create_score(
-                team_id=team_id,
-                event_id=event_id,
-                team_name=team.name,
-                points=0
-            )
+        if score:
+            return score  # type: ignore[no-any-return]
 
-        return score
+        score = cls.create_score(team_id=team_id, points=0, team=team)
+
+        return score  # type: ignore[no-any-return]
 
     @classmethod
     def find_filtered_scores(
@@ -257,11 +265,13 @@ class Score(db.Model):
 
         if limit is not None:
             query = query.limit(limit)
-        return query.all()
+        return query.all()  # type: ignore[no-any-return]
 
     @classmethod
     def clear_leaderboard_cache(cls, event_id: int | None = None) -> None:
-        """Clear leaderboard cache for specific event or all events"""
+        """
+        Clear leaderboard cache for specific event or all events
+        """
         if event_id is None:
             clear_cache_for_function("get_leaderboard")
         else:

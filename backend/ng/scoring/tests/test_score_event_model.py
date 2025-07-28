@@ -4,7 +4,7 @@ Tests for the ScoreEvent model
 
 import pytest
 from unittest.mock import patch
-from datetime import datetime
+from datetime import datetime, UTC
 
 from ..models.ScoreEvent import ScoreEvent
 from ..models.Score import Score
@@ -69,13 +69,26 @@ class TestCreateScoreEvent:
 
     def test_create_score_event_with_timestamp(self, db_session, score):
         """Test creating a score event with custom timestamp"""
-        custom_time = datetime(2024, 1, 1, 12, 0, 0)
+        from datetime import timezone
+
+        custom_time = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
 
         event = ScoreEvent.create_score_event(
             score_id=score.id, team_id=score.team_id, points=100, timestamp=custom_time
         )
 
-        assert event.timestamp == custom_time
+        # Flush and refresh to ensure we're testing actual DB persistence
+        db_session.flush()
+        db_session.refresh(event)
+
+        # SQLite strips timezone info but preserves the UTC time value
+        # So we need to compare the timestamps as UTC moments in time
+        if custom_time.tzinfo is not None and event.timestamp.tzinfo is None:
+            # Stored timestamp should be interpreted as UTC
+            stored_as_utc = event.timestamp.replace(tzinfo=UTC)
+            assert custom_time == stored_as_utc, f"Expected {custom_time}, got {stored_as_utc}"
+        else:
+            assert event.timestamp == custom_time
 
     def test_create_score_event_no_commit(self, db_session, score):
         """Test creating a score event without committing"""
@@ -171,7 +184,6 @@ class TestDeleteEvent:
         attempt = Attempt.create_attempt(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=score.event_id,
             challenge_id=question.challenge_id,
             question_id=question.id,
             submission=question.answer,  # Correct answer
@@ -226,7 +238,9 @@ class TestFindFilteredEvents:
         assert len(events) == 2  # Only the 2 we created for this score
         assert all(e.score_id == score.id for e in events)
 
-    def test_find_by_team_id(self, db_session, score, score_event, score_event_factory, team_factory, event, user_factory):
+    def test_find_by_team_id(
+        self, db_session, score, score_event, score_event_factory, team_factory, event, user_factory
+    ):
         """Test filtering events by team_id"""
         # Create events for same team (in addition to fixture)
         score_event_factory(score_id=score.id, team_id=score.team_id, points=10)
@@ -246,7 +260,15 @@ class TestFindFilteredEvents:
         assert all(e.team_id == score.team_id for e in events)
 
     def test_find_by_event_id(
-        self, db_session, score, score_event, score_event_factory, event_factory, team_factory, team_with_member, user_factory
+        self,
+        db_session,
+        score,
+        score_event,
+        score_event_factory,
+        event_factory,
+        team_factory,
+        team_with_member,
+        user_factory,
     ):
         """Test filtering events by event_id"""
         # Create events for same event (in addition to fixture)
@@ -414,6 +436,7 @@ class TestScoreEventValidation:
         assert validated["points"] == 100
 
         from ...core.exceptions import ValidationError
+
         with pytest.raises(ValidationError) as exc_info:
             ScoreEvent.validate(
                 {

@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import Any, TypedDict
 
 from datetime import datetime
+from sqlalchemy.orm import selectinload
 
 from CTFd.models import db
 
@@ -49,10 +50,10 @@ class ScoreEvent(db.Model):
             "score_id": self.score_id,
             "team_id": self.team_id,
             "points": self.points,
-            "timestamp": self.timestamp.isoformat() + "Z" if self.timestamp else None,
+            "timestamp": self.timestamp.isoformat() + "Z",
         }
 
-        return SerializedScoreEvent(**data)
+        return SerializedScoreEvent(**data)  # type: ignore[typeddict-item, no-any-return]
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
@@ -68,7 +69,7 @@ class ScoreEvent(db.Model):
 
         validator.validate_datetime(data, "timestamp", required=False)
 
-        return validator.validate()
+        return validator.validate()  # type: ignore[no-any-return]
 
     @classmethod
     def create_score_event(
@@ -99,6 +100,7 @@ class ScoreEvent(db.Model):
                 "score_id": score_id,
                 "team_id": team_id,
                 "points": points,
+                "timestamp": timestamp.isoformat(),
             }
         )
 
@@ -149,7 +151,6 @@ class ScoreEvent(db.Model):
         """
         # LAZY-IMPORT
         from .Score import Score
-        from sqlalchemy.orm import selectinload
 
         query = cls.query
 
@@ -169,14 +170,13 @@ class ScoreEvent(db.Model):
         query = query.order_by(cls.timestamp.desc())
         if limit is not None:
             query = query.limit(limit)
-        return query.all()
+        return query.all()  # type: ignore[no-any-return]
 
     def delete_event(self, commit: bool = True) -> None:
         """
         Delete this score event and adjust the associated score
         """
-        if self.score:
-            self.score.adjust(-self.points, commit=commit)
+        self.score.adjust(-self.points, commit=commit)
 
         db.session.delete(self)
         if commit:

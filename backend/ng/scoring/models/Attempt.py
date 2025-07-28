@@ -74,13 +74,13 @@ class Attempt(db.Model):
             "challenge_id": self.challenge_id,
             "question_id": self.question_id,
             "score_event_id": self.score_event_id,
-            "timestamp": self.timestamp.isoformat() + "Z" if self.timestamp else None,
+            "timestamp": self.timestamp.isoformat() + "Z",
             "points": self.points,
             "submission": self.submission,
             "is_correct": self.is_correct,
         }
 
-        return SerializedAttempt(**data)
+        return SerializedAttempt(**data)  # type: ignore[typeddict-item, no-any-return]
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
@@ -96,34 +96,12 @@ class Attempt(db.Model):
         validator.validate_model_id(data, "question_id", "Question", required=True)
 
         validator.validate_string(
-            data,
-            "submission",
-            max_length=config.MAX_SUBMISSION_LENGTH,
-            required=True,
-            friendly_name="Submission"
+            data, "submission", max_length=config.MAX_SUBMISSION_LENGTH, required=True, friendly_name="Submission"
         )
-
-        if "points" in data:
-            validator.validate_integer(data, "points", required=False, min_value=0)
 
         validator.validate_datetime(data, "timestamp", required=False)
 
-        validator.validate_boolean(data, "is_correct", required=False)
-
-        return validator.validate()
-
-    @classmethod
-    def validate_api_submission(cls, data: dict[str, Any]) -> dict[str, Any]:
-        """
-        Validate answer submission from API (partial data)
-        """
-        validator = BaseValidator()
-
-        validator.validate_string(
-            data, "submission", config.MAX_SUBMISSION_LENGTH, required=True, friendly_name="Submission"
-        )
-
-        return validator.validate()
+        return validator.validate()  # type: ignore[no-any-return]
 
     @classmethod
     def validate_attempt_allowed(
@@ -132,11 +110,13 @@ class Attempt(db.Model):
         """
         Validate that an attempt is allowed
         """
+
         # LAZY-IMPORT: Tagging all necessary lazy imports for easy searchability & visibility.
         from ...challenge.models.Question import Question
         from ...event.models.Event import Event
         from ...team.models.TeamMember import TeamMember
 
+        # TODO: Move logic to Daniel's permission check system in the future
         event = Event.find_by_id(event_id)
         if event and event.locked:
             raise BusinessLogicError("Cannot submit answers for a locked event")
@@ -168,7 +148,6 @@ class Attempt(db.Model):
         cls,
         user_id: int,
         team_id: int,
-        event_id: int,
         challenge_id: int,
         question_id: int,
         submission: str,
@@ -180,7 +159,6 @@ class Attempt(db.Model):
         Args:
             user_id: ID of the user submitting
             team_id: ID of the team
-            event_id: ID of the event
             challenge_id: ID of the challenge
             question_id: ID of the question
             submission: The submitted answer
@@ -190,21 +168,29 @@ class Attempt(db.Model):
         Returns:
             Attempt: The created attempt
         """
+        # LAZY-IMPORT
+        from ...team.models.Team import Team
+
+        team = db.session.get(Team, team_id)
+        if not team:
+            raise ValidationError(f"Team with ID {team_id} not found")
+
+        if timestamp is None:
+            timestamp = utc_now()
+
         validated_data = cls.validate(
             {
                 "user_id": user_id,
                 "team_id": team_id,
-                "event_id": event_id,
+                "event_id": team.event_id,
                 "challenge_id": challenge_id,
                 "question_id": question_id,
                 "submission": submission,
+                "timestamp": timestamp.isoformat(),
             }
         )
 
-        cls.validate_attempt_allowed(user_id, team_id, event_id, challenge_id, question_id)
-
-        if timestamp is None:
-            timestamp = utc_now()
+        cls.validate_attempt_allowed(user_id, team_id, team.event_id, challenge_id, question_id)
 
         # LAZY-IMPORT
         from ...challenge.models.Question import Question
@@ -217,7 +203,7 @@ class Attempt(db.Model):
         attempt = cls(
             user_id=validated_data["user_id"],
             team_id=validated_data["team_id"],
-            event_id=validated_data["event_id"],
+            event_id=team.event_id,
             challenge_id=validated_data["challenge_id"],
             question_id=validated_data["question_id"],
             submission=validated_data["submission"],
@@ -234,11 +220,11 @@ class Attempt(db.Model):
             from .Score import Score
             from .ScoreEvent import ScoreEvent
 
-            score = Score.find_by_team_and_event(team_id, event_id)
+            score = Score.find_by_team(team_id)
             score_event = ScoreEvent.create_score_event(
                 score_id=score.id, team_id=team_id, points=points, timestamp=timestamp, commit=False
             )
-            attempt.score_event_id = score_event.id
+            attempt.score_event = score_event
 
         if commit:
             try:
@@ -277,7 +263,7 @@ class Attempt(db.Model):
         if is_correct is not None:
             query = query.filter_by(is_correct=is_correct)
 
-        return query.order_by(cls.timestamp.desc()).all()
+        return query.order_by(cls.timestamp.desc()).all()  # type: ignore[no-any-return]
 
     def delete_attempt(self, commit: bool = True) -> None:
         """

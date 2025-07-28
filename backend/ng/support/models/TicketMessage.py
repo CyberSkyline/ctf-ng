@@ -10,10 +10,6 @@ from CTFd.models import db, Users
 from ... import config
 from ...core.utils import utc_now
 from ...core.utils.validator import BaseValidator
-from ...core.exceptions import (
-    ValidationError,
-    NotFoundError,
-)
 
 class TicketMessage(db.Model):
     __tablename__ = "ng_ticket_messages"

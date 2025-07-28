@@ -19,7 +19,6 @@ def redeem_hint(
         hint_id=hint.id,
         user_id=current_user.id,
         team_id=team.id,
-        event_id=event.id,
         challenge_id=challenge.id,
     )
 

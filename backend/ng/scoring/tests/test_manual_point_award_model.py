@@ -4,11 +4,17 @@ Tests for the ManualPointAward model
 
 import pytest
 from unittest.mock import patch
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
-from ..models.ManualPointAward import ManualPointAward
-from ..models.ScoreEvent import ScoreEvent
-from ..models.Score import Score
+from CTFd.models import Users
+
+from ...core.exceptions import ValidationError
+
+from ..models import (
+    ManualPointAward,
+    ScoreEvent,
+    Score,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -27,7 +33,7 @@ class TestManualPointAwardRepr:
     def test_repr(self, db_session, admin, team_with_member, event):
         try:
             award = ManualPointAward.create_award(
-                admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Good performance", event_id=event.id
+                admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Good performance"
             )
         except Exception as e:
             if hasattr(e, "errors"):
@@ -47,7 +53,6 @@ class TestCreateAward:
             team_id=team_with_member.id,
             points=100,
             reason="Excellent sportsmanship",
-            event_id=event.id,
         )
 
         assert award.admin_id == admin.id
@@ -56,17 +61,14 @@ class TestCreateAward:
         assert award.reason == "Excellent sportsmanship"
         assert isinstance(award.timestamp, datetime)
 
-        # Should have created a score event
         assert award.score_event_id is not None
         score_event = ScoreEvent.query.get(award.score_event_id)
         assert score_event is not None
         assert score_event.points == 100
 
-        # Score should be updated
         db_session.refresh(score)
         assert score.points == 100
 
-        # Verify it's persisted
         found_award = ManualPointAward.query.filter_by(id=award.id).first()
         assert found_award is not None
 
@@ -77,7 +79,7 @@ class TestCreateAward:
         db_session.commit()
 
         award = ManualPointAward.create_award(
-            admin_id=admin.id, team_id=team_with_member.id, points=-50, reason="Violation of rules", event_id=event.id
+            admin_id=admin.id, team_id=team_with_member.id, points=-50, reason="Violation of rules"
         )
 
         assert award.points == -50
@@ -89,18 +91,24 @@ class TestCreateAward:
 
     def test_create_award_with_timestamp(self, db_session, admin, team_with_member, event):
         """Test creating an award with custom timestamp"""
-        custom_time = datetime(2024, 1, 1, 12, 0, 0)
+        custom_time = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
 
         award = ManualPointAward.create_award(
             admin_id=admin.id,
             team_id=team_with_member.id,
             points=100,
             reason="Test award",
-            event_id=event.id,
             timestamp=custom_time,
         )
 
-        assert award.timestamp == custom_time
+        db_session.flush()
+        db_session.refresh(award)
+
+        if custom_time.tzinfo is not None and award.timestamp.tzinfo is None:
+            stored_as_utc = award.timestamp.replace(tzinfo=UTC)
+            assert custom_time == stored_as_utc, f"Expected {custom_time}, got {stored_as_utc}"
+        else:
+            assert award.timestamp == custom_time
 
     def test_create_award_no_commit(self, db_session, admin, team_with_member, event):
         """Test creating an award without committing"""
@@ -110,7 +118,6 @@ class TestCreateAward:
                 team_id=team_with_member.id,
                 points=100,
                 reason="Test award",
-                event_id=event.id,
                 commit=False,
             )
             mock_commit.assert_not_called()
@@ -126,26 +133,20 @@ class TestCreateAward:
                 team_id=team_with_member.id,
                 points=100,
                 reason="Test award",
-                event_id=event.id,
                 commit=True,
             )
             mock_commit.assert_called_once()
 
     def test_create_award_zero_points_fails(self, db_session, admin, team_with_member, event):
         """Test that creating an award with zero points fails"""
-        from ...core.exceptions import ValidationError
-
         with pytest.raises(ValidationError) as exc_info:
-            ManualPointAward.create_award(
-                admin_id=admin.id, team_id=team_with_member.id, points=0, reason="Test award", event_id=event.id
-            )
+            ManualPointAward.create_award(admin_id=admin.id, team_id=team_with_member.id, points=0, reason="Test award")
 
         assert "points" in exc_info.value.errors
         assert "Points cannot be zero" in exc_info.value.errors["points"]
 
     def test_create_award_non_admin_fails(self, db_session, user, team_with_member, event):
         """Test that non-admin cannot create awards"""
-        from ...core.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
             ManualPointAward.create_award(
@@ -153,7 +154,6 @@ class TestCreateAward:
                 team_id=team_with_member.id,
                 points=100,
                 reason="Test award",
-                event_id=event.id,
             )
 
         assert "admin_id" in exc_info.value.errors
@@ -161,7 +161,6 @@ class TestCreateAward:
 
     def test_create_award_invalid_team_fails(self, db_session, admin, event):
         """Test that creating an award with invalid team fails"""
-        from ...core.exceptions import ValidationError
 
         with pytest.raises(ValidationError):
             ManualPointAward.create_award(
@@ -169,7 +168,6 @@ class TestCreateAward:
                 team_id=999999,  # Non-existent
                 points=100,
                 reason="Test award",
-                event_id=event.id,
             )
 
     def test_create_award_creates_score_if_needed(self, db_session, admin, team_factory, event_factory, user_factory):
@@ -180,13 +178,13 @@ class TestCreateAward:
         team_without_score = team_factory(event=other_event, members=[captain])
 
         # Delete the auto-created score
-        score = Score.query.filter_by(team_id=team_without_score.id, event_id=other_event.id).first()
+        score = Score.query.filter_by(team_id=team_without_score.id).first()
         if score:
             db_session.delete(score)
             db_session.commit()
 
         # Verify no score exists
-        score = Score.query.filter_by(team_id=team_without_score.id, event_id=other_event.id).first()
+        score = Score.query.filter_by(team_id=team_without_score.id).first()
         assert score is None
 
         # Create the award - should succeed and create a score
@@ -195,7 +193,6 @@ class TestCreateAward:
             team_id=team_without_score.id,
             points=100,
             reason="Test award",
-            event_id=other_event.id,
         )
 
         # Verify award was created
@@ -203,7 +200,7 @@ class TestCreateAward:
         assert award.points == 100
 
         # Verify score was created automatically
-        score = Score.query.filter_by(team_id=team_without_score.id, event_id=other_event.id).first()
+        score = Score.query.filter_by(team_id=team_without_score.id).first()
         assert score is not None
         assert score.points == 100
 
@@ -215,7 +212,7 @@ class TestDeleteAward:
         """Test that deleting an award deletes its score event"""
         # Create an award
         award = ManualPointAward.create_award(
-            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Test award", event_id=event.id
+            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Test award"
         )
 
         score_event_id = award.score_event_id
@@ -241,7 +238,7 @@ class TestDeleteAward:
     def test_delete_award_no_commit(self, db_session, admin, team_with_member, event):
         """Test deleting an award without committing"""
         award = ManualPointAward.create_award(
-            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Test award", event_id=event.id
+            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Test award"
         )
 
         with patch.object(db_session, "commit") as mock_commit:
@@ -251,7 +248,7 @@ class TestDeleteAward:
     def test_delete_award_with_commit(self, db_session, admin, team_with_member, event):
         """Test deleting an award with commit"""
         award = ManualPointAward.create_award(
-            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Test award", event_id=event.id
+            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Test award"
         )
 
         with patch.object(db_session, "commit") as mock_commit:
@@ -269,12 +266,8 @@ class TestFindFilteredAwards:
         other_team = team_factory(event=event, members=[other_captain])
 
         # Create awards for different teams
-        ManualPointAward.create_award(
-            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Award 1", event_id=event.id
-        )
-        ManualPointAward.create_award(
-            admin_id=admin.id, team_id=other_team.id, points=200, reason="Award 2", event_id=event.id
-        )
+        ManualPointAward.create_award(admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Award 1")
+        ManualPointAward.create_award(admin_id=admin.id, team_id=other_team.id, points=200, reason="Award 2")
 
         # Find awards for specific team
         awards = ManualPointAward.find_filtered_awards(team_id=team_with_member.id)
@@ -285,19 +278,15 @@ class TestFindFilteredAwards:
     def test_find_by_admin_id(self, db_session, admin, user, team_with_member, event):
         """Test filtering awards by admin_id"""
         # Create another admin
-        from CTFd.models import Users
-
         other_admin = Users(name="admin2", email="admin2@example.com", password="password", type="admin")
         other_admin.verified = True
         db_session.add(other_admin)
         db_session.commit()
 
         # Create awards by different admins
+        ManualPointAward.create_award(admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Award 1")
         ManualPointAward.create_award(
-            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Award 1", event_id=event.id
-        )
-        ManualPointAward.create_award(
-            admin_id=other_admin.id, team_id=team_with_member.id, points=200, reason="Award 2", event_id=event.id
+            admin_id=other_admin.id, team_id=team_with_member.id, points=200, reason="Award 2"
         )
 
         # Find awards by specific admin
@@ -306,7 +295,9 @@ class TestFindFilteredAwards:
         assert len(awards) == 1
         assert awards[0].admin_id == admin.id
 
-    def test_find_by_event_id(self, db_session, admin, team_with_member, team_factory, event, event_factory, user_factory):
+    def test_find_by_event_id(
+        self, db_session, admin, team_with_member, team_factory, event, event_factory, user_factory
+    ):
         """Test filtering awards by event_id"""
         # Create another event and team
         other_event = event_factory()
@@ -315,11 +306,9 @@ class TestFindFilteredAwards:
 
         # Create awards for teams in different events
         award1 = ManualPointAward.create_award(
-            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Award 1", event_id=event.id
+            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Award 1"
         )
-        ManualPointAward.create_award(
-            admin_id=admin.id, team_id=other_team.id, points=200, reason="Award 2", event_id=other_event.id
-        )
+        ManualPointAward.create_award(admin_id=admin.id, team_id=other_team.id, points=200, reason="Award 2")
 
         # Find awards for specific event
         awards = ManualPointAward.find_filtered_awards(event_id=event.id)
@@ -336,7 +325,6 @@ class TestFindFilteredAwards:
                 team_id=team_with_member.id,
                 points=(i + 1) * 10,
                 reason=f"Award {i}",
-                event_id=event.id,
             )
 
         # Find with limit
@@ -352,24 +340,21 @@ class TestFindFilteredAwards:
             team_id=team_with_member.id,
             points=10,
             reason="Award 1",
-            event_id=event.id,
-            timestamp=datetime(2024, 1, 1, 10, 0, 0),
+            timestamp=datetime(2024, 1, 1, 10, 0, 0, tzinfo=UTC),
         )
         ManualPointAward.create_award(
             admin_id=admin.id,
             team_id=team_with_member.id,
             points=20,
             reason="Award 2",
-            event_id=event.id,
-            timestamp=datetime(2024, 1, 1, 12, 0, 0),
+            timestamp=datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC),
         )
         ManualPointAward.create_award(
             admin_id=admin.id,
             team_id=team_with_member.id,
             points=30,
             reason="Award 3",
-            event_id=event.id,
-            timestamp=datetime(2024, 1, 1, 11, 0, 0),
+            timestamp=datetime(2024, 1, 1, 11, 0, 0, tzinfo=UTC),
         )
 
         awards = ManualPointAward.find_filtered_awards(team_id=team_with_member.id)
@@ -387,7 +372,7 @@ class TestManualPointAwardSerialization:
     def test_serialize_basic(self, db_session, admin, team_with_member, event):
         """Test basic serialization"""
         award = ManualPointAward.create_award(
-            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Test award", event_id=event.id
+            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Test award"
         )
 
         data = award.serialize()
@@ -404,7 +389,7 @@ class TestManualPointAwardSerialization:
     def test_serialize_with_admin_fields(self, db_session, admin, team_with_member, event):
         """Test serialization with admin fields"""
         award = ManualPointAward.create_award(
-            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Test award", event_id=event.id
+            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Test award"
         )
 
         data = award.serialize(include_admin_fields=True)
@@ -430,8 +415,6 @@ class TestManualPointAwardValidation:
 
     def test_validate_missing_admin_id(self, db_session, team_with_member):
         """Test validation fails with missing admin_id"""
-        from ...core.exceptions import ValidationError
-
         with pytest.raises(ValidationError) as exc_info:
             ManualPointAward.validate({"team_id": team_with_member.id, "points": 100, "reason": "Test award"})
 
@@ -440,7 +423,6 @@ class TestManualPointAwardValidation:
 
     def test_validate_non_admin_user(self, db_session, user, team_with_member):
         """Test validation fails with non-admin user"""
-        from ...core.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
             ManualPointAward.validate(
@@ -457,8 +439,6 @@ class TestManualPointAwardValidation:
 
     def test_validate_missing_points(self, db_session, admin, team_with_member):
         """Test validation fails with missing points"""
-        from ...core.exceptions import ValidationError
-
         with pytest.raises(ValidationError) as exc_info:
             ManualPointAward.validate({"admin_id": admin.id, "team_id": team_with_member.id, "reason": "Test award"})
 
@@ -467,8 +447,6 @@ class TestManualPointAwardValidation:
 
     def test_validate_zero_points(self, db_session, admin, team_with_member):
         """Test validation fails with zero points"""
-        from ...core.exceptions import ValidationError
-
         with pytest.raises(ValidationError) as exc_info:
             ManualPointAward.validate(
                 {"admin_id": admin.id, "team_id": team_with_member.id, "points": 0, "reason": "Test award"}
@@ -479,8 +457,6 @@ class TestManualPointAwardValidation:
 
     def test_validate_non_integer_points(self, db_session, admin, team_with_member):
         """Test validation fails with non-integer points"""
-        from ...core.exceptions import ValidationError
-
         with pytest.raises(ValidationError) as exc_info:
             ManualPointAward.validate(
                 {
@@ -496,17 +472,13 @@ class TestManualPointAwardValidation:
 
     def test_validate_missing_reason(self, db_session, admin, team_with_member):
         """Test validation fails with missing reason"""
-        from ...core.exceptions import ValidationError
-
         with pytest.raises(ValidationError) as exc_info:
             ManualPointAward.validate({"admin_id": admin.id, "team_id": team_with_member.id, "points": 100})
 
         assert "reason" in exc_info.value.errors
 
     def test_validate_empty_reason(self, db_session, admin, team_with_member):
-        """Test validation fails with empty reason"""
-        from ...core.exceptions import ValidationError
-
+        """Test that empty/whitespace reasons are rejected"""
         with pytest.raises(ValidationError) as exc_info:
             ManualPointAward.validate(
                 {
@@ -514,10 +486,12 @@ class TestManualPointAwardValidation:
                     "team_id": team_with_member.id,
                     "points": 100,
                     "reason": "   ",  # Empty after strip
+                    "timestamp": "2024-01-01T12:00:00Z",
                 }
             )
 
         assert "reason" in exc_info.value.errors
+        assert "cannot be empty" in exc_info.value.errors["reason"]
 
 
 class TestManualPointAwardRelationships:
@@ -526,7 +500,7 @@ class TestManualPointAwardRelationships:
     def test_admin_relationship(self, db_session, admin, team_with_member, event):
         """Test the admin relationship"""
         award = ManualPointAward.create_award(
-            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Test award", event_id=event.id
+            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Test award"
         )
 
         assert award.admin == admin
@@ -534,7 +508,7 @@ class TestManualPointAwardRelationships:
     def test_team_relationship(self, db_session, admin, team_with_member, event):
         """Test the team relationship"""
         award = ManualPointAward.create_award(
-            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Test award", event_id=event.id
+            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Test award"
         )
 
         assert award.team == team_with_member
@@ -543,7 +517,7 @@ class TestManualPointAwardRelationships:
         """Test the score_event relationship"""
         # Create award
         award = ManualPointAward.create_award(
-            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Test award", event_id=event.id
+            admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Test award"
         )
 
         assert award.score_event is not None

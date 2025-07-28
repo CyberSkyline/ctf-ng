@@ -21,7 +21,6 @@ from ...core.exceptions import ValidationError
 
 from ...user.models import User
 
-from ..models import Attempt
 from ..controllers import (
     get_leaderboard,
     get_team_score,
@@ -73,14 +72,23 @@ class MyTeamScore(Resource):
 @scoring_user_namespace.route("/<int:event_id>/challenges/<int:challenge_id>/questions/<int:question_id>/submit")
 class SubmitAnswer(Resource):
     @scoring_user_namespace.doc(**SUBMIT_ANSWER_DOC)
-    @user_endpoint(json_required=True, validation_func=Attempt.validate_api_submission)
+    @user_endpoint(json_required=True)
     @load_event(LoaderType.PARAM)
     @load_challenge(LoaderType.PARAM)
     @load_question(LoaderType.PARAM)
     @load_team_by_user_and_event()
     def post(
-        self, event_id: int, challenge_id: int, question_id: int,
-        event, challenge, question, team, current_user: User, validated_data, **kwargs
+        self,
+        event_id: int,
+        challenge_id: int,
+        question_id: int,
+        event,
+        challenge,
+        question,
+        team,
+        current_user: User,
+        json_data,
+        **kwargs,
     ):
         """
         Submit an answer to a question
@@ -91,7 +99,7 @@ class SubmitAnswer(Resource):
             question=question,
             team=team,
             current_user=current_user,
-            submission=validated_data["submission"],
+            submission=json_data.get("submission", ""),
         )
         return success_response(result, status_code=201)
 
@@ -104,8 +112,18 @@ class RedeemHint(Resource):
     @load_challenge(LoaderType.PARAM)
     @load_hint(LoaderType.PARAM)
     @load_team_by_user_and_event()
-    def post(self, event_id: int, challenge_id: int, hint_id: int,
-             event, challenge, hint, team, current_user: User, **kwargs):
+    def post(
+        self,
+        event_id: int,
+        challenge_id: int,
+        hint_id: int,
+        event,
+        challenge,
+        hint,
+        team,
+        current_user: User,
+        **kwargs,
+    ):
         """
         Redeem a hint
         """

@@ -4,11 +4,22 @@ Tests for the Attempt model
 
 import pytest
 from unittest.mock import patch
-from datetime import datetime
+from datetime import datetime, timezone, timedelta, UTC
 
-from ..models.Attempt import Attempt
-from ..models.ScoreEvent import ScoreEvent
-from ..models.Score import Score
+from ...core.exceptions import (
+    ValidationError,
+    BusinessLogicError,
+)
+
+from ...challenge.models.Question import Question
+from ...team.models.Team import Team
+from ...event.models.Event import Event
+
+from ..models import (
+    Attempt,
+    ScoreEvent,
+    Score,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -28,7 +39,6 @@ class TestAttemptRepr:
         attempt = attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             submission="test answer",
@@ -46,7 +56,6 @@ class TestCreateAttempt:
         attempt = Attempt.create_attempt(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             submission=question.answer,  # Correct answer
@@ -79,7 +88,6 @@ class TestCreateAttempt:
         attempt = Attempt.create_attempt(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             submission="wrong answer",
@@ -104,7 +112,6 @@ class TestCreateAttempt:
         attempt = Attempt.create_attempt(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             submission="4",  # Same as answer but different case
@@ -115,19 +122,25 @@ class TestCreateAttempt:
 
     def test_create_attempt_with_timestamp(self, db_session, user, team_with_member, event, challenge, question):
         """Test creating an attempt with custom timestamp"""
-        custom_time = datetime(2024, 1, 1, 12, 0, 0)
+        custom_time = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
 
         attempt = Attempt.create_attempt(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             submission="test",
             timestamp=custom_time,
         )
 
-        assert attempt.timestamp == custom_time
+        db_session.flush()
+        db_session.refresh(attempt)
+
+        if custom_time.tzinfo is not None and attempt.timestamp.tzinfo is None:
+            stored_as_utc = attempt.timestamp.replace(tzinfo=UTC)
+            assert custom_time == stored_as_utc, f"Expected {custom_time}, got {stored_as_utc}"
+        else:
+            assert attempt.timestamp == custom_time
 
     def test_create_attempt_no_commit(self, db_session, user, team_with_member, event, challenge, question):
         """Test creating an attempt without committing"""
@@ -135,7 +148,6 @@ class TestCreateAttempt:
             attempt = Attempt.create_attempt(
                 user_id=user.id,
                 team_id=team_with_member.id,
-                event_id=event.id,
                 challenge_id=challenge.id,
                 question_id=question.id,
                 submission="test",
@@ -143,7 +155,6 @@ class TestCreateAttempt:
             )
             mock_commit.assert_not_called()
 
-        # Should still be in session
         assert attempt in db_session
 
     def test_create_attempt_with_commit(self, db_session, user, team_with_member, event, challenge, question):
@@ -152,7 +163,6 @@ class TestCreateAttempt:
             Attempt.create_attempt(
                 user_id=user.id,
                 team_id=team_with_member.id,
-                event_id=event.id,
                 challenge_id=challenge.id,
                 question_id=question.id,
                 submission="test",
@@ -162,13 +172,10 @@ class TestCreateAttempt:
 
     def test_create_attempt_invalid_question_fails(self, db_session, user, team_with_member, event, challenge):
         """Test that creating an attempt with invalid question fails"""
-        from ...core.exceptions import ValidationError
-
         with pytest.raises(ValidationError):
             Attempt.create_attempt(
                 user_id=user.id,
                 team_id=team_with_member.id,
-                event_id=event.id,
                 challenge_id=challenge.id,
                 question_id=999999,  # Non-existent
                 submission="test",
@@ -178,11 +185,6 @@ class TestCreateAttempt:
         self, db_session, user, team_with_member, locked_event, challenge, question
     ):
         """Test that creating an attempt for locked event fails"""
-        from ...core.exceptions import BusinessLogicError
-
-        # Create a team and score for the locked event
-        from ...team.models.Team import Team
-
         locked_team = Team.create_team_with_captain(
             name="Locked Team", event_id=locked_event.id, captain_id=user.id, invite_code="locked123"
         )
@@ -191,7 +193,6 @@ class TestCreateAttempt:
             Attempt.create_attempt(
                 user_id=user.id,
                 team_id=locked_team.id,
-                event_id=locked_event.id,
                 challenge_id=challenge.id,
                 question_id=question.id,
                 submission="test",
@@ -211,7 +212,6 @@ class TestDeleteAttempt:
         attempt = Attempt.create_attempt(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             submission=question.answer,
@@ -239,7 +239,6 @@ class TestDeleteAttempt:
         attempt = Attempt.create_attempt(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             submission="wrong",
@@ -261,7 +260,6 @@ class TestDeleteAttempt:
         attempt = attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
         )
@@ -277,7 +275,6 @@ class TestDeleteAttempt:
         attempt = attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
         )
@@ -298,7 +295,6 @@ class TestFindFilteredAttempts:
         attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             submission="test1",
@@ -306,7 +302,6 @@ class TestFindFilteredAttempts:
         attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             submission="test2",
@@ -314,7 +309,6 @@ class TestFindFilteredAttempts:
         attempt_factory(
             user_id=admin.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             submission="test3",
@@ -327,7 +321,16 @@ class TestFindFilteredAttempts:
         assert all(a.user_id == user.id for a in attempts)
 
     def test_find_by_team_id(
-        self, db_session, attempt_factory, user, team_with_member, team_factory, event, challenge, question, user_factory
+        self,
+        db_session,
+        attempt_factory,
+        user,
+        team_with_member,
+        team_factory,
+        event,
+        challenge,
+        question,
+        user_factory,
     ):
         """Test filtering attempts by team_id"""
         # Create another team
@@ -338,14 +341,12 @@ class TestFindFilteredAttempts:
         attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
         )
         attempt_factory(
             user_id=user.id,
             team_id=other_team.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
         )
@@ -359,8 +360,6 @@ class TestFindFilteredAttempts:
     def test_find_by_question_id(self, db_session, attempt_factory, user, team_with_member, event, challenge, question):
         """Test filtering attempts by question_id"""
         # Create another question
-        from ...challenge.models.Question import Question
-
         other_question = Question(
             challenge_id=challenge.id, name="Other Question", body="What is 3+3?", answer="6", points=50, max_attempts=5
         )
@@ -371,14 +370,12 @@ class TestFindFilteredAttempts:
         attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
         )
         attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=other_question.id,
         )
@@ -395,7 +392,6 @@ class TestFindFilteredAttempts:
         Attempt.create_attempt(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             submission=question.answer,
@@ -403,7 +399,6 @@ class TestFindFilteredAttempts:
         Attempt.create_attempt(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             submission="wrong",
@@ -422,7 +417,6 @@ class TestFindFilteredAttempts:
             attempt_factory(
                 user_id=user.id,
                 team_id=team_with_member.id,
-                event_id=event.id,
                 challenge_id=challenge.id,
                 question_id=question.id,
                 submission=f"test{i}",
@@ -445,7 +439,6 @@ class TestFindFilteredAttempts:
         attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             timestamp=datetime(2024, 1, 1, 10, 0, 0),
@@ -453,7 +446,6 @@ class TestFindFilteredAttempts:
         attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             timestamp=datetime(2024, 1, 1, 12, 0, 0),
@@ -461,7 +453,6 @@ class TestFindFilteredAttempts:
         attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             timestamp=datetime(2024, 1, 1, 11, 0, 0),
@@ -486,7 +477,6 @@ class TestGetTeamAttemptCount:
             Attempt.create_attempt(
                 user_id=user.id,
                 team_id=team_with_member.id,
-                event_id=event.id,
                 challenge_id=challenge.id,
                 question_id=question.id,
                 submission=f"attempt{i}",
@@ -513,7 +503,6 @@ class TestHasCorrectAnswer:
         Attempt.create_attempt(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             submission=question.answer,
@@ -531,7 +520,6 @@ class TestHasCorrectAnswer:
         Attempt.create_attempt(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             submission="wrong",
@@ -559,7 +547,6 @@ class TestAttemptSerialization:
         attempt = attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             submission="test answer",
@@ -589,7 +576,6 @@ class TestAttemptSerialization:
         attempt = attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             submission="test answer",
@@ -643,7 +629,7 @@ class TestAttemptValidation:
         assert "submission" in exc_info.value.errors
 
     def test_validate_empty_submission(self, db_session, user, team_with_member, event, challenge, question):
-        """Test validation fails with empty submission"""
+        """Test that empty/whitespace submissions are rejected"""
         from ...core.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
@@ -654,31 +640,13 @@ class TestAttemptValidation:
                     "event_id": event.id,
                     "challenge_id": challenge.id,
                     "question_id": question.id,
-                    "submission": "   ",  # Empty after strip
+                    "submission": "   ",
+                    "timestamp": "2024-01-01T12:00:00Z",
                 }
             )
 
         assert "submission" in exc_info.value.errors
-
-
-class TestValidateApiSubmission:
-    """Test the validate_api_submission method"""
-
-    def test_validate_api_submission_valid(self, db_session, question):
-        """Test API submission validation with valid data"""
-        data = Attempt.validate_api_submission({"submission": "test answer"})
-
-        assert data["submission"] == "test answer"
-        # question_id is not included since it comes from URL path
-
-    def test_validate_api_submission_missing_submission(self, db_session):
-        """Test API submission validation fails without submission"""
-        from ...core.exceptions import ValidationError
-
-        with pytest.raises(ValidationError) as exc_info:
-            Attempt.validate_api_submission({})
-
-        assert "submission" in exc_info.value.errors
+        assert "cannot be empty" in exc_info.value.errors["submission"]
 
 
 class TestValidateAttemptAllowed:
@@ -697,11 +665,7 @@ class TestValidateAttemptAllowed:
 
     def test_validate_attempt_locked_event(self, db_session, user, team_with_member, locked_event, challenge, question):
         """Test validation fails for locked event"""
-        from ...core.exceptions import BusinessLogicError
-
         # Create team for locked event
-        from ...team.models.Team import Team
-
         locked_team = Team.create_team_with_captain(
             name="Locked Team", event_id=locked_event.id, captain_id=user.id, invite_code="locked123"
         )
@@ -719,13 +683,7 @@ class TestValidateAttemptAllowed:
 
     def test_validate_attempt_ended_event(self, db_session, user, team_with_member, challenge, question):
         """Test validation fails for ended event"""
-        from ...core.exceptions import BusinessLogicError
-        from datetime import timedelta, datetime
-
-        # Create an ended event with timezone-naive datetimes (as Event model stores them)
-        from ...event.models.Event import Event
-
-        now = datetime.utcnow()  # Use naive datetime to match Event model
+        now = datetime.utcnow()
         ended_event = Event(
             name="Ended Event",
             description="This event has ended",
@@ -735,9 +693,6 @@ class TestValidateAttemptAllowed:
         )
         db_session.add(ended_event)
         db_session.commit()
-
-        # Create team for ended event
-        from ...team.models.Team import Team
 
         ended_team = Team.create_team_with_captain(
             name="Ended Team", event_id=ended_event.id, captain_id=user.id, invite_code="ended123"
@@ -756,11 +711,9 @@ class TestValidateAttemptAllowed:
 
     def test_validate_attempt_not_team_member(self, db_session, admin, team_with_member, event, challenge, question):
         """Test validation fails when user is not team member"""
-        from ...core.exceptions import BusinessLogicError
-
         with pytest.raises(BusinessLogicError) as exc_info:
             Attempt.validate_attempt_allowed(
-                user_id=admin.id,  # Admin is not member of team_with_member
+                user_id=admin.id,
                 team_id=team_with_member.id,
                 event_id=event.id,
                 challenge_id=challenge.id,
@@ -773,14 +726,11 @@ class TestValidateAttemptAllowed:
         self, db_session, user, team_with_member, event, challenge, question
     ):
         """Test validation fails when max attempts reached"""
-        from ...core.exceptions import BusinessLogicError
-
         # Create max attempts
         for i in range(question.max_attempts):
             Attempt.create_attempt(
                 user_id=user.id,
                 team_id=team_with_member.id,
-                event_id=event.id,
                 challenge_id=challenge.id,
                 question_id=question.id,
                 submission=f"attempt{i}",
@@ -806,7 +756,6 @@ class TestAttemptRelationships:
         attempt = attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
         )
@@ -818,7 +767,6 @@ class TestAttemptRelationships:
         attempt = attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
         )
@@ -832,7 +780,6 @@ class TestAttemptRelationships:
         attempt = attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
         )
@@ -845,7 +792,6 @@ class TestAttemptRelationships:
         attempt = Attempt.create_attempt(
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
             question_id=question.id,
             submission=question.answer,

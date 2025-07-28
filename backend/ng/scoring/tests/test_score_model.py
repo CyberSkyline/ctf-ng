@@ -6,8 +6,9 @@ import pytest
 from unittest.mock import patch
 from datetime import datetime
 
-from ..models.Score import Score
-from ..models.ScoreEvent import ScoreEvent
+from CTFd.cache import cache
+
+from ..models import Score, ScoreEvent
 
 
 @pytest.fixture(autouse=True)
@@ -40,7 +41,7 @@ class TestCreateScore:
             score = existing
         else:
             # Create a new score
-            score = Score.create_score(team_id=team_with_member.id, event_id=event.id, team_name=team_with_member.name)
+            score = Score.create_score(team_id=team_with_member.id)
 
         assert score.team_id == team_with_member.id
         assert score.event_id == event.id
@@ -67,9 +68,7 @@ class TestCreateScore:
             db_session.commit()
 
         with patch.object(db_session, "commit") as mock_commit:
-            score = Score.create_score(
-                team_id=new_team.id, event_id=new_event.id, team_name=new_team.name, commit=False
-            )
+            score = Score.create_score(team_id=new_team.id, commit=False)
             mock_commit.assert_not_called()
 
         # Should still be in session
@@ -89,7 +88,7 @@ class TestCreateScore:
             db_session.commit()
 
         with patch.object(db_session, "commit") as mock_commit:
-            Score.create_score(team_id=new_team.id, event_id=new_event.id, team_name=new_team.name, commit=True)
+            Score.create_score(team_id=new_team.id, commit=True)
             mock_commit.assert_called_once()
 
     def test_create_duplicate_score_raises_error(self, db_session, score):
@@ -97,7 +96,7 @@ class TestCreateScore:
         from sqlalchemy.exc import IntegrityError
 
         with pytest.raises(IntegrityError):
-            Score.create_score(team_id=score.team_id, event_id=score.event_id, team_name="Duplicate Team")
+            Score.create_score(team_id=score.team_id)
 
 
 class TestScoreAdjust:
@@ -202,8 +201,6 @@ class TestGetLeaderboard:
 
     def test_get_leaderboard_ordering(self, db_session, event_factory, team_factory, user_factory):
         """Test leaderboard returns teams in descending score order"""
-        from CTFd.cache import cache
-
         cache.clear()
 
         # Create a fresh event and teams to avoid cache issues
@@ -236,7 +233,6 @@ class TestGetLeaderboard:
 
     def test_get_leaderboard_caching(self, db_session, event_factory, team_factory, user_factory):
         """Test that leaderboard is cached"""
-        from CTFd.cache import cache
 
         cache.clear()
 
@@ -275,8 +271,6 @@ class TestGetLeaderboard:
 
     def test_get_leaderboard_with_tied_scores(self, db_session, event_factory, team_factory, user_factory):
         """Test leaderboard handles tied scores correctly"""
-        from CTFd.cache import cache
-
         cache.clear()
 
         fresh_event = event_factory()
@@ -323,7 +317,7 @@ class TestGetTeamRank:
 
         # Test ranks for each team
         for i, team_data in enumerate(teams_data):
-            rank = Score.get_team_rank(team_data["team"].id, event.id)
+            rank = Score.get_team_rank(team_data["team"].id)
             # Team 4 has highest score (500), so rank 1
             # Team 0 has lowest score (100), so rank 5
             expected_rank = 5 - i
@@ -331,12 +325,8 @@ class TestGetTeamRank:
 
     def test_get_team_rank_nonexistent(self, db_session, event):
         """Test rank for team that doesn't exist in event"""
-        from ...core.exceptions import NotFoundError
-
-        with pytest.raises(NotFoundError) as exc_info:
-            Score.get_team_rank(999999, event.id)
-
-        assert "Team with ID 999999 not found" in str(exc_info.value)
+        rank = Score.get_team_rank(999999)
+        assert rank is None
 
     def test_get_team_rank_uses_cache(self, db_session, event, score):
         """Test that get_team_rank uses cached leaderboard"""
@@ -344,7 +334,7 @@ class TestGetTeamRank:
         Score.get_leaderboard(event.id)
 
         # Get rank without mocking to ensure it works
-        rank = Score.get_team_rank(score.team_id, event.id)
+        rank = Score.get_team_rank(score.team_id)
         assert rank == 1  # Only team, so rank 1
 
 

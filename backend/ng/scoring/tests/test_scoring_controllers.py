@@ -27,6 +27,7 @@ from ..models import (
     Score,
     ScoreEvent,
 )
+from ...challenge.models.Hint import Hint
 
 
 @pytest.fixture(autouse=True)
@@ -83,7 +84,6 @@ class TestSubmitAnswer:
         # Verify the score was not updated
         db_session.refresh(score)
         assert score.points == 0
-
 
     def test_submit_answer_with_existing_score(
         self, db_session, user, team_with_member, event, challenge, question, score
@@ -158,7 +158,6 @@ class TestRedeemHint:
         assert result.team_id == team_with_member.id
         assert result.points == -hint.deduction
 
-
     def test_redeem_hint_already_redeemed(self, db_session, user, team_with_member, event, challenge, hint):
         """Test redeeming hint that was already redeemed"""
         # Create initial redemption
@@ -166,7 +165,6 @@ class TestRedeemHint:
             hint_id=hint.id,
             user_id=user.id,
             team_id=team_with_member.id,
-            event_id=event.id,
             challenge_id=challenge.id,
         )
 
@@ -183,8 +181,6 @@ class TestRedeemHint:
 
     def test_redeem_hint_zero_deduction(self, db_session, user, team_with_member, event, challenge):
         """Test redeeming hint with zero deduction"""
-        from ...challenge.models.Hint import Hint
-
         # Create hint with zero deduction
         free_hint = Hint(challenge_id=challenge.id, preview="Free hint", body="This is a free hint", deduction=0)
         db_session.add(free_hint)
@@ -306,7 +302,6 @@ class TestAwardManualPoints:
         assert award is not None
         assert award.points == -50
 
-
     def test_award_manual_points_zero_points_fails(self, db_session, admin, event, team_with_member, score):
         """Test that awarding zero points fails"""
         with pytest.raises(ValidationError) as exc_info:
@@ -418,7 +413,6 @@ class TestRecalculateScore:
         # Result is the updated Score object
         assert isinstance(result, Score)
         assert result.points == 130  # 100 + 50 - 20
-
 
     def test_recalculate_score_updates_timestamp(self, db_session, event, team_with_member, score):
         """Test that recalculation updates the last_update timestamp"""

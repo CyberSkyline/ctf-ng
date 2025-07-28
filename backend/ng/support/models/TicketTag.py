@@ -9,7 +9,6 @@ from CTFd.models import db
 
 from ... import config
 from ...core.utils.validator import BaseValidator
-from ...core.exceptions import ValidationError
 
 
 class TicketTag(db.Model):

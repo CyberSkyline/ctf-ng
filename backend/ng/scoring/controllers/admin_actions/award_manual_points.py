@@ -21,7 +21,6 @@ def award_manual_points(
         team_id=team.id,
         points=points,
         reason=reason,
-        event_id=event.id,
     )
 
     return award

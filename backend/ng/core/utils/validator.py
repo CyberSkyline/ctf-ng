@@ -46,7 +46,7 @@ def validation_field(func: Callable) -> Callable:
             return None
 
         # Call the original function with the processed parameters
-        return func(self, data, field, *args, required=required, friendly_name=name, value=value, **kwargs)
+        return func(self, data, field, *args, friendly_name=name, value=value, required=required, **kwargs)
 
     return wrapper
 
@@ -200,7 +200,7 @@ class BaseValidator:
         self,
         data: dict[str, Any],
         field: str = "admin_id",
-        required: bool = True,
+        required: bool = False,  # Used in decorator
         friendly_name: str | None = None,
         value: Any = None,  # Injected by decorator
     ) -> None:
@@ -212,9 +212,6 @@ class BaseValidator:
             
         try:
             user_id = int(value)
-            if user_id <= 0:
-                self.errors[field] = f"{friendly_name} must be a positive number"
-                return
         except (ValueError, TypeError):
             self.errors[field] = f"{friendly_name} must be a valid number"
             return
@@ -239,7 +236,7 @@ class BaseValidator:
         min_value: int | None = None,
         max_value: int | None = None,
         allow_zero: bool = True,
-        required: bool = False,
+        required: bool = False,  # Used in decorator
         friendly_name: str | None = None,
         value: Any = None,  # Injected by decorator
     ) -> None:

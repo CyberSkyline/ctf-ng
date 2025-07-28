@@ -3,7 +3,7 @@ Defines the ManualPointAward model for admin point adjustments.
 """
 
 from __future__ import annotations
-from typing import Any, TypedDict
+from typing import Any, TypedDict, NotRequired
 
 from datetime import datetime
 
@@ -22,6 +22,7 @@ class SerializedManualPointAward(TypedDict):
     timestamp: str
     points: int
     reason: str
+    admin_name: NotRequired[str]
 
 
 class ManualPointAward(db.Model):
@@ -51,7 +52,7 @@ class ManualPointAward(db.Model):
             "admin_id": self.admin_id,
             "team_id": self.team_id,
             "score_event_id": self.score_event_id,
-            "timestamp": self.timestamp.isoformat() + "Z" if self.timestamp else None,
+            "timestamp": self.timestamp.isoformat() + "Z",
             "points": self.points,
             "reason": self.reason,
         }
@@ -59,7 +60,7 @@ class ManualPointAward(db.Model):
         if include_admin_fields and self.admin:
             data["admin_name"] = self.admin.name
 
-        return SerializedManualPointAward(**data)
+        return SerializedManualPointAward(**data)  # type: ignore[typeddict-item, no-any-return]
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
@@ -72,25 +73,15 @@ class ManualPointAward(db.Model):
 
         validator.validate_model_id(data, "team_id", "Team", required=True)
 
-        validator.validate_integer(
-            data,
-            "points",
-            allow_zero=False,
-            required=True,
-            friendly_name="Points"
-        )
+        validator.validate_integer(data, "points", allow_zero=False, required=True, friendly_name="Points")
 
         validator.validate_string(
-            data,
-            "reason",
-            max_length=config.MANUAL_AWARD_REASON_MAX_LENGTH,
-            required=True,
-            friendly_name="Reason"
+            data, "reason", max_length=config.MANUAL_AWARD_REASON_MAX_LENGTH, required=True, friendly_name="Reason"
         )
 
         validator.validate_datetime(data, "timestamp", required=False)
 
-        return validator.validate()
+        return validator.validate()  # type: ignore[no-any-return]
 
     @classmethod
     def create_award(
@@ -99,7 +90,6 @@ class ManualPointAward(db.Model):
         team_id: int,
         points: int,
         reason: str,
-        event_id: int,
         timestamp: datetime | None = None,
         commit: bool = True,
     ) -> ManualPointAward:
@@ -110,7 +100,6 @@ class ManualPointAward(db.Model):
             team_id: ID of the team receiving points
             points: Points to add/subtract (can be negative)
             reason: Explanation for the award
-            event_id: ID of the event (for finding the score)
             timestamp: When awarded (defaults to now)
             commit: Whether to commit immediately
 
@@ -133,7 +122,7 @@ class ManualPointAward(db.Model):
         from .Score import Score
         from .ScoreEvent import ScoreEvent
 
-        score = Score.find_by_team_and_event(validated_data["team_id"], event_id)
+        score = Score.find_by_team(validated_data["team_id"])
 
         score_event = ScoreEvent.create_score_event(
             score_id=score.id,
@@ -146,11 +135,12 @@ class ManualPointAward(db.Model):
         award = cls(
             admin_id=validated_data["admin_id"],
             team_id=validated_data["team_id"],
-            score_event_id=score_event.id,
             timestamp=timestamp,
             points=validated_data["points"],
             reason=validated_data["reason"],
         )
+
+        award.score_event = score_event
 
         db.session.add(award)
 
@@ -191,7 +181,7 @@ class ManualPointAward(db.Model):
 
         if limit is not None:
             query = query.limit(limit)
-        return query.all()
+        return query.all()  # type: ignore[no-any-return]
 
     def delete_award(self, commit: bool = True) -> None:
         """

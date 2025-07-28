@@ -9,6 +9,9 @@ ifeq ($(shell test -f $(VENV_PYTHON) && echo exists), exists)
 endif
 
 
+find-TODO:
+	pylint --disable=all --enable=W0511 .
+
 # All tests
 test-all:
 	$(PYTHON_EXEC) -m pytest -m "not middleware" -v

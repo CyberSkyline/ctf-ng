@@ -19,7 +19,6 @@ def submit_answer(
     attempt = Attempt.create_attempt(
         user_id=current_user.id,
         team_id=team.id,
-        event_id=event.id,
         challenge_id=challenge.id,
         question_id=question.id,
         submission=submission,

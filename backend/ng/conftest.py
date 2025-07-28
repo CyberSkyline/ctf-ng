@@ -177,11 +177,11 @@ def user(db_session):
     user = Users(name="testuser", email="test@example.com", password="password")
     user.verified = True
     db_session.add(user)
-    db_session.commit()
+    db_session.flush()
     from .user.models.User import User as NgUser
 
     NgUser.create_user(user_id=user.id, commit=False)
-    db_session.commit()
+    db_session.flush()
     return user
 
 
@@ -191,11 +191,11 @@ def admin(db_session):
     admin = Users(name="admin", email="admin@example.com", password="password", type="admin")
     admin.verified = True
     db_session.add(admin)
-    db_session.commit()
+    db_session.flush()
     from .user.models.User import User as NgUser
 
     NgUser.create_user(user_id=admin.id, commit=False)
-    db_session.commit()
+    db_session.flush()
     return admin
 
 
@@ -354,9 +354,19 @@ def team_member_client(app, db_session, team_with_members, role_with_permissions
 
 
 @pytest.fixture
-def event(event_factory):
+def event(db_session):
     """Simple fixture to get a single event."""
-    return event_factory()
+    from .event.models.Event import Event
+    
+    event = Event(
+        name="Test Event 1",
+        description="A test event.",
+        max_team_size=4,
+        locked=False,
+    )
+    db_session.add(event)
+    db_session.flush()
+    return event
 
 
 
@@ -374,7 +384,7 @@ def locked_event(db_session):
         end_time=datetime.utcnow() - timedelta(days=5)
     )
     db_session.add(event)
-    db_session.commit()
+    db_session.flush()
     return event
 
 
@@ -391,7 +401,7 @@ def future_event(db_session):
         end_time=datetime.utcnow() + timedelta(days=10)
     )
     db_session.add(event)
-    db_session.commit()
+    db_session.flush()
     return event
 
 
@@ -736,9 +746,10 @@ def team_with_member(db_session, event, user):
     """Create a team with a member for scoring tests."""
     from .team.models.Team import Team
 
+    event_id = event.id
     team = Team.create_team_with_captain(
         name="Test Scoring Team",
-        event_id=event.id,
+        event_id=event_id,
         captain_id=user.id,
         invite_code="test123"
     )
@@ -747,24 +758,17 @@ def team_with_member(db_session, event, user):
 
 @pytest.fixture
 def score(db_session, team_with_member, event):
-    """Create a Score record for testing."""
+    """Get the Score record that was automatically created with the team."""
     from .scoring.models.Score import Score
 
-    existing_score = Score.query.filter_by(
+    score = Score.query.filter_by(
         team_id=team_with_member.id,
         event_id=event.id
     ).first()
 
-    if existing_score:
-        return existing_score
-
-    score = Score.create_score(
-        team_id=team_with_member.id,
-        event_id=event.id,
-        team_name=team_with_member.name,
-        commit=False
-    )
-    db_session.commit()
+    if not score:
+        raise RuntimeError("Score should have been created automatically with team")
+    
     return score
 
 
