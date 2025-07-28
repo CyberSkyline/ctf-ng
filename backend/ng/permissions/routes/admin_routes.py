@@ -22,7 +22,6 @@ class RoleDetails(Resource):
     @permissions_admin_namespace.doc(
         description="Get all details for a specific role by ID",
         responses={404: "Role not found", 200: "Success"},
-        params={"role_id": "Role ID to retrieve details for"},
     )
     def get(self, role_id, **kwargs):
         """
@@ -47,14 +46,19 @@ class RoleDetails(Resource):
             403: "Forbidden - User does not have permission to update role"
 
         },
-        params={"role_id": "Role ID to update"},
-        body={
-            "name": "Name of the role",
-            "description": "Description of the role",
-            "permissions": "List of permission names to assign to the role"
+        params={
+            "json_data": {
+                "description": "JSON data of updated role",
+                "in": "body",
+                "required": True,
+                "example": {
+                    "name": "new_role_name",
+                    "description": "Updated description for the role"
+                }
+            }
         }
     )
-    def patch(self, role_id, **kwargs):
+    def put(self, role_id, **kwargs):
         """
         Update the details of a specific role by ID.
         """
@@ -88,7 +92,7 @@ class UserRoles(Resource):
     )
     @load_user(source=LoaderType.PARAM, output_key="user")
     @permissions_admin_namespace.doc(
-        description="Update roles for a specific user by Name",
+        description="Update roles for a specific user by ID",
         responses={
             404: "User not found",
             200: "Success",
@@ -96,12 +100,18 @@ class UserRoles(Resource):
             500: "Internal Server Error - Could not update user roles",
             403: "Forbidden - User does not have permission to update roles"
         },
-        params={"user_id": "User ID to update roles for"},
-        body={
-            "role_ids": "List of role names to assign to the user"
+        params={
+            "json_data": {
+                "description": "JSON data of updated roles",
+                "in": "body",
+                "required": True,
+                "example": {
+                    "roles": ["admin", "support"]
+                }
+            }
         }
     )
-    def patch(self, user_id, **kwargs):
+    def put(self, user_id, **kwargs):
         """
         Update roles for a specific user by ID.
         """

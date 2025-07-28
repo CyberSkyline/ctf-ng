@@ -1,5 +1,6 @@
 import base64
 import os
+import pytest
 
 from ...challenge.models.Challenge import Challenge
 from ...team.models.Team import Team
@@ -7,6 +8,7 @@ from ...team.models.TeamMember import TeamMember
 from ...user.models.User import User
 from datetime import datetime, timedelta
 
+pytestmark = pytest.mark.db
 
 class Test_Public_Event_Listing:
     endpoint = "/ng/events"
@@ -434,9 +436,9 @@ class Test_Event_Team_Management:
         assert "errors" in data
         assert "not a member of team" in data['errors']['validation']
 
-    def test_Cant_kick_closed_event(self, closed_event_client, event_factory, team_factory):
+    def test_cant_kick_closed_event(self, closed_event_client, event_factory, team_factory):
         """Test that the team kick endpoint fails when trying to kick a user from a closed event."""
-        response = closed_event_client.post(f"/ng/events/{1}/me/team/kick", json={"user_id": 2})
+        response = closed_event_client.post(f"/ng/events/{1}/me/team/kick", json={"user_id": 3})
         assert response.status_code == 403
         data = response.get_json()
         assert not data['success']
@@ -462,7 +464,6 @@ class Test_Event_Team_Management:
     def test_leave_closed_event(self, closed_event_client):
         """Test that the team leave endpoint fails when trying to leave a closed event."""
         response = closed_event_client.get(f"/ng/events/{1}/me/team/leave")
-        print(response.get_json())
         assert response.status_code == 403
         data = response.get_json()
         assert not data['success']
@@ -473,20 +474,20 @@ class Test_Event_Team_Management:
         """Test that the team name can be updated."""
         new_name = "Updated Team Name"
         response = team_captain_client.put(f"/ng/events/{1}/me/team/update_name", json={"name": new_name})
-        print(response.get_json())
         assert response.status_code == 200
         data = response.get_json()
         assert data['success']
         assert data['data']['name'] == new_name
 
-    def test_update_name_event_over(self, user_factory, team_factory, event_factory):
-
-        event = event_factory(name="Event Over", public=True, registration_start_date=datetime.utcnow() - timedelta(days=3), registration_end_date=datetime.utcnow() - timedelta(days=1))
-        user = user_factory(name="testuser", email="testuser@example.com")
-        team = team_factory(event=event, members=[user])
-
-        #FINISH LATER
-
+    def test_update_name_event_over(self, closed_event_client):
+        """Test that the team name update fails when the event is over."""
+        new_name = "Updated Team Name"
+        response = closed_event_client.put(f"/ng/events/{1}/me/team/update_name", json={"name": new_name})
+        assert response.status_code == 403
+        data = response.get_json()
+        assert not data['success']
+        assert "errors" in data
+        assert "You cannot update the team name after the event has ended." in data['errors']['forbidden']
 
 class Test_Event_Admin_Register:
     def post_endpoint(self, event_id: int, user_id: int) -> str:
@@ -516,10 +517,98 @@ class Test_Event_Admin_Register:
         data = response.get_json()
         assert data["success"] is True
 
+    def test_non_admin_fails_registering_user_for_event(self, logged_in_client, user_factory, event_factory):
+        event = event_factory(name="Non-Admin Register Event", public=True)
+        user = user_factory(name="testuser", email="testuser@example.com")
+
+        response = logged_in_client.post(self.post_endpoint(event.id, user.id), json={
+            "team_name": "Non-Admin Team",
+        })
+        assert response.status_code == 403
+
+    def test_admin_can_register_user_for_locked_event(self, admin_client, user_factory, event_factory, team_factory):
+        event = event_factory(name="Admin Register Locked Event", public=True, locked=True)
+        user = user_factory(name="testuser", email="testuser@example.com")
+        user2 = user_factory(name="testuser2", email="testuser2@example.com")
+        team = team_factory(event=event, members=[user])
+
+        response = admin_client.post(self.post_endpoint(event.id, user2.id), json={
+            "invite_code": team.invite_code,
+        })
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert "data" in data
+
+def test_admin_get_private_event(admin_client, event_factory):
+    event = event_factory(name="Admin Get Private Event", public=False)
+
+    response = admin_client.get(f"/ng/admin/events/{event.id}")
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["data"] == event.serialize()
+
+class Test_Event_Admin_Get:
+    def get_endpoint(self, event_id: int) -> str:
+        return f"/ng/admin/events/{event_id}"
+
+    def test_admin_get_event_details(self, admin_client, event_factory):
+        event = event_factory(name="Admin Get Event", public=True)
+
+        response = admin_client.get(self.get_endpoint(event.id))
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"] == event.serialize()
+
+    def test_non_admin_get_event_details(self, logged_in_client, event_factory):
+        event = event_factory(name="Non-Admin Get Event", public=True)
+
+        response = logged_in_client.get(self.get_endpoint(event.id))
+
+        assert response.status_code == 302
+
+class Test_Event_Admin_Put:
+    def put_endpoint(self, event_id: int) -> str:
+        return f"/ng/admin/events/{event_id}"
+
+    def test_admin_update_event(self, admin_client, event_factory):
+        event = event_factory(name="Admin Update Event", public=True)
+
+        updated_data = {
+            "name": "Updated Event Name",
+            "description": "Updated Description",
+            "public": False,
+        }
+
+        response = admin_client.put(self.put_endpoint(event.id), json=updated_data)
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["name"] == updated_data["name"]
+        assert data["data"]["description"] == updated_data["description"]
+        assert data["data"]["public"] is False
+
+    def test_non_admin_update_event(self, logged_in_client, event_factory):
+        event = event_factory(name="Non-Admin Update Event", public=True)
+
+        updated_data = {
+            "name": "Updated Event Name",
+            "description": "Updated Description",
+            "public": False,
+        }
+
+        response = logged_in_client.put(self.put_endpoint(event.id), json=updated_data)
+
+        assert response.status_code == 403
+
 class Test_Event_Challenge_Import:
     def get_endpoint(self, event) -> str:
         return f"/ng/admin/events/{event.id}/challenges"
-    """
+    
     def test_challenge_import_endpoint(self, admin_client, event):
         with open(os.path.join(os.path.dirname(__file__), "../../challenge/tests/yamls/default.yaml"), "rb") as f:
             yaml = base64.urlsafe_b64encode(f.read())
@@ -531,7 +620,7 @@ class Test_Event_Challenge_Import:
         assert response.status_code == 200
         assert len(challenge.hints) == 1
         assert len(challenge.questions) == 1
-        """
+        
 
     def test_challenge_import_endpoint_bad_yaml(self, admin_client, event):
         with open(os.path.join(os.path.dirname(__file__), "../../challenge/tests/yamls/bad.yaml"), "rb") as f:

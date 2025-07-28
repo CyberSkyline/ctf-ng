@@ -30,12 +30,39 @@ events_admin_namespace = Namespace("/admin/events", description="event endpoints
 @events_admin_namespace.route("")
 class EventList(Resource):
     @admin_endpoint()
+    @events_admin_namespace.doc(
+        description="Get all events",
+        responses={
+            200: "Success",
+            404: "No events found",
+        },
+    )
     def get(self, **kwargs):
         """Get all events"""
         events = Event.get_all_events(public_only=False)
         return success_response(events)
 
     @admin_endpoint(json_required=True, validation_func=Event.validate)
+    @events_admin_namespace.doc(
+        description="Create a new event",
+        responses={
+            201: "Event created successfully",
+            400: "Bad Request if validation fails",
+        },
+        params={
+            "json_data": {
+                "description": "Event data in JSON format",
+                "in": "body",
+                "required": True,
+                "example": {
+                    "name": "New Event",
+                    "description": "Description of the new event",
+                    "start_time": "2023-10-01T00:00:00Z",
+                    "end_time": "2023-10-31T23:59:59Z"
+                }
+            }
+        }
+    )
     def post(self, validated_data):
         """Create event"""
         data = validated_data
@@ -47,12 +74,40 @@ class EventList(Resource):
 class EventDetail(Resource):
     @admin_endpoint()
     @load_event(source=LoaderType.PARAM)
+    @events_admin_namespace.doc(
+        description="Get an event by ID",
+        responses={
+            200: "Success",
+            404: "Event not found",
+        },
+    )
     def get(self, event_id, event, **kwargs):
         """Get an event"""
         return success_response(event)
 
     @admin_endpoint(json_required=True, validation_func=Event.validate)
     @load_event(source=LoaderType.PARAM)
+    @events_admin_namespace.doc(
+        description="Update an event by ID",
+        responses={
+            200: "Success",
+            404: "Event not found",
+            400: "Bad Request if validation fails",
+        },
+        params={
+            "json_data": {
+                "description": "Event data in JSON format",
+                "in": "body",
+                "required": True,
+                "example": {
+                    "name": "Updated Event Name",
+                    "description": "Updated description of the event",
+                    "start_time": "2023-10-01T00:00:00Z",
+                    "end_time": "2023-10-31T23:59:59Z"
+                }
+            }
+        }
+    )
     def put(self, event_id, event, validated_data, **kwargs):
         """Update event"""
         data = validated_data
@@ -64,6 +119,28 @@ class EventRegister(Resource):
     @admin_endpoint(json_required=True)
     @load_event(source=LoaderType.PARAM)
     @load_user(source=LoaderType.PARAM)
+    @events_admin_namespace.doc(
+        description="Register a user for an event",
+        responses={
+            200: "Success",
+            400: "Bad Request if invite_code or team_name is missing",
+            404: "Event or User not found",
+        },
+        params={
+            "invite_code": {
+                "description": "Invite code for the event",
+                "in": "body",
+                "required": False,
+                "example": "xchfg459fghj",
+            },
+            "team_name": {
+                "description": "Name of the team to join",
+                "in": "body",
+                "required": False,
+                "example": "My Team",
+            }
+        }
+    )
     def post(self, event_id, user_id, **kwargs):
         """Register a user for an event"""
         json_data = kwargs.get("json_data", {})
@@ -85,6 +162,27 @@ class EventChallenges(Resource):
     )
     @admin_endpoint(json_required=True)
     @load_event(source=LoaderType.PARAM)
+    @events_admin_namespace.doc(
+        description="Create a challenge for an event",
+        responses={
+            200: "Success",
+            400: "Bad Request if JSON data is invalid",
+            404: "Event not found",
+        },
+        params={
+            "json_data": {
+                "description": "Challenge data in JSON format",
+                "in": "body",
+                "required": True,
+                "example": {
+                    "name": "New Challenge",
+                    "description": "Description of the challenge",
+                    "value": 100,
+                    "category": "Category Name"
+                }
+            }
+        }
+    )
     def post(self, event_id, event, json_data, **kwargs):
         """Create a challenge for an event"""
         challenge = import_challenge_from_yaml(event, json_data)
