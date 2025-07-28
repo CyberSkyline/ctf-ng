@@ -55,6 +55,7 @@ def handle_exceptions(f):
         except SQLAlchemyError as e:  # 3. Any other, more generic database error
             db.session.rollback()
             db.session.remove()
+            print(e)
             logger.error(
                 "Database error occurred.",
                 extra={"context": {"error_type": type(e).__name__}},

@@ -18,7 +18,7 @@ export default function Entity({
     <RadixLink asChild>
       <Link to={to}>
         <Flex direction="row" align="center" gap="1" className="h-full">
-          <Icon />
+          <Icon className="shrink-0" />
           <span>{label}</span>
         </Flex>
       </Link>

@@ -7,9 +7,9 @@ cattrs==23.1.1
 cyber-skyline-chall-parser>=0.2.0
 faker>=37.4.0
 pyyaml>=6.0.2
-
 # Websocket support
 Flask-SocketIO==5.5.1
 python-socketio==5.13.0
 gevent-websocket==0.10.1
 #redis==6.2.0
+docker==7.1.0

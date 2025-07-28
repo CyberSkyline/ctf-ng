@@ -15,7 +15,7 @@ class UserProfile(Resource):
                                   200: "Success",
                                   404: "User not found",
                               })
-    def get(self, current_user):
+    def get(self, current_user, **kwargs):
         """Get my user information"""
         return success_response(current_user)
 
@@ -27,7 +27,7 @@ class UserEvents(Resource):
                                   200: "Success",
                                   404: "User not found",
                               })
-    def get(self, current_user):
+    def get(self, current_user, **kwargs):
         """Get my events"""
         events = current_user.get_events()
         return success_response(events)
@@ -40,7 +40,7 @@ class UserTeams(Resource):
                                   200: "Success",
                                   404: "User not found",
                               })
-    def get(self, current_user):
+    def get(self, current_user, **kwargs):
         """Get my teams"""
         teams = current_user.get_teams()
         return success_response(teams)
