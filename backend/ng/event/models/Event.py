@@ -90,62 +90,55 @@ class Event(db.Model):
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
         validator = BaseValidator()
-        if "name" in data:
-            validator.validate_string(
-                data,
-                "name",
-                config.EVENT_NAME_MAX_LENGTH,
-                required=True,
-                friendly_name="Event name",
-            )
-        if "description" in data:
-            validator.validate_string(
-                data,
-                "description",
-                config.EVENT_DESCRIPTION_MAX_LENGTH,
-                required=False,
+
+        validator.validate_string(
+            data,
+            "name",
+            config.EVENT_NAME_MAX_LENGTH,
+            required=True,
+            friendly_name="Event name",
+        )
+        validator.validate_string(
+            data,
+            "description",
+            config.EVENT_DESCRIPTION_MAX_LENGTH,
+            required=False,
             friendly_name="Event description",
         )
-        if "max_team_size" in data:
-            validator.validate_integer_range(
-                data,
-                "max_team_size",
-                1,
-                config.MAX_TEAM_SIZE,
-                required=True,
-                friendly_name="Max team size",
-            )
-        if "locked" in data:
-            validator.validate_boolean(
-                data,
-                "locked",
-                required=False,
-                friendly_name="Locked status",
+        validator.validate_integer_range(
+            data,
+            "max_team_size",
+            1,
+            config.MAX_TEAM_SIZE,
+            required=True,
+            friendly_name="Max team size",
         )
-        if "start_time" in data or "end_time" in data:
-            validator.validate_time_window(
-                data,
-                start_field="start_time",
-                end_field="end_time",
-            )
-        if "registration_start_date" in data or "registration_end_date" in data:
-            validator.validate_time_window(
-                data,
-                start_field="registration_start_date",
-                end_field="registration_end_date",
-            )
-        if "public" in data:
-            validator.validate_boolean(
-                data,
-                "public",
-                required=False,
-                friendly_name="Public event",
-            )
-        if "registration_open" in data:
-            validator.validate_boolean(
-                data,
-                "registration_open",
-                friendly_name="Registration open status",
+        validator.validate_boolean(
+            data,
+            "locked",
+            required=False,
+            friendly_name="Locked status",
+        )
+        validator.validate_time_window(
+            data,
+            start_field="start_time",
+            end_field="end_time",
+        )
+        validator.validate_time_window(
+            data,
+            start_field="registration_start_date",
+            end_field="registration_end_date",
+        )
+        validator.validate_boolean(
+            data,
+            "public",
+            required=False,
+            friendly_name="Public event",
+        )
+        validator.validate_boolean(
+            data,
+            "registration_open",
+            friendly_name="Registration open status",
         )
 
         return validator.validate()
@@ -215,7 +208,7 @@ class Event(db.Model):
             if hasattr(self, key):
                 setattr(self, key, value)
 
-        Event.validate(kwargs.items())
+        Event.validate(kwargs)
 
         if commit:
             db.session.commit()

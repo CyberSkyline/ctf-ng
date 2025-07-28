@@ -582,6 +582,8 @@ class Test_Event_Admin_Put:
             "name": "Updated Event Name",
             "description": "Updated Description",
             "public": False,
+            "registration_open": True,
+            "max_team_size": 7,
         }
 
         response = admin_client.put(self.put_endpoint(event.id), json=updated_data)
@@ -604,6 +606,57 @@ class Test_Event_Admin_Put:
         response = logged_in_client.put(self.put_endpoint(event.id), json=updated_data)
 
         assert response.status_code == 403
+
+class Test_Event_Admin_Create:
+    def post_endpoint(self) -> str:
+        return "/ng/admin/events"
+
+    def test_admin_create_event(self, admin_client):
+        new_event_data = {
+            "name": "New Admin Created Event",
+            "description": "This is a test event created by admin.",
+            "public": True,
+            "registration_open": True,
+            "max_team_size": 5,
+        }
+
+        response = admin_client.post(self.post_endpoint(), json=new_event_data)
+        print(response.get_json())
+
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["name"] == new_event_data["name"]
+        assert data["data"]["description"] == new_event_data["description"]
+        assert data["data"]["public"] is True
+
+    def test_non_admin_create_event(self, logged_in_client):
+        new_event_data = {
+            "name": "New Non-Admin Created Event",
+            "description": "This is a test event created by non-admin.",
+            "public": True,
+            "registration_open": True,
+            "max_team_size": 5,
+        }
+
+        response = logged_in_client.post(self.post_endpoint(), json=new_event_data)
+
+        assert response.status_code == 403
+
+
+    def test_admin_create_event_with_missing_fields(self, admin_client):
+        new_event_data = {
+            "name": "Incomplete Event",
+            # Missing description and public fields
+        }
+
+        response = admin_client.post(self.post_endpoint(), json=new_event_data)
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        assert "errors" in data
+        assert "validation" in data["errors"]
 
 class Test_Event_Challenge_Import:
     def get_endpoint(self, event) -> str:

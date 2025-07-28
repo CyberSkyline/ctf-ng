@@ -63,7 +63,7 @@ class EventList(Resource):
             }
         }
     )
-    def post(self, validated_data):
+    def post(self, validated_data, **kwargs):
         """Create event"""
         data = validated_data
         result = Event.create_event(**data)
