@@ -1,12 +1,10 @@
-import { Button, Dialog, Flex } from '@radix-ui/themes';
+import { useAllEvents } from '@/hooks/events';
+import { Flex } from '@radix-ui/themes';
 import type { ColDef } from 'ag-grid-community';
-import { TbPlus } from 'react-icons/tb';
-import { createEvent, useAllEvents } from '@/hooks/events';
 import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
-import { useState } from 'react';
+import EventModal from './EventModal';
 import EventSidebar from './EventSidebar';
-import EventDataForm from './EventDataForm';
 
 /**
  * Event management page for admins, will also include challenge YAML uploading.
@@ -85,8 +83,6 @@ export default function AdminEvents() {
     },
   ];
 
-  const [ open, setOpen ] = useState(false);
-
   if (error) {
     return <ErrorCallout>{error.message}</ErrorCallout>;
   }
@@ -94,24 +90,7 @@ export default function AdminEvents() {
   return (
     <Flex direction="column" gap="4" className="h-full w-full">
       <Flex direction="row" gap="4" className="shrink-0">
-        <Dialog.Root open={open} onOpenChange={setOpen}>
-          <Dialog.Trigger>
-            <Button variant="solid">
-              <TbPlus />
-              Create Event
-            </Button>
-          </Dialog.Trigger>
-          <Dialog.Content>
-            <Dialog.Title>Create New Event</Dialog.Title>
-            <EventDataForm onSubmit={(d) => {
-              createEvent(d);
-
-              // close the dialog after submission
-              setOpen(false);
-            }}
-            />
-          </Dialog.Content>
-        </Dialog.Root>
+        <EventModal />
       </Flex>
       <Flex direction="row" gap="4" className="grow">
         <AdminGrid

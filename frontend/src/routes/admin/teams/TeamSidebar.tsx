@@ -1,27 +1,29 @@
+import { UserIcon } from '@/constants';
+import { useTeamMembers } from '@/hooks/team';
+import type { Team } from '@/types';
 import {
   Button,
   Flex,
   Heading,
   Table,
 } from '@radix-ui/themes';
-import { TbDoorExit, TbPlusMinus, TbStar } from 'react-icons/tb';
-import { useTeamMembers } from '@/hooks/team';
-import Entity from 'components/Entity';
-import type { Team } from '@/types';
-import { ErrorCallout, InfoCallout } from 'components/Callouts';
-import AdminSidebar from 'components/AdminSidebar';
-import RoleBadge from 'components/RoleBadge';
 import AdminDataList from 'components/AdminDataList';
-import { UserIcon } from '@/constants';
+import AdminSidebar from 'components/AdminSidebar';
+import AdminSidebarHeader from 'components/AdminSidebarHeader';
+import { ErrorCallout, InfoCallout } from 'components/Callouts';
+import Entity from 'components/Entity';
+import RoleBadge from 'components/RoleBadge';
+import { TbDoorExit, TbPlusMinus, TbStar } from 'react-icons/tb';
 
 export default function TeamSidebar({ entity }: { entity: Team }) {
   const { data : members, error : membersError } = useTeamMembers(entity.id);
 
   return (
-    <AdminSidebar title="Team Details">
+    <AdminSidebar>
+      <AdminSidebarHeader title="Team Details" />
       <AdminDataList data={{ ...entity }} />
 
-      <Heading>Members</Heading>
+      <AdminSidebarHeader title="Team Details" />
 
       {membersError && <ErrorCallout>{membersError.message}</ErrorCallout> }
       {members && (
@@ -63,13 +65,12 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
           </Table.Body>
         </Table.Root>
       )}
-      <Flex direction="row" gap="2" justify="between" align="center">
-        <Heading>Activity</Heading>
+      <AdminSidebarHeader title="Activity">
         <Button variant="soft" color="amber">
           <TbPlusMinus />
           Point Adjust
         </Button>
-      </Flex>
+      </AdminSidebarHeader>
       <InfoCallout>
         Attempts, hint redemptions, and manual awards for this team.
       </InfoCallout>

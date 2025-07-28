@@ -77,12 +77,8 @@ class Event(db.Model):
             "locked": self.locked,
             "public": self.public,
             "registration_open": self.registration_open,
-            "registration_start_date": self.registration_start_date.isoformat() + "Z"
-            if self.registration_start_date
-            else None,
-            "registration_end_date": self.registration_end_date.isoformat() + "Z"
-            if self.registration_end_date
-            else None,
+            "registration_start_date": self.registration_start_date.isoformat() + "Z" if self.registration_start_date else None,
+            "registration_end_date": self.registration_end_date.isoformat() + "Z" if self.registration_end_date else None,
         }
 
         return data

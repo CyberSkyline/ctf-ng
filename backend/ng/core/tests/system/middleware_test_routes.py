@@ -6,6 +6,7 @@ Test routes for middleware testing isolated in a separate Flask app instance.
 from flask import Blueprint, jsonify
 from ...middleware.permission_middleware import (
     get_permissions,
+    event_only_public
 
 )
 from ...middleware.auth import user_endpoint, admin_endpoint
@@ -83,4 +84,17 @@ def get_user_permissions(**kwargs):
     The permissions are attached to the request context by the decorator.
     """
     return jsonify({"success": True, "permissions": kwargs.get("permissions", [])})
+
+
+@middleware_test_routes.route("/event_only_public/<int:event_id>", methods=["GET"])
+@user_endpoint()
+@load_event(source=LoaderType.PARAM)
+@event_only_public
+def event_only_public(**kwargs): 
+
+    """
+    Endpoint to test the event_only_public decorator.
+    This decorator ensures that the event is public.
+    """
+    return jsonify({"success": True, "message": "Event can be accessed."})
 
