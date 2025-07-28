@@ -67,3 +67,27 @@ def test_get_user_role_permissions(middleware_client):
     assert isinstance(data["permissions"], list)
     assert len(data["permissions"]) > 0
     assert "CAN_EDIT_TEAM" in data["permissions"]
+
+def test_event_only_public(middleware_client):
+    """
+    Test the event_only_public decorator.
+    This checks if the decorator correctly restricts access to public events.
+    """
+    response = middleware_client.get("/event_only_public/2")
+
+    assert response.status_code == 404
+    data = response.get_json()
+    assert data["success"] is False
+    assert data["errors"]["not_found"] == "Event not found"
+
+def test_event_only_public_already_registered(middleware_client):
+    """
+    Test the event_only_public decorator when the user is already registered.
+    This checks if the decorator allows access to registered users even if the event is not public.
+    """
+    response = middleware_client.get("/event_only_public/3")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert "message" in data
+    assert data["message"] == "Event can be accessed."

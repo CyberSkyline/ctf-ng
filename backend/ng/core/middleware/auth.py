@@ -3,14 +3,17 @@ Simplified main decorators - just handle auth and input validation.
 Resource loading and permissions are handled by separate decorators.
 """
 
-import inspect
 from functools import wraps
-from flask import request, g
-from CTFd.utils.user import get_current_user, is_admin as is_admin_ctfd
+
 from CTFd.utils.decorators import admins_only, authed_only
+from CTFd.utils.user import get_current_user
+from CTFd.utils.user import is_admin as is_admin_ctfd
+from flask import request
+
+from ...user.models.User import User
 from ..exceptions import PermissionError, ValidationError
 from .error_handler import handle_exceptions
-from ...user.models.User import User
+
 
 def api_endpoint(auth_required=True, admin_required=False, json_required=False, validation_func=None):
     """
@@ -56,6 +59,7 @@ def api_endpoint(auth_required=True, admin_required=False, json_required=False, 
 def _auth_handler(f, auth_required, json_required, validation_func):
     """Internal helper to handle the actual endpoint logic"""
 
+
     @handle_exceptions
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -71,12 +75,8 @@ def _auth_handler(f, auth_required, json_required, validation_func):
             if not data:
                 raise ValidationError("JSON body is malformed or empty.")
             kwargs["json_data"] = data
-            g.json_data = data
             if validation_func:
-                try:
-                    kwargs["validated_data"] = validation_func(data)
-                except Exception as e:
-                    raise ValidationError(str(e))
+                kwargs["validated_data"] = validation_func(data)
         return f(*args, **kwargs)
 
     return decorated_function

@@ -1,11 +1,11 @@
-import { map } from 'lodash';
 import { Flex, Table } from '@radix-ui/themes';
-import EditTeamName from './EditTeamName';
+import { map } from 'lodash';
 import AddMemberModal from './AddMemberModal';
-import RemovePlayerModal from './RemovePlayerModal';
-import LeaveTeamModal from './LeaveTeamModal';
-import TransferTeamModal from './TransferTeamModal';
 import AssignCaptainModal from './AssignCaptainModal';
+import EditTeamName from './EditTeamName';
+import LeaveTeamModal from './LeaveTeamModal';
+import RemovePlayerModal from './RemovePlayerModal';
+import TransferTeamModal from './TransferTeamModal';
 
 export default function TeamManagement() {
   const selfId = '1'; // its a me, Mario

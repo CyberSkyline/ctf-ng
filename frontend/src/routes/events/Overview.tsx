@@ -1,27 +1,31 @@
 import { Container, Tabs } from '@radix-ui/themes';
 
 import { TbStar } from 'react-icons/tb';
-import { useSearchParams } from 'react-router';
+import { useParams, useSearchParams } from 'react-router';
 
+import { ChallengeIcon, TeamIcon } from '@/constants';
+import { useEvent } from '@/hooks/events';
 import EventHeader from 'components/EventHeader';
 import HeaderContainer from 'components/HeaderContainer';
-import { ChallengeIcon, TeamIcon } from '@/constants';
-import LeaderboardTab from './OverviewTabs/LeaderboardTab';
 import ChallengesTab from './OverviewTabs/ChallengesTab';
+import LeaderboardTab from './OverviewTabs/LeaderboardTab';
 import TeamTab from './OverviewTabs/TeamTab';
 
 export default function Overview() {
   const [ searchParams, setSearchParams ] = useSearchParams();
+  const { idEvent } = useParams();
   const currentTab = searchParams.get('tab') ?? 'challenges';
+
+  const { data } = useEvent(Number(idEvent));
 
   return (
     <>
       <HeaderContainer>
-        <EventHeader
-          name="Event Name"
-          description="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-          state="upcoming"
-        />
+        {data && (
+          <EventHeader
+            event={data}
+          />
+        )}
       </HeaderContainer>
 
       <Tabs.Root

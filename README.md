@@ -31,3 +31,10 @@ Vite provides hot module reloading. Most changes will be reflected on the page i
 You do not need to run any commands after making frontend changes. 
 
 This is a single-page app. To reach the vite entrypoint, go to `/hello`. 
+
+### Docker tls install
+All of the certs and config for the daemon are handled in the install script.
+You might run into an issue that systemd no longer wants to start the docker daemon.
+Modifying the service definition for the docker systemd service to run as root:root (User and group)
+should fix this.
+

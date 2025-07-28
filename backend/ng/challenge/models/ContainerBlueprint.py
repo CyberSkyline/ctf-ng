@@ -100,8 +100,8 @@ class ContainerBlueprint(db.Model):
         commit=True,
     ):
         try:
-            validated_data = cls.validate(
-                {
+            ## Removed the validator as it currently does not support lists
+            validated_data = {
                     "image": image,
                     "hostname": hostname,
                     "challenge_id": challenge_id,
@@ -116,8 +116,7 @@ class ContainerBlueprint(db.Model):
                     "memswap_limit": memswap_limit,
                     "cpus": cpus,
                     "user": user,
-                }
-            )
+            }
             blueprint = cls(**validated_data)
             db.session.add(blueprint)
             db.session.flush()

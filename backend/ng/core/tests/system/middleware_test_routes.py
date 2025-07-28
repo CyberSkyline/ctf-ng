@@ -6,6 +6,7 @@ Test routes for middleware testing isolated in a separate Flask app instance.
 from flask import Blueprint, jsonify
 from ...middleware.permission_middleware import (
     get_permissions,
+    event_only_public
 
 )
 from ...middleware.auth import user_endpoint, admin_endpoint

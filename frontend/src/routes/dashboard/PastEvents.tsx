@@ -1,15 +1,8 @@
+import type { Event } from '@/types';
 import { Grid, Heading } from '@radix-ui/themes';
-import type { accentColors } from '@radix-ui/themes/props';
 import EventCard from './EventCard';
 
-export default function PastEvents({ events }: {
-    events: {
-        id: string;
-        name: string;
-        description: string;
-        color?: typeof accentColors[number];
-    }[]
-}) {
+export default function PastEvents({ events }: { events: Event[] }) {
   if (events.length === 0) {
     return null;
   }
@@ -26,10 +19,7 @@ export default function PastEvents({ events }: {
         {events.map((event) => (
           <EventCard
             key={event.id}
-            id={event.id}
-            name={event.name}
-            description={event.description}
-            color={event.color}
+            event={event}
           />
         ))}
       </Grid>

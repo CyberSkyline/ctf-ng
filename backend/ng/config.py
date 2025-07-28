@@ -31,6 +31,8 @@ DEFAULT_SCORE_HISTORY_LIMIT = 50
 MAX_LEADERBOARD_LIMIT = 1000
 MAX_SCORE_HISTORY_LIMIT = 500
 
+# Docker host config
+# This will eventually be an array but just single host for mvp
 DOCKER_HOST = "10.100.20.246"
 
 # This is a place holder vnc image
