@@ -18,7 +18,11 @@ users_admin_namespace = Namespace("/admin/users", description="user endpoints fo
 class UsersAdminResource(Resource):
     @admin_endpoint()
     @users_admin_namespace.doc(
-        description="Get all users"
+        description="Get all users",
+        responses={
+            200: "Success",
+            403: "Permission denied",
+        }
     )
     def get(self, **kwargs):
         """Get all users on the system"""
@@ -29,7 +33,12 @@ class UserAdminResource(Resource):
     @admin_endpoint()
     @load_user(source=LoaderType.PARAM, output_key="target_user")
     @users_admin_namespace.doc(
-        description="Get a specific user by ID"
+        description="Get a specific user by ID",
+        responses={
+            200: "User retrieved successfully",
+            404: "User not found",
+            403: "Permission denied"
+        }
     )
     def get(self, user_id, target_user, **kwargs):
         """Get a specific user by ID"""
@@ -50,7 +59,7 @@ class UserAdminResource(Resource):
                 }
             }
         },
-        responses={200: "User updated successfully"}
+        responses={200: "User updated successfully", 404: "User not found", 403: "Permission denied"}
     )
     def put(self, user_id, target_user, validated_data, **kwargs):
         """Update a specific user"""

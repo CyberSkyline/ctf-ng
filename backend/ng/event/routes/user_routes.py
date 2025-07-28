@@ -339,7 +339,6 @@ class EventTeamLeave(Resource):
     def get(self, event_id, event, team, current_user,**kwargs):
         """Leave the user's team in the event"""
         team_member = TeamMember.find_by_user_and_team(current_user.id, team.id)
-        print(event.locked)
         if event.end_time and event.end_time < datetime.utcnow():
             return error_response("You cannot leave the team after the event has ended.", "forbidden", 403)
         if team_member.role == TeamRole.CAPTAIN:
