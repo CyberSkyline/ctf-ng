@@ -1,4 +1,3 @@
-import { COLOR_INFO } from '@/constants';
 import { Button } from '@radix-ui/themes';
 import { WarningCallout } from 'components/Callouts';
 import Modal from 'components/Modal';
@@ -9,7 +8,7 @@ export default function FeedbackModal() {
     <Modal
       title="Feedback"
       trigger={(
-        <Button variant="ghost" color={COLOR_INFO} className="!m-0">
+        <Button variant="ghost" color="jade" className="!m-0">
           <TbSpeakerphone />
           Feedback
         </Button>

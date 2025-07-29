@@ -11,7 +11,7 @@ import ChallengeUploadModal from './ChallengeUploadModal';
 import EventModal from './EventModal';
 
 export default function EventSidebar({ entity }: { entity: Event }) {
-const { data : challenges } = useEventChallenges(entity.id);
+  const { data : challenges } = useEventChallenges(entity.id);
 
   return (
     <AdminSidebar>
