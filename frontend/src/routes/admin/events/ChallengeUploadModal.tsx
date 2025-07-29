@@ -21,16 +21,15 @@ function ChallengeUploadDropzone({ onDrop }: { onDrop: (files: File[]) => void }
       multiple={false}
     >
       {({ getRootProps, getInputProps, isDragActive }) => (
-
         <Callout.Root
-              // eslint-disable-next-line react/jsx-props-no-spreading
+          // eslint-disable-next-line react/jsx-props-no-spreading
           {...getRootProps()}
           variant={(isDragActive) ? 'surface' : 'outline'}
           className="cursor-pointer !p-8 !flex flex-col !items-center"
           color="lime"
         >
           <input
-                // eslint-disable-next-line react/jsx-props-no-spreading
+            // eslint-disable-next-line react/jsx-props-no-spreading
             {...getInputProps()}
             name="file"
           />
@@ -42,6 +41,7 @@ function ChallengeUploadDropzone({ onDrop }: { onDrop: (files: File[]) => void }
     </Dropzone>
   );
 }
+
 export default function ChallengeUploadModal({ eventId }: { eventId: number }) {
   const [ fileContent, setFileContent ] = useState<string | null>(null);
 
@@ -69,7 +69,6 @@ export default function ChallengeUploadModal({ eventId }: { eventId: number }) {
         }
       }}
     >
-
       <ChallengeUploadDropzone
         onDrop={
             (files) => {
