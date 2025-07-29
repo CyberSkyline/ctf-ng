@@ -1,5 +1,6 @@
-import NotFound from 'components/NotFound';
 import { useRoutes } from 'react-router';
+
+import NotFound from 'components/NotFound';
 
 import Dashboard from 'routes/dashboard';
 import Notifications from 'routes/notifications';
@@ -11,6 +12,7 @@ import CreateTicket from 'routes/support/CreateTicket';
 import TicketDetail from 'routes/support/Detail';
 
 // events
+import AvailableEvents from 'routes/events/AvailableEvents';
 import Challenge from 'routes/events/challenge';
 import Overview from 'routes/events/Overview';
 
@@ -26,7 +28,6 @@ import AdminSettings from 'routes/admin/settings';
 import AdminTeams from 'routes/admin/teams';
 import AdminTickets from 'routes/admin/tickets';
 import AdminUsers from 'routes/admin/users';
-import AvailableEvents from 'routes/events/AvailableEvents';
 
 function Routes() {
   const routes = useRoutes([
