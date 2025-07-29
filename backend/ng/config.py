@@ -18,11 +18,11 @@ INVITE_CODE_GENERATION_ATTEMPTS = 10
 
 # Docker host config
 # This will eventually be an array but just single host for mvp
-DOCKER_HOST = "10.100.20.246"
+DOCKER_HOST = "172.17.0.1"
 
 # This is a place holder vnc image
-NOVNC_CONTAINER = "theasp/novnc"
-NOVNC_PORT = 8080
+NOVNC_CONTAINER = "consol/debian-xfce-vnc"
+NOVNC_PORT = 6901
 
 # TODO
 # TAG_NAME_MAX_LENGTH = 50

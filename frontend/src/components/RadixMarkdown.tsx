@@ -1,62 +1,42 @@
-import ReactMarkdown, { type Components } from 'react-markdown';
 import {
-  Text,
-  Heading,
-  Link,
-  Table,
+  Blockquote,
   Code,
   Em,
+  Heading,
+  Link,
   Strong,
-  Blockquote,
+  Table,
+  Text,
 } from '@radix-ui/themes';
-import remarkGfm from 'remark-gfm';
+import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkBreaks from 'remark-breaks';
+import remarkGfm from 'remark-gfm';
 
 /**
  * Mapping of html elements to their themed Radix UI counterparts to use when rendering markdown.
  */
 const Components: Components = {
-  // @ts-expect-error - ReactMarkdown types broken under React 19
-  p : ({ children }) => <Text as="p" color="gray" mb="2">{children}</Text>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
+  p : ({ children }) => <Text as="p" color="gray" className="mb-2 last:mb-0">{children}</Text>,
   em : ({ children }) => <Em>{children}</Em>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
   strong : ({ children }) => <Strong>{children}</Strong>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
-  code : ({ children }) => <Code color="lime">{children}</Code>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
+  code : ({ children }) => <Code color="gray">{children}</Code>,
+  pre : ({ children }) => <pre className="[&>code]:block [&>code]:mb-2 [&>code]:!p-2">{children}</pre>,
   blockquote : ({ children }) => <Blockquote>{children}</Blockquote>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
-  a : ({ href, children }) => <Link href={href} color="lime" target="_blank" rel="noopener noreferrer">{children}</Link>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
+  a : ({ href, children }) => <Link href={href} target="_blank" rel="noopener noreferrer">{children}</Link>,
   h1 : ({ children }) => <Heading size="6" as="h1">{children}</Heading>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
   h2 : ({ children }) => <Heading size="5" as="h2">{children}</Heading>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
   h3 : ({ children }) => <Heading size="4" as="h3">{children}</Heading>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
   h4 : ({ children }) => <Heading size="3" as="h4">{children}</Heading>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
-  h5 : ({ children }) => <Heading size="2" as="h5">{children}</Heading>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
-  h6 : ({ children }) => <Heading size="1" as="h6">{children}</Heading>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
-  ul : ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
-  ol : ({ children }) => <ol className="list-decimal list-inside mb-2">{children}</ol>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
+  h5 : ({ children }) => <Heading size="3" as="h5">{children}</Heading>,
+  h6 : ({ children }) => <Heading size="3" as="h6">{children}</Heading>,
+  ul : ({ children }) => <ul className="list-disc list-inside mb-2 ms-2">{children}</ul>,
+  ol : ({ children }) => <ol className="list-decimal list-inside mb-2 ms-2">{children}</ol>,
   li : ({ children }) => <Text asChild color="gray" mb="1"><li>{children}</li></Text>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
   table : ({ children }) => <Table.Root className="w-fit max-w-full mb-2">{children}</Table.Root>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
   thead : ({ children }) => <Table.Header>{children}</Table.Header>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
   tbody : ({ children }) => <Table.Body>{children}</Table.Body>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
   tr : ({ children }) => <Table.Row>{children}</Table.Row>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
   th : ({ children }) => <Table.ColumnHeaderCell>{children}</Table.ColumnHeaderCell>,
-  // @ts-expect-error - ReactMarkdown types broken under React 19
   td : ({ children }) => <Table.Cell>{children}</Table.Cell>,
 };
 
@@ -67,7 +47,6 @@ export default function RadixMarkdown({ children }: {
   children: string;
 }) {
   return (
-    /* @ts-expect-error - ReactMarkdown types broken under React 19 */
     <ReactMarkdown components={Components} remarkPlugins={[ remarkGfm, remarkBreaks ]}>
       {children}
     </ReactMarkdown>

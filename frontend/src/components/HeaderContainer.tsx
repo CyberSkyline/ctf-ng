@@ -13,7 +13,7 @@ export default function HeaderContainer({ children = undefined }: {
         mx="-4"
         mt="-4"
         mb="4"
-        className="bg-[var(--gray-2)] bg-radial from-[var(--gray-3)] from-[1px] to-transparent to-0% bg-size-[4px_4px] bg-repeat-space"
+        className="bg-dots-2"
       >
         {children}
       </Container>
