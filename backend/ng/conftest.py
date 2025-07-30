@@ -162,11 +162,11 @@ def middleware_client():
         )
         Team.create_team_with_captain(name="Second Team", event_id=event.id, captain_id=user2.id)
 
-        Ticket.create(
+        Ticket.create_ticket(
             subject="Test Ticket",
             author_id=user_to_login.id,
         )
-        TicketTag.create(name="Test Tag")
+        TicketTag.create_tag(name="Test Tag")
 
         client = app.test_client()
         with client.session_transaction() as sess:
