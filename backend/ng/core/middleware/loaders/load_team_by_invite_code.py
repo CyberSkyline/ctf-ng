@@ -1,6 +1,6 @@
 
 from functools import wraps
-from typing import Callable
+from collections.abc import Callable
 from ._util import LoaderType, check_output_exists, get_model_class, get_json_val, get_param_val
 from ...exceptions import NotFoundError
 

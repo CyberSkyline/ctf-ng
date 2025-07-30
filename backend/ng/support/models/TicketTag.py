@@ -7,25 +7,76 @@ from typing import Any
 
 from CTFd.models import db
 
+from ... import config
+from ...core.utils.validator import BaseValidator
+
 
 class TicketTag(db.Model):
     __tablename__ = "ng_ticket_tags"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False, unique=True)
+    name = db.Column(
+        db.String(config.TICKET_TAG_NAME_MAX_LENGTH), nullable=False, unique=True
+    )
     color = db.Column(db.String(7), nullable=True)
-    description = db.Column(db.String(200), nullable=True)
+    description = db.Column(
+        db.String(config.TICKET_TAG_DESCRIPTION_MAX_LENGTH), nullable=True
+    )
 
-    tickets = db.relationship("Ticket", secondary="ng_ticket_tags_junction", back_populates="tags")
+    tickets = db.relationship(
+        "Ticket", secondary="ng_ticket_tags_junction", back_populates="tags"
+    )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<TicketTag {self.name}>"
 
-    def serialize(self, include_admin_fields: bool = False) -> dict[str, Any]:
-        """Serialize tag for API response.
+    @classmethod
+    def validate(
+        cls, data: dict[str, Any], current_instance: TicketTag | None = None
+    ) -> dict[str, Any]:
+        validator = BaseValidator()
 
-        Args:
-            include_admin_fields: Whether to include admin-only fields
+        validator.validate_string(
+            data,
+            "name",
+            config.TICKET_TAG_NAME_MAX_LENGTH,
+            required=not bool(current_instance),
+            friendly_name="Tag name",
+        )
+
+        # Optional field
+        if "color" in data and data["color"] is not None:
+            color = data["color"]
+            if not isinstance(color, str):
+                validator.errors["color"] = "Color must be a string"
+            elif not (len(color) == 7 and color.startswith("#")):
+                validator.errors["color"] = (
+                    "Color must be a valid hex code (e.g., #FF0000)"
+                )
+            else:
+                validator._add_parsed_data("color", color)
+
+        validator.validate_string(
+            data,
+            "description",
+            config.TICKET_TAG_DESCRIPTION_MAX_LENGTH,
+            required=False,
+            friendly_name="Tag description",
+        )
+
+        if "name" in data and "name" not in validator.errors:
+            existing = cls.query.filter_by(name=data["name"]).first()
+            if existing:
+                if not current_instance or existing.id != current_instance.id:
+                    validator.errors["name"] = (
+                        f"Tag name '{data['name']}' already exists"
+                    )
+
+        return validator.validate()
+
+    def serialize(self) -> dict[str, Any]:
+        """
+        Serialize tag for API response.
 
         Returns:
             dict: Serialized tag data
@@ -41,14 +92,15 @@ class TicketTag(db.Model):
         return data
 
     @classmethod
-    def create(
+    def create_tag(
         cls,
         name: str,
         color: str | None = None,
         description: str | None = None,
         commit: bool = True,
     ) -> TicketTag:
-        """Create and persist a new ticket tag.
+        """
+        Create and persist a new ticket tag with validation.
 
         Args:
             name: Tag name
@@ -59,37 +111,69 @@ class TicketTag(db.Model):
         Returns:
             TicketTag: The created tag instance
         """
-        tag = cls(name=name, color=color, description=description)
+
+        validated_data = cls.validate({
+            "name": name,
+            "color": color,
+            "description": description,
+        })
+
+        tag = cls(
+            name=validated_data["name"],
+            color=validated_data.get("color"),
+            description=validated_data.get("description"),
+        )
 
         db.session.add(tag)
         if commit:
-            db.session.commit()
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                raise e
         return tag
 
-    def update_tag(self, **kwargs) -> bool:
-        """Update tag properties and persist to database.
+    def update_tag(self, commit: bool = True, **kwargs) -> None:
+        """
+        Update tag properties and persist to database.
 
         Args:
+            commit: Whether to commit immediately
             **kwargs: Tag properties to update
-
-        Returns:
-            bool: True if successful
         """
-        for key, value in kwargs.items():
-            if hasattr(self, key):
+
+        update_data = {}
+        if "name" in kwargs:
+            update_data["name"] = kwargs["name"]
+        if "color" in kwargs:
+            update_data["color"] = kwargs["color"]
+        if "description" in kwargs:
+            update_data["description"] = kwargs["description"]
+
+        if update_data:
+            validated_data = self.validate(update_data, current_instance=self)
+
+            for key, value in validated_data.items():
                 setattr(self, key, value)
 
-        db.session.commit()
-        return True
+        if commit:
+            db.session.commit()
 
-    def delete_tag(self) -> None:
-        """Delete this tag from the database."""
+    def delete_tag(self, commit: bool = True) -> None:
+        """
+        Delete this tag from the database.
+
+        Args:
+            commit: Whether to commit immediately
+        """
         db.session.delete(self)
-        db.session.commit()
+        if commit:
+            db.session.commit()
 
     @classmethod
     def find_by_id(cls, tag_id: int) -> TicketTag | None:
-        """Find a tag by ID.
+        """
+        Find a tag by ID.
 
         Args:
             tag_id: The tag ID to find
@@ -101,7 +185,8 @@ class TicketTag(db.Model):
 
     @classmethod
     def find_by_name(cls, name: str) -> TicketTag | None:
-        """Find a tag by name.
+        """
+        Find a tag by name.
 
         Args:
             name: The tag name to find
@@ -130,7 +215,7 @@ class TicketTag(db.Model):
         Returns:
             list[tuple[TicketTag, int]]: List of (tag, usage_count) tuples
         """
-        # Lazy import to prevent circular dependencies (needed)
+        # LAZY-IMPORT: Tagging all necessary lazy imports for easy searchability & visibility.
         from .Ticket import ticket_tags_junction
 
         popular = (
@@ -157,4 +242,8 @@ class TicketTag(db.Model):
         Returns:
             list[TicketTag]: Matching tags
         """
-        return cls.query.filter(cls.name.ilike(f"%{query}%")).order_by(cls.name.asc()).all()
+        return (
+            cls.query.filter(cls.name.ilike(f"%{query}%"))
+            .order_by(cls.name.asc())
+            .all()
+        )

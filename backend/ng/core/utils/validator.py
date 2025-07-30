@@ -8,8 +8,10 @@ from enum import Enum
 from functools import wraps
 from typing import Any
 
-from . import utc_now
+from CTFd.models import get_class_by_tablename, Users
 
+from . import utc_now
+from ..exceptions import ValidationError
 
 def validation_field(func: Callable) -> Callable:
     """
@@ -44,7 +46,7 @@ def validation_field(func: Callable) -> Callable:
             return None
 
         # Call the original function with the processed parameters
-        return func(self, data, field, *args, required=required, friendly_name=name, value=value, **kwargs)
+        return func(self, data, field, *args, friendly_name=name, value=value, required=required, **kwargs)
 
     return wrapper
 
@@ -127,24 +129,27 @@ class BaseValidator:
             self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_NUMBER.format(field=friendly_name)
             return
 
-        # Import here to avoid circular imports
-        from CTFd.models import get_class_by_tablename
-
         # Map model names to table names
         model_table_mapping = {
+            "Attempt": "ng_attempts",
             "Challenge": "ng_challenges",
-            "Demographic": "ng_demographics",
-            "Question": "ng_questions",
-            "Hint": "ng_hints",
             "ChallengeTag": "ng_challenge_tags",
             "ContainerBlueprint": "ng_container_blueprints",
+            "Demographic": "ng_demographics",
+            "Event": "ng_events",
+            "Hint": "ng_challenge_hints",
+            "HintRedemption": "ng_hint_redemptions",
+            "ManualPointAward": "ng_manual_point_awards",
+            "Permission": "ng_permissions",
+            "Question": "ng_challenge_questions",
+            "Role": "ng_roles",
+            "Score": "ng_scores",
+            "ScoreEvent": "ng_score_events",
             "Team": "ng_teams",
             "TeamMember": "ng_team_members",
-            "User": "ng_users",
-            "Event": "ng_events",
             "Ticket": "ng_tickets",
-            "Permission": "ng_permissions",
-            "Role": "ng_roles",
+            "User": "ng_users",
+            "Users": "users",  # CTFd's main users table
         }
 
         # Get the table name for the model
@@ -181,15 +186,84 @@ class BaseValidator:
         friendly_name: str | None = None,
         value: Any = None,  # Injected by decorator
     ) -> None:
+        """
+        Validate a positive (greater than zero) integer
+        """
+        return self.validate_integer(
+            data, 
+            field, 
+            min_value=1,
+            required=required,
+            friendly_name=friendly_name
+        )
+
+    @validation_field
+    def validate_admin_id(
+        self,
+        data: dict[str, Any],
+        field: str = "admin_id",
+        required: bool = False,  # Used in decorator
+        friendly_name: str | None = None,
+        value: Any = None,  # Injected by decorator
+    ) -> None:
+        """
+        Validate that a user ID belongs to an admin user
+        """
+        try:
+            user_id = int(value)
+        except (ValueError, TypeError):
+            self.errors[field] = f"{friendly_name} must be a valid number"
+            return
+                
+        user = Users.query.get(user_id)
+        
+        if not user:
+            self.errors[field] = f"{friendly_name} with ID {user_id} does not exist"
+            return
+            
+        if user.type != "admin":
+            self.errors[field] = f"User must be an admin to perform this action"
+            return
+            
+        self._add_parsed_data(field, user_id)
+
+    @validation_field
+    def validate_integer(
+        self,
+        data: dict[str, Any],
+        field: str,
+        min_value: int | None = None,
+        max_value: int | None = None,
+        allow_zero: bool = True,
+        required: bool = False,  # Used in decorator
+        friendly_name: str | None = None,
+        value: Any = None,  # Injected by decorator
+    ) -> None:
+        """
+        Validate an integer field with optional constraints.
+        """
         try:
             int_value = int(value)  # type: ignore[arg-type]
-            if int_value <= 0:
-                self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_POSITIVE.format(field=friendly_name)
+            
+            # Check zero constraint
+            if not allow_zero and int_value == 0:
+                self.errors[field] = f"{friendly_name} cannot be zero"
                 return
+                
+            # Check min constraint
+            if min_value is not None and int_value < min_value:
+                self.errors[field] = f"{friendly_name} must be at least {min_value}"
+                return
+                
+            # Check max constraint  
+            if max_value is not None and int_value > max_value:
+                self.errors[field] = f"{friendly_name} must be at most {max_value}"
+                return
+                
             self._add_parsed_data(field, int_value)
+            
         except (ValueError, TypeError):
-            self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_NUMBER.format(field=friendly_name)
-            return
+            self.errors[field] = f"{friendly_name} must be a valid integer"
 
     @validation_field
     def validate_integer_range(
@@ -296,7 +370,6 @@ class BaseValidator:
         Raises:
             ValidationError: If there are any validation errors
         """
-        from ..exceptions import ValidationError
 
         if self.errors:
             raise ValidationError("Validation failed", errors=self.errors)
@@ -329,3 +402,6 @@ class BaseValidator:
                 f"{end_field.replace('_', ' ').title()} must be after {start_field.replace('_', ' ')}."
             )
             return
+
+
+
