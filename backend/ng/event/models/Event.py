@@ -120,6 +120,11 @@ class Event(db.Model):
             start_field="start_time",
             end_field="end_time",
         )
+        validator.validate_time_window(
+            data,
+            start_field="registration_start_date",
+            end_field="registration_end_date",
+        )
         validator.validate_boolean(
             data,
             "public",
@@ -129,13 +134,7 @@ class Event(db.Model):
         validator.validate_boolean(
             data,
             "registration_open",
-            required=False,
             friendly_name="Registration open status",
-        )
-        validator.validate_time_window(
-            data,
-            start_field="registration_start_date",
-            end_field="registration_end_date",
         )
 
         return validator.validate()
@@ -205,7 +204,7 @@ class Event(db.Model):
             if hasattr(self, key):
                 setattr(self, key, value)
 
-        Event.validate(self.serialize())
+        Event.validate(kwargs)
 
         if commit:
             db.session.commit()

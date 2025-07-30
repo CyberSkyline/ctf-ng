@@ -43,7 +43,6 @@ def admin_decorator_test(**kwargs):
     """
     Endpoint to test the admin decorator.
     """
-    print("gets here")
     return jsonify({"success": True, "message": "Admin decorator test successful."})
 
 

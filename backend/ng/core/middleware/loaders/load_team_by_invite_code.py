@@ -13,7 +13,7 @@ def load_team_by_invite_code(source : LoaderType = LoaderType.BODY, input_key="i
             if source == LoaderType.PARAM:
                 invite_code = get_param_val(kwargs, input_key)
             elif source == LoaderType.BODY:
-                invite_code = get_json_val(input_key)
+                invite_code = get_json_val(kwargs, input_key)
             else:
                 raise ValueError(f"Invalid loader type: {source}")
 

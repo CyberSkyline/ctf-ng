@@ -162,11 +162,11 @@ def middleware_client():
         )
         Team.create_team_with_captain(name="Second Team", event_id=event.id, captain_id=user2.id)
 
-        Ticket.create(
+        Ticket.create_ticket(
             subject="Test Ticket",
             author_id=user_to_login.id,
         )
-        TicketTag.create(name="Test Tag")
+        TicketTag.create_tag(name="Test Tag")
 
         client = app.test_client()
         with client.session_transaction() as sess:
@@ -264,6 +264,8 @@ def event_factory(db_session):
             "description": "A test event.",
             "max_team_size": 4,
             "locked": False,
+            "start_time": datetime.utcnow() - timedelta(days=1),
+            "end_time": datetime.utcnow() + timedelta(days=1),
         }
         defaults.update(kwargs)
         event = Event.create_event(**defaults)
@@ -368,6 +370,28 @@ def team_member_client(app, db_session, team_with_members, role_with_permissions
         sess.permanent = False
     return client
 
+@pytest.fixture
+def closed_event_client(app, db_session, event_factory, team_factory, user_factory):
+    """A test client for a closed event."""
+    # Clear any cached user data to prevent cross-test contamination
+    from CTFd.cache import cache
+    cache.clear()
+    user = user_factory(name="Closed Event User", email="closed_event_user@example.com")
+    user2 = user_factory(name="Closed Event User 2", email="closed_event_user2@example.com")
+    event = event_factory(locked=True, start_time=datetime.utcnow() - timedelta(days=2), end_time=datetime.utcnow() - timedelta(days=1))
+    team = team_factory(event=event, members=[user, user2])
+
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        # Completely clear the session and set only what we need
+        sess.clear()
+        sess["id"] = team.members[0].user_id
+        sess["name"] = team.members[0].user.ctfd_user.name
+        sess["type"] = "team"
+        sess["nonce"] = generate_nonce()
+        sess.permanent = False
+    return client
+
 
 @pytest.fixture
 def event(db_session):
@@ -383,6 +407,7 @@ def event(db_session):
     db_session.add(event)
     db_session.flush()
     return event
+
 
 
 

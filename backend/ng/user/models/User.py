@@ -190,3 +190,21 @@ class User(db.Model):
         except Exception:
             db.session.rollback()
             raise
+    
+    def delete(self) -> None:
+        """Delete the user extension from the database."""
+        """Delete the user extension from the database."""
+        db.session.delete(self)
+        db.session.commit()
+
+
+    def update(self, **kwargs) -> None:
+        """Update user fields with provided keyword arguments.
+
+        Args:
+            **kwargs: Fields to update
+        """
+        for key, value in kwargs.items():
+            if hasattr(self.ctfd_user, key):
+                setattr(self.ctfd_user, key, value)
+        db.session.commit()
