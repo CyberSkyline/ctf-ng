@@ -31,7 +31,7 @@ def handle_exceptions(f):
         except APIException as e:  # 1. Predictable application errors first
             db.session.remove()
             logger.warning(
-                f"Business Logic Error: {e.__class__.__name__}: {str(e)}",
+                f"API Exception: {e.__class__.__name__}: {str(e)}",
                 extra={
                     "context": {
                         "status_code": e.status_code,
@@ -39,7 +39,11 @@ def handle_exceptions(f):
                     }
                 },
             )
-            return error_response(e.message, e.error_field, e.status_code)
+            return error_response(
+                e.message,
+                e.error_field,
+                e.status_code,
+            )
 
         except IntegrityError as e:  # 2. Database integrity violations
             db.session.rollback()
