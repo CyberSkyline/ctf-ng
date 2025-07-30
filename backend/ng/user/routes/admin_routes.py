@@ -111,7 +111,7 @@ class UserEventsAdminResource(Resource):
         """Get events for a specific user"""
         events = target_user.get_events()
         return success_response(events)
-    
+
 @users_admin_namespace.route("/<int:user_id>/teams")
 class UserTeamsAdminResource(Resource):
     @admin_endpoint()

@@ -23,6 +23,11 @@ from .challenge.models.ContainerBlueprint import ContainerBlueprint  # noqa: F40
 from .challenge.models.Hint import Hint  # noqa: F401
 from .challenge.models.Question import Question  # noqa: F401
 from .challenge.models.ChallengeTag import ChallengeTag # noqa: F401
+from .scoring.models.Score import Score  # noqa: F401
+from .scoring.models.ScoreEvent import ScoreEvent  # noqa: F401
+from .scoring.models.Attempt import Attempt  # noqa: F401
+from .scoring.models.HintRedemption import HintRedemption  # noqa: F401
+from .scoring.models.ManualPointAward import ManualPointAward  # noqa: F401
 
 logger = get_logger(__name__)
 

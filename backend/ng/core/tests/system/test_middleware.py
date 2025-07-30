@@ -35,7 +35,7 @@ def test_loading(middleware_client):
     Test the loading of resources using the middleware decorators.
     This checks if the decorators correctly load user and event data.
     """
-    response = middleware_client.post("/loading_model_objects", 
+    response = middleware_client.post("/loading_model_objects",
         json={
             "user_id": 1,
             "event_id": 1,
@@ -60,7 +60,6 @@ def test_get_user_role_permissions(middleware_client):
     """
     response = middleware_client.get("/get_user_permissions", query_string={"user_id": 1})
 
-    
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"] is True

@@ -1,6 +1,9 @@
 from ._util import LoaderType
 from .load_challenge import load_challenge
 from .load_event import load_event
+from .load_hint import load_hint
+from .load_question import load_question
+from .load_score import load_score_by_team_and_event
 from .load_team import load_team
 from .load_team_by_invite_code import load_team_by_invite_code
 from .load_team_by_user_and_event import load_team_by_user_and_event
@@ -12,6 +15,9 @@ __all__ = [
     "LoaderType",
     "load_challenge",
     "load_event",
+    "load_hint",
+    "load_question",
+    "load_score_by_team_and_event",
     "load_team",
     "load_user",
     "load_ticket",

@@ -15,9 +15,10 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 from ... import config
 from ...core.exceptions import ConflictError, ValidationError, BusinessLogicError
+from ...core.utils.validator import BaseValidator
+
 from ...user.models.User import User
 from .enums import TeamRole
-from ...core.utils.validator import BaseValidator
 from .TeamMember import TeamMember
 
 HEX_CHARS = string.hexdigits.lower()[:16]  # '0123456789abcdef'
@@ -66,6 +67,7 @@ class Team(db.Model):
     @member_count.expression  # type: ignore[misc]
     @classmethod
     def _member_count_expression(cls):
+        # LAZY-IMPORT: Tagging all necessary lazy imports for easy searchability & visibility.
         from .TeamMember import TeamMember
 
         return select(func.count(TeamMember.id)).where(TeamMember.team_id == cls.id).scalar_subquery()
@@ -146,6 +148,21 @@ class Team(db.Model):
             raise ValidationError(f"Team validation failed: {e.errors}") from e
 
     @classmethod
+    def team_name_contains_member_name(cls,name, member_names) -> bool:
+        """Check if the team name contains any member's name.
+
+        Returns:
+            bool: True if team name contains a member's name, False otherwise
+        """
+        name_split = [part for part in name.lower().split() if len(part) > 1]
+        for member_name in member_names:
+            member_name_parts = [part for part in member_name.lower().split() if len(part) > 1]
+            if any(part in name_split for part in member_name_parts):
+                return True
+
+        return False
+
+    @classmethod
     def get_unique_invite_code(cls) -> str:
         """Generate a unique invite code for a new team."""
         # TODO - Raise an exception if this loops too many times
@@ -171,14 +188,12 @@ class Team(db.Model):
         commit: bool = True,
     ):
         """Create and persist a new team to the database.
-
         Args:
             name (str): Team name
             event_id (int): Associated event ID
             invite_code (str): Team invite code
             ranked (bool, optional): Whether team is ranked
             commit (bool, optional)
-
         Returns:
             Team: The created team instance
         """
@@ -186,15 +201,22 @@ class Team(db.Model):
             invite_code = cls.get_unique_invite_code()
         if seed is None:
             seed = cls.generate_random_seed()
-
         validated_data = cls.validate(
             data={"name": name, "event_id": event_id, "invite_code": invite_code, "seed": seed, "ranked": ranked}
         )
-
         team = cls(**validated_data)
-
         db.session.add(team)
         db.session.flush()
+
+        # LAZY-IMPORT
+        from ...scoring.models.Score import Score
+
+        score = Score.create_score(
+            team_id=team.id,
+            commit=False,
+            team=team
+        )
+
         if commit:
             try:
                 db.session.commit()
@@ -203,7 +225,6 @@ class Team(db.Model):
                 if "uq_team_event_name" in str(e):
                     raise ConflictError(f"Team name '{name}' already exists for event ID {event_id}.") from e
                 raise
-
         return team
 
     def disband_team(self, commit=True):
@@ -223,13 +244,18 @@ class Team(db.Model):
 
         self.invite_code = new_code
 
-
         if commit:
             db.session.commit()
 
-    def update_name(self, new_name, commit=True):
-        """Update team name and persist to database."""
+    def update_name(self, new_name: str, commit: bool = True) -> None:
+        """
+        Updates the team's name and synchronizes the cached name
+        """
+        # LAZY-IMPORT
+        from ...scoring.models.Score import Score
+
         self.name = new_name
+        Score.query.filter_by(team_id=self.id).update({"team_name": new_name})
 
         if commit:
             db.session.commit()
@@ -245,6 +271,7 @@ class Team(db.Model):
         Returns:
             TeamMember: The created team member instance
         """
+        # LAZY-IMPORT
         from ...event.models.Event import Event
         from .TeamMember import TeamMember
 
@@ -315,6 +342,7 @@ class Team(db.Model):
 
     @classmethod
     def find_by_user_and_event(cls, user_id: int, event_id: int) -> Team | None:
+        # LAZY-IMPORT
         from .TeamMember import TeamMember
 
         return cls.query.join(TeamMember).filter(TeamMember.user_id == user_id, cls.event_id == event_id).first()
@@ -404,6 +432,7 @@ class Team(db.Model):
         Returns:
             dict: Team object with related data
         """
+        # LAZY-IMPORT
         from ...event.models.Event import Event
         from .TeamMember import TeamMember
 
@@ -426,7 +455,7 @@ class Team(db.Model):
         Creates a team, assigns the creator as captain, and creates a demographic
         record in a single, atomic transaction.
         """
-
+        # LAZY-IMPORT
         from .enums import TeamRole
         captain = User.find_by_id(captain_id)
 
@@ -455,9 +484,61 @@ class Team(db.Model):
             db.session.rollback()
             raise e
 
+    def count_correct_attempts_in_event(self, event_id: int) -> int:
+        """
+        Counts the number of correctly answered questions by this team in a given event
+        """
+        # LAZY-IMPORT
+        from ...scoring.models.Attempt import Attempt
+
+        return Attempt.query.filter_by(
+            team_id=self.id,
+            event_id=event_id,
+            is_correct=True
+        ).count()
+
+    def has_solved_question(self, question_id: int) -> bool:
+        """
+        Checks if the team has already correctly answered a specific question
+        """
+        # LAZY-IMPORT
+        from ...scoring.models.Attempt import Attempt
+
+        return Attempt.query.filter_by(
+            team_id=self.id,
+            question_id=question_id,
+            is_correct=True
+        ).first() is not None
+
+    def has_redeemed_hint(self, hint_id: int) -> bool:
+        """
+        Checks if the team has already redeemed a specific hint
+         """
+        # LAZY-IMPORT
+        from ...scoring.models.HintRedemption import HintRedemption
+
+        return HintRedemption.query.filter_by(
+            team_id=self.id,
+            hint_id=hint_id
+        ).first() is not None
+
+    def get_redeemed_hints_for_challenge(self, challenge_id: int) -> list[int]:
+        """
+        Gets a list of hint IDs this team has redeemed for a specific challenge
+        """
+        # LAZY-IMPORT
+        from ...scoring.models.HintRedemption import HintRedemption
+        from ...challenge.models.Hint import Hint
+
+        redemptions = HintRedemption.query.join(Hint).filter(
+            HintRedemption.team_id == self.id,
+            Hint.challenge_id == challenge_id
+        ).all()
+        return [r.hint_id for r in redemptions]
+
     def remove_member_and_regenerate_code(self, user_id: int, commit=True) -> None:
         """Remove a team member and regenerate invite code in single transaction."""
-
+        # LAZY-IMPORT
         from .TeamMember import TeamMember
 
         try:
@@ -469,13 +550,14 @@ class Team(db.Model):
                 self.update_invite_code(commit=False)
                 if commit:
                     db.session.commit()
+                return True
         except Exception:
             db.session.rollback()
             raise
 
     def remove_captain_and_promote(self, new_captain_user_id: int) -> bool:
         """Remove captain and promote new one in single transaction."""
-
+        # LAZY-IMPORT
         from .enums import TeamRole
         from .TeamMember import TeamMember
 
@@ -507,18 +589,4 @@ class Team(db.Model):
         except Exception:
             db.session.rollback()
             raise
-    @classmethod
-    def team_name_contains_member_name(cls,name, member_names) -> bool:
-        """Check if the team name contains any member's name.
-
-        Returns:
-            bool: True if team name contains a member's name, False otherwise
-        """
-
-        name_split = [part for part in name.lower().split() if len(part) > 1]
-        for member_name in member_names:
-            member_name_parts = [part for part in member_name.lower().split() if len(part) > 1]
-            if any(part in name_split for part in member_name_parts):
-                return True
-
-        return False
+            

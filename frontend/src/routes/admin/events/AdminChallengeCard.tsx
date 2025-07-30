@@ -1,11 +1,23 @@
-import { Card, Heading, Text } from '@radix-ui/themes';
+import type { Challenge } from '@/types';
+import {
+  Card,
+  Flex,
+  Heading,
+  Text,
+} from '@radix-ui/themes';
+import ChallengeIcon from 'components/ChallengeIcon';
 
-export default function AdminChallengeCard() {
+export default function AdminChallengeCard({ challenge }: { challenge: Challenge }) {
   return (
     <Card>
-      <Heading size="3">Challenge</Heading>
+      <Flex direction="row" align="center" gap="1">
+        <ChallengeIcon icon={challenge.icon} />
+        <Heading size="3">
+          {challenge.name}
+        </Heading>
+      </Flex>
       <Text color="gray">
-        This is a placeholder for the challenge card. It will display challenge details and actions.
+        {challenge.summary}
       </Text>
     </Card>
   );

@@ -23,7 +23,7 @@ def test_role_endpoints_not_authenticated(client, role_with_permissions):
     response = client.put(f"/ng/admin/permissions/{role.id}/details", json={
         "permissions": ["can_edit_team", "can_edit_user"]
     })
-    assert response.status_code == 403 
+    assert response.status_code == 403
 
 def test_change_role_permissions(admin_client, role_with_permissions):
     """Check that we can change permissions for a specific role."""

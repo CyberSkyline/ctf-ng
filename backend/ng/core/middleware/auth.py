@@ -59,7 +59,6 @@ def api_endpoint(auth_required=True, admin_required=False, json_required=False, 
 def _auth_handler(f, auth_required, json_required, validation_func):
     """Internal helper to handle the actual endpoint logic"""
 
-
     @handle_exceptions
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -71,9 +70,15 @@ def _auth_handler(f, auth_required, json_required, validation_func):
         if json_required:
             if not request.is_json:
                 raise ValidationError("Request must have a JSON body.")
-            data = request.get_json()
-            if not data:
-                raise ValidationError("JSON body is malformed or empty.")
+
+            try:
+                data = request.get_json(force=False, silent=False)
+                # Explicitly check that data is a dictionary because get_json can sometimes return a string
+                if not isinstance(data, dict):
+                    raise ValidationError("JSON body must be an object (dictionary).")
+            except Exception as e:
+                raise ValidationError(f"JSON body is malformed: {str(e)}") from e
+
             kwargs["json_data"] = data
             if validation_func:
                 kwargs["validated_data"] = validation_func(data)

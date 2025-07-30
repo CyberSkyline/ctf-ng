@@ -5,41 +5,71 @@ Defines the TicketMessage model for support ticket thread messages.
 from __future__ import annotations
 from typing import Any
 
-from CTFd.models import db
+from CTFd.models import db, Users
 
+from ... import config
 from ...core.utils import utc_now
-
+from ...core.utils.validator import BaseValidator
 
 class TicketMessage(db.Model):
     __tablename__ = "ng_ticket_messages"
 
     id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.String(4096), nullable=False)
-    ticket_id = db.Column(db.Integer, db.ForeignKey("ng_tickets.id"), nullable=False, index=True)
-    author_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    text = db.Column(db.String(config.TICKET_MESSAGE_MAX_LENGTH), nullable=False)
+    ticket_id = db.Column(
+        db.Integer, db.ForeignKey("ng_tickets.id"), nullable=False, index=True
+    )
+    author_id = db.Column(
+        db.Integer, db.ForeignKey("users.id"), nullable=False, index=True
+    )
     created_at = db.Column(db.DateTime, nullable=False, default=utc_now)
 
     ticket = db.relationship("Ticket", back_populates="messages")
     author = db.relationship("Users", backref="ticket_messages")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<TicketMessage {self.id} on Ticket {self.ticket_id}>"
 
-    def serialize(self, include_admin_fields: bool = False) -> dict[str, Any]:
+    @classmethod
+    def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
+        validator = BaseValidator()
+
+        validator.validate_string(
+            data,
+            "text",
+            config.TICKET_MESSAGE_MAX_LENGTH,
+            required=True,
+            friendly_name="Message text",
+        )
+        validator.validate_model_id(data, "ticket_id", "Ticket", required=True)
+        validator.validate_model_id(data, "author_id", "Users", required=True)
+
+        return validator.validate()
+
+    def serialize(
+        self,
+        include_admin_fields: bool = False,
+        author_cache: dict[int, Any] | None = None,
+    ) -> dict[str, Any]:
         """Serialize message for API response.
 
         Args:
-            include_admin_fields: Whether to include admin-only fields
+            include_admin_fields: Whether to include admin only fields
+            author_cache: Optional cache of author data to avoid N+1 queries
 
         Returns:
             dict: Serialized message data
         """
-        # Lazy import to prevent circular dependencies (needed)
-        from CTFd.models import Users
-
-        author = Users.query.get(self.author_id)
-        author_name = author.name if author else f"User {self.author_id}"
-        author_type = getattr(author, "type", "user") if author else "user"
+        # Get author info from cache or query if not cached
+        if author_cache and self.author_id in author_cache:
+            author_info = author_cache[self.author_id]
+            author_name = author_info["name"]
+            author_type = author_info["type"]
+        else:
+            # Fallback to query
+            author = Users.query.get(self.author_id)
+            author_name = author.name if author else f"User {self.author_id}"
+            author_type = getattr(author, "type", "user") if author else "user"
 
         data = {
             "id": self.id,
@@ -54,8 +84,10 @@ class TicketMessage(db.Model):
         return data
 
     @classmethod
-    def create(cls, text: str, ticket_id: int, author_id: int, commit: bool = True) -> "TicketMessage":
-        """Create and persist a new ticket message.
+    def create_message(
+        cls, text: str, ticket_id: int, author_id: int, commit: bool = True
+    ) -> TicketMessage:
+        """Create and persist a new ticket message with validation.
 
         Args:
             text: Message content (markdown supported)
@@ -66,7 +98,20 @@ class TicketMessage(db.Model):
         Returns:
             TicketMessage: The created message instance
         """
-        message = cls(text=text, ticket_id=ticket_id, author_id=author_id, created_at=utc_now())
+
+        data = {
+            "text": text,
+            "ticket_id": ticket_id,
+            "author_id": author_id,
+        }
+
+        validated_data = cls.validate(data)
+
+        message = cls(
+            text=validated_data["text"],
+            ticket_id=validated_data["ticket_id"],
+            author_id=validated_data["author_id"],
+        )
 
         db.session.add(message)
         if commit:
@@ -86,51 +131,17 @@ class TicketMessage(db.Model):
         return cls.query.get(message_id)
 
     @classmethod
-    def find_by_ticket(cls, ticket_id: int) -> list[TicketMessage]:
-        """Find all messages for a specific ticket.
-
-        Args:
-            ticket_id: The ticket ID to get messages for
-
-        Returns:
-            list[TicketMessage]: List of messages ordered by creation time
-        """
-        return cls.query.filter_by(ticket_id=ticket_id).order_by(cls.created_at.asc()).all()
-
-    @classmethod
-    def find_by_author(cls, author_id: int) -> list[TicketMessage]:
-        """Find all messages by a specific author.
-
-        Args:
-            author_id: The author's user ID
-
-        Returns:
-            list[TicketMessage]: List of messages by the author
-        """
-        return cls.query.filter_by(author_id=author_id).order_by(cls.created_at.desc()).all()
-
-    @classmethod
-    def count_by_ticket(cls, ticket_id: int) -> int:
-        """Count messages in a ticket.
-
-        Args:
-            ticket_id: The ticket ID to count messages for
-
-        Returns:
-            int: Number of messages in the ticket
-        """
-        return cls.query.filter_by(ticket_id=ticket_id).count()
-
-    @classmethod
-    def delete_by_ticket(cls, ticket_id: int) -> int:
+    def delete_by_ticket(cls, ticket_id: int, commit: bool = True) -> int:
         """Delete all messages for a ticket.
 
         Args:
             ticket_id: The ticket ID to delete messages for
+            commit: Whether to commit immediately
 
         Returns:
             int: Number of messages deleted
         """
         count = cls.query.filter_by(ticket_id=ticket_id).delete()
-        db.session.commit()
+        if commit:
+            db.session.commit()
         return count

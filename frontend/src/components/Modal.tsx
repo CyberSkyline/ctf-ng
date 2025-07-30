@@ -37,6 +37,7 @@ export default function Modal({
 } : ModalProps) {
   const [ open, setOpen ] = useState<boolean>(false);
   const [ error, setError ] = useState<string | null>(null);
+  const [ loading, setLoading ] = useState<boolean>(false);
   const [ formTouched, setFormTouched ] = useState<boolean>(false);
 
   useEffect(() => {
@@ -95,6 +96,7 @@ export default function Modal({
 
             if (onSubmit) {
               const formData = new FormData(e.currentTarget);
+              setLoading(true);
               onSubmit(formData)
                 .then(() => {
                   // if promise resolves, close the modal
@@ -103,6 +105,8 @@ export default function Modal({
                 .catch((err) => {
                   // if promise rejects, set the error message
                   setError(err.message);
+                }).finally(() => {
+                  setLoading(false);
                 });
             } else {
               // if no submit handler is defined, just close the modal
@@ -120,7 +124,8 @@ export default function Modal({
                 type="submit"
                 color={onSubmit ? submitColor : 'gray'}
                 variant={onSubmit ? 'solid' : 'soft'}
-                disabled={submitDisabled || (requireTouchingForm && !formTouched)}
+                loading={loading}
+                disabled={loading || submitDisabled || (requireTouchingForm && !formTouched)}
               >
                 {onSubmit ? submitVerb : 'Close'}
               </Button>

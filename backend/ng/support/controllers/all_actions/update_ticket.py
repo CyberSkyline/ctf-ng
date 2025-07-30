@@ -28,15 +28,15 @@ def update_ticket(
             subject=(subject, subject is not None and subject != ticket.subject),
             event_id=(
                 event_id if event_id != 0 else None,
-                event_id is not None and event_id != getattr(ticket, "event_id"),
+                event_id is not None and event_id != ticket.event_id,
             ),
             team_id=(
                 team_id if team_id != 0 else None,
-                team_id is not None and team_id != getattr(ticket, "team_id"),
+                team_id is not None and team_id != ticket.team_id,
             ),
             challenge_id=(
                 challenge_id if challenge_id != 0 else None,
-                challenge_id is not None and challenge_id != getattr(ticket, "challenge_id"),
+                challenge_id is not None and challenge_id != ticket.challenge_id,
             ),
         )
     else:

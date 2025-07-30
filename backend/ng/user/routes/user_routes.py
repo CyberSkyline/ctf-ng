@@ -31,7 +31,7 @@ class UserEvents(Resource):
         """Get my events"""
         events = current_user.get_events()
         return success_response(events)
-    
+
 @users_user_namespace.route("/me/teams")
 class UserTeams(Resource):
     @user_endpoint()
