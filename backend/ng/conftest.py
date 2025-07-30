@@ -193,11 +193,11 @@ def user(db_session):
     user = Users(name="testuser", email="test@example.com", password="password")
     user.verified = True
     db_session.add(user)
-    db_session.commit()
+    db_session.flush()
     from .user.models.User import User as NgUser
 
     NgUser.create_user(user_id=user.id, commit=False)
-    db_session.commit()
+    db_session.flush()
     return user
 
 
@@ -207,11 +207,11 @@ def admin(db_session):
     admin = Users(name="admin", email="admin@example.com", password="password", type="admin")
     admin.verified = True
     db_session.add(admin)
-    db_session.commit()
+    db_session.flush()
     from .user.models.User import User as NgUser
 
     NgUser.create_user(user_id=admin.id, commit=False)
-    db_session.commit()
+    db_session.flush()
     return admin
 
 
@@ -370,11 +370,55 @@ def team_member_client(app, db_session, team_with_members, role_with_permissions
 
 
 @pytest.fixture
-def event(event_factory):
+def event(db_session):
     """Simple fixture to get a single event."""
-    return event_factory()
+    from .event.models.Event import Event
+    
+    event = Event(
+        name="Test Event 1",
+        description="A test event.",
+        max_team_size=4,
+        locked=False,
+    )
+    db_session.add(event)
+    db_session.flush()
+    return event
 
 
+
+
+@pytest.fixture
+def locked_event(db_session):
+    """Create a locked event for testing restrictions."""
+    from .event.models.Event import Event
+
+    event = Event(
+        name="Locked Event",
+        description="This event is locked",
+        locked=True,
+        start_time=datetime.utcnow() - timedelta(days=10),
+        end_time=datetime.utcnow() - timedelta(days=5)
+    )
+    db_session.add(event)
+    db_session.flush()
+    return event
+
+
+@pytest.fixture
+def future_event(db_session):
+    """Create a future event that hasn't started yet."""
+    from .event.models.Event import Event
+
+    event = Event(
+        name="Future Event",
+        description="This event hasn't started",
+        locked=False,
+        start_time=datetime.utcnow() + timedelta(days=5),
+        end_time=datetime.utcnow() + timedelta(days=10)
+    )
+    db_session.add(event)
+    db_session.flush()
+    return event
 
 
 @pytest.fixture
@@ -453,6 +497,167 @@ def challenge(db_session, event):
 
 
 @pytest.fixture
+def ticket_tag(db_session):
+    """Creates a ticket tag for testing."""
+    from .support.models.TicketTag import TicketTag
+
+    tag = TicketTag.create_tag(
+        name="bug", color="#FF0000", description="Bug reports", commit=False
+    )
+    db_session.add(tag)
+    db_session.commit()
+    return tag
+
+
+@pytest.fixture
+def ticket_tag_factory(db_session):
+    """Factory to create ticket tags"""
+    from .support.models.TicketTag import TicketTag
+
+    def _factory(**kwargs):
+        defaults = {
+            "name": f"tag_{datetime.utcnow().timestamp()}",
+            "color": "#0000FF",
+            "description": "Test tag",
+        }
+        defaults.update(kwargs)
+
+        tag = TicketTag.create_tag(**defaults, commit=False)
+        db_session.add(tag)
+        db_session.commit()
+        return tag
+
+    return _factory
+
+
+@pytest.fixture
+def ticket(db_session, user, event):
+    """Creates a basic support ticket."""
+    from .support.models.Ticket import Ticket
+
+    ticket = Ticket.create_ticket(
+        subject="Test Support Request",
+        author_id=user.id,
+        event_id=event.id,
+        commit=False,
+    )
+    db_session.add(ticket)
+    db_session.commit()
+    return ticket
+
+
+@pytest.fixture
+def closed_ticket(db_session, user):
+    """Creates a closed support ticket."""
+    from .support.models.Ticket import Ticket
+
+    ticket = Ticket.create_ticket(
+        subject="Resolved Issue", author_id=user.id, commit=False
+    )
+    ticket.close_ticket(commit=False)
+    db_session.add(ticket)
+    db_session.commit()
+    return ticket
+
+
+@pytest.fixture
+def muted_ticket(db_session, user):
+    """Creates a muted support ticket."""
+    from .support.models.Ticket import Ticket
+
+    ticket = Ticket.create_ticket(
+        subject="Low Priority Issue", author_id=user.id, commit=False
+    )
+    ticket.toggle_mute(True, commit=False)
+    db_session.add(ticket)
+    db_session.commit()
+    return ticket
+
+
+@pytest.fixture
+def assigned_ticket(db_session, user, admin):
+    """Creates a ticket assigned to an admin."""
+    from .support.models.Ticket import Ticket
+
+    ticket = Ticket.create_ticket(
+        subject="Assigned Issue", author_id=user.id, commit=False
+    )
+    ticket.assign_to_user(admin.id, commit=False)
+    db_session.add(ticket)
+    db_session.commit()
+    return ticket
+
+
+@pytest.fixture
+def ticket_with_messages(db_session, ticket, user, admin):
+    """Creates a ticket with messages from user and admin."""
+    from .support.models.TicketMessage import TicketMessage
+
+    user_msg = TicketMessage.create_message(
+        text="I'm having an issue", ticket_id=ticket.id, author_id=user.id, commit=False
+    )
+
+    admin_msg = TicketMessage.create_message(
+        text="I'll help you", ticket_id=ticket.id, author_id=admin.id, commit=False
+    )
+
+    ticket.first_admin_response_timestamp = admin_msg.created_at
+
+    db_session.add_all([user_msg, admin_msg])
+    db_session.commit()
+    return ticket
+
+
+@pytest.fixture
+def ticket_with_tags(db_session, ticket, ticket_tag_factory):
+    """Creates a ticket with multiple tags."""
+
+    tag1 = ticket_tag_factory(name="urgent")
+    tag2 = ticket_tag_factory(name="technical")
+
+    ticket.add_tags([tag1, tag2], commit=False)
+    db_session.commit()
+    return ticket
+
+
+@pytest.fixture
+def ticket_factory(db_session):
+    """Factory to create tickets"""
+    from .support.models.Ticket import Ticket
+
+    def _factory(**kwargs):
+        defaults = {
+            "subject": f"Test Ticket {datetime.utcnow().timestamp()}",
+            "author_id": kwargs.get("author_id", 1),
+        }
+        defaults.update(kwargs)
+
+        ticket = Ticket.create_ticket(**defaults, commit=False)
+        db_session.add(ticket)
+        db_session.commit()
+        return ticket
+
+    return _factory
+
+
+@pytest.fixture
+def ticket_message_factory(db_session):
+    """Factory to create ticket messages"""
+    from .support.models.TicketMessage import TicketMessage
+
+    def _factory(**kwargs):
+        defaults = {
+            "text": "Test message",
+            "ticket_id": kwargs.get("ticket_id", 1),
+            "author_id": kwargs.get("author_id", 1),
+        }
+        defaults.update(kwargs)
+
+        message = TicketMessage.create_message(**defaults, commit=False)
+        db_session.add(message)
+        db_session.commit()
+        return message
+
 def challenge_factory(db_session, event_factory):
     """A factory function to create Challenge objects for tests, with 2 questions."""
 
@@ -488,11 +693,284 @@ def challenge_factory(db_session, event_factory):
         db_session.commit()
 
         return challenge
+    return _factory
+
+
+@pytest.fixture
+def multiple_tickets(db_session, user, admin, event, team_factory, ticket_factory):
+    """Creates multiple tickets with various states for testing filters."""
+
+    team = team_factory(event=event)
+
+    tickets = {
+        "open_unassigned": ticket_factory(
+            subject="Open Unassigned", author_id=user.id, event_id=event.id
+        ),
+        "open_assigned": ticket_factory(
+            subject="Open Assigned", author_id=user.id, team_id=team.id
+        ),
+        "closed": ticket_factory(subject="Closed Ticket", author_id=admin.id),
+        "muted": ticket_factory(subject="Muted Ticket", author_id=user.id),
+    }
+
+    tickets["open_assigned"].assign_to_user(admin.id)
+    tickets["closed"].close_ticket()
+    tickets["muted"].toggle_mute(True)
+
+    return tickets
+
+
+# Scoring Module Fixtures
+
+
+@pytest.fixture
+def question(db_session, challenge):
+    """Create a test question for scoring tests."""
+    from .challenge.models.Question import Question
+
+    question = Question(
+        challenge_id=challenge.id,
+        name="Test Question",
+        body="What is 2+2?",
+        answer="4",
+        points=100,
+        max_attempts=5
+    )
+    db_session.add(question)
+    db_session.commit()
+    return question
+
+
+@pytest.fixture
+def hint(db_session, challenge):
+    """Create a test hint for scoring tests."""
+    from .challenge.models.Hint import Hint
+
+    hint = Hint(
+        challenge_id=challenge.id,
+        preview="Single digit hint",
+        body="The answer is a single digit",
+        deduction=20
+    )
+    db_session.add(hint)
+    db_session.commit()
+    return hint
+
+
+@pytest.fixture
+def team_with_member(db_session, event, user):
+    """Create a team with a member for scoring tests."""
+    from .team.models.Team import Team
+
+    event_id = event.id
+    team = Team.create_team_with_captain(
+        name="Test Scoring Team",
+        event_id=event_id,
+        captain_id=user.id,
+        invite_code="test123"
+    )
+    return team
+
+
+@pytest.fixture
+def score(db_session, team_with_member, event):
+    """Get the Score record that was automatically created with the team."""
+    from .scoring.models.Score import Score
+
+    score = Score.query.filter_by(
+        team_id=team_with_member.id,
+        event_id=event.id
+    ).first()
+
+    if not score:
+        raise RuntimeError("Score should have been created automatically with team")
+    
+    return score
+
+
+@pytest.fixture
+def score_event(db_session, score, team_with_member):
+    """Create a ScoreEvent for testing."""
+    from .scoring.models.ScoreEvent import ScoreEvent
+
+    score_event = ScoreEvent(
+        score_id=score.id,
+        team_id=team_with_member.id,
+        points=50,
+        timestamp=datetime.utcnow()
+    )
+    db_session.add(score_event)
+    db_session.commit()
+    score.adjust(50, commit=True)
+    return score_event
+
+
+@pytest.fixture
+def attempt_factory(db_session):
+    """Factory to create attempts."""
+    from .scoring.models.Attempt import Attempt
+
+    def _factory(**kwargs):
+        defaults = {
+            "user_id": kwargs.get("user_id", 1),
+            "team_id": kwargs.get("team_id", 1),
+            "event_id": kwargs.get("event_id", 1),
+            "challenge_id": kwargs.get("challenge_id", 1),
+            "question_id": kwargs.get("question_id", 1),
+            "submission": kwargs.get("submission", "test answer"),
+            "is_correct": kwargs.get("is_correct", False),
+            "points": kwargs.get("points", 0),
+            "timestamp": kwargs.get("timestamp", datetime.utcnow())
+        }
+        defaults.update(kwargs)
+
+        attempt = Attempt(**defaults)
+        db_session.add(attempt)
+        if kwargs.get("commit", True):
+            db_session.commit()
+        return attempt
 
     return _factory
 
 
 @pytest.fixture
+def hint_redemption_factory(db_session):
+    """Factory to create hint redemptions."""
+    from .scoring.models.HintRedemption import HintRedemption
+
+    def _factory(**kwargs):
+        defaults = {
+            "hint_id": kwargs.get("hint_id", 1),
+            "user_id": kwargs.get("user_id", 1),
+            "team_id": kwargs.get("team_id", 1),
+            "points": kwargs.get("points", 0),
+            "timestamp": kwargs.get("timestamp", datetime.utcnow())
+        }
+        defaults.update(kwargs)
+
+        redemption = HintRedemption(**defaults)
+        db_session.add(redemption)
+        if kwargs.get("commit", True):
+            db_session.commit()
+        return redemption
+
+    return _factory
+
+
+@pytest.fixture
+def manual_award_factory(db_session):
+    """Factory to create manual point awards."""
+    from .scoring.models.ManualPointAward import ManualPointAward
+
+    def _factory(**kwargs):
+        defaults = {
+            "admin_id": kwargs.get("admin_id", 1),
+            "team_id": kwargs.get("team_id", 1),
+            "points": kwargs.get("points", 100),
+            "reason": kwargs.get("reason", "Test award"),
+            "timestamp": kwargs.get("timestamp", datetime.utcnow())
+        }
+        defaults.update(kwargs)
+
+        award = ManualPointAward(**defaults)
+        db_session.add(award)
+        if kwargs.get("commit", True):
+            db_session.commit()
+        return award
+
+    return _factory
+
+
+@pytest.fixture
+def score_factory(db_session):
+    """Factory to create Score records."""
+    from .scoring.models.Score import Score
+
+    def _factory(**kwargs):
+        defaults = {
+            "team_id": kwargs.get("team_id", 1),
+            "event_id": kwargs.get("event_id", 1),
+            "points": kwargs.get("points", 0),
+            "last_update": kwargs.get("last_update", datetime.utcnow()),
+            "team_name": kwargs.get("team_name", "Test Team")
+        }
+        defaults.update(kwargs)
+
+        score = Score(**defaults)
+        db_session.add(score)
+        if kwargs.get("commit", True):
+            db_session.commit()
+        return score
+
+    return _factory
+
+
+@pytest.fixture
+def score_event_factory(db_session):
+    """Factory to create ScoreEvent records."""
+    from .scoring.models.ScoreEvent import ScoreEvent
+
+    def _factory(**kwargs):
+        defaults = {
+            "score_id": kwargs.get("score_id", 1),
+            "team_id": kwargs.get("team_id", 1),
+            "points": kwargs.get("points", 100),
+            "timestamp": kwargs.get("timestamp", datetime.utcnow())
+        }
+        defaults.update(kwargs)
+
+        score_event = ScoreEvent(**defaults)
+        db_session.add(score_event)
+        if kwargs.get("commit", True):
+            db_session.commit()
+        return score_event
+
+    return _factory
+
+
+@pytest.fixture
+def multiple_teams_with_scores(db_session, event, team_factory, score_factory):
+    """Create multiple teams with different scores for leaderboard testing."""
+    from .scoring.models.Score import Score
+
+    teams_data = []
+
+    user_ids = []
+    for i in range(5):
+        user = Users(
+            name=f"scoreuser{i}",
+            email=f"scoreuser{i}@example.com",
+            password="password"
+        )
+        user.verified = True
+        db_session.add(user)
+        db_session.commit()
+
+        ng_user = NgUser(id=user.id)
+        db_session.add(ng_user)
+        db_session.commit()
+        user_ids.append(user.id)
+
+    for i in range(5):
+        team = Team.create_team_with_captain(
+            name=f"Score Team {i}",
+            event_id=event.id,
+            captain_id=user_ids[i],
+            invite_code=f"score{i}123"
+        )
+
+        score = Score.query.filter_by(team_id=team.id, event_id=event.id).first()
+        score.points = (i + 1) * 100
+        db_session.commit()
+
+        teams_data.append({
+            "user_id": user_ids[i],
+            "team": team,
+            "score": score
+        })
+
+    return teams_data
+  
 def question_factory(db_session, challenge_factory):
     """A factory function to create Question objects for tests."""
 

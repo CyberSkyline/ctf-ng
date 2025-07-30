@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any
 
 from CTFd.models import db
@@ -21,6 +23,7 @@ class Hint(db.Model):
 
     def __repr__(self):
         return f"<NgHint {self.id}, deduction={self.deduction}, preview={self.preview}, body={self.body}>"
+
 
     def serialize(self, include_admin_fields=False) -> dict[str, Any]:
         """
@@ -90,6 +93,13 @@ class Hint(db.Model):
             db.session.rollback()
             raise e
 
+    @classmethod
+    def find_by_id(cls, hint_id: int) -> Hint | None:
+        """
+        Find a hint by its ID.
+        """
+        return cls.query.filter_by(id=hint_id).first()
+
     def as_attr(self) -> HintAttr:
         """
         Convert the Hint model to a HintAttr object.
@@ -100,3 +110,4 @@ class Hint(db.Model):
             preview=self.preview,  # type: ignore
             deduction=self.deduction,  # type: ignore
         )
+

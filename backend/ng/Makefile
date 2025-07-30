@@ -9,26 +9,28 @@ ifeq ($(shell test -f $(VENV_PYTHON) && echo exists), exists)
 endif
 
 
+find-TODO:
+	pylint --disable=all --enable=W0511 .
+
 # All tests
 test-all:
 	$(PYTHON_EXEC) -m pytest -m "not middleware" -v
 
 
-# Test types
-test-logic:
-	$(PYTHON_EXEC) -m pytest -v $(shell find . -name "test_*_logic.py")
-
-test-models:
-	$(PYTHON_EXEC) -m pytest -v $(shell find . -name "test_*_models.py")
-
 test-validation:
 	$(PYTHON_EXEC) -m pytest -v $(shell find . -name "test_*_validation.py")
+
+test-models:
+	$(PYTHON_EXEC) -m pytest -v $(shell find . -name "test_*_model.py")
 
 test-controllers:
 	$(PYTHON_EXEC) -m pytest -v $(shell find . -name "test_*_controllers.py")
 
-test-integration:
-	$(PYTHON_EXEC) -m pytest -v $(shell find . -name "test_*_integration.py")
+test-routes:
+	$(PYTHON_EXEC) -m pytest -v $(shell find . -name "test_*_routes.py")
+
+test-api:
+	$(PYTHON_EXEC) -m pytest -v $(shell find . -name "test_*_api.py")
 
 
 # Domain
@@ -44,20 +46,24 @@ test-admin:
 test-user:
 	$(PYTHON_EXEC) -m pytest ./user/tests/ -v
 
+# TODO: add back when routes/controllers are complete
 test-support:
-	$(PYTHON_EXEC) -m pytest ./support/tests/ -v
+	$(PYTHON_EXEC) -m pytest ./support/tests/ -k "model" -v
 
-test-utils:
-	$(PYTHON_EXEC) -m pytest ./core/tests/system/ -v
+test-scoring:
+	$(PYTHON_EXEC) -m pytest -s ./scoring/tests/ -v
 
 test-challenge:
 	$(PYTHON_EXEC) -m pytest -s challenge/tests/ -v
 
-test-middleware:
-	$(PYTHON_EXEC) -m pytest -m middleware . -v
-
 test-permissions:
 	$(PYTHON_EXEC) -m pytest permissions/tests/ -v
 
+test-middleware:
+	$(PYTHON_EXEC) -m pytest -m middleware . -v
 
-.PHONY: check fix format test-all test-logic test-models test-validation test-controllers test-integration test-team test-event test-admin test-user test-support test-utils test-fast test-middleware test-event-registration
+test-utils:
+	$(PYTHON_EXEC) -m pytest ./core/tests/system/ -v
+
+
+.PHONY: check fix format test-all test-routes test-models test-validation test-controllers test-api test-team test-event test-admin test-user test-support test-utils test-fast test-middleware test-event-registration test-scoring

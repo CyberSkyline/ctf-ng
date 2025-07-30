@@ -39,7 +39,7 @@ class RolePermission(db.Model):
         """
         return cls.query.filter_by(role_id=role_id).all()
 
-    
+
     def serialize(self):
         """Serialize a RolePermission instance to a dictionary.
 

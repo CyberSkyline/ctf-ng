@@ -9,7 +9,6 @@ from ...event.models.Demographic import Demographic
 logger = get_logger(__name__)
 
 
-
 def get_permissions(f):
     """Decorator to get user permissions and append them to the request context."""
 

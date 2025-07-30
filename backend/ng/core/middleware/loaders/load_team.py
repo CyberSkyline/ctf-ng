@@ -1,4 +1,4 @@
-from typing import Callable
+from collections.abc import Callable
 from ._util import generate_loader_decorator, LoaderType
 
 def load_team(source : LoaderType, input_key="team_id", output_key="team") -> Callable:

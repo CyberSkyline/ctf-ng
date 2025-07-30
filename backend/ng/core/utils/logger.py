@@ -6,12 +6,12 @@ import os
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 
 def utc_now() -> datetime:
     """Get current UTC datetime. Replacement for deprecated datetime.utcnow()."""
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 PLUGIN_LOGGER_NAME = "ctfd_ng_plugin"

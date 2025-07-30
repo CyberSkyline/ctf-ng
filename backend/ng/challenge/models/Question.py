@@ -35,6 +35,7 @@ class Question(db.Model):
     def __repr__(self):
         return f"<NgChallengeQuestion {self.id}, name={self.name}, points={self.points}>"
 
+
     def serialize(self, include_admin_fields=False) -> dict[str, Any]:
         """
         Serialize the question to a dictionary.
@@ -143,6 +144,13 @@ class Question(db.Model):
         except Exception as e:
             db.session.rollback()
             raise e
+
+    @classmethod
+    def find_by_id(cls, question_id: int) -> Question | None:
+        """
+        Find a question by its ID.
+        """
+        return cls.query.filter_by(id=question_id).first()
 
     def check_answer(self, team: Team, answer: str) -> bool:
         """
