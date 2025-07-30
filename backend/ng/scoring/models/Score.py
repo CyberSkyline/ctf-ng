@@ -77,9 +77,7 @@ class Score(db.Model):
 
         validator.validate_model_id(data, "team_id", "Team", required=True)
         validator.validate_model_id(data, "event_id", "Event", required=True)
-
-        if "points" in data:
-            validator.validate_integer(data, "points", required=False)
+        validator.validate_integer(data, "points", required=False)
 
         validator.validate_string(
             data, "team_name", config.TEAM_NAME_MAX_LENGTH, required=True, friendly_name="Team name"
@@ -116,7 +114,7 @@ class Score(db.Model):
             # LAZY-IMPORT
             from ...team.models.Team import Team
 
-            team = db.session.get(Team, team_id)
+            team = Team.find_by_id(team_id)
 
         validated_data = cls.validate(
             {
@@ -228,7 +226,7 @@ class Score(db.Model):
         # LAZY-IMPORT
         from ...team.models.Team import Team
 
-        team = db.session.get(Team, team_id)
+        team = Team.find_by_id(team_id)
         if not team:
             raise NotFoundError(f"Team with ID {team_id} not found")
 

@@ -177,12 +177,14 @@ class BaseValidator:
             self.errors[field] = f"Error validating {friendly_name}: {str(e)}"
             return
 
+    @validation_field
     def validate_positive_integer(
         self,
         data: dict[str, Any],
         field: str,
         required: bool = False,
         friendly_name: str | None = None,
+        value: Any = None,  # Injected by decorator
     ) -> None:
         """
         Validate a positive (greater than zero) integer
@@ -207,9 +209,6 @@ class BaseValidator:
         """
         Validate that a user ID belongs to an admin user
         """
-        if value is None:
-            return
-            
         try:
             user_id = int(value)
         except (ValueError, TypeError):
