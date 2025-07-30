@@ -3,9 +3,12 @@ Centralized error handling for the entire Flask application.
 Provides a unified decorator and a global registration function.
 """
 
+import traceback
 from functools import wraps
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+
 from CTFd.models import db
+from flask import current_app as app
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from ..exceptions import APIException
 from ..utils import error_response
@@ -62,19 +65,22 @@ def handle_exceptions(f):
                 exc_info=True,
             )
             return error_response(
-                "A database error occurred. Please contact an administrator.",
+                traceback.format_exc() if app.debug else "A database error occurred.",
                 "database_error",
                 500,
             )
 
         except Exception as e:
             db.session.remove()
-            import traceback
 
             print(f"ERROR: {str(e)}")
             print(traceback.format_exc())
             logger.exception("Unexpected internal server error occurred.")
-            return error_response("An internal server error occurred.", "server_error", 500)
+            return error_response(
+                traceback.format_exc() if app.debug else "An internal server error occurred.",
+                "server_error",
+                500,
+            )
 
     return decorated_function
 
