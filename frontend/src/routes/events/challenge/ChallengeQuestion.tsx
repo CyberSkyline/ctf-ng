@@ -18,7 +18,7 @@ export default function ChallengeQuestion({
   question,
   placeholder,
   points,
-  attempts,
+  attemptsRemaining,
   status,
   valueOverride,
 }: {
@@ -26,7 +26,7 @@ export default function ChallengeQuestion({
   question: string;
   placeholder: string;
   points: number;
-  attempts: number;
+  attemptsRemaining: number;
   status: 'unanswered' | 'incorrect' | 'correct';
   valueOverride?: string;
 }) {
@@ -68,9 +68,9 @@ export default function ChallengeQuestion({
       <Flex direction="row" gap="2" align="center" justify="between">
         <Box>
           {status === 'correct' && (
-          <Text size="2" color="lime">
-            Correct
-          </Text>
+            <Text size="2" color="lime">
+              Correct
+            </Text>
           )}
           {status === 'incorrect' && (
             <Text size="2" color="red">
@@ -84,11 +84,7 @@ export default function ChallengeQuestion({
           )}
         </Box>
         <Text size="2" color="gray">
-          {attempts}
-          {' '}
-          attempt
-          {attempts !== 1 ? 's ' : ' '}
-          left
+          {`${attemptsRemaining} attempt${attemptsRemaining !== 1 ? 's' : ''} left`}
         </Text>
       </Flex>
 
@@ -105,7 +101,7 @@ export default function ChallengeQuestion({
                 placeholder={placeholder}
                 required
                 defaultValue={valueOverride}
-                disabled={status === 'correct' || attempts <= 0}
+                disabled={status === 'correct' || attemptsRemaining <= 0}
               >
                 <TextField.Slot>
                   <TbFlag2 className={twMerge(status !== 'unanswered' && 'text-(--accent-10)')} />
@@ -115,7 +111,7 @@ export default function ChallengeQuestion({
             <Form.Message match="valueMissing">Flag cannot be empty</Form.Message>
           </Form.Field>
 
-          {status !== 'correct' && attempts > 0 && (
+          {status !== 'correct' && attemptsRemaining > 0 && (
             <Button variant="soft" size="2" type="submit" color="amber">
               Submit
             </Button>

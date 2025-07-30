@@ -5,7 +5,7 @@ import {
   Text,
   TextField,
 } from '@radix-ui/themes';
-import _ from 'lodash';
+import { keyBy } from 'lodash';
 import { useMemo, useState } from 'react';
 import { TbCancel, TbSearch } from 'react-icons/tb';
 import { useParams } from 'react-router';
@@ -16,7 +16,7 @@ export default function ChallengesTab() {
   const { data } = useEventChallenges(Number(idEvent));
   const { data : myChallenges } = useMyChallenges(Number(idEvent));
 
-  const challengeProgressMap = useMemo(() => _.keyBy(myChallenges, (progress) => progress.challenge_id), [ myChallenges ]);
+  const challengeProgressMap = useMemo(() => keyBy(myChallenges, (progress) => progress.challenge_id), [ myChallenges ]);
 
   const [ searchQuery, setSearchQuery ] = useState('');
 

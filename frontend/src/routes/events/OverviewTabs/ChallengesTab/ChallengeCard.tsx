@@ -40,9 +40,9 @@ export default function ChallengeCard({
           <Heading size="4" color={color}>{challenge.name}</Heading>
           <Box flexGrow="1" />
           {complete && (
-          <Text size="2" color={color}>
-            <tb.TbCircleCheckFilled />
-          </Text>
+            <Text size="2" color={color}>
+              <tb.TbCircleCheckFilled />
+            </Text>
           )}
           {inProgress && (
             <Text size="2" color={color}>

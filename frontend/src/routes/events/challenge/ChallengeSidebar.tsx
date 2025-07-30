@@ -78,7 +78,9 @@ export default function ChallengeSidebar() {
               </Box>
             )}
 
-            <ConnectModal eventId={Number(idEvent)} challengeId={Number(idChallenge)} />
+            {challenge && event && (
+              <ConnectModal eventId={event.id} challengeId={challenge.id} />
+            )}
           </ChallengeHeader>
         </Inset>
       </Card>
@@ -86,21 +88,21 @@ export default function ChallengeSidebar() {
       <Card className="!flex flex-col">
         <Inset side="all" className="shrink !overflow-y-auto">
           <Flex direction="column" gap="3" className="p-3">
-            <Skeleton loading={!challenge}>
-              {!challenge && (
-              <>
-                {/* Placeholder text to produce a skeleton effect from - actual text is not shown. */}
-                <Text>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</Text>
-                <Text>Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</Text>
-                <Text>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</Text>
-              </>
-              )}
-              {challenge?.description && (
+            {challenge ? (
               <RadixMarkdown>
                 {challenge.description}
               </RadixMarkdown>
-              )}
-            </Skeleton>
+            ) : (
+              <Text>
+                <Skeleton loading>
+                  {/* Placeholder text to produce a skeleton effect from - actual text is not shown. */}
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                  Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                  Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                </Skeleton>
+              </Text>
+            )}
+
             <Flex direction="column" gap="3">
               {questions?.map((question) => (
                 <ChallengeQuestion
@@ -109,7 +111,7 @@ export default function ChallengeSidebar() {
                   question={question.body}
                   placeholder={question.placeholder}
                   points={question.points}
-                  attempts={question.max_attempts - 0}
+                  attemptsRemaining={question.max_attempts}
                   status="unanswered"
                 />
               ))}
