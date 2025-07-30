@@ -1,4 +1,5 @@
 import { useRoutes } from 'react-router';
+
 import NotFound from 'components/NotFound';
 
 import Dashboard from 'routes/dashboard';
@@ -11,23 +12,22 @@ import CreateTicket from 'routes/support/CreateTicket';
 import TicketDetail from 'routes/support/Detail';
 
 // events
+import AvailableEvents from 'routes/events/AvailableEvents';
+import Challenge from 'routes/events/challenge';
 import Overview from 'routes/events/Overview';
-import Challenge from 'routes/events/Challenge';
 
 // Admin Section
-import AdminDashboard from 'routes/admin/dashboard';
-import AdminNotifications from 'routes/admin/notifications';
-import AdminUsers from 'routes/admin/users';
-import AdminTickets from 'routes/admin/tickets';
-import AdminLayout from 'routes/admin/layout';
+import AdminApiTest from 'routes/admin/api-test';
 import AdminContainers from 'routes/admin/containers';
-import AdminTeams from 'routes/admin/teams';
+import AdminDashboard from 'routes/admin/dashboard';
 import AdminEvents from 'routes/admin/events';
+import AdminLayout from 'routes/admin/layout';
+import AdminNotifications from 'routes/admin/notifications';
 import AdminReports from 'routes/admin/reports';
 import AdminSettings from 'routes/admin/settings';
-import AdminApiTest from 'routes/admin/api-test';
-import AvailableEvents from 'routes/events/AvailableEvents';
-import ImportChallenge from 'routes/admin/import';
+import AdminTeams from 'routes/admin/teams';
+import AdminTickets from 'routes/admin/tickets';
+import AdminUsers from 'routes/admin/users';
 
 function Routes() {
   const routes = useRoutes([
@@ -69,7 +69,6 @@ function Routes() {
         { path : 'tickets', element : <AdminTickets /> },
         { path : 'settings', element : <AdminSettings /> },
         { path : 'api-test', element : <AdminApiTest /> },
-        { path : 'import', element : <ImportChallenge /> },
       ],
     },
   ]);
