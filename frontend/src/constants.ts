@@ -35,7 +35,7 @@ export const COLOR_INFO: AccentColor = 'teal';
 
 /**
  * Accent color used for question input fields. Should usually match the global accent,
- * but may need to change for disambiguation purposes if the global accent is green/red.
+ * but may need to change for disambiguation if the global accent is green/red.
  */
 export const COLOR_QUESTION: AccentColor = 'amber';
 
