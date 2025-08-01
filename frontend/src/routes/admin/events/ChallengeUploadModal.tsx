@@ -1,3 +1,4 @@
+import { COLOR_POSITIVE } from '@/constants';
 import { createChallenge } from '@/hooks/challenge';
 import {
   Button,
@@ -19,7 +20,7 @@ export default function ChallengeUploadModal({ eventId }: { eventId: number }) {
       title="Add Challenge"
       description="Upload a challenge YAML file to create a new challenge for this event."
       trigger={(
-        <Button variant="soft" color="lime">
+        <Button variant="soft" color={COLOR_POSITIVE}>
           <TbPlus />
           Add
         </Button>

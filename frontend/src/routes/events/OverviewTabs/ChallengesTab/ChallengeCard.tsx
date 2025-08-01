@@ -1,3 +1,4 @@
+import { COLOR_POSITIVE, COLOR_WARNING, type AccentColor } from '@/constants';
 import type { Challenge, MeChallenge } from '@/types';
 import {
   Box,
@@ -7,7 +8,6 @@ import {
   Skeleton,
   Text,
 } from '@radix-ui/themes';
-import type { accentColors } from '@radix-ui/themes/props';
 import ChallengeIcon from 'components/ChallengeIcon';
 import * as tb from 'react-icons/tb';
 import { Link } from 'react-router';
@@ -22,12 +22,12 @@ export default function ChallengeCard({
   const complete = progress && progress.num_questions_solved === progress.num_questions_available;
   const inProgress = progress && progress.num_attempts_made > 0 && !complete;
 
-  let color: typeof accentColors[number] | undefined;
+  let color: AccentColor | undefined;
 
   if (complete) {
-    color = 'lime';
+    color = COLOR_POSITIVE;
   } else if (inProgress) {
-    color = 'amber';
+    color = COLOR_WARNING;
   }
 
   return (

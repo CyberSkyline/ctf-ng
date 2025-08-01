@@ -1,5 +1,4 @@
-import { UserIcon } from '@/constants';
-import { useTeamMembers } from '@/hooks/team';
+import { COLOR_NEGATIVE, COLOR_WARNING, UserIcon } from '@/constants';
 import type { Team } from '@/types';
 import {
   Button,
@@ -23,7 +22,7 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
       <AdminSidebarHeader title="Team Details" />
       <AdminDataList data={{ ...entity }} />
 
-      <AdminSidebarHeader title="Team Details" />
+      <AdminSidebarHeader title="Members" />
 
       {membersError && <ErrorCallout>{membersError.message}</ErrorCallout> }
       {members && (
@@ -50,11 +49,11 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
                 <Table.Cell>{member.joined_at.toLocaleString()}</Table.Cell>
                 <Table.Cell>
                   <Flex direction="row" align="center" justify="end" className="h-full *:!m-0">
-                    <Button variant="ghost" color="red" disabled={member.role === 'captain'}>
+                    <Button variant="ghost" color={COLOR_NEGATIVE} disabled={member.role === 'captain'}>
                       <TbDoorExit />
                       Remove
                     </Button>
-                    <Button variant="ghost" color="amber" disabled={member.role === 'captain'}>
+                    <Button variant="ghost" color={COLOR_WARNING} disabled={member.role === 'captain'}>
                       <TbStar />
                       Assign Captain
                     </Button>

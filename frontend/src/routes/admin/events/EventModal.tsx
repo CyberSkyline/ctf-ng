@@ -1,3 +1,4 @@
+import { COLOR_POSITIVE, COLOR_WARNING } from '@/constants';
 import { createEvent, updateEvent } from '@/hooks/events';
 import type { Event } from '@/types';
 import { Button } from '@radix-ui/themes';
@@ -39,13 +40,13 @@ export default function EventModal({
       trigger={
         eventToUpdate
           ? (
-            <Button variant="soft" color="amber">
+            <Button variant="soft" color={COLOR_WARNING}>
               <TbPencil />
               Edit
             </Button>
           )
           : (
-            <Button variant="solid" color="lime">
+            <Button variant="solid" color={COLOR_POSITIVE}>
               <TbPlus />
               Create Event
             </Button>
@@ -53,6 +54,7 @@ export default function EventModal({
       }
       onSubmit={handleSubmit}
       submitVerb={eventToUpdate ? 'Update' : 'Create'}
+      submitColor={eventToUpdate ? COLOR_WARNING : COLOR_POSITIVE}
       requireTouchingForm={!!eventToUpdate}
     >
       <EventDataForm initial={eventToUpdate} />

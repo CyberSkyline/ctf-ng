@@ -1,3 +1,4 @@
+import { COLOR_WARNING } from '@/constants';
 import {
   Button,
   Select,
@@ -34,9 +35,10 @@ export default function TransferTeamModal({ transferCaptain, membersList }: Tran
       title="Are you sure you want to transfer teams?"
       description="You will no longer have access to participate with this team, and will be moved to a new team."
       submitVerb="Transfer"
+      submitColor={COLOR_WARNING}
       onSubmit={transferTeam}
       trigger={(
-        <Button variant="soft" color="lime">
+        <Button variant="soft" color={COLOR_WARNING}>
           <TbArrowRight />
           Transfer Team
         </Button>

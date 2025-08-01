@@ -14,7 +14,6 @@ export default function CreateTicket() {
       <Box maxWidth="200px">
         <Button
           variant="ghost"
-          color="lime"
           onClick={() => { navigate('/support'); }}
         >
           <TbArrowLeft />

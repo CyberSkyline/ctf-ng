@@ -1,3 +1,4 @@
+import { COLOR_HINT } from '@/constants';
 import { useChallenge } from '@/hooks/challenge';
 import { Button, Skeleton, Table } from '@radix-ui/themes';
 import { ErrorCallout, WarningCallout } from 'components/Callouts';
@@ -17,7 +18,7 @@ export default function HintsModal({
       title="Hints"
       description="Hints can be redeemed in exchange for a deduction from your score."
       trigger={(
-        <Button variant="ghost" color="purple" className="!m-0">
+        <Button variant="ghost" color={COLOR_HINT} className="!m-0">
           <TbBulb />
           Hints
         </Button>

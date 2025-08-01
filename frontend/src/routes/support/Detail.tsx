@@ -7,9 +7,9 @@ import {
   Separator,
   Text,
 } from '@radix-ui/themes';
+import { StatusBadge } from 'components/StatusBadge';
 import { TbArrowLeft } from 'react-icons/tb';
 import { useNavigate } from 'react-router';
-import { StatusBadge } from 'components/StatusBadge';
 // import Editor from 'components/Editor'; //milkdown
 import { map } from 'lodash';
 /* import ReactMarkdown from 'react-markdown';
@@ -43,7 +43,6 @@ export default function Detail() {
         <Box maxWidth="200px">
           <Button
             variant="ghost"
-            color="lime"
             onClick={() => { navigate('/support'); }}
           >
             <TbArrowLeft />

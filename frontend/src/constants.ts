@@ -1,3 +1,4 @@
+import type { accentColors } from '@radix-ui/themes/props';
 import type { IconType } from 'react-icons';
 import {
   TbCalendarEvent,
@@ -8,7 +9,8 @@ import {
   TbUser,
   TbUsersGroup,
 } from 'react-icons/tb';
-import type { accentColors } from '@radix-ui/themes/props';
+
+export type AccentColor = (typeof accentColors)[number];
 
 export const ROUTEPREFIX: string = '/hello';
 export const APIPREFIX: string = '/ng';
@@ -19,19 +21,40 @@ export const UserIcon = TbUser;
 export const TeamIcon = TbUsersGroup;
 export const ChallengeIcon = TbCube;
 
+// Semantic colors for UI.
+// Use instead of default accent for things that carry semantic meaning.
+
+/** Use for controls that confirm a positive action - creating/adding, registration, applying changes to settings, etc. */
+export const COLOR_POSITIVE: AccentColor = 'lime';
+/** Use for controls that signal warning/privilege or have notable (but not destructive) effects - changes in privilege, scores, availability, etc. */
+export const COLOR_WARNING: AccentColor = 'orange';
+/** Use for actions that have destructive effects - deletion, leaving teams, etc. */
+export const COLOR_NEGATIVE: AccentColor = 'red';
+/** Use for informational messages or controls that provide additional context without changing state. */
+export const COLOR_INFO: AccentColor = 'teal';
+
+/**
+ * Accent color used for question input fields. Should usually match the global accent,
+ * but may need to change for disambiguation purposes if the global accent is green/red.
+ */
+export const COLOR_QUESTION: AccentColor = 'amber';
+
+/** Use for controls related to hints, remote access, god mode, etc. */
+export const COLOR_HINT: AccentColor = 'violet';
+
 // Colors/icons used for displaying User and TeamMember roles.
 // Will fall back to generic gray badges if a role is not specified here.
-export const ROLES: Record<string, { color: (typeof accentColors)[number]; icon: IconType }> = {
+export const ROLES: Record<string, { color: AccentColor; icon: IconType }> = {
   admin : {
-    color : 'red',
+    color : COLOR_NEGATIVE,
     icon : TbTools,
   },
   support : {
-    color : 'jade',
+    color : COLOR_HINT,
     icon : TbLifebuoy,
   },
   captain : {
-    color : 'amber',
+    color : COLOR_WARNING,
     icon : TbStarFilled,
   },
   member : {

@@ -8,9 +8,9 @@ ModuleRegistry.registerModules([ AllCommunityModule ]);
 export const radixTheme = themeQuartz
   .withParams(
     {
-      backgroundColor : 'var(--gray-1)',
+      backgroundColor : 'var(--color-background)',
       chromeBackgroundColor : 'var(--gray-2)',
       foregroundColor : 'var(--gray-12)',
-      accentColor : 'var(--lime-9)',
+      accentColor : 'var(--accent-9)',
     },
   );

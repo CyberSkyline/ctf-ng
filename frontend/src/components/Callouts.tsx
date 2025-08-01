@@ -1,10 +1,11 @@
+import { COLOR_INFO, COLOR_NEGATIVE, COLOR_WARNING } from '@/constants';
 import { Callout } from '@radix-ui/themes';
 import type { ReactNode } from 'react';
 import { TbAlertTriangle, TbCancel, TbInfoCircle } from 'react-icons/tb';
 
 export function ErrorCallout({ children }: {children: ReactNode}) {
   return (
-    <Callout.Root variant="surface" color="red">
+    <Callout.Root variant="surface" color={COLOR_NEGATIVE}>
       <Callout.Icon>
         <TbCancel aria-label="Error" />
       </Callout.Icon>
@@ -17,7 +18,7 @@ export function ErrorCallout({ children }: {children: ReactNode}) {
 
 export function WarningCallout({ children }: {children: ReactNode}) {
   return (
-    <Callout.Root variant="surface" color="amber">
+    <Callout.Root variant="surface" color={COLOR_WARNING}>
       <Callout.Icon>
         <TbAlertTriangle aria-label="Warning" />
       </Callout.Icon>
@@ -29,7 +30,7 @@ export function WarningCallout({ children }: {children: ReactNode}) {
 }
 export function InfoCallout({ children }: {children: ReactNode}) {
   return (
-    <Callout.Root variant="surface" color="jade">
+    <Callout.Root variant="surface" color={COLOR_INFO}>
       <Callout.Icon>
         <TbInfoCircle aria-label="Info" />
       </Callout.Icon>

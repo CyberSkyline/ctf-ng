@@ -33,7 +33,7 @@ function NavItem({
           end
           className="
             flex items-center gap-2
-            [&[aria-current='page']]:bg-[var(--lime-9)]
+            [&[aria-current='page']]:bg-[var(--accent-9)]
             [&[aria-current='page']]:text-[var(--accent-contrast)]
             p-2 rounded overflow-hidden
           "

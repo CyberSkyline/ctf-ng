@@ -1,3 +1,4 @@
+import { COLOR_NEGATIVE } from '@/constants';
 import { Button } from '@radix-ui/themes';
 import Modal from 'components/Modal';
 import { TbDoorExit } from 'react-icons/tb';
@@ -17,14 +18,14 @@ export default function RemovePlayerModal({ id, name }:RemovePlayerModalProps) {
       title={`Are you sure you want to remove ${name}?`}
       description="They will no longer have access to participate with this team. The invite code for the team will change."
       trigger={(
-        <Button variant="soft" color="red">
+        <Button variant="soft" color={COLOR_NEGATIVE}>
           <TbDoorExit />
           Remove Player
         </Button>
       )}
       onSubmit={removePlayer}
       submitVerb="Remove"
-      submitColor="red"
+      submitColor={COLOR_NEGATIVE}
     />
   );
 }

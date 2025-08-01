@@ -1,3 +1,4 @@
+import { COLOR_NEGATIVE } from '@/constants';
 import { Button, Select, Text } from '@radix-ui/themes';
 import Modal from 'components/Modal';
 import { map } from 'lodash';
@@ -28,7 +29,7 @@ export default function LeaveTeamModal({ transferCaptain, membersList }: LeaveTe
       title="Are you sure you want to leave the team?"
       description="You will no longer have access to participate with this team."
       trigger={(
-        <Button variant="soft" color="red">
+        <Button variant="soft" color={COLOR_NEGATIVE}>
           <TbDoorExit />
           Leave Team
         </Button>
@@ -41,7 +42,7 @@ export default function LeaveTeamModal({ transferCaptain, membersList }: LeaveTe
         }
       }}
       submitVerb="Leave"
-      submitColor="red"
+      submitColor={COLOR_NEGATIVE}
       submitDisabled={transferCaptain && newCaptain === ''}
     >
       {transferCaptain && (

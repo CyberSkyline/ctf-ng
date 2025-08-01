@@ -1,4 +1,4 @@
-import { TeamIcon } from '@/constants';
+import { COLOR_INFO, TeamIcon } from '@/constants';
 import { useEventChallenges } from '@/hooks/challenge';
 import type { Event } from '@/types';
 import { Button } from '@radix-ui/themes';
@@ -16,7 +16,7 @@ export default function EventSidebar({ entity }: { entity: Event }) {
   return (
     <AdminSidebar>
       <AdminSidebarHeader title="Event Details">
-        <Button variant="soft" color="jade" asChild>
+        <Button variant="soft" color={COLOR_INFO} asChild>
           <Link to={`/admin/teams?event=${entity.id}`}>
             <TeamIcon />
             Teams
