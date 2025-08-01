@@ -1,4 +1,4 @@
-import { EventIcon, TeamIcon } from '@/constants';
+import { COLOR_POSITIVE, EventIcon, TeamIcon } from '@/constants';
 import { useUserEvents } from '@/hooks/events';
 import { useTeamMembers, useUserTeams } from '@/hooks/team';
 import type { Event, Team, User } from '@/types';
@@ -54,7 +54,7 @@ export default function UserSidebar({ entity }: { entity: User }) {
       <AdminDataList data={{ ...entity }} />
 
       <AdminSidebarHeader title="Registrations">
-        <Button variant="soft">
+        <Button variant="soft" color={COLOR_POSITIVE}>
           <TbPlus />
           Register
         </Button>

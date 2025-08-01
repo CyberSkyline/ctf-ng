@@ -1,28 +1,33 @@
+import {
+  COLOR_INFO,
+  COLOR_POSITIVE,
+  COLOR_WARNING,
+  type AccentColor,
+} from '@/constants';
 import { Badge } from '@radix-ui/themes';
-import { TbCheck, TbClock, TbPlayerPlayFilled } from 'react-icons/tb';
-import type { accentColors } from '@radix-ui/themes/props';
 import type { IconType } from 'react-icons';
+import { TbCheck, TbClock, TbPlayerPlayFilled } from 'react-icons/tb';
 
 /** Maps an event state onto label, color, and icon to display in the UI. */
 const EVENT_STATES: {
     [key: string]: {
-        color: typeof accentColors[number];
+        color: AccentColor;
         label: string;
         icon: IconType;
     };
 } = {
   upcoming : {
-    color : 'blue',
+    color : COLOR_INFO,
     label : 'Upcoming',
     icon : TbClock,
   },
   waiting : {
-    color : 'yellow',
+    color : COLOR_WARNING,
     label : 'Waiting for team',
     icon : TbClock,
   },
   live : {
-    color : 'lime',
+    color : COLOR_POSITIVE,
     label : 'Happening Now',
     icon : TbPlayerPlayFilled,
   },

@@ -1,11 +1,10 @@
 import {
   Box,
-  Callout,
   Container,
   Flex,
   Heading,
 } from '@radix-ui/themes';
-import { TbInfoCircle } from 'react-icons/tb';
+import { InfoCallout } from 'components/Callouts';
 
 /**
  * Global application configuration forms for admins.
@@ -16,45 +15,21 @@ export default function AdminSettings() {
       <Flex direction="column" gap="4">
         <Box>
           <Heading>Section</Heading>
-          <Callout.Root
-            color="jade"
-            variant="surface"
-          >
-            <Callout.Icon>
-              <TbInfoCircle />
-            </Callout.Icon>
-            <Callout.Text>
-              Config form.
-            </Callout.Text>
-          </Callout.Root>
+          <InfoCallout>
+            Config form.
+          </InfoCallout>
         </Box>
         <Box>
           <Heading>Section</Heading>
-          <Callout.Root
-            color="jade"
-            variant="surface"
-          >
-            <Callout.Icon>
-              <TbInfoCircle />
-            </Callout.Icon>
-            <Callout.Text>
-              Config form.
-            </Callout.Text>
-          </Callout.Root>
+          <InfoCallout>
+            Config form.
+          </InfoCallout>
         </Box>
         <Box>
           <Heading>Section</Heading>
-          <Callout.Root
-            color="jade"
-            variant="surface"
-          >
-            <Callout.Icon>
-              <TbInfoCircle />
-            </Callout.Icon>
-            <Callout.Text>
-              Config form.
-            </Callout.Text>
-          </Callout.Root>
+          <InfoCallout>
+            Config form.
+          </InfoCallout>
         </Box>
       </Flex>
     </Container>

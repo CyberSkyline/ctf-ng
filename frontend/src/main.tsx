@@ -1,16 +1,16 @@
+import { Theme } from '@radix-ui/themes';
+import FooterBar from 'components/Footer';
+import NavBar from 'components/NavBar';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
-import { Theme } from '@radix-ui/themes';
-import NavBar from 'components/NavBar';
-import FooterBar from 'components/Footer';
 import { SWRConfig } from 'swr';
 import Routes from './Routes';
 
-import './index.css';
-import './grid';
 import { ROUTEPREFIX } from './constants';
 import { apiFetcher } from './fetchers';
+import './grid';
+import './index.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -18,8 +18,8 @@ createRoot(document.getElementById('root')!).render(
       <Theme
         appearance="dark"
         panelBackground="solid" // disable blur effect on surfaces for performance
-        grayColor="olive"
-        accentColor="lime"
+        grayColor="sand"
+        accentColor="amber"
       >
         <SWRConfig
           value={{ fetcher : apiFetcher }}

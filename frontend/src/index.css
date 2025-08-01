@@ -1,7 +1,6 @@
 @import "@radix-ui/themes/styles.css";
 @import "tailwindcss";
 @import "assets/fonts/inter/inter.css";
-@import "./colors.css";
 
 :root {
   --NavBarHeight: 48px;

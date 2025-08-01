@@ -1,10 +1,10 @@
-import { useState } from 'react';
 import {
   Box,
   Button,
   Text,
   TextField,
 } from '@radix-ui/themes';
+import { useState } from 'react';
 import { TbPencil } from 'react-icons/tb';
 
 export default function EditTeamName() {
@@ -50,7 +50,6 @@ export default function EditTeamName() {
             </Text>
             <Button
               className="!mt-0"
-              color="lime"
               variant="ghost"
               onClick={() => setIsEditing(true)}
             >

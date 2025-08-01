@@ -1,3 +1,4 @@
+import { COLOR_NEGATIVE, COLOR_POSITIVE } from '@/constants';
 import {
   Badge,
   Box,
@@ -25,7 +26,7 @@ export default function Statistic({
     description?: string;
     delta?: string;
 }) {
-  const deltaColor = delta && delta.startsWith('-') ? 'red' : 'green';
+  const deltaColor = delta && delta.startsWith('-') ? COLOR_NEGATIVE : COLOR_POSITIVE;
 
   return (
     <Box>

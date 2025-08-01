@@ -1,10 +1,10 @@
+import { COLOR_POSITIVE, type AccentColor } from '@/constants';
 import {
   Box,
   Button,
   Dialog,
   Flex,
 } from '@radix-ui/themes';
-import type { accentColors } from '@radix-ui/themes/props';
 import { Form } from 'radix-ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import { TbX } from 'react-icons/tb';
@@ -18,7 +18,7 @@ interface ModalProps {
   onSubmit?: (formData: FormData) => Promise<unknown>,
   onOpenChange?: (open: boolean) => void,
   submitVerb?: string,
-  submitColor?: typeof accentColors[number],
+  submitColor?: AccentColor,
   submitDisabled?: boolean,
   requireTouchingForm?: boolean,
 }
@@ -31,7 +31,7 @@ export default function Modal({
   onSubmit,
   onOpenChange,
   submitVerb = 'Submit',
-  submitColor = 'lime',
+  submitColor = COLOR_POSITIVE,
   submitDisabled = false,
   requireTouchingForm = false,
 } : ModalProps) {
