@@ -190,7 +190,7 @@ class User(db.Model):
         except Exception:
             db.session.rollback()
             raise
-    
+
     def delete(self) -> None:
         """Delete the user extension from the database."""
         """Delete the user extension from the database."""

@@ -1,4 +1,3 @@
-from ...team.models.Team import Team
 from ...team.models.TeamMember import TeamMember
 from ...team.models.enums import TeamRole
 from ..models.Permission import Permission

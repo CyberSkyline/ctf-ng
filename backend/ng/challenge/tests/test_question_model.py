@@ -324,7 +324,7 @@ class Test_Create_Question:
 
 class Test_Check_Answer:
     def test_check_answer_with_correct_answer(self, db_session, admin_client, event, team_factory,user):
-        team = team_factory(event=event, members=[user])
+        team = team_factory(event=event, members=[user]) # noqa F841
 
         with open(os.path.join(os.path.dirname(__file__), "./yamls/default.yaml"), "rb") as f:
             yaml = base64.urlsafe_b64encode(f.read())

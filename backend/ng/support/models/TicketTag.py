@@ -3,37 +3,42 @@ Defines the TicketTag model for categorizing support tickets.
 """
 
 from __future__ import annotations
-from typing import Any
+from typing import Any, TypedDict
 
 from CTFd.models import db
+from sqlalchemy.exc import IntegrityError
 
 from ... import config
 from ...core.utils.validator import BaseValidator
+from ...core.exceptions import ConflictError
+
+
+class SerializedTicketTag(TypedDict):
+    id: int
+    name: str
+    color: str | None
+    description: str | None
+    ticket_count: int
 
 
 class TicketTag(db.Model):
     __tablename__ = "ng_ticket_tags"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(
-        db.String(config.TICKET_TAG_NAME_MAX_LENGTH), nullable=False, unique=True
-    )
-    color = db.Column(db.String(7), nullable=True)
-    description = db.Column(
-        db.String(config.TICKET_TAG_DESCRIPTION_MAX_LENGTH), nullable=True
-    )
+    name = db.Column(db.String(config.TICKET_TAG_NAME_MAX_LENGTH), nullable=False, unique=True)
+    color = db.Column(db.String(config.TICKET_TAG_COLOR_MAX_LENGTH), nullable=True)
+    description = db.Column(db.String(config.TICKET_TAG_DESCRIPTION_MAX_LENGTH), nullable=True)
 
-    tickets = db.relationship(
-        "Ticket", secondary="ng_ticket_tags_junction", back_populates="tags"
-    )
+    tickets = db.relationship("Ticket", secondary="ng_ticket_tags_junction", back_populates="tags")
 
     def __repr__(self) -> str:
         return f"<TicketTag {self.name}>"
 
     @classmethod
-    def validate(
-        cls, data: dict[str, Any], current_instance: TicketTag | None = None
-    ) -> dict[str, Any]:
+    def validate(cls, data: dict[str, Any], current_instance: TicketTag | None = None) -> dict[str, Any]:
+        """
+        Validate Ticket Tag data. Raises ValidationError on failure
+        """
         validator = BaseValidator()
 
         validator.validate_string(
@@ -44,17 +49,13 @@ class TicketTag(db.Model):
             friendly_name="Tag name",
         )
 
-        # Optional field
-        if "color" in data and data["color"] is not None:
-            color = data["color"]
-            if not isinstance(color, str):
-                validator.errors["color"] = "Color must be a string"
-            elif not (len(color) == 7 and color.startswith("#")):
-                validator.errors["color"] = (
-                    "Color must be a valid hex code (e.g., #FF0000)"
-                )
-            else:
-                validator._add_parsed_data("color", color)
+        validator.validate_string(
+            data,
+            "color",
+            config.TICKET_TAG_COLOR_MAX_LENGTH,
+            required=False,
+            friendly_name="Tag color",
+        )
 
         validator.validate_string(
             data,
@@ -64,22 +65,14 @@ class TicketTag(db.Model):
             friendly_name="Tag description",
         )
 
-        if "name" in data and "name" not in validator.errors:
-            existing = cls.query.filter_by(name=data["name"]).first()
-            if existing:
-                if not current_instance or existing.id != current_instance.id:
-                    validator.errors["name"] = (
-                        f"Tag name '{data['name']}' already exists"
-                    )
-
         return validator.validate()
 
-    def serialize(self) -> dict[str, Any]:
+    def serialize(self, include_admin_fields: bool = False) -> SerializedTicketTag:
         """
         Serialize tag for API response.
 
-        Returns:
-            dict: Serialized tag data
+        Args:
+            include_admin_fields: Not used for tags, but kept for API consistency
         """
         data = {
             "id": self.id,
@@ -89,7 +82,7 @@ class TicketTag(db.Model):
             "ticket_count": len(self.tickets),
         }
 
-        return data
+        return SerializedTicketTag(**data)  # type: ignore[typeddict-item]
 
     @classmethod
     def create_tag(
@@ -112,11 +105,13 @@ class TicketTag(db.Model):
             TicketTag: The created tag instance
         """
 
-        validated_data = cls.validate({
-            "name": name,
-            "color": color,
-            "description": description,
-        })
+        validated_data = cls.validate(
+            {
+                "name": name,
+                "color": color,
+                "description": description,
+            }
+        )
 
         tag = cls(
             name=validated_data["name"],
@@ -128,9 +123,11 @@ class TicketTag(db.Model):
         if commit:
             try:
                 db.session.commit()
-            except Exception as e:
+            except IntegrityError as e:
                 db.session.rollback()
-                raise e
+                if "UNIQUE constraint failed" in str(e) or "unique" in str(e).lower():
+                    raise ConflictError(f"Tag name '{name}' already exists") from e
+                raise
         return tag
 
     def update_tag(self, commit: bool = True, **kwargs) -> None:
@@ -162,9 +159,6 @@ class TicketTag(db.Model):
     def delete_tag(self, commit: bool = True) -> None:
         """
         Delete this tag from the database.
-
-        Args:
-            commit: Whether to commit immediately
         """
         db.session.delete(self)
         if commit:
@@ -174,12 +168,6 @@ class TicketTag(db.Model):
     def find_by_id(cls, tag_id: int) -> TicketTag | None:
         """
         Find a tag by ID.
-
-        Args:
-            tag_id: The tag ID to find
-
-        Returns:
-            TicketTag or None: The tag instance if found
         """
         return cls.query.get(tag_id)
 
@@ -187,63 +175,12 @@ class TicketTag(db.Model):
     def find_by_name(cls, name: str) -> TicketTag | None:
         """
         Find a tag by name.
-
-        Args:
-            name: The tag name to find
-
-        Returns:
-            TicketTag or None: The tag instance if found
         """
         return cls.query.filter_by(name=name).first()
 
     @classmethod
     def get_all_tags(cls) -> list[TicketTag]:
-        """Get all tags ordered by name.
-
-        Returns:
-            list[TicketTag]: List of all tags
+        """
+        Get all tags ordered by name.
         """
         return cls.query.order_by(cls.name.asc()).all()
-
-    @classmethod
-    def get_popular_tags(cls, limit: int = 10) -> list[tuple[TicketTag, int]]:
-        """Get most used tags.
-
-        Args:
-            limit: Maximum number of tags to return
-
-        Returns:
-            list[tuple[TicketTag, int]]: List of (tag, usage_count) tuples
-        """
-        # LAZY-IMPORT: Tagging all necessary lazy imports for easy searchability & visibility.
-        from .Ticket import ticket_tags_junction
-
-        popular = (
-            db.session.query(
-                cls,
-                db.func.count(ticket_tags_junction.c.ticket_id).label("usage_count"),
-            )
-            .join(ticket_tags_junction, cls.id == ticket_tags_junction.c.tag_id)
-            .group_by(cls.id)
-            .order_by(db.func.count(ticket_tags_junction.c.ticket_id).desc())
-            .limit(limit)
-            .all()
-        )
-
-        return popular
-
-    @classmethod
-    def search_tags(cls, query: str) -> list[TicketTag]:
-        """Search tags by name.
-
-        Args:
-            query: Search string
-
-        Returns:
-            list[TicketTag]: Matching tags
-        """
-        return (
-            cls.query.filter(cls.name.ilike(f"%{query}%"))
-            .order_by(cls.name.asc())
-            .all()
-        )

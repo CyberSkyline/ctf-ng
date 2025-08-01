@@ -6,7 +6,7 @@ from CTFd.models import db
 from cyber_skyline.chall_parser.compose.challenge_info import Question as QuestionAttr
 from faker import Faker
 
-from ...core.validation import BaseValidator
+from ...core.utils.validator import BaseValidator
 
 if TYPE_CHECKING:
     from ...team.models.Team import Team

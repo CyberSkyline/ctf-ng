@@ -17,7 +17,6 @@ from ... import config
 from ...core.exceptions import ConflictError, ValidationError, BusinessLogicError
 from ...core.utils.validator import BaseValidator
 
-from ...user.models.User import User
 from .enums import TeamRole
 from .TeamMember import TeamMember
 
@@ -211,7 +210,7 @@ class Team(db.Model):
         # LAZY-IMPORT
         from ...scoring.models.Score import Score
 
-        score = Score.create_score(
+        Score.create_score(
             team_id=team.id,
             commit=False,
             team=team
@@ -457,8 +456,6 @@ class Team(db.Model):
         """
         # LAZY-IMPORT
         from .enums import TeamRole
-        captain = User.find_by_id(captain_id)
-
         try:
             team = cls.create_team(
                 name=name,
@@ -589,4 +586,4 @@ class Team(db.Model):
         except Exception:
             db.session.rollback()
             raise
-            
+

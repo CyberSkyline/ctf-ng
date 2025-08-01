@@ -1,4 +1,4 @@
-from flask_restx import Namespace, Resource, fields
+from flask_restx import Namespace, Resource
 
 from ...core.utils import success_response
 from ...core.middleware import (

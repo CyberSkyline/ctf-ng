@@ -3,7 +3,7 @@ Defines the TicketMessage model for support ticket thread messages.
 """
 
 from __future__ import annotations
-from typing import Any
+from typing import Any, TypedDict
 
 from CTFd.models import db, Users
 
@@ -11,17 +11,24 @@ from ... import config
 from ...core.utils import utc_now
 from ...core.utils.validator import BaseValidator
 
+
+class SerializedTicketMessage(TypedDict):
+    id: int
+    text: str
+    author_id: int
+    author_name: str
+    author_type: str
+    created_at: str | None
+    ticket_id: int
+
+
 class TicketMessage(db.Model):
     __tablename__ = "ng_ticket_messages"
 
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(config.TICKET_MESSAGE_MAX_LENGTH), nullable=False)
-    ticket_id = db.Column(
-        db.Integer, db.ForeignKey("ng_tickets.id"), nullable=False, index=True
-    )
-    author_id = db.Column(
-        db.Integer, db.ForeignKey("users.id"), nullable=False, index=True
-    )
+    ticket_id = db.Column(db.Integer, db.ForeignKey("ng_tickets.id"), nullable=False, index=True)
+    author_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
     created_at = db.Column(db.DateTime, nullable=False, default=utc_now)
 
     ticket = db.relationship("Ticket", back_populates="messages")
@@ -32,6 +39,9 @@ class TicketMessage(db.Model):
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
+        """
+        Validate Ticket Message data. Raises ValidationError on failure
+        """
         validator = BaseValidator()
 
         validator.validate_string(
@@ -50,8 +60,9 @@ class TicketMessage(db.Model):
         self,
         include_admin_fields: bool = False,
         author_cache: dict[int, Any] | None = None,
-    ) -> dict[str, Any]:
-        """Serialize message for API response.
+    ) -> SerializedTicketMessage:
+        """
+        Serialize message for API response.
 
         Args:
             include_admin_fields: Whether to include admin only fields
@@ -81,13 +92,12 @@ class TicketMessage(db.Model):
             "ticket_id": self.ticket_id,
         }
 
-        return data
+        return SerializedTicketMessage(**data)  # type: ignore[typeddict-item]
 
     @classmethod
-    def create_message(
-        cls, text: str, ticket_id: int, author_id: int, commit: bool = True
-    ) -> TicketMessage:
-        """Create and persist a new ticket message with validation.
+    def create_message(cls, text: str, ticket_id: int, author_id: int, commit: bool = True) -> TicketMessage:
+        """
+        Create and persist a new ticket message with validation.
 
         Args:
             text: Message content (markdown supported)
@@ -120,26 +130,15 @@ class TicketMessage(db.Model):
 
     @classmethod
     def find_by_id(cls, message_id: int) -> TicketMessage | None:
-        """Find a message by ID.
-
-        Args:
-            message_id: The message ID to find
-
-        Returns:
-            TicketMessage or None: The message instance if found
+        """
+        Find a message by ID.
         """
         return cls.query.get(message_id)
 
     @classmethod
     def delete_by_ticket(cls, ticket_id: int, commit: bool = True) -> int:
-        """Delete all messages for a ticket.
-
-        Args:
-            ticket_id: The ticket ID to delete messages for
-            commit: Whether to commit immediately
-
-        Returns:
-            int: Number of messages deleted
+        """
+        Delete all messages for a ticket.
         """
         count = cls.query.filter_by(ticket_id=ticket_id).delete()
         if commit:

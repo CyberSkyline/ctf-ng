@@ -1,10 +1,7 @@
-import inspect
 from functools import wraps
 from collections.abc import Callable
 from ._util import check_output_exists, get_model_class
 from ...exceptions import NotFoundError
-from ....user.models.User import User
-from ....event.models.Event import Event
 
 def load_team_by_user_and_event(output_key="team") -> Callable:
     def decorator(f):

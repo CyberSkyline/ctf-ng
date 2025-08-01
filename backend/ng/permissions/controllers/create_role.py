@@ -10,7 +10,6 @@ def create_role(name: str, permissions: list[PermissionEnum] = None):
 
     Returns:
         Role: The created role instance
-        
     """
 
     if Role.get_role_by_name(name):

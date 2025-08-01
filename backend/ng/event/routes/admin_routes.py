@@ -16,12 +16,6 @@ from ...core.middleware import (
 )
 from ..controllers.user import join_event_controller
 
-from ...core.middleware import (
-    admin_endpoint,
-)
-from ...core.middleware.loaders import LoaderType, load_event
-from ...core.utils import success_response
-from ...event.models.Event import Event
 from ..controllers.admin.import_challenge_from_yaml import import_challenge_from_yaml
 
 events_admin_namespace = Namespace("/admin/events", description="event endpoints for admins")

@@ -2,7 +2,7 @@ from typing import Any
 
 from CTFd.models import db
 
-from ...core.validation import BaseValidator
+from ...core.utils.validator import BaseValidator
 
 MAX_CHALLENGE_TAG_NAME_LENGTH = 256
 

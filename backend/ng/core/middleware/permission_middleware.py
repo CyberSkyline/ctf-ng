@@ -21,7 +21,7 @@ def get_permissions(f):
         team = kwargs.get('team')
         if team:
             permissions.extend(get_team_management_permissions(team, user))
-        permissions = list(set([permission.name for permission in permissions]))
+        permissions = list({permission.name for permission in permissions})
         if kwargs.get('permissions') is None:
             kwargs['permissions'] = permissions
         else:

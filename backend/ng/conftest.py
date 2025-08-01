@@ -358,7 +358,7 @@ def team_member_client(app, db_session, team_with_members, role_with_permissions
     # Clear any cached user data to prevent cross-test contamination
     from CTFd.cache import cache
     cache.clear()
-    
+
     client = app.test_client()
     with client.session_transaction() as sess:
         # Completely clear the session and set only what we need
@@ -397,7 +397,7 @@ def closed_event_client(app, db_session, event_factory, team_factory, user_facto
 def event(db_session):
     """Simple fixture to get a single event."""
     from .event.models.Event import Event
-    
+
     event = Event(
         name="Test Event 1",
         description="A test event.",
@@ -640,7 +640,7 @@ def ticket_with_tags(db_session, ticket, ticket_tag_factory):
     tag1 = ticket_tag_factory(name="urgent")
     tag2 = ticket_tag_factory(name="technical")
 
-    ticket.add_tags([tag1, tag2], commit=False)
+    ticket.set_tags([tag1.id, tag2.id], commit=False)
     db_session.commit()
     return ticket
 
@@ -725,7 +725,7 @@ def challenge_factory(db_session, event_factory):
 def multiple_tickets(db_session, user, admin, event, team_factory, ticket_factory):
     """Creates multiple tickets with various states for testing filters."""
 
-    team = team_factory(event=event)
+    team = team_factory(event=event, members=[user])
 
     tickets = {
         "open_unassigned": ticket_factory(
@@ -809,7 +809,7 @@ def score(db_session, team_with_member, event):
 
     if not score:
         raise RuntimeError("Score should have been created automatically with team")
-    
+
     return score
 
 
@@ -995,7 +995,7 @@ def multiple_teams_with_scores(db_session, event, team_factory, score_factory):
         })
 
     return teams_data
-  
+
 def question_factory(db_session, challenge_factory):
     """A factory function to create Question objects for tests."""
 

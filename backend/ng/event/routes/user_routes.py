@@ -29,9 +29,6 @@ from ...core.middleware.permission_middleware import get_permissions, event_only
 from ...permissions.models.enums import PermissionEnum
 from ...team.models.enums import TeamRole
 from ...event.models.Demographic import Demographic
-from ...core.utils import success_response
-from ...core.utils.validator import BaseValidator
-from ...event.models.Event import Event
 from ...team.models.Team import Team
 from ...user.models.User import User
 from datetime import datetime
@@ -97,8 +94,8 @@ class EventEligibility(Resource):
 
 
         event.check_eligibility(current_user)
-       
-        
+
+
         return success_response(True)
 
 
@@ -435,7 +432,7 @@ class EventChallengeStartContainers(Resource):
             400: "Bad request",
         },
     )
- 
+
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
     @load_team_by_user_and_event()

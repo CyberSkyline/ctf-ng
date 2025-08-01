@@ -2,7 +2,7 @@ from typing import Any
 
 from CTFd.models import db
 
-from ...core.validation import BaseValidator
+from ...core.utils.validator import BaseValidator
 from .Question import MAX_QUESTION_ANSWER_LENGTH
 
 

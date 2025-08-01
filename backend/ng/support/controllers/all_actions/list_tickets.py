@@ -1,8 +1,9 @@
 """
-Lists support tickets with optional filtering based on user permissions.
+Lists tickets with optional filters.
 """
 
 from ...models.Ticket import Ticket
+
 
 def list_tickets(
     user_id: int | None = None,
@@ -12,8 +13,10 @@ def list_tickets(
     team_id: int | None = None,
     is_admin: bool = False,
 ) -> list[Ticket]:
-    """Lists support tickets based on filters and user permissions."""
-    tickets = Ticket.find_filtered_tickets(
+    """
+    List tickets with optional filters
+    """
+    return Ticket.find_filtered_tickets(
         user_id=user_id,
         status=status,
         assigned_to=assigned_to,
@@ -21,5 +24,3 @@ def list_tickets(
         team_id=team_id,
         is_admin=is_admin,
     )
-
-    return tickets

@@ -72,7 +72,7 @@ class TeamDetail(Resource):
     )
     def put(self, team_id, team, validated_data, **kwargs):
         """Update a team"""
-        
+
         new_name = validated_data.get("name", team.name)
         if Team.team_name_contains_member_name(name=new_name, member_names=[m.user.ctfd_user.name for m in team.members]):
             return error_response(
