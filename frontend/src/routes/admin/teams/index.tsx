@@ -1,12 +1,11 @@
+import { EventIcon } from '@/constants';
+import { useEvent } from '@/hooks/events';
+import { useAllTeams } from '@/hooks/team';
+import type { Team } from '@/types';
 import type { ColDef } from 'ag-grid-community';
 import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
-import type { Team } from '@/types';
-import { useEvent } from '@/hooks/events';
 import Entity from 'components/Entity';
-import { useAllTeams } from '@/hooks/team';
-import { useSearchParams } from 'react-router';
-import { EventIcon } from '@/constants';
 import MemberCountBadge from 'components/MemberCountBadge';
 import TeamSidebar from './TeamSidebar';
 
@@ -35,9 +34,6 @@ function EventCellRenderer({ value }: { value: number }) {
  * Team management page for admins.
  */
 export default function AdminTeams() {
-  const [ searchParams ] = useSearchParams();
-  const eventId = searchParams.get('event');
-
   const { data, error, isLoading } = useAllTeams();
 
   if (error) {
@@ -58,6 +54,10 @@ export default function AdminTeams() {
       headerName : 'Event',
       width : 200,
       filter : 'agNumberColumnFilter',
+      filterParams : {
+        filterOptions : [ 'equals' ],
+        maxNumConditions : 1,
+      },
       floatingFilter : true,
       cellRenderer : EventCellRenderer,
     },
@@ -90,16 +90,6 @@ export default function AdminTeams() {
       columnDefs={colDefs}
       loading={isLoading}
       getRowId={(params) => params.data.id.toString()}
-      initialState={{
-        filter : {
-          filterModel : {
-            event_id : {
-              type : 'equals',
-              filter : eventId ?? '',
-            },
-          },
-        },
-      }}
       sidebarComponent={TeamSidebar}
     />
   );
