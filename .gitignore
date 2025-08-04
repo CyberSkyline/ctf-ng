@@ -39,3 +39,6 @@ node_modules/
 !.yarn/plugins/
 !.yarn/plugins/**
 
+# SSL certs
+privatesslkey.pem
+sslpublickey.pem

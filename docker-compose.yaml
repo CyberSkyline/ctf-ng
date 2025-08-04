@@ -15,7 +15,6 @@ services:
       - .data/CTFd/logs:/var/log/CTFd
       - .data/CTFd/uploads:/var/uploads
       - ./backend/ng:/opt/CTFd/CTFd/plugins/ng/:ro
-      - /var/lib/certs/ssl/:/var/lib/certs/ssl/
     depends_on:
       - db
       - cache
@@ -35,9 +34,12 @@ services:
     restart: always
     volumes:
       - ./conf/nginx/http.conf:/etc/nginx/nginx.conf:ro
+      - ./conf/ctfd/sslpublickey.pem:/certificates/sslpublickey.pem:ro
+      - ./conf/ctfd/privatesslkey.pem:/certificates/privatesslkey.pem:ro
       - ./frontend/dist:/var/www/vite-build:ro
     ports:
       - 80:80
+      - 443:443
       - 5173:5173
 
   db:
