@@ -76,3 +76,19 @@ export function connectWorkspace(eventId: number, challengeId: number) {
     method : 'GET',
   });
 }
+
+export function submitFlag(
+  eventId: number,
+  challengeId: number,
+  questionId: number,
+  flag: string,
+) {
+  return apiMutation(`/events/${eventId}/challenges/${challengeId}/questions/${questionId}/submit`, {
+    submission : flag,
+  }, {
+    method : 'POST',
+  }).then(() => {
+    // refresh the challenge data after submitting a flag
+    mutate(`/events/${eventId}/challenges/${challengeId}`);
+  });
+}

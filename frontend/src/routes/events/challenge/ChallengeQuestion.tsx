@@ -1,5 +1,4 @@
 import {
-  Box,
   Button,
   Flex,
   Heading,
@@ -11,81 +10,79 @@ import { Form } from 'radix-ui';
 import { TbFlag2 } from 'react-icons/tb';
 import { twMerge } from 'tailwind-merge';
 
-import { useCallback, useMemo } from 'react';
+import {
+  COLOR_NEGATIVE,
+  COLOR_POSITIVE,
+  COLOR_QUESTION,
+  type AccentColor,
+} from '@/constants';
+import { submitFlag } from '@/hooks/challenge';
+import type { Attempt, Question } from '@/types';
+import { startCase } from 'lodash';
+import { useCallback } from 'react';
 
 export default function ChallengeQuestion({
-  name,
+  eventId,
   question,
-  placeholder,
-  points,
-  attemptsRemaining,
-  status,
-  valueOverride,
+  attempts,
 }: {
-  name: string;
-  question: string;
-  placeholder: string;
-  points: number;
-  attemptsRemaining: number;
-  status: 'unanswered' | 'incorrect' | 'correct';
-  valueOverride?: string;
+  eventId: number;
+  question: Question;
+  attempts: Attempt[];
 }) {
+  const {
+    id, name, points, body, max_attempts : maxAttempts, placeholder, challenge_id : challengeId,
+  } = question;
+
   const handleSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const target = event.currentTarget;
     const { flag } = Object.fromEntries(new FormData(event.currentTarget));
 
-    alert(flag);
-  }, []);
+    return submitFlag(eventId, challengeId, id, flag as string)
+      .finally(() => {
+        // clear the form after submission
+        target.reset();
+      });
+  }, [ eventId, challengeId, id ]);
 
-  const color = useMemo(() => {
-    switch (status) {
-      case 'incorrect':
-        return 'red';
-      case 'correct':
-        return 'lime';
-      default:
-        return 'amber';
-    }
-  }, [ status ]);
+  const attemptsRemaining = maxAttempts - attempts.length;
+
+  let status: 'unanswered' | 'correct' | 'incorrect' = 'unanswered';
+  let color: AccentColor | undefined;
+
+  if (attempts.find((attempt) => attempt.is_correct)) {
+    status = 'correct';
+    color = COLOR_POSITIVE;
+  } else if (attempts.length > 0) {
+    status = 'incorrect';
+    color = COLOR_NEGATIVE;
+  }
 
   return (
     <Flex direction="column">
       <Flex direction="row" gap="2" align="center" justify="start">
-        <Heading size="5" color={status === 'correct' ? 'lime' : undefined}>
+        <Heading size="5" color={color}>
           {name}
         </Heading>
-        <Text size="2" color={status === 'correct' ? 'lime' : 'gray'}>
-          {points}
-          {' '}
-          points
+        <Text size="2" color={color || 'gray'}>
+          {`${points} point${points !== 1 ? 's' : ''}`}
         </Text>
       </Flex>
 
       <RadixMarkdown>
-        {question}
+        {body}
       </RadixMarkdown>
 
       <Flex direction="row" gap="2" align="center" justify="between">
-        <Box>
-          {status === 'correct' && (
-            <Text size="2" color="lime">
-              Correct
-            </Text>
-          )}
-          {status === 'incorrect' && (
-            <Text size="2" color="red">
-              Incorrect
-            </Text>
-          )}
-          {status === 'unanswered' && (
-            <Text size="2" color="gray">
-              Unanswered
-            </Text>
-          )}
-        </Box>
-        <Text size="2" color="gray">
-          {`${attemptsRemaining} attempt${attemptsRemaining !== 1 ? 's' : ''} left`}
+        <Text size="2" color={color || 'gray'}>
+          {startCase(status)}
         </Text>
+        {status !== 'correct' && (
+          <Text size="2" color={color || 'gray'}>
+            {`${attemptsRemaining} attempt${attemptsRemaining !== 1 ? 's' : ''} left`}
+          </Text>
+        )}
       </Flex>
 
       <Form.Root onSubmitCapture={handleSubmit}>
@@ -97,10 +94,9 @@ export default function ChallengeQuestion({
                   'ss02',
                   status !== 'unanswered' && '!ring ring-(--accent-a7)',
                 )}
-                color={color}
+                color={color || COLOR_QUESTION}
                 placeholder={placeholder}
                 required
-                defaultValue={valueOverride}
                 disabled={status === 'correct' || attemptsRemaining <= 0}
               >
                 <TextField.Slot>
@@ -112,7 +108,7 @@ export default function ChallengeQuestion({
           </Form.Field>
 
           {status !== 'correct' && attemptsRemaining > 0 && (
-            <Button variant="soft" size="2" type="submit" color="amber">
+            <Button variant="soft" size="2" type="submit" color={color || COLOR_QUESTION}>
               Submit
             </Button>
           )}

@@ -42,6 +42,7 @@ export interface TeamMember {
 
 export interface Challenge {
   id: number;
+  event_id: number;
   name: string;
   description: string;
   icon: string;
@@ -79,11 +80,31 @@ export interface Hint {
 
 export interface Attempt {
   id: number;
-  question_id: number;
-  event_id: number;
-  submission: string;
-  correct: boolean;
-  created_at: Date;
-  team_id: number;
   user_id: number;
+  team_id: number;
+  event_id: number;
+  challenge_id: number;
+  question_id: number;
+  score_event_id?: number;
+  timestamp: Date;
+  points: number;
+  submission: string;
+  is_correct: boolean;
+}
+
+export interface Score {
+   id: number;
+   team_id: number;
+   event_id: number;
+   points: number;
+   last_update: Date;
+   team_name: string | null;
+}
+
+export interface ScoreEvent {
+  id: number;
+  score_id: number;
+  team_id: number;
+  points: number;
+  timestamp: Date;
 }
