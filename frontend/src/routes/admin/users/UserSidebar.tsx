@@ -29,7 +29,11 @@ function RegistrationRow({ userId, team, event }: { userId: number, team: Team, 
         <Entity label={event.name} icon={EventIcon} to={`/admin/events?id=${event.id}`} />
       </Table.Cell>
       <Table.Cell>
-        <Entity label={team.name} icon={TeamIcon} to={`/admin/teams?event=${team.event_id}&id=${team.id}`} />
+        <Entity
+          label={team.name}
+          icon={TeamIcon}
+          to={`/admin/teams?id=${team.id}&filter=${btoa(JSON.stringify({ event_id : { filterType : 'number', type : 'equals', filter : event.id } }))}`}
+        />
       </Table.Cell>
       <Table.Cell>
         <RoleBadge value={membership.role} />

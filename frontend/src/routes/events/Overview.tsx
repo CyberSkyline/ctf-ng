@@ -31,6 +31,9 @@ export default function Overview() {
       <Tabs.Root
         value={currentTab}
         onValueChange={(tab) => {
+          if (tab === searchParams.get('tab')) {
+            return;
+          }
           setSearchParams((prev) => {
             prev.set('tab', tab);
             return prev;

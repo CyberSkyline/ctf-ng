@@ -17,7 +17,7 @@ export default function EventSidebar({ entity }: { entity: Event }) {
     <AdminSidebar>
       <AdminSidebarHeader title="Event Details">
         <Button variant="soft" color={COLOR_INFO} asChild>
-          <Link to={`/admin/teams?event=${entity.id}`}>
+          <Link to={`/admin/teams?filter=${btoa(JSON.stringify({ event_id : { filterType : 'number', type : 'equals', filter : entity.id } }))}`}>
             <TeamIcon />
             Teams
           </Link>
