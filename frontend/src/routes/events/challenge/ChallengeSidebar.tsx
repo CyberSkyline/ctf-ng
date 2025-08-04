@@ -13,6 +13,7 @@ import {
 import { ErrorCallout } from 'components/Callouts';
 import ChallengeIcon from 'components/ChallengeIcon';
 import RadixMarkdown from 'components/RadixMarkdown';
+import { groupBy } from 'lodash';
 import { TbArrowLeft } from 'react-icons/tb';
 import { Link, useParams } from 'react-router';
 import ChallengeHeader from './ChallengeHeader';
@@ -30,7 +31,11 @@ export default function ChallengeSidebar() {
     Number(idChallenge),
   );
 
-  const { challenge, questions } = data || {};
+  const {
+    challenge, questions, hints, attempts,
+  } = data || {};
+
+  const groupedAttempts = groupBy(attempts || [], 'question_id');
 
   return (
     <Flex direction="column" gap="3" className="shrink-0 grow-0 lg:basis-128">
@@ -51,7 +56,7 @@ export default function ChallengeSidebar() {
               </Button>
 
               <Box flexShrink="0">
-                <HintsModal eventId={Number(idEvent)} challengeId={Number(idChallenge)} />
+                {hints && hints.length > 0 && <HintsModal eventId={Number(idEvent)} challengeId={Number(idChallenge)} />}
                 <FeedbackModal />
               </Box>
             </Flex>
@@ -104,15 +109,12 @@ export default function ChallengeSidebar() {
             )}
 
             <Flex direction="column" gap="3">
-              {questions?.map((question) => (
+              {challenge && questions?.map((question) => (
                 <ChallengeQuestion
                   key={question.id}
-                  name={question.name}
-                  question={question.body}
-                  placeholder={question.placeholder}
-                  points={question.points}
-                  attemptsRemaining={question.max_attempts}
-                  status="unanswered"
+                  eventId={challenge.event_id}
+                  question={question}
+                  attempts={groupedAttempts[question.id] || []}
                 />
               ))}
             </Flex>
