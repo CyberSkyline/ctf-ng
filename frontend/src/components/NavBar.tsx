@@ -30,30 +30,34 @@ export default function NavBar() {
     underline-offset-8
     decoration-2`;
 
+  const dropdownClass = 'flex items-center gap-2 px-2 py-1.5 rounded';
+
   return (
     <NavigationMenu.Root className="h-[var(--NavBarHeight)]">
       <NavigationMenu.List className="flex p-1 pr-4 dark:border-b-(--gray-a6) dark:border-b-1">
         <div className="flex">
-          <NavigationMenu.Item className={location.pathname === '/' ? activeLinkClass : defaultLinkClass}>
-            <NavLink to="/">
+          <NavLink to="/" className={location.pathname === '/' ? activeLinkClass : defaultLinkClass}>
+            <NavigationMenu.Item>
               Dashboard
-            </NavLink>
-          </NavigationMenu.Item>
-          <NavigationMenu.Item className={location.pathname === '/events' ? activeLinkClass : defaultLinkClass}>
-            <NavLink to="/events">
+            </NavigationMenu.Item>
+          </NavLink>
+          <NavLink to="/events" className={location.pathname === '/events' ? activeLinkClass : defaultLinkClass}>
+            <NavigationMenu.Item>
               Events
-            </NavLink>
-          </NavigationMenu.Item>
-          <NavigationMenu.Item className={location.pathname === '/practice' ? activeLinkClass : defaultLinkClass}>
-            Practice*
-          </NavigationMenu.Item>
+            </NavigationMenu.Item>
+          </NavLink>
+          <NavLink className={location.pathname === '/practice' ? activeLinkClass : defaultLinkClass}>
+            <NavigationMenu.Item>
+              Practice*
+            </NavigationMenu.Item>
+          </NavLink>
         </div>
         <div className="flex ml-auto">
-          <NavigationMenu.Item className={location.pathname === '/support' ? activeLinkClass : defaultLinkClass}>
-            <NavLink to="/support">
+          <NavLink to="/support" className={location.pathname === '/support' ? activeLinkClass : defaultLinkClass}>
+            <NavigationMenu.Item>
               Support
-            </NavLink>
-          </NavigationMenu.Item>
+            </NavigationMenu.Item>
+          </NavLink>
           <NavigationMenu.Item className={location.pathname === '/notifications' ? activeLinkClass : defaultLinkClass}>
             Notifications*
           </NavigationMenu.Item>
@@ -70,16 +74,15 @@ export default function NavBar() {
               <DropdownMenu.Item asChild>
                 <NavLink
                   // to="/profile"
-                  className="flex items-center gap-2 px-2 py-1.5 rounded"
+                  className={dropdownClass}
                 >
                   Profile*
                 </NavLink>
               </DropdownMenu.Item>
-
               <DropdownMenu.Item asChild>
                 <NavLink
                   to="/admin"
-                  className="flex items-center gap-2 px-2 py-1.5 rounded"
+                  className={dropdownClass}
                 >
                   Admin Portal
                 </NavLink>
@@ -89,7 +92,7 @@ export default function NavBar() {
                 <button
                   type="button"
                   onClick={logout}
-                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded"
+                  className={dropdownClass}
                 >
                   Log Out*
                 </button>
