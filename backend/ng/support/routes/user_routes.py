@@ -74,7 +74,7 @@ class MyTicket(Resource):
         """
         Get ticket details with all messages
         """
-        result = get_ticket(ticket_id=ticket_id, ticket=ticket)
+        result = get_ticket(ticket=ticket)
         return success_response(result)
 
     @support_user_namespace.doc(**ADD_MESSAGE_DOC)

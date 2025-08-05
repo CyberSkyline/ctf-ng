@@ -138,7 +138,7 @@ class TestGetTicket:
     def test_get_ticket_basic(self, db_session, ticket_with_messages):
         """Test getting ticket with messages"""
         result = get_ticket(
-            ticket_id=ticket_with_messages.id, ticket=ticket_with_messages
+            ticket=ticket_with_messages
         )
 
         assert isinstance(result, dict)
@@ -363,7 +363,7 @@ class TestUpdateTicketMute:
         assert ticket.muted is False
 
         result = update_ticket_mute(
-            ticket_id=ticket.id, muted=True, ticket=ticket
+            muted=True, ticket=ticket
         )
 
         assert result.muted is True
@@ -373,7 +373,7 @@ class TestUpdateTicketMute:
         assert muted_ticket.muted is True
 
         result = update_ticket_mute(
-            ticket_id=muted_ticket.id, muted=False, ticket=muted_ticket
+            muted=False, ticket=muted_ticket
         )
 
         assert result.muted is False
@@ -388,7 +388,6 @@ class TestUpdateTicketEvent:
         new_team = team_factory(event=new_event, members=[user])
 
         result = update_ticket_event(
-            ticket_id=ticket.id,
             event_id=new_event.id,
             team_id=new_team.id,
             ticket=ticket,
@@ -402,7 +401,6 @@ class TestUpdateTicketEvent:
         new_event = event_factory()
 
         result = update_ticket_event(
-            ticket_id=ticket.id,
             event_id=new_event.id,
             team_id=None,
             ticket=ticket,
@@ -418,7 +416,7 @@ class TestUpdateTicketChallenge:
     def test_update_challenge(self, db_session, ticket, challenge):
         """Test updating ticket's challenge"""
         result = update_ticket_challenge(
-            ticket_id=ticket.id, challenge_id=challenge.id, ticket=ticket
+            challenge_id=challenge.id, ticket=ticket
         )
 
         assert result.challenge_id == challenge.id
@@ -428,7 +426,7 @@ class TestUpdateTicketChallenge:
         ticket.challenge_id = challenge.id
 
         result = update_ticket_challenge(
-            ticket_id=ticket.id, challenge_id=None, ticket=ticket
+            challenge_id=None, ticket=ticket
         )
 
         assert result.challenge_id is None
@@ -483,7 +481,7 @@ class TestControllerIntegration:
         assert ticket.status == "closed"
 
         # 6. Verify final state
-        result = get_ticket(ticket_id=ticket.id, ticket=ticket)
+        result = get_ticket(ticket=ticket)
         assert len(result["messages"]) == 3
         assert result["ticket"].status == "closed"
         assert result["ticket"].assigned_to == admin.id

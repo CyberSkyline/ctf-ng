@@ -3,12 +3,13 @@ Allows users to close their own support tickets.
 """
 
 from ....core.utils import emit_event
+from ....user.models.User import User
 from ...models.Ticket import Ticket
 
 
 def close_my_ticket(
     ticket: Ticket,
-    current_user,
+    current_user: User,
 ) -> Ticket:
     """
     Close user's own ticket.

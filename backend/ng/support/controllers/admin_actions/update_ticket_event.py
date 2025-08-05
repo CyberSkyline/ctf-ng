@@ -6,10 +6,9 @@ from ...models.Ticket import Ticket
 
 
 def update_ticket_event(
-    ticket_id: int,
     event_id: int | None,
     team_id: int | None,
-    ticket=None,
+    ticket: Ticket,
 ) -> Ticket:
     """
     Update ticket's event and team association.

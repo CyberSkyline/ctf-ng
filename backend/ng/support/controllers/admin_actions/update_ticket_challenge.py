@@ -6,9 +6,8 @@ from ...models.Ticket import Ticket
 
 
 def update_ticket_challenge(
-    ticket_id: int,
     challenge_id: int | None,
-    ticket=None,
+    ticket: Ticket,
 ) -> Ticket:
     """
     Update ticket's challenge association

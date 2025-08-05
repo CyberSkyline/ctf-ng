@@ -82,7 +82,7 @@ class AdminTicket(Resource):
         """
         Get any ticket with all messages
         """
-        result = get_ticket(ticket_id=ticket_id, ticket=ticket)
+        result = get_ticket(ticket=ticket)
         return success_response(result)
 
     @support_admin_namespace.doc(**ADD_ADMIN_MESSAGE_DOC)
@@ -177,7 +177,6 @@ class AdminTicketMute(Resource):
         Toggle ticket mute status
         """
         updated_ticket = update_ticket_mute(
-            ticket_id=ticket_id,
             muted=json_data.get("muted", False),
             ticket=ticket,
         )
@@ -195,7 +194,6 @@ class AdminTicketEvent(Resource):
         Update ticket event/team association
         """
         updated_ticket = update_ticket_event(
-            ticket_id=ticket_id,
             event_id=json_data.get("event_id"),
             team_id=json_data.get("team_id"),
             ticket=ticket,
@@ -213,7 +211,6 @@ class AdminTicketChallenge(Resource):
         Update ticket challenge association
         """
         updated_ticket = update_ticket_challenge(
-            ticket_id=ticket_id,
             challenge_id=json_data.get("challenge_id"),
             ticket=ticket,
         )

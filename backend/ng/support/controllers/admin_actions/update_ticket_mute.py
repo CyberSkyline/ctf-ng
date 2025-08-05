@@ -6,9 +6,8 @@ from ...models.Ticket import Ticket
 
 
 def update_ticket_mute(
-    ticket_id: int,
     muted: bool,
-    ticket=None,
+    ticket: Ticket,
 ) -> Ticket:
     """
     Toggle ticket mute status.

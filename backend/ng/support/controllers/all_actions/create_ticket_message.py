@@ -3,13 +3,14 @@ Creates a new message in a support ticket thread.
 """
 
 from ....core.utils import emit_event
+from ...models.Ticket import Ticket
 from ...models.TicketMessage import TicketMessage
 
 
 def create_ticket_message(
     text: str,
     author_id: int,
-    ticket,
+    ticket: Ticket,
     is_admin: bool = False,
 ) -> TicketMessage:
     """

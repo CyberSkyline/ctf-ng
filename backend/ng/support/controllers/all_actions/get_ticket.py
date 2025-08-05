@@ -4,8 +4,10 @@ Gets ticket details with all messages for display.
 
 from typing import Any
 
+from ...models.Ticket import Ticket
 
-def get_ticket(ticket_id: int, ticket=None) -> dict[str, Any]:
+
+def get_ticket(ticket: Ticket) -> dict[str, Any]:
     """
     Get ticket details with all messages.
     """
