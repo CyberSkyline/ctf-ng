@@ -1,8 +1,7 @@
-import { DATEFORMAT } from '@/constants';
-import type { Event } from '@/types';
 import {
   AspectRatio,
   Box,
+  Link as LinkTheme,
   Flex,
   Heading,
   Text,
@@ -10,8 +9,11 @@ import {
 import { isNull } from 'lodash';
 import type { ReactNode } from 'react';
 import { TbCalendar, TbUser } from 'react-icons/tb';
+import { Link } from 'react-router';
 import EventBadge from './EventBadge';
 import RadixMarkdown from './RadixMarkdown';
+import type { Event } from '@/types';
+import { DATEFORMAT } from '@/constants';
 
 export default function EventHeader({
   children = undefined,
@@ -21,6 +23,7 @@ export default function EventHeader({
   event: Event;
 }) {
   const {
+    id,
     name,
     description,
     start_time : startTime,
@@ -55,7 +58,11 @@ export default function EventHeader({
           <EventBadge state={state} />
         )}
         <Box>
-          <Heading size="8">{name}</Heading>
+          <Heading size="8">
+            <LinkTheme asChild>
+              <Link to={`/events/${id}`}>{name}</Link>
+            </LinkTheme>
+          </Heading>
           <RadixMarkdown>
             {description || ''}
           </RadixMarkdown>
