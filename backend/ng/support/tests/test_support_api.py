@@ -71,7 +71,7 @@ class TestUserSupportEndpoints:
 
     def test_get_my_tickets_all(self, logged_in_client, multiple_tickets, user):
         """Test getting all user's tickets"""
-        response = logged_in_client.get("/ng/support/me/tickets")
+        response = logged_in_client.get("/ng/support/me/tickets", json={})
 
         assert response.status_code == 200
         data = response.get_json()
@@ -83,7 +83,7 @@ class TestUserSupportEndpoints:
     def test_get_my_tickets_filtered(self, logged_in_client, multiple_tickets, user):
         """Test getting filtered tickets"""
         # Get only open tickets
-        response = logged_in_client.get("/ng/support/me/tickets?status=open")
+        response = logged_in_client.get("/ng/support/me/tickets", json={"status": "open"})
 
         assert response.status_code == 200
         data = response.get_json()
@@ -184,7 +184,7 @@ class TestAdminSupportEndpoints:
 
     def test_get_all_tickets(self, admin_client, multiple_tickets):
         """Test getting all tickets as admin"""
-        response = admin_client.get("/ng/admin/support/tickets")
+        response = admin_client.get("/ng/admin/support/tickets", json={})
 
         assert response.status_code == 200
         data = response.get_json()
@@ -194,12 +194,12 @@ class TestAdminSupportEndpoints:
     def test_get_tickets_filtered(self, admin_client, multiple_tickets, admin):
         """Test getting filtered tickets"""
         # Filter by status
-        response = admin_client.get("/ng/admin/support/tickets?status=open")
+        response = admin_client.get("/ng/admin/support/tickets", json={"status": "open"})
         data = response.get_json()
         assert all(t["status"] == "open" for t in data["data"])
 
         # Filter by assigned user
-        response = admin_client.get(f"/ng/admin/support/tickets?assigned_to={admin.id}")
+        response = admin_client.get("/ng/admin/support/tickets", json={"assigned_to": admin.id})
         data = response.get_json()
         assert all(t["assigned_to"] == admin.id for t in data["data"])
 
@@ -269,10 +269,6 @@ class TestAdminSupportEndpoints:
         assert create_response.status_code == 201
         tag_id = create_response.get_json()["data"]["id"]
 
-        # Debug: print response
-        if create_response.status_code != 201:
-            print(f"Create failed: {create_response.get_json()}")
-
         # Now update it
         response = admin_client.put(
             f"/ng/admin/support/tags/{tag_id}",
@@ -333,8 +329,8 @@ class TestAdminSupportEndpoints:
     def test_unassign_ticket(self, admin_client, assigned_ticket):
         """Test unassigning ticket"""
         response = admin_client.put(
-            f"/ng/admin/support/tickets/{assigned_ticket.id}/assign",
-            json={"user_id": None},
+            f"/ng/admin/support/tickets/{assigned_ticket.id}/unassign",
+            json={}
         )
 
         assert response.status_code == 200

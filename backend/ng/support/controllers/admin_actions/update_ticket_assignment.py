@@ -3,19 +3,19 @@ Updates ticket assignment (admin only).
 """
 
 from ...models.Ticket import Ticket
+from ....user.models.User import User
 
 
 def update_ticket_assignment(
-    ticket_id: int,
-    user_id: int | None,
-    ticket=None,
+    user: User | None,
+    ticket: Ticket,
 ) -> Ticket:
     """
     Assign or unassign a ticket
     """
-    if user_id is None:
+    if user is None:
         ticket.unassign(commit=True)
     else:
-        ticket.assign_to_user(user_id=user_id, commit=True)
+        ticket.assign_to_user(user_id=user.id, commit=True)
 
     return ticket

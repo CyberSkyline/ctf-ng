@@ -7,11 +7,10 @@ from ...models.TicketMessage import TicketMessage
 
 
 def create_ticket_message(
-    ticket_id: int,
     text: str,
     author_id: int,
+    ticket,
     is_admin: bool = False,
-    ticket=None,
 ) -> TicketMessage:
     """
     Creates a new message in a ticket thread.
@@ -32,8 +31,8 @@ def create_ticket_message(
     # TODO: Refactor in near future with notifications implemenation
     emit_event(
         event_name="new_message",
-        data={"ticket_id": ticket_id, "message": message.serialize()},
-        room=f"ticket_{ticket_id}",
+        data={"ticket_id": ticket.id, "message": message.serialize()},
+        room=f"ticket_{ticket.id}",
     )
 
     return message

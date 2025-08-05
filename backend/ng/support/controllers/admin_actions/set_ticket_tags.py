@@ -6,9 +6,8 @@ from ...models.Ticket import Ticket
 
 
 def set_ticket_tags(
-    ticket_id: int,
     tag_ids: list[int],
-    ticket=None,
+    ticket: Ticket,
 ) -> Ticket:
     """
     Set tags on a ticket

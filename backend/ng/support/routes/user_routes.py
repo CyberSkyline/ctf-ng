@@ -2,11 +2,10 @@
 User API routes for support tickets
 """
 
-from flask import request
 from flask_restx import Namespace, Resource
 
 from ...core.middleware import user_endpoint
-from ...core.middleware.loaders import load_ticket_by_user
+from ...core.middleware.loaders import load_ticket_with_user
 from ...core.utils import success_response
 from ...user.models import User
 
@@ -51,12 +50,12 @@ class Tickets(Resource):
 @support_user_namespace.route("/me/tickets")
 class MyTickets(Resource):
     @support_user_namespace.doc(**LIST_MY_TICKETS_DOC)
-    @user_endpoint()
-    def get(self, current_user: User, **kwargs):
+    @user_endpoint(json_required=True)
+    def get(self, current_user: User, json_data, **kwargs):
         """
         Get all tickets for the current user
         """
-        status = request.args.get("status", "all")
+        status = json_data.get("status", "all")
 
         tickets = list_tickets(
             user_id=current_user.id,
@@ -70,7 +69,7 @@ class MyTickets(Resource):
 class MyTicket(Resource):
     @support_user_namespace.doc(**GET_MY_TICKET_DOC)
     @user_endpoint()
-    @load_ticket_by_user()
+    @load_ticket_with_user()
     def get(self, ticket_id: int, ticket, current_user: User, **kwargs):
         """
         Get ticket details with all messages
@@ -80,17 +79,16 @@ class MyTicket(Resource):
 
     @support_user_namespace.doc(**ADD_MESSAGE_DOC)
     @user_endpoint(json_required=True)
-    @load_ticket_by_user()
+    @load_ticket_with_user()
     def post(self, ticket_id: int, ticket, current_user: User, json_data, **kwargs):
         """
         Add a new message to the ticket
         """
         message = create_ticket_message(
-            ticket_id=ticket_id,
             text=json_data.get("text"),
             author_id=current_user.id,
-            is_admin=False,
             ticket=ticket,
+            is_admin=False,
         )
         return success_response(message, status_code=201)
 
@@ -99,13 +97,12 @@ class MyTicket(Resource):
 class CloseMyTicket(Resource):
     @support_user_namespace.doc(**CLOSE_MY_TICKET_DOC)
     @user_endpoint()
-    @load_ticket_by_user()
+    @load_ticket_with_user()
     def post(self, ticket_id: int, ticket, current_user: User, **kwargs):
         """
         Close user's own ticket
         """
         closed_ticket = close_my_ticket(
-            ticket_id=ticket_id,
             ticket=ticket,
             current_user=current_user,
         )

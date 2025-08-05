@@ -115,13 +115,22 @@ SET_TICKET_TAGS_DOC = {
     },
 }
 
-UPDATE_ASSIGNMENT_DOC = {
-    "description": "Assign or unassign a ticket to/from a user (Admin only)",
+ASSIGN_TICKET_DOC = {
+    "description": "Assign a ticket to a user (Admin only)",
     "responses": {
         200: "Success - Assignment updated",
-        400: "Bad request - Invalid user_id",
+        400: "Bad request - Invalid user_id or already assigned",
         **ADMIN_REQUIRED_RESPONSES,
         404: "Not found - Ticket or user not found",
+    },
+}
+
+UNASSIGN_TICKET_DOC = {
+    "description": "Unassign a ticket from any user (Admin only)",
+    "responses": {
+        200: "Success - Ticket unassigned",
+        **ADMIN_REQUIRED_RESPONSES,
+        404: "Not found - Ticket does not exist",
     },
 }
 

@@ -7,10 +7,9 @@ from ...models.Ticket import Ticket
 
 
 def update_ticket_status(
-    ticket_id: int,
     closed: bool,
-    ticket=None,
-    current_user=None,
+    ticket: Ticket,
+    current_user,
 ) -> Ticket:
     """
     Toggle ticket open/closed status
@@ -25,8 +24,8 @@ def update_ticket_status(
     # TODO: Refactor in near future with notifications implemenation
     emit_event(
         event_name=event_name,
-        data={"ticket_id": ticket_id, "changed_by": current_user.id},
-        room=f"ticket_{ticket_id}",
+        data={"ticket_id": ticket.id, "changed_by": current_user.id},
+        room=f"ticket_{ticket.id}",
     )
 
     return ticket

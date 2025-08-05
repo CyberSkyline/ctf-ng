@@ -6,11 +6,10 @@ from ...models.TicketTag import TicketTag
 
 
 def update_tag(
-    tag_id: int,
+    tag: TicketTag,
     name: str | None = None,
     color: str | None = None,
     description: str | None = None,
-    tag=None,
 ) -> TicketTag:
     """
     Update an existing ticket tag

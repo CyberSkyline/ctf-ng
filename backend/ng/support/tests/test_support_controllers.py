@@ -77,7 +77,7 @@ class TestCloseMyTicket:
         assert ticket.status == "open"
 
         result = close_my_ticket(
-            ticket_id=ticket.id, ticket=ticket, current_user=user
+            ticket=ticket, current_user=user
         )
 
         assert isinstance(result, Ticket)
@@ -92,11 +92,10 @@ class TestCreateTicketMessage:
     def test_create_message_as_user(self, db_session, ticket, user):
         """Test creating message as regular user"""
         result = create_ticket_message(
-            ticket_id=ticket.id,
             text="Additional information",
             author_id=user.id,
-            is_admin=False,
             ticket=ticket,
+            is_admin=False,
         )
 
         assert isinstance(result, TicketMessage)
@@ -109,11 +108,10 @@ class TestCreateTicketMessage:
         assert closed_ticket.status == "closed"
 
         create_ticket_message(
-            ticket_id=closed_ticket.id,
             text="I've reopened this to help",
             author_id=admin.id,
-            is_admin=True,
             ticket=closed_ticket,
+            is_admin=True,
         )
 
         assert closed_ticket.status == "open"
@@ -124,11 +122,10 @@ class TestCreateTicketMessage:
         assert ticket.first_admin_response_timestamp is None
 
         create_ticket_message(
-            ticket_id=ticket.id,
             text="I'll help you with this",
             author_id=admin.id,
-            is_admin=True,
             ticket=ticket,
+            is_admin=True,
         )
 
         assert ticket.first_admin_response_timestamp is not None
@@ -220,7 +217,7 @@ class TestUpdateTag:
     def test_update_tag_name(self, db_session, ticket_tag):
         """Test updating tag name"""
         result = update_tag(
-            tag_id=ticket_tag.id, name="updated-bug", tag=ticket_tag
+            tag=ticket_tag, name="updated-bug"
         )
 
         assert result.name == "updated-bug"
@@ -229,11 +226,10 @@ class TestUpdateTag:
     def test_update_tag_multiple_fields(self, db_session, ticket_tag):
         """Test updating multiple tag fields"""
         result = update_tag(
-            tag_id=ticket_tag.id,
+            tag=ticket_tag,
             name="critical-bug",
             color="#FF00FF",
             description="Updated description",
-            tag=ticket_tag,
         )
 
         assert result.name == "critical-bug"
@@ -243,7 +239,7 @@ class TestUpdateTag:
     def test_update_tag_no_changes(self, db_session, ticket_tag):
         """Test update with no data doesn't error"""
         original_name = ticket_tag.name
-        result = update_tag(tag_id=ticket_tag.id, tag=ticket_tag)
+        result = update_tag(tag=ticket_tag)
 
         assert result.name == original_name
 
@@ -276,7 +272,7 @@ class TestSetTicketTags:
         tag2 = ticket_tag_factory(name="ui-issue")
 
         result = set_ticket_tags(
-            ticket_id=ticket.id, tag_ids=[tag1.id, tag2.id], ticket=ticket
+            tag_ids=[tag1.id, tag2.id], ticket=ticket
         )
 
         assert len(result.tags) == 2
@@ -288,7 +284,6 @@ class TestSetTicketTags:
         new_tag = ticket_tag_factory(name="new-tag")
 
         result = set_ticket_tags(
-            ticket_id=ticket_with_tags.id,
             tag_ids=[new_tag.id],
             ticket=ticket_with_tags,
         )
@@ -301,7 +296,7 @@ class TestSetTicketTags:
         assert len(ticket_with_tags.tags) > 0
 
         result = set_ticket_tags(
-            ticket_id=ticket_with_tags.id, tag_ids=[], ticket=ticket_with_tags
+            tag_ids=[], ticket=ticket_with_tags
         )
 
         assert len(result.tags) == 0
@@ -315,7 +310,7 @@ class TestUpdateTicketAssignment:
         assert ticket.assigned_to is None
 
         result = update_ticket_assignment(
-            ticket_id=ticket.id, user_id=admin.id, ticket=ticket
+            user=admin, ticket=ticket
         )
 
         assert result.assigned_to == admin.id
@@ -325,7 +320,7 @@ class TestUpdateTicketAssignment:
         assert assigned_ticket.assigned_to is not None
 
         result = update_ticket_assignment(
-            ticket_id=assigned_ticket.id, user_id=None, ticket=assigned_ticket
+            user=None, ticket=assigned_ticket
         )
 
         assert result.assigned_to is None
@@ -339,7 +334,7 @@ class TestUpdateTicketStatus:
         assert ticket.status == "open"
 
         result = update_ticket_status(
-            ticket_id=ticket.id, closed=True, ticket=ticket, current_user=admin
+            closed=True, ticket=ticket, current_user=admin
         )
 
         assert result.status == "closed"
@@ -350,7 +345,6 @@ class TestUpdateTicketStatus:
         assert closed_ticket.status == "closed"
 
         result = update_ticket_status(
-            ticket_id=closed_ticket.id,
             closed=False,
             ticket=closed_ticket,
             current_user=admin,
@@ -457,36 +451,34 @@ class TestControllerIntegration:
         # 2. Admin assigns and tags ticket
         tag = ticket_tag_factory(name="needs-investigation")
         ticket = update_ticket_assignment(
-            ticket_id=ticket.id, user_id=admin.id, ticket=ticket
+            user=admin, ticket=ticket
         )
         ticket = set_ticket_tags(
-            ticket_id=ticket.id, tag_ids=[tag.id], ticket=ticket
+            tag_ids=[tag.id], ticket=ticket
         )
         assert ticket.assigned_to == admin.id
         assert len(ticket.tags) == 1
 
         # 3. Admin responds
         create_ticket_message(
-            ticket_id=ticket.id,
             text="I'm looking into this",
             author_id=admin.id,
-            is_admin=True,
             ticket=ticket,
+            is_admin=True,
         )
         assert ticket.first_admin_response_timestamp is not None
 
         # 4. User responds
         create_ticket_message(
-            ticket_id=ticket.id,
             text="Thank you for the help",
             author_id=user.id,
-            is_admin=False,
             ticket=ticket,
+            is_admin=False,
         )
 
         # 5. Admin closes ticket
         ticket = update_ticket_status(
-            ticket_id=ticket.id, closed=True, ticket=ticket, current_user=admin
+            closed=True, ticket=ticket, current_user=admin
         )
         assert ticket.status == "closed"
 

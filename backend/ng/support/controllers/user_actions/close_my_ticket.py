@@ -7,9 +7,8 @@ from ...models.Ticket import Ticket
 
 
 def close_my_ticket(
-    ticket_id: int,
-    ticket=None,
-    current_user=None,
+    ticket: Ticket,
+    current_user,
 ) -> Ticket:
     """
     Close user's own ticket.
@@ -19,8 +18,8 @@ def close_my_ticket(
     # TODO: Refactor in near future with notifications implemenation
     emit_event(
         event_name="ticket_closed",
-        data={"ticket_id": ticket_id, "closed_by": current_user.id},
-        room=f"ticket_{ticket_id}",
+        data={"ticket_id": ticket.id, "closed_by": current_user.id},
+        room=f"ticket_{ticket.id}",
     )
 
     return ticket

@@ -4,7 +4,7 @@ from ._util import check_output_exists, get_model_class
 from ...exceptions import NotFoundError, PermissionError
 
 
-def load_ticket_by_user(output_key="ticket") -> Callable:
+def load_ticket_with_user(output_key="ticket") -> Callable:
     """
     Load ticket by ID and verify it belongs to the current user.
     Expects current_user to be loaded by auth middleware.

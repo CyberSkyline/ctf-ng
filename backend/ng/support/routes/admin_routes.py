@@ -2,7 +2,6 @@
 Admin API routes for support tickets
 """
 
-from flask import request
 from flask_restx import Namespace, Resource
 
 from ...core.middleware import admin_endpoint
@@ -10,6 +9,7 @@ from ...core.middleware.loaders import (
     LoaderType,
     load_ticket,
     load_ticket_tag,
+    load_user,
 )
 from ...core.utils import success_response
 from ...user.models import User
@@ -34,7 +34,8 @@ from ._docs import (
     GET_TICKET_DOC,
     ADD_ADMIN_MESSAGE_DOC,
     SET_TICKET_TAGS_DOC,
-    UPDATE_ASSIGNMENT_DOC,
+    ASSIGN_TICKET_DOC,
+    UNASSIGN_TICKET_DOC,
     UPDATE_STATUS_DOC,
     UPDATE_MUTE_DOC,
     UPDATE_EVENT_DOC,
@@ -50,16 +51,16 @@ support_admin_namespace = Namespace("admin/support", description="Admin support 
 @support_admin_namespace.route("/tickets")
 class AdminTickets(Resource):
     @support_admin_namespace.doc(**LIST_TICKETS_DOC)
-    @admin_endpoint()
-    def get(self, current_user: User, **kwargs):
+    @admin_endpoint(json_required=True)
+    def get(self, current_user: User, json_data, **kwargs):
         """
         Get all tickets with optional filters
         """
-        user_id = request.args.get("user_id", type=int)
-        status = request.args.get("status", "all")
-        assigned_to = request.args.get("assigned_to", type=int)
-        event_id = request.args.get("event_id", type=int)
-        team_id = request.args.get("team_id", type=int)
+        user_id = json_data.get("user_id")
+        status = json_data.get("status", "all")
+        assigned_to = json_data.get("assigned_to")
+        event_id = json_data.get("event_id")
+        team_id = json_data.get("team_id")
 
         tickets = list_tickets(
             user_id=user_id,
@@ -92,11 +93,10 @@ class AdminTicket(Resource):
         Add admin message (reopens closed tickets)
         """
         message = create_ticket_message(
-            ticket_id=ticket_id,
             text=json_data.get("text"),
             author_id=current_user.id,
-            is_admin=True,
             ticket=ticket,
+            is_admin=True,
         )
         return success_response(message, status_code=201)
 
@@ -111,7 +111,6 @@ class AdminTicketTags(Resource):
         Set ticket tags (replaces all existing tags)
         """
         updated_ticket = set_ticket_tags(
-            ticket_id=ticket_id,
             tag_ids=json_data.get("tag_ids", []),
             ticket=ticket,
         )
@@ -120,16 +119,32 @@ class AdminTicketTags(Resource):
 
 @support_admin_namespace.route("/tickets/<int:ticket_id>/assign")
 class AdminTicketAssignment(Resource):
-    @support_admin_namespace.doc(**UPDATE_ASSIGNMENT_DOC)
+    @support_admin_namespace.doc(**ASSIGN_TICKET_DOC)
+    @admin_endpoint(json_required=True)
+    @load_ticket(LoaderType.PARAM)
+    @load_user(source=LoaderType.BODY)
+    def put(self, ticket_id: int, ticket, user, current_user: User, json_data, **kwargs):
+        """
+        Assign ticket to a user
+        """
+        updated_ticket = update_ticket_assignment(
+            user=user,
+            ticket=ticket,
+        )
+        return success_response(updated_ticket)
+
+
+@support_admin_namespace.route("/tickets/<int:ticket_id>/unassign")
+class AdminTicketUnassignment(Resource):
+    @support_admin_namespace.doc(**UNASSIGN_TICKET_DOC)
     @admin_endpoint(json_required=True)
     @load_ticket(LoaderType.PARAM)
     def put(self, ticket_id: int, ticket, current_user: User, json_data, **kwargs):
         """
-        Assign or unassign ticket
+        Unassign ticket from current user
         """
         updated_ticket = update_ticket_assignment(
-            ticket_id=ticket_id,
-            user_id=json_data.get("user_id"),
+            user=None,
             ticket=ticket,
         )
         return success_response(updated_ticket)
@@ -145,7 +160,6 @@ class AdminTicketStatus(Resource):
         Toggle ticket open/closed status
         """
         updated_ticket = update_ticket_status(
-            ticket_id=ticket_id,
             closed=json_data.get("closed", False),
             ticket=ticket,
             current_user=current_user,
@@ -241,10 +255,9 @@ class AdminTag(Resource):
         Update an existing tag
         """
         updated_tag = update_tag(
-            tag_id=ticket_tag_id,
+            tag=ticket_tag,
             name=json_data.get("name"),
             color=json_data.get("color"),
             description=json_data.get("description"),
-            tag=ticket_tag,
         )
         return success_response(updated_tag)
