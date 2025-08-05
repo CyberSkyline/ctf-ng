@@ -1,15 +1,19 @@
-import { registerMyEvent } from '@/hooks/events';
-import type { Event } from '@/types';
 import { Button, TextField } from '@radix-ui/themes';
 import Modal from 'components/Modal';
 import { Form } from 'radix-ui';
+import { useNavigate } from 'react-router';
+import type { Event } from '@/types';
+import { registerMyEvent } from '@/hooks/events';
 
 export default function RegistrationModal({ eventId }: {eventId : Event['id']}) {
   // Todo: alternate case when team game vs individual
+  const navigate = useNavigate();
 
   const register = async (data: FormData) => {
     const leaderboardName = data.get('leaderboard_name') as string;
-    return registerMyEvent(eventId, leaderboardName);
+    return registerMyEvent(eventId, leaderboardName).then(() => {
+      navigate(`/events/${eventId}`);
+    });
   };
 
   return (
