@@ -8,8 +8,8 @@ import { BrowserRouter } from 'react-router';
 import { SWRConfig } from 'swr';
 import Routes from './Routes';
 
-import { ROUTEPREFIX } from './constants';
-import { apiFetcher } from './fetchers';
+import { ROUTEPREFIX } from '@/constants';
+import { apiFetcher } from '@/fetchers';
 import './grid';
 import './index.css';
 
