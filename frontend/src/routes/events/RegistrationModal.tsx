@@ -11,7 +11,7 @@ export default function RegistrationModal({ eventId }: {eventId : Event['id']}) 
 
   const register = async (data: FormData) => {
     const leaderboardName = data.get('leaderboard_name') as string;
-    return registerMyEvent(eventId, leaderboardName).finally(() => {
+    return registerMyEvent(eventId, leaderboardName).then(() => {
       navigate(`/events/${eventId}`);
     });
   };

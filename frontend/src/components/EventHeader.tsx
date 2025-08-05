@@ -10,10 +10,10 @@ import { isNull } from 'lodash';
 import type { ReactNode } from 'react';
 import { TbCalendar, TbUser } from 'react-icons/tb';
 import { Link } from 'react-router';
-import EventBadge from './EventBadge';
-import RadixMarkdown from './RadixMarkdown';
 import type { Event } from '@/types';
 import { DATEFORMAT } from '@/constants';
+import EventBadge from './EventBadge';
+import RadixMarkdown from './RadixMarkdown';
 
 export default function EventHeader({
   children = undefined,
