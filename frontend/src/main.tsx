@@ -1,4 +1,5 @@
 import { Theme } from '@radix-ui/themes';
+import { ThemeProvider } from 'next-themes';
 import FooterBar from 'components/Footer';
 import NavBar from 'components/NavBar';
 import { StrictMode } from 'react';
@@ -15,20 +16,25 @@ import './index.css';
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter basename={ROUTEPREFIX}>
-      <Theme
-        appearance="dark"
-        panelBackground="solid" // disable blur effect on surfaces for performance
-        grayColor="sand"
-        accentColor="amber"
+      <ThemeProvider
+        attribute="class"
+        defaultTheme='dark'
+        enableSystem
       >
-        <SWRConfig
-          value={{ fetcher : apiFetcher }}
+        <Theme
+          panelBackground="solid" // disable blur effect on surfaces for performance
+          grayColor="sand"
+          accentColor="amber"
         >
-          <NavBar />
-          <Routes />
-          <FooterBar />
-        </SWRConfig>
-      </Theme>
+          <SWRConfig
+            value={{ fetcher : apiFetcher }}
+          >
+            <NavBar />
+            <Routes />
+            <FooterBar />
+          </SWRConfig>
+        </Theme>
+      </ThemeProvider>
     </BrowserRouter>
   </StrictMode>,
 );
