@@ -30,7 +30,7 @@ class TestCoreIntegration:
     def test_frontend_routes(self, client):
         """Test frontend application routes."""
         # Test the hello route (frontend app)
-        response = client.get("/hello")
+        response = client.get("/hello") # TODO update when daniel refactors
 
         if response.status_code == 200:
             content = response.get_data(as_text=True)
@@ -38,12 +38,3 @@ class TestCoreIntegration:
 
         assert response.status_code != 404, "Frontend hello route not found"
 
-    def test_test_harness_route(self, admin_client):
-        """Test the backend test harness route."""
-        response = admin_client.get("/test-harness")
-
-        if response.status_code == 200:
-            content = response.get_data(as_text=True)
-            assert "html" in content.lower()
-
-        assert response.status_code != 404, "Test harness route not found"

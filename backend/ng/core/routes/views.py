@@ -5,7 +5,6 @@ All user-accessed URLs use the same view for the frontend application.
 from typing import Any
 from flask import Blueprint, render_template
 from flask import current_app as app
-from ..middleware.auth import admin_view
 from CTFd.utils import get_app_config
 
 plugin_views = Blueprint("plugin_views", __name__)
@@ -19,11 +18,3 @@ def view_template(subpath: str) -> Any:
         "dev_entrypoint.html" if app.debug else "prod_entrypoint.html",
         static_build_path=static_build_path,
     )
-
-
-# Testing view
-@plugin_views.route("/test-harness", methods=["GET"])
-@admin_view
-def view_test_harness() -> Any:
-    """A view for backend developers to test API endpoints."""
-    return render_template("test_harness.html")

@@ -10,10 +10,6 @@ from .logger import (
     get_logger,
     logger,
 )
-from .update import (
-    build_conditional_update_data,
-)
-
 
 def utc_now() -> datetime:
     """
@@ -66,6 +62,5 @@ __all__ = [
     "serialize_model_for_api",
     "success_response",
     "error_response",
-    "build_conditional_update_data",
     "emit_event",
 ]

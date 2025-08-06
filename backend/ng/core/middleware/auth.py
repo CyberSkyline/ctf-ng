@@ -7,7 +7,6 @@ from functools import wraps
 
 from CTFd.utils.decorators import admins_only, authed_only
 from CTFd.utils.user import get_current_user
-from CTFd.utils.user import is_admin as is_admin_ctfd
 from flask import request
 
 from ...user.models.User import User
@@ -116,25 +115,3 @@ def public_endpoint(json_required=False, validation_func=None):
         json_required=json_required,
         validation_func=validation_func,
     )
-
-
-# Testing Decorator
-def admin_view(f):
-    """
-    Decorator for traditional Flask views that require admin access.
-    It integrates with our plugin's custom exception handling by raising
-    a PermissionError, ensuring consistent error responses.
-    """
-
-    @wraps(f)
-    @handle_exceptions
-    def decorated_function(*args, **kwargs):
-        user = get_current_user()
-        if not user:
-            raise PermissionError("You must be logged in to view this page.")
-        if not is_admin_ctfd():
-            raise PermissionError("You must be an administrator to view this page.")
-        kwargs["current_user"] = User.find_or_create_by_ctfd_id(user.id)
-        return f(*args, **kwargs)
-
-    return decorated_function
