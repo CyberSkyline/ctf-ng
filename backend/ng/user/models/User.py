@@ -62,12 +62,11 @@ class User(db.Model):
                 "roles": [role.name for role in self.roles],
                 "registered_at": self.ctfd_user.created.isoformat() + "Z",
             }
-        else:
-            return {
-                "id": self.id,
-                "name": self.ctfd_user.name,
-                "email": self.ctfd_user.email,
-                "registered_at": self.ctfd_user.created.isoformat() + "Z",
+        return {
+            "id": self.id,
+            "name": self.ctfd_user.name,
+            "email": self.ctfd_user.email,
+            "registered_at": self.ctfd_user.created.isoformat() + "Z",
             }
 
     @classmethod
@@ -192,7 +191,6 @@ class User(db.Model):
             raise
 
     def delete(self) -> None:
-        """Delete the user extension from the database."""
         """Delete the user extension from the database."""
         db.session.delete(self)
         db.session.commit()

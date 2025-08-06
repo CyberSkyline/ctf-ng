@@ -147,13 +147,6 @@ class EventRegister(Resource):
 
 @events_admin_namespace.route("/<int:event_id>/challenges")
 class EventChallenges(Resource):
-    @events_admin_namespace.doc(
-        description="Create a challenge for an event",
-        responses={
-            200: "Success",
-            400: "Bad request",
-        },
-    )
     @admin_endpoint(json_required=True)
     @load_event(source=LoaderType.PARAM)
     @events_admin_namespace.doc(
