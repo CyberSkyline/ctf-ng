@@ -51,10 +51,61 @@ with app.app_context():
         ctf_theme=None,
     )
 
-    # Import plugin modules after app initialization
-    # This script is designed to run in production via 'yarn populate-data'
-    # where the plugin is properly located at /opt/CTFd/CTFd/plugins/ng
+# Configure app permission system
+with app.app_context():
     try:
+        # This script is designed to run in production via 'yarn populate-data'
+        # where the plugin is properly located at /opt/CTFd/CTFd/plugins/ng
+        from CTFd.plugins.ng.permissions.controllers.assign_role_to_user import assign_role_to_user  # type: ignore
+        from CTFd.plugins.ng.permissions.controllers.create_permission import create_permission  # type: ignore
+        from CTFd.plugins.ng.permissions.controllers.create_role import create_role  # type: ignore
+        from CTFd.plugins.ng.permissions.models.enums import PermissionEnum, RoleEnum  # type: ignore
+        from CTFd.plugins.ng.user.models.User import User as NgUser  # type: ignore
+    except ImportError as e:
+        print(f"Failed to import plugin modules: {e}")
+        print("This script should be run via 'yarn populate-data' from the project root.")
+        raise
+
+    # Get the admin user and create NG user extension
+    ctfd_admin_user = Users.query.filter_by(name="admin").first()
+    ng_admin_user = NgUser.query.filter_by(id=ctfd_admin_user.id).first()
+    if not ng_admin_user:
+        ng_admin_user = NgUser.create_user(user_id=ctfd_admin_user.id, commit=True)
+
+    create_permission(
+        name=PermissionEnum.CAN_EDIT_TEAM,
+        description="Can edit teams",
+    )
+    create_permission(
+        name=PermissionEnum.CAN_EDIT_USER,
+        description="Can edit users",
+    )
+    create_permission(
+        name=PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
+        description="Can manage support tickets",
+    )
+
+    create_role(
+        name=RoleEnum.ADMIN,
+        permissions=[
+            PermissionEnum.CAN_EDIT_TEAM,
+            PermissionEnum.CAN_EDIT_USER,
+            PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
+        ],
+    )
+    create_role(
+        name=RoleEnum.SUPPORT,
+        permissions=[
+            PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
+        ],
+    )
+    assign_role_to_user(ng_admin_user.id, "admin")
+
+# Insert sample data
+with app.app_context():
+    try:
+        # This script is designed to run in production via 'yarn populate-data'
+        # where the plugin is properly located at /opt/CTFd/CTFd/plugins/ng
         from CTFd.plugins.ng.event.controllers.admin.import_challenge_from_yaml import (  # type: ignore
             import_challenge_from_yaml,  # type: ignore
         )
@@ -97,7 +148,7 @@ with app.app_context():
             description="Competition designed for large teams and organizations",
             max_team_size=8,
             public=True,
-            registration_open=False,  # Registration closed
+            registration_open=True,
             commit=False,
         ),
     ]
@@ -106,29 +157,43 @@ with app.app_context():
     db.session.commit()
 
     # Get the admin user and create NG user extension
-    admin_user = Users.query.filter_by(name="admin").first()
-    NgUser.create_user(user_id=admin_user.id, commit=True)
+    ctfd_admin_user = Users.query.filter_by(name="admin").first()
+    ng_admin_user = NgUser.query.filter_by(id=ctfd_admin_user.id).first()
+    if not ng_admin_user:
+        ng_admin_user = NgUser.create_user(user_id=ctfd_admin_user.id, commit=True)
 
     # Create additional test user for team membership
-    test_user = Users(name="testuser", email="test@example.com", password="password", type="user")
-    test_user.verified = True
-    db.session.add(test_user)
+    ctfd_test_user = Users(name="testuser", email="test@example.com", password="password", type="user")
+    ctfd_test_user.verified = True
+
+    ctfd_test_user_2 = Users(name="testuser2", email="test2@example.com", password="password", type="user")
+    ctfd_test_user_2.verified = True
+
+    db.session.add(ctfd_test_user)
+    db.session.add(ctfd_test_user_2)
     db.session.commit()
 
-    # Create NG user extension for test user
-    NgUser.create_user(user_id=test_user.id, commit=True)
+    test_user = NgUser.create_user(user_id=ctfd_test_user.id, commit=True)
+    test_user_2 = NgUser.create_user(user_id=ctfd_test_user_2.id, commit=True)
 
     # Register admin for first two events (Public CTF Championship and Private Training Event)
     admin_teams = []
     for i, event in enumerate(events[:2]):
         team_name = f"Admin Team {i + 1}" if i == 0 else "Elite Squad"
-        team = join_event_controller(event=event, user=admin_user, team_name=team_name)
+        team = join_event_controller(event=event, user=ng_admin_user, team_name=team_name)
         admin_teams.append(team)
 
     # Add test user as member to the first admin team
-    if admin_teams:
-        first_team = admin_teams[0]
-        first_team.add_member(test_user.id, commit=True)
+    first_team = admin_teams[0]
+    join_event_controller(
+        event=first_team.event,
+        user=test_user,
+        invite_code=first_team.invite_code,
+    )
+
+    # Create a sample team for test user2 in the first event
+    first_event = events[0]
+    test_team = join_event_controller(event=first_event, user=test_user_2, team_name="Test User2 Team")
 
     # Import sample challenge from default yaml
     with open(os.path.join(os.path.dirname(__file__), "../challenge/tests/yamls/default.yaml"), "rb") as f:
@@ -144,7 +209,8 @@ with app.app_context():
     for event in events:
         print(f"   - {event.name} (max_team_size: {event.max_team_size}, public: {event.public})")
     print(f"Admin user registered for {len(admin_teams)} events")
-    print(f"Added test user to admin's first team: {admin_teams[0].name if admin_teams else 'None'}")
+    print(f"Added test user to admin's first team: '{admin_teams[0].name if admin_teams else 'None'}'")
+    print(f"Added test user2 to '{test_team.name}' in '{events[0].name}'")
 
     print("\n")
     # ANSI escape code for yellow background: \033[43m, reset: \033[0m
