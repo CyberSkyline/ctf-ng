@@ -146,7 +146,7 @@ class TestPositiveIntegerEdgeCases:
         with pytest.raises(ValidationError) as exc_info:
             validator.validate()
         assert "num" in exc_info.value.errors
-        assert "positive" in exc_info.value.errors["num"].lower()
+        assert "at least 1" in exc_info.value.errors["num"].lower()
 
         validator = BaseValidator()
         validator.validate_positive_integer({"num": -1}, "num")
