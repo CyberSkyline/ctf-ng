@@ -2,7 +2,7 @@ from typing import Any
 
 from CTFd.models import db
 
-from ...core.validation import BaseValidator
+from ...core.utils.validator import BaseValidator
 
 MAX_CONTAINER_BLUEPRINT_IMAGE_LENGTH = 1024
 MAX_CONTAINER_BLUEPRINT_HOSTNAME_LENGTH = 256

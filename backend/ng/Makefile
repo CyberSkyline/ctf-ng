@@ -46,9 +46,8 @@ test-admin:
 test-user:
 	$(PYTHON_EXEC) -m pytest ./user/tests/ -v
 
-# TODO: add back when routes/controllers are complete
 test-support:
-	$(PYTHON_EXEC) -m pytest ./support/tests/ -k "model" -v
+	$(PYTHON_EXEC) -m pytest ./support/tests/ -v
 
 test-scoring:
 	$(PYTHON_EXEC) -m pytest -s ./scoring/tests/ -v

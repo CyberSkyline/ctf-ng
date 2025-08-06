@@ -5,7 +5,7 @@ Custom exceptions used by global error handler
 from __future__ import annotations
 
 
-class APIException(Exception):
+class APIException(Exception): # noqa: N818
     """Base exception class for all plugin API exceptions."""
 
     status_code: int = 500

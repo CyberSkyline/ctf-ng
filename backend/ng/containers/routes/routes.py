@@ -1,9 +1,6 @@
 from flask_restx import Namespace, Resource
 from ..controllers.vnc import forward_vnc
 
-from ...core.utils import (
-    success_response,
-)
 
 from ...core.middleware import (
     user_endpoint,

@@ -78,7 +78,7 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
             elif isinstance(question.answer, Answer):
                 question_payload["answer"] = question.answer.body
                 test_cases = question.answer.test_cases or []
-                for test_case in test_cases:
+                for test_case in test_cases: # noqa B007
                     # TODO - create test cases
                     pass
             # Answer uses a template

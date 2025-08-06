@@ -2,8 +2,10 @@
 Model tests for Ticket
 """
 
+import pytest
 from unittest.mock import patch
 from ..models.Ticket import Ticket
+from ...core.exceptions import NotFoundError, BusinessLogicError
 
 
 class TestTicketRepr:
@@ -33,7 +35,8 @@ class TestTicketStatusProperty:
         """Test the computed status property."""
         assert ticket.status == "open"
         assert closed_ticket.status == "closed"
-        assert muted_ticket.status == "muted"
+        assert muted_ticket.status == "open"
+        assert muted_ticket.muted is True
 
 
 class TestCreateTicket:
@@ -135,7 +138,7 @@ class TestToggleMute:
         refreshed_ticket = Ticket.find_by_id(ticket_id)
         assert refreshed_ticket is not None
         assert refreshed_ticket.muted is True
-        assert refreshed_ticket.status == "muted"
+        assert refreshed_ticket.status == "open"  # Status is only open/closed
 
         ticket.toggle_mute(False)
 
@@ -153,6 +156,31 @@ class TestToggleMute:
         with patch.object(db_session, "commit") as mock_commit:
             ticket.toggle_mute(False, commit=True)
             mock_commit.assert_called_once()
+
+
+class TestUpdateEventAndTeam:
+    def test_update_event_and_team_mismatch(self, ticket, event_factory, team_factory, user, db_session):
+        """Test that updating with mismatched team/event raises BusinessLogicError."""
+        event1 = event_factory(name="Event 1")
+        event2 = event_factory(name="Event 2")
+        team_in_event1 = team_factory(event=event1, members=[user])
+
+        # Set initial valid values
+        ticket.update_event_and_team(event_id=event1.id, team_id=team_in_event1.id)
+        assert ticket.event_id == event1.id
+        assert ticket.team_id == team_in_event1.id
+
+        # Try to update with mismatched team/event
+        with pytest.raises(BusinessLogicError) as exc_info:
+            ticket.update_event_and_team(
+                event_id=event2.id,  # Different event
+                team_id=team_in_event1.id  # Team from event1
+            )
+        assert "Team does not belong to the specified event" in str(exc_info.value)
+
+        # Verify nothing was changed
+        assert ticket.event_id == event1.id
+        assert ticket.team_id == team_in_event1.id
 
 
 class TestAssignUnassignTicket:
@@ -280,7 +308,7 @@ class TestGetTicketStats:
             "total": len(all_tickets),
             "open": len([t for t in all_tickets if t.status == "open"]),
             "closed": len([t for t in all_tickets if t.status == "closed"]),
-            "muted": len([t for t in all_tickets if t.status == "muted"]),
+            "muted": len([t for t in all_tickets if t.muted]),
             "unassigned": len([t for t in all_tickets if t.assigned_to is None]),
             "avg_response_time_hours": 0,
             "closed_today": 0,
@@ -300,16 +328,16 @@ class TestGetTicketStats:
         assert stats["muted"] >= 1
 
 
-class TestAddTags:
-    def test_add_tags(self, ticket, ticket_tag_factory, db_session):
-        """Test adding tags to a ticket."""
+class TestSetTags:
+    def test_set_tags(self, ticket, ticket_tag_factory, db_session):
+        """Test setting tags on a ticket."""
         ticket_id = ticket.id
         tag1 = ticket_tag_factory(name="urgent")
         tag2 = ticket_tag_factory(name="technical")
 
         assert len(ticket.tags) == 0
 
-        ticket.add_tags([tag1, tag2])
+        ticket.set_tags([tag1.id, tag2.id])
 
         refreshed_ticket = Ticket.find_by_id(ticket_id)
         assert refreshed_ticket is not None
@@ -318,52 +346,94 @@ class TestAddTags:
         assert "urgent" in tag_names
         assert "technical" in tag_names
 
-    def test_add_tags_respects_commit_flag(
+    def test_set_tags_respects_commit_flag(
         self, ticket, ticket_tag_factory, db_session
     ):
-        """Test that add_tags respects the commit flag."""
+        """Test that set_tags respects the commit flag."""
         tag = ticket_tag_factory(name="test-tag")
 
         with patch.object(db_session, "commit") as mock_commit:
-            ticket.add_tags([tag], commit=False)
+            ticket.set_tags([tag.id], commit=False)
             mock_commit.assert_not_called()
 
         with patch.object(db_session, "commit") as mock_commit:
-            ticket.add_tags([tag], commit=True)
+            ticket.set_tags([tag.id], commit=True)
             mock_commit.assert_called_once()
 
+    def test_set_tags_with_invalid_ids(self, ticket, db_session):
+        """Test set_tags raises NotFoundError for invalid tag IDs."""
 
-class TestRemoveTags:
-    def test_remove_tags(self, ticket_with_tags, db_session):
-        """Test removing tags from a ticket."""
+        # Ensure ticket has no tags initially
+        assert len(ticket.tags) == 0
+
+        with pytest.raises(NotFoundError) as exc_info:
+            ticket.set_tags([99999, 88888])
+        assert "Tag IDs not found" in str(exc_info.value)
+
+        # Verify nothing was changed on the object
+        assert len(ticket.tags) == 0
+
+
+class TestUpdateTags:
+    def test_replace_tags(self, ticket_with_tags, ticket_tag_factory, db_session):
+        """Test replacing all tags on a ticket."""
         ticket_id = ticket_with_tags.id
-        initial_count = len(ticket_with_tags.tags)
-        tag_to_remove = ticket_with_tags.tags[0]
-        tag_to_keep = ticket_with_tags.tags[1]
-        tag_to_keep_name = tag_to_keep.name
+        initial_tags = ticket_with_tags.tags
 
-        ticket_with_tags.remove_tags([tag_to_remove])
+        # Create new tags to replace with
+        new_tag1 = ticket_tag_factory(name="priority-high")
+        new_tag2 = ticket_tag_factory(name="backend")
+
+        # Replace all tags
+        ticket_with_tags.set_tags([new_tag1.id, new_tag2.id])
 
         refreshed_ticket = Ticket.find_by_id(ticket_id)
         assert refreshed_ticket is not None
-        assert len(refreshed_ticket.tags) == initial_count - 1
+        assert len(refreshed_ticket.tags) == 2
         tag_names = [tag.name for tag in refreshed_ticket.tags]
-        assert tag_to_remove.name not in tag_names
-        assert tag_to_keep_name in tag_names
+        assert "priority-high" in tag_names
+        assert "backend" in tag_names
+        # Original tags should not be present
+        for original_tag in initial_tags:
+            assert original_tag.name not in tag_names
 
-    def test_remove_tags_respects_commit_flag(
-        self, ticket, ticket_tag_factory, db_session
-    ):
-        """Test that remove_tags respects the commit flag."""
-        tag1 = ticket_tag_factory(name="test-remove-1")
-        tag2 = ticket_tag_factory(name="test-remove-2")
-        ticket.add_tags([tag1, tag2])
-        db_session.commit()
+    def test_clear_all_tags(self, ticket_with_tags, db_session):
+        """Test clearing all tags from a ticket."""
+        ticket_id = ticket_with_tags.id
+        assert len(ticket_with_tags.tags) > 0
 
-        with patch.object(db_session, "commit") as mock_commit:
-            ticket.remove_tags([tag1], commit=False)
-            mock_commit.assert_not_called()
+        # Clear all tags by setting empty list
+        ticket_with_tags.set_tags([])
 
-        with patch.object(db_session, "commit") as mock_commit:
-            ticket.remove_tags([tag2], commit=True)
-            mock_commit.assert_called_once()
+        refreshed_ticket = Ticket.find_by_id(ticket_id)
+        assert refreshed_ticket is not None
+        assert len(refreshed_ticket.tags) == 0
+
+
+class TestAddMessage:
+    def test_add_message_first_admin_response(self, ticket, user, admin, db_session):
+        """Test that first admin message sets first_admin_response_timestamp."""
+        ticket_id = ticket.id
+        assert ticket.first_admin_response_timestamp is None
+
+        ticket.add_message("User question", author_id=user.id, is_admin=False)
+        assert ticket.first_admin_response_timestamp is None
+
+        refreshed = Ticket.find_by_id(ticket_id)
+        assert refreshed.first_admin_response_timestamp is None
+        assert len(refreshed.messages) == 1
+
+        ticket.add_message("Admin response", author_id=admin.id, is_admin=True)
+        assert ticket.first_admin_response_timestamp is not None
+
+        refreshed = Ticket.find_by_id(ticket_id)
+        assert refreshed.first_admin_response_timestamp is not None
+        assert len(refreshed.messages) == 2
+
+        original_timestamp = ticket.first_admin_response_timestamp
+        ticket.add_message("Another admin response", author_id=admin.id, is_admin=True)
+        assert ticket.first_admin_response_timestamp == original_timestamp
+
+        refreshed = Ticket.find_by_id(ticket_id)
+        assert refreshed.first_admin_response_timestamp == original_timestamp
+        assert len(refreshed.messages) == 3

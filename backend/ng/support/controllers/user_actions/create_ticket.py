@@ -1,45 +1,44 @@
 """
-Creates a new support ticket.
+Creates a new support ticket with initial message.
 """
 
-from typing import Any
-
 from ....core.utils import emit_event
-from ....core import ValidationError, NotFoundError
-
+from ....user.models.User import User
 from ...models.Ticket import Ticket
 
 
 def create_ticket(
     subject: str,
-    author_id: int,
+    text: str,
+    current_user: User,
     event_id: int | None = None,
     team_id: int | None = None,
     challenge_id: int | None = None,
-    tag_ids: list[int] | None = None,
-) -> dict[str, Any]:
-    """Creates a new support ticket."""
-    result = Ticket.create_with_validation(
+) -> Ticket:
+    """
+    Create a new support ticket with initial message
+    """
+    ticket = Ticket.create_ticket(
         subject=subject,
-        author_id=author_id,
+        author_id=current_user.id,
         event_id=event_id,
         team_id=team_id,
         challenge_id=challenge_id,
-        tag_ids=tag_ids,
+        commit=True,
     )
 
-    if not result["success"]:
-        if "not found" in result["error"].lower():
-            raise NotFoundError(result["error"])
-        else:
-            raise ValidationError(result["error"])
+    ticket.add_message(
+        text=text,
+        author_id=current_user.id,
+        is_admin=False,
+        commit=True,
+    )
 
-    ticket = result["ticket"]
-
+    # TODO: Refactor in near future with notifications implemenation
     emit_event(
         event_name="new_ticket",
-        data=ticket.serialize(include_admin_fields=True),
-        room="support_staff",
+        data={"ticket": ticket.serialize()},
+        room="support_admin",
     )
 
-    return ticket.serialize(include_admin_fields=False)
+    return ticket

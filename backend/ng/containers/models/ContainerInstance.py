@@ -4,7 +4,6 @@ from ..utils.get_client import get_client
 from ... import config
 from .. constants import DOCKER_RUNNING
 from ...challenge.models.ContainerBlueprint import ContainerBlueprint
-from ...core.utils.validator import BaseValidator
 
 class ContainerInstance(db.Model):
     __tablename__ = "ng_container_instances"

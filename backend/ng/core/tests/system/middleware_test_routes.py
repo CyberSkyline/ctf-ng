@@ -84,12 +84,12 @@ def get_user_permissions(**kwargs):
     The permissions are attached to the request context by the decorator.
     """
     return jsonify({"success": True, "permissions": kwargs.get("permissions", [])})
-    
+
 @middleware_test_routes.route("/event_only_public/<int:event_id>", methods=["GET"])
 @user_endpoint()
 @load_event(source=LoaderType.PARAM)
 @event_only_public
-def event_only_public(**kwargs): 
+def event_only_public(**kwargs):
 
     """
     Endpoint to test the event_only_public decorator.

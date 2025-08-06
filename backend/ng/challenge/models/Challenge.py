@@ -4,7 +4,7 @@ from typing import Any, TypedDict
 
 from CTFd.models import db
 
-from ...core.validation import BaseValidator
+from ...core.utils.validator import BaseValidator
 
 MAX_CHALLENGE_NAME_LENGTH = 128
 MAX_CHALLENGE_DESCRIPTION_LENGTH = 4096

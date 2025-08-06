@@ -190,8 +190,8 @@ class BaseValidator:
         Validate a positive (greater than zero) integer
         """
         return self.validate_integer(
-            data, 
-            field, 
+            data,
+            field,
             min_value=1,
             required=required,
             friendly_name=friendly_name
@@ -214,17 +214,17 @@ class BaseValidator:
         except (ValueError, TypeError):
             self.errors[field] = f"{friendly_name} must be a valid number"
             return
-                
+
         user = Users.query.get(user_id)
-        
+
         if not user:
             self.errors[field] = f"{friendly_name} with ID {user_id} does not exist"
             return
-            
+
         if user.type != "admin":
-            self.errors[field] = f"User must be an admin to perform this action"
+            self.errors[field] = "User must be an admin to perform this action"
             return
-            
+
         self._add_parsed_data(field, user_id)
 
     @validation_field
@@ -244,24 +244,24 @@ class BaseValidator:
         """
         try:
             int_value = int(value)  # type: ignore[arg-type]
-            
+
             # Check zero constraint
             if not allow_zero and int_value == 0:
                 self.errors[field] = f"{friendly_name} cannot be zero"
                 return
-                
+
             # Check min constraint
             if min_value is not None and int_value < min_value:
                 self.errors[field] = f"{friendly_name} must be at least {min_value}"
                 return
-                
-            # Check max constraint  
+
+            # Check max constraint
             if max_value is not None and int_value > max_value:
                 self.errors[field] = f"{friendly_name} must be at most {max_value}"
                 return
-                
+
             self._add_parsed_data(field, int_value)
-            
+
         except (ValueError, TypeError):
             self.errors[field] = f"{friendly_name} must be a valid integer"
 

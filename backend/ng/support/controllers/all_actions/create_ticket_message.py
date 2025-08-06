@@ -2,28 +2,38 @@
 Creates a new message in a support ticket thread.
 """
 
-from flask import g
-from typing import Any
-
-from ....core.validation import validate_ticket_reply_allowed
 from ....core.utils import emit_event
+from ...models.Ticket import Ticket
+from ...models.TicketMessage import TicketMessage
 
 
-def create_ticket_message(ticket_id: int, text: str, author_id: int, is_admin: bool = False) -> dict[str, Any]:
-    """Creates a new message in a ticket thread."""
-    ticket = g.ticket
+def create_ticket_message(
+    text: str,
+    author_id: int,
+    ticket: Ticket,
+    is_admin: bool = False,
+) -> TicketMessage:
+    """
+    Creates a new message in a ticket thread.
+    """
+    if ticket.status == "closed" and is_admin:
+        ticket.reopen_ticket(commit=False)
 
-    validate_ticket_reply_allowed(ticket, is_admin)
-
-    result = ticket.add_message_with_updates(text=text, author_id=author_id, is_admin=is_admin)
-
-    emit_event(
-        event_name="new_message",
-        data=result["message"].serialize(),
-        room=f"ticket_{ticket_id}",
+    ticket.add_message(
+        text=text,
+        author_id=author_id,
+        is_admin=is_admin,
+        commit=True,
     )
 
-    return {
-        "message": result["message"],
-        "ticket_reopened": result["ticket_reopened"],
-    }
+    messages = ticket.get_messages()
+    message = messages[-1]
+
+    # TODO: Refactor in near future with notifications implemenation
+    emit_event(
+        event_name="new_message",
+        data={"ticket_id": ticket.id, "message": message.serialize()},
+        room=f"ticket_{ticket.id}",
+    )
+
+    return message

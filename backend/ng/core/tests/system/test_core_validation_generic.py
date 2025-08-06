@@ -8,7 +8,7 @@ import pytest
 
 from ...exceptions import ValidationError
 from ...utils import utc_now
-from ...validation import BaseValidator
+from ...utils.validator import BaseValidator
 
 
 class TestBaseValidator:

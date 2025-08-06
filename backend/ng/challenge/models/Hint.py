@@ -5,7 +5,7 @@ from typing import Any
 from CTFd.models import db
 from cyber_skyline.chall_parser.compose.challenge_info import Hint as HintAttr
 
-from ...core.validation import BaseValidator
+from ...core.utils.validator import BaseValidator
 
 MAX_HINT_PREVIEW_LENGTH = 256
 MAX_HINT_BODY_LENGTH = 1024

@@ -165,7 +165,6 @@ class TestEventValidationEdgeCases:
         multiline_desc = """This is a test event
         with multiple lines
         and various formatting.
-        
         It includes:
         - Line breaks
         - Special characters !@#$%

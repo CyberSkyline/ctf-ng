@@ -28,7 +28,6 @@ class Test_Public_Event_Listing:
 
 
     def test_list_no_private_events(self, logged_in_client, event_factory):
-        event1 = event_factory(name="Private Event 1", public=False)
         event2 = event_factory(name="Private Event 2", public=True)
 
         response = logged_in_client.get(self.endpoint)
@@ -102,7 +101,7 @@ class Test_Event_Eligibility:
         assert data["success"] is False
         assert "errors" in data
         assert "Event registration is closed." in data["errors"]["business_logic"]
-    
+
     def test_check_event_eligibility_before_start(self, logged_in_client, event_factory):
         event = event_factory(name="Event Before Start", public=True, registration_start_date=datetime.utcnow() + timedelta(days=1), registration_end_date=datetime.utcnow() + timedelta(days=2))
 
@@ -409,7 +408,7 @@ class Test_Event_Team_Management:
         assert not data['success']
         assert "errors" in data
         assert "You cannot kick yourself from the team." in data['errors']['validation']
-    
+
     def test_captain_kick_invalid_user(self, team_captain_client):
         """Test that the team kick endpoint fails with invalid user."""
         response = team_captain_client.post(f"/ng/events/{1}/me/team/kick", json={"user_id": 9999})
@@ -661,7 +660,7 @@ class Test_Event_Admin_Create:
 class Test_Event_Challenge_Import:
     def get_endpoint(self, event) -> str:
         return f"/ng/admin/events/{event.id}/challenges"
-    
+
     def test_challenge_import_endpoint(self, admin_client, event):
         with open(os.path.join(os.path.dirname(__file__), "../../challenge/tests/yamls/default.yaml"), "rb") as f:
             yaml = base64.urlsafe_b64encode(f.read())
@@ -673,7 +672,7 @@ class Test_Event_Challenge_Import:
         assert response.status_code == 200
         assert len(challenge.hints) == 1
         assert len(challenge.questions) == 1
-        
+
 
     def test_challenge_import_endpoint_bad_yaml(self, admin_client, event):
         with open(os.path.join(os.path.dirname(__file__), "../../challenge/tests/yamls/bad.yaml"), "rb") as f:

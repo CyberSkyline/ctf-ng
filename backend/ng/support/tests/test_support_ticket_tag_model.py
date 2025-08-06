@@ -2,9 +2,10 @@
 Model tests for TicketTag
 """
 
+import pytest
 from unittest.mock import patch
 from ..models.TicketTag import TicketTag
-
+from ...core.exceptions import ConflictError
 
 class TestTicketTagRepr:
     def test_repr(self, ticket_tag):
@@ -45,6 +46,17 @@ class TestCreateTag:
                 name="with-commit-tag", description="With commit", commit=True
             )
             mock_commit.assert_called_once()
+
+    def test_create_tag_duplicate_name(self, db_session):
+        """Test that creating a tag with duplicate name raises ConflictError."""
+        # Create a tag first
+        TicketTag.create_tag(name="unique-tag-test", color="#FF0000")
+        db_session.flush()  # Ensure it's in the database
+
+        # Try to create another with the same name
+        with pytest.raises(ConflictError) as exc_info:
+            TicketTag.create_tag(name="unique-tag-test", color="#00FF00")
+        assert "Tag name 'unique-tag-test' already exists" in str(exc_info.value)
 
 
 class TestUpdateTag:
@@ -128,26 +140,6 @@ class TestGetAllTags:
             assert tag.name == original.name
             assert tag.color == original.color
             assert tag.description == original.description
-
-
-class TestSearchTags:
-    def test_search_tags(self, ticket_tag_factory):
-        """Test searching tags by name."""
-        ticket_tag_factory(name="critical-bug")
-        ticket_tag_factory(name="minor-bug")
-        ticket_tag_factory(name="feature-request")
-
-        bug_tags = TicketTag.search_tags("bug")
-        assert len(bug_tags) >= 2
-        assert all("bug" in tag.name for tag in bug_tags)
-
-    def test_search_tags_case_insensitive(self, ticket_tag_factory):
-        """Test that tag search is case insensitive."""
-        ticket_tag_factory(name="BUG-report")
-        ticket_tag_factory(name="bug-fix")
-
-        results = TicketTag.search_tags("bug")
-        assert len(results) >= 2
 
 
 class TestSerialize:

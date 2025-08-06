@@ -8,7 +8,7 @@ from ..core.utils import get_logger
 
 logger = get_logger(__name__)
 
-
+# TODO: Refactor in near future with notifications implemenation
 def initialize_socket_handlers(socketio):
     """
     Registers all socket event handlers with the main SocketIO instance.
@@ -42,10 +42,10 @@ def initialize_socket_handlers(socketio):
 
             room_name = f"ticket_{ticket_id}"
             join_room(room_name)
-            logger.info(f"Client joined room: {room_name}")
+            logger.info("Client joined room: %s", room_name)
             emit("room_joined", {"room": room_name, "status": "success"})
         except Exception as e:
-            logger.error(f"Error in handle_join_ticket_room: {e}", exc_info=True)
+            logger.error("Error in handle_join_ticket_room: %s", e, exc_info=True)
             emit(
                 "error",
                 {"message": "An internal error occurred while joining the room."},
@@ -67,10 +67,10 @@ def initialize_socket_handlers(socketio):
 
             room_name = f"ticket_{ticket_id}"
             leave_room(room_name)
-            logger.info(f"Client left room: {room_name}")
+            logger.info("Client left room: %s", room_name)
             emit("room_left", {"room": room_name, "status": "success"})
         except Exception as e:
-            logger.error(f"Error in handle_leave_ticket_room: {e}", exc_info=True)
+            logger.error("Error in handle_leave_ticket_room: %s", e, exc_info=True)
             emit(
                 "error",
                 {"message": "An internal error occurred while leaving the room."},
@@ -97,7 +97,7 @@ def initialize_socket_handlers(socketio):
                 include_self=False,
             )
         except Exception as e:
-            logger.error(f"Error in handle_user_typing: {e}", exc_info=True)
+            logger.error("Error in handle_user_typing: %s", e, exc_info=True)
 
     @socketio.on("user_stops_typing")
     def handle_user_stops_typing(data):
@@ -120,4 +120,4 @@ def initialize_socket_handlers(socketio):
                 include_self=False,
             )
         except Exception as e:
-            logger.error(f"Error in handle_user_stops_typing: {e}", exc_info=True)
+            logger.error("Error in handle_user_stops_typing: %s", e, exc_info=True)
