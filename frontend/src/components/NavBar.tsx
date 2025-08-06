@@ -3,7 +3,7 @@ import { DropdownMenu } from '@radix-ui/themes';
 import { NavLink, useLocation } from 'react-router';
 import { TbUserCircle } from 'react-icons/tb';
 import { twMerge } from 'tailwind-merge';
-import ThemeToggle from './ThemeToggle';
+import ThemeToggle from 'components/ThemeToggle';
 
 export default function NavBar() {
   const logout = () => {
