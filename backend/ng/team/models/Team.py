@@ -14,9 +14,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from ... import config
-from ...core.exceptions import ConflictError, ValidationError, BusinessLogicError
+from ...core.exceptions import BusinessLogicError, ConflictError, ValidationError
 from ...core.utils.validator import BaseValidator
-
 from .enums import TeamRole
 from .TeamMember import TeamMember
 
@@ -128,7 +127,7 @@ class Team(db.Model):
             res = Team.name_exists_in_event_excluding_self(
                 event_id=data["event_id"],
                 name=data["name"],
-                exclude_team_id=data.get("id", 0)  # Exclude current team if updating
+                exclude_team_id=data.get("id", 0),  # Exclude current team if updating
             )
             if res:
                 raise ValidationError(f"Team name '{data['name']}' already exists in event ID {data['event_id']}.")
@@ -147,7 +146,7 @@ class Team(db.Model):
             raise ValidationError(f"Team validation failed: {e.errors}") from e
 
     @classmethod
-    def team_name_contains_member_name(cls,name, member_names) -> bool:
+    def team_name_contains_member_name(cls, name, member_names) -> bool:
         """Check if the team name contains any member's name.
 
         Returns:
@@ -210,11 +209,7 @@ class Team(db.Model):
         # LAZY-IMPORT
         from ...scoring.models.Score import Score
 
-        Score.create_score(
-            team_id=team.id,
-            commit=False,
-            team=team
-        )
+        Score.create_score(team_id=team.id, commit=False, team=team)
 
         if commit:
             try:
@@ -456,6 +451,7 @@ class Team(db.Model):
         """
         # LAZY-IMPORT
         from .enums import TeamRole
+
         try:
             team = cls.create_team(
                 name=name,
@@ -491,7 +487,7 @@ class Team(db.Model):
         return Attempt.query.filter_by(
             team_id=self.id,
             event_id=event_id,
-            is_correct=True
+            is_correct=True,
         ).count()
 
     def has_solved_question(self, question_id: int) -> bool:
@@ -501,36 +497,40 @@ class Team(db.Model):
         # LAZY-IMPORT
         from ...scoring.models.Attempt import Attempt
 
-        return Attempt.query.filter_by(
-            team_id=self.id,
-            question_id=question_id,
-            is_correct=True
-        ).first() is not None
+        return (
+            Attempt.query.filter_by(
+                team_id=self.id,
+                question_id=question_id,
+                is_correct=True,
+            ).first()
+            is not None
+        )
 
     def has_redeemed_hint(self, hint_id: int) -> bool:
         """
         Checks if the team has already redeemed a specific hint
-         """
+        """
         # LAZY-IMPORT
         from ...scoring.models.HintRedemption import HintRedemption
 
-        return HintRedemption.query.filter_by(
-            team_id=self.id,
-            hint_id=hint_id
-        ).first() is not None
+        return HintRedemption.query.filter_by(team_id=self.id, hint_id=hint_id).first() is not None
 
     def get_redeemed_hints_for_challenge(self, challenge_id: int) -> list[int]:
         """
         Gets a list of hint IDs this team has redeemed for a specific challenge
         """
         # LAZY-IMPORT
-        from ...scoring.models.HintRedemption import HintRedemption
         from ...challenge.models.Hint import Hint
+        from ...scoring.models.HintRedemption import HintRedemption
 
-        redemptions = HintRedemption.query.join(Hint).filter(
-            HintRedemption.team_id == self.id,
-            Hint.challenge_id == challenge_id
-        ).all()
+        redemptions = (
+            HintRedemption.query.join(Hint)
+            .filter(
+                HintRedemption.team_id == self.id,
+                Hint.challenge_id == challenge_id,
+            )
+            .all()
+        )
         return [r.hint_id for r in redemptions]
 
     def remove_member_and_regenerate_code(self, user_id: int, commit=True) -> None:
@@ -547,7 +547,7 @@ class Team(db.Model):
                 self.update_invite_code(commit=False)
                 if commit:
                     db.session.commit()
-                return True
+                return
         except Exception:
             db.session.rollback()
             raise
@@ -569,8 +569,6 @@ class Team(db.Model):
             else:
                 raise ValidationError(f"User {new_captain_user_id} is not a member of team {self.id}.")
 
-            self.update_invite_code(commit=False)
-
             db.session.commit()
             return True
         except Exception:
@@ -586,4 +584,3 @@ class Team(db.Model):
         except Exception:
             db.session.rollback()
             raise
-

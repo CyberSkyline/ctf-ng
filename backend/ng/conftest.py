@@ -20,6 +20,7 @@ from . import load as plugin_load
 from .challenge.models.Challenge import Challenge
 from .core.tests.helpers import create_ctfd, destroy_ctfd
 from .core.tests.system.middleware_test_routes import middleware_test_routes
+from .event.models.Demographic import Demographic
 from .event.models.Event import Event
 from .permissions.controllers import assign_role_to_user
 from .permissions.models.enums import PermissionEnum, RoleEnum
@@ -30,7 +31,6 @@ from .support.models.Ticket import Ticket
 from .support.models.TicketTag import TicketTag
 from .team.models.Team import Team
 from .user.models.User import User as NgUser
-from .event.models.Demographic import Demographic
 
 
 def create_app():
@@ -127,7 +127,11 @@ def middleware_client():
         db.session.add(ng_user2)
         db.session.commit()
 
-        event = Event(name="Temp Event", description="Temporary event for testing",public=True,)
+        event = Event(
+            name="Temp Event",
+            description="Temporary event for testing",
+            public=True,
+        )
         db.session.add(event)
         db.session.commit()
 
@@ -153,9 +157,7 @@ def middleware_client():
         db.session.add(event3)
         db.session.commit()
 
-        Demographic.create_demographic(
-            user_id=user_to_login.id, event_id = event3.id, commit=True
-        )
+        Demographic.create_demographic(user_id=user_to_login.id, event_id=event3.id, commit=True)
 
         Team.create_team_with_captain(
             name="Temp Team", event_id=event.id, captain_id=user_to_login.id, invite_code="fo67ykug"
@@ -298,12 +300,11 @@ def team_factory(db_session, event_factory):
 
         for member_user in members_to_add:
             TeamMember.create_team_member(user_id=member_user.id, team_id=team.id, event_id=event.id)
-            Demographic.create_demographic(
-                user_id=member_user.id, event_id=event.id, commit=False
-            )
+            Demographic.create_demographic(user_id=member_user.id, event_id=event.id, commit=False)
         return team
 
     return _factory
+
 
 @pytest.fixture
 def user_factory(db_session):
@@ -329,6 +330,7 @@ def team_with_member(db_session, team_factory, user):
     team = team_factory(members=[user])
     return team
 
+
 @pytest.fixture
 def team_with_members(db_session, team_factory, user_factory):
     """Creates a team with multiple members for testing."""
@@ -336,11 +338,13 @@ def team_with_members(db_session, team_factory, user_factory):
     team = team_factory(members=users)
     return team
 
+
 @pytest.fixture
 def team_captain_client(app, db_session, team_with_members, role_with_permissions):
     """A test client logged in as a team captain."""
     # Clear any cached user data to prevent cross-test contamination
     from CTFd.cache import cache
+
     cache.clear()
     client = app.test_client()
     with client.session_transaction() as sess:
@@ -353,11 +357,13 @@ def team_captain_client(app, db_session, team_with_members, role_with_permission
         sess.permanent = False
     return client
 
+
 @pytest.fixture
 def team_member_client(app, db_session, team_with_members, role_with_permissions):
     """A test client logged in as a team member."""
     # Clear any cached user data to prevent cross-test contamination
     from CTFd.cache import cache
+
     cache.clear()
 
     client = app.test_client()
@@ -371,15 +377,19 @@ def team_member_client(app, db_session, team_with_members, role_with_permissions
         sess.permanent = False
     return client
 
+
 @pytest.fixture
 def closed_event_client(app, db_session, event_factory, team_factory, user_factory):
     """A test client for a closed event."""
     # Clear any cached user data to prevent cross-test contamination
     from CTFd.cache import cache
+
     cache.clear()
     user = user_factory(name="Closed Event User", email="closed_event_user@example.com")
     user2 = user_factory(name="Closed Event User 2", email="closed_event_user2@example.com")
-    event = event_factory(locked=True, start_time=datetime.utcnow() - timedelta(days=2), end_time=datetime.utcnow() - timedelta(days=1))
+    event = event_factory(
+        locked=True, start_time=datetime.utcnow() - timedelta(days=2), end_time=datetime.utcnow() - timedelta(days=1)
+    )
     team = team_factory(event=event, members=[user, user2])
 
     client = app.test_client()
@@ -410,9 +420,6 @@ def event(db_session):
     return event
 
 
-
-
-
 @pytest.fixture
 def locked_event(db_session):
     """Create a locked event for testing restrictions."""
@@ -423,7 +430,7 @@ def locked_event(db_session):
         description="This event is locked",
         locked=True,
         start_time=datetime.utcnow() - timedelta(days=10),
-        end_time=datetime.utcnow() - timedelta(days=5)
+        end_time=datetime.utcnow() - timedelta(days=5),
     )
     db_session.add(event)
     db_session.flush()
@@ -440,7 +447,7 @@ def future_event(db_session):
         description="This event hasn't started",
         locked=False,
         start_time=datetime.utcnow() + timedelta(days=5),
-        end_time=datetime.utcnow() + timedelta(days=10)
+        end_time=datetime.utcnow() + timedelta(days=10),
     )
     db_session.add(event)
     db_session.flush()
@@ -527,9 +534,7 @@ def ticket_tag(db_session):
     """Creates a ticket tag for testing."""
     from .support.models.TicketTag import TicketTag
 
-    tag = TicketTag.create_tag(
-        name="bug", color="#FF0000", description="Bug reports", commit=False
-    )
+    tag = TicketTag.create_tag(name="bug", color="#FF0000", description="Bug reports", commit=False)
     db_session.add(tag)
     db_session.commit()
     return tag
@@ -577,9 +582,7 @@ def closed_ticket(db_session, user):
     """Creates a closed support ticket."""
     from .support.models.Ticket import Ticket
 
-    ticket = Ticket.create_ticket(
-        subject="Resolved Issue", author_id=user.id, commit=False
-    )
+    ticket = Ticket.create_ticket(subject="Resolved Issue", author_id=user.id, commit=False)
     ticket.close_ticket(commit=False)
     db_session.add(ticket)
     db_session.commit()
@@ -591,9 +594,7 @@ def muted_ticket(db_session, user):
     """Creates a muted support ticket."""
     from .support.models.Ticket import Ticket
 
-    ticket = Ticket.create_ticket(
-        subject="Low Priority Issue", author_id=user.id, commit=False
-    )
+    ticket = Ticket.create_ticket(subject="Low Priority Issue", author_id=user.id, commit=False)
     ticket.toggle_mute(True, commit=False)
     db_session.add(ticket)
     db_session.commit()
@@ -605,9 +606,7 @@ def assigned_ticket(db_session, user, admin):
     """Creates a ticket assigned to an admin."""
     from .support.models.Ticket import Ticket
 
-    ticket = Ticket.create_ticket(
-        subject="Assigned Issue", author_id=user.id, commit=False
-    )
+    ticket = Ticket.create_ticket(subject="Assigned Issue", author_id=user.id, commit=False)
     ticket.assign_to_user(admin.id, commit=False)
     db_session.add(ticket)
     db_session.commit()
@@ -720,6 +719,7 @@ def challenge_factory(db_session, event_factory):
         db_session.commit()
 
         return challenge
+
     return _factory
 
 
@@ -730,12 +730,8 @@ def multiple_tickets(db_session, user, admin, event, team_factory, ticket_factor
     team = team_factory(event=event, members=[user])
 
     tickets = {
-        "open_unassigned": ticket_factory(
-            subject="Open Unassigned", author_id=user.id, event_id=event.id
-        ),
-        "open_assigned": ticket_factory(
-            subject="Open Assigned", author_id=user.id, team_id=team.id
-        ),
+        "open_unassigned": ticket_factory(subject="Open Unassigned", author_id=user.id, event_id=event.id),
+        "open_assigned": ticket_factory(subject="Open Assigned", author_id=user.id, team_id=team.id),
         "closed": ticket_factory(subject="Closed Ticket", author_id=admin.id),
         "muted": ticket_factory(subject="Muted Ticket", author_id=user.id),
     }
@@ -756,12 +752,7 @@ def question(db_session, challenge):
     from .challenge.models.Question import Question
 
     question = Question(
-        challenge_id=challenge.id,
-        name="Test Question",
-        body="What is 2+2?",
-        answer="4",
-        points=100,
-        max_attempts=5
+        challenge_id=challenge.id, name="Test Question", body="What is 2+2?", answer="4", points=100, max_attempts=5
     )
     db_session.add(question)
     db_session.commit()
@@ -774,10 +765,7 @@ def hint(db_session, challenge):
     from .challenge.models.Hint import Hint
 
     hint = Hint(
-        challenge_id=challenge.id,
-        preview="Single digit hint",
-        body="The answer is a single digit",
-        deduction=20
+        challenge_id=challenge.id, preview="Single digit hint", body="The answer is a single digit", deduction=20
     )
     db_session.add(hint)
     db_session.commit()
@@ -791,10 +779,7 @@ def team_with_member(db_session, event, user):
 
     event_id = event.id
     team = Team.create_team_with_captain(
-        name="Test Scoring Team",
-        event_id=event_id,
-        captain_id=user.id,
-        invite_code="test123"
+        name="Test Scoring Team", event_id=event_id, captain_id=user.id, invite_code="test123"
     )
     return team
 
@@ -804,10 +789,7 @@ def score(db_session, team_with_member, event):
     """Get the Score record that was automatically created with the team."""
     from .scoring.models.Score import Score
 
-    score = Score.query.filter_by(
-        team_id=team_with_member.id,
-        event_id=event.id
-    ).first()
+    score = Score.query.filter_by(team_id=team_with_member.id, event_id=event.id).first()
 
     if not score:
         raise RuntimeError("Score should have been created automatically with team")
@@ -820,12 +802,7 @@ def score_event(db_session, score, team_with_member):
     """Create a ScoreEvent for testing."""
     from .scoring.models.ScoreEvent import ScoreEvent
 
-    score_event = ScoreEvent(
-        score_id=score.id,
-        team_id=team_with_member.id,
-        points=50,
-        timestamp=datetime.utcnow()
-    )
+    score_event = ScoreEvent(score_id=score.id, team_id=team_with_member.id, points=50, timestamp=datetime.utcnow())
     db_session.add(score_event)
     db_session.commit()
     score.adjust(50, commit=True)
@@ -847,7 +824,7 @@ def attempt_factory(db_session):
             "submission": kwargs.get("submission", "test answer"),
             "is_correct": kwargs.get("is_correct", False),
             "points": kwargs.get("points", 0),
-            "timestamp": kwargs.get("timestamp", datetime.utcnow())
+            "timestamp": kwargs.get("timestamp", datetime.utcnow()),
         }
         defaults.update(kwargs)
 
@@ -871,7 +848,7 @@ def hint_redemption_factory(db_session):
             "user_id": kwargs.get("user_id", 1),
             "team_id": kwargs.get("team_id", 1),
             "points": kwargs.get("points", 0),
-            "timestamp": kwargs.get("timestamp", datetime.utcnow())
+            "timestamp": kwargs.get("timestamp", datetime.utcnow()),
         }
         defaults.update(kwargs)
 
@@ -895,7 +872,7 @@ def manual_award_factory(db_session):
             "team_id": kwargs.get("team_id", 1),
             "points": kwargs.get("points", 100),
             "reason": kwargs.get("reason", "Test award"),
-            "timestamp": kwargs.get("timestamp", datetime.utcnow())
+            "timestamp": kwargs.get("timestamp", datetime.utcnow()),
         }
         defaults.update(kwargs)
 
@@ -919,7 +896,7 @@ def score_factory(db_session):
             "event_id": kwargs.get("event_id", 1),
             "points": kwargs.get("points", 0),
             "last_update": kwargs.get("last_update", datetime.utcnow()),
-            "team_name": kwargs.get("team_name", "Test Team")
+            "team_name": kwargs.get("team_name", "Test Team"),
         }
         defaults.update(kwargs)
 
@@ -942,7 +919,7 @@ def score_event_factory(db_session):
             "score_id": kwargs.get("score_id", 1),
             "team_id": kwargs.get("team_id", 1),
             "points": kwargs.get("points", 100),
-            "timestamp": kwargs.get("timestamp", datetime.utcnow())
+            "timestamp": kwargs.get("timestamp", datetime.utcnow()),
         }
         defaults.update(kwargs)
 
@@ -967,7 +944,7 @@ def multiple_teams_with_scores(db_session, event, team_factory, score_factory):
         user = Users(
             name=f"scoreuser{i}",
             email=f"scoreuser{i}@example.com",
-            password="password"
+            password="password",
         )
         user.verified = True
         db_session.add(user)
@@ -983,18 +960,20 @@ def multiple_teams_with_scores(db_session, event, team_factory, score_factory):
             name=f"Score Team {i}",
             event_id=event.id,
             captain_id=user_ids[i],
-            invite_code=f"score{i}123"
+            invite_code=f"score{i}123",
         )
 
         score = Score.query.filter_by(team_id=team.id, event_id=event.id).first()
         score.points = (i + 1) * 100
         db_session.commit()
 
-        teams_data.append({
-            "user_id": user_ids[i],
-            "team": team,
-            "score": score
-        })
+        teams_data.append(
+            {
+                "user_id": user_ids[i],
+                "team": team,
+                "score": score,
+            }
+        )
 
     return teams_data
 

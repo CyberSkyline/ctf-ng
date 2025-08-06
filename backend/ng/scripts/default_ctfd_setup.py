@@ -58,6 +58,7 @@ with app.app_context():
         from CTFd.plugins.ng.permissions.controllers.assign_role_to_user import assign_role_to_user  # type: ignore
         from CTFd.plugins.ng.permissions.controllers.create_permission import create_permission  # type: ignore
         from CTFd.plugins.ng.permissions.controllers.create_role import create_role  # type: ignore
+        from CTFd.plugins.ng.permissions.models.enums import PermissionEnum, RoleEnum  # type: ignore
         from CTFd.plugins.ng.user.models.User import User  # type: ignore
     except ImportError as e:
         print(f"Failed to import plugin modules: {e}")
@@ -69,30 +70,30 @@ with app.app_context():
         admin_user = User.create_user(1, commit=True)
 
     create_permission(
-        name="CAN_EDIT_TEAMS",
+        name=PermissionEnum.CAN_EDIT_TEAM,
         description="Can edit teams",
     )
     create_permission(
-        name="CAN_EDIT_USER",
+        name=PermissionEnum.CAN_EDIT_USER,
         description="Can edit users",
     )
     create_permission(
-        name="CAN_MANAGE_SUPPORT_TICKETS",
+        name=PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
         description="Can manage support tickets",
     )
 
     create_role(
-        name="admin",
+        name=RoleEnum.ADMIN,
         permissions=[
-            "CAN_EDIT_TEAMS",
-            "CAN_EDIT_USER",
-            "CAN_MANAGE_SUPPORT_TICKETS",
+            PermissionEnum.CAN_EDIT_TEAM,
+            PermissionEnum.CAN_EDIT_USER,
+            PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
         ],
     )
     create_role(
-        name="support",
+        name=RoleEnum.SUPPORT,
         permissions=[
-            "CAN_MANAGE_SUPPORT_TICKETS",
+            PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
         ],
     )
     assign_role_to_user(admin_user.id, "admin")
