@@ -19,6 +19,7 @@ from ...support.routes import support_user_namespace, support_admin_namespace
 # from ...event_registration.routes.event_registration import event_reg_namespace
 # from ...challenge.routes.routes import challenge_namespace
 from ...containers.routes.routes import container_namespace
+from ...containers.routes.admin_routes import admin_container_namespace
 
 api_blueprint = Blueprint("plugin_api", __name__)
 
@@ -57,4 +58,4 @@ api_v1.add_namespace(teams_admin_namespace, path="/admin/teams")
 api_v1.add_namespace(permissions_admin_namespace, path="/admin/permissions")
 api_v1.add_namespace(challenge_admin_namespace, path="/admin/challenge")
 api_v1.add_namespace(scoring_admin_namespace, path="/admin/scoring")
-
+api_v1.add_namespace(admin_container_namespace, path="/admin/container")

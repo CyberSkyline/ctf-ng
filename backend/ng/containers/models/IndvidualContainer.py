@@ -1,8 +1,16 @@
 from CTFd.models import db
 import docker
+from typing import TypedDict
 from ... import config
 from ..constants import DOCKER_RUNNING, DOCKER_BRIDGE
 from ..utils.get_client import get_client
+from .ContainerInstance import ContainerInstance
+
+class SerializedIndvidualContainerInfo(TypedDict):
+    id: int
+    hostip: str
+    dockerid: str
+    user: int
 
 class IndvidualContainer(db.Model):
     __tablename__ = "ng_indvidual_containers"
@@ -13,6 +21,10 @@ class IndvidualContainer(db.Model):
 
     def __repr__(self):
         return f"<IndvidualContainer {self.id}>"
+
+    @classmethod
+    def get_user_indvidual_container(cls, user_id: int):
+        return cls.query.filter_by(user=user_id).first()
 
     @classmethod
     def create_indvidual_container(cls, user_id: int, commit: bool = True):
@@ -107,3 +119,70 @@ class IndvidualContainer(db.Model):
         host_port = ports[f"{config.NOVNC_PORT}/tcp"][0]["HostPort"]
 
         return host_port
+
+    def get_current_challenge(self) -> int:
+        client = get_client(self.hostip)
+        ctr_info = client.api.inspect_container(self.dockerid)
+
+        current_challenge_network = None
+
+        networks = ctr_info["NetworkSettings"]["Networks"]
+        for network in networks:
+            if network != DOCKER_BRIDGE:
+                current_challenge_network = network
+
+        if not current_challenge_network:
+            return None
+
+        parsed_network = ContainerInstance.parse_network_name(current_challenge_network)
+
+        return parsed_network.challenge_id
+
+    def restart(self):
+        client = get_client(self.hostip)
+        ctr = client.containers.get(self.dockerid)
+        ctr.restart()
+
+    def recycle(self):
+        client = get_client(self.hostip)
+        try:
+            ctr = client.containers.get(self.dockerid)
+            if ctr.status == DOCKER_RUNNING:
+                ctr.kill()
+
+            ctr.remove()
+
+        except docker.errors.NotFound:
+            pass
+
+        finally:
+            container_name = self.render_container_name(self.user)
+            new_ctr = client.containers.run(
+                config.NOVNC_CONTAINER,
+                name=container_name,
+                detach=True,
+                publish_all_ports=True,
+            )
+
+            self.dockerid = new_ctr.id
+            db.session.commit()
+
+
+    def get_status(self) -> str:
+        client = get_client(self.hostip)
+        ctr = client.containers.get(self.dockerid)
+
+        return ctr.status
+
+    def serialize(self) -> SerializedIndvidualContainerInfo:
+        data = {
+            "id": self.id,
+            "hostip": self.hostip,
+            "dockerid": self.dockerid,
+            "user": self.user,
+        }
+
+        return SerializedIndvidualContainerInfo(
+            **data
+        )
+

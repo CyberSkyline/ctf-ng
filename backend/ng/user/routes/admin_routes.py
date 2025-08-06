@@ -11,6 +11,7 @@ from ...core.middleware.loaders import (
 )
 
 from ..models.User import User
+from ...containers.models.IndvidualContainer import IndvidualContainer
 
 from ._docs import (
     GET_ALL_USERS_DOC,
@@ -78,3 +79,81 @@ class UserTeamsAdminResource(Resource):
         """Get teams for a specific user"""
         teams = target_user.get_teams()
         return success_response(teams)
+
+@users_admin_namespace.route("/<int:user_id>/container")
+class UserIndvidualContainer(Resource):
+    @admin_endpoint()
+    @users_admin_namespace.doc(
+        description="Get user's container",
+        responses={
+            200: "Sucess",
+            400: "Bad request"
+        }
+    )
+    def get(self, user_id):
+        ctr = IndvidualContainer.get_user_indvidual_container(user_id)
+        data = ctr.serialize()
+        return success_response(data)
+
+@users_admin_namespace.route("/<int:user_id>/container/status")
+class UserIndvidualContainerStatus(Resource):
+    @admin_endpoint()
+    @users_admin_namespace.doc(
+        description="Get current status of user's container",
+        responses={
+            200: "Sucess",
+            400: "Bad request"
+        }
+    )
+    def get(self, user_id):
+        ctr = IndvidualContainer.get_user_indvidual_container(user_id)
+        data = ctr.get_status()
+        return success_response(data)
+
+@users_admin_namespace.route("/<int:user_id>/container/challenge")
+class UserIndvidualContainerCurrentChallenge(Resource):
+    @admin_endpoint()
+    @users_admin_namespace.doc(
+        description="Get current challenge user's indvidual container is connected to",
+        responses={
+            200: "Sucess",
+            400: "Bad request"
+        }
+    )
+    def get(self, user_id):
+        ctr = IndvidualContainer.get_user_indvidual_container(user_id)
+        data = ctr.get_current_challenge()
+        return success_response({
+            "challenge_id": data,
+        })
+
+@users_admin_namespace.route("/<int:user_id>/container/restart")
+class UserIndvidualContainerRestart(Resource):
+    @admin_endpoint()
+    @users_admin_namespace.doc(
+        description="Restart a user's indvidual container",
+        responses={
+            200: "Sucess",
+            400: "Bad request"
+        }
+    )
+    def get(self, user_id):
+        ctr = IndvidualContainer.get_user_indvidual_container(user_id)
+        ctr.restart()
+        return success_response(True)
+
+@users_admin_namespace.route("/<int:user_id>/container/recycle")
+class UserIndvidualContainerRecycle(Resource):
+    @admin_endpoint()
+    @users_admin_namespace.doc(
+        description="Delete a user's indvidual container while keeping the db object",
+        responses={
+            200: "Sucess",
+            400: "Bad request"
+        }
+    )
+    def get(self, user_id):
+        ctr = IndvidualContainer.get_user_indvidual_container(user_id)
+        ctr.recycle()
+        res = ctr.serialize()
+        return success_response(res)
