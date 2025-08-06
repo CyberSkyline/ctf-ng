@@ -50,9 +50,6 @@ def test_loading(middleware_client):
     assert "message" in data
     assert data["message"] == "Loading model objects successful."
 
-
-
-
 def test_get_user_role_permissions(middleware_client):
     """
     Test the get_user_role_permissions middleware decorator.

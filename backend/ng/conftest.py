@@ -203,6 +203,7 @@ def user(db_session):
     return user
 
 
+
 @pytest.fixture(scope="function")
 def admin(db_session):
     """Creates an admin user in the database for testing."""
@@ -682,7 +683,6 @@ def ticket_message_factory(db_session):
         db_session.commit()
         return message
 
-
 @pytest.fixture
 def challenge_factory(db_session, event_factory):
     """A factory function to create Challenge objects for tests, with 2 questions."""
@@ -977,7 +977,7 @@ def multiple_teams_with_scores(db_session, event, team_factory, score_factory):
 
     return teams_data
 
-
+@pytest.fixture
 def question_factory(db_session, challenge_factory):
     """A factory function to create Question objects for tests."""
 
