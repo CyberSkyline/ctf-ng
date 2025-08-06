@@ -24,11 +24,14 @@ from ..controllers import (
     update_tag,
     list_tags,
     set_ticket_tags,
-    update_ticket_assignment,
+    assign_ticket,
+    unassign_ticket,
     update_ticket_status,
     update_ticket_mute,
-    update_ticket_event,
-    update_ticket_challenge,
+    set_ticket_event,
+    remove_ticket_event,
+    set_ticket_challenge,
+    remove_ticket_challenge,
 )
 from ..models import Ticket, TicketMessage, TicketTag
 
@@ -302,25 +305,29 @@ class TestSetTicketTags:
         assert len(result.tags) == 0
 
 
-class TestUpdateTicketAssignment:
-    """Test the update_ticket_assignment controller"""
+class TestAssignTicket:
+    """Test the assign_ticket controller"""
 
     def test_assign_ticket(self, db_session, ticket, admin):
         """Test assigning ticket to user"""
         assert ticket.assigned_to is None
 
-        result = update_ticket_assignment(
+        result = assign_ticket(
             user=admin, ticket=ticket
         )
 
         assert result.assigned_to == admin.id
 
+
+class TestUnassignTicket:
+    """Test the unassign_ticket controller"""
+
     def test_unassign_ticket(self, db_session, assigned_ticket):
         """Test unassigning ticket"""
         assert assigned_ticket.assigned_to is not None
 
-        result = update_ticket_assignment(
-            user=None, ticket=assigned_ticket
+        result = unassign_ticket(
+            ticket=assigned_ticket
         )
 
         assert result.assigned_to is None
@@ -379,15 +386,15 @@ class TestUpdateTicketMute:
         assert result.muted is False
 
 
-class TestUpdateTicketEvent:
-    """Test the update_ticket_event controller"""
+class TestSetTicketEvent:
+    """Test the set_ticket_event controller"""
 
-    def test_update_event_and_team(self, db_session, ticket, event_factory, team_factory, user):
-        """Test updating ticket's event and team"""
+    def test_set_event_and_team(self, db_session, ticket, event_factory, team_factory, user):
+        """Test setting ticket's event and team"""
         new_event = event_factory()
         new_team = team_factory(event=new_event, members=[user])
 
-        result = update_ticket_event(
+        result = set_ticket_event(
             event_id=new_event.id,
             team_id=new_team.id,
             ticket=ticket,
@@ -396,39 +403,53 @@ class TestUpdateTicketEvent:
         assert result.event_id == new_event.id
         assert result.team_id == new_team.id
 
-    def test_update_event_only(self, db_session, ticket, event_factory):
-        """Test updating only event"""
-        new_event = event_factory()
 
-        result = update_ticket_event(
-            event_id=new_event.id,
-            team_id=None,
-            ticket=ticket,
-        )
+class TestRemoveTicketEvent:
+    """Test the remove_ticket_event controller"""
 
-        assert result.event_id == new_event.id
+    def test_remove_event(self, db_session, ticket, event_factory, team_factory, user):
+        """Test removing ticket's event association"""
+        event = event_factory()
+        team = team_factory(event=event, members=[user])
+
+        set_ticket_event(event_id=event.id, team_id=team.id, ticket=ticket)
+
+        db_session.refresh(ticket)
+        assert ticket.event_id == event.id
+
+        result = remove_ticket_event(ticket=ticket)
+
+        db_session.refresh(result)
+        assert result.event_id is None
         assert result.team_id is None
 
 
-class TestUpdateTicketChallenge:
-    """Test the update_ticket_challenge controller"""
+class TestSetTicketChallenge:
+    """Test the set_ticket_challenge controller"""
 
-    def test_update_challenge(self, db_session, ticket, challenge):
-        """Test updating ticket's challenge"""
-        result = update_ticket_challenge(
+    def test_set_challenge(self, db_session, ticket, challenge):
+        """Test setting ticket's challenge"""
+        result = set_ticket_challenge(
             challenge_id=challenge.id, ticket=ticket
         )
 
         assert result.challenge_id == challenge.id
 
-    def test_clear_challenge(self, db_session, ticket, challenge):
-        """Test clearing ticket's challenge"""
-        ticket.challenge_id = challenge.id
 
-        result = update_ticket_challenge(
-            challenge_id=None, ticket=ticket
-        )
+class TestRemoveTicketChallenge:
+    """Test the remove_ticket_challenge controller"""
 
+    def test_remove_challenge(self, db_session, ticket, challenge):
+        """Test removing ticket's challenge"""
+
+        set_ticket_challenge(challenge_id=challenge.id, ticket=ticket)
+
+        db_session.refresh(ticket)
+        assert ticket.challenge_id == challenge.id
+
+        result = remove_ticket_challenge(ticket=ticket)
+
+        db_session.refresh(result)
         assert result.challenge_id is None
 
 
@@ -448,7 +469,7 @@ class TestControllerIntegration:
 
         # 2. Admin assigns and tags ticket
         tag = ticket_tag_factory(name="needs-investigation")
-        ticket = update_ticket_assignment(
+        ticket = assign_ticket(
             user=admin, ticket=ticket
         )
         ticket = set_ticket_tags(

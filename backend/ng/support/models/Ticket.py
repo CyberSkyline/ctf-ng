@@ -236,9 +236,9 @@ class Ticket(db.Model):
         validator = BaseValidator()
 
         if event_id is not None:
-            validator.validate_model_id({"event_id": event_id}, "event_id", "Event", required=False)
+            validator.validate_model_id({"event_id": event_id}, "event_id", "Event", required=True)
         if team_id is not None:
-            validator.validate_model_id({"team_id": team_id}, "team_id", "Team", required=False)
+            validator.validate_model_id({"team_id": team_id}, "team_id", "Team", required=True)
 
         validated_data = validator.validate()
 
@@ -249,10 +249,8 @@ class Ticket(db.Model):
             if team and team.event_id != event_id:
                 raise BusinessLogicError("Team does not belong to the specified event")
 
-        if "event_id" in validated_data:
-            self.event_id = validated_data.get("event_id")
-        if "team_id" in validated_data:
-            self.team_id = validated_data.get("team_id")
+        self.event_id = validated_data.get("event_id")
+        self.team_id = validated_data.get("team_id")
 
         self.last_updated = utc_now()
         if commit:

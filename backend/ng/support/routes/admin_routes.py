@@ -19,11 +19,14 @@ from ..controllers import (
     update_tag,
     list_tags,
     set_ticket_tags,
-    update_ticket_assignment,
+    assign_ticket,
+    unassign_ticket,
     update_ticket_status,
     update_ticket_mute,
-    update_ticket_event,
-    update_ticket_challenge,
+    set_ticket_event,
+    remove_ticket_event,
+    set_ticket_challenge,
+    remove_ticket_challenge,
     list_tickets,
     get_ticket,
     create_ticket_message,
@@ -38,8 +41,10 @@ from ._docs import (
     UNASSIGN_TICKET_DOC,
     UPDATE_STATUS_DOC,
     UPDATE_MUTE_DOC,
-    UPDATE_EVENT_DOC,
-    UPDATE_CHALLENGE_DOC,
+    SET_TICKET_EVENT_DOC,
+    REMOVE_TICKET_EVENT_DOC,
+    SET_TICKET_CHALLENGE_DOC,
+    REMOVE_TICKET_CHALLENGE_DOC,
     LIST_TAGS_DOC,
     CREATE_TAG_DOC,
     UPDATE_TAG_DOC,
@@ -127,7 +132,7 @@ class AdminTicketAssignment(Resource):
         """
         Assign ticket to a user
         """
-        updated_ticket = update_ticket_assignment(
+        updated_ticket = assign_ticket(
             user=user,
             ticket=ticket,
         )
@@ -143,8 +148,7 @@ class AdminTicketUnassignment(Resource):
         """
         Unassign ticket from current user
         """
-        updated_ticket = update_ticket_assignment(
-            user=None,
+        updated_ticket = unassign_ticket(
             ticket=ticket,
         )
         return success_response(updated_ticket)
@@ -186,14 +190,14 @@ class AdminTicketMute(Resource):
 
 @support_admin_namespace.route("/tickets/<int:ticket_id>/event")
 class AdminTicketEvent(Resource):
-    @support_admin_namespace.doc(**UPDATE_EVENT_DOC)
+    @support_admin_namespace.doc(**SET_TICKET_EVENT_DOC)
     @admin_endpoint(json_required=True)
     @load_ticket(LoaderType.PARAM)
     def put(self, ticket_id: int, ticket, current_user: User, json_data, **kwargs):
         """
-        Update ticket event/team association
+        Set ticket event/team association
         """
-        updated_ticket = update_ticket_event(
+        updated_ticket = set_ticket_event(
             event_id=json_data.get("event_id"),
             team_id=json_data.get("team_id"),
             ticket=ticket,
@@ -201,17 +205,47 @@ class AdminTicketEvent(Resource):
         return success_response(updated_ticket)
 
 
-@support_admin_namespace.route("/tickets/<int:ticket_id>/challenge")
-class AdminTicketChallenge(Resource):
-    @support_admin_namespace.doc(**UPDATE_CHALLENGE_DOC)
+@support_admin_namespace.route("/tickets/<int:ticket_id>/event/remove")
+class AdminTicketEventRemove(Resource):
+    @support_admin_namespace.doc(**REMOVE_TICKET_EVENT_DOC)
     @admin_endpoint(json_required=True)
     @load_ticket(LoaderType.PARAM)
     def put(self, ticket_id: int, ticket, current_user: User, json_data, **kwargs):
         """
-        Update ticket challenge association
+        Remove ticket event/team association
         """
-        updated_ticket = update_ticket_challenge(
+        updated_ticket = remove_ticket_event(
+            ticket=ticket,
+        )
+        return success_response(updated_ticket)
+
+
+@support_admin_namespace.route("/tickets/<int:ticket_id>/challenge")
+class AdminTicketChallenge(Resource):
+    @support_admin_namespace.doc(**SET_TICKET_CHALLENGE_DOC)
+    @admin_endpoint(json_required=True)
+    @load_ticket(LoaderType.PARAM)
+    def put(self, ticket_id: int, ticket, current_user: User, json_data, **kwargs):
+        """
+        Set ticket challenge association
+        """
+        updated_ticket = set_ticket_challenge(
             challenge_id=json_data.get("challenge_id"),
+            ticket=ticket,
+        )
+        return success_response(updated_ticket)
+
+
+@support_admin_namespace.route("/tickets/<int:ticket_id>/challenge/remove")
+class AdminTicketChallengeRemove(Resource):
+    @support_admin_namespace.doc(**REMOVE_TICKET_CHALLENGE_DOC)
+    @admin_endpoint(json_required=True)
+    @load_ticket(LoaderType.PARAM)
+    def put(self, ticket_id: int, ticket, current_user: User, json_data, **kwargs):
+        """
+        Remove ticket challenge association
+        """
+        updated_ticket = remove_ticket_challenge(
             ticket=ticket,
         )
         return success_response(updated_ticket)

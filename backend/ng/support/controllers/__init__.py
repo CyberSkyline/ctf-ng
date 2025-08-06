@@ -16,11 +16,14 @@ from .admin_actions import (
     update_tag,
     list_tags,
     set_ticket_tags,
-    update_ticket_assignment,
+    assign_ticket,
+    unassign_ticket,
     update_ticket_status,
     update_ticket_mute,
-    update_ticket_event,
-    update_ticket_challenge,
+    set_ticket_event,
+    remove_ticket_event,
+    set_ticket_challenge,
+    remove_ticket_challenge,
 )
 
 __all__ = [
@@ -36,9 +39,12 @@ __all__ = [
     "update_tag",
     "list_tags",
     "set_ticket_tags",
-    "update_ticket_assignment",
+    "assign_ticket",
+    "unassign_ticket",
     "update_ticket_status",
     "update_ticket_mute",
-    "update_ticket_event",
-    "update_ticket_challenge",
+    "set_ticket_event",
+    "remove_ticket_event",
+    "set_ticket_challenge",
+    "remove_ticket_challenge",
 ]

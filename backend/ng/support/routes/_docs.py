@@ -154,8 +154,8 @@ UPDATE_MUTE_DOC = {
     },
 }
 
-UPDATE_EVENT_DOC = {
-    "description": "Update ticket's event and team association (Admin only)",
+SET_TICKET_EVENT_DOC = {
+    "description": "Set ticket's event and team association (Admin only)",
     "responses": {
         200: "Success - Event/team association updated",
         400: "Bad request - Team does not belong to specified event",
@@ -164,13 +164,31 @@ UPDATE_EVENT_DOC = {
     },
 }
 
-UPDATE_CHALLENGE_DOC = {
-    "description": "Update ticket's challenge association (Admin only)",
+REMOVE_TICKET_EVENT_DOC = {
+    "description": "Remove ticket's event and team association (Admin only)",
+    "responses": {
+        200: "Success - Event/team association removed",
+        **ADMIN_REQUIRED_RESPONSES,
+        404: "Not found - Ticket does not exist",
+    },
+}
+
+SET_TICKET_CHALLENGE_DOC = {
+    "description": "Set ticket's challenge association (Admin only)",
     "responses": {
         200: "Success - Challenge association updated",
         400: "Bad request - Invalid challenge_id",
         **ADMIN_REQUIRED_RESPONSES,
         404: "Not found - Ticket or challenge not found",
+    },
+}
+
+REMOVE_TICKET_CHALLENGE_DOC = {
+    "description": "Remove ticket's challenge association (Admin only)",
+    "responses": {
+        200: "Success - Challenge association removed",
+        **ADMIN_REQUIRED_RESPONSES,
+        404: "Not found - Ticket does not exist",
     },
 }
 
