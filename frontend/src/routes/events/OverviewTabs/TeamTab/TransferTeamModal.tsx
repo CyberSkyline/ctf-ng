@@ -1,26 +1,24 @@
-import { COLOR_WARNING } from '@/constants';
 import {
   Button,
   Select,
   Text,
   TextField,
 } from '@radix-ui/themes';
+import { Form } from 'radix-ui';
 import Modal from 'components/Modal';
 import { map } from 'lodash';
 import { useState } from 'react';
 import { TbArrowRight } from 'react-icons/tb';
-
-type memberListType = {
-  id: string,
-  name: string,
-}
+import { COLOR_WARNING } from '@/constants';
+import type { Event, TeamMember } from '@/types';
 
 interface TransferTeamModalProps {
+  eventId: Event['id'],
   transferCaptain: boolean,
-  membersList: Array<memberListType>,
+  membersList: TeamMember[],
 }
 
-export default function TransferTeamModal({ transferCaptain, membersList }: TransferTeamModalProps) {
+export default function TransferTeamModal({ eventId, transferCaptain, membersList }: TransferTeamModalProps) {
   const [ newCaptain, setNewCaptain ] = useState<string>('');
   const [ inviteCode, setInviteCode ] = useState<string>('');
 
@@ -54,31 +52,35 @@ export default function TransferTeamModal({ transferCaptain, membersList }: Tran
     >
       <>
         {transferCaptain && (
-          <>
-            <Text>
-              All teams must have at least one captain.
-            </Text>
-            <Text>
-              Please select a new captain before transferring.
-            </Text>
-            <Select.Root defaultValue="" onValueChange={setNewCaptain}>
-              <Select.Trigger placeholder="Select a member" />
-              <Select.Content position="popper">
-                <Select.Group>
-                  {map(membersList, (member: { id: string, name: string}) => (
-                    <Select.Item key={member.id} value={member.id}>{member.name}</Select.Item>
-                  ))}
-                </Select.Group>
-              </Select.Content>
-            </Select.Root>
-          </>
+          <Form.Field name="newCaptain" className="flex flex-col w-full">
+            <Form.Label>
+              All teams must have at least one captain. Please select a new captain before leaving.
+            </Form.Label>
+            <Form.Control asChild>
+              <Select.Root
+                onValueChange={setNewCaptain}
+              >
+                <Select.Trigger placeholder="Select a member" />
+                <Select.Content position="popper">
+                  <Select.Group>
+                    {map(membersList, (member: { id: string, user_name: string}) => (
+                      <Select.Item key={member.id} value={String(member.id)}>{member.user_name}</Select.Item>
+                    ))}
+                  </Select.Group>
+                </Select.Content>
+              </Select.Root>
+            </Form.Control>
+          </Form.Field>
         )}
-        <Text>{'Enter your new team\'s invite code to transfer teams.'}</Text>
-        <TextField.Root
-          placeholder="Invite Code"
-          defaultValue=""
-          onChange={(e) => setInviteCode(e.target.value)}
-        />
+        <Form.Field name="inviteCode">
+          <Form.Label>{'Enter your new team\'s invite code to transfer teams.'}</Form.Label>
+          <Form.Control asChild>
+            <TextField.Root
+              placeholder="Invite Code"
+              onChange={(e) => setInviteCode(e.target.value)}
+            />
+          </Form.Control>
+        </Form.Field>
       </>
     </Modal>
   );

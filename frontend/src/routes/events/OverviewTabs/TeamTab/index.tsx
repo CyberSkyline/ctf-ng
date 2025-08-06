@@ -1,29 +1,47 @@
-import { Flex, Table } from '@radix-ui/themes';
-import { map } from 'lodash';
+import { useMemo } from 'react';
+import { Flex, Table, Text } from '@radix-ui/themes';
+import { map, isUndefined, filter } from 'lodash';
+import { useParams } from 'react-router';
 import AddMemberModal from './AddMemberModal';
 import AssignCaptainModal from './AssignCaptainModal';
 import EditTeamName from './EditTeamName';
 import LeaveTeamModal from './LeaveTeamModal';
 import RemovePlayerModal from './RemovePlayerModal';
 import TransferTeamModal from './TransferTeamModal';
+import { useCurrentUser } from '@/hooks/users';
+import { useMyTeam, useMyTeamMembers } from '@/hooks/events';
 
 export default function TeamManagement() {
-  const selfId = '1'; // its a me, Mario
-  const inviteCode = 'httptempcode';
-  const membersList = [
-    { id : '1', name : 'cj', role : 'captain' },
-    { id : '2', name : 'md', role : 'captain' },
-  ];
-
   const transferCaptain = true;
+
+  /* temp above ^ */
+  const { data : currentUser } = useCurrentUser();
+
+  const { idEvent } = useParams<{idEvent: string}>();
+  const { data : team, error : teamError } = useMyTeam(Number(idEvent));
+
+  const { data : fullMembersList, error : fullMembersError } = useMyTeamMembers(team?.event_id);
+
+  const membersList = useMemo(() => filter(fullMembersList, (member) => member.id !== currentUser?.id), [ fullMembersList, currentUser ]);
+
+  if (isUndefined(team) || teamError || isUndefined(fullMembersList) || fullMembersError) {
+    return (
+      <>
+        <Text as="p">Oops, something went wrong.</Text>
+        <Text as="p">{String(teamError)}</Text>
+        <Text as="p">{String(fullMembersError)}</Text>
+      </>
+    );
+  }
+
+  const { event_id : eventId } = team;
 
   return (
     <>
       <Flex gap="4" direction="column">
-        <EditTeamName />
-        <AddMemberModal
-          inviteCode={inviteCode}
-        />
+        <EditTeamName team={team} />
+        {!isUndefined(team.invite_code)
+          && <AddMemberModal inviteCode={team.invite_code} />}
       </Flex>
       <Table.Root>
         <Table.Header>
@@ -35,19 +53,25 @@ export default function TeamManagement() {
         </Table.Header>
 
         <Table.Body>
-          {map(membersList, (member) => (
-            <Table.Row key={member.id}>
-              <Table.RowHeaderCell>{member.name}</Table.RowHeaderCell>
-              <Table.Cell>{member.role}</Table.Cell>
+          {map(fullMembersList, ({
+            user_name : name,
+            user_id : id,
+            role,
+          }) => (
+            <Table.Row key={id}>
+              <Table.RowHeaderCell>{name + '-' + id}</Table.RowHeaderCell>
+              <Table.Cell>{role}</Table.Cell>
               <Table.Cell>
                 <Flex as="span" align="center" gap="2">
-                  {member.id === selfId ? (
+                  {id === currentUser?.id ? (
                     <>
                       <LeaveTeamModal
+                        eventId={eventId}
                         transferCaptain={transferCaptain}
                         membersList={membersList}
                       />
                       <TransferTeamModal
+                        eventId={eventId}
                         transferCaptain={transferCaptain}
                         membersList={membersList}
                       />
@@ -55,12 +79,14 @@ export default function TeamManagement() {
                   ) : (
                     <>
                       <RemovePlayerModal
-                        id={member.id}
-                        name={member.name}
+                        eventId={eventId}
+                        userId={id}
+                        name={name}
                       />
                       <AssignCaptainModal
-                        id={member.id}
-                        name={member.name}
+                        eventId={eventId}
+                        userId={id}
+                        name={name}
                       />
                     </>
                   )}

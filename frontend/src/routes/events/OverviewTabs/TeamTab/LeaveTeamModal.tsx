@@ -1,28 +1,27 @@
-import { COLOR_NEGATIVE } from '@/constants';
-import { Button, Select, Text } from '@radix-ui/themes';
+import { Button, Select } from '@radix-ui/themes';
+import { Form } from 'radix-ui';
 import Modal from 'components/Modal';
 import { map } from 'lodash';
 import { useState } from 'react';
 import { TbDoorExit } from 'react-icons/tb';
-
-type memberListType = {
-  id: string,
-  name: string,
-}
+import { useNavigate } from 'react-router';
+import { COLOR_NEGATIVE } from '@/constants';
+import { leaveMyTeam } from '@/hooks/events';
+import type { Event, TeamMember } from '@/types';
 
 interface LeaveTeamModalProps {
+  eventId: Event['id'],
   transferCaptain: boolean,
-  membersList: Array<memberListType>,
+  membersList: TeamMember[],
 }
 
-export default function LeaveTeamModal({ transferCaptain, membersList }: LeaveTeamModalProps) {
+export default function LeaveTeamModal({ eventId, transferCaptain, membersList }: LeaveTeamModalProps) {
   const [ newCaptain, setNewCaptain ] = useState<string>('');
+  const navigate = useNavigate();
 
-  const leaveTeam = async () => {
-    console.log('leaveTeam action', newCaptain);
-    // action for selecting a new captain
-    // action for leaving team
-  };
+  const leaveTeam = async () => leaveMyTeam(eventId, Number(newCaptain)).then(() => {
+    navigate('/events');
+  });
 
   return (
     <Modal
@@ -37,7 +36,7 @@ export default function LeaveTeamModal({ transferCaptain, membersList }: LeaveTe
       onSubmit={leaveTeam}
       onOpenChange={(open) => {
         if (open) {
-          // reset captain state when modal is closed and reopened
+        // reset captain state when modal is closed and reopened
           setNewCaptain('');
         }
       }}
@@ -46,25 +45,25 @@ export default function LeaveTeamModal({ transferCaptain, membersList }: LeaveTe
       submitDisabled={transferCaptain && newCaptain === ''}
     >
       {transferCaptain && (
-      <>
-        <Text>
+      <Form.Field name="newCaptain" className="flex flex-col w-full">
+        <Form.Label>
           All teams must have at least one captain. Please select a new captain before leaving.
-        </Text>
-
-        <Select.Root
-          defaultValue=""
-          onValueChange={setNewCaptain}
-        >
-          <Select.Trigger placeholder="Select a member" />
-          <Select.Content position="popper">
-            <Select.Group>
-              {map(membersList, (member: { id: string, name: string}) => (
-                <Select.Item key={member.id} value={member.id}>{member.name}</Select.Item>
-              ))}
-            </Select.Group>
-          </Select.Content>
-        </Select.Root>
-      </>
+        </Form.Label>
+        <Form.Control asChild>
+          <Select.Root
+            onValueChange={setNewCaptain}
+          >
+            <Select.Trigger placeholder="Select a member" />
+            <Select.Content position="popper">
+              <Select.Group>
+                {map(membersList, (member: { id: string, user_name: string}) => (
+                  <Select.Item key={member.id} value={String(member.id)}>{member.user_name}</Select.Item>
+                ))}
+              </Select.Group>
+            </Select.Content>
+          </Select.Root>
+        </Form.Control>
+      </Form.Field>
       )}
     </Modal>
   );

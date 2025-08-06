@@ -1,16 +1,22 @@
 import { Button, TextField } from '@radix-ui/themes';
 import Modal from 'components/Modal';
+import type { Team } from '@/types';
+import { COLOR_POSITIVE, ROUTEPREFIX } from '@/constants';
 
-interface AddMemberModalProps {
-  inviteCode: string,
-}
-
-export default function AddMemberModal({ inviteCode }: AddMemberModalProps) {
-  const inviteURL = `${window.location.origin}/teamSetup/invite/${inviteCode}`;
+export default function AddMemberModal({ inviteCode }: { inviteCode : Team['invite_code']}) {
+  const inviteURL = `${window.location.origin}${ROUTEPREFIX}/teamSetup/invite/${inviteCode}`;
 
   return (
     <Modal
-      trigger={(<Button className="!max-w-32">Add Member</Button>)}
+      trigger={(
+        <Button
+          className="!max-w-32"
+          color={COLOR_POSITIVE}
+          variant="soft"
+        >
+          Add Member
+        </Button>
+      )}
       title="Invite Members"
       description="Invite members to your team by sharing this link."
     >
@@ -23,7 +29,6 @@ export default function AddMemberModal({ inviteCode }: AddMemberModalProps) {
         <TextField.Slot pr="3" side="right">
           <Button
             size="1"
-            type="button"
             onClick={() => {
               // Clipboard only works in secure context (https)
               navigator.clipboard.writeText(inviteURL);

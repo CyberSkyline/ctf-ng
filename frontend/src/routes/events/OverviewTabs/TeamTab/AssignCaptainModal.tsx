@@ -1,17 +1,18 @@
-import { COLOR_WARNING } from '@/constants';
 import { Button } from '@radix-ui/themes';
 import Modal from 'components/Modal';
 import { TbStar } from 'react-icons/tb';
+import { COLOR_WARNING } from '@/constants';
+import type { Event, TeamMember } from '@/types';
+import { promoteMyCaptain } from '@/hooks/events';
 
 interface AssignCaptainModalProps {
-  id: string,
-  name: string,
+  eventId: Event['id'],
+  userId: TeamMember['user_id'],
+  name: TeamMember['user_name'],
 }
 
-export default function AssignCaptainModal({ id, name }:AssignCaptainModalProps) {
-  const assignCaptain = async () => {
-    console.log('assign captain', id);
-  };
+export default function AssignCaptainModal({ eventId, userId, name }:AssignCaptainModalProps) {
+  const assignCaptain = async () => promoteMyCaptain(eventId, userId);
 
   return (
     <Modal

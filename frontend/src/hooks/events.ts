@@ -1,6 +1,6 @@
-import { apiMutation } from '@/fetchers';
 import useSWR, { mutate } from 'swr';
-import type { Event } from '../types';
+import { apiMutation } from '@/fetchers';
+import type { Event, Team, TeamMember } from '@/types';
 
 /**
  * Retrieves a list of all public and registerable events.
@@ -56,6 +56,81 @@ export function registerMyEvent(eventId: number, teamName: string) {
     method : 'POST',
   }).then(() => {
     mutate('/users/me/events');
+  });
+}
+
+/**
+ * Gets the current user's team for a specific event
+ * @param eventId The id of the event, if undefined this should not fetch
+ * @returns a Team object
+ */
+export function useMyTeam(eventId: number | undefined) {
+  return useSWR<Team, Error>(
+    eventId ? `/events/${eventId}/me/team` : null,
+  );
+}
+
+/**
+ * @param eventId The id of the event
+ * @param userId The user id of the player to kick off the team
+ */
+export function kickFromMyTeam(eventId: number, userId: number) {
+  return apiMutation(`/events/${eventId}/me/team/kick`, { user_id : userId }, {
+    method : 'POST',
+  }).then(() => {
+    mutate(`/events/${eventId}/me/team`);
+    mutate(`/events/${eventId}/me/team/members`);
+  });
+}
+
+/**
+ * @param eventId The id of the event
+ * @param newCaptain The user id of the new captain, optional
+ */
+export function leaveMyTeam(eventId: number, newCaptain: number) {
+  return apiMutation(`/events/${eventId}/me/team/leave`, { captain : newCaptain }, {
+    method : 'POST',
+    // cj the docs are wrong. This should be a post
+    // cj unless this is supposed to be 2 separate operations, this should take a captain as an optional param
+  }).then(() => {
+    mutate('/users/me/events');
+    // cj - do I need to mutate the useMyTeam and useMyTeamMembers here?
+  });
+}
+
+/**
+ * @param eventId The id of the event
+ * @param userId The user id of the new captain
+ */
+export function promoteMyCaptain(eventId: number, userId: number) {
+  return apiMutation(`/events/${eventId}/me/team/promote`, { user_id : userId }, {
+    method : 'POST',
+  }).then(() => {
+    mutate(`/events/${eventId}/me/team/members`);
+  });
+}
+
+/**
+ * @param eventId The id of the event, if undefined this should not fetch
+ * @returns a list of Team Members
+ */
+export function useMyTeamMembers(eventId: number | undefined) {
+  return useSWR<TeamMember[], Error>(
+    eventId ? `/events/${eventId}/me/team/members` : null,
+  );
+}
+
+/**
+ * @param eventId The id of the event
+ * @param teamName The new name for the team
+ * @returns a new team object
+ */
+export function updateTeamName(eventId: number, updated: Team) {
+  return apiMutation(`/events/${eventId}/me/team/update_name`, updated, {
+    method : 'PUT',
+    // cj this isn't working for some reason. Returns a 500 every time.
+  }).then(() => {
+    mutate('/users/me/team');
   });
 }
 
