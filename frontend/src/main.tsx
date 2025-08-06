@@ -18,7 +18,7 @@ createRoot(document.getElementById('root')!).render(
     <BrowserRouter basename={ROUTEPREFIX}>
       <ThemeProvider
         attribute="class"
-        defaultTheme='dark'
+        defaultTheme="dark"
         enableSystem
       >
         <Theme
