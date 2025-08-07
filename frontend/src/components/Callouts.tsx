@@ -1,11 +1,11 @@
-import { COLOR_INFO, COLOR_NEGATIVE, COLOR_WARNING } from '@/constants';
 import { Callout } from '@radix-ui/themes';
 import type { ReactNode } from 'react';
 import { TbAlertTriangle, TbCancel, TbInfoCircle } from 'react-icons/tb';
+import { COLOR_INFO, COLOR_NEGATIVE, COLOR_WARNING } from '@/constants';
 
-export function ErrorCallout({ children }: {children: ReactNode}) {
+export function ErrorCallout({ children, className }: {children: ReactNode, className: string}) {
   return (
-    <Callout.Root variant="surface" color={COLOR_NEGATIVE}>
+    <Callout.Root variant="surface" color={COLOR_NEGATIVE} className={className}>
       <Callout.Icon>
         <TbCancel aria-label="Error" />
       </Callout.Icon>
@@ -16,9 +16,9 @@ export function ErrorCallout({ children }: {children: ReactNode}) {
   );
 }
 
-export function WarningCallout({ children }: {children: ReactNode}) {
+export function WarningCallout({ children, className }: {children: ReactNode, className: string}) {
   return (
-    <Callout.Root variant="surface" color={COLOR_WARNING}>
+    <Callout.Root variant="surface" color={COLOR_WARNING} className={className}>
       <Callout.Icon>
         <TbAlertTriangle aria-label="Warning" />
       </Callout.Icon>
@@ -28,9 +28,9 @@ export function WarningCallout({ children }: {children: ReactNode}) {
     </Callout.Root>
   );
 }
-export function InfoCallout({ children }: {children: ReactNode}) {
+export function InfoCallout({ children, className }: {children: ReactNode, className: string}) {
   return (
-    <Callout.Root variant="surface" color={COLOR_INFO}>
+    <Callout.Root variant="surface" color={COLOR_INFO} className={className}>
       <Callout.Icon>
         <TbInfoCircle aria-label="Info" />
       </Callout.Icon>
