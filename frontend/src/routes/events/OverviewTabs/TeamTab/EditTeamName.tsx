@@ -5,13 +5,16 @@ import {
   TextField,
 } from '@radix-ui/themes';
 import { Form } from 'radix-ui';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TbPencil } from 'react-icons/tb';
+import { ErrorCallout } from 'components/Callouts';
 import { updateTeamName } from '@/hooks/events';
 import type { Team } from '@/types';
 
-export default function EditTeamName(team: Team) {
-  const { name : defaultTeamName, event_id : eventId} = team
+export default function EditTeamName(
+  { eventId, defaultTeamName } :
+  { eventId: Team['event_id'], defaultTeamName: Team['name'] },
+) {
   const [ isEditing, setIsEditing ] = useState<boolean>(false);
   const [ formData, setFormData ] = useState({
     teamName : defaultTeamName,
@@ -19,11 +22,18 @@ export default function EditTeamName(team: Team) {
   const [ loading, setLoading ] = useState<boolean>(false);
   const [ error, setError ] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!isEditing) {
+      setError(null);
+      setLoading(false);
+    }
+  }, [ isEditing ]);
+
   const updateName = (e) => {
     e.preventDefault();
+    setLoading(true);
 
-    const newTeam = { ...team, name : formData.teamName as string };
-    updateTeamName(eventId, newTeam)
+    updateTeamName(eventId, formData.teamName)
       .then(() => {
         setIsEditing(false);
       })
@@ -44,7 +54,7 @@ export default function EditTeamName(team: Team) {
   };
 
   return (
-    <Box maxWidth="280px">
+    <Box maxWidth="380px">
       {
         isEditing ? (
           <Form.Root
@@ -75,6 +85,8 @@ export default function EditTeamName(team: Team) {
                       <Button
                         type="submit"
                         size="1"
+                        loading={loading}
+                        disabled={loading}
                       >
                         Save
                       </Button>
@@ -85,6 +97,11 @@ export default function EditTeamName(team: Team) {
               <Form.Message match="valueMissing">
                 Please enter a team name.
               </Form.Message>
+              {error && (
+                <ErrorCallout className="mt-2">
+                  {error}
+                </ErrorCallout>
+              )}
             </Form.Field>
           </Form.Root>
         ) : (

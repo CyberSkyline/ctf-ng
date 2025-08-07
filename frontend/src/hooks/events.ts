@@ -125,10 +125,9 @@ export function useMyTeamMembers(eventId: number | undefined) {
  * @param teamName The new name for the team
  * @returns a new team object
  */
-export function updateTeamName(eventId: number, updated: Team) {
-  return apiMutation(`/events/${eventId}/me/team/update_name`, updated, {
+export function updateTeamName(eventId: number, teamName: Team['name']) {
+  return apiMutation(`/events/${eventId}/me/team/update_name`, { name : teamName }, {
     method : 'PUT',
-    // cj this isn't working for some reason. Returns a 500 every time.
   }).then(() => {
     mutate('/users/me/team');
   });

@@ -2,14 +2,14 @@ import { useMemo } from 'react';
 import { Flex, Table, Text } from '@radix-ui/themes';
 import { map, isUndefined, filter } from 'lodash';
 import { useParams } from 'react-router';
+import { useCurrentUser } from '@/hooks/users';
+import { useMyTeam, useMyTeamMembers } from '@/hooks/events';
 import AddMemberModal from './AddMemberModal';
 import AssignCaptainModal from './AssignCaptainModal';
 import EditTeamName from './EditTeamName';
 import LeaveTeamModal from './LeaveTeamModal';
 import RemovePlayerModal from './RemovePlayerModal';
 import TransferTeamModal from './TransferTeamModal';
-import { useCurrentUser } from '@/hooks/users';
-import { useMyTeam, useMyTeamMembers } from '@/hooks/events';
 
 export default function TeamManagement() {
   const transferCaptain = true;
@@ -34,12 +34,12 @@ export default function TeamManagement() {
     );
   }
 
-  const { event_id : eventId } = team;
+  const { event_id : eventId, name : teamName } = team;
 
   return (
     <>
       <Flex gap="4" direction="column">
-        <EditTeamName team={team} />
+        <EditTeamName eventId={eventId} defaultTeamName={teamName} />
         {!isUndefined(team.invite_code)
           && <AddMemberModal inviteCode={team.invite_code} />}
       </Flex>
@@ -59,7 +59,7 @@ export default function TeamManagement() {
             role,
           }) => (
             <Table.Row key={id}>
-              <Table.RowHeaderCell>{name + '-' + id}</Table.RowHeaderCell>
+              <Table.RowHeaderCell>{name}</Table.RowHeaderCell>
               <Table.Cell>{role}</Table.Cell>
               <Table.Cell>
                 <Flex as="span" align="center" gap="2">
