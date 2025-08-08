@@ -13,7 +13,10 @@ export default function RegistrationModal({ eventId, isTeamGame }: {eventId : Ev
   const register = async (data: FormData) => {
     if (!createTeam) {
       const inviteCode = data.get('invite_code') as string;
-      return registerMyEventTeamJoin(eventId, inviteCode).then(() => {
+      // This allows the user to input the full invite URL or just the invite Code
+      const substringCode = inviteCode.indexOf('/') > -1 ? inviteCode.substring(inviteCode.lastIndexOf('/') + 1) : inviteCode;
+
+      return registerMyEventTeamJoin(eventId, substringCode).then(() => {
         navigate(`/events/${eventId}`);
       });
     }
