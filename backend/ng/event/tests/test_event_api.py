@@ -1,14 +1,16 @@
 import base64
 import os
+from datetime import datetime, timedelta
+
 import pytest
 
 from ...challenge.models.Challenge import Challenge
 from ...team.models.Team import Team
 from ...team.models.TeamMember import TeamMember
 from ...user.models.User import User
-from datetime import datetime, timedelta
 
 pytestmark = pytest.mark.db
+
 
 class Test_Public_Event_Listing:
     endpoint = "/ng/events"
@@ -26,7 +28,6 @@ class Test_Public_Event_Listing:
         assert data["data"][0] == event1.serialize()
         assert data["data"][1] == event2.serialize()
 
-
     def test_list_no_private_events(self, logged_in_client, event_factory):
         event2 = event_factory(name="Private Event 2", public=True)
 
@@ -36,6 +37,7 @@ class Test_Public_Event_Listing:
         assert data["success"] is True
         assert len(data["data"]) == 1
         assert data["data"][0] == event2.serialize()
+
 
 class Test_Public_Event_Detail:
     def get_endpoint(self, event_id: int) -> str:
@@ -90,7 +92,6 @@ class Test_Event_Eligibility:
         data = response.get_json()
         assert data["success"] is False
 
-
     def test_check_event_eligibility_not_open(self, logged_in_client, event_factory):
         event = event_factory(name="Closed Event", public=True, registration_open=False)
 
@@ -103,7 +104,12 @@ class Test_Event_Eligibility:
         assert "Event registration is closed." in data["errors"]["business_logic"]
 
     def test_check_event_eligibility_before_start(self, logged_in_client, event_factory):
-        event = event_factory(name="Event Before Start", public=True, registration_start_date=datetime.utcnow() + timedelta(days=1), registration_end_date=datetime.utcnow() + timedelta(days=2))
+        event = event_factory(
+            name="Event Before Start",
+            public=True,
+            registration_start_date=datetime.utcnow() + timedelta(days=1),
+            registration_end_date=datetime.utcnow() + timedelta(days=2),
+        )
 
         response = logged_in_client.get(self.get_endpoint(event.id))
 
@@ -114,7 +120,12 @@ class Test_Event_Eligibility:
         assert "Event registration has not started yet." in data["errors"]["business_logic"]
 
     def test_check_event_eligibility_after_end(self, logged_in_client, event_factory):
-        event = event_factory(name="Event After End", public=True, registration_end_date=datetime.utcnow() - timedelta(days=1), registration_start_date=datetime.utcnow() - timedelta(days=2))
+        event = event_factory(
+            name="Event After End",
+            public=True,
+            registration_end_date=datetime.utcnow() - timedelta(days=1),
+            registration_start_date=datetime.utcnow() - timedelta(days=2),
+        )
 
         response = logged_in_client.get(self.get_endpoint(event.id))
 
@@ -127,10 +138,12 @@ class Test_Event_Eligibility:
     def test_check_event_eligibility_already_registered(self, logged_in_client, user, event_factory, team_factory):
         event = event_factory(name="Already Registered Event", public=True)
 
-
-        response = logged_in_client.post(f"/ng/events/{event.id}/me/register", json={
-            "team_name": "Test Team",
-        })
+        response = logged_in_client.post(
+            f"/ng/events/{event.id}/me/register",
+            json={
+                "team_name": "Test Team",
+            },
+        )
 
         response = logged_in_client.get(self.get_endpoint(event.id))
 
@@ -190,9 +203,12 @@ class Test_Event_Registration:
     def test_register_member_name_cannot_be_in_team_name(self, logged_in_client, user, event_factory):
         event = event_factory(name="Event for Invalid Team Name", public=True)
 
-        response = logged_in_client.post(self.get_endpoint(event.id), json={
-            "team_name": user.name,
-        })
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json={
+                "team_name": user.name,
+            },
+        )
 
         assert response.status_code == 400
         data = response.get_json()
@@ -201,9 +217,12 @@ class Test_Event_Registration:
         assert "Team name cannot include a member's name." in data["errors"]["validation"]
 
     def test_register_for_nonexistent_event(self, logged_in_client):
-        response = logged_in_client.post(self.get_endpoint(9999), json={
-            "team_name": "Test Team",
-        })
+        response = logged_in_client.post(
+            self.get_endpoint(9999),
+            json={
+                "team_name": "Test Team",
+            },
+        )
 
         assert response.status_code == 404
         data = response.get_json()
@@ -222,9 +241,12 @@ class Test_Event_Registration:
     def test_register_closed_event(self, logged_in_client, event_factory):
         event = event_factory(name="Closed Event", public=True, registration_open=False)
 
-        response = logged_in_client.post(self.get_endpoint(event.id), json={
-            "team_name": "Test Team",
-        })
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json={
+                "team_name": "Test Team",
+            },
+        )
         assert response.status_code == 400
         data = response.get_json()
         assert data["success"] is False
@@ -234,20 +256,31 @@ class Test_Event_Registration:
     def test_register_private_event(self, logged_in_client, event_factory):
         event = event_factory(name="Private Event for Registration", public=False)
 
-        response = logged_in_client.post(self.get_endpoint(event.id), json={
-            "team_name": "Test Team",
-        })
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json={
+                "team_name": "Test Team",
+            },
+        )
 
         assert response.status_code == 404
         data = response.get_json()
         assert data["success"] is False
 
     def test_register_event_before_start(self, logged_in_client, event_factory):
-        event = event_factory(name="Event Before Start", public=True, registration_start_date=datetime.utcnow() + timedelta(days=1),registration_end_date=datetime.utcnow() + timedelta(days=2))
+        event = event_factory(
+            name="Event Before Start",
+            public=True,
+            registration_start_date=datetime.utcnow() + timedelta(days=1),
+            registration_end_date=datetime.utcnow() + timedelta(days=2),
+        )
 
-        response = logged_in_client.post(self.get_endpoint(event.id), json={
-            "team_name": "Test Team",
-        })
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json={
+                "team_name": "Test Team",
+            },
+        )
 
         assert response.status_code == 400
         data = response.get_json()
@@ -256,11 +289,19 @@ class Test_Event_Registration:
         assert "Event registration has not started yet." in data["errors"]["business_logic"]
 
     def test_register_event_after_end(self, logged_in_client, event_factory):
-        event = event_factory(name="Event After End", public=True, registration_end_date=datetime.utcnow() - timedelta(days=1), registration_start_date=datetime.utcnow() - timedelta(days=2))
+        event = event_factory(
+            name="Event After End",
+            public=True,
+            registration_end_date=datetime.utcnow() - timedelta(days=1),
+            registration_start_date=datetime.utcnow() - timedelta(days=2),
+        )
 
-        response = logged_in_client.post(self.get_endpoint(event.id), json={
-            "team_name": "Test Team",
-        })
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json={
+                "team_name": "Test Team",
+            },
+        )
 
         assert response.status_code == 400
         data = response.get_json()
@@ -272,18 +313,24 @@ class Test_Event_Registration:
         event = event_factory(name="Event for Duplicate Registration", public=True)
 
         # First registration
-        response = logged_in_client.post(self.get_endpoint(event.id), json={
-            "team_name": "First Team",
-        })
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json={
+                "team_name": "First Team",
+            },
+        )
 
         assert response.status_code == 201
         data = response.get_json()
         assert data["success"] is True
 
         # Second registration attempt
-        response = logged_in_client.post(self.get_endpoint(event.id), json={
-            "team_name": "Second Team",
-        })
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json={
+                "team_name": "Second Team",
+            },
+        )
 
         assert response.status_code == 400
         data = response.get_json()
@@ -338,17 +385,14 @@ class Test_Event_TeamMember_Lookup:
         assert data["success"] is False
 
 
-
 class Test_Event_Team_Management:
-
     def test_captain_promote(self, team_captain_client):
         """Test that the team promote endpoint works correctly."""
-
 
         response = team_captain_client.post(f"/ng/events/{1}/me/team/promote", json={"user_id": 3})
         assert response.status_code == 200
         data = response.get_json()
-        assert data['success']
+        assert data["success"]
 
     def test_captain_promote_invalid_user(self, team_captain_client):
         """Test that the team promote endpoint fails with invalid user."""
@@ -356,7 +400,7 @@ class Test_Event_Team_Management:
         response = team_captain_client.post(f"/ng/events/{1}/me/team/promote", json={"user_id": 9999})
         assert response.status_code == 404
         data = response.get_json()
-        assert not data['success']
+        assert not data["success"]
         assert "errors" in data
 
     def test_captain_promote_self(self, team_captain_client):
@@ -364,9 +408,9 @@ class Test_Event_Team_Management:
         response = team_captain_client.post(f"/ng/events/{1}/me/team/promote", json={"user_id": 2})
         assert response.status_code == 400
         data = response.get_json()
-        assert not data['success']
+        assert not data["success"]
         assert "errors" in data
-        assert "You cannot promote yourself." in data['errors']['validation']
+        assert "You cannot promote yourself." in data["errors"]["validation"]
 
     def test_captain_promote_not_privileged(self, team_member_client):
         """Test that the team promote endpoint fails when a non-captain tries to promote."""
@@ -374,7 +418,7 @@ class Test_Event_Team_Management:
         response = team_member_client.post(f"/ng/events/{1}/me/team/promote", json={"user_id": 2})
         assert response.status_code == 403
         data = response.get_json()
-        assert not data['success']
+        assert not data["success"]
         assert "errors" in data
 
     def test_team_captain_promote_event_closed(self, closed_event_client):
@@ -383,7 +427,7 @@ class Test_Event_Team_Management:
         print(response.get_json())
         assert response.status_code == 403
         data = response.get_json()
-        assert not data['success']
+        assert not data["success"]
         assert "errors" in data
 
     def test_captain_kick(self, team_captain_client):
@@ -392,12 +436,12 @@ class Test_Event_Team_Management:
         response = team_captain_client.post(f"/ng/events/{1}/me/team/kick", json={"user_id": 3})
         assert response.status_code == 200
         data = response.get_json()
-        assert data['success']
+        assert data["success"]
 
         # Verify that the user is no longer a member of the team
         response = team_captain_client.get(f"/ng/events/{1}/me/team/members")
         assert response.status_code == 200
-        members_data = response.get_json()['data']
+        members_data = response.get_json()["data"]
         assert len(members_data) == 2
 
     def test_captain_kick_self(self, team_captain_client):
@@ -405,16 +449,16 @@ class Test_Event_Team_Management:
         response = team_captain_client.post(f"/ng/events/{1}/me/team/kick", json={"user_id": 2})
         assert response.status_code == 400
         data = response.get_json()
-        assert not data['success']
+        assert not data["success"]
         assert "errors" in data
-        assert "You cannot kick yourself from the team." in data['errors']['validation']
+        assert "You cannot kick yourself from the team." in data["errors"]["validation"]
 
     def test_captain_kick_invalid_user(self, team_captain_client):
         """Test that the team kick endpoint fails with invalid user."""
         response = team_captain_client.post(f"/ng/events/{1}/me/team/kick", json={"user_id": 9999})
         assert response.status_code == 404
         data = response.get_json()
-        assert not data['success']
+        assert not data["success"]
         assert "errors" in data
 
     def test_captain_kick_not_privileged(self, team_member_client):
@@ -422,30 +466,32 @@ class Test_Event_Team_Management:
         response = team_member_client.post(f"/ng/events/{1}/me/team/kick", json={"user_id": 2})
         assert response.status_code == 403
         data = response.get_json()
-        assert not data['success']
+        assert not data["success"]
         assert "errors" in data
 
     def test_cant_kick_from_other_teams(self, team_captain_client, team_factory, user_factory):
         """Test that the team kick endpoint fails when trying to kick a user not in the team."""
         other_team = team_factory(event_id=1, members=[user_factory(name="Other User")])
-        response = team_captain_client.post(f"/ng/events/{1}/me/team/kick", json={"user_id": other_team.members[0].user_id})
+        response = team_captain_client.post(
+            f"/ng/events/{1}/me/team/kick", json={"user_id": other_team.members[0].user_id}
+        )
         assert response.status_code == 400
         data = response.get_json()
-        assert not data['success']
+        assert not data["success"]
         assert "errors" in data
-        assert "not a member of team" in data['errors']['validation']
+        assert "not a member of team" in data["errors"]["validation"]
 
     def test_cant_kick_closed_event(self, closed_event_client, event_factory, team_factory):
         """Test that the team kick endpoint fails when trying to kick a user from a closed event."""
         response = closed_event_client.post(f"/ng/events/{1}/me/team/kick", json={"user_id": 3})
         assert response.status_code == 403
         data = response.get_json()
-        assert not data['success']
+        assert not data["success"]
         assert "errors" in data
 
     def test_member_leave(self, team_member_client):
         """Test that the team leave endpoint works correctly."""
-        response = team_member_client.get(f"/ng/events/{1}/me/team/leave")
+        response = team_member_client.post(f"/ng/events/{1}/me/team/leave", json={})
         assert response.status_code == 303
 
         reponse = team_member_client.get(f"/ng/events/{1}/me/team")
@@ -453,21 +499,26 @@ class Test_Event_Team_Management:
 
     def test_captain_cant_leave(self, team_captain_client):
         """Test that the team leave endpoint fails for a captain."""
-        response = team_captain_client.get(f"/ng/events/{1}/me/team/leave")
+        response = team_captain_client.post(f"/ng/events/{1}/me/team/leave", json={})
         assert response.status_code == 403
         data = response.get_json()
-        assert not data['success']
+        assert not data["success"]
         assert "errors" in data
-        assert "You cannot leave the team as a captain. Please promote another member first." in data['errors']['forbidden']
+        assert (
+            "You cannot leave the team as a captain. Please promote another member first."
+            in data["errors"]["forbidden"]
+        )
 
     def test_leave_closed_event(self, closed_event_client):
         """Test that the team leave endpoint fails when trying to leave a closed event."""
-        response = closed_event_client.get(f"/ng/events/{1}/me/team/leave")
+        response = closed_event_client.post(f"/ng/events/{1}/me/team/leave", json={})
         assert response.status_code == 403
         data = response.get_json()
-        assert not data['success']
+        assert not data["success"]
         assert "errors" in data
-        assert "You cannot leave the team after the event has ended." in data['errors']['forbidden']
+        assert "You cannot leave the team after the event has ended." in data["errors"]["forbidden"]
+
+    # TODO - Write test case that someone on a solo team can leave
 
     def test_update_name(self, team_captain_client):
         """Test that the team name can be updated."""
@@ -475,8 +526,8 @@ class Test_Event_Team_Management:
         response = team_captain_client.put(f"/ng/events/{1}/me/team/update_name", json={"name": new_name})
         assert response.status_code == 200
         data = response.get_json()
-        assert data['success']
-        assert data['data']['name'] == new_name
+        assert data["success"]
+        assert data["data"]["name"] == new_name
 
     def test_update_name_event_over(self, closed_event_client):
         """Test that the team name update fails when the event is over."""
@@ -484,9 +535,10 @@ class Test_Event_Team_Management:
         response = closed_event_client.put(f"/ng/events/{1}/me/team/update_name", json={"name": new_name})
         assert response.status_code == 403
         data = response.get_json()
-        assert not data['success']
+        assert not data["success"]
         assert "errors" in data
-        assert "You cannot update the team name after the event has ended." in data['errors']['forbidden']
+        assert "You cannot update the team name after the event has ended." in data["errors"]["forbidden"]
+
 
 class Test_Event_Admin_Register:
     def post_endpoint(self, event_id: int, user_id: int) -> str:
@@ -498,9 +550,12 @@ class Test_Event_Admin_Register:
         user2 = user_factory(name="testuser2", email="testuser2@example.com")
         team = team_factory(event=event, members=[user])
 
-        response = admin_client.post(self.post_endpoint(event.id, user2.id), json={
-            "invite_code": team.invite_code,
-        })
+        response = admin_client.post(
+            self.post_endpoint(event.id, user2.id),
+            json={
+                "invite_code": team.invite_code,
+            },
+        )
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -509,9 +564,12 @@ class Test_Event_Admin_Register:
     def test_admin_register_user_for_event_name(self, admin_client, user, event_factory):
         event = event_factory(name="Admin Register Event", public=True)
 
-        response = admin_client.post(self.post_endpoint(event.id, user.id), json={
-            "team_name": "Admin Created Team",
-        })
+        response = admin_client.post(
+            self.post_endpoint(event.id, user.id),
+            json={
+                "team_name": "Admin Created Team",
+            },
+        )
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -520,9 +578,12 @@ class Test_Event_Admin_Register:
         event = event_factory(name="Non-Admin Register Event", public=True)
         user = user_factory(name="testuser", email="testuser@example.com")
 
-        response = logged_in_client.post(self.post_endpoint(event.id, user.id), json={
-            "team_name": "Non-Admin Team",
-        })
+        response = logged_in_client.post(
+            self.post_endpoint(event.id, user.id),
+            json={
+                "team_name": "Non-Admin Team",
+            },
+        )
         assert response.status_code == 403
 
     def test_admin_can_register_user_for_locked_event(self, admin_client, user_factory, event_factory, team_factory):
@@ -531,13 +592,17 @@ class Test_Event_Admin_Register:
         user2 = user_factory(name="testuser2", email="testuser2@example.com")
         team = team_factory(event=event, members=[user])
 
-        response = admin_client.post(self.post_endpoint(event.id, user2.id), json={
-            "invite_code": team.invite_code,
-        })
+        response = admin_client.post(
+            self.post_endpoint(event.id, user2.id),
+            json={
+                "invite_code": team.invite_code,
+            },
+        )
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
         assert "data" in data
+
 
 def test_admin_get_private_event(admin_client, event_factory):
     event = event_factory(name="Admin Get Private Event", public=False)
@@ -548,6 +613,7 @@ def test_admin_get_private_event(admin_client, event_factory):
     data = response.get_json()
     assert data["success"] is True
     assert data["data"] == event.serialize()
+
 
 class Test_Event_Admin_Get:
     def get_endpoint(self, event_id: int) -> str:
@@ -569,6 +635,7 @@ class Test_Event_Admin_Get:
         response = logged_in_client.get(self.get_endpoint(event.id))
 
         assert response.status_code == 302
+
 
 class Test_Event_Admin_Put:
     def put_endpoint(self, event_id: int) -> str:
@@ -606,6 +673,7 @@ class Test_Event_Admin_Put:
 
         assert response.status_code == 403
 
+
 class Test_Event_Admin_Create:
     def post_endpoint(self) -> str:
         return "/ng/admin/events"
@@ -642,7 +710,6 @@ class Test_Event_Admin_Create:
 
         assert response.status_code == 403
 
-
     def test_admin_create_event_with_missing_fields(self, admin_client):
         new_event_data = {
             "name": "Incomplete Event",
@@ -656,6 +723,7 @@ class Test_Event_Admin_Create:
         assert data["success"] is False
         assert "errors" in data
         assert "validation" in data["errors"]
+
 
 class Test_Event_Challenge_Import:
     def get_endpoint(self, event) -> str:
@@ -672,7 +740,6 @@ class Test_Event_Challenge_Import:
         assert response.status_code == 200
         assert len(challenge.hints) == 1
         assert len(challenge.questions) == 1
-
 
     def test_challenge_import_endpoint_bad_yaml(self, admin_client, event):
         with open(os.path.join(os.path.dirname(__file__), "../../challenge/tests/yamls/bad.yaml"), "rb") as f:
@@ -733,7 +800,6 @@ class Test_Event_Challenge_Statuses:
         challenge2 = challenge_factory(event=event, name="Challenge 2")
 
         response = logged_in_client.get(self.get_endpoint(event.id))
-
 
         assert response.status_code == 200
         data = response.get_json()
