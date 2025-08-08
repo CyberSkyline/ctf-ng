@@ -329,12 +329,12 @@ class EventTeamLeave(Resource):
             404: "Not Found if user is not part of a team",
         },
     )
-    def get(self, event_id, event, team, current_user, **kwargs):
+    def post(self, event_id, event, team, current_user, **kwargs):
         """Leave the user's team in the event"""
         team_member = TeamMember.find_by_user_and_team(current_user.id, team.id)
         if event.end_time and event.end_time < datetime.utcnow():
             return error_response("You cannot leave the team after the event has ended.", "forbidden", 403)
-        if team_member.role == TeamRole.CAPTAIN:
+        if len(team.members) > 1 and team_member.role == TeamRole.CAPTAIN:
             return error_response(
                 "You cannot leave the team as a captain. Please promote another member first.",
                 "forbidden",
