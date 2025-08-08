@@ -17,6 +17,7 @@ interface ModalProps {
   trigger: ReactNode,
   onSubmit?: (formData: FormData) => Promise<unknown>,
   onOpenChange?: (open: boolean) => void,
+  defaultOpen?: boolean,
   submitVerb?: string,
   submitColor?: AccentColor,
   submitDisabled?: boolean,
@@ -30,12 +31,13 @@ export default function Modal({
   trigger,
   onSubmit,
   onOpenChange,
+  defaultOpen = false,
   submitVerb = 'Submit',
   submitColor = COLOR_POSITIVE,
   submitDisabled = false,
   requireTouchingForm = false,
 } : ModalProps) {
-  const [ open, setOpen ] = useState<boolean>(false);
+  const [ open, setOpen ] = useState<boolean>(defaultOpen);
   const [ error, setError ] = useState<string | null>(null);
   const [ loading, setLoading ] = useState<boolean>(false);
   const [ formTouched, setFormTouched ] = useState<boolean>(false);

@@ -1,22 +1,28 @@
-import { Button, TextField, RadioGroup } from '@radix-ui/themes';
+import {
+  Button,
+  Checkbox,
+  TextField,
+  Text,
+  Flex,
+} from '@radix-ui/themes';
 import Modal from 'components/Modal';
 import { Form } from 'radix-ui';
-import { useNavigate } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { useState } from 'react';
+import { isUndefined } from 'lodash';
 import type { Event } from '@/types';
 import { registerMyEvent, registerMyEventTeamJoin } from '@/hooks/events';
 
-export default function RegistrationModal({ eventId, isTeamGame }: {eventId : Event['id'], isTeamGame: boolean}) {
-  const [ createTeam, setCreateTeam ] = useState(true);
+export default function RegistrationModal({ eventId, eventName, isTeamGame }: {eventId : Event['id'], eventName: string, isTeamGame: boolean}) {
+  const [ checked, setChecked ] = useState(false);
+  const { inviteCode, idEvent } = useParams();
+  const joinWithCode = !!(eventId === Number(idEvent) && !isUndefined(inviteCode));
+
   const navigate = useNavigate();
 
   const register = async (data: FormData) => {
-    if (!createTeam) {
-      const inviteCode = data.get('invite_code') as string;
-      // This allows the user to input the full invite URL or just the invite Code
-      const substringCode = inviteCode.indexOf('/') > -1 ? inviteCode.substring(inviteCode.lastIndexOf('/') + 1) : inviteCode;
-
-      return registerMyEventTeamJoin(eventId, substringCode).then(() => {
+    if (joinWithCode) {
+      return registerMyEventTeamJoin(eventId, inviteCode).then(() => {
         navigate(`/events/${eventId}`);
       });
     }
@@ -27,81 +33,79 @@ export default function RegistrationModal({ eventId, isTeamGame }: {eventId : Ev
     });
   };
 
+  function getDescription() {
+    if (joinWithCode) {
+      return undefined;
+    }
+    return isTeamGame ? 'Please do not use your real name or user name for your team name'
+      : 'Please do not use your real name for your leaderboard name.';
+  }
+
   return (
     <Modal
       title="Are you sure you want to register for this event?"
-      description={isTeamGame ? 'Please do not use your real name or user name for your team name'
-        : 'Please do not use your real name for your leaderboard name.'}
+      description={getDescription()}
       trigger={(
         <Button variant="soft">Register</Button>
       )}
       onSubmit={register}
       submitVerb="Register"
-      onOpenChange={() => setCreateTeam(true)}
+      onOpenChange={() => {
+        setChecked(false);
+      }}
+      defaultOpen={joinWithCode}
     >
-      {isTeamGame
-        ? (
-          <>
-            <RadioGroup.Root
-              value={createTeam ? 'new' : 'join'}
-              onValueChange={(value) => {
-                setCreateTeam(value === 'new');
-              }}
-              name="joinToggle"
-            >
-              <RadioGroup.Item value="new">Create New Team</RadioGroup.Item>
-              <RadioGroup.Item value="join">Join Existing Team</RadioGroup.Item>
-            </RadioGroup.Root>
-
-            {createTeam ? (
-              <Form.Field name="leaderboard_name">
-                <Form.Label>
-                  Team Name
-                </Form.Label>
-                <Form.Control asChild>
-                  <TextField.Root
-                    placeholder="Enter your team name"
-                    required
-                  />
-                </Form.Control>
-                <Form.Message match="valueMissing">
-                  Please enter a leaderboard name.
-                </Form.Message>
-              </Form.Field>
-            ) : (
-              <Form.Field name="invite_code">
-                <Form.Label>
-                  Invite Code
-                </Form.Label>
-                <Form.Control asChild>
-                  <TextField.Root
-                    placeholder="Please enter the invite code"
-                    required
-                  />
-                </Form.Control>
-                <Form.Message match="valueMissing">
-                  Please enter an invite code.
-                </Form.Message>
-              </Form.Field>
-            )}
-
-          </>
+      {
+        joinWithCode ? (
+          <Flex gap="2">
+            <Text as="label" className="font-bold">Event Name: </Text>
+            <Text as="label">{eventName}</Text>
+          </Flex>
         ) : (
           <Form.Field name="leaderboard_name">
             <Form.Label>
-              Leaderboard Name
+              {isTeamGame ? 'Team Name' : 'Leaderboard Name'}
             </Form.Label>
             <Form.Control asChild>
               <TextField.Root
-                placeholder="Enter your leaderboard name"
+                placeholder={isTeamGame ? 'Enter your team name' : 'Enter your leaderboard name'}
                 required
               />
             </Form.Control>
             <Form.Message match="valueMissing">
-              Please enter a leaderboard name.
+              Please enter a name.
             </Form.Message>
           </Form.Field>
-        )}
+        )
+      }
+
+      <Form.Field name="terms_conditions">
+        <Form.Label asChild>
+          <Text as="label" size="2">
+            <Flex as="span" gap="2">
+              <Checkbox
+                checked={checked}
+                onCheckedChange={(val) => setChecked(val === true)}
+              />
+              Agree to the Terms and Conditions
+            </Flex>
+          </Text>
+        </Form.Label>
+        {/* Hidden native checkbox for validation */}
+        <Form.Control asChild>
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={(e) => setChecked(e.target.checked)}
+            required
+            className="hidden"
+          />
+        </Form.Control>
+
+        <Form.Message match="valueMissing">
+          You must accept the terms and conditions.
+        </Form.Message>
+      </Form.Field>
     </Modal>
   );
 }

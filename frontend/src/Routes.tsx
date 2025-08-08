@@ -36,7 +36,11 @@ function Routes() {
       element : <NotFound />, // Catch-all route for 404 page
     },
     { path : '/', element : <Dashboard /> },
-    { path : '/events', element : <AvailableEvents /> },
+    {
+      path : '/events',
+      element : <AvailableEvents />,
+      children : [ { path : ':idEvent/invitecode/:inviteCode', element : <AvailableEvents /> } ],
+    },
     {
       path : '/events/:idEvent',
       children : [
