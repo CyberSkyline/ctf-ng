@@ -40,7 +40,7 @@ export default function AvailableEvents() {
                     )
                     : (
                       event.registration_open
-                      && <RegistrationModal eventId={event.id} />
+                      && <RegistrationModal eventId={event.id} isTeamGame={event.max_team_size > 1} />
                     )
                 }
               </EventHeader>

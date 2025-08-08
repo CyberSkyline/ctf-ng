@@ -49,10 +49,18 @@ export function useUserEvents(userId: number | null) {
 /**
  * Registeres user for a specific event
  * @param event_id The event id
- * @param team_name The leaderboard name
+ * @param team_name The leaderboard name for solo events or team name for team creation
+ * @param invite_code The invite code of the team you want to join
  */
 export function registerMyEvent(eventId: number, teamName: string) {
   return apiMutation(`/events/${eventId}/me/register`, { team_name : teamName }, {
+    method : 'POST',
+  }).then(() => {
+    mutate('/users/me/events');
+  });
+}
+export function registerMyEventTeamJoin(eventId: number, inviteCode: string) {
+  return apiMutation(`/events/${eventId}/me/register`, { invite_code : inviteCode }, {
     method : 'POST',
   }).then(() => {
     mutate('/users/me/events');
