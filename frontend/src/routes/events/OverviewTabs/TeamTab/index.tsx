@@ -1,6 +1,11 @@
 import { useMemo } from 'react';
 import { Flex, Table, Text } from '@radix-ui/themes';
-import { map, isUndefined, filter } from 'lodash';
+import {
+  filter,
+  find,
+  isUndefined,
+  map,
+} from 'lodash';
 import { useParams } from 'react-router';
 import { useCurrentUser } from '@/hooks/users';
 import { useMyTeam, useMyTeamMembers } from '@/hooks/events';
@@ -12,9 +17,6 @@ import RemovePlayerModal from './RemovePlayerModal';
 import TransferTeamModal from './TransferTeamModal';
 
 export default function TeamManagement() {
-  const transferCaptain = true;
-
-  /* temp above ^ */
   const { data : currentUser } = useCurrentUser();
 
   const { idEvent } = useParams<{idEvent: string}>();
@@ -23,6 +25,13 @@ export default function TeamManagement() {
   const { data : fullMembersList, error : fullMembersError } = useMyTeamMembers(team?.event_id);
 
   const membersList = useMemo(() => filter(fullMembersList, (member) => member.id !== currentUser?.id), [ fullMembersList, currentUser ]);
+
+  const userIsCaptain = useMemo(() => !!find(fullMembersList, (member) => {
+    if (member.id === currentUser?.id) {
+      return member.role === 'captain';
+    }
+    return false;
+  }), [ fullMembersList, currentUser ]);
 
   if (isUndefined(team) || teamError || isUndefined(fullMembersList) || fullMembersError) {
     return (
@@ -39,8 +48,12 @@ export default function TeamManagement() {
   return (
     <>
       <Flex gap="4" direction="column">
-        <EditTeamName eventId={eventId} defaultTeamName={teamName} />
-        {!isUndefined(team.invite_code)
+        {
+          (userIsCaptain && !team.locked)
+            ? <EditTeamName eventId={eventId} defaultTeamName={teamName} />
+            : <Text className="pr-4">{`Team Name: ${teamName}`}</Text>
+        }
+        {!isUndefined(team.invite_code) && userIsCaptain && !team.locked
           && <AddMemberModal inviteCode={team.invite_code} />}
       </Flex>
       <Table.Root>
@@ -59,34 +72,59 @@ export default function TeamManagement() {
             role,
           }) => (
             <Table.Row key={id}>
-              <Table.RowHeaderCell>{name}</Table.RowHeaderCell>
+              <Table.RowHeaderCell>
+                {
+                  id === currentUser?.id ? `${name} (you)` : name
+                }
+              </Table.RowHeaderCell>
               <Table.Cell>{role}</Table.Cell>
               <Table.Cell>
                 <Flex as="span" align="center" gap="2">
-                  {id === currentUser?.id ? (
+                  {
+                    userIsCaptain && !team.locked && (
+                      <>
+                        {id !== currentUser?.id ? (
+                          <RemovePlayerModal
+                            eventId={eventId}
+                            userId={id}
+                            name={name}
+                          />
+                        ) : (
+                          <>
+                            <LeaveTeamModal
+                              eventId={eventId}
+                              transferCaptain={userIsCaptain}
+                              membersList={membersList}
+                            />
+                            <TransferTeamModal
+                              eventId={eventId}
+                              transferCaptain={userIsCaptain}
+                              membersList={membersList}
+                            />
+                          </>
+                        )}
+                        {id !== currentUser?.id && (
+                          <AssignCaptainModal
+                            eventId={eventId}
+                            userId={id}
+                            name={name}
+                          />
+                        )}
+
+                      </>
+                    )
+                  }
+                  { !userIsCaptain && !team.locked && id === currentUser?.id && (
                     <>
                       <LeaveTeamModal
                         eventId={eventId}
-                        transferCaptain={transferCaptain}
+                        transferCaptain={userIsCaptain}
                         membersList={membersList}
                       />
                       <TransferTeamModal
                         eventId={eventId}
-                        transferCaptain={transferCaptain}
+                        transferCaptain={userIsCaptain}
                         membersList={membersList}
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <RemovePlayerModal
-                        eventId={eventId}
-                        userId={id}
-                        name={name}
-                      />
-                      <AssignCaptainModal
-                        eventId={eventId}
-                        userId={id}
-                        name={name}
                       />
                     </>
                   )}
