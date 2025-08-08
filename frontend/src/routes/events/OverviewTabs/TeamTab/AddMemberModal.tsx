@@ -3,8 +3,8 @@ import Modal from 'components/Modal';
 import type { Team } from '@/types';
 import { COLOR_POSITIVE, ROUTEPREFIX } from '@/constants';
 
-export default function AddMemberModal({ inviteCode }: { inviteCode : Team['invite_code']}) {
-  const inviteURL = `${window.location.origin}${ROUTEPREFIX}/teamSetup/invite/${inviteCode}`;
+export default function AddMemberModal({ eventId, inviteCode }: { eventId: Team['event_id'], inviteCode : Team['invite_code']}) {
+  const inviteURL = `${window.location.origin}${ROUTEPREFIX}/events/${eventId}/invitecode/${inviteCode}`;
 
   return (
     <Modal

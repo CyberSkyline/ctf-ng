@@ -54,7 +54,7 @@ export default function TeamManagement() {
             : <Text className="pr-4">{`Team Name: ${teamName}`}</Text>
         }
         {!isUndefined(team.invite_code) && userIsCaptain && !team.locked
-          && <AddMemberModal inviteCode={team.invite_code} />}
+          && <AddMemberModal inviteCode={team.invite_code} eventId={eventId}/>}
       </Flex>
       <Table.Root>
         <Table.Header>
