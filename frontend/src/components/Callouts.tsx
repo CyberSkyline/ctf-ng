@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { TbAlertTriangle, TbCancel, TbInfoCircle } from 'react-icons/tb';
 import { COLOR_INFO, COLOR_NEGATIVE, COLOR_WARNING } from '@/constants';
 
-export function ErrorCallout({ children, className }: {children: ReactNode, className: string}) {
+export function ErrorCallout({ children, className }: {children: ReactNode, className?: string}) {
   return (
     <Callout.Root variant="surface" color={COLOR_NEGATIVE} className={className}>
       <Callout.Icon>
@@ -16,7 +16,7 @@ export function ErrorCallout({ children, className }: {children: ReactNode, clas
   );
 }
 
-export function WarningCallout({ children, className }: {children: ReactNode, className: string}) {
+export function WarningCallout({ children, className }: {children: ReactNode, className?: string}) {
   return (
     <Callout.Root variant="surface" color={COLOR_WARNING} className={className}>
       <Callout.Icon>
@@ -28,7 +28,7 @@ export function WarningCallout({ children, className }: {children: ReactNode, cl
     </Callout.Root>
   );
 }
-export function InfoCallout({ children, className }: {children: ReactNode, className: string}) {
+export function InfoCallout({ children, className }: {children: ReactNode, className?: string}) {
   return (
     <Callout.Root variant="surface" color={COLOR_INFO} className={className}>
       <Callout.Icon>
