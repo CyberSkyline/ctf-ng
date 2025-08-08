@@ -8,6 +8,7 @@ from ...core.middleware import (
 from ...core.middleware.loaders import (
     LoaderType,
     load_user,
+    load_indvidual_container_by_user,
 )
 
 from ..models.User import User
@@ -90,9 +91,9 @@ class UserIndvidualContainer(Resource):
             400: "Bad request"
         }
     )
-    def get(self, user_id):
-        ctr = IndvidualContainer.get_user_indvidual_container(user_id)
-        data = ctr.serialize()
+    @load_indvidual_container_by_user()
+    def get(self, user_id, indvidual_container):
+        data = indvidual_container.serialize()
         return success_response(data)
 
 @users_admin_namespace.route("/<int:user_id>/container/status")
@@ -105,9 +106,9 @@ class UserIndvidualContainerStatus(Resource):
             400: "Bad request"
         }
     )
-    def get(self, user_id):
-        ctr = IndvidualContainer.get_user_indvidual_container(user_id)
-        data = ctr.get_status()
+    @load_indvidual_container_by_user()
+    def get(self, user_id, indvidual_container):
+        data = indvidual_container.get_status()
         return success_response(data)
 
 @users_admin_namespace.route("/<int:user_id>/container/challenge")
@@ -120,9 +121,9 @@ class UserIndvidualContainerCurrentChallenge(Resource):
             400: "Bad request"
         }
     )
-    def get(self, user_id):
-        ctr = IndvidualContainer.get_user_indvidual_container(user_id)
-        data = ctr.get_current_challenge()
+    @load_indvidual_container_by_user()
+    def get(self, indvidual_container, user_id):
+        data = indvidual_container.get_current_challenge()
         return success_response({
             "challenge_id": data,
         })
@@ -137,9 +138,9 @@ class UserIndvidualContainerRestart(Resource):
             400: "Bad request"
         }
     )
-    def get(self, user_id):
-        ctr = IndvidualContainer.get_user_indvidual_container(user_id)
-        ctr.restart()
+    @load_indvidual_container_by_user()
+    def get(self, indvidual_container, user_id):
+        indvidual_container.restart()
         return success_response(True)
 
 @users_admin_namespace.route("/<int:user_id>/container/recycle")
@@ -152,8 +153,8 @@ class UserIndvidualContainerRecycle(Resource):
             400: "Bad request"
         }
     )
-    def get(self, user_id):
-        ctr = IndvidualContainer.get_user_indvidual_container(user_id)
-        ctr.recycle()
-        res = ctr.serialize()
+    @load_indvidual_container_by_user()
+    def get(self, user_id, indvidual_container):
+        indvidual_container.recycle()
+        res = indvidual_container.serialize()
         return success_response(res)

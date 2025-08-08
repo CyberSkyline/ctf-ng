@@ -34,25 +34,16 @@ class IndvidualContainer(db.Model):
 
         if db_exists:
             try:
-                ctr = client.containers.get(db_exists.dockerid)
-                if ctr.status != DOCKER_RUNNING:
-                    ctr.start()
+                ctr = client.get_running(db_exists.dockerid)
             except docker.errors.NotFound:
-                ctr = client.containers.run(
-                    config.NOVNC_CONTAINER,
-                    name=container_name,
-                    detach=True,
-                    publish_all_ports=True,
-                )
+                ctr = cls.run_container(client, container_name)
                 db_exists.dockerid = ctr.id
                 db.session.commit()
 
             return db_exists
 
         try:
-            exists = client.containers.get(container_name)
-            if exists.status != DOCKER_RUNNING:
-                exists.start()
+            exists = client.get_running(container_name)
 
             indv = cls(
                 user=user_id,
@@ -65,15 +56,7 @@ class IndvidualContainer(db.Model):
             return indv
 
         except docker.errors.NotFound:
-
-            # Auto publish ports tagged in expose
-            # For the indvidual container this means the vnc port
-            ctr = client.containers.run(
-                config.NOVNC_CONTAINER,
-                name=container_name,
-                detach=True,
-                publish_all_ports=True,
-            )
+            ctr = cls.run_container(client, container_name)
 
             indvidual_container = cls(
                 user=user_id,
@@ -89,6 +72,16 @@ class IndvidualContainer(db.Model):
     @staticmethod
     def render_container_name(user_id) -> str:
         return f"{user_id}-indv"
+
+    @staticmethod
+    def run_container(client, container_name):
+        return client.containers.run(
+            config.NOVNC_CONTAINER,
+            name=container_name,
+            detach=True,
+            publish_all_ports=True,
+        )
+
 
     def disconnect_from_networks(self):
         # Disconnect your indvidual container from challenge networks
@@ -136,12 +129,15 @@ class IndvidualContainer(db.Model):
 
         parsed_network = ContainerInstance.parse_network_name(current_challenge_network)
 
-        return parsed_network.challenge_id
+        return parsed_network["challenge_id"]
 
     def restart(self):
         client = get_client(self.hostip)
-        ctr = client.containers.get(self.dockerid)
-        ctr.restart()
+        try:
+            ctr = client.containers.get(self.dockerid)
+            ctr.restart()
+        except docker.errors.NotFound:
+            raise ValueError("Container not found please recycle") 
 
     def recycle(self):
         client = get_client(self.hostip)
@@ -157,12 +153,7 @@ class IndvidualContainer(db.Model):
 
         finally:
             container_name = self.render_container_name(self.user)
-            new_ctr = client.containers.run(
-                config.NOVNC_CONTAINER,
-                name=container_name,
-                detach=True,
-                publish_all_ports=True,
-            )
+            new_ctr = self.run_container(client, container_name)
 
             self.dockerid = new_ctr.id
             db.session.commit()

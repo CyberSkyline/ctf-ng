@@ -28,6 +28,8 @@ def get_models():
     from ...support.models import Ticket, TicketMessage, TicketTag
     from ...team.models import Team, TeamMember
     from ...user.models import User
+    from ...containers.models.IndvidualContainer import IndvidualContainer
+    from ...containers.models.ContainerInstance import ContainerInstance
 
     return {
         "Attempt": Attempt,
@@ -52,6 +54,8 @@ def get_models():
         "TicketTag": TicketTag,
         "User": User,
         "UserRole": UserRole,
+        "ContainerInstance": ContainerInstance,
+        "IndvidualContainer": IndvidualContainer,
     }
 
 
