@@ -1,6 +1,6 @@
 import { Button } from '@radix-ui/themes';
 import Modal from 'components/Modal';
-import { TbCircleMinus } from "react-icons/tb";
+import { TbCircleMinus } from 'react-icons/tb';
 import { COLOR_NEGATIVE } from '@/constants';
 import type { Event, TeamMember } from '@/types';
 import { kickFromMyTeam } from '@/hooks/events';
