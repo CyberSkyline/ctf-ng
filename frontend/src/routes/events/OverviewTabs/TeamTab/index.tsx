@@ -19,7 +19,7 @@ export default function TeamManagement() {
   const { data : fullMembersList, error : fullMembersError } = useMyTeamMembers(team?.event_id);
 
   const userIsCaptain = useMemo(() => !!find(fullMembersList, (member) => {
-    if (member.id === currentUser?.id) {
+    if (member.user_id === currentUser?.id) {
       return member.role === 'captain';
     }
     return false;
