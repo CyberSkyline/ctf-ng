@@ -3,6 +3,7 @@ import { DropdownMenu } from '@radix-ui/themes';
 import { NavLink, useLocation } from 'react-router';
 import { TbUserCircle } from 'react-icons/tb';
 import { twMerge } from 'tailwind-merge';
+import ThemeToggle from 'components/ThemeToggle';
 
 export default function NavBar() {
   const logout = () => {
@@ -87,6 +88,7 @@ export default function NavBar() {
                   Admin Portal
                 </NavLink>
               </DropdownMenu.Item>
+              <ThemeToggle className="ml-3" />
               <DropdownMenu.Separator className="h-px bg-gray-200 my-1" />
               <DropdownMenu.Item asChild>
                 <button
