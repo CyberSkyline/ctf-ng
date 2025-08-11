@@ -95,14 +95,11 @@ export function kickFromMyTeam(eventId: number, userId: number) {
  * @param eventId The id of the event
  * @param newCaptain The user id of the new captain, optional
  */
-export function leaveMyTeam(eventId: number, newCaptain: number) {
-  return apiMutation(`/events/${eventId}/me/team/leave`, { captain : newCaptain }, {
+export function leaveMyTeam(eventId: number) {
+  return apiMutation(`/events/${eventId}/me/team/leave`, { }, {
     method : 'POST',
-    // cj the docs are wrong. This should be a post
-    // cj unless this is supposed to be 2 separate operations, this should take a captain as an optional param
   }).then(() => {
     mutate('/users/me/events');
-    // cj - do I need to mutate the useMyTeam and useMyTeamMembers here?
   });
 }
 

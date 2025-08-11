@@ -1,11 +1,6 @@
 import { useMemo } from 'react';
 import { Flex, Table, Text } from '@radix-ui/themes';
-import {
-  filter,
-  find,
-  isUndefined,
-  map,
-} from 'lodash';
+import { find, isUndefined, map } from 'lodash';
 import { useParams } from 'react-router';
 import { useCurrentUser } from '@/hooks/users';
 import { useMyTeam, useMyTeamMembers } from '@/hooks/events';
@@ -14,7 +9,6 @@ import AssignCaptainModal from './AssignCaptainModal';
 import EditTeamName from './EditTeamName';
 import LeaveTeamModal from './LeaveTeamModal';
 import RemovePlayerModal from './RemovePlayerModal';
-import TransferTeamModal from './TransferTeamModal';
 
 export default function TeamManagement() {
   const { data : currentUser } = useCurrentUser();
@@ -23,8 +17,6 @@ export default function TeamManagement() {
   const { data : team, error : teamError } = useMyTeam(Number(idEvent));
 
   const { data : fullMembersList, error : fullMembersError } = useMyTeamMembers(team?.event_id);
-
-  const membersList = useMemo(() => filter(fullMembersList, (member) => member.id !== currentUser?.id), [ fullMembersList, currentUser ]);
 
   const userIsCaptain = useMemo(() => !!find(fullMembersList, (member) => {
     if (member.id === currentUser?.id) {
@@ -54,7 +46,7 @@ export default function TeamManagement() {
             : <Text className="pr-4">{`Team Name: ${teamName}`}</Text>
         }
         {!isUndefined(team.invite_code) && userIsCaptain && !team.locked
-          && <AddMemberModal inviteCode={team.invite_code} eventId={eventId}/>}
+          && <AddMemberModal inviteCode={team.invite_code} eventId={eventId} />}
       </Flex>
       <Table.Root>
         <Table.Header>
@@ -81,52 +73,27 @@ export default function TeamManagement() {
               <Table.Cell>
                 <Flex as="span" align="center" gap="2">
                   {
-                    userIsCaptain && !team.locked && (
-                      <>
-                        {id !== currentUser?.id ? (
+                    !team.locked && (
+                      userIsCaptain && id !== currentUser?.id && (
+                        <>
                           <RemovePlayerModal
                             eventId={eventId}
                             userId={id}
                             name={name}
                           />
-                        ) : (
-                          <>
-                            <LeaveTeamModal
-                              eventId={eventId}
-                              transferCaptain={userIsCaptain}
-                              membersList={membersList}
-                            />
-                            <TransferTeamModal
-                              eventId={eventId}
-                              transferCaptain={userIsCaptain}
-                              membersList={membersList}
-                            />
-                          </>
-                        )}
-                        {id !== currentUser?.id && (
                           <AssignCaptainModal
                             eventId={eventId}
                             userId={id}
                             name={name}
                           />
-                        )}
-
-                      </>
-                    )
+                        </>
+                      ))
                   }
-                  { !userIsCaptain && !team.locked && id === currentUser?.id && (
-                    <>
-                      <LeaveTeamModal
-                        eventId={eventId}
-                        transferCaptain={userIsCaptain}
-                        membersList={membersList}
-                      />
-                      <TransferTeamModal
-                        eventId={eventId}
-                        transferCaptain={userIsCaptain}
-                        membersList={membersList}
-                      />
-                    </>
+                  { !team.locked && id === currentUser?.id && (
+                    <LeaveTeamModal
+                      eventId={eventId}
+                      transferCaptain={userIsCaptain && team.member_count !== 1}
+                    />
                   )}
                 </Flex>
               </Table.Cell>
