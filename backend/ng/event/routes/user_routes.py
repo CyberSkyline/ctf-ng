@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from CTFd.models import db
-from flask import redirect
 from flask_restx import Namespace, Resource
 
 from ...challenge.models.Challenge import Challenge
@@ -351,7 +350,7 @@ class EventTeamLeave(Resource):
             db.session.rollback()
             return error_response(f"Failed to leave team: {str(e)}", "internal_error", 500)
 
-        return redirect(f"/ng/events/{event_id}/me/register", code=303)
+        return success_response()
 
 
 @events_user_namespace.route("/<int:event_id>/challenges")

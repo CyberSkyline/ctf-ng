@@ -492,7 +492,7 @@ class Test_Event_Team_Management:
     def test_member_leave(self, team_member_client):
         """Test that the team leave endpoint works correctly."""
         response = team_member_client.post(f"/ng/events/{1}/me/team/leave", json={})
-        assert response.status_code == 303
+        assert response.status_code == 200
 
         reponse = team_member_client.get(f"/ng/events/{1}/me/team")
         assert reponse.status_code == 404
