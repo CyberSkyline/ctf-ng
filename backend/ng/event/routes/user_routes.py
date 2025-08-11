@@ -341,11 +341,12 @@ class EventTeamLeave(Resource):
                 403,
             )
         try:
-            team_member.remove_team_member(commit=True)
+            team_member.remove_team_member(commit=False)
             demographic = Demographic.find_by_user_and_event(current_user.id, event_id)
-            demographic.delete(commit=True)
+            demographic.delete(commit=False)
             if len(team.members) == 0:
-                team.delete(commit=True)
+                team.disband_team(commit=False)
+            db.session.commit()
         except Exception as e:
             db.session.rollback()
             return error_response(f"Failed to leave team: {str(e)}", "internal_error", 500)
