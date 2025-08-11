@@ -86,11 +86,9 @@ class Team(db.Model):
             "member_count": self.member_count,
             "ranked": self.ranked,
             "locked": self.locked,
+            "invite_code": self.invite_code,
         }
 
-        if include_admin_fields:
-            data["invite_code"] = self.invite_code
-            data["seed"] = self.seed
 
         return SerializedTeam(**data)
 
