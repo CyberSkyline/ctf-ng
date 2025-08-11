@@ -52,6 +52,7 @@ class AdminStatsCounts(Resource):
 
 @admin_namespace.route("/reset")
 class AdminReset(Resource):
+    @admin_endpoint()
     @admin_namespace.doc(**RESET_ALL_DATA_DOC)
     def post(self):
         """Reset all data"""
@@ -61,6 +62,7 @@ class AdminReset(Resource):
 
 @admin_namespace.route("/events/<int:event_id>/reset")
 class AdminEventReset(Resource):
+    @admin_endpoint()
     @load_event(LoaderType.PARAM)
     @admin_namespace.doc(**RESET_EVENT_DATA_DOC)
     def post(self, event_id):
