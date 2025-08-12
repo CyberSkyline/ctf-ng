@@ -34,8 +34,8 @@ services:
     restart: always
     volumes:
       - ./conf/nginx/http.conf:/etc/nginx/nginx.conf:ro
-      - ./conf/ctfd/sslpublickey.pem:/certificates/sslpublickey.pem:ro
-      - ./conf/ctfd/privatesslkey.pem:/certificates/privatesslkey.pem:ro
+      - ./sslpublickey.pem:/certificates/sslpublickey.pem:ro
+      - ./privatesslkey.pem:/certificates/privatesslkey.pem:ro
       - ./frontend/dist:/var/www/vite-build:ro
     ports:
       - 80:80
