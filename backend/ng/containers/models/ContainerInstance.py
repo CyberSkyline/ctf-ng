@@ -162,8 +162,8 @@ class ContainerInstance(db.Model):
         try:
             ctr = client.containers.get(self.dockerid)
             ctr.restart()
-        except docker.errors.NotFound:
-            raise ValueError("Container not found please recycle")
+        except docker.errors.NotFound as exc:
+            raise ValueError("Container not found please recycle") from exc
 
     def recycle(self):
         blueprint_obj = ContainerBlueprint.query.filter_by(id=self.blueprint).first()

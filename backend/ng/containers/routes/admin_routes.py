@@ -1,4 +1,5 @@
 from flask_restx import Namespace, Resource
+from ..controllers.get_stats import get_stats
 from ..models.ContainerInstance import ContainerInstance
 
 from ...core.middleware import (

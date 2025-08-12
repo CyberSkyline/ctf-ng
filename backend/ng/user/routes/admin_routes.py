@@ -12,7 +12,6 @@ from ...core.middleware.loaders import (
 )
 
 from ..models.User import User
-from ...containers.models.IndvidualContainer import IndvidualContainer
 
 from ._docs import (
     GET_ALL_USERS_DOC,

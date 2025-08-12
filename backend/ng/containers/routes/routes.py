@@ -1,11 +1,14 @@
 from flask_restx import Namespace, Resource
 from ..controllers.vnc import forward_vnc
 from ..controllers.get_current_connected_challenge import get_current_connected_challenge
-from ..models.ContainerInstance import ContainerInstance
 
 
 from ...core.middleware import (
     user_endpoint,
+)
+
+from ...core.utils import (
+    success_response,
 )
 
 container_namespace = Namespace("containers", description="containers")
