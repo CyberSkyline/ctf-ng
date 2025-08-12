@@ -3,10 +3,10 @@ import { Container, Tabs } from '@radix-ui/themes';
 import { TbStar } from 'react-icons/tb';
 import { useParams, useSearchParams } from 'react-router';
 
-import { ChallengeIcon, TeamIcon } from '@/constants';
-import { useEvent } from '@/hooks/events';
 import EventHeader from 'components/EventHeader';
 import HeaderContainer from 'components/HeaderContainer';
+import { ChallengeIcon, TeamIcon } from '@/constants';
+import { useEvent } from '@/hooks/events';
 import ChallengesTab from './OverviewTabs/ChallengesTab';
 import LeaderboardTab from './OverviewTabs/LeaderboardTab';
 import TeamTab from './OverviewTabs/TeamTab';
@@ -50,10 +50,13 @@ export default function Overview() {
               <TbStar className="mr-1" />
               Leaderboard
             </Tabs.Trigger>
-            <Tabs.Trigger value="team">
-              <TeamIcon className="mr-1" />
-              Team
-            </Tabs.Trigger>
+            {data?.max_team_size > 1
+              && (
+              <Tabs.Trigger value="team">
+                <TeamIcon className="mr-1" />
+                Team
+              </Tabs.Trigger>
+              )}
           </Tabs.List>
         </Container>
 
