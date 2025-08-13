@@ -27,16 +27,42 @@ ADMIN_REQUIRED_RESPONSES = {
 # ============ USER SUPPORT ENDPOINTS ============
 CREATE_TICKET_DOC = {
     "description": "Create a new support ticket with initial message",
+    "params": {
+        "subject": "Ticket subject line (128 character max length)",
+        "text": "Initial message text",
+        "event_id": "Event ID to associate ticket with",
+        "team_id": "Team ID to associate ticket with",
+        "challenge_id": "Challenge ID to associate ticket with"
+    },
     "responses": {
-        201: "Success - Ticket created with initial message",
-        400: "Bad request - Missing required fields (subject, text) or invalid associations",
+        201:
+        "Success - Ticket created with initial message",
+        400:
+        "Bad request - Missing required fields (subject, text) or invalid associations",
         **AUTH_REQUIRED_RESPONSES,
-        404: "Not found - Event, team, or challenge association not found",
+        404:
+        "Not found - Event, team, or challenge association not found",
     },
 }
 
 LIST_MY_TICKETS_DOC = {
-    "description": "Get all support tickets created by the current user with optional status filter",
+    "description":
+    """
+    Get all support tickets created by the current user with optional status filter.
+
+    Note: This endpoint requires a JSON request body.
+    Swagger UI does not support parameter testing for GET requests that require JSON request bodies.
+
+    Request Body (JSON):
+    - 'status' (optional, string): Filter by ticket status. Options: 'all', 'open', 'closed'. Default: 'all'
+
+    Manual Testing:
+
+    curl -X GET '/ng/support/me/tickets' \\
+      -H 'Content-Type: application/json' \\
+      -d '{"status": "open"}'
+
+    """,
     "responses": {
         200: "Success - Returns list of user's tickets",
         400: "Bad request - Invalid status filter (must be: all, open, closed)",
@@ -45,7 +71,11 @@ LIST_MY_TICKETS_DOC = {
 }
 
 GET_MY_TICKET_DOC = {
-    "description": "Get a specific ticket with all messages (user must own the ticket)",
+    "description":
+    "Get a specific ticket with all messages (user must own the ticket)",
+    "params": {
+        "ticket_id": "Ticket ID"
+    },
     "responses": {
         200: "Success - Returns ticket details and message thread",
         **AUTH_REQUIRED_RESPONSES,
@@ -56,6 +86,10 @@ GET_MY_TICKET_DOC = {
 
 ADD_MESSAGE_DOC = {
     "description": "Add a new message to an existing support ticket thread",
+    "params": {
+        "ticket_id": "Ticket ID",
+        "text": "Message content (4096 character max length)"
+    },
     "responses": {
         201: "Success - Message added to ticket thread",
         400: "Bad request - Missing message text",
@@ -67,6 +101,9 @@ ADD_MESSAGE_DOC = {
 
 CLOSE_MY_TICKET_DOC = {
     "description": "Close a support ticket (user must own the ticket)",
+    "params": {
+        "ticket_id": "Ticket ID"
+    },
     "responses": {
         200: "Success - Ticket closed",
         400: "Bad request - Ticket is already closed",
@@ -78,7 +115,25 @@ CLOSE_MY_TICKET_DOC = {
 
 # ============ ADMIN SUPPORT ENDPOINTS ============
 LIST_TICKETS_DOC = {
-    "description": "Get all support tickets with optional filters (Admin only)",
+    "description": """Get all support tickets with optional filters (Admin only).
+
+    Note: This endpoint requires a JSON request body.
+    Swagger UI does not support interactive parameter testing for GET requests that require JSON request bodies.
+
+    Request Body (JSON):
+    - `user_id` (optional, int): Filter by ticket author ID
+    - `status` (optional, str): Filter by ticket status. Options: 'all', 'open', 'closed'. Default: 'all'
+    - `assigned_to` (optional, int): Filter by assigned user ID
+    - `event_id` (optional, int): Filter by event ID
+    - `team_id` (optional, int): Filter by team ID
+
+    Manual Testing:
+
+    curl -X GET '/ng/admin/support/tickets' \\
+      -H 'Content-Type: application/json' \\
+      -d '{"status": "open", "user_id": 123, "assigned_to": 456}'
+
+    """,
     "responses": {
         200: "Success - Returns filtered list of tickets",
         400: "Bad request - Invalid filter parameters",
@@ -88,6 +143,9 @@ LIST_TICKETS_DOC = {
 
 GET_TICKET_DOC = {
     "description": "Get any support ticket with all messages (Admin only)",
+    "params": {
+        "ticket_id": "Ticket ID"
+    },
     "responses": {
         200: "Success - Returns ticket details and message thread",
         **ADMIN_REQUIRED_RESPONSES,
@@ -96,7 +154,12 @@ GET_TICKET_DOC = {
 }
 
 ADD_ADMIN_MESSAGE_DOC = {
-    "description": "Add admin message to any ticket (reopens closed tickets) (Admin only)",
+    "description":
+    "Add admin message to any ticket (reopens closed tickets) (Admin only)",
+    "params": {
+        "ticket_id": "Ticket ID",
+        "text": "Message content (4096 character max length)"
+    },
     "responses": {
         201: "Success - Message added and ticket reopened if necessary",
         400: "Bad request - Missing message text",
@@ -106,7 +169,12 @@ ADD_ADMIN_MESSAGE_DOC = {
 }
 
 SET_TICKET_TAGS_DOC = {
-    "description": "Set tags on a ticket (replaces all existing tags) (Admin only)",
+    "description":
+    "Set tags on a ticket (replaces all existing tags) (Admin only)",
+    "params": {
+        "ticket_id": "Ticket ID",
+        "tag_ids": "Array of tag IDs to assign (empty array to clear all tags)"
+    },
     "responses": {
         200: "Success - Tags updated",
         400: "Bad request - Invalid tag_ids array",
@@ -117,6 +185,10 @@ SET_TICKET_TAGS_DOC = {
 
 ASSIGN_TICKET_DOC = {
     "description": "Assign a ticket to a user (Admin only)",
+    "params": {
+        "ticket_id": "Ticket ID",
+        "user_id": "User ID to assign ticket to"
+    },
     "responses": {
         200: "Success - Assignment updated",
         400: "Bad request - Invalid user_id or already assigned",
@@ -127,6 +199,9 @@ ASSIGN_TICKET_DOC = {
 
 UNASSIGN_TICKET_DOC = {
     "description": "Unassign a ticket from any user (Admin only)",
+    "params": {
+        "ticket_id": "Ticket ID"
+    },
     "responses": {
         200: "Success - Ticket unassigned",
         **ADMIN_REQUIRED_RESPONSES,
@@ -136,6 +211,10 @@ UNASSIGN_TICKET_DOC = {
 
 UPDATE_STATUS_DOC = {
     "description": "Toggle ticket open/closed status (Admin only)",
+    "params": {
+        "ticket_id": "Ticket ID",
+        "closed": "Whether to close the ticket"
+    },
     "responses": {
         200: "Success - Status updated",
         400: "Bad request - Missing or invalid closed boolean",
@@ -146,6 +225,10 @@ UPDATE_STATUS_DOC = {
 
 UPDATE_MUTE_DOC = {
     "description": "Toggle ticket mute status (Admin only)",
+    "params": {
+        "ticket_id": "Ticket ID",
+        "muted": "Whether to mute the ticket"
+    },
     "responses": {
         200: "Success - Mute status updated",
         400: "Bad request - Missing or invalid muted boolean",
@@ -156,16 +239,27 @@ UPDATE_MUTE_DOC = {
 
 SET_TICKET_EVENT_DOC = {
     "description": "Set ticket's event and team association (Admin only)",
+    "params": {
+        "ticket_id": "Ticket ID",
+        "event_id": "Event ID to associate with ticket",
+        "team_id": "Team ID to associate with ticket"
+    },
     "responses": {
-        200: "Success - Event/team association updated",
-        400: "Bad request - Team does not belong to specified event",
+        200:
+        "Success - Event/team association updated",
+        400:
+        "Bad request - Team does not belong to specified event",
         **ADMIN_REQUIRED_RESPONSES,
-        404: "Not found - Ticket, event, or team not found",
+        404:
+        "Not found - Ticket, event, or team not found",
     },
 }
 
 REMOVE_TICKET_EVENT_DOC = {
     "description": "Remove ticket's event and team association (Admin only)",
+    "params": {
+        "ticket_id": "Ticket ID"
+    },
     "responses": {
         200: "Success - Event/team association removed",
         **ADMIN_REQUIRED_RESPONSES,
@@ -175,6 +269,10 @@ REMOVE_TICKET_EVENT_DOC = {
 
 SET_TICKET_CHALLENGE_DOC = {
     "description": "Set ticket's challenge association (Admin only)",
+    "params": {
+        "ticket_id": "Ticket ID",
+        "challenge_id": "Challenge ID to associate with ticket"
+    },
     "responses": {
         200: "Success - Challenge association updated",
         400: "Bad request - Invalid challenge_id",
@@ -185,6 +283,9 @@ SET_TICKET_CHALLENGE_DOC = {
 
 REMOVE_TICKET_CHALLENGE_DOC = {
     "description": "Remove ticket's challenge association (Admin only)",
+    "params": {
+        "ticket_id": "Ticket ID"
+    },
     "responses": {
         200: "Success - Challenge association removed",
         **ADMIN_REQUIRED_RESPONSES,
@@ -202,6 +303,11 @@ LIST_TAGS_DOC = {
 
 CREATE_TAG_DOC = {
     "description": "Create a new support ticket tag (Admin only)",
+    "params": {
+        "name": "Tag name (50 character max length, must be unique)",
+        "color": "Tag color (hex color code e.g #FFFFFF)",
+        "description": "Tag description (200 character max length)"
+    },
     "responses": {
         201: "Success - Tag created",
         400: "Bad request - Missing name or invalid color format",
@@ -212,6 +318,12 @@ CREATE_TAG_DOC = {
 
 UPDATE_TAG_DOC = {
     "description": "Update an existing support ticket tag (Admin only)",
+    "params": {
+        "ticket_tag_id": "Tag ID",
+        "name": "Tag name (50 character max length)",
+        "color": "Tag color (hex color code e.g #FF0000)",
+        "description": "Tag description (200 character max length)"
+    },
     "responses": {
         200: "Success - Tag updated",
         400: "Bad request - Invalid name or color format",
