@@ -71,23 +71,15 @@ CREATE_TICKET_DOC = {
 }
 
 LIST_MY_TICKETS_DOC = {
-    "description":
-    """
-    Get all support tickets created by the current user with optional status filter.
-
-    Note: This endpoint requires a JSON request body.
-    Swagger UI does not support parameter testing for GET requests that require JSON request bodies.
-
-    Request Body (JSON):
-    - 'status' (optional, string): Filter by ticket status. Options: 'all', 'open', 'closed'. Default: 'all'
-
-    Manual Testing:
-
-    curl -X GET '/ng/support/me/tickets' \\
-      -H 'Content-Type: application/json' \\
-      -d '{"status": "open"}'
-
-    """,
+    "description": "Get all support tickets created by the current user with optional status filter.",
+    "params": {
+        "status": {
+            "description": "Filter by ticket status. Options: 'all', 'open', 'closed'. Default: 'all'",
+            "required": False,
+            "type": "string",
+            "example": "open"
+        }
+    },
     "responses": {
         200: "Success - Returns list of user's tickets",
         400: "Bad request - Invalid status filter (must be: all, open, closed)",
@@ -161,25 +153,39 @@ CLOSE_MY_TICKET_DOC = {
 
 # ============ ADMIN SUPPORT ENDPOINTS ============
 LIST_TICKETS_DOC = {
-    "description": """Get all support tickets with optional filters (Admin only).
-
-    Note: This endpoint requires a JSON request body.
-    Swagger UI does not support interactive parameter testing for GET requests that require JSON request bodies.
-
-    Request Body (JSON):
-    - `user_id` (optional, int): Filter by ticket author ID
-    - `status` (optional, str): Filter by ticket status. Options: 'all', 'open', 'closed'. Default: 'all'
-    - `assigned_to` (optional, int): Filter by assigned user ID
-    - `event_id` (optional, int): Filter by event ID
-    - `team_id` (optional, int): Filter by team ID
-
-    Manual Testing:
-
-    curl -X GET '/ng/admin/support/tickets' \\
-      -H 'Content-Type: application/json' \\
-      -d '{"status": "open", "user_id": 123, "assigned_to": 456}'
-
-    """,
+    "description": "Get all support tickets with optional filters (Admin only).",
+    "params": {
+        "user_id": {
+            "description": "Filter by ticket author ID",
+            "required": False,
+            "type": "integer",
+            "example": 123
+        },
+        "status": {
+            "description": "Filter by ticket status. Options: 'all', 'open', 'closed'. Default: 'all'",
+            "required": False,
+            "type": "string",
+            "example": "open"
+        },
+        "assigned_to": {
+            "description": "Filter by assigned user ID",
+            "required": False,
+            "type": "integer",
+            "example": 456
+        },
+        "event_id": {
+            "description": "Filter by event ID",
+            "required": False,
+            "type": "integer",
+            "example": 1
+        },
+        "team_id": {
+            "description": "Filter by team ID",
+            "required": False,
+            "type": "integer",
+            "example": 42
+        }
+    },
     "responses": {
         200: "Success - Returns filtered list of tickets",
         400: "Bad request - Invalid filter parameters",

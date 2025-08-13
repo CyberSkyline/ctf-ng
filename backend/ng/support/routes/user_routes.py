@@ -2,6 +2,7 @@
 User API routes for support tickets
 """
 
+from flask import request
 from flask_restx import Namespace, Resource
 
 from ...core.middleware import user_endpoint
@@ -50,12 +51,12 @@ class Tickets(Resource):
 @support_user_namespace.route("/me/tickets")
 class MyTickets(Resource):
     @support_user_namespace.doc(**LIST_MY_TICKETS_DOC)
-    @user_endpoint(json_required=True)
-    def get(self, current_user: User, json_data, **kwargs):
+    @user_endpoint()
+    def get(self, current_user: User, **kwargs):
         """
         Get all tickets for the current user
         """
-        status = json_data.get("status", "all")
+        status = request.args.get("status", "all")
 
         tickets = list_tickets(
             user_id=current_user.id,

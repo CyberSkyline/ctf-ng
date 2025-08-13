@@ -71,7 +71,7 @@ class TestUserSupportEndpoints:
 
     def test_get_my_tickets_all(self, logged_in_client, multiple_tickets, user):
         """Test getting all user's tickets"""
-        response = logged_in_client.get("/ng/support/me/tickets", json={})
+        response = logged_in_client.get("/ng/support/me/tickets")
 
         assert response.status_code == 200
         data = response.get_json()
@@ -83,7 +83,7 @@ class TestUserSupportEndpoints:
     def test_get_my_tickets_filtered(self, logged_in_client, multiple_tickets, user):
         """Test getting filtered tickets"""
         # Get only open tickets
-        response = logged_in_client.get("/ng/support/me/tickets", json={"status": "open"})
+        response = logged_in_client.get("/ng/support/me/tickets?status=open")
 
         assert response.status_code == 200
         data = response.get_json()
@@ -184,7 +184,7 @@ class TestAdminSupportEndpoints:
 
     def test_get_all_tickets(self, admin_client, multiple_tickets):
         """Test getting all tickets as admin"""
-        response = admin_client.get("/ng/admin/support/tickets", json={})
+        response = admin_client.get("/ng/admin/support/tickets")
 
         assert response.status_code == 200
         data = response.get_json()
@@ -194,12 +194,12 @@ class TestAdminSupportEndpoints:
     def test_get_tickets_filtered(self, admin_client, multiple_tickets, admin):
         """Test getting filtered tickets"""
         # Filter by status
-        response = admin_client.get("/ng/admin/support/tickets", json={"status": "open"})
+        response = admin_client.get("/ng/admin/support/tickets?status=open")
         data = response.get_json()
         assert all(t["status"] == "open" for t in data["data"])
 
         # Filter by assigned user
-        response = admin_client.get("/ng/admin/support/tickets", json={"assigned_to": admin.id})
+        response = admin_client.get(f"/ng/admin/support/tickets?assigned_to={admin.id}")
         data = response.get_json()
         assert all(t["assigned_to"] == admin.id for t in data["data"])
 

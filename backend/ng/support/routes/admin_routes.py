@@ -2,6 +2,7 @@
 Admin API routes for support tickets
 """
 
+from flask import request
 from flask_restx import Namespace, Resource
 
 from ...core.middleware import admin_endpoint
@@ -56,16 +57,16 @@ support_admin_namespace = Namespace("admin/support", description="Admin support 
 @support_admin_namespace.route("/tickets")
 class AdminTickets(Resource):
     @support_admin_namespace.doc(**LIST_TICKETS_DOC)
-    @admin_endpoint(json_required=True)
-    def get(self, current_user: User, json_data, **kwargs):
+    @admin_endpoint()
+    def get(self, current_user: User, **kwargs):
         """
         Get all tickets with optional filters
         """
-        user_id = json_data.get("user_id")
-        status = json_data.get("status", "all")
-        assigned_to = json_data.get("assigned_to")
-        event_id = json_data.get("event_id")
-        team_id = json_data.get("team_id")
+        user_id = request.args.get("user_id", type=int)
+        status = request.args.get("status", "all")
+        assigned_to = request.args.get("assigned_to", type=int)
+        event_id = request.args.get("event_id", type=int)
+        team_id = request.args.get("team_id", type=int)
 
         tickets = list_tickets(
             user_id=user_id,
