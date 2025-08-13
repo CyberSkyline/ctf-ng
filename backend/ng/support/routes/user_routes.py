@@ -28,7 +28,7 @@ from ._docs import (
 support_user_namespace = Namespace("support", description="Support ticket operations for users")
 
 
-@support_user_namespace.route("/tickets")
+@support_user_namespace.route("/tickets/create")
 class Tickets(Resource):
     @support_user_namespace.doc(**CREATE_TICKET_DOC)
     @user_endpoint(json_required=True)

@@ -13,7 +13,7 @@ class TestUserSupportEndpoints:
     def test_create_ticket_basic(self, logged_in_client, user, event):
         """Test creating a basic support ticket"""
         response = logged_in_client.post(
-            "/ng/support/tickets",
+            "/ng/support/tickets/create",
             json={
                 "subject": "Need help with challenge",
                 "text": "I can't submit my flag",
@@ -32,7 +32,7 @@ class TestUserSupportEndpoints:
     def test_create_ticket_minimal(self, logged_in_client):
         """Test creating ticket with minimal data"""
         response = logged_in_client.post(
-            "/ng/support/tickets",
+            "/ng/support/tickets/create",
             json={
                 "subject": "Simple question",
                 "text": "How do I get started?",
@@ -47,7 +47,7 @@ class TestUserSupportEndpoints:
     def test_create_ticket_missing_fields(self, logged_in_client):
         """Test creating ticket without required fields"""
         response = logged_in_client.post(
-            "/ng/support/tickets",
+            "/ng/support/tickets/create",
             json={"subject": "Missing text"},
         )
 
@@ -58,7 +58,7 @@ class TestUserSupportEndpoints:
     def test_create_ticket_empty_subject(self, logged_in_client):
         """Test creating ticket with empty subject"""
         response = logged_in_client.post(
-            "/ng/support/tickets",
+            "/ng/support/tickets/create",
             json={
                 "subject": "   ",
                 "text": "Some text",
@@ -163,7 +163,7 @@ class TestUserSupportEndpoints:
     def test_unauthenticated_requests(self, client, ticket):
         """Test that unauthenticated requests fail"""
         endpoints = [
-            ("/ng/support/tickets", "POST", {"subject": "test", "text": "test"}),
+            ("/ng/support/tickets/create", "POST", {"subject": "test", "text": "test"}),
             ("/ng/support/me/tickets", "GET", None),
             (f"/ng/support/me/tickets/{ticket.id}", "GET", None),
             (f"/ng/support/me/tickets/{ticket.id}", "POST", {"text": "test"}),
