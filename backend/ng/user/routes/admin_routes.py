@@ -91,7 +91,7 @@ class UserIndvidualContainer(Resource):
         }
     )
     @load_indvidual_container_by_user()
-    def get(self, user_id, indvidual_container):
+    def get(self, user_id, indvidual_container, **kwargs):
         data = indvidual_container.serialize()
         return success_response(data)
 
@@ -106,7 +106,7 @@ class UserIndvidualContainerStatus(Resource):
         }
     )
     @load_indvidual_container_by_user()
-    def get(self, user_id, indvidual_container):
+    def get(self, user_id, indvidual_container, **kwargs):
         data = indvidual_container.get_status()
         return success_response(data)
 
@@ -121,7 +121,7 @@ class UserIndvidualContainerCurrentChallenge(Resource):
         }
     )
     @load_indvidual_container_by_user()
-    def get(self, indvidual_container, user_id):
+    def get(self, indvidual_container, user_id, **kwargs):
         data = indvidual_container.get_current_challenge()
         return success_response({
             "challenge_id": data,
@@ -138,7 +138,7 @@ class UserIndvidualContainerRestart(Resource):
         }
     )
     @load_indvidual_container_by_user()
-    def get(self, indvidual_container, user_id):
+    def get(self, indvidual_container, user_id, **kwargs):
         indvidual_container.restart()
         return success_response(True)
 
@@ -153,7 +153,7 @@ class UserIndvidualContainerRecycle(Resource):
         }
     )
     @load_indvidual_container_by_user()
-    def get(self, user_id, indvidual_container):
+    def get(self, user_id, indvidual_container, **kwargs):
         indvidual_container.recycle()
         res = indvidual_container.serialize()
         return success_response(res)
