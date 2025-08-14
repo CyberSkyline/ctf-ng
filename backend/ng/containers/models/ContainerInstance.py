@@ -1,6 +1,6 @@
 from CTFd.models import db
 import docker
-from sqlalchemy import func
+from sqlalchemy import func, select
 from typing import TypedDict
 from ..utils.get_client import get_client
 from ... import config
@@ -12,6 +12,13 @@ class SerializedInstanceStats(TypedDict):
     image: str
     docker_id: str
     status: str
+
+class SerializedContainerInstance(TypedDict):
+    id: int
+    blueprint: int
+    team: int
+    hostip: str
+    dockerid: str
 
 class ContainerInstance(db.Model):
     __tablename__ = "ng_container_instances"
@@ -130,6 +137,7 @@ class ContainerInstance(db.Model):
                 Team.name.label("team_name"),
                 Challenge.id.label("challenge_id"),
                 func.count(cls.id.distinct()).label("containers"),
+                Challenge.event_id.label("event_id")
             )
             .outerjoin(Team, cls.team == Team.id)
             .outerjoin(ContainerBlueprint, cls.blueprint == ContainerBlueprint.id)
@@ -138,6 +146,23 @@ class ContainerInstance(db.Model):
             .all())
 
         return qr
+
+    @classmethod
+    def get_service_group(cls, challenge_id: int, team_id: int) -> list[SerializedContainerInstance]:
+        from ...challenge.models.ContainerBlueprint import ContainerBlueprint
+
+        blueprints = ContainerBlueprint.query.filter_by(challenge_id=challenge_id).all()
+
+        blueprint_ids = [blueprint.id for blueprint in blueprints]
+
+        instances = db.session.scalars(
+            select(cls)
+            .where(cls.blueprint.in_(blueprint_ids), cls.team == team_id)
+        ).all()
+
+
+        return [instance.serialize() for instance in instances]
+
 
     @classmethod
     def get_instance_by_id(cls, instance_id: int):
@@ -155,6 +180,15 @@ class ContainerInstance(db.Model):
         }
 
         return SerializedInstanceStats(**data)
+
+    def serialize(self) -> SerializedContainerInstance:
+        return SerializedContainerInstance(
+            id=self.id,
+            blueprint=self.blueprint,
+            team=self.team,
+            hostip=self.hostip,
+            dockerid=self.dockerid,
+       )
 
 
     def restart(self):
