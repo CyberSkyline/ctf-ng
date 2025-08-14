@@ -75,7 +75,7 @@ class UserRoles(Resource):
     """
     Resource to manage roles for a specific user.
     """
-    @user_endpoint()
+    @admin_endpoint()
     @load_user(source=LoaderType.PARAM, output_key="user")
     @permissions_admin_namespace.doc("get_user_roles")
     def get(self, user_id, **kwargs):

@@ -27,6 +27,7 @@ from .permissions.models.enums import PermissionEnum, RoleEnum
 from .permissions.models.Permission import Permission
 from .permissions.models.Role import Role
 from .permissions.models.RolePermission import RolePermission
+from .permissions.controllers.assign_role_to_user import assign_role_to_user
 from .support.models.Ticket import Ticket
 from .support.models.TicketTag import TicketTag
 from .team.models.Team import Team
@@ -212,8 +213,11 @@ def admin(db_session):
     db_session.add(admin)
     db_session.flush()
     from .user.models.User import User as NgUser
+    Role.create_role(RoleEnum.ADMIN)
+    Permission.create_permission(PermissionEnum.CAN_EDIT_TEAM, "Edit team details")
 
     NgUser.create_user(user_id=admin.id, commit=False)
+    assign_role_to_user(admin.id, RoleEnum.ADMIN)
     db_session.flush()
     return admin
 
@@ -493,8 +497,8 @@ def user_with_roles(db_session):
     # Assign multiple roles to the user
     role1 = Role.create_role(RoleEnum.ADMIN)
     role2 = Role.create_role(RoleEnum.SUPPORT)
-    assign_role_to_user(user.id, role1.name)
-    assign_role_to_user(user.id, role2.name)
+    assign_role_to_user(user.id, RoleEnum.ADMIN)
+    assign_role_to_user(user.id, RoleEnum.SUPPORT)
 
     return user
 

@@ -13,13 +13,13 @@ def create_role(name: str, permissions: list[PermissionEnum] = None):
     """
 
     if Role.get_role_by_name(name):
-        return {"success": False, "error": f"Role '{name}' already exists"}
+        raise ValueError(f"Role '{name}' already exists")
     permissions_obj = []
     if permissions:
         for perm_name in permissions:
             permission = Permission.get_permission_by_name(perm_name)
             if not permission:
-                return {"success": False, "error": f"Permission '{perm_name}' does not exist"}
+                raise ValueError(f"Permission '{perm_name}' does not exist")
             permissions_obj.append(permission)
 
     return Role.create_role(name=name, permissions=permissions_obj)
