@@ -112,6 +112,7 @@ def register_error_handlers(app):
     def handle_sqlalchemy_error(error):
         db.session.rollback()
         db.session.remove()
+        print(error)
         logger.error("SQLAlchemy error occurred", exc_info=True)
         return error_response(
             "A database error occurred. Please contact an administrator.",
