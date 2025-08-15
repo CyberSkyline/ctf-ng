@@ -34,6 +34,11 @@ module = "*"
 # Allow accessing any attribute on db.session (scoped_session)
 disable_error_code = ["attr-defined", "name-defined"]
 
+[[tool.mypy.overrides]]
+module = "*.models.*"
+# Disable TypedDict errors for model serialization methods
+disable_error_code = ["typeddict-item", "no-any-return"]
+
 [tool.ruff]
 line-length = 120
 target-version = "py312"

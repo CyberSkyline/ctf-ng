@@ -1,22 +1,31 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TypedDict
 
 from CTFd.models import db
-from cyber_skyline.chall_parser.compose.challenge_info import Hint as HintAttr
+from cyber_skyline.chall_parser.compose.challenge_info import (
+    Hint as HintAttr,
+)
 
+from ... import config
 from ...core.utils.validator import BaseValidator
 
-MAX_HINT_PREVIEW_LENGTH = 256
-MAX_HINT_BODY_LENGTH = 1024
+
+class SerializedHint(TypedDict):
+    id: int
+    challenge_id: int
+    preview: str
+    body: str | None
+    deduction: int
+    is_redeemed: bool
 
 
 class Hint(db.Model):
     __tablename__ = "ng_challenge_hints"
     id = db.Column(db.Integer, primary_key=True)
     challenge_id = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
-    preview = db.Column(db.String(MAX_HINT_PREVIEW_LENGTH), nullable=False)
-    body = db.Column(db.String(MAX_HINT_BODY_LENGTH), nullable=False)
+    preview = db.Column(db.String(config.MAX_HINT_PREVIEW_LENGTH), nullable=False)
+    body = db.Column(db.String(config.MAX_HINT_BODY_LENGTH), nullable=False)
     deduction = db.Column(db.Integer, nullable=False)
 
     challenge = db.relationship("Challenge", back_populates="hints")
@@ -25,18 +34,34 @@ class Hint(db.Model):
         return f"<NgHint {self.id}, deduction={self.deduction}, preview={self.preview}, body={self.body}>"
 
 
-    def serialize(self, include_admin_fields=False) -> dict[str, Any]:
+    def serialize(self, team=None, include_admin_fields=False) -> SerializedHint:
         """
         Serialize the hint to a dictionary.
+        :param team: Optional team object to check redemption status
+        :param include_admin_fields: Whether to include admin-only fields
         :return: A dictionary representation of the hint.
         """
-        return {
+        data = {
             "id": self.id,
             "challenge_id": self.challenge_id,
             "preview": self.preview,
-            "body": self.body,
+            "body": None,
             "deduction": self.deduction,
+            "is_redeemed": False,
         }
+
+        if team:
+            # LAZY-IMPORT
+            from ...scoring.models import HintRedemption
+            redemption = HintRedemption.find_by_team_and_hint(team.id, self.id)
+            if redemption:
+                data["is_redeemed"] = True
+                data["body"] = self.body
+
+        if include_admin_fields: # TODO may need changes after daniels admin field
+            data["body"] = self.body
+
+        return SerializedHint(**data)
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
@@ -50,14 +75,14 @@ class Hint(db.Model):
         validator.validate_string(
             data,
             "body",
-            MAX_HINT_BODY_LENGTH,
+            config.MAX_HINT_BODY_LENGTH,
             required=True,
             friendly_name="Hint Body",
         )
         validator.validate_string(
             data,
             "preview",
-            MAX_HINT_PREVIEW_LENGTH,
+            config.MAX_HINT_PREVIEW_LENGTH,
             required=False,
             friendly_name="Hint Preview",
         )

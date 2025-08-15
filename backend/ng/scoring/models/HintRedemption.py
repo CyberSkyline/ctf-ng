@@ -65,7 +65,7 @@ class HintRedemption(db.Model):
             "points": self.points,
         }
 
-        return SerializedHintRedemption(**data)  # type: ignore[typeddict-item, no-any-return]
+        return SerializedHintRedemption(**data)
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:

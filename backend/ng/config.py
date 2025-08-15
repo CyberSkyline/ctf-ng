@@ -32,6 +32,10 @@ DEFAULT_SCORE_HISTORY_LIMIT = 50
 MAX_LEADERBOARD_LIMIT = 1000
 MAX_SCORE_HISTORY_LIMIT = 500
 
+# Hint Model Field Length Limits
+MAX_HINT_PREVIEW_LENGTH = 256
+MAX_HINT_BODY_LENGTH = 1024
+
 # Docker host config
 # This will eventually be an array but just single host for mvp
 DOCKER_HOST = "172.17.0.1"
