@@ -76,7 +76,20 @@ class AdminTickets(Resource):
             team_id=team_id,
             is_admin=True,
         )
-        return success_response(tickets)
+
+        # Enrich each ticket with names for API response
+        enriched_tickets = []
+        for ticket in tickets:
+            ticket_data = ticket.serialize(include_admin_fields=True)
+            if ticket.event_id:
+                ticket_data["event_name"] = ticket.event.name
+            if ticket.team_id:
+                ticket_data["team_name"] = ticket.team.name
+            if ticket.challenge_id:
+                ticket_data["challenge_name"] = ticket.challenge.name
+            enriched_tickets.append(ticket_data)
+
+        return success_response(enriched_tickets)
 
 
 @support_admin_namespace.route("/tickets/<int:ticket_id>")

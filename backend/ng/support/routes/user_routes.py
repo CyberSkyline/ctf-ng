@@ -45,7 +45,16 @@ class Tickets(Resource):
             team_id=json_data.get("team_id"),
             challenge_id=json_data.get("challenge_id"),
         )
-        return success_response(ticket, status_code=201)
+
+        ticket_data = ticket.serialize()
+        if ticket.event_id:
+            ticket_data["event_name"] = ticket.event.name
+        if ticket.team_id:
+            ticket_data["team_name"] = ticket.team.name
+        if ticket.challenge_id:
+            ticket_data["challenge_name"] = ticket.challenge.name
+
+        return success_response(ticket_data, status_code=201)
 
 
 @support_user_namespace.route("/me/tickets")
@@ -63,7 +72,19 @@ class MyTickets(Resource):
             status=status,
             is_admin=False,
         )
-        return success_response(tickets)
+
+        enriched_tickets = []
+        for ticket in tickets:
+            ticket_data = ticket.serialize()
+            if ticket.event_id:
+                ticket_data["event_name"] = ticket.event.name
+            if ticket.team_id:
+                ticket_data["team_name"] = ticket.team.name
+            if ticket.challenge_id:
+                ticket_data["challenge_name"] = ticket.challenge.name
+            enriched_tickets.append(ticket_data)
+
+        return success_response(enriched_tickets)
 
 
 @support_user_namespace.route("/me/tickets/<int:ticket_id>")

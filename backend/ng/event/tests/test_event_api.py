@@ -810,3 +810,36 @@ class Test_Event_Challenge_Statuses:
         assert data["data"][1]["challenge_id"] == challenge2.id
 
         # TODO - Add more assertions to check the results
+
+    def test_challenge_statuses_include_challenge_name(
+        self, logged_in_client, user, event_factory, team_factory, challenge_factory
+    ):
+        """
+        Test that challenge statuses response includes challenge names
+        """
+        event = event_factory(name="Event for Challenge Name Test", public=True)
+        team_factory(event=event, members=[user])
+        challenge1 = challenge_factory(event=event, name="Web Security Challenge")
+        challenge2 = challenge_factory(event=event, name="Crypto Puzzle")
+
+        response = logged_in_client.get(f"/ng/events/{event.id}/me/challenges")
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert len(data["data"]) == 2
+
+        # Check that challenge names are included
+        challenge_statuses = data["data"]
+        challenge1_status = next(cs for cs in challenge_statuses if cs["challenge_id"] == challenge1.id)
+        challenge2_status = next(cs for cs in challenge_statuses if cs["challenge_id"] == challenge2.id)
+
+        assert challenge1_status["challenge_name"] == "Web Security Challenge"
+        assert challenge2_status["challenge_name"] == "Crypto Puzzle"
+
+        # Also verify the structure includes both id and name
+        for status in challenge_statuses:
+            assert "challenge_id" in status
+            assert "challenge_name" in status
+            assert "total_points_available" in status
+            assert "num_questions_available" in status
