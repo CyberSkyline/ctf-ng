@@ -1,7 +1,7 @@
 from flask_restx import Namespace, Resource
 from ...core.utils.logger import get_logger
 from ...core.utils.api import error_response, success_response
-from ...core.middleware.auth import user_endpoint, admin_endpoint
+from ...core.middleware.auth import admin_endpoint
 from ..models.Role import Role
 from ..models.UserRole import UserRole
 from ...core.middleware.loaders.load_role import load_role
@@ -122,3 +122,4 @@ class UserRoles(Resource):
         user = UserRole.update_user_roles(user_id, data)
 
         return success_response(user)
+

@@ -1,5 +1,4 @@
 from datetime import UTC, datetime
-from CTFd.utils.user import get_current_user
 from .api import (
     error_response,
     serialize_model_for_api,

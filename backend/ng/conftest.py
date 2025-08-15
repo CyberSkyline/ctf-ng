@@ -119,7 +119,7 @@ def middleware_client():
         Role.create_role(RoleEnum.ADMIN)
         Role.create_role(RoleEnum.SUPPORT)
         Permission.create_permission(PermissionEnum.CAN_EDIT_TEAM, "Edit team details")
-        RolePermission.create_role_permission(1, 1)  # Admin role with all permissions
+        RolePermission.create_role_permission(1, 1)
 
         assign_role_to_user(user_to_login.id, RoleEnum.ADMIN)
 
@@ -495,8 +495,8 @@ def user_with_roles(db_session):
     db_session.commit()
 
     # Assign multiple roles to the user
-    role1 = Role.create_role(RoleEnum.ADMIN)
-    role2 = Role.create_role(RoleEnum.SUPPORT)
+    Role.create_role(RoleEnum.ADMIN)
+    Role.create_role(RoleEnum.SUPPORT)
     assign_role_to_user(user.id, RoleEnum.ADMIN)
     assign_role_to_user(user.id, RoleEnum.SUPPORT)
 

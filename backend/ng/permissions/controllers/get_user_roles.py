@@ -1,6 +1,5 @@
 from ...user.models.User import User
 from ...permissions.models.UserRole import UserRole
-from ...permissions.models.Role import Role
 from ...permissions.models.enums import RoleEnum
 from CTFd.utils.user import get_current_user
 
