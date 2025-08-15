@@ -11,6 +11,6 @@ def get_user_roles():
     user = get_current_user()
     if not user:
         return []
-    ng_user = User.find_or_create_by_ctfd_id(user.id, commit=False)
+    ng_user = User.find_or_create_by_ctfd_id(user.id, commit=True)
     roles = UserRole.get_user_roles(ng_user.id)
     return [RoleEnum(role.name) for role in roles] if roles else []
