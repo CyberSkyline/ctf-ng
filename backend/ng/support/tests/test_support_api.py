@@ -10,8 +10,11 @@ from datetime import datetime
 class TestUserSupportEndpoints:
     """Tests for user support API endpoints"""
 
-    def test_create_ticket_basic(self, logged_in_client, user, event):
+    def test_create_ticket_basic(self, logged_in_client, user, event, team_factory):
         """Test creating a basic support ticket"""
+        # Create a team for the user in this event
+        team_factory(event=event, members=[user])
+
         response = logged_in_client.post(
             "/ng/support/tickets/create",
             json={
@@ -427,5 +430,107 @@ class TestAdminSupportEndpoints:
                 response = logged_in_client.post(endpoint, json={})
 
             assert response.status_code in [302, 403]
+
+    def test_create_ticket_without_team_id(self, logged_in_client, user, event_factory, team_factory):
+        """
+        Test creating ticket without team_id - it should be auto-derived
+        """
+        event = event_factory(name="Test Event for Auto Team", public=True)
+        team_factory(event=event, members=[user])
+
+        response = logged_in_client.post(
+            "/ng/support/tickets/create",
+            json={
+                "subject": "Auto-derived team ticket",
+                "text": "This should work without team_id",
+                "event_id": event.id,
+            },
+        )
+
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["subject"] == "Auto-derived team ticket"
+        assert data["data"]["author_id"] == user.id
+        assert data["data"]["event_id"] == event.id
+        # Team ID should be automatically set
+        assert data["data"]["team_id"] is not None
+
+    def test_create_ticket_without_team_membership_fails(self, logged_in_client, user, event_factory):
+        """
+        Test creating ticket fails when user is not in event team
+        """
+        event = event_factory(name="Test Event No Team", public=True)
+        # User is not in any team for this event
+
+        response = logged_in_client.post(
+            "/ng/support/tickets/create",
+            json={
+                "subject": "Should fail",
+                "text": "User not in team",
+                "event_id": event.id,
+            },
+        )
+
+        assert response.status_code == 404  # Team not found for user+event
+
+    def test_ticket_list_includes_challenge_name(self, logged_in_client, user, event, challenge, team_factory):
+        """
+        Test that ticket list includes challenge name when challenge_id is set
+        """
+        _ = team_factory(event=event, members=[user])
+
+        # Create ticket with challenge
+        response = logged_in_client.post(
+            "/ng/support/tickets/create",
+            json={
+                "subject": "Challenge question",
+                "text": "Need help with this challenge",
+                "event_id": event.id,
+                "challenge_id": challenge.id,
+            },
+        )
+        assert response.status_code == 201
+
+        # Get ticket list
+        response = logged_in_client.get("/ng/support/me/tickets")
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+
+        # Find our ticket
+        ticket = next(t for t in data["data"] if t["subject"] == "Challenge question")
+        assert ticket["challenge_id"] == challenge.id
+        assert ticket["challenge_name"] == challenge.name
+
+    def test_ticket_list_null_challenge_name(self, logged_in_client, user, event, team_factory):
+        """
+        Test that ticket list has null challenge_name when no challenge_id
+        """
+        _ = team_factory(event=event, members=[user])
+
+        # Create ticket without challenge
+        response = logged_in_client.post(
+            "/ng/support/tickets/create",
+            json={
+                "subject": "General question",
+                "text": "Not related to any challenge",
+                "event_id": event.id,
+            },
+        )
+        assert response.status_code == 201
+
+        # Get ticket list
+        response = logged_in_client.get("/ng/support/me/tickets")
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+
+        # Find our ticket
+        ticket = next(t for t in data["data"] if t["subject"] == "General question")
+        assert ticket["challenge_id"] is None
+        assert ticket["challenge_name"] is None
 
 

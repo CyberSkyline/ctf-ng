@@ -28,6 +28,7 @@ class SerializedTicket(TypedDict):
     event_id: int | None
     team_id: int | None
     challenge_id: int | None
+    challenge_name: str | None
     message_count: int
     tags: list[str]
     # Admin-only fields
@@ -49,7 +50,7 @@ class Ticket(db.Model):
     assigned_to = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True, index=True)
     event_id = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=True, index=True)
     team_id = db.Column(db.Integer, db.ForeignKey("ng_teams.id"), nullable=True, index=True)
-    challenge_id = db.Column(db.Integer, nullable=True, index=True)
+    challenge_id = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=True, index=True)
     muted = db.Column(db.Boolean, default=False, nullable=False)
     first_admin_response_timestamp = db.Column(db.DateTime, nullable=True)
 
@@ -64,6 +65,7 @@ class Ticket(db.Model):
     assigned_user = db.relationship("Users", foreign_keys=[assigned_to], backref="assigned_tickets")
     event = db.relationship("Event", backref="tickets")
     team = db.relationship("Team", backref="tickets")
+    challenge = db.relationship("Challenge")
 
     def __repr__(self) -> str:
         return f"<Ticket {self.id}: {self.subject}>"
@@ -137,6 +139,7 @@ class Ticket(db.Model):
             "event_id": self.event_id,
             "team_id": self.team_id,
             "challenge_id": self.challenge_id,
+            "challenge_name": self.challenge.name if self.challenge else None,
             "message_count": len(self.messages),
             "tags": [tag.name for tag in self.tags],
         }
@@ -154,7 +157,7 @@ class Ticket(db.Model):
                 }
             )
 
-        return SerializedTicket(**data)  # type: ignore[typeddict-item]
+        return SerializedTicket(**data)
 
     @classmethod
     def create_ticket(

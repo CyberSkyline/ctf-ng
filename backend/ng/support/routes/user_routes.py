@@ -6,7 +6,11 @@ from flask import request
 from flask_restx import Namespace, Resource
 
 from ...core.middleware import user_endpoint
-from ...core.middleware.loaders import load_ticket_with_user
+from ...core.middleware.loaders import (
+    load_ticket_with_user,
+    load_event_and_team_if_provided,
+    LoaderType,
+)
 from ...core.utils import success_response
 from ...user.models import User
 
@@ -33,7 +37,8 @@ support_user_namespace = Namespace("support", description="Support ticket operat
 class Tickets(Resource):
     @support_user_namespace.doc(**CREATE_TICKET_DOC)
     @user_endpoint(json_required=True)
-    def post(self, current_user: User, json_data, **kwargs):
+    @load_event_and_team_if_provided(source=LoaderType.BODY)
+    def post(self, current_user: User, json_data, event, team, **kwargs):
         """
         Create a new support ticket
         """
@@ -41,8 +46,8 @@ class Tickets(Resource):
             subject=json_data.get("subject"),
             text=json_data.get("text"),
             current_user=current_user,
-            event_id=json_data.get("event_id"),
-            team_id=json_data.get("team_id"),
+            event_id=event.id if event else None,
+            team_id=team.id if team else None,
             challenge_id=json_data.get("challenge_id"),
         )
         return success_response(ticket, status_code=201)

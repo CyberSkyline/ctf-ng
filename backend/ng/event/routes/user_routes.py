@@ -407,6 +407,7 @@ class EventChallengeStatuses(Resource):
             results.append(
                 {
                     "challenge_id": challenge.id,
+                    "challenge_name": challenge.name,
                     "total_points_available": sum(q.points for q in challenge.questions),
                     "total_points_scored": 100,  # TODO: Implement actual points scoring logic
                     "num_questions_solved": 1,  # TODO: Implement actual questions solved logic

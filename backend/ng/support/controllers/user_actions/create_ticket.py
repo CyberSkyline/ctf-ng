@@ -6,7 +6,6 @@ from ....core.utils import emit_event
 from ....user.models.User import User
 from ...models.Ticket import Ticket
 
-
 def create_ticket(
     subject: str,
     text: str,
