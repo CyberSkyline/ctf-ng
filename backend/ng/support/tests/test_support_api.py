@@ -10,8 +10,8 @@ from datetime import datetime
 class TestUserSupportEndpoints:
     """Tests for user support API endpoints"""
 
-    def test_create_ticket_basic(self, logged_in_client, user, event, team_factory):
-        """Test creating a basic support ticket"""
+    def test_create_ticket_with_event_id(self, logged_in_client, user, event, team_factory):
+        """Test creating a support ticket with optional event id association"""
         # Create a team for the user in this event
         team_factory(event=event, members=[user])
 
@@ -33,7 +33,7 @@ class TestUserSupportEndpoints:
         assert data["data"]["status"] == "open"
 
     def test_create_ticket_minimal(self, logged_in_client):
-        """Test creating ticket with minimal data"""
+        """Test creating ticket with minimal data - no event/team/challenge"""
         response = logged_in_client.post(
             "/ng/support/tickets/create",
             json={
@@ -45,7 +45,15 @@ class TestUserSupportEndpoints:
         assert response.status_code == 201
         data = response.get_json()
         assert data["success"] is True
-        assert data["data"]["subject"] == "Simple question"
+        ticket = data["data"]
+        assert ticket["subject"] == "Simple question"
+        assert ticket["event_id"] is None
+        assert ticket["team_id"] is None
+        assert ticket["challenge_id"] is None
+        # Should not have any name fields since no IDs provided
+        assert "event_name" not in ticket
+        assert "team_name" not in ticket
+        assert "challenge_name" not in ticket
 
     def test_create_ticket_missing_fields(self, logged_in_client):
         """Test creating ticket without required fields"""
@@ -474,11 +482,11 @@ class TestAdminSupportEndpoints:
 
         assert response.status_code == 404  # Team not found for user+event
 
-    def test_ticket_list_includes_challenge_name(self, logged_in_client, user, event, challenge, team_factory):
+    def test_ticket_list_includes_names(self, logged_in_client, user, event, challenge, team_factory):
         """
-        Test that ticket list includes challenge name when challenge_id is set
+        Test that ticket list includes event_name, team_name, and challenge_name
         """
-        _ = team_factory(event=event, members=[user])
+        team = team_factory(event=event, members=[user])
 
         # Create ticket with challenge
         response = logged_in_client.post(
@@ -494,7 +502,6 @@ class TestAdminSupportEndpoints:
 
         # Get ticket list
         response = logged_in_client.get("/ng/support/me/tickets")
-
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -503,12 +510,16 @@ class TestAdminSupportEndpoints:
         ticket = next(t for t in data["data"] if t["subject"] == "Challenge question")
         assert ticket["challenge_id"] == challenge.id
         assert ticket["challenge_name"] == challenge.name
+        assert ticket["event_id"] == event.id
+        assert ticket["event_name"] == event.name
+        assert ticket["team_id"] == team.id
+        assert ticket["team_name"] == team.name
 
-    def test_ticket_list_null_challenge_name(self, logged_in_client, user, event, team_factory):
+    def test_ticket_list_without_challenge(self, logged_in_client, user, event, team_factory):
         """
-        Test that ticket list has null challenge_name when no challenge_id
+        Test that ticket list includes event_name and team_name but not challenge_name when no challenge_id
         """
-        _ = team_factory(event=event, members=[user])
+        team = team_factory(event=event, members=[user])
 
         # Create ticket without challenge
         response = logged_in_client.post(
@@ -531,6 +542,11 @@ class TestAdminSupportEndpoints:
         # Find our ticket
         ticket = next(t for t in data["data"] if t["subject"] == "General question")
         assert ticket["challenge_id"] is None
-        assert ticket["challenge_name"] is None
+        assert ticket["event_id"] == event.id
+        assert ticket["event_name"] == event.name
+        assert ticket["team_id"] == team.id
+        assert ticket["team_name"] == team.name
+        # Should not have challenge_name since no challenge_id
+        assert "challenge_name" not in ticket
 
 

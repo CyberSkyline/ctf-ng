@@ -28,7 +28,6 @@ class SerializedTicket(TypedDict):
     event_id: int | None
     team_id: int | None
     challenge_id: int | None
-    challenge_name: str | None
     message_count: int
     tags: list[str]
     # Admin-only fields
@@ -139,7 +138,6 @@ class Ticket(db.Model):
             "event_id": self.event_id,
             "team_id": self.team_id,
             "challenge_id": self.challenge_id,
-            "challenge_name": self.challenge.name if self.challenge else None,
             "message_count": len(self.messages),
             "tags": [tag.name for tag in self.tags],
         }
