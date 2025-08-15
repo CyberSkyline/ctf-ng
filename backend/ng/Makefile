@@ -65,4 +65,4 @@ test-utils:
 	$(PYTHON_EXEC) -m pytest ./core/tests/system/ -v
 
 
-.PHONY: check fix format test-all test-routes test-models test-validation test-controllers test-api test-team test-event test-admin test-user test-support test-utils test-fast test-middleware test-event-registration test-scoring
+.PHONY: check fix format test-all test-routes test-models test-validation test-controllers test-api test-team test-event test-admin test-user test-support test-utils test-fast test-middleware test-event-registration test-scoring find-TODO

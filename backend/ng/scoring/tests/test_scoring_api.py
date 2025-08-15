@@ -215,9 +215,12 @@ class TestUserScoringEndpoints:
         assert response.status_code == 201
         data = response.get_json()
         assert data["success"] is True
-        # Controller returns HintRedemption object directly
-        assert data["data"]["hint_id"] == hint.id
-        assert data["data"]["points"] == -hint.deduction  # Negative points for deduction
+
+        assert data["data"]["id"] == hint.id
+        assert data["data"]["body"] == hint.body
+        assert data["data"]["preview"] == hint.preview
+        assert data["data"]["is_redeemed"] is True
+        assert data["data"]["deduction"] == hint.deduction
 
     def test_redeem_hint_no_team(self, logged_in_client, event, challenge, hint):
         """Test redeeming hint when not in a team"""
@@ -290,6 +293,44 @@ class TestUserScoringEndpoints:
         assert response.status_code == 400
         data = response.get_json()
         assert data["success"] is False
+
+    def test_hint_visibility_through_challenge_endpoint(self, logged_in_client, user, event, team_with_member, challenge, hint):
+        """
+        Test that hints are hidden before redemption and visible after through challenge endpoint
+        """
+        response = logged_in_client.get(f"/ng/events/{event.id}/challenges/{challenge.id}")
+        assert response.status_code == 200
+        data = response.get_json()
+
+        hints = data["data"]["hints"]
+        hint_data = next((h for h in hints if h["id"] == hint.id), None)
+        assert hint_data is not None
+
+        assert hint_data["body"] is None
+        assert hint_data["preview"] == hint.preview
+        assert hint_data["is_redeemed"] is False
+
+        with logged_in_client.session_transaction() as sess:
+            nonce = sess.get("nonce")
+
+        redeem_response = logged_in_client.post(
+            f"/ng/events/{event.id}/challenges/{challenge.id}/hint/{hint.id}/redeem",
+            data={"nonce": nonce}
+        )
+        assert redeem_response.status_code == 201
+
+        response = logged_in_client.get(f"/ng/events/{event.id}/challenges/{challenge.id}")
+        assert response.status_code == 200
+        data = response.get_json()
+
+        hints = data["data"]["hints"]
+        hint_data_after = next((h for h in hints if h["id"] == hint.id), None)
+        assert hint_data_after is not None
+
+        assert hint_data_after["body"] == hint.body
+        assert hint_data_after["preview"] == hint.preview
+        assert hint_data_after["is_redeemed"] is True
+
 
     def test_unauthenticated_requests(self, client, event, challenge, question, hint):
         """Test that unauthenticated requests fail"""

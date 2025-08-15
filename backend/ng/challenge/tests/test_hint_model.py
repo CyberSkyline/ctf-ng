@@ -5,7 +5,8 @@ Test cases for the Hint model to verify validation and database operations.
 import pytest
 
 from ...core.exceptions import ValidationError
-from ..models.Hint import MAX_HINT_BODY_LENGTH, MAX_HINT_PREVIEW_LENGTH, Hint
+from ... import config
+from ..models.Hint import Hint
 
 
 @pytest.fixture
@@ -65,7 +66,7 @@ class Test_Validate:
 
     def test_validate_body_too_long_should_fail(self, valid_hint_data):
         """Test that validation fails when body exceeds maximum length."""
-        valid_hint_data["body"] = "a" * (MAX_HINT_BODY_LENGTH + 1)
+        valid_hint_data["body"] = "a" * (config.MAX_HINT_BODY_LENGTH + 1)
 
         with pytest.raises(ValidationError) as exc_info:
             Hint.validate(valid_hint_data)
@@ -74,7 +75,7 @@ class Test_Validate:
 
     def test_validate_preview_too_long_should_fail(self, valid_hint_data):
         """Test that validation fails when preview exceeds maximum length."""
-        valid_hint_data["preview"] = "a" * (MAX_HINT_PREVIEW_LENGTH + 1)
+        valid_hint_data["preview"] = "a" * (config.MAX_HINT_PREVIEW_LENGTH + 1)
 
         with pytest.raises(ValidationError) as exc_info:
             Hint.validate(valid_hint_data)
@@ -279,15 +280,15 @@ class Test_Create_Hint:
 
     def test_create_hint_with_maximum_length_fields(self, db_session, challenge):
         """Test creating hints with maximum allowed field lengths."""
-        max_body = "a" * MAX_HINT_BODY_LENGTH
-        max_preview = "b" * MAX_HINT_PREVIEW_LENGTH
+        max_body = "a" * config.MAX_HINT_BODY_LENGTH
+        max_preview = "b" * config.MAX_HINT_PREVIEW_LENGTH
 
         hint = Hint.create_hint(challenge_id=challenge.id, body=max_body, preview=max_preview, deduction=15)
 
         assert hint.body == max_body
         assert hint.preview == max_preview
-        assert len(hint.body) == MAX_HINT_BODY_LENGTH
-        assert len(hint.preview) == MAX_HINT_PREVIEW_LENGTH
+        assert len(hint.body) == config.MAX_HINT_BODY_LENGTH
+        assert len(hint.preview) == config.MAX_HINT_PREVIEW_LENGTH
 
     def test_create_hint_with_special_characters(self, db_session, challenge):
         """Test creating hints with special characters in text fields."""
