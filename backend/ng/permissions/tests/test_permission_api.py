@@ -62,7 +62,6 @@ def test_get_user_roles(admin_client, user_with_roles):
 def test_user_endpoints_not_authenticated(logged_in_client, user_with_roles):
     """Check that user endpoints are not accessible without authentication as an admin."""
     response = logged_in_client.get(f"/ng/admin/permissions/{user_with_roles.id}/roles")
-    print(response)
     assert response.status_code == 302
     response = logged_in_client.put(f"/ng/admin/permissions/{user_with_roles.id}/roles", json={
         "roles": ["Test Role"]
@@ -76,7 +75,6 @@ def test_update_user_roles(admin_client, user_with_roles):
     })
     assert response.status_code == 200
     data = response.get_json()
-    print(data)
     assert data["success"]
     assert "admin" in data["data"]["roles"]
 
