@@ -41,6 +41,9 @@ class Hint(db.Model):
         :param include_admin_fields: Whether to include admin-only fields
         :return: A dictionary representation of the hint.
         """
+        # LAZY-IMPORT
+        from ...scoring.models import HintRedemption
+
         data = {
             "id": self.id,
             "challenge_id": self.challenge_id,
@@ -51,14 +54,12 @@ class Hint(db.Model):
         }
 
         if team:
-            # LAZY-IMPORT
-            from ...scoring.models import HintRedemption
             redemption = HintRedemption.find_by_team_and_hint(team.id, self.id)
             if redemption:
                 data["is_redeemed"] = True
                 data["body"] = self.body
 
-        if include_admin_fields: # TODO may need changes after daniels admin field
+        if include_admin_fields:
             data["body"] = self.body
 
         return SerializedHint(**data)
