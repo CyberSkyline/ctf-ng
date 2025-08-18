@@ -359,9 +359,9 @@ class TestNotification:
         notification_factory(
             recipient_id = user.id,
             title = "Old",
-            created_at = datetime(2024,
-                                  1,
-                                  1,
+            created_at = datetime(6969,
+                                  8,
+                                  15,
                                   10,
                                   0,
                                   0)
@@ -369,9 +369,9 @@ class TestNotification:
         notification_factory(
             recipient_id = user.id,
             title = "New",
-            created_at = datetime(2024,
-                                  1,
-                                  1,
+            created_at = datetime(6969,
+                                  8,
+                                  17,
                                   12,
                                   0,
                                   0)
@@ -379,9 +379,9 @@ class TestNotification:
         notification_factory(
             recipient_id = user.id,
             title = "Middle",
-            created_at = datetime(2024,
-                                  1,
-                                  1,
+            created_at = datetime(6969,
+                                  8,
+                                  16,
                                   11,
                                   0,
                                   0)

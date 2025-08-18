@@ -6,6 +6,6 @@ Notification route package PLACEHOLDER
 # from .user_routes import notifications_user_namespace
 
 # __all__ = [
-    # "events_admin_namespace",
-    # "events_user_namespace",
+    # "notifications_admin_namespace",
+    # "notifications_user_namespace",
 # ]
