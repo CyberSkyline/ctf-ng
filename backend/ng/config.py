@@ -36,6 +36,10 @@ MAX_SCORE_HISTORY_LIMIT = 500
 MAX_HINT_PREVIEW_LENGTH = 256
 MAX_HINT_BODY_LENGTH = 1024
 
+# Notification Model Field Length Limits
+NOTIFICATION_TITLE_MAX_LENGTH = 200
+NOTIFICATION_MESSAGE_MAX_LENGTH = 1000
+
 # Docker host config
 # This will eventually be an array but just single host for mvp
 DOCKER_HOST = "172.17.0.1"

@@ -1008,3 +1008,37 @@ def question_factory(db_session, challenge_factory):
         return question
 
     return _factory
+
+
+@pytest.fixture
+def notification_factory(db_session):
+    """
+    Factory to create notifications
+    """
+    from .notifications.models.Notification import Notification, NotificationType, NotificationPriority
+
+    def _factory(**kwargs):
+        defaults = {
+            "type": kwargs.get("type", NotificationType.SYSTEM_ANNOUNCEMENT),
+            "priority": kwargs.get("priority", NotificationPriority.NORMAL),
+            "title": kwargs.get("title", f"Test Notification {datetime.utcnow().timestamp()}"),
+            "message": kwargs.get("message", "Test notification message"),
+            "data": kwargs.get("data", None),
+            "recipient_id": kwargs.get("recipient_id", None),
+            "sender_id": kwargs.get("sender_id", None),
+            "read": kwargs.get("read", False),
+            "created_at": kwargs.get("created_at", datetime.utcnow()),
+            "ticket_id": kwargs.get("ticket_id", None),
+            "team_id": kwargs.get("team_id", None),
+            "event_id": kwargs.get("event_id", None),
+            "challenge_id": kwargs.get("challenge_id", None),
+        }
+        defaults.update(kwargs)
+
+        notification = Notification(**defaults)
+        db_session.add(notification)
+        if kwargs.get("commit", True):
+            db_session.commit()
+        return notification
+
+    return _factory

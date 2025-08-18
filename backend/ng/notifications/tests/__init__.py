@@ -1,0 +1,3 @@
+"""
+Ctf-ng Notification Tests
+"""
