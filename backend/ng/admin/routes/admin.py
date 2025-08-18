@@ -9,7 +9,6 @@ from CTFd.utils.security.csrf import generate_nonce
 from ..controllers import (
     get_data_counts,
     get_detailed_stats,
-    reset_all_plugin_data,
     reset_event_data,
 )
 from ...permissions.models.enums import PermissionEnum
@@ -40,7 +39,7 @@ admin_namespace = Namespace("admin", description="admin operations")
 class AdminStats(Resource):
     @admin_endpoint()
     @admin_namespace.doc(**GET_DETAILED_STATS_DOC)
-    def get(self):
+    def get(self, **kwargs):
         """Get system stats"""
         result = get_detailed_stats()
         return success_response(result)
@@ -50,21 +49,11 @@ class AdminStats(Resource):
 class AdminStatsCounts(Resource):
     @admin_endpoint()
     @admin_namespace.doc(**GET_DATA_COUNTS_DOC)
-    def get(self):
+    def get(self, **kwargs):
         """Get data counts"""
 
         
         result = get_data_counts()
-        return success_response(result)
-
-
-@admin_namespace.route("/reset")
-class AdminReset(Resource):
-    @admin_endpoint()
-    @admin_namespace.doc(**RESET_ALL_DATA_DOC)
-    def post(self):
-        """Reset all data"""
-        result = reset_all_plugin_data()
         return success_response(result)
 
 
@@ -73,7 +62,7 @@ class AdminEventReset(Resource):
     @admin_endpoint()
     @load_event(LoaderType.PARAM)
     @admin_namespace.doc(**RESET_EVENT_DATA_DOC)
-    def post(self, event_id):
+    def post(self, event_id, **kwargs):
         """Reset event data"""
         reset_event_data(event_id)
         return success_response()
@@ -82,7 +71,7 @@ class AdminEventReset(Resource):
 class AdminHealth(Resource):
     @admin_endpoint()
     @admin_namespace.doc(**SYSTEM_HEALTH_DOC)
-    def get(self):
+    def get(self, **kwargs):
         """Check system health"""
         counts = get_data_counts()
         detailed = get_detailed_stats()

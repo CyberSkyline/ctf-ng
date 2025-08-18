@@ -181,7 +181,7 @@ class User(db.Model):
         return list(permissions)
 
     @classmethod
-    def delete_all(cls) -> None:
+    def delete_all(cls, exception) -> None:
         """Delete all user extensions from the database."""
         try:
             cls.query.delete()
@@ -194,6 +194,15 @@ class User(db.Model):
         """Delete the user extension from the database."""
         db.session.delete(self)
         db.session.commit()
+
+    @classmethod
+    def get_total_count(cls) -> int:
+        """Get the total count of all teams.
+
+        Returns:
+            int: Total number of teams
+        """
+        return cls.query.count()
 
 
     def update(self, **kwargs) -> None:

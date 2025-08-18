@@ -22,5 +22,4 @@ def get_data_counts() -> dict[str, Any]:
         "events": Event.get_total_count(),
         "teams": Team.get_total_count(),
         "users": User.get_total_count(),
-        "team_members": TeamMember.get_total_count(),
     }
