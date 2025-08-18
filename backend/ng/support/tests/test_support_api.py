@@ -112,6 +112,40 @@ class TestUserSupportEndpoints:
         assert "messages" in data["data"]
         assert len(data["data"]["messages"]) == 2
 
+        # Verify ticket data is serialized properly
+        ticket_data = data["data"]["ticket"]
+        assert isinstance(ticket_data, dict)
+        assert ticket_data["id"] == ticket_with_messages.id
+
+    def test_get_ticket_details_includes_names(self, logged_in_client, user, event, challenge, team_factory):
+        """Test getting ticket details includes event_name and challenge_name"""
+        team = team_factory(event=event, members=[user])
+
+        # Create ticket with event and challenge
+        response = logged_in_client.post(
+            "/ng/support/tickets/create",
+            json={
+                "subject": "Challenge question",
+                "text": "Need help with this challenge",
+                "event_id": event.id,
+                "challenge_id": challenge.id,
+            },
+        )
+        assert response.status_code == 201
+        ticket_id = response.get_json()["data"]["id"]
+
+        # Get ticket details
+        response = logged_in_client.get(f"/ng/support/me/tickets/{ticket_id}")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        ticket_data = data["data"]["ticket"]
+
+        # Verify names are included
+        assert ticket_data["event_name"] == event.name
+        assert ticket_data["team_name"] == team.name
+        assert ticket_data["challenge_name"] == challenge.name
+
     def test_get_my_ticket_not_found(self, logged_in_client):
         """Test getting non-existent ticket"""
         response = logged_in_client.get("/ng/support/me/tickets/999999")
@@ -123,7 +157,7 @@ class TestUserSupportEndpoints:
     def test_add_message_to_ticket(self, logged_in_client, ticket):
         """Test adding message to ticket"""
         response = logged_in_client.post(
-            f"/ng/support/me/tickets/{ticket.id}",
+            f"/ng/support/me/tickets/{ticket.id}/add_message",
             json={"text": "Here's additional information"},
         )
 
@@ -135,7 +169,7 @@ class TestUserSupportEndpoints:
     def test_add_message_empty_text(self, logged_in_client, ticket):
         """Test adding message with empty text"""
         response = logged_in_client.post(
-            f"/ng/support/me/tickets/{ticket.id}",
+            f"/ng/support/me/tickets/{ticket.id}/add_message",
             json={"text": "   "},
         )
 
@@ -177,7 +211,7 @@ class TestUserSupportEndpoints:
             ("/ng/support/tickets/create", "POST", {"subject": "test", "text": "test"}),
             ("/ng/support/me/tickets", "GET", None),
             (f"/ng/support/me/tickets/{ticket.id}", "GET", None),
-            (f"/ng/support/me/tickets/{ticket.id}", "POST", {"text": "test"}),
+            (f"/ng/support/me/tickets/{ticket.id}/add_message", "POST", {"text": "test"}),
             (f"/ng/support/me/tickets/{ticket.id}/close", "POST", {}),
         ]
 
