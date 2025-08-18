@@ -15,7 +15,7 @@ from ...user.routes import users_admin_namespace, users_user_namespace
 from ...scoring.routes import scoring_admin_namespace, scoring_user_namespace
 from ...support.routes import support_user_namespace, support_admin_namespace
 
-# from ...admin.routes.admin import admin_namespace
+from ...admin.routes.admin import admin_namespace
 # from ...event_registration.routes.event_registration import event_reg_namespace
 # from ...challenge.routes.routes import challenge_namespace
 from ...containers.routes.routes import container_namespace
@@ -51,6 +51,7 @@ api_v1.add_namespace(support_user_namespace, path="/support")
 api_v1.add_namespace(container_namespace, path="/container")
 
 # Admin namespaces
+api_v1.add_namespace(admin_namespace, path="/admin")
 api_v1.add_namespace(support_admin_namespace, path="/admin/support")
 api_v1.add_namespace(events_admin_namespace, path="/admin/events")
 api_v1.add_namespace(users_admin_namespace, path="/admin/users")

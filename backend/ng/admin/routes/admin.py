@@ -3,15 +3,17 @@ Administrative operations and system management API routes.
 """
 
 from flask_restx import Namespace, Resource
+from flask import session
 from ...core.utils import utc_now
-
+from CTFd.utils.security.csrf import generate_nonce
 from ..controllers import (
     get_data_counts,
     get_detailed_stats,
     reset_all_plugin_data,
     reset_event_data,
 )
-from ...core.utils import success_response
+from ...permissions.models.enums import PermissionEnum
+from ...core.utils import success_response, error_response
 from ...core.middleware.loaders import (
     LoaderType,
     load_event,
@@ -19,6 +21,10 @@ from ...core.middleware.loaders import (
 
 from ...core.middleware import (
     admin_endpoint,
+    user_endpoint
+)
+from ...core.middleware.permission_middleware import (
+    get_permissions,
 )
 from ..docs.api import (
     GET_DETAILED_STATS_DOC,
@@ -46,6 +52,8 @@ class AdminStatsCounts(Resource):
     @admin_namespace.doc(**GET_DATA_COUNTS_DOC)
     def get(self):
         """Get data counts"""
+
+        
         result = get_data_counts()
         return success_response(result)
 
@@ -85,6 +93,52 @@ class AdminHealth(Resource):
             "empty_teams_count": detailed.get("total_empty_teams", 0),
         }
         return success_response(health_report)
+
+@admin_namespace.route("/impersonate")
+class AdminImpersonate(Resource):
+    @admin_endpoint(json_required=True)
+    @get_permissions
+    @admin_namespace.doc(
+        description="Impersonate a user by ID",
+        responses={
+            200: "Success",
+            403: "Forbidden - User does not have permission to impersonate",
+            404: "User not found"
+        }
+    )
+    def post(self, json_data,current_user, permissions, **kwargs):
+        """Impersonate a user by ID"""
+        if PermissionEnum.CAN_IMPERSONATE_USERS not in permissions:
+            return error_response("You do not have permission to impersonate users.", "permissions", 403)
+
+        session["admin_id"] = current_user.id
+        session["impersonated"] = True
+        session["id"] = json_data.get("user_id")
+        session["nonce"] = generate_nonce()
+
+
+@admin_namespace.route("/stop_impersonating")
+class AdminStopImpersonating(Resource):
+    @user_endpoint(json_required=True)
+    @admin_namespace.doc(
+        description="Stop impersonating a user",
+        responses={
+            200: "Success",
+            403: "Forbidden - User is not impersonating"
+        }
+    )
+    def post(self,json_data, **kwargs):
+        """Stop impersonating a user"""
+        if not session["impersonated"]:
+            print("User is not currently impersonating any other user.")
+            return error_response("You are not currently impersonating any user.", "impersonation", 403)
+
+        session["id"] = session["admin_id"]
+        session.pop("admin_id", None)
+        session.pop("impersonated", None)
+        session["nonce"] = generate_nonce()
+        return success_response()
+
 
 
 

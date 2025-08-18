@@ -213,8 +213,12 @@ def admin(db_session):
     db_session.add(admin)
     db_session.flush()
     from .user.models.User import User as NgUser
+    from .permissions.models.Role import Role
     Role.create_role(RoleEnum.ADMIN)
+    Permission.create_permission(PermissionEnum.CAN_IMPERSONATE_USERS, "Impersonate users")
     Permission.create_permission(PermissionEnum.CAN_EDIT_TEAM, "Edit team details")
+    RolePermission.create_role_permission(1, 1)
+    RolePermission.create_role_permission(1, 2)
 
     NgUser.create_user(user_id=admin.id, commit=False)
     assign_role_to_user(admin.id, RoleEnum.ADMIN)
