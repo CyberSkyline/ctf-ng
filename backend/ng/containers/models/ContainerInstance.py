@@ -168,12 +168,11 @@ class ContainerInstance(db.Model):
     @classmethod
     def get_instance_by_id(cls, instance_id: int):
         return cls.query.filter_by(id=instance_id).first()
-    
-    def get_logs(self, tail: int = 100) -> str:
+
+    def logs(self, tail: int = 500) -> str:
         client = get_client(config.DOCKER_HOST)
         ctr = client.containers.get(self.dockerid)
         return ctr.logs(tail=tail).decode('utf-8')
- 
 
     def status(self) -> SerializedInstanceStats:
         client = get_client(config.DOCKER_HOST)

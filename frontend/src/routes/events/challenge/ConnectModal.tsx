@@ -21,7 +21,7 @@ export default function ConnectModal({ eventId, challengeId }: {
 
   if (currentChallenge === challengeId) {
     return (
-      <Button variant="soft" disabled m="0" mt="3">
+      <Button variant="soft" disabled m="0">
         <TbCheck />
         Connected
       </Button>
@@ -31,7 +31,7 @@ export default function ConnectModal({ eventId, challengeId }: {
   if (currentChallenge === null) {
     // If the workspace isn't connected to anything, don't require confirmation
     return (
-      <Button mt="3" onClick={handleConnect} loading={loading} color={COLOR_POSITIVE} className="pulsate">
+      <Button onClick={handleConnect} loading={loading} color={COLOR_POSITIVE} className="pulsate">
         <TbPlayerPlay />
         Start Challenge
       </Button>
@@ -43,7 +43,7 @@ export default function ConnectModal({ eventId, challengeId }: {
       title="Switch challenge?"
       description="Your workspace will be disconnected from your previous challenge and connected to this one."
       trigger={(
-        <Button mt="3" loading={loading} color={COLOR_POSITIVE} className="pulsate">
+        <Button loading={loading} color={COLOR_POSITIVE} className="pulsate">
           <TbPlayerPlay />
           Start Challenge
         </Button>

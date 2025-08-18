@@ -136,5 +136,5 @@ class InstanceLogs(Resource):
     @admin_endpoint()
     @load_container_instance(source=LoaderType.PARAM)
     def get(self, container_instance, **kwargs):
-        res = container_instance.get_logs(tail=500)
+        res = container_instance.logs()
         return success_response(res)

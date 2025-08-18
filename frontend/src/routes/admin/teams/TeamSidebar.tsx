@@ -1,4 +1,9 @@
-import { COLOR_NEGATIVE, COLOR_WARNING, UserIcon } from '@/constants';
+import {
+  COLOR_INFO,
+  COLOR_NEGATIVE,
+  COLOR_WARNING,
+  UserIcon,
+} from '@/constants';
 import { useTeamMembers } from '@/hooks/team';
 import type { Team } from '@/types';
 import {
@@ -13,7 +18,12 @@ import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { ErrorCallout, InfoCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import RoleBadge from 'components/RoleBadge';
-import { TbDoorExit, TbPackages, TbStar } from 'react-icons/tb';
+import {
+  TbDoorExit,
+  TbPackages,
+  TbPlusMinus,
+  TbStar,
+} from 'react-icons/tb';
 import { Link } from 'react-router';
 
 export default function TeamSidebar({ entity }: { entity: Team }) {
