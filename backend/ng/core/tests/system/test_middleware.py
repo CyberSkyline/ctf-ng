@@ -27,8 +27,7 @@ def test_admin_endpoint_decorator(middleware_client):
     """
     response = middleware_client.get("/admin_decorator_test", query_string={"team_id": 1, "user_id": 1})
 
-    assert response.status_code == 302
-
+    assert response.status_code == 200
 
 def test_loading(middleware_client):
     """

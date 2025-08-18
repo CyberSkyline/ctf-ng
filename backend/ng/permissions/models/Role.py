@@ -31,6 +31,9 @@ class Role(db.Model):
         Returns:
             Role: The created role instance
         """
+        role = cls.query.filter_by(name=name).first()
+        if role:
+            return role
         role = cls(name=name.value, permissions=permissions or [])
         db.session.add(role)
         db.session.commit()

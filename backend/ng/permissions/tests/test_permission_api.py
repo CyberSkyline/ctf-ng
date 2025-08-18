@@ -15,12 +15,12 @@ def test_get_role_permissions(admin_client, role_with_permissions):
     assert "permissions" in data['data']
     assert len(data['data']["permissions"]) > 0
 
-def test_role_endpoints_not_authenticated(client, role_with_permissions):
-    """Check that role endpoints are not accessible without authentication."""
+def test_role_endpoints_not_authenticated(logged_in_client, role_with_permissions):
+    """Check that role endpoints are not accessible without authentication as an admin."""
     role = role_with_permissions
-    response = client.get(f"/ng/admin/permissions/{role.id}/details")
+    response = logged_in_client.get(f"/ng/admin/permissions/{role.id}/details")
     assert response.status_code == 302
-    response = client.put(f"/ng/admin/permissions/{role.id}/details", json={
+    response = logged_in_client.put(f"/ng/admin/permissions/{role.id}/details", json={
         "permissions": ["can_edit_team", "can_edit_user"]
     })
     assert response.status_code == 403
@@ -50,20 +50,20 @@ def test_change_role_invalid_permissions(admin_client, role_with_permissions):
     assert "validation" in data["errors"]
 
 
-def test_get_user_roles(logged_in_client, user_with_roles):
+def test_get_user_roles(admin_client, user_with_roles):
     """Check that we can get roles for a specific user."""
-    response = logged_in_client.get(f"/ng/admin/permissions/{user_with_roles.id}/roles")
+    response = admin_client.get(f"/ng/admin/permissions/{user_with_roles.id}/roles")
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"]
     assert len(data["data"]) > 1
     assert data["data"][0]["name"] in ["admin", "support"]
 
-def test_user_endpoints_not_authenticated(client, user_with_roles):
-    """Check that user endpoints are not accessible without authentication."""
-    response = client.get(f"/ng/admin/permissions/{user_with_roles.id}/roles")
+def test_user_endpoints_not_authenticated(logged_in_client, user_with_roles):
+    """Check that user endpoints are not accessible without authentication as an admin."""
+    response = logged_in_client.get(f"/ng/admin/permissions/{user_with_roles.id}/roles")
     assert response.status_code == 302
-    response = client.put(f"/ng/admin/permissions/{user_with_roles.id}/roles", json={
+    response = logged_in_client.put(f"/ng/admin/permissions/{user_with_roles.id}/roles", json={
         "roles": ["Test Role"]
     })
     assert response.status_code == 403

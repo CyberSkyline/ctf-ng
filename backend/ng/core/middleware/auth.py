@@ -5,12 +5,14 @@ Resource loading and permissions are handled by separate decorators.
 
 from functools import wraps
 
-from CTFd.utils.decorators import admins_only, authed_only
+from CTFd.utils.decorators import authed_only
 from CTFd.utils.user import get_current_user
-from flask import request
+from flask import request, redirect, url_for, abort
 
 from ...user.models.User import User
 from ..exceptions import PermissionError, ValidationError
+from ...permissions.models.enums import RoleEnum
+from ...permissions.controllers.get_user_roles import get_user_roles
 from .error_handler import handle_exceptions
 
 
@@ -84,6 +86,25 @@ def _auth_handler(f, auth_required, json_required, validation_func):
         return f(*args, **kwargs)
 
     return decorated_function
+
+def admins_only(f):
+    """
+    Decorator that requires the user to be authenticated and an admin
+    :param f:
+    :return:
+    """
+
+    @wraps(f)
+    def admins_only_wrapper(*args, **kwargs):
+        if RoleEnum.ADMIN in get_user_roles():
+            return f(*args, **kwargs)
+        else:
+            if request.content_type == "application/json":
+                abort(403)
+            else:
+                return redirect(url_for("auth.login", next=request.full_path))
+
+    return admins_only_wrapper
 
 
 # Convenience decorators for common patterns
