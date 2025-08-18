@@ -71,12 +71,6 @@ export function createChallenge(eventId: number, yaml: string) {
   });
 }
 
-export function connectWorkspace(eventId: number, challengeId: number) {
-  return apiMutation(`/events/${eventId}/challenge/${challengeId}/containers`, undefined, {
-    method : 'GET',
-  });
-}
-
 export function submitFlag(
   eventId: number,
   challengeId: number,

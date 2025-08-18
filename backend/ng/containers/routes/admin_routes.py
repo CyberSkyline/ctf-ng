@@ -17,7 +17,7 @@ from ...core.utils import (
 
 admin_container_namespace = Namespace("admin containers", description="admin containers")
 
-@admin_container_namespace.route("/")
+@admin_container_namespace.route("")
 class Containers(Resource):
     @admin_container_namespace.doc(
         description="Get service groups by teams",
@@ -120,3 +120,21 @@ class InstanceRecycle(Resource):
     def get(self, container_instance, **kwargs):
         container_instance.recycle()
         return success_response(True)
+
+@admin_container_namespace.route("/<int:container_instance_id>/logs")
+class InstanceLogs(Resource):
+    @admin_container_namespace.doc(
+        description="Get Container Instance logs",
+        params={
+            "container_instance_id": "Id of instance",
+        },
+        responses={
+            200: "Success",
+            400: "Bad request"
+        },
+    )
+    @admin_endpoint()
+    @load_container_instance(source=LoaderType.PARAM)
+    def get(self, container_instance, **kwargs):
+        res = container_instance.get_logs(tail=500)
+        return success_response(res)

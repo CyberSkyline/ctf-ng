@@ -13,14 +13,22 @@ import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { ErrorCallout, InfoCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import RoleBadge from 'components/RoleBadge';
-import { TbDoorExit, TbPlusMinus, TbStar } from 'react-icons/tb';
+import { TbDoorExit, TbPackages, TbStar } from 'react-icons/tb';
+import { Link } from 'react-router';
 
 export default function TeamSidebar({ entity }: { entity: Team }) {
   const { data : members, error : membersError } = useTeamMembers(entity.id);
 
   return (
     <AdminSidebar>
-      <AdminSidebarHeader title="Team Details" />
+      <AdminSidebarHeader title="Team Details">
+        <Button variant="soft" color={COLOR_INFO} asChild>
+          <Link to={`/admin/deployments?filter=${btoa(JSON.stringify({ team : { filterType : 'number', type : 'equals', filter : entity.id } }))}`}>
+            <TbPackages />
+            Deployments
+          </Link>
+        </Button>
+      </AdminSidebarHeader>
       <AdminDataList data={{ ...entity }} />
 
       <AdminSidebarHeader title="Members" />

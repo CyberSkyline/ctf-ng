@@ -1,14 +1,15 @@
-import { connectWorkspace } from '@/hooks/challenge';
+import { COLOR_POSITIVE, COLOR_WARNING } from '@/constants';
+import { connectWorkspace, useCurrentChallengeId } from '@/hooks/container';
 import { Button } from '@radix-ui/themes';
 import Modal from 'components/Modal';
 import { useState } from 'react';
-import { TbCheck, TbPlug } from 'react-icons/tb';
+import { TbCheck, TbPlayerPlay } from 'react-icons/tb';
 
 export default function ConnectModal({ eventId, challengeId }: {
   eventId: number;
   challengeId: number;
 }) {
-  const currentChallenge = null; // get from server once route is ready
+  const { data : currentChallenge } = useCurrentChallengeId();
   const [ loading, setLoading ] = useState(false);
 
   const handleConnect = async () => {
@@ -22,7 +23,7 @@ export default function ConnectModal({ eventId, challengeId }: {
     return (
       <Button variant="soft" disabled m="0" mt="3">
         <TbCheck />
-        Workspace Connected
+        Connected
       </Button>
     );
   }
@@ -30,9 +31,9 @@ export default function ConnectModal({ eventId, challengeId }: {
   if (currentChallenge === null) {
     // If the workspace isn't connected to anything, don't require confirmation
     return (
-      <Button mt="3" onClick={handleConnect} loading={loading}>
-        <TbPlug />
-        Connect Workspace
+      <Button mt="3" onClick={handleConnect} loading={loading} color={COLOR_POSITIVE} className="pulsate">
+        <TbPlayerPlay />
+        Start Challenge
       </Button>
     );
   }
@@ -40,15 +41,16 @@ export default function ConnectModal({ eventId, challengeId }: {
   return (
     <Modal
       title="Switch challenge?"
-      description="Your workspace will no longer be connected to (currently connected challenge)."
+      description="Your workspace will be disconnected from your previous challenge and connected to this one."
       trigger={(
-        <Button mt="3" loading={loading}>
-          <TbPlug />
-          Connect Workspace
+        <Button mt="3" loading={loading} color={COLOR_POSITIVE} className="pulsate">
+          <TbPlayerPlay />
+          Start Challenge
         </Button>
       )}
       onSubmit={handleConnect}
       submitVerb="Confirm"
+      submitColor={COLOR_WARNING}
     />
   );
 }
