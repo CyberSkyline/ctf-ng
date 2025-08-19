@@ -7,7 +7,7 @@ def get_user_roles(user_id=None):
     """
     Get the roles for a user.
     """
-    
+
     user = get_current_user() if user_id is None else User.find_by_id(user_id)
     if not user:
         return []

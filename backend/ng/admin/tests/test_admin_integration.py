@@ -84,7 +84,7 @@ class TestAdminImpersonation:
         assert data["data"]["id"] == user.id
         assert data["data"]["name"] == user.ctfd_user.name
 
-        response = admin_client.get(f"/ng/users/me/teams")
+        response = admin_client.get("/ng/users/me/teams")
         assert response.status_code == 200
         data = response.get_json()
         assert data["data"][0]["id"] == team.id
@@ -98,7 +98,7 @@ class TestAdminImpersonation:
         assert data["data"]["id"] != user.id
         assert data["data"]["name"] != user.ctfd_user.name
 
-        response = admin_client.get(f"/ng/users/me/teams")
+        response = admin_client.get("/ng/users/me/teams")
         assert response.status_code == 200
         data = response.get_json()
         assert data["data"] == []
@@ -124,7 +124,7 @@ class TestAdminImpersonation:
         response = admin_client.post(f"/ng/events/{event.id}/me/team/leave", json={})
         assert response.status_code == 200
 
-        response = admin_client.get(f"/ng/users/me/teams")
+        response = admin_client.get("/ng/users/me/teams")
         assert response.status_code == 200
         data = response.get_json()
         assert data["data"] == []
@@ -183,7 +183,7 @@ class TestAdminImpersonation:
         """Test that non-admin users cannot impersonate others."""
         user = user_factory()
 
-        response = logged_in_client.post("/ng/admin/impersonate", json={"user_id": 2})
+        response = logged_in_client.post("/ng/admin/impersonate", json={"user_id": user.id})
         assert response.status_code == 403
 
     def test_cannot_impersonate_self(self, admin_client, user_factory):

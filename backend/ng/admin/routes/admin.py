@@ -11,7 +11,7 @@ from ..controllers import (
     get_detailed_stats,
     reset_event_data,
 )
-from ...permissions.models.enums import PermissionEnum, RoleEnum
+from ...permissions.models.enums import PermissionEnum
 from ...permissions.controllers.get_user_roles import get_user_roles
 from ...core.utils import success_response, error_response
 from ...core.middleware.loaders import (
@@ -19,7 +19,7 @@ from ...core.middleware.loaders import (
     load_event,
     load_user
 )
-
+from ...core.utils.logger import get_logger
 from ...core.middleware import (
     admin_endpoint,
     user_endpoint
@@ -30,10 +30,11 @@ from ...core.middleware.permission_middleware import (
 from ..docs.api import (
     GET_DETAILED_STATS_DOC,
     GET_DATA_COUNTS_DOC,
-    RESET_ALL_DATA_DOC,
     RESET_EVENT_DATA_DOC,
     SYSTEM_HEALTH_DOC,
 )
+
+logger = get_logger(__name__)
 
 admin_namespace = Namespace("admin", description="admin operations")
 
@@ -54,7 +55,7 @@ class AdminStatsCounts(Resource):
     def get(self, **kwargs):
         """Get data counts"""
 
-        
+
         result = get_data_counts()
         return success_response(result)
 

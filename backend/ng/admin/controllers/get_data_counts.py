@@ -7,7 +7,6 @@ from typing import Any
 
 from ...event.models.Event import Event
 from ...team.models.Team import Team
-from ...team.models.TeamMember import TeamMember
 from ...user.models.User import User
 
 
