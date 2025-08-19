@@ -22,18 +22,20 @@ import styles from './milkdown.module.css';
 function CrepeEditor({
   initialValue = '',
   onChange,
-} : {
-  initialValue? : string,
-  onChange : (value : string) => void,
+  version = 0
+}: {
+  initialValue?: string,
+  onChange: (value: string) => void,
+  version: number
 }) {
   const features = {
-    'image-block' : false,
-    latex : false,
+    'image-block': false,
+    latex: false,
   };
 
   const featureConfigs = {
-    placeholder : {
-      text : 'Type here...',
+    placeholder: {
+      text: 'Type here...',
     },
   };
 
@@ -42,7 +44,7 @@ function CrepeEditor({
       root,
       features,
       featureConfigs,
-      defaultValue : initialValue,
+      defaultValue: initialValue,
     });
 
     crepe.editor.use(automd);
@@ -56,7 +58,7 @@ function CrepeEditor({
     });
 
     return crepe;
-  }, []);
+  }, [version]);
 
   return <Milkdown />;
 }
@@ -64,14 +66,16 @@ function CrepeEditor({
 export default function MilkdownEditorWrapper({
   initialValue = '',
   onChange,
-} : {
-  initialValue? : string,
-  onChange : (value : string) => void,
+  version = 0
+}: {
+  initialValue?: string,
+  onChange: (value: string) => void,
+  version?: number
 }) {
   return (
     <MilkdownProvider>
       <div className={styles.milkdownEditor}>
-        <CrepeEditor initialValue={initialValue} onChange={onChange} />
+        <CrepeEditor initialValue={initialValue} onChange={onChange} version={version}/>
       </div>
     </MilkdownProvider>
   );
