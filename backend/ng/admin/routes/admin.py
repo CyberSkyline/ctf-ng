@@ -11,11 +11,13 @@ from ..controllers import (
     get_detailed_stats,
     reset_event_data,
 )
-from ...permissions.models.enums import PermissionEnum
+from ...permissions.models.enums import PermissionEnum, RoleEnum
+from ...permissions.controllers.get_user_roles import get_user_roles
 from ...core.utils import success_response, error_response
 from ...core.middleware.loaders import (
     LoaderType,
     load_event,
+    load_user
 )
 
 from ...core.middleware import (
@@ -86,6 +88,7 @@ class AdminHealth(Resource):
 @admin_namespace.route("/impersonate")
 class AdminImpersonate(Resource):
     @admin_endpoint(json_required=True)
+    @load_user(LoaderType.BODY)
     @get_permissions
     @admin_namespace.doc(
         description="Impersonate a user by ID",
@@ -97,13 +100,28 @@ class AdminImpersonate(Resource):
     )
     def post(self, json_data,current_user, permissions, **kwargs):
         """Impersonate a user by ID"""
+        user_id = json_data.get("user_id")
         if PermissionEnum.CAN_IMPERSONATE_USERS not in permissions:
             return error_response("You do not have permission to impersonate users.", "permissions", 403)
 
+        if user_id == current_user.id:
+            return error_response("You cannot impersonate yourself.", "impersonation", 403)
+
+        if get_user_roles(user_id) != []:
+            return error_response("You cannot impersonate privileged users", "impersonation", 403)
+
+        if session.get("impersonated"):
+            # Should never be able to get here but just in case
+            return error_response("You are already impersonating another user.", "impersonation", 403)
+
+        logger.info(f"Admin {current_user.id} is impersonating user {user_id}")
+
         session["admin_id"] = current_user.id
         session["impersonated"] = True
-        session["id"] = json_data.get("user_id")
+        session["id"] = user_id
         session["nonce"] = generate_nonce()
+
+        return success_response()
 
 
 @admin_namespace.route("/stop_impersonating")
@@ -118,14 +136,17 @@ class AdminStopImpersonating(Resource):
     )
     def post(self,json_data, **kwargs):
         """Stop impersonating a user"""
-        if not session["impersonated"]:
-            print("User is not currently impersonating any other user.")
+        if not session.get("impersonated"):
             return error_response("You are not currently impersonating any user.", "impersonation", 403)
+
+        logger.info(f"Admin {session['admin_id']} stopped impersonating user {session['id']}")
 
         session["id"] = session["admin_id"]
         session.pop("admin_id", None)
         session.pop("impersonated", None)
         session["nonce"] = generate_nonce()
+
+
         return success_response()
 
 

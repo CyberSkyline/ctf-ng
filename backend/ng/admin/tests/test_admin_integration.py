@@ -72,7 +72,7 @@ class TestAdminImpersonation:
             assert session["id"] == 2
 
     def test_admin_identity_endpoints_report_as_user(self, admin_client, user_factory, team_factory):
-        """Test that admin can perform actions as the impersonated user."""
+        """Test that endpoints report as impersonated user"""
         user = user_factory()
         team = team_factory(members=[user])
         response = self.impersonate(admin_client, user.id)
@@ -104,6 +104,7 @@ class TestAdminImpersonation:
         assert data["data"] == []
 
     def test_admin_team_management_as_user(self, admin_client, user_factory, team_factory, event_factory):
+        """Test that admin can manage teams as the impersonated user."""
         user = user_factory()
         event = event_factory()
 
@@ -171,8 +172,12 @@ class TestAdminImpersonation:
         assert response.status_code == 200
 
         response = admin_client.get("/ng/admin/health")
-        print(response.get_json())
-        assert response.status_code == 403
+        assert response.status_code == 302
+
+    def test_cannot_impersonate_nonexistent_user(self, admin_client):
+        """Test that admin cannot impersonate a nonexistent user."""
+        response = self.impersonate(admin_client, 9999)  # Assuming 9999 is a nonexistent user ID
+        assert response.status_code == 404
 
     def test_non_admins_cannot_impersonate(self, logged_in_client, user_factory):
         """Test that non-admin users cannot impersonate others."""
@@ -180,3 +185,16 @@ class TestAdminImpersonation:
 
         response = logged_in_client.post("/ng/admin/impersonate", json={"user_id": 2})
         assert response.status_code == 403
+
+    def test_cannot_impersonate_self(self, admin_client, user_factory):
+        """Test that admin cannot impersonate other admins."""
+        response = self.impersonate(admin_client, 2)
+        assert response.status_code == 403
+        assert response.get_json()["errors"]["impersonation"] == "You cannot impersonate yourself."
+
+    def test_cannot_impersonate_admin(self, admin_client, user_factory):
+        """Test that admin cannot impersonate other admins."""
+        admin2 = user_factory(name="Admin 2", email="admin2@example.com", password="password", admin=True)
+        response = self.impersonate(admin_client, admin2.id)
+        assert response.status_code == 403
+        assert response.get_json()["errors"]["impersonation"] == "You cannot impersonate privileged users"
