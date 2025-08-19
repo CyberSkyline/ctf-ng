@@ -20,44 +20,44 @@ import { ErrorCallout } from 'components/Callouts';
 
 export default function CreateTicket() {
   const navigate = useNavigate();
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [text, setText] = useState<string>();
-  const [selectedEvent, setSelectedEvent] = useState<string | undefined>();
-  const [selectedChallenge, setSelectedChallenge] = useState<string | undefined>();
+  const [ error, setError ] = useState<string | null>(null);
+  const [ loading, setLoading ] = useState<boolean>(false);
+  const [ text, setText ] = useState<string>();
+  const [ selectedEvent, setSelectedEvent ] = useState<string | undefined>();
+  const [ selectedChallenge, setSelectedChallenge ] = useState<string | undefined>();
 
-  const { data: events, error: eventsError } = useMyEvents();
-  const { data: challenges, error: challengeError } = useMyChallenges(Number(selectedEvent));
+  const { data : events, error : eventsError } = useMyEvents();
+  const { data : challenges, error : challengeError } = useMyChallenges(Number(selectedEvent));
 
   if (!isUndefined(eventsError)) {
-    return <ErrorCallout>{eventsError?.message}</ErrorCallout>
-  } else if (!isUndefined(challengeError)) {
-    <ErrorCallout>{challengeError?.message}</ErrorCallout>
+    return <ErrorCallout>{eventsError?.message}</ErrorCallout>;
+  } if (!isUndefined(challengeError)) {
+    <ErrorCallout>{challengeError?.message}</ErrorCallout>;
   }
 
   const create = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true)
+    setLoading(true);
 
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
     const parsed = {
       ...data,
-      event_id: data?.event_id ? Number(data.event_id) : undefined,
-      challenge_id: data?.challenge_id ? Number(data.challenge_id) : undefined,
+      event_id : data?.event_id ? Number(data.event_id) : undefined,
+      challenge_id : data?.challenge_id ? Number(data.challenge_id) : undefined,
     };
-    
+
     createTicket(parsed).then((ticketId) => {
       navigate(`/support/${ticketId}`);
     }).catch((err) => {
       setError(err.message);
     }).finally(() => {
-      setLoading(false)
-    })
+      setLoading(false);
+    });
   };
 
   return (
-    <Container size='4'>
+    <Container size="4">
       <Flex gap="3" direction="column">
         <Box maxWidth="200px">
           <Button
@@ -107,14 +107,14 @@ export default function CreateTicket() {
             )}
           </Form.Field>
 
-          <Form.Field name="event_id" className='mt-2'>
-            <Form.Label className='mr-2'>Event:</Form.Label>
+          <Form.Field name="event_id" className="mt-2">
+            <Form.Label className="mr-2">Event:</Form.Label>
             <Select.Root
               name="event_id"
               value={selectedEvent}
               onValueChange={(v: string) => setSelectedEvent(v)}
             >
-              <Select.Trigger placeholder="Select an event" className='w-[200px]' />
+              <Select.Trigger placeholder="Select an event" className="w-[200px]" />
               <Select.Content>
                 <Select.Group>
                   {map(events, (event) => (
@@ -132,8 +132,8 @@ export default function CreateTicket() {
 
           {!isEmpty(selectedEvent)
             && (
-              <Form.Field name="challenge_id" className='mt-2'>
-                <Form.Label className='mr-2'>Challenge:</Form.Label>
+              <Form.Field name="challenge_id" className="mt-2">
+                <Form.Label className="mr-2">Challenge:</Form.Label>
                 <Select.Root
                   name="challenge_id"
                   value={selectedChallenge}
@@ -156,12 +156,12 @@ export default function CreateTicket() {
               </Form.Field>
             )}
 
-          {error && <ErrorCallout className='mt-2'>{error}</ErrorCallout>}
+          {error && <ErrorCallout className="mt-2">{error}</ErrorCallout>}
 
           <Form.Submit asChild>
             <Button
               type="submit"
-              className='!mt-2'
+              className="!mt-2"
               loading={loading}
               disabled={loading}
             >

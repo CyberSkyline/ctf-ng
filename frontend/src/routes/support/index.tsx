@@ -12,7 +12,7 @@ import { StatusBadgeCell } from 'components/StatusBadge';
 import { radixTheme } from '@/grid';
 import { useMyTickets } from '@/hooks/support';
 import type { Ticket } from '@/types';
-import { isUndefined } from 'lodash'
+import { isUndefined } from 'lodash';
 import { ErrorCallout } from 'components/Callouts';
 
 export default function Support() {
@@ -21,17 +21,17 @@ export default function Support() {
   const { data, error } = useMyTickets();
 
   const colDefs: ColDef<Ticket>[] = [
-    { field: 'subject', headerName: 'Subject' },
-    { field: 'event_name', headerName: 'Event Name' },
-    { field: 'status', headerName: 'Status', cellRenderer: StatusBadgeCell },
-    { field: 'opened_timestamp', headerName: 'Created Date', valueFormatter: (params) => new Date(params.value).toString() },
-    { field: 'last_updated', headerName: 'Last Updated Date', valueFormatter: (params) => new Date(params.value).toString() },
+    { field : 'subject', headerName : 'Subject' },
+    { field : 'event_name', headerName : 'Event Name' },
+    { field : 'status', headerName : 'Status', cellRenderer : StatusBadgeCell },
+    { field : 'opened_timestamp', headerName : 'Created Date', valueFormatter : (params) => new Date(params.value).toString() },
+    { field : 'last_updated', headerName : 'Last Updated Date', valueFormatter : (params) => new Date(params.value).toString() },
   ];
 
   return (
     <Container size="4">
-      {!isUndefined(error) ?
-        <ErrorCallout>{error?.message}</ErrorCallout>
+      {!isUndefined(error)
+        ? <ErrorCallout>{error?.message}</ErrorCallout>
         : (
           <Flex gap="3" direction="column">
             <Heading size="7">Support Tickets</Heading>
