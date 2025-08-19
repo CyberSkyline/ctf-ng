@@ -29,13 +29,13 @@ function CrepeEditor({
   version: number
 }) {
   const features = {
-    'image-block': false,
-    latex: false,
+    'image-block' : false,
+    latex : false,
   };
 
   const featureConfigs = {
-    placeholder: {
-      text: 'Type here...',
+    placeholder : {
+      text : 'Type here...',
     },
   };
 
@@ -44,7 +44,7 @@ function CrepeEditor({
       root,
       features,
       featureConfigs,
-      defaultValue: initialValue,
+      defaultValue : initialValue,
     });
 
     crepe.editor.use(automd);
