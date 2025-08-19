@@ -181,7 +181,7 @@ class User(db.Model):
         return list(permissions)
 
     @classmethod
-    def delete_all(cls, exception) -> None:
+    def delete_all(cls) -> None:
         """Delete all user extensions from the database."""
         try:
             cls.query.delete()
