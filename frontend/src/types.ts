@@ -185,8 +185,11 @@ export interface Ticket {
   last_updated: Date;
   opened_timestamp: Date;
   author_id: number;
+  author_name: string;
   message_count: number;
-  tags: string[]
+  tags: string[];
+  assigned_to?: number;
+  assigned_to_name?: string;
 }
 
 export interface TicketMessage {

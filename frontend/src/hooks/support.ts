@@ -48,3 +48,11 @@ export function resolveMyTicket(ticketId: number) {
     mutate(`/support/me/tickets/${ticketId}`);
   });
 }
+
+/*
+  ADMIN ROUTES
+*/
+
+export function useAdminAllTickets() {
+  return useSWR<Ticket[], Error>('/admin/support/tickets');
+}
