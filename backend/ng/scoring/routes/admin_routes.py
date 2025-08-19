@@ -20,6 +20,7 @@ from ..controllers import (
     award_manual_points,
     recalculate_score,
     get_score_history,
+    get_team_attempts,
 )
 from ._docs import (
     AWARD_MANUAL_POINTS_DOC,
@@ -82,4 +83,21 @@ class ScoreHistory(Resource):
             raise ValidationError(f"Limit must be between 1 and {config.MAX_SCORE_HISTORY_LIMIT}")
 
         result = get_score_history(event=event, team=team, limit=limit)
+        return success_response(result)
+
+@scoring_admin_namespace.route("/events/<int:event_id>/teams/<int:team_id>/attempts")
+class ScoreAttempts(Resource):
+    @scoring_admin_namespace.doc(**GET_SCORE_HISTORY_DOC)
+    @admin_endpoint()
+    @load_event(LoaderType.PARAM)
+    @load_team(LoaderType.PARAM)
+    def get(self, event_id: int, team_id: int, event, team, **kwargs):
+        """
+        Get scoring attempts for a team
+        """
+        limit = request.args.get("limit", config.DEFAULT_SCORE_HISTORY_LIMIT, type=int)
+        if limit < 1 or limit > config.MAX_SCORE_HISTORY_LIMIT:
+            raise ValidationError(f"Limit must be between 1 and {config.MAX_SCORE_HISTORY_LIMIT}")
+
+        result = get_team_attempts(event=event, team=team, limit=limit)
         return success_response(result)

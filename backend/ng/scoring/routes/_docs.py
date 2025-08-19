@@ -90,3 +90,12 @@ GET_SCORE_HISTORY_DOC = {
         **ADMIN_REQUIRED_RESPONSES,
     },
 }
+
+GET_ATTEMPT_HISTORY_DOC = {
+    "description": "Get attempt history for a specific team in an event (Admin only)",
+    "responses": {
+        200: "Success - Returns list of all attempts made by the team",
+        400: "Bad request - Invalid limit parameter (must be 1-500)",
+        **ADMIN_REQUIRED_RESPONSES,
+    },
+}

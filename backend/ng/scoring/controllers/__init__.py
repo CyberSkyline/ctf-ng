@@ -9,6 +9,7 @@ from .user_actions import (
 from .all_actions import (
     get_leaderboard,
     get_team_score,
+    get_team_attempts,
 )
 from .admin_actions import (
     award_manual_points,
@@ -24,4 +25,5 @@ __all__ = [
     "get_team_score",
     "submit_answer",
     "redeem_hint",
+    "get_team_attempts",
 ]

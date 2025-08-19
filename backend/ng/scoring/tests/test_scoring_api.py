@@ -623,6 +623,117 @@ class TestAdminScoringEndpoints:
         # Controller returns empty list when no events
         assert data["data"] == []
 
+    def test_get_attempt_history(self, db_session, admin_client, user, event,team_with_member, attempt_factory, challenge, question):
+        """Test getting attempt history for a team"""
+        # Create some attempts for the team
+
+        for _ in range(3):
+            attempt = attempt_factory(
+                user_id=user.id,
+                team_id=team_with_member.id,
+                challenge_id=challenge.id,
+                question_id=question.id,
+                submission="test answer",
+                is_correct=False,
+            )
+
+        response = admin_client.get(f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/attempts")
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data["data"]) == 3
+        assert data["success"] is True
+
+    def test_get_attempt_history_with_limit(self, admin_client, event, user, team_with_member, attempt_factory, challenge, question_factory):
+        """Test getting attempt history with limit"""
+        # Create multiple attempts
+
+        question = question_factory(challenge=challenge)
+
+        for _ in range(10):
+            attempt = attempt_factory(
+                user_id=user.id,
+                team_id=team_with_member.id,
+                challenge_id=challenge.id,
+                question_id=question.id,
+                submission="test answer",
+                is_correct=False,
+            )
+
+        response = admin_client.get(
+            f"/ng/admin/scoring/events/{team_with_member.event_id}/teams/{team_with_member.id}/attempts?limit=5"
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert len(data["data"]) == 5
+
+    def test_get_attempt_history_invalid_limit(self, admin_client, event, team_with_member):
+        """Test getting attempt history with invalid limit"""
+        response = admin_client.get(
+            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/attempts?limit=0"
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+
+    def test_get_attempt_history_limit_too_high(self, admin_client, event, team_with_member):
+        """Test getting attempt history with limit too high"""
+        response = admin_client.get(
+            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/attempts?limit=1000"
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+
+    def test_get_attempt_history_nonexistent_team(self, admin_client,event):
+        """Test getting attempt history for nonexistent team"""
+        response = admin_client.get(
+            f"/ng/admin/scoring/events/{event.id}/teams/999999/attempts"
+        )
+
+        assert response.status_code == 404
+        data = response.get_json()
+        assert data["success"] is False
+
+    def test_get_attempt_history_nonexistent_event(self, admin_client, team_with_member):
+        """Test getting attempt history for nonexistent event"""
+        response = admin_client.get(
+            f"/ng/admin/scoring/events/999999/teams/{team_with_member.id}/attempts"
+        )
+
+        assert response.status_code == 404
+        data = response.get_json()
+        assert data["success"] is False
+
+    def test_get_attempt_history_non_admin_fails(self, logged_in_client, event, team_with_member):
+        """Test that non-admin cannot get attempt history"""
+        response = logged_in_client.get(
+            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/attempts"
+        )
+
+        assert response.status_code == 302
+
+    def test_get_attempt_history_empty(self, admin_client, event, team_with_member):
+        """Test getting attempt history for team with no attempts"""
+        from ..models import Attempt
+
+        Attempt.query.filter_by(team_id=team_with_member.id).delete()
+
+        response = admin_client.get(
+            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/attempts"
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"] == []
+
+
+
     def test_unauthenticated_admin_requests(self, client, event, team_with_member):
         """Test that unauthenticated admin requests fail"""
         endpoints = [
