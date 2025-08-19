@@ -9,14 +9,6 @@ import Entity from 'components/Entity';
 import EventCellRenderer from 'components/EventCellRenderer';
 import DeploymentSidebar from './DeploymentSidebar';
 
-function TeamCellRenderer({ data }: {data: Deployment}) {
-  return <Entity icon={TeamIcon} label={data.team_name} to={`/admin/teams?id=${data.team}`} />;
-}
-
-function ChallengeCellRenderer({ data }: {data: Deployment}) {
-  return <Entity icon={ChallengeIcon} label={data.challenge_name} to={`/admin/events?id=${data.event_id}`} />;
-}
-
 /**
  * Admin page to manage challenge networks/containers.
  * The datagrid will list full challenge deployments/networks with aggregate stats,
@@ -31,14 +23,24 @@ export default function AdminDeployments() {
     {
       field : 'challenge_id',
       headerName : 'Challenge',
-      cellRenderer : ChallengeCellRenderer,
+      cellRenderer : Entity,
+      cellRendererParams : (params: { data: Deployment }) => ({
+        icon : ChallengeIcon,
+        label : params.data.challenge_name,
+        to : `/admin/events?id=${params.data.event_id}`,
+      }),
       filter : true,
       floatingFilter : true,
     },
     {
       field : 'team',
       headerName : 'Team',
-      cellRenderer : TeamCellRenderer,
+      cellRenderer : Entity,
+      cellRendererParams : (params: { data: Deployment }) => ({
+        icon : TeamIcon,
+        label : params.data.team_name,
+        to : `/admin/teams?id=${params.data.team}`,
+      }),
       filter : true,
       floatingFilter : true,
     },

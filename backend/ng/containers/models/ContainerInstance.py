@@ -169,10 +169,13 @@ class ContainerInstance(db.Model):
     def get_instance_by_id(cls, instance_id: int):
         return cls.query.filter_by(id=instance_id).first()
 
-    def logs(self, tail: int = 500) -> str:
+    def logs(self, tail: int = 200) -> str:
         client = get_client(config.DOCKER_HOST)
-        ctr = client.containers.get(self.dockerid)
-        return ctr.logs(tail=tail).decode('utf-8')
+        try:
+            ctr = client.containers.get(self.dockerid)
+            return ctr.logs(tail=tail).decode('utf-8')
+        except docker.errors.NotFound as exc:
+            raise ValueError("Container not found, please recycle") from exc
 
     def status(self) -> SerializedInstanceStats:
         client = get_client(config.DOCKER_HOST)

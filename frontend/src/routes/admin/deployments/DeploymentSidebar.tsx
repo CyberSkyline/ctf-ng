@@ -1,70 +1,19 @@
+import { COLOR_INFO, TeamIcon, UserIcon } from '@/constants';
+import { useDeploymentServices } from '@/hooks/container';
+import type { Deployment } from '@/types';
 import {
-  COLOR_INFO,
-  COLOR_NEGATIVE,
-  COLOR_POSITIVE,
-  TeamIcon,
-  UserIcon,
-} from '@/constants';
-import { useContainerStatus, useDeploymentServices } from '@/hooks/container';
-import type { ContainerInstance, Deployment } from '@/types';
-import {
-  Badge,
   Button,
   Code,
   Skeleton,
   Table,
-  Text,
-  Tooltip,
 } from '@radix-ui/themes';
 import AdminDataList from 'components/AdminDataList';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { ErrorCallout, WarningCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
-import { upperCase } from 'lodash';
 import { Link } from 'react-router';
-import ContainerLogsModal from './ContainerLogsModal';
-import RecycleContainerModal from './RecycleContainerModal';
-import RestartContainerModal from './RestartContainerModal';
-
-function ServiceRow({ service }: {service: ContainerInstance}) {
-  const { data : status, error, isLoading } = useContainerStatus(service.id);
-  return (
-    <Table.Row key={service.id}>
-      <Table.Cell>
-        <Skeleton loading={isLoading}>
-          {status?.name || error?.message || 'lorem-ipsum'}
-        </Skeleton>
-      </Table.Cell>
-      <Table.Cell>
-        <Skeleton loading={!status}>
-          <Badge color={status?.status === 'running' ? COLOR_POSITIVE : COLOR_NEGATIVE}>
-            {upperCase(status?.status) || 'lorem-ipsum'}
-          </Badge>
-        </Skeleton>
-      </Table.Cell>
-
-      <Table.Cell>
-        <Tooltip content={<Text>{service?.dockerid}</Text>}>
-          <Code color="gray">{service?.dockerid.slice(0, 12)}</Code>
-        </Tooltip>
-      </Table.Cell>
-      <Table.Cell>
-        <Skeleton loading={!status}>
-          {status?.image || 'lorem-ipsum'}
-        </Skeleton>
-      </Table.Cell>
-      <Table.Cell>
-        {service?.hostip}
-      </Table.Cell>
-      <Table.Cell align="right">
-        <ContainerLogsModal containerId={service.id} />
-        <RestartContainerModal containerId={service.id} />
-        <RecycleContainerModal containerId={service.id} />
-      </Table.Cell>
-    </Table.Row>
-  );
-}
+import ServiceRow from './ServiceRow';
 
 export default function DeploymentSidebar({ entity }: {entity: Deployment}) {
   const { data : serviceData, error } = useDeploymentServices(entity.challenge_id, entity.team);

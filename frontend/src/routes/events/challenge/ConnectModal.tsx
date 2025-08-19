@@ -1,6 +1,7 @@
 import { COLOR_POSITIVE, COLOR_WARNING } from '@/constants';
 import { connectWorkspace, useCurrentChallengeId } from '@/hooks/container';
 import { Button } from '@radix-ui/themes';
+import { ErrorCallout } from 'components/Callouts';
 import Modal from 'components/Modal';
 import { useState } from 'react';
 import { TbCheck, TbPlayerPlay } from 'react-icons/tb';
@@ -9,7 +10,7 @@ export default function ConnectModal({ eventId, challengeId }: {
   eventId: number;
   challengeId: number;
 }) {
-  const { data : currentChallenge } = useCurrentChallengeId();
+  const { data : currentChallenge, error } = useCurrentChallengeId();
   const [ loading, setLoading ] = useState(false);
 
   const handleConnect = async () => {
@@ -18,6 +19,11 @@ export default function ConnectModal({ eventId, challengeId }: {
       setLoading(false);
     });
   };
+
+  if (error) {
+    // if we can't get the current challenge, show an error where the button would otherwise go
+    return <ErrorCallout>{error.message}</ErrorCallout>;
+  }
 
   if (currentChallenge === challengeId) {
     return (
