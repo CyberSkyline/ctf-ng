@@ -3,7 +3,7 @@ from ..models.Role import Role
 
 
 def get_user_permissions(user):
-    """Get all permissions for a specific user.
+    """Get all Role based permissions for a specific user.
 
     Args:
         user (User): The user object.

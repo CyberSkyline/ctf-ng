@@ -30,6 +30,7 @@ class Event(db.Model):
     registration_open = db.Column(db.Boolean, nullable=False, default=False)
     registration_start_date = db.Column(db.DateTime, nullable=True)
     registration_end_date = db.Column(db.DateTime, nullable=True)
+    hints_enabled = db.Column(db.Boolean, default=False, nullable=False)
 
     __table_args__ = (
         CheckConstraint(
@@ -79,6 +80,7 @@ class Event(db.Model):
             "registration_open": self.registration_open,
             "registration_start_date": self.registration_start_date.isoformat() + "Z" if self.registration_start_date else None,
             "registration_end_date": self.registration_end_date.isoformat() + "Z" if self.registration_end_date else None,
+            "hints_enabled": self.hints_enabled,
         }
 
         return data
@@ -152,6 +154,7 @@ class Event(db.Model):
         registration_open: bool = True,
         registration_start_date: datetime | None = None,
         registration_end_date: datetime | None = None,
+        hints_enabled: bool = False,
         commit: bool = True,
     ):
         """Create and persist a new event to the database.
@@ -183,6 +186,7 @@ class Event(db.Model):
             registration_open=registration_open,
             registration_start_date=registration_start_date,
             registration_end_date=registration_end_date,
+            hints_enabled=hints_enabled,
         )
 
         db.session.add(event)
@@ -332,6 +336,11 @@ class Event(db.Model):
         except Exception:
             db.session.rollback()
             raise
+
+    def toggle_hints(self) -> None:
+        """Toggle the hints_enabled status for the event."""
+        self.hints_enabled = not self.hints_enabled
+        db.session.commit()
 
     def check_eligibility(self, user):
         """Check if a user is eligible to register for an event.
