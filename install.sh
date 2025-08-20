@@ -125,7 +125,7 @@ cd "$PYTHON_DIR"
 
 # Create virtual environment if not already present
 if [ ! -d "venv" ]; then
-  echo "Creating virtual environment in $PROJECT_DIR/venv..."
+  echo "Creating virtual environment in $PYTHON_DIR/venv..."
   python3 -m venv venv
 fi
 

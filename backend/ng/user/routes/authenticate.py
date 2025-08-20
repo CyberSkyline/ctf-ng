@@ -1,5 +1,5 @@
-from flask import Blueprint
-from flask_restx import Api, Namespace, Resource
+# backend/ng/user/routes.py
+from flask_restx import Namespace, Resource
 from ..controllers.authenticate import okta_login, okta_callback
 
 oauth_namespace = Namespace("authenticate", description="Okta OAuth routes")
