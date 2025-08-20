@@ -1,101 +1,174 @@
+import { useState } from 'react';
 import {
   Box,
   Button,
   Card,
+  Container,
   Flex,
   Heading,
   Separator,
   Text,
+  Section,
 } from '@radix-ui/themes';
 import { StatusBadge } from 'components/StatusBadge';
+import { ErrorCallout } from 'components/Callouts';
 import { TbArrowLeft } from 'react-icons/tb';
-import { useNavigate } from 'react-router';
-// import Editor from 'components/Editor'; //milkdown
-import { map } from 'lodash';
-/* import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import remarkBreaks from 'remark-breaks';
-import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize'; */
+import { useNavigate, useParams } from 'react-router';
+import { isNil, isUndefined, map } from 'lodash';
+import RichTextEditor from 'components/RichTextEditor';
+import { useMyTicketMessages, addNewTicketMessage, resolveMyTicket } from '@/hooks/support';
 
 export default function Detail() {
-  const status = 'inprogress';
-  const event = 'blah event';
-  const challenge = 'blah challenge';
-  const repliesArray = [
-    { user : 'user1', timestamp : '2025-11-1', text : 'blah' },
-    { user : 'user2', timestamp : '2025-11-1', text : 'blah' },
-    { user : 'user3', timestamp : '2025-11-1', text : 'blah' },
-    { user : 'user4', timestamp : '2025-11-1', text : 'blah' },
-  ];
-
   const navigate = useNavigate();
+  const { idTicket } = useParams();
+  const { data, error : errorMessages } = useMyTicketMessages(Number(idTicket));
+  const [ version, setVersion ] = useState<number>(0); // To reinit the RichTextEditor
+  const [ newText, setNewText ] = useState<string>('');
+  const [ replyError, setReplyError ] = useState<string | null>(null);
+  const [ resolveError, setResolveError ] = useState<boolean>(false);
+  const [ resolveLoading, setResolveLoading ] = useState<boolean>(false);
+  const [ replyLoading, setReplyLoading ] = useState<boolean>(false);
 
-  function resolveTicket() {
-    // do server call to resolve ticket
-    // onSuccess go back to details page
-    navigate('/support');
+  if (isNil(data) || errorMessages) {
+    return (
+      <ErrorCallout>
+        {isUndefined(errorMessages)
+          ? 'The data for this ticket could not be found'
+          : errorMessages.message}
+      </ErrorCallout>
+    );
   }
 
-  return (
-    <Flex direction="row" gap="4">
-      <Flex gap="3" direction="column" className="w-4/5">
-        <Box maxWidth="200px">
-          <Button
-            variant="ghost"
-            onClick={() => { navigate('/support'); }}
-          >
-            <TbArrowLeft />
-            Support
-          </Button>
-        </Box>
-        <Heading size="7">Ticket Detail</Heading>
-        <Box maxWidth="200px">
-          <Button
-            onClick={() => resolveTicket()}
-          >
-            Mark Ticket as Resolved
-          </Button>
-        </Box>
-        <div>
-          {map(repliesArray, ({ user, timestamp, text }) => (
-            <Card className="pt-8">
-              <Text>{user}</Text>
-              <Text>{timestamp}</Text>
-              <div className="pb-4">
-                {text}
-                markdownreact here
-              </div>
-            </Card>
-          ))}
-        </div>
-        <div>
-          {/* <Editor
-            value={value}
-            onChange={handleOnChange}
-          /> */}
-        </div>
-      </Flex>
+  const { messages, ticket } = data;
 
-      <Card size="3" className="w-1/5">
-        <Flex direction="column" gap="4">
+  const {
+    subject,
+    status,
+    event_name : eventName,
+    team_name : teamName,
+    challenge_name : challengeName,
+  } = ticket;
+
+  const resolveTicket = () => {
+    setResolveLoading(true);
+    setResolveError(false);
+
+    resolveMyTicket(ticket.id)
+      .catch((err) => setResolveError(err.message))
+      .finally(() => setResolveLoading(false));
+  };
+
+  const sendNewMessage = async () => {
+    setReplyError(null);
+    setReplyLoading(true);
+
+    // add a new message to the ticket
+    addNewTicketMessage(ticket.id, newText)
+      .catch((err) => setReplyError(err.message))
+      .then(() => {
+        setNewText('');
+        setVersion((prev) => prev + 1); // This forces reMount of RichTextEditor
+      }).finally(() => setReplyLoading(false));
+  };
+
+  return (
+    <Container size="4">
+      <Flex direction="row" gap="4">
+        <Flex gap="3" direction="column" className="w-5/7">
+          <Box maxWidth="200px">
+            <Button
+              variant="ghost"
+              onClick={() => { navigate('/support'); }}
+            >
+              <TbArrowLeft />
+              Support
+            </Button>
+          </Box>
+          <Heading size="7">Ticket Detail</Heading>
+          <Flex gap="2">
+            <Heading size="3">Subject:</Heading>
+            <Text>{subject}</Text>
+          </Flex>
+          <Box maxWidth="200px">
+            <Button
+              onClick={() => resolveTicket()}
+              loading={resolveLoading}
+              disabled={resolveLoading || status === 'closed'}
+            >
+              Mark Ticket as Resolved
+            </Button>
+            {resolveError && (
+              <ErrorCallout>
+                {resolveError}
+              </ErrorCallout>
+            )}
+          </Box>
           <div>
-            Event
-            <Separator size="4" />
-            <Text>{event}</Text>
+            {map(messages, (message) => (
+              <Card className="mt-2" key={message.id}>
+                <Flex justify="between">
+                  <Text weight="bold" size="2">{message.author_name}</Text>
+                  <Text weight="bold" size="2">{message.created_at.toLocaleString()}</Text>
+                </Flex>
+                <Separator size="4" className="mb-1" />
+                <Text as="p">
+                  {message.text}
+                </Text>
+              </Card>
+            ))}
           </div>
-          <div>
-            Challenge
-            <Separator size="4" />
-            <Text>{challenge}</Text>
-          </div>
-          <div>
-            Status
-            <Separator size="4" />
-            {StatusBadge(status)}
-          </div>
+          <Flex gap="2" direction="column">
+            <RichTextEditor
+              initialValue={newText}
+              onChange={setNewText}
+              version={version}
+            />
+            <Button
+              onClick={sendNewMessage}
+              loading={replyLoading}
+              disabled={replyLoading || status === 'closed'}
+            >
+              Reply
+            </Button>
+            {replyError && (
+              <ErrorCallout>
+                {replyError}
+              </ErrorCallout>
+            )}
+          </Flex>
         </Flex>
-      </Card>
-    </Flex>
+
+        <Card size="3" className="w-2/7 h-fit">
+          <Flex direction="column" gap="4">
+            <Section size="1">
+              Event
+              <Separator size="4" />
+              <Text>
+                {isNil(eventName) ? 'N/A' : eventName}
+              </Text>
+            </Section>
+            <Section size="1">
+              Team
+              <Separator size="4" />
+              <Text>
+                {isNil(teamName) ? 'N/A' : teamName}
+              </Text>
+            </Section>
+            <Section size="1">
+              Challenge
+              <Separator size="4" />
+              <Text>
+                {isNil(challengeName) ? 'N/A' : challengeName}
+              </Text>
+            </Section>
+            <Section size="1">
+              Status
+              <Separator size="4" />
+              {StatusBadge(status)}
+            </Section>
+          </Flex>
+        </Card>
+      </Flex>
+    </Container>
   );
 }

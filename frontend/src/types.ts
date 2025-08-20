@@ -53,6 +53,7 @@ export interface Challenge {
 
 export interface MeChallenge {
   challenge_id: number;
+  challenge_name: string;
   total_points_available: number;
   total_points_scored: number;
   num_questions_solved: number;
@@ -107,4 +108,31 @@ export interface ScoreEvent {
   team_id: number;
   points: number;
   timestamp: Date;
+}
+
+export interface Ticket {
+  id: number;
+  subject: string;
+  event_id?: number;
+  event_name?: string;
+  team_id?: number;
+  team_name?: string;
+  challenge_id?: number;
+  challenge_name?: string;
+  status: 'open' | 'closed' | 'inprogress';
+  last_updated: Date;
+  opened_timestamp: Date;
+  author_id: number;
+  message_count: number;
+  tags: string[]
+}
+
+export interface TicketMessage {
+  author_id: number;
+  author_name: string;
+  author_type: string;
+  created_at: Date;
+  id: number;
+  text: string;
+  ticket_id: number
 }
