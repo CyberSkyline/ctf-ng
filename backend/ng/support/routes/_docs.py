@@ -147,7 +147,7 @@ CLOSE_MY_TICKET_DOC = {
 
 # ============ ADMIN SUPPORT ENDPOINTS ============
 LIST_TICKETS_DOC = {
-    "description": "Get all support tickets with optional filters (Admin only).",
+    "description": "Get all support tickets with optional filters and enriched names (Admin only). Returns tickets with author_name, assigned_to_name, event_name, team_name, and challenge_name.",
     "params": {
         "user_id": {
             "description": "Filter by ticket author ID",
