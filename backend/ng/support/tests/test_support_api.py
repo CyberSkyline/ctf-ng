@@ -299,7 +299,7 @@ class TestAdminSupportEndpoints:
     def test_admin_add_message_reopens_ticket(self, admin_client, closed_ticket, admin):
         """Test admin message reopens closed ticket"""
         response = admin_client.post(
-            f"/ng/admin/support/tickets/{closed_ticket.id}",
+            f"/ng/admin/support/tickets/{closed_ticket.id}/add_message",
             json={"text": "I'm reopening this to help"},
         )
 

@@ -114,6 +114,9 @@ class AdminTicket(Resource):
         result = get_ticket(ticket=ticket)
         return success_response(result)
 
+
+@support_admin_namespace.route("/tickets/<int:ticket_id>/add_message")
+class AdminTicketMessage(Resource):
     @support_admin_namespace.doc(**ADD_ADMIN_MESSAGE_DOC)
     @admin_endpoint(json_required=True)
     @load_ticket(LoaderType.PARAM)
