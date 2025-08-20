@@ -28,8 +28,8 @@ export default function AdminGrid<T>({
   loading?: boolean;
   sidebarComponent?: React.ComponentType<{entity: T}>;
   getRowId: (params: { data: T }) => string;
-  gridOptions?: GridOptions
-  stopCellSelection?: string[], // colIds of cells
+  gridOptions?: GridOptions;
+  stopCellSelection?: string[]; // colIds of cells
 }) {
   const [ searchParams, setSearchParams ] = useSearchParams();
   const selectedId = searchParams.get('id');
