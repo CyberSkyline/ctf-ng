@@ -66,7 +66,7 @@ class Score(db.Model):
             "team_name": self.team_name,
         }
 
-        return SerializedScore(**data)  # type: ignore[typeddict-item, no-any-return]
+        return SerializedScore(**data)
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:

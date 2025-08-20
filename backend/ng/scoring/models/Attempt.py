@@ -80,7 +80,7 @@ class Attempt(db.Model):
             "is_correct": self.is_correct,
         }
 
-        return SerializedAttempt(**data)  # type: ignore[typeddict-item, no-any-return]
+        return SerializedAttempt(**data)
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:

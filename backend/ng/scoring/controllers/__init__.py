@@ -13,12 +13,14 @@ from .all_actions import (
 from .admin_actions import (
     award_manual_points,
     get_score_history,
+    get_submission_history,
     recalculate_score,
 )
 
 __all__ = [
     "award_manual_points",
     "get_score_history",
+    "get_submission_history",
     "recalculate_score",
     "get_leaderboard",
     "get_team_score",

@@ -60,7 +60,7 @@ class ManualPointAward(db.Model):
         if include_admin_fields and self.admin:
             data["admin_name"] = self.admin.name
 
-        return SerializedManualPointAward(**data)  # type: ignore[typeddict-item, no-any-return]
+        return SerializedManualPointAward(**data)
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:

@@ -53,7 +53,7 @@ class ScoreEvent(db.Model):
             "timestamp": self.timestamp.isoformat() + "Z",
         }
 
-        return SerializedScoreEvent(**data)  # type: ignore[typeddict-item, no-any-return]
+        return SerializedScoreEvent(**data)
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
