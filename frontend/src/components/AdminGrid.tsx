@@ -1,6 +1,11 @@
 import { radixTheme } from '@/grid';
 import { Flex, Spinner } from '@radix-ui/themes';
-import type { ColDef, GridApi } from 'ag-grid-community';
+import type {
+  ColDef,
+  GridApi,
+  GridOptions,
+  TData,
+} from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
@@ -14,12 +19,14 @@ export default function AdminGrid<T>({
   loading = false,
   sidebarComponent : Sidebar,
   getRowId,
+  gridOptions,
 }: {
   rowData: T[];
   columnDefs: ColDef<T>[];
   loading?: boolean;
   sidebarComponent?: React.ComponentType<{entity: T}>;
   getRowId: (params: { data: T }) => string;
+  gridOptions?: GridOptions<TData>
 }) {
   const [ searchParams, setSearchParams ] = useSearchParams();
   const selectedId = searchParams.get('id');
@@ -94,6 +101,11 @@ export default function AdminGrid<T>({
         loading={loading}
         loadingOverlayComponent={Spinner}
         getRowId={getRowId}
+        onRowDoubleClicked={(event) => {
+          if (event.node.isSelected()) {
+            event.node.setSelected(false);
+          }
+        }}
         onRowSelected={(event) => {
           if (event.node.isSelected() && event.node.id && event.node.id !== selectedId) {
             setSearchParams((prev) => {
@@ -136,6 +148,7 @@ export default function AdminGrid<T>({
         }}
         initialState={initialState}
         className="w-full h-full grow"
+        gridOptions={gridOptions}
       />
       {Sidebar && selectedData && (
         <Sidebar entity={selectedData} key={selectedId} />
