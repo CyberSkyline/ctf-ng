@@ -14,14 +14,17 @@ import { StatusBadge } from 'components/StatusBadge';
 import { ErrorCallout } from 'components/Callouts';
 import { TbArrowLeft } from 'react-icons/tb';
 import { useNavigate, useParams } from 'react-router';
-import { isNil, isUndefined, map } from 'lodash';
+import { isNil, isUndefined } from 'lodash';
 import RichTextEditor from 'components/RichTextEditor';
 import { useMyTicketMessages, addNewTicketMessage, resolveMyTicket } from '@/hooks/support';
+import TicketMessagesCard from 'components/TicketMessagesCard';
+import { useCurrentUser } from '@/hooks/users';
 
 export default function Detail() {
   const navigate = useNavigate();
   const { idTicket } = useParams();
   const { data, error : errorMessages } = useMyTicketMessages(Number(idTicket));
+  const { data : currentUser } = useCurrentUser();
   const [ version, setVersion ] = useState<number>(0); // To reinit the RichTextEditor
   const [ newText, setNewText ] = useState<string>('');
   const [ replyError, setReplyError ] = useState<string | null>(null);
@@ -103,20 +106,10 @@ export default function Detail() {
               </ErrorCallout>
             )}
           </Box>
-          <div>
-            {map(messages, (message) => (
-              <Card className="mt-2" key={message.id}>
-                <Flex justify="between">
-                  <Text weight="bold" size="2">{message.author_name}</Text>
-                  <Text weight="bold" size="2">{message.created_at.toLocaleString()}</Text>
-                </Flex>
-                <Separator size="4" className="mb-1" />
-                <Text as="p">
-                  {message.text}
-                </Text>
-              </Card>
-            ))}
-          </div>
+          <TicketMessagesCard
+            messages={messages}
+            currentUserId={currentUser?.id}
+          />
           <Flex gap="2" direction="column">
             <RichTextEditor
               initialValue={newText}
