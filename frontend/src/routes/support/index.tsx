@@ -24,8 +24,8 @@ export default function Support() {
     { field : 'subject', headerName : 'Subject' },
     { field : 'event_name', headerName : 'Event Name' },
     { field : 'status', headerName : 'Status', cellRenderer : StatusBadgeCell },
-    { field : 'opened_timestamp', headerName : 'Created Date', valueFormatter : (params) => new Date(params.value).toString() },
-    { field : 'last_updated', headerName : 'Last Updated Date', valueFormatter : (params) => new Date(params.value).toString() },
+    { field : 'opened_timestamp', headerName : 'Created Date', valueFormatter : (params) => params.value.toLocaleString() },
+    { field : 'last_updated', headerName : 'Last Updated Date', valueFormatter : (params) => params.value.toLocaleString() },
   ];
 
   return (

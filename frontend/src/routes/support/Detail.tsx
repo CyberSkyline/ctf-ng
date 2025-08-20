@@ -108,7 +108,7 @@ export default function Detail() {
               <Card className="mt-2" key={message.id}>
                 <Flex justify="between">
                   <Text weight="bold" size="2">{message.author_name}</Text>
-                  <Text weight="bold" size="2">{new Date(message.created_at).toString()}</Text>
+                  <Text weight="bold" size="2">{message.created_at.toLocaleString()}</Text>
                 </Flex>
                 <Separator size="4" className="mb-1" />
                 <Text as="p">
