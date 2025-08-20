@@ -81,6 +81,16 @@ class AdminTickets(Resource):
         enriched_tickets = []
         for ticket in tickets:
             ticket_data = ticket.serialize(include_admin_fields=True)
+
+            # Add author name
+            if ticket.author:
+                ticket_data["author_name"] = ticket.author.name
+
+            # Add assigned user name
+            if ticket.assigned_to and ticket.assigned_user:
+                ticket_data["assigned_to_name"] = ticket.assigned_user.name
+
+            # Add existing name enrichments
             if ticket.event_id:
                 ticket_data["event_name"] = ticket.event.name
             if ticket.team_id:
