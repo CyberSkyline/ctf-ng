@@ -155,12 +155,12 @@ class Challenge(db.Model):
         from .Question import Question
         from ...scoring.models import Attempt
 
+        hints = Hint.query.filter_by(challenge_id=self.id).all()
+
         data = {
             "challenge": self.serialize(),
             "questions": Question.query.filter_by(challenge_id=self.id).all(),
-            "hints": Hint.query.filter_by(
-                challenge_id=self.id
-            ).all(),  # TODO - Selectivly hide/reveal hints based on if they were redeemed
+            "hints": [hint.serialize(team=team) for hint in hints],
             "attempts": Attempt.query.filter_by(
                 team_id=team.id,
                 challenge_id=self.id

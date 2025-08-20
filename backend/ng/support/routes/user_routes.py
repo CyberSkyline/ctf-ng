@@ -45,7 +45,16 @@ class Tickets(Resource):
             team_id=json_data.get("team_id"),
             challenge_id=json_data.get("challenge_id"),
         )
-        return success_response(ticket, status_code=201)
+
+        ticket_data = ticket.serialize()
+        if ticket.event_id:
+            ticket_data["event_name"] = ticket.event.name
+        if ticket.team_id:
+            ticket_data["team_name"] = ticket.team.name
+        if ticket.challenge_id:
+            ticket_data["challenge_name"] = ticket.challenge.name
+
+        return success_response(ticket_data, status_code=201)
 
 
 @support_user_namespace.route("/me/tickets")
@@ -63,7 +72,19 @@ class MyTickets(Resource):
             status=status,
             is_admin=False,
         )
-        return success_response(tickets)
+
+        enriched_tickets = []
+        for ticket in tickets:
+            ticket_data = ticket.serialize()
+            if ticket.event_id:
+                ticket_data["event_name"] = ticket.event.name
+            if ticket.team_id:
+                ticket_data["team_name"] = ticket.team.name
+            if ticket.challenge_id:
+                ticket_data["challenge_name"] = ticket.challenge.name
+            enriched_tickets.append(ticket_data)
+
+        return success_response(enriched_tickets)
 
 
 @support_user_namespace.route("/me/tickets/<int:ticket_id>")
@@ -76,8 +97,20 @@ class MyTicket(Resource):
         Get ticket details with all messages
         """
         result = get_ticket(ticket=ticket)
-        return success_response(result)
 
+        ticket_data = result["ticket"].serialize()
+        if result["ticket"].event_id:
+            ticket_data["event_name"] = result["ticket"].event.name
+        if result["ticket"].team_id:
+            ticket_data["team_name"] = result["ticket"].team.name
+        if result["ticket"].challenge_id:
+            ticket_data["challenge_name"] = result["ticket"].challenge.name
+
+        enriched_result = {"ticket": ticket_data, "messages": result["messages"]}
+        return success_response(enriched_result)
+
+@support_user_namespace.route("/me/tickets/<int:ticket_id>/add_message")
+class TicketMessage(Resource):
     @support_user_namespace.doc(**ADD_MESSAGE_DOC)
     @user_endpoint(json_required=True)
     @load_ticket_with_user()

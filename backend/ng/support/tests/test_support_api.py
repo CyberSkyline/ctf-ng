@@ -10,8 +10,11 @@ from datetime import datetime
 class TestUserSupportEndpoints:
     """Tests for user support API endpoints"""
 
-    def test_create_ticket_basic(self, logged_in_client, user, event):
-        """Test creating a basic support ticket"""
+    def test_create_ticket_with_event_id(self, logged_in_client, user, event, team_factory):
+        """Test creating a support ticket with optional event id association"""
+        # Create a team for the user in this event
+        team_factory(event=event, members=[user])
+
         response = logged_in_client.post(
             "/ng/support/tickets/create",
             json={
@@ -30,7 +33,7 @@ class TestUserSupportEndpoints:
         assert data["data"]["status"] == "open"
 
     def test_create_ticket_minimal(self, logged_in_client):
-        """Test creating ticket with minimal data"""
+        """Test creating ticket with minimal data - no event/team/challenge"""
         response = logged_in_client.post(
             "/ng/support/tickets/create",
             json={
@@ -42,7 +45,15 @@ class TestUserSupportEndpoints:
         assert response.status_code == 201
         data = response.get_json()
         assert data["success"] is True
-        assert data["data"]["subject"] == "Simple question"
+        ticket = data["data"]
+        assert ticket["subject"] == "Simple question"
+        assert ticket["event_id"] is None
+        assert ticket["team_id"] is None
+        assert ticket["challenge_id"] is None
+        # Should not have any name fields since no IDs provided
+        assert "event_name" not in ticket
+        assert "team_name" not in ticket
+        assert "challenge_name" not in ticket
 
     def test_create_ticket_missing_fields(self, logged_in_client):
         """Test creating ticket without required fields"""
@@ -101,6 +112,40 @@ class TestUserSupportEndpoints:
         assert "messages" in data["data"]
         assert len(data["data"]["messages"]) == 2
 
+        # Verify ticket data is serialized properly
+        ticket_data = data["data"]["ticket"]
+        assert isinstance(ticket_data, dict)
+        assert ticket_data["id"] == ticket_with_messages.id
+
+    def test_get_ticket_details_includes_names(self, logged_in_client, user, event, challenge, team_factory):
+        """Test getting ticket details includes event_name and challenge_name"""
+        team = team_factory(event=event, members=[user])
+
+        # Create ticket with event and challenge
+        response = logged_in_client.post(
+            "/ng/support/tickets/create",
+            json={
+                "subject": "Challenge question",
+                "text": "Need help with this challenge",
+                "event_id": event.id,
+                "challenge_id": challenge.id,
+            },
+        )
+        assert response.status_code == 201
+        ticket_id = response.get_json()["data"]["id"]
+
+        # Get ticket details
+        response = logged_in_client.get(f"/ng/support/me/tickets/{ticket_id}")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        ticket_data = data["data"]["ticket"]
+
+        # Verify names are included
+        assert ticket_data["event_name"] == event.name
+        assert ticket_data["team_name"] == team.name
+        assert ticket_data["challenge_name"] == challenge.name
+
     def test_get_my_ticket_not_found(self, logged_in_client):
         """Test getting non-existent ticket"""
         response = logged_in_client.get("/ng/support/me/tickets/999999")
@@ -112,7 +157,7 @@ class TestUserSupportEndpoints:
     def test_add_message_to_ticket(self, logged_in_client, ticket):
         """Test adding message to ticket"""
         response = logged_in_client.post(
-            f"/ng/support/me/tickets/{ticket.id}",
+            f"/ng/support/me/tickets/{ticket.id}/add_message",
             json={"text": "Here's additional information"},
         )
 
@@ -124,7 +169,7 @@ class TestUserSupportEndpoints:
     def test_add_message_empty_text(self, logged_in_client, ticket):
         """Test adding message with empty text"""
         response = logged_in_client.post(
-            f"/ng/support/me/tickets/{ticket.id}",
+            f"/ng/support/me/tickets/{ticket.id}/add_message",
             json={"text": "   "},
         )
 
@@ -166,7 +211,7 @@ class TestUserSupportEndpoints:
             ("/ng/support/tickets/create", "POST", {"subject": "test", "text": "test"}),
             ("/ng/support/me/tickets", "GET", None),
             (f"/ng/support/me/tickets/{ticket.id}", "GET", None),
-            (f"/ng/support/me/tickets/{ticket.id}", "POST", {"text": "test"}),
+            (f"/ng/support/me/tickets/{ticket.id}/add_message", "POST", {"text": "test"}),
             (f"/ng/support/me/tickets/{ticket.id}/close", "POST", {}),
         ]
 
@@ -203,6 +248,44 @@ class TestAdminSupportEndpoints:
         data = response.get_json()
         assert all(t["assigned_to"] == admin.id for t in data["data"])
 
+    def test_admin_tickets_include_author_and_assigned_names(self, admin_client, user, admin, event, challenge, team_factory, ticket_factory):
+        """Test that admin ticket list includes author_name and assigned_to_name"""
+        team = team_factory(event=event, members=[user])
+
+        # Create a ticket with assignment
+        ticket = ticket_factory(
+            subject="Test ticket with assignment",
+            author_id=user.id,
+            event_id=event.id,
+            team_id=team.id,
+            challenge_id=challenge.id
+        )
+        # Assign the ticket
+        ticket.assign_to_user(admin.id)
+
+        # Get all tickets via admin endpoint
+        response = admin_client.get("/ng/admin/support/tickets")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+
+        # Find our test ticket
+        test_ticket = next(t for t in data["data"] if t["subject"] == "Test ticket with assignment")
+
+        # Verify all name enrichments are present
+        assert test_ticket["author_name"] == user.name
+        assert test_ticket["assigned_to_name"] == admin.name
+        assert test_ticket["event_name"] == event.name
+        assert test_ticket["team_name"] == team.name
+        assert test_ticket["challenge_name"] == challenge.name
+
+        # Verify IDs are also present
+        assert test_ticket["author_id"] == user.id
+        assert test_ticket["assigned_to"] == admin.id
+        assert test_ticket["event_id"] == event.id
+        assert test_ticket["team_id"] == team.id
+        assert test_ticket["challenge_id"] == challenge.id
+
     def test_get_any_ticket_details(self, admin_client, ticket_with_messages):
         """Test admin can get any ticket details"""
         response = admin_client.get(f"/ng/admin/support/tickets/{ticket_with_messages.id}")
@@ -216,7 +299,7 @@ class TestAdminSupportEndpoints:
     def test_admin_add_message_reopens_ticket(self, admin_client, closed_ticket, admin):
         """Test admin message reopens closed ticket"""
         response = admin_client.post(
-            f"/ng/admin/support/tickets/{closed_ticket.id}",
+            f"/ng/admin/support/tickets/{closed_ticket.id}/add_message",
             json={"text": "I'm reopening this to help"},
         )
 
@@ -427,5 +510,115 @@ class TestAdminSupportEndpoints:
                 response = logged_in_client.post(endpoint, json={})
 
             assert response.status_code in [302, 403]
+
+    def test_create_ticket_without_team_id(self, logged_in_client, user, event_factory, team_factory):
+        """
+        Test creating ticket without team_id - it should be auto-derived
+        """
+        event = event_factory(name="Test Event for Auto Team", public=True)
+        team_factory(event=event, members=[user])
+
+        response = logged_in_client.post(
+            "/ng/support/tickets/create",
+            json={
+                "subject": "Auto-derived team ticket",
+                "text": "This should work without team_id",
+                "event_id": event.id,
+            },
+        )
+
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["subject"] == "Auto-derived team ticket"
+        assert data["data"]["author_id"] == user.id
+        assert data["data"]["event_id"] == event.id
+        # Team ID should be automatically set
+        assert data["data"]["team_id"] is not None
+
+    def test_create_ticket_without_team_membership_fails(self, logged_in_client, user, event_factory):
+        """
+        Test creating ticket fails when user is not in event team
+        """
+        event = event_factory(name="Test Event No Team", public=True)
+        # User is not in any team for this event
+
+        response = logged_in_client.post(
+            "/ng/support/tickets/create",
+            json={
+                "subject": "Should fail",
+                "text": "User not in team",
+                "event_id": event.id,
+            },
+        )
+
+        assert response.status_code == 404  # Team not found for user+event
+
+    def test_ticket_list_includes_names(self, logged_in_client, user, event, challenge, team_factory):
+        """
+        Test that ticket list includes event_name, team_name, and challenge_name
+        """
+        team = team_factory(event=event, members=[user])
+
+        # Create ticket with challenge
+        response = logged_in_client.post(
+            "/ng/support/tickets/create",
+            json={
+                "subject": "Challenge question",
+                "text": "Need help with this challenge",
+                "event_id": event.id,
+                "challenge_id": challenge.id,
+            },
+        )
+        assert response.status_code == 201
+
+        # Get ticket list
+        response = logged_in_client.get("/ng/support/me/tickets")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+
+        # Find our ticket
+        ticket = next(t for t in data["data"] if t["subject"] == "Challenge question")
+        assert ticket["challenge_id"] == challenge.id
+        assert ticket["challenge_name"] == challenge.name
+        assert ticket["event_id"] == event.id
+        assert ticket["event_name"] == event.name
+        assert ticket["team_id"] == team.id
+        assert ticket["team_name"] == team.name
+
+    def test_ticket_list_without_challenge(self, logged_in_client, user, event, team_factory):
+        """
+        Test that ticket list includes event_name and team_name but not challenge_name when no challenge_id
+        """
+        team = team_factory(event=event, members=[user])
+
+        # Create ticket without challenge
+        response = logged_in_client.post(
+            "/ng/support/tickets/create",
+            json={
+                "subject": "General question",
+                "text": "Not related to any challenge",
+                "event_id": event.id,
+            },
+        )
+        assert response.status_code == 201
+
+        # Get ticket list
+        response = logged_in_client.get("/ng/support/me/tickets")
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+
+        # Find our ticket
+        ticket = next(t for t in data["data"] if t["subject"] == "General question")
+        assert ticket["challenge_id"] is None
+        assert ticket["event_id"] == event.id
+        assert ticket["event_name"] == event.name
+        assert ticket["team_id"] == team.id
+        assert ticket["team_name"] == team.name
+        # Should not have challenge_name since no challenge_id
+        assert "challenge_name" not in ticket
 
 

@@ -4,7 +4,7 @@ from sqlalchemy import func, select
 from typing import TypedDict
 from ..utils.get_client import get_client
 from ... import config
-from .. constants import DOCKER_RUNNING
+from .. constants import DOCKER_RUNNING, DOCKER_BRIDGE
 from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 
 class SerializedInstanceStats(TypedDict):
@@ -101,13 +101,19 @@ class ContainerInstance(db.Model):
 
     @staticmethod
     def run_container(client, team, blueprint_obj):
-        return client.containers.run(
+        ctr = client.containers.run(
             blueprint_obj.image,
             environment=blueprint_obj.environment,
             name=ContainerInstance.render_container_name(team, blueprint_obj.hostname, blueprint_obj.challenge_id),
-            detach=True
+            detach=True,
         )
 
+        # Get bridge network and remove to isolate challenge containres
+        # From reaching out
+        net = client.networks.list(names=[DOCKER_BRIDGE])
+        net[0].disconnect(ctr)
+
+        return ctr
 
     @staticmethod
     def connect_networks(client, team, blueprint_obj, ctr):

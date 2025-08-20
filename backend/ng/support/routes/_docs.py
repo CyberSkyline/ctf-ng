@@ -26,7 +26,7 @@ ADMIN_REQUIRED_RESPONSES = {
 
 # ============ USER SUPPORT ENDPOINTS ============
 CREATE_TICKET_DOC = {
-    "description": "Create a new support ticket with initial message",
+    "description": "Create a new support ticket with initial message. Team ID is automatically derived from the user and event.",
     "params": {
         "subject": {
             "description": "Ticket subject line (128 character max length)",
@@ -47,12 +47,6 @@ CREATE_TICKET_DOC = {
             "type": "integer",
             "example": 1
         },
-        "team_id": {
-            "description": "Team ID to associate ticket with",
-            "required": False,
-            "type": "integer",
-            "example": 42
-        },
         "challenge_id": {
             "description": "Challenge ID to associate ticket with",
             "required": False,
@@ -63,7 +57,7 @@ CREATE_TICKET_DOC = {
     "responses": {
         201: "Success - Ticket created with initial message",
         400:
-        "Bad request - Missing required fields (subject, text) or invalid associations",
+        "Bad request - Missing required fields (subject, text) or invalid associations, or user not in team for event",
         **AUTH_REQUIRED_RESPONSES,
         404:
         "Not found - Event, team, or challenge association not found",
@@ -153,7 +147,7 @@ CLOSE_MY_TICKET_DOC = {
 
 # ============ ADMIN SUPPORT ENDPOINTS ============
 LIST_TICKETS_DOC = {
-    "description": "Get all support tickets with optional filters (Admin only).",
+    "description": "Get all support tickets with optional filters and enriched names (Admin only). Returns tickets with author_name, assigned_to_name, event_name, team_name, and challenge_name.",
     "params": {
         "user_id": {
             "description": "Filter by ticket author ID",

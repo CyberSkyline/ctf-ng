@@ -151,12 +151,18 @@ class TestRedeemHint:
             current_user=user,
         )
 
-        # Result is now a HintRedemption object
-        assert isinstance(result, HintRedemption)
-        assert result.hint_id == hint.id
-        assert result.user_id == user.id
-        assert result.team_id == team_with_member.id
-        assert result.points == -hint.deduction
+        # Result is now a serialized hint with body revealed
+        assert isinstance(result, dict)
+        assert result["id"] == hint.id
+        assert result["body"] == hint.body  # Body should be revealed
+        assert result["preview"] == hint.preview
+        assert result["is_redeemed"] is True
+        assert result["deduction"] == hint.deduction
+
+        # Verify redemption was created in database
+        redemption = HintRedemption.find_by_team_and_hint(team_with_member.id, hint.id)
+        assert redemption is not None
+        assert redemption.points == -hint.deduction
 
     def test_redeem_hint_already_redeemed(self, db_session, user, team_with_member, event, challenge, hint):
         """Test redeeming hint that was already redeemed"""
@@ -194,9 +200,16 @@ class TestRedeemHint:
             current_user=user,
         )
 
-        # Result is a HintRedemption object
-        assert isinstance(result, HintRedemption)
-        assert result.points == 0  # No deduction for free hint
+        # Result is a serialized hint
+        assert isinstance(result, dict)
+        assert result["body"] == "This is a free hint"  # Body revealed
+        assert result["is_redeemed"] is True
+        assert result["deduction"] == 0
+
+        # Verify redemption was created with zero points
+        redemption = HintRedemption.find_by_team_and_hint(team_with_member.id, free_hint.id)
+        assert redemption is not None
+        assert redemption.points == 0  # No deduction for free hint
 
 
 class TestGetLeaderboard:
@@ -459,7 +472,13 @@ class TestControllerIntegration:
             team=team_with_member,
             current_user=user,
         )
-        assert hint_result.points == -hint.deduction
+        # Hint result is now a serialized hint
+        assert hint_result["is_redeemed"] is True
+        assert hint_result["body"] == hint.body
+
+        # Verify the hint redemption created the deduction
+        redemption = HintRedemption.find_by_team_and_hint(team_with_member.id, hint.id)
+        assert redemption.points == -hint.deduction
 
         # 3. Award manual points
         award_result = award_manual_points(

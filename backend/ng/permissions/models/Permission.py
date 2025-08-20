@@ -23,6 +23,9 @@ class Permission(db.Model):
         Returns:
             Permission: The created permission instance
         """
+        existing_permission = cls.query.filter_by(name=name.value).first()
+        if existing_permission:
+            return existing_permission
         permission = cls(name=name.value, description=description)
         db.session.add(permission)
         db.session.commit()
