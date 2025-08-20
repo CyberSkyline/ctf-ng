@@ -9,6 +9,7 @@ from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 
 class SerializedInstanceStats(TypedDict):
     id: int
+    name: str
     image: str
     docker_id: str
     status: str
@@ -94,8 +95,8 @@ class ContainerInstance(db.Model):
         parts = network.split('-')
         return {
             "network_name": parts[0],
-            "team_id": parts[1],
-            "challenge_id": parts[2],
+            "team_id": int(parts[1]),
+            "challenge_id": int(parts[2]),
         }
 
     @staticmethod
@@ -174,6 +175,14 @@ class ContainerInstance(db.Model):
     def get_instance_by_id(cls, instance_id: int):
         return cls.query.filter_by(id=instance_id).first()
 
+    def logs(self, tail: int = 200) -> str:
+        client = get_client(config.DOCKER_HOST)
+        try:
+            ctr = client.containers.get(self.dockerid)
+            return ctr.logs(tail=tail).decode('utf-8')
+        except docker.errors.NotFound as exc:
+            raise ValueError("Container not found, please recycle") from exc
+
     def status(self) -> SerializedInstanceStats:
         client = get_client(config.DOCKER_HOST)
         ctr = client.containers.get(self.dockerid)
@@ -181,6 +190,7 @@ class ContainerInstance(db.Model):
         data = {
             "id": self.id,
             "name": ctr.name,
+            "image": ctr.image.tags[0] if ctr.image.tags else "unknown",
             "docker_id": self.dockerid,
             "status": ctr.status,
         }

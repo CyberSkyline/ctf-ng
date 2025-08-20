@@ -61,9 +61,9 @@ export default function AdminLayout() {
               <NavItem to="/admin" label="Dashboard" icon={TbLayoutDashboard} />
               <NavItem to="/admin/reports" label="Reports" icon={TbChartPie} />
               <NavItem to="/admin/events" label="Events" icon={EventIcon} />
-              <NavItem to="/admin/containers" label="Containers" icon={TbPackages} />
               <NavItem to="/admin/users" label="Users" icon={UserIcon} />
               <NavItem to="/admin/teams" label="Teams" icon={TeamIcon} />
+              <NavItem to="/admin/deployments" label="Deployments" icon={TbPackages} />
               <NavItem to="/admin/notifications" label="Notifications" icon={TbBell} />
               <NavItem to="/admin/tickets" label="Tickets" icon={TbMessage} />
               <NavItem to="/admin/settings" label="Settings" icon={TbSettings} />

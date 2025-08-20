@@ -13,13 +13,14 @@ import TicketDetail from 'routes/support/Detail';
 
 // events
 import AvailableEvents from 'routes/events/AvailableEvents';
-import Challenge from 'routes/events/challenge';
+
 import Overview from 'routes/events/Overview';
+import Challenge from 'routes/events/challenge';
 
 // Admin Section
 import AdminApiTest from 'routes/admin/api-test';
-import AdminContainers from 'routes/admin/containers';
 import AdminDashboard from 'routes/admin/dashboard';
+import AdminDeployments from 'routes/admin/deployments';
 import AdminEvents from 'routes/admin/events';
 import AdminLayout from 'routes/admin/layout';
 import AdminNotifications from 'routes/admin/notifications';
@@ -66,9 +67,9 @@ function Routes() {
         { index : true, element : <AdminDashboard /> },
         { path : 'reports', element : <AdminReports /> },
         { path : 'events', element : <AdminEvents /> },
-        { path : 'containers', element : <AdminContainers /> },
         { path : 'users', element : <AdminUsers /> },
         { path : 'teams', element : <AdminTeams /> },
+        { path : 'deployments', element : <AdminDeployments /> },
         { path : 'notifications', element : <AdminNotifications /> },
         { path : 'tickets', element : <AdminTickets /> },
         { path : 'settings', element : <AdminSettings /> },

@@ -110,6 +110,33 @@ export interface ScoreEvent {
   timestamp: Date;
 }
 
+export interface Deployment {
+  id: number;
+  blueprint: number;
+  team: number;
+  challenge_name: string;
+  team_name: string;
+  challenge_id: number;
+  containers: number;
+  event_id: number;
+}
+
+export interface ContainerInstance {
+  id: number;
+  blueprint: number;
+  team: number;
+  hostip: string;
+  dockerid: string;
+}
+
+export interface ContainerStatus {
+  id: number;
+  name: string;
+  image: string;
+  docker_id: string;
+  status: 'created' | 'running' | 'paused' | 'restarting' | 'exited' | 'removing' | 'dead';
+}
+
 export interface Ticket {
   id: number;
   subject: string;
