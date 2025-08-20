@@ -1,6 +1,9 @@
 import { useAdminAllTickets } from '@/hooks/support';
 import type { Ticket } from '@/types';
-import type { CellClickedEvent, ColDef, TData, TValue } from 'ag-grid-community';
+import type {
+  CellClickedEvent,
+  ColDef,
+} from 'ag-grid-community';
 import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
@@ -13,7 +16,7 @@ import {
   TeamIcon,
   UserIcon,
 } from '@/constants';
-import MessagesSidebar from './MessagesSidebar'
+import MessagesSidebar from './MessagesSidebar';
 
 function NameLinkCell(
   {
@@ -41,6 +44,90 @@ function NameLinkCell(
   return null;
 }
 
+const colDefs: ColDef<Ticket>[] = [
+  {
+    field: 'id',
+    hide: true,
+  },
+  {
+    field: 'status',
+    headerName: 'Status',
+    cellRenderer: StatusBadgeCell,
+  },
+  {
+    field: 'subject',
+    headerName: 'Subject',
+    filter: true,
+    floatingFilter: true,
+  },
+  {
+    field: 'author_id',
+    headerName: 'Author',
+    cellRenderer: NameLinkCell,
+    cellRendererParams: (params) => ({
+      id: params.data.author_id,
+      name: params.data.author_name,
+      linkTo: `/admin/users?id=${params.data.author_id}`,
+      icon: UserIcon,
+    }),
+    filter: true,
+    floatingFilter: true,
+  },
+  {
+    field: 'last_updated',
+    headerName: 'Updated Date',
+    valueFormatter: (params) => params.value && params.value.toLocaleString(),
+    filter: true,
+    floatingFilter: true,
+  },
+  {
+    field: 'event_id',
+    headerName: 'Event',
+    cellRenderer: NameLinkCell,
+    cellRendererParams: (params) => ({
+      id: params.data.event_id,
+      name: params.data.event_name,
+      linkTo: `/admin/events?id=${params.data.event_id}`,
+      icon: EventIcon,
+    }),
+    filter: true,
+    floatingFilter: true,
+  },
+  {
+    field: 'team_id',
+    headerName: 'Team',
+    cellRenderer: NameLinkCell,
+    cellRendererParams: (params) => ({
+      id: params.data.team_id,
+      name: params.data.team_name,
+      linkTo: `/admin/teams?id=${params.data.team_id}`,
+      icon: TeamIcon,
+    }),
+    filter: true,
+    floatingFilter: true,
+  },
+  {
+    field: 'challenge_id',
+    headerName: 'Challenge',
+    cellRenderer: NameLinkCell,
+    cellRendererParams: (params) => ({
+      id: params.data.challenge_id,
+      name: params.data.challenge_name,
+      linkTo: `/admin/events?id=${params.data.event_id}`,
+      icon: ChallengeIcon,
+    }),
+    filter: true,
+    floatingFilter: true,
+  },
+  {
+    field: 'opened_timestamp',
+    headerName: 'Created Date',
+    valueFormatter: (params) => params.value && params.value.toLocaleString(),
+    filter: true,
+    floatingFilter: true,
+  },
+];
+
 export default function AdminTickets() {
   const { data, error, isLoading } = useAdminAllTickets();
 
@@ -49,90 +136,6 @@ export default function AdminTickets() {
     'event_id',
     'team_id',
     'challenge_id',
-  ];
-
-  const colDefs: ColDef<Ticket>[] = [
-    {
-      field: 'id',
-      hide: true,
-    },
-    {
-      field: 'status',
-      headerName: 'Status',
-      cellRenderer: StatusBadgeCell,
-    },
-    {
-      field: 'subject',
-      headerName: 'Subject',
-      filter: true,
-      floatingFilter: true,
-    },
-    {
-      field: 'author_id',
-      headerName: 'Author',
-      cellRenderer: NameLinkCell,
-      cellRendererParams: (params) => ({
-        id: params.data.author_id,
-        name: params.data.author_name,
-        linkTo: `/admin/users?id=${params.data.author_id}`,
-        icon: UserIcon,
-      }),
-      filter: true,
-      floatingFilter: true,
-    },
-    {
-      field: 'last_updated',
-      headerName: 'Updated Date',
-      valueFormatter: (params) => params.value && params.value.toLocaleString(),
-      filter: true,
-      floatingFilter: true,
-    },
-    {
-      field: 'event_id',
-      headerName: 'Event',
-      cellRenderer: NameLinkCell,
-      cellRendererParams: (params) => ({
-        id: params.data.event_id,
-        name: params.data.event_name,
-        linkTo: `/admin/events?id=${params.data.event_id}`,
-        icon: EventIcon,
-      }),
-      filter: true,
-      floatingFilter: true,
-    },
-    {
-      field: 'team_id',
-      headerName: 'Team',
-      cellRenderer: NameLinkCell,
-      cellRendererParams: (params) => ({
-        id: params.data.team_id,
-        name: params.data.team_name,
-        linkTo: `/admin/teams?id=${params.data.team_id}`,
-        icon: TeamIcon,
-      }),
-      filter: true,
-      floatingFilter: true,
-    },
-    {
-      field: 'challenge_id',
-      headerName: 'Challenge',
-      cellRenderer: NameLinkCell,
-      cellRendererParams: (params) => ({
-        id: params.data.challenge_id,
-        name: params.data.challenge_name,
-        linkTo: `/admin/events?id=${params.data.event_id}`,
-        icon: ChallengeIcon,
-      }),
-      filter: true,
-      floatingFilter: true,
-    },
-    {
-      field: 'opened_timestamp',
-      headerName: 'Created Date',
-      valueFormatter: (params) => params.value && params.value.toLocaleString(),
-      filter: true,
-      floatingFilter: true,
-    },
   ];
 
   return (
@@ -145,7 +148,7 @@ export default function AdminTickets() {
         getRowId={(params) => params.data.id.toString()}
         sidebarComponent={MessagesSidebar}
         gridOptions={{
-          onCellClicked : (e: CellClickedEvent<TData, TValue>) => {
+          onCellClicked: (e: CellClickedEvent) => {
             if (includes(stopCellSelection, e.column.colId)) {
               e.stopPropagation();
             }

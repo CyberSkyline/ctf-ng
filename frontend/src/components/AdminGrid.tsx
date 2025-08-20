@@ -4,7 +4,6 @@ import type {
   ColDef,
   GridApi,
   GridOptions,
-  TData,
 } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -26,7 +25,7 @@ export default function AdminGrid<T>({
   loading?: boolean;
   sidebarComponent?: React.ComponentType<{entity: T}>;
   getRowId: (params: { data: T }) => string;
-  gridOptions?: GridOptions<TData>
+  gridOptions?: GridOptions
 }) {
   const [ searchParams, setSearchParams ] = useSearchParams();
   const selectedId = searchParams.get('id');
