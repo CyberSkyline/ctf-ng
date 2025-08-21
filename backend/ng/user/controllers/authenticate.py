@@ -91,9 +91,6 @@ def okta_callback():
             )
             db.session.add(user)
             db.session.flush()
-        # else:
-        #     if user.name != name:
-        #         user.name = name
 
         ng_user_obj = ng_user.find_or_create_by_ctfd_id(user.id)
         user_data = okta.get(USER_API_URL).json()
