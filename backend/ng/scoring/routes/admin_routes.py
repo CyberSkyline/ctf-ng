@@ -20,13 +20,13 @@ from ..controllers import (
     award_manual_points,
     recalculate_score,
     get_score_history,
-    get_submission_history,
+    get_team_score_events,
 )
 from ._docs import (
     AWARD_MANUAL_POINTS_DOC,
     RECALCULATE_SCORE_DOC,
     GET_SCORE_HISTORY_DOC,
-    GET_SUBMISSION_HISTORY_DOC,
+    GET_TEAM_SCORE_EVENTS_DOC,
 )
 
 
@@ -114,90 +114,20 @@ class ScoreHistory(Resource):
 
 
 @scoring_admin_namespace.route(
-    "/events/<int:event_id>/teams/<int:team_id>/submission_history"
+    "/events/<int:event_id>/teams/<int:team_id>/score_events"
 )
-class SubmissionHistory(Resource):
-    @scoring_admin_namespace.doc(**GET_SUBMISSION_HISTORY_DOC)
+class TeamScoreEvents(Resource):
+    @scoring_admin_namespace.doc(**GET_TEAM_SCORE_EVENTS_DOC)
     @admin_endpoint()
     @load_event(LoaderType.PARAM)
     @load_team(LoaderType.PARAM)
     def get(self, event_id: int, team_id: int, event, team, **kwargs):
         """
-        Get submission history including all scoring events
+        Get timeline of score events for a team with embedded source data
         """
-        limit = request.args.get(
-            "limit",
-            config.DEFAULT_SUBMISSION_HISTORY_LIMIT,
-            type = int
+        score_events = get_team_score_events(
+            team_id=team_id,
+            event_id=event_id
         )
 
-        if limit < 1 or limit > config.MAX_SUBMISSION_HISTORY_LIMIT:
-            raise ValidationError(f"Limit must be between 1 and {config.MAX_SUBMISSION_HISTORY_LIMIT}")
-
-        result = get_submission_history(
-            team_id = team_id,
-            event_id = event_id,
-            limit = limit
-        )
-
-        enriched_score_events = []
-        for score_event in result["score_events"]:
-            event_data = score_event.serialize(include_admin_fields = True)
-            event_data["team_name"] = team.name
-
-            if score_event.attempts:
-                event_data["source_type"] = "attempt"
-                event_data["source_id"] = score_event.attempts[0].id
-            elif score_event.hint_redemptions:
-                event_data["source_type"] = "hint_redemption"
-                event_data["source_id"] = score_event.hint_redemptions[0].id
-            elif score_event.manual_awards:
-                event_data["source_type"] = "manual_award"
-                event_data["source_id"] = score_event.manual_awards[0].id
-            enriched_score_events.append(event_data)
-
-        enriched_attempts = []
-        for attempt in result["attempts"]:
-            attempt_data = attempt.serialize(include_admin_fields = True)
-            attempt_data["team_name"] = team.name
-
-            if attempt.user:
-                user_data = attempt.user.serialize()
-                attempt_data["user_name"] = user_data["name"]
-
-            if attempt.challenge:
-                attempt_data["challenge_name"] = attempt.challenge.name
-            if attempt.question:
-                attempt_data["question_name"] = attempt.question.name
-            enriched_attempts.append(attempt_data)
-
-        enriched_hints = []
-        for redemption in result["hint_redemptions"]:
-            hint_data = redemption.serialize(include_admin_fields = True)
-            hint_data["team_name"] = team.name
-
-            if redemption.user:
-                user_data = redemption.user.serialize()
-                hint_data["user_name"] = user_data["name"]
-
-            if redemption.hint:
-                hint_data["hint_preview"] = redemption.hint.preview
-            enriched_hints.append(hint_data)
-
-        enriched_awards = []
-        for award in result["manual_awards"]:
-            award_data = award.serialize(include_admin_fields = True)
-            award_data["team_name"] = team.name
-
-            if award.admin:
-                award_data["admin_name"] = award.admin.name
-            enriched_awards.append(award_data)
-
-        return success_response(
-            {
-                "score_events": enriched_score_events,
-                "attempts": enriched_attempts,
-                "hint_redemptions": enriched_hints,
-                "manual_awards": enriched_awards
-            }
-        )
+        return success_response({"score_events": score_events})

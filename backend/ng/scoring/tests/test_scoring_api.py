@@ -953,7 +953,7 @@ class TestAdminScoringEndpoints:
         # Controller returns empty list when no events
         assert data["data"] == []
 
-    def test_get_submission_history_basic(
+    def test_get_team_score_events_basic(
         self,
         admin_client,
         admin,
@@ -961,25 +961,19 @@ class TestAdminScoringEndpoints:
         team_with_member
     ):
         """
-        Test getting basic submission history
+        Test getting basic team score events timeline
         """
         response = admin_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/submission_history"
+            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/score_events"
         )
 
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
         assert "score_events" in data["data"]
-        assert "attempts" in data["data"]
-        assert "hint_redemptions" in data["data"]
-        assert "manual_awards" in data["data"]
         assert isinstance(data["data"]["score_events"], list)
-        assert isinstance(data["data"]["attempts"], list)
-        assert isinstance(data["data"]["hint_redemptions"], list)
-        assert isinstance(data["data"]["manual_awards"], list)
 
-    def test_get_submission_history_with_data(
+    def test_get_team_score_events_with_data(
         self,
         admin_client,
         admin,
@@ -989,100 +983,98 @@ class TestAdminScoringEndpoints:
         challenge,
         question,
         hint,
-        attempt_factory,
-        hint_redemption_factory,
-        manual_award_factory,
-        score_event_factory,
-        score
+        db_session
     ):
         """
-        Test getting submission history with actual data
+        Test getting team score events timeline with embedded source data
         """
-        attempt = attempt_factory(
-            user_id = user.id,
-            team_id = team_with_member.id,
-            event_id = event.id,
-            challenge_id = challenge.id,
-            question_id = question.id,
-            submission = "test answer",
-            is_correct = True,
-            points = 100
+        from ..models import Attempt, HintRedemption, ManualPointAward, ScoreEvent, Score
+
+        # Create a correct attempt that generates a score event
+        attempt = Attempt.create_attempt(
+            user_id=user.id,
+            team_id=team_with_member.id,
+            challenge_id=challenge.id,
+            question_id=question.id,
+            submission=question.answer,  # Correct answer
         )
 
-        hint_redemption = hint_redemption_factory(
-            hint_id = hint.id,
-            user_id = user.id,
-            team_id = team_with_member.id,
-            points = -20
+        # Create a hint redemption that generates a score event
+        hint_redemption = HintRedemption.create_redemption(
+            hint_id=hint.id,
+            user_id=user.id,
+            team_id=team_with_member.id,
+            challenge_id=challenge.id,
         )
 
-        score_event = score_event_factory(
-            score_id = score.id,
-            team_id = team_with_member.id,
-            points = 50
-        )
-
-        manual_award = manual_award_factory(
-            admin_id = admin.id,
-            team_id = team_with_member.id,
-            score_event_id = score_event.id,
-            points = 50,
-            reason = "Test bonus"
+        # Create a manual award that generates a score event
+        manual_award = ManualPointAward.create_award(
+            admin_id=admin.id,
+            team_id=team_with_member.id,
+            points=50,
+            reason="Test bonus"
         )
 
         response = admin_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/submission_history"
+            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/score_events"
         )
 
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
 
-        # Check that data contains enriched information
-        attempts = data["data"]["attempts"]
-        hints = data["data"]["hint_redemptions"]
-        awards = data["data"]["manual_awards"]
+        score_events = data["data"]["score_events"]
+        assert len(score_events) >= 3  # At least our 3 events
 
-        test_attempt = next(
-            (a for a in attempts if a["id"] == attempt.id),
-            None
-        )
-        test_hint = next(
-            (h for h in hints if h["id"] == hint_redemption.id),
-            None
-        )
-        test_award = next(
-            (a for a in awards if a["id"] == manual_award.id),
-            None
-        )
+        # Find our specific score events by checking embedded source data
+        attempt_event = None
+        hint_event = None
+        award_event = None
 
-        assert test_attempt is not None
-        assert test_hint is not None
-        assert test_award is not None
+        for event_data in score_events:
+            if "source_type" in event_data:
+                if event_data["source_type"] == "attempt" and event_data["source"]["id"] == attempt.id:
+                    attempt_event = event_data
+                elif event_data["source_type"] == "hint_redemption" and event_data["source"]["id"] == hint_redemption.id:
+                    hint_event = event_data
+                elif event_data["source_type"] == "manual_award" and event_data["source"]["id"] == manual_award.id:
+                    award_event = event_data
 
-        # Team Names
-        assert "team_name" in test_attempt
-        assert "team_name" in test_hint
-        assert "team_name" in test_award
-        assert test_attempt["team_name"] == team_with_member.name
-        assert test_hint["team_name"] == team_with_member.name
-        assert test_award["team_name"] == team_with_member.name
+        # Verify we found all our events
+        assert attempt_event is not None, "Should find attempt score event"
+        assert hint_event is not None, "Should find hint redemption score event"
+        assert award_event is not None, "Should find manual award score event"
 
-        # Challenge and question names
-        assert "challenge_name" in test_attempt
-        assert "question_name" in test_attempt
-        assert test_attempt["challenge_name"] == challenge.name
-        assert test_attempt["question_name"] == question.name
+        # Check score event structure
+        assert "team_name" in attempt_event
+        assert attempt_event["team_name"] == team_with_member.name
+        assert "source" in attempt_event
 
-        # Check that hints include hint preview
-        assert "hint_preview" in test_hint
-        assert test_hint["hint_preview"] == hint.preview
+        # Check embedded attempt data includes names
+        attempt_source = attempt_event["source"]
+        assert "team_name" in attempt_source
+        assert "challenge_name" in attempt_source
+        assert "question_name" in attempt_source
+        assert attempt_source["team_name"] == team_with_member.name
+        assert attempt_source["challenge_name"] == challenge.name
+        assert attempt_source["question_name"] == question.name
 
-        # Check that awards include admin name
-        assert "admin_name" in test_award
-        assert test_award["admin_name"] == admin.name
+        # Check embedded hint redemption includes names
+        hint_source = hint_event["source"]
+        assert "team_name" in hint_source
+        assert "hint_preview" in hint_source
+        assert hint_source["team_name"] == team_with_member.name
+        assert hint_source["hint_preview"] == hint.preview
 
-    def test_get_submission_history_with_limit(
+        # Check embedded manual award includes names
+        award_source = award_event["source"]
+        assert "team_name" in award_source
+        assert "admin_name" in award_source
+        assert award_source["team_name"] == team_with_member.name
+        assert award_source["admin_name"] == admin.name
+        assert award_source["reason"] == "Test bonus"
+
+    def test_get_team_score_events_no_limit(
         self,
         admin_client,
         admin,
@@ -1091,7 +1083,7 @@ class TestAdminScoringEndpoints:
         score,
         score_event_factory
     ):
-        """Test getting submission history with limit"""
+        """Test getting team score events returns all events (no limit)"""
         # Create multiple score events
         for i in range(10):
             score_event_factory(
@@ -1101,54 +1093,55 @@ class TestAdminScoringEndpoints:
             )
 
         response = admin_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/submission_history?limit=5"
+            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/score_events"
         )
 
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
-        assert len(data["data"]["score_events"]) == 5
+        # Should return all events (no limit applied)
+        assert len(data["data"]["score_events"]) >= 10
 
-    def test_get_submission_history_nonexistent_team(
+    def test_get_team_score_events_nonexistent_team(
         self,
         admin_client,
         admin,
         event
     ):
-        """Test getting submission history for nonexistent team"""
+        """Test getting team score events for nonexistent team"""
         response = admin_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/999999/submission_history"
+            f"/ng/admin/scoring/events/{event.id}/teams/999999/score_events"
         )
 
         assert response.status_code == 404
         data = response.get_json()
         assert data["success"] is False
 
-    def test_get_submission_history_nonexistent_event(
+    def test_get_team_score_events_nonexistent_event(
         self,
         admin_client,
         admin,
         team_with_member
     ):
-        """Test getting submission history for nonexistent event"""
+        """Test getting team score events for nonexistent event"""
         response = admin_client.get(
-            f"/ng/admin/scoring/events/999999/teams/{team_with_member.id}/submission_history"
+            f"/ng/admin/scoring/events/999999/teams/{team_with_member.id}/score_events"
         )
 
         assert response.status_code == 404
         data = response.get_json()
         assert data["success"] is False
 
-    def test_get_submission_history_non_admin_fails(
+    def test_get_team_score_events_non_admin_fails(
         self,
         logged_in_client,
         user,
         event,
         team_with_member
     ):
-        """Test that non-admin cannot get submission history"""
+        """Test that non-admin cannot get team score events"""
         response = logged_in_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/submission_history"
+            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/score_events"
         )
 
         assert response.status_code == 302
@@ -1164,7 +1157,7 @@ class TestAdminScoringEndpoints:
             f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/award-points",
             f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/recalculate",
             f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/history",
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/submission_history",
+            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/score_events",
         ]
 
         for endpoint in endpoints:

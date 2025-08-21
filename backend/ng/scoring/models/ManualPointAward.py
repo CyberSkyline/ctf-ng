@@ -23,6 +23,7 @@ class SerializedManualPointAward(TypedDict):
     points: int
     reason: str
     admin_name: NotRequired[str]
+    team_name: NotRequired[str]
 
 
 class ManualPointAward(db.Model):
@@ -57,8 +58,10 @@ class ManualPointAward(db.Model):
             "reason": self.reason,
         }
 
-        if include_admin_fields and self.admin:
+        if self.admin:
             data["admin_name"] = self.admin.name
+        if self.team:
+            data["team_name"] = self.team.name
 
         return SerializedManualPointAward(**data)
 

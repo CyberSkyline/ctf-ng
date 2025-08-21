@@ -3,6 +3,7 @@ Get challenge progress for a team in an event
 """
 
 from typing import Any
+
 from ....scoring.models import Attempt
 from ....challenge.models import Challenge
 

@@ -3,7 +3,7 @@ Defines the Attempt model for tracking answer submissions.
 """
 
 from __future__ import annotations
-from typing import Any, TypedDict
+from typing import Any, TypedDict, NotRequired
 
 from datetime import datetime
 
@@ -30,6 +30,11 @@ class SerializedAttempt(TypedDict):
     points: int
     submission: str
     is_correct: bool
+    # Name enrichment fields
+    user_name: NotRequired[str]
+    team_name: NotRequired[str]
+    challenge_name: NotRequired[str]
+    question_name: NotRequired[str]
 
 
 class Attempt(db.Model):
@@ -79,6 +84,15 @@ class Attempt(db.Model):
             "submission": self.submission,
             "is_correct": self.is_correct,
         }
+
+        if self.user:
+            data["user_name"] = self.user.ctfd_user.name if self.user.ctfd_user else f"User {self.user_id}"
+        if self.team:
+            data["team_name"] = self.team.name
+        if self.challenge:
+            data["challenge_name"] = self.challenge.name
+        if self.question:
+            data["question_name"] = self.question.name
 
         return SerializedAttempt(**data)
 

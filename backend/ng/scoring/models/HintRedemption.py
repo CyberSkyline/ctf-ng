@@ -3,7 +3,7 @@ Defines the HintRedemption model for tracking hint usage.
 """
 
 from __future__ import annotations
-from typing import Any, TypedDict
+from typing import Any, TypedDict, NotRequired
 
 from datetime import datetime
 
@@ -25,6 +25,10 @@ class SerializedHintRedemption(TypedDict):
     score_event_id: int | None
     timestamp: str
     points: int
+    # Name enrichment fields
+    user_name: NotRequired[str]
+    team_name: NotRequired[str]
+    hint_preview: NotRequired[str]
 
 
 class HintRedemption(db.Model):
@@ -64,6 +68,13 @@ class HintRedemption(db.Model):
             "timestamp": self.timestamp.isoformat() + "Z",
             "points": self.points,
         }
+
+        if self.user:
+            data["user_name"] = self.user.ctfd_user.name if self.user.ctfd_user else f"User {self.user_id}"
+        if self.team:
+            data["team_name"] = self.team.name
+        if self.hint:
+            data["hint_preview"] = self.hint.preview
 
         return SerializedHintRedemption(**data)
 
