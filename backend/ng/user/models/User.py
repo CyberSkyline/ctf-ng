@@ -195,6 +195,15 @@ class User(db.Model):
         db.session.delete(self)
         db.session.commit()
 
+    @classmethod
+    def get_total_count(cls) -> int:
+        """Get the total count of all users.
+
+        Returns:
+            int: Total number of users
+        """
+        return cls.query.count()
+
 
     def update(self, **kwargs) -> None:
         """Update user fields with provided keyword arguments.
