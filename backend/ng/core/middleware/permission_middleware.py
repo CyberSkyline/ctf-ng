@@ -4,6 +4,7 @@ from ..utils.api import error_response
 from ..utils.logger import get_logger
 from ...permissions.controllers.get_team_management_permissions import get_team_management_permissions
 from ...permissions.controllers.get_user_permissions import get_user_permissions
+from ...permissions.controllers.get_challenge_permissions import get_challenge_permissions
 from ...event.models.Demographic import Demographic
 
 logger = get_logger(__name__)

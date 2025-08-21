@@ -4,6 +4,7 @@ Defines the Team database model and its properties
 
 from __future__ import annotations
 
+from datetime import datetime
 import random
 import string
 from typing import Any, TypedDict, cast
@@ -18,6 +19,7 @@ from ...core.exceptions import BusinessLogicError, ConflictError, ValidationErro
 from ...core.utils.validator import BaseValidator
 from .enums import TeamRole
 from .TeamMember import TeamMember
+from ...event.models.Event import Event
 
 HEX_CHARS = string.hexdigits.lower()[:16]  # '0123456789abcdef'
 SEED_LENGTH = 16  # 8 bytes for random seed
