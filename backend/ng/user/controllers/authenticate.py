@@ -1,12 +1,11 @@
 # backend/ng/user/controllers/authenticate.py
-from flask import redirect, request, session, url_for, current_app, jsonify
+from flask import redirect, request, session
 from requests_oauthlib import OAuth2Session
 import os
 import datetime
 from CTFd.cache import clear_user_session
 from CTFd.utils.security.signing import hmac
 from CTFd.utils.security.csrf import generate_nonce
-from CTFd.utils.user import get_ip
 from CTFd.models import db
 from CTFd.models import Users as User
 from ..models.User import User as ng_user
@@ -40,21 +39,20 @@ def okta_login():
     return redirect(authorization_url)
 
 def okta_callback():    
+    error_msg = None
     if 'oauth_state' not in session:
         error_msg = "No OAuth state found in session - possible session timeout"
-        print(error_msg)
-        return {"error": error_msg}, 400
 
     if 'error' in request.args:
         error_msg = f"Okta returned error: {request.args.get('error')}"
         if 'error_description' in request.args:
             error_msg += f" - {request.args.get('error_description')}"
-        print(error_msg)
-        return {"error": error_msg}, 400
 
     code = request.args.get('code')
     if not code:
         error_msg = "No authorization code found in callback URL"
+
+    if (error_msg):
         print(error_msg)
         return {"error": error_msg}, 400
 
@@ -93,9 +91,9 @@ def okta_callback():
             )
             db.session.add(user)
             db.session.flush()
-        else:
-            if user.name != name:
-                user.name = name
+        # else:
+        #     if user.name != name:
+        #         user.name = name
 
         ng_user_obj = ng_user.find_or_create_by_ctfd_id(user.id)
         user_data = okta.get(USER_API_URL).json()
@@ -128,9 +126,7 @@ def okta_callback():
         ng_user_obj.email = email
         ng_user_obj.oauth_id = oauth_id
 
-        user.last_login = datetime.datetime.utcnow()
-        user.ip = get_ip()
-
+        user.last_login = datetime.datetime.now(datetime.timezone.utc)
         session.clear()
         
         session['id'] = user.id
