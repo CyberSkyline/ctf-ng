@@ -8,7 +8,7 @@ from CTFd.utils.security.signing import hmac
 from CTFd.utils.security.csrf import generate_nonce
 from CTFd.models import db
 from CTFd.models import Users as User
-from ..models.User import User as ng_user
+from ..models.User import User as NG_User
 
 OKTA_CLIENT_ID = os.getenv("OKTA_CLIENT_ID")
 OKTA_CLIENT_SECRET = os.getenv("OKTA_CLIENT_SECRET")
@@ -38,7 +38,7 @@ def okta_login():
     session["oauth_state"] = state
     return redirect(authorization_url)
 
-def okta_callback():    
+def okta_callback():
     error_msg = None
     if 'oauth_state' not in session:
         error_msg = "No OAuth state found in session - possible session timeout"
@@ -63,7 +63,7 @@ def okta_callback():
             redirect_uri=REDIRECT_URI
         )
 
-        token = okta.fetch_token(
+        okta.fetch_token(
             TOKEN_URL,
             code=code,
             client_secret=OKTA_CLIENT_SECRET,
@@ -84,7 +84,7 @@ def okta_callback():
         user = User.query.filter_by(email=email).first()
         if not user:
             user = User(
-                name=name, 
+                name=name,
                 email=email,
                 password=OAUTH_PLACEHOLDER_HASH,
                 verified=True
@@ -92,7 +92,7 @@ def okta_callback():
             db.session.add(user)
             db.session.flush()
 
-        ng_user_obj = ng_user.find_or_create_by_ctfd_id(user.id)
+        NG_User_obj = NG_User.find_or_create_by_ctfd_id(user.id)
         user_data = okta.get(USER_API_URL).json()
 
         email = user_data.get("email")
@@ -107,7 +107,7 @@ def okta_callback():
         user = User.query.filter_by(email=email).first()
         if not user:
             user = User(
-                name=name, 
+                name=name,
                 email=email,
                 password=OAUTH_PLACEHOLDER_HASH,
                 verified=True
@@ -118,14 +118,14 @@ def okta_callback():
             if user.name != name:
                 user.name = name
 
-        ng_user_obj = ng_user.find_or_create_by_ctfd_id(user.id)
-        ng_user_obj.name = name
-        ng_user_obj.email = email
-        ng_user_obj.oauth_id = oauth_id
+        NG_User_obj = NG_User.find_or_create_by_ctfd_id(user.id)
+        NG_User_obj.name = name
+        NG_User_obj.email = email
+        NG_User_obj.oauth_id = oauth_id
 
-        user.last_login = datetime.datetime.now(datetime.timezone.utc)
+        user.last_login = datetime.datetime.now(datetime.UTC)
         session.clear()
-        
+
         session['id'] = user.id
         session['nonce'] = generate_nonce()
         session['hash'] = hmac(user.password)
