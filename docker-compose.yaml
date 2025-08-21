@@ -76,6 +76,8 @@ services:
     container_name: ng-vite
     restart: always
     tty: true
+    ports:
+      - "5173:5173"
     volumes:
       - ./frontend:/app/frontend
       - ./node_modules:/app/node_modules
