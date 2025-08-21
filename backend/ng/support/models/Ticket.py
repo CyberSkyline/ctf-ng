@@ -30,11 +30,18 @@ class SerializedTicket(TypedDict):
     challenge_id: int | None
     message_count: int
     tags: list[str]
+    # Name enrichment fields
+    event_name: NotRequired[str | None]
+    team_name: NotRequired[str | None]
+    challenge_name: NotRequired[str | None]
     # Admin-only fields
     assigned_to: NotRequired[int | None]
     closed_timestamp: NotRequired[str | None]
     muted: NotRequired[bool]
     first_admin_response_timestamp: NotRequired[str | None]
+    # Admin name enrichment fields
+    author_name: NotRequired[str]
+    assigned_to_name: NotRequired[str | None]
 
 
 class Ticket(db.Model):
@@ -142,6 +149,13 @@ class Ticket(db.Model):
             "tags": [tag.name for tag in self.tags],
         }
 
+        if self.event_id and self.event:
+            data["event_name"] = self.event.name
+        if self.team_id and self.team:
+            data["team_name"] = self.team.name
+        if self.challenge_id and self.challenge:
+            data["challenge_name"] = self.challenge.name
+
         if include_admin_fields:
             first_admin_response_timestamp = (
                 self.first_admin_response_timestamp.isoformat() + "Z" if self.first_admin_response_timestamp else None
@@ -154,6 +168,11 @@ class Ticket(db.Model):
                     "first_admin_response_timestamp": first_admin_response_timestamp,
                 }
             )
+
+            if self.author:
+                data["author_name"] = self.author.name
+            if self.assigned_to and self.assigned_user:
+                data["assigned_to_name"] = self.assigned_user.name
 
         return SerializedTicket(**data)
 

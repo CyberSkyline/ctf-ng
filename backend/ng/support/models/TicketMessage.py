@@ -92,7 +92,7 @@ class TicketMessage(db.Model):
             "ticket_id": self.ticket_id,
         }
 
-        return SerializedTicketMessage(**data)  # type: ignore[typeddict-item]
+        return SerializedTicketMessage(**data)
 
     @classmethod
     def create_message(cls, text: str, ticket_id: int, author_id: int, commit: bool = True) -> TicketMessage:
