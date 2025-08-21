@@ -197,10 +197,10 @@ class User(db.Model):
 
     @classmethod
     def get_total_count(cls) -> int:
-        """Get the total count of all teams.
+        """Get the total count of all users.
 
         Returns:
-            int: Total number of teams
+            int: Total number of users
         """
         return cls.query.count()
 
