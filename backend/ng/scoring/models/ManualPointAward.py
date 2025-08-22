@@ -4,8 +4,8 @@ Defines the ManualPointAward model for admin point adjustments.
 
 from __future__ import annotations
 from typing import (
-    Any, 
-    TypedDict, 
+    Any,
+    TypedDict,
     NotRequired,
 )
 
@@ -194,17 +194,17 @@ class ManualPointAward(db.Model):
     def find_by_team_and_event(cls, team_id: int, event_id: int) -> list[ManualPointAward]:
         """
         Get all manual point awards for a team in a specific event
-        
+
         Args:
             team_id: The team ID
             event_id: The event ID
-            
+
         Returns:
             List of manual awards for the team in the event
         """
         # LAZY-IMPORT
         from ...team.models.Team import Team
-        
+
         return (
             cls.query
             .join(Team, cls.team_id == Team.id)

@@ -4,8 +4,8 @@ Defines the Attempt model for tracking answer submissions.
 
 from __future__ import annotations
 from typing import (
-    Any, 
-    TypedDict, 
+    Any,
+    TypedDict,
     NotRequired,
 )
 

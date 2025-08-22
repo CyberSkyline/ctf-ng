@@ -620,14 +620,14 @@ class TestGetTeamAttempts:
         )
 
         result = get_team_attempts(team_id=team_with_member.id, event_id=event.id)
-        
+
         assert len(result) >= 2
         assert all(isinstance(attempt, Attempt) for attempt in result)
-        
+
         # Find our specific attempts
         correct_attempt_found = any(a.id == correct_attempt.id for a in result)
         failed_attempt_found = any(a.id == failed_attempt.id for a in result)
-        
+
         assert correct_attempt_found, "Should find correct attempt"
         assert failed_attempt_found, "Should find failed attempt"
 
@@ -651,10 +651,10 @@ class TestGetTeamHintRedemptions:
         )
 
         result = get_team_hint_redemptions(team_id=team_with_member.id, event_id=event.id)
-        
+
         assert len(result) >= 1
         assert all(isinstance(r, HintRedemption) for r in result)
-        
+
         # Find our specific redemption
         redemption_found = any(r.id == redemption.id for r in result)
         assert redemption_found, "Should find hint redemption"
@@ -679,10 +679,10 @@ class TestGetTeamManualAwards:
         )
 
         result = get_team_manual_awards(team_id=team_with_member.id, event_id=event.id)
-        
+
         assert len(result) >= 1
         assert all(isinstance(a, ManualPointAward) for a in result)
-        
+
         # Find our specific award
         award_found = any(a.id == award.id for a in result)
         assert award_found, "Should find manual award"

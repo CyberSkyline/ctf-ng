@@ -4,8 +4,8 @@ Defines the HintRedemption model for tracking hint usage.
 
 from __future__ import annotations
 from typing import (
-    Any, 
-    TypedDict, 
+    Any,
+    TypedDict,
     NotRequired,
 )
 
@@ -256,18 +256,18 @@ class HintRedemption(db.Model):
     def find_by_team_and_event(cls, team_id: int, event_id: int) -> list[HintRedemption]:
         """
         Get all hint redemptions for a team in a specific event
-        
+
         Args:
             team_id: The team ID
             event_id: The event ID
-            
+
         Returns:
             List of hint redemptions for the team in the event
         """
         # LAZY-IMPORT
         from ...challenge.models.Hint import Hint
         from ...challenge.models.Challenge import Challenge
-        
+
         return (
             cls.query
             .join(Hint, cls.hint_id == Hint.id)

@@ -4,8 +4,8 @@ Defines the ScoreEvent model for tracking all scoring changes.
 
 from __future__ import annotations
 from typing import (
-    Any, 
-    TypedDict, 
+    Any,
+    TypedDict,
     NotRequired,
 )
 
