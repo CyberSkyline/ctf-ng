@@ -8,9 +8,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timezone, UTC
 
 from ..models.Announcement import (
-    Announcement,
-    AnnouncementType,
-)
+        Announcement,
+        AnnouncementType,
+        )
 from ...core.exceptions import ValidationError
 
 
@@ -20,9 +20,9 @@ class TestAnnouncementRepr:
         Test the string representation of the model
         """
         announcement = announcement_factory(
-            type = AnnouncementType.GENERAL,
-            title = "Test Announcement"
-        )
+                type = AnnouncementType.GENERAL,
+                title = "Test Announcement"
+                )
         expected = f"<Announcement {announcement.id}: type={AnnouncementType.GENERAL.value}>"
         assert repr(announcement) == expected
 
@@ -31,10 +31,10 @@ class TestAnnouncementRepr:
         Test string representation for event-specific announcement
         """
         announcement = announcement_factory(
-            type = AnnouncementType.EVENT_UPDATE,
-            event_id = event.id,
-            title = "Event Update"
-        )
+                type = AnnouncementType.EVENT_UPDATE,
+                event_id = event.id,
+                title = "Event Update"
+                )
         expected = f"<Announcement {announcement.id}: type={AnnouncementType.EVENT_UPDATE.value}>"
         assert repr(announcement) == expected
 
@@ -56,10 +56,10 @@ class TestAnnouncement:
         Test creating an announcement with minimal required fields
         """
         announcement = Announcement.create_announcement(
-            announcement_type = AnnouncementType.GENERAL,
-            title = "Test Title",
-            message = "Test message"
-        )
+                announcement_type = AnnouncementType.GENERAL,
+                title = "Test Title",
+                message = "Test message"
+                )
 
         refreshed_announcement = Announcement.find_by_id(announcement.id)
         assert refreshed_announcement is not None
@@ -72,21 +72,26 @@ class TestAnnouncement:
         assert refreshed_announcement.expires_at is None
         assert refreshed_announcement.event_id is None
 
-    def test_create_announcement_full_fields(self, db_session, admin, event):
+    def test_create_announcement_full_fields(
+            self,
+            db_session,
+            admin,
+            event
+            ):
         """
         Test creating an announcement with all fields populated
         """
         expires_at = "2025-12-31T23:59:59Z"
 
         announcement = Announcement.create_announcement(
-            announcement_type = AnnouncementType.EVENT_UPDATE,
-            title = "Event Starting Soon",
-            message = "The event will begin in 30 minutes",
-            sender_id = admin.id,
-            priority = "high",
-            event_id = event.id,
-            expires_at = expires_at
-        )
+                announcement_type = AnnouncementType.EVENT_UPDATE,
+                title = "Event Starting Soon",
+                message = "The event will begin in 30 minutes",
+                sender_id = admin.id,
+                priority = "high",
+                event_id = event.id,
+                expires_at = expires_at
+                )
 
         refreshed_announcement = Announcement.find_by_id(announcement.id)
         assert refreshed_announcement is not None
@@ -97,13 +102,13 @@ class TestAnnouncement:
         assert refreshed_announcement.priority == "high"
         assert refreshed_announcement.event_id == event.id
         assert refreshed_announcement.expires_at == datetime(
-            6969,
-            12,
-            31,
-            23,
-            59,
-            59
-        )
+                2025,
+                12,
+                31,
+                23,
+                59,
+                59
+                )
 
     def test_create_announcement_respects_commit_flag(self, db_session):
         """
@@ -111,21 +116,21 @@ class TestAnnouncement:
         """
         with patch.object(db_session, "commit") as mock_commit:
             announcement = Announcement.create_announcement(
-                announcement_type = AnnouncementType.GENERAL,
-                title = "No Commit",
-                message = "This should not be committed",
-                commit = False
-            )
+                    announcement_type = AnnouncementType.GENERAL,
+                    title = "No Commit",
+                    message = "This should not be committed",
+                    commit = False
+                    )
             mock_commit.assert_not_called()
             assert announcement.title == "No Commit"
 
         with patch.object(db_session, "commit") as mock_commit:
             Announcement.create_announcement(
-                announcement_type = AnnouncementType.GENERAL,
-                title = "With Commit",
-                message = "This should be committed",
-                commit = True
-            )
+                    announcement_type = AnnouncementType.GENERAL,
+                    title = "With Commit",
+                    message = "This should be committed",
+                    commit = True
+                    )
             mock_commit.assert_called_once()
 
     def test_create_announcement_invalid_type_fails(self, db_session):
@@ -134,10 +139,10 @@ class TestAnnouncement:
         """
         with pytest.raises(ValidationError) as exc_info:
             Announcement.create_announcement(
-                announcement_type = "invalid_type",
-                title = "Test",
-                message = "Test message"
-            )
+                    announcement_type = "invalid_type",
+                    title = "Test",
+                    message = "Test message"
+                    )
         assert "type" in exc_info.value.errors
 
     def test_create_announcement_missing_title_fails(self, db_session):
@@ -146,10 +151,10 @@ class TestAnnouncement:
         """
         with pytest.raises(ValidationError) as exc_info:
             Announcement.create_announcement(
-                announcement_type = AnnouncementType.GENERAL,
-                title = "",
-                message = "Test message"
-            )
+                    announcement_type = AnnouncementType.GENERAL,
+                    title = "",
+                    message = "Test message"
+                    )
         assert "title" in exc_info.value.errors
 
     def test_create_announcement_missing_message_fails(self, db_session):
@@ -158,10 +163,10 @@ class TestAnnouncement:
         """
         with pytest.raises(ValidationError) as exc_info:
             Announcement.create_announcement(
-                announcement_type = AnnouncementType.GENERAL,
-                title = "Test Title",
-                message = ""
-            )
+                    announcement_type = AnnouncementType.GENERAL,
+                    title = "Test Title",
+                    message = ""
+                    )
         assert "message" in exc_info.value.errors
 
     def test_create_announcement_invalid_user_id_fails(self, db_session):
@@ -170,11 +175,11 @@ class TestAnnouncement:
         """
         with pytest.raises(ValidationError):
             Announcement.create_announcement(
-                announcement_type = AnnouncementType.GENERAL,
-                title = "Test",
-                message = "Test message",
-                sender_id = 999999
-            )
+                    announcement_type = AnnouncementType.GENERAL,
+                    title = "Test",
+                    message = "Test message",
+                    sender_id = 999999
+                    )
 
     def test_create_announcement_invalid_event_id_fails(self, db_session):
         """
@@ -182,11 +187,11 @@ class TestAnnouncement:
         """
         with pytest.raises(ValidationError):
             Announcement.create_announcement(
-                announcement_type = AnnouncementType.EVENT_UPDATE,
-                title = "Test",
-                message = "Test message",
-                event_id = 999999
-            )
+                    announcement_type = AnnouncementType.EVENT_UPDATE,
+                    title = "Test",
+                    message = "Test message",
+                    event_id = 999999
+                    )
 
     def test_is_active_property_no_expiration(self, announcement_factory):
         """
@@ -195,7 +200,10 @@ class TestAnnouncement:
         announcement = announcement_factory(expires_at = None)
         assert announcement.is_active is True
 
-    def test_is_active_property_future_expiration(self, announcement_factory):
+    def test_is_active_property_future_expiration(
+            self,
+            announcement_factory
+            ):
         """
         Test is_active property for announcement with future expiration
         """
@@ -207,33 +215,33 @@ class TestAnnouncement:
         """
         Test is_active property for expired announcement
         """
-        past_date = datetime(6969, 1, 1, 0, 0, 0, tzinfo = UTC)
+        past_date = datetime(1969, 1, 1, 0, 0, 0, tzinfo = UTC)
         announcement = announcement_factory(expires_at = past_date)
         assert announcement.is_active is False
 
     def test_get_active_announcements_global(
-        self,
-        db_session,
-        announcement_factory
-    ):
+            self,
+            db_session,
+            announcement_factory
+            ):
         """
         Test getting active global announcements
         """
         active_announcement = announcement_factory(
-            type = AnnouncementType.GENERAL,
-            event_id = None,
-            expires_at = None,
-            title = "Active Global"
-        )
+                type = AnnouncementType.GENERAL,
+                event_id = None,
+                expires_at = None,
+                title = "Active Global"
+                )
         announcement_factory(
-            type = AnnouncementType.GENERAL,
-            event_id = None,
-            expires_at = datetime(6969,
-                                  1,
-                                  1,
-                                  tzinfo = UTC),
-            title = "Expired Global"
-        )
+                type = AnnouncementType.GENERAL,
+                event_id = None,
+                expires_at = datetime(1969,
+                                      1,
+                                      1,
+                                      tzinfo = UTC),
+                title = "Expired Global"
+                )
 
         active_announcements = Announcement.get_active_announcements()
 
@@ -242,85 +250,87 @@ class TestAnnouncement:
         assert active_announcements[0].title == "Active Global"
 
     def test_get_active_announcements_event_specific(
-        self,
-        db_session,
-        announcement_factory,
-        event
-    ):
+            self,
+            db_session,
+            announcement_factory,
+            event
+            ):
         """
         Test getting active event-specific announcements
         """
         event_announcement = announcement_factory(
-            type = AnnouncementType.EVENT_UPDATE,
-            event_id = event.id,
-            expires_at = None,
-            title = "Event Update"
-        )
+                type = AnnouncementType.EVENT_UPDATE,
+                event_id = event.id,
+                expires_at = None,
+                title = "Event Update"
+                )
         announcement_factory(
-            type = AnnouncementType.GENERAL,
-            event_id = None,
-            title = "Global"
-        )
+                type = AnnouncementType.GENERAL,
+                event_id = None,
+                title = "Global"
+                )
 
         event_announcements = Announcement.get_active_announcements(
-            event_id = event.id
-        )
+                event_id = event.id
+                )
 
         assert len(event_announcements) == 1
         assert event_announcements[0].id == event_announcement.id
         assert event_announcements[0].title == "Event Update"
 
     def test_get_active_announcements_with_limit(
-        self,
-        db_session,
-        announcement_factory
-    ):
+            self,
+            db_session,
+            announcement_factory
+            ):
         """
         Test getting active announcements with limit
         """
         announcements = []
         for i in range(5):
             announcement = announcement_factory(
-                type = AnnouncementType.GENERAL,
-                event_id = None,
-                title = f"Announcement {i}"
-            )
+                    type = AnnouncementType.GENERAL,
+                    event_id = None,
+                    title = f"Announcement {i}"
+                    )
             announcements.append(announcement)
 
-        limited_announcements = Announcement.get_active_announcements(limit = 3)
+        limited_announcements = Announcement.get_active_announcements(
+                limit = 3
+                )
 
         assert len(limited_announcements) == 3
 
     def test_get_active_announcements_ordered_by_created_desc(
-        self,
-        db_session,
-        announcement_factory
-    ):
+            self,
+            db_session,
+            announcement_factory
+            ):
         """
         Test that announcements are ordered by created_at descending
         """
         old_announcement = announcement_factory(
-            type = AnnouncementType.GENERAL,
-            title = "Old",
-            created_at = datetime(6969,
-                                  1,
-                                  1,
-                                  10,
-                                  0,
-                                  0,
-                                  tzinfo = UTC)
-        )
+                type = AnnouncementType.GENERAL,
+                title = "Old",
+                created_at = datetime(6969,
+                                      1,
+                                      1,
+                                      10,
+                                      0,
+                                      0,
+                                      tzinfo = UTC)
+                )
         new_announcement = announcement_factory(
-            type = AnnouncementType.GENERAL,
-            title = "New",
-            created_at = datetime(6969,
-                                  1,
-                                  2,
-                                  10,
-                                  0,
-                                  0,
-                                  tzinfo = UTC)
-        )
+                type = AnnouncementType.GENERAL,
+                title = "New",
+                created_at = datetime(6969,
+                                      1,
+                                      2,
+                                      10,
+                                      0,
+                                      0,
+                                      tzinfo = UTC)
+                )
 
         announcements = Announcement.get_active_announcements()
 
@@ -333,16 +343,16 @@ class TestAnnouncement:
         Test deleting expired announcements
         """
         active_announcement = announcement_factory(
-            expires_at = None,
-            title = "Active"
-        )
+                expires_at = None,
+                title = "Active"
+                )
         announcement_factory(
-            expires_at = datetime(6969,
-                                  1,
-                                  1,
-                                  tzinfo = UTC),
-            title = "Expired"
-        )
+                expires_at = datetime(1969,
+                                      1,
+                                      1,
+                                      tzinfo = UTC),
+                title = "Expired"
+                )
 
         count = Announcement.delete_expired()
         assert count == 1
@@ -356,12 +366,12 @@ class TestAnnouncement:
         Test basic announcement serialization
         """
         announcement = announcement_factory(
-            type = AnnouncementType.GENERAL,
-            priority = "normal",
-            title = "Test Announcement",
-            message = "Test message",
-            sender_id = admin.id
-        )
+                type = AnnouncementType.GENERAL,
+                priority = "normal",
+                title = "Test Announcement",
+                message = "Test message",
+                sender_id = admin.id
+                )
 
         data = announcement.serialize()
 
@@ -375,15 +385,19 @@ class TestAnnouncement:
         assert data["created_at"].endswith("Z")
         assert data["expires_at"] is None
 
-    def test_serialize_with_event_reference(self, announcement_factory, event):
+    def test_serialize_with_event_reference(
+            self,
+            announcement_factory,
+            event
+            ):
         """
         Test serialization with event reference
         """
         announcement = announcement_factory(
-            type = AnnouncementType.EVENT_UPDATE,
-            event_id = event.id,
-            title = "Event Update"
-        )
+                type = AnnouncementType.EVENT_UPDATE,
+                event_id = event.id,
+                title = "Event Update"
+                )
 
         data = announcement.serialize()
 
@@ -395,11 +409,11 @@ class TestAnnouncement:
         Test serialization without optional fields
         """
         announcement = announcement_factory(
-            type = AnnouncementType.GENERAL,
-            priority = None,
-            sender_id = None,
-            event_id = None
-        )
+                type = AnnouncementType.GENERAL,
+                priority = None,
+                sender_id = None,
+                event_id = None
+                )
 
         data = announcement.serialize()
 
@@ -411,30 +425,30 @@ class TestAnnouncement:
         """
         Test serialization with expiration date
         """
-        expiry_date = datetime(6969, 12, 31, 23, 59, 59, tzinfo = UTC)
+        expiry_date = datetime(1969, 12, 31, 23, 59, 59, tzinfo = UTC)
         announcement = announcement_factory(
-            type = AnnouncementType.GENERAL,
-            expires_at = expiry_date
-        )
+                type = AnnouncementType.GENERAL,
+                expires_at = expiry_date
+                )
 
         data = announcement.serialize()
 
-        assert data["expires_at"] == "2025-12-31T23:59:59Z"
+        assert data["expires_at"] == "1969-12-31T23:59:59Z"
 
     def test_validate_valid_data(self, db_session, admin, event):
         """
         Test validation with valid data
         """
         data = Announcement.validate(
-            {
-                "type": AnnouncementType.EVENT_UPDATE,
-                "title": "Test Title",
-                "message": "Test message",
-                "priority": "high",
-                "sender_id": admin.id,
-                "event_id": event.id,
-            }
-        )
+                {
+                        "type": AnnouncementType.EVENT_UPDATE,
+                        "title": "Test Title",
+                        "message": "Test message",
+                        "priority": "high",
+                        "sender_id": admin.id,
+                        "event_id": event.id,
+                        }
+                )
 
         assert data["type"] == AnnouncementType.EVENT_UPDATE
         assert data["title"] == "Test Title"
@@ -449,11 +463,11 @@ class TestAnnouncement:
         """
         with pytest.raises(ValidationError) as exc_info:
             Announcement.validate(
-                {
-                    "title": "Test Title",
-                    "message": "Test message"
-                }
-            )
+                    {
+                            "title": "Test Title",
+                            "message": "Test message"
+                            }
+                    )
         assert "type" in exc_info.value.errors
 
     def test_validate_missing_title_fails(self, db_session):
@@ -462,11 +476,11 @@ class TestAnnouncement:
         """
         with pytest.raises(ValidationError) as exc_info:
             Announcement.validate(
-                {
-                    "type": AnnouncementType.GENERAL,
-                    "message": "Test message"
-                }
-            )
+                    {
+                            "type": AnnouncementType.GENERAL,
+                            "message": "Test message"
+                            }
+                    )
         assert "title" in exc_info.value.errors
 
     def test_validate_missing_message_fails(self, db_session):
@@ -475,11 +489,11 @@ class TestAnnouncement:
         """
         with pytest.raises(ValidationError) as exc_info:
             Announcement.validate(
-                {
-                    "type": AnnouncementType.GENERAL,
-                    "title": "Test Title"
-                }
-            )
+                    {
+                            "type": AnnouncementType.GENERAL,
+                            "title": "Test Title"
+                            }
+                    )
         assert "message" in exc_info.value.errors
 
     def test_validate_invalid_priority(self, db_session):
@@ -488,13 +502,13 @@ class TestAnnouncement:
         """
         with pytest.raises(ValidationError) as exc_info:
             Announcement.validate(
-                {
-                    "type": AnnouncementType.GENERAL,
-                    "title": "Test Title",
-                    "message": "Test message",
-                    "priority": "x" * 100
-                }
-            )
+                    {
+                            "type": AnnouncementType.GENERAL,
+                            "title": "Test Title",
+                            "message": "Test message",
+                            "priority": "x" * 100
+                            }
+                    )
         assert "priority" in exc_info.value.errors
 
     def test_validate_empty_title_fails(self, db_session):
@@ -503,12 +517,12 @@ class TestAnnouncement:
         """
         with pytest.raises(ValidationError) as exc_info:
             Announcement.validate(
-                {
-                    "type": AnnouncementType.GENERAL,
-                    "title": "   ",
-                    "message": "Test message"
-                }
-            )
+                    {
+                            "type": AnnouncementType.GENERAL,
+                            "title": "   ",
+                            "message": "Test message"
+                            }
+                    )
         assert "title" in exc_info.value.errors
 
     def test_validate_empty_message_fails(self, db_session):
@@ -517,12 +531,12 @@ class TestAnnouncement:
         """
         with pytest.raises(ValidationError) as exc_info:
             Announcement.validate(
-                {
-                    "type": AnnouncementType.GENERAL,
-                    "title": "Test Title",
-                    "message": "   "
-                }
-            )
+                    {
+                            "type": AnnouncementType.GENERAL,
+                            "title": "Test Title",
+                            "message": "   "
+                            }
+                    )
         assert "message" in exc_info.value.errors
 
     def test_announcement_type_enum_values(self):
