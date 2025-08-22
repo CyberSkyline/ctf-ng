@@ -3,14 +3,13 @@ Model tests for Notification
 """
 
 import pytest
-from datetime import datetime
 from unittest.mock import patch
+from datetime import datetime, timezone, UTC
 from sqlalchemy.exc import SQLAlchemyError
 
 from ..models.Notification import (
     Notification,
     NotificationType,
-    NotificationPriority,
 )
 from ...core.exceptions import ValidationError
 
@@ -28,16 +27,17 @@ class TestNotificationRepr:
         expected = f"<Notification {notification.id}: type={NotificationType.TICKET_CREATE.value} recipient={user.id}>"
         assert repr(notification) == expected
 
-    def test_repr_broadcast(self, notification_factory):
+    def test_repr_with_sender(self, notification_factory, user, admin):
         """
-        Test string representation for broadcast notification
+        Test string representation with sender
         """
         notification = notification_factory(
-            type = NotificationType.SYSTEM_ANNOUNCEMENT,
-            recipient_id = None,
-            title = "Broadcast"
+            type = NotificationType.TICKET_CREATE,
+            recipient_id = user.id,
+            sender_id = admin.id,
+            title = "Test"
         )
-        expected = f"<Notification {notification.id}: type={NotificationType.SYSTEM_ANNOUNCEMENT.value} recipient=None>"
+        expected = f"<Notification {notification.id}: type={NotificationType.TICKET_CREATE.value} recipient={user.id}>"
         assert repr(notification) == expected
 
 
@@ -48,37 +48,37 @@ class TestNotification:
         """
         notification = Notification()
         assert notification.priority is None
-        assert notification.data is None
-        assert notification.recipient_id is None
         assert notification.sender_id is None
-        assert notification.read is None
+        assert notification.read_at is None
         assert notification.created_at is None
+        assert notification.expires_at is None
         assert notification.ticket_id is None
         assert notification.team_id is None
         assert notification.event_id is None
         assert notification.challenge_id is None
 
-    def test_create_notification_minimal(self, db_session):
+    def test_create_notification_minimal(self, db_session, user):
         """
         Test creating a notification with minimal required fields
         """
         notification = Notification.create_notification(
-            notification_type = NotificationType.SYSTEM_ANNOUNCEMENT,
+            notification_type = NotificationType.TICKET_CREATE,
             title = "Test Title",
-            message = "Test message"
+            message = "Test message",
+            recipient_id = user.id
         )
 
         refreshed_notification = Notification.find_by_id(notification.id)
         assert refreshed_notification is not None
-        assert refreshed_notification.type == NotificationType.SYSTEM_ANNOUNCEMENT
+        assert refreshed_notification.type == NotificationType.TICKET_CREATE
         assert refreshed_notification.title == "Test Title"
         assert refreshed_notification.message == "Test message"
-        assert refreshed_notification.priority == NotificationPriority.NORMAL
-        assert refreshed_notification.data is None
-        assert refreshed_notification.recipient_id is None
+        assert refreshed_notification.priority is None
+        assert refreshed_notification.recipient_id == user.id
         assert refreshed_notification.sender_id is None
-        assert refreshed_notification.read is False
+        assert refreshed_notification.read_at is None
         assert refreshed_notification.created_at is not None
+        assert refreshed_notification.expires_at is None
 
     def test_create_notification_full_fields(
         self,
@@ -93,16 +93,13 @@ class TestNotification:
         """
         Test creating a notification with all fields populated
         """
-        test_data = {"ticket_id": ticket.id, "urgency": "high"}
-
         notification = Notification.create_notification(
             notification_type = NotificationType.TICKET_MESSAGE,
             title = "Ticket Updated",
             message = "Your ticket has been updated",
             recipient_id = user.id,
             sender_id = admin.id,
-            priority = NotificationPriority.HIGH,
-            data = test_data,
+            priority = "high",
             ticket_id = ticket.id,
             team_id = team_with_member.id,
             event_id = event.id,
@@ -116,22 +113,22 @@ class TestNotification:
         assert refreshed_notification.message == "Your ticket has been updated"
         assert refreshed_notification.recipient_id == user.id
         assert refreshed_notification.sender_id == admin.id
-        assert refreshed_notification.priority == NotificationPriority.HIGH
-        assert refreshed_notification.data == test_data
+        assert refreshed_notification.priority == "high"
         assert refreshed_notification.ticket_id == ticket.id
         assert refreshed_notification.team_id == team_with_member.id
         assert refreshed_notification.event_id == event.id
         assert refreshed_notification.challenge_id == challenge.id
 
-    def test_create_notification_respects_commit_flag(self, db_session):
+    def test_create_notification_respects_commit_flag(self, db_session, user):
         """
         Test that create respects the commit flag
         """
         with patch.object(db_session, "commit") as mock_commit:
             notification = Notification.create_notification(
-                notification_type = NotificationType.SYSTEM_ANNOUNCEMENT,
+                notification_type = NotificationType.TICKET_CREATE,
                 title = "No Commit",
                 message = "This should not be committed",
+                recipient_id = user.id,
                 commit = False
             )
             mock_commit.assert_not_called()
@@ -139,14 +136,15 @@ class TestNotification:
 
         with patch.object(db_session, "commit") as mock_commit:
             Notification.create_notification(
-                notification_type = NotificationType.SYSTEM_ANNOUNCEMENT,
+                notification_type = NotificationType.TICKET_CREATE,
                 title = "With Commit",
                 message = "This should be committed",
+                recipient_id = user.id,
                 commit = True
             )
             mock_commit.assert_called_once()
 
-    def test_create_notification_invalid_type_fails(self, db_session):
+    def test_create_notification_invalid_type_fails(self, db_session, user):
         """
         Test that creating notification with invalid type fails validation
         """
@@ -154,31 +152,34 @@ class TestNotification:
             Notification.create_notification(
                 notification_type = "invalid_type",
                 title = "Test",
-                message = "Test message"
+                message = "Test message",
+                recipient_id = user.id
             )
         assert "type" in exc_info.value.errors
 
-    def test_create_notification_missing_title_fails(self, db_session):
+    def test_create_notification_missing_title_fails(self, db_session, user):
         """
         Test that creating notification without title fails validation
         """
         with pytest.raises(ValidationError) as exc_info:
             Notification.create_notification(
-                notification_type = NotificationType.SYSTEM_ANNOUNCEMENT,
+                notification_type = NotificationType.TICKET_CREATE,
                 title = "",
-                message = "Test message"
+                message = "Test message",
+                recipient_id = user.id
             )
         assert "title" in exc_info.value.errors
 
-    def test_create_notification_missing_message_fails(self, db_session):
+    def test_create_notification_missing_message_fails(self, db_session, user):
         """
         Test that creating notification without message fails validation
         """
         with pytest.raises(ValidationError) as exc_info:
             Notification.create_notification(
-                notification_type = NotificationType.SYSTEM_ANNOUNCEMENT,
+                notification_type = NotificationType.TICKET_CREATE,
                 title = "Test Title",
-                message = ""
+                message = "",
+                recipient_id = user.id
             )
         assert "message" in exc_info.value.errors
 
@@ -194,7 +195,11 @@ class TestNotification:
                 recipient_id = 999999
             )
 
-    def test_create_notification_invalid_ticket_id_fails(self, db_session):
+    def test_create_notification_invalid_ticket_id_fails(
+        self,
+        db_session,
+        user
+    ):
         """
         Test that creating notification with invalid ticket ID fails
         """
@@ -203,6 +208,7 @@ class TestNotification:
                 notification_type = NotificationType.TICKET_MESSAGE,
                 title = "Test",
                 message = "Test message",
+                recipient_id = user.id,
                 ticket_id = 999999
             )
 
@@ -210,15 +216,20 @@ class TestNotification:
         """
         Test marking a notification as read
         """
-        notification = notification_factory(recipient_id = user.id, read = False)
+        notification = notification_factory(
+            recipient_id = user.id,
+            read_at = None
+        )
         notification_id = notification.id
-        assert notification.read is False
+        assert notification.is_read is False
+        assert notification.read_at is None
 
         notification.mark_as_read()
 
         refreshed_notification = Notification.find_by_id(notification_id)
         assert refreshed_notification is not None
-        assert refreshed_notification.read is True
+        assert refreshed_notification.is_read is True
+        assert refreshed_notification.read_at is not None
 
     def test_mark_as_read_respects_commit_flag(
         self,
@@ -229,17 +240,27 @@ class TestNotification:
         """
         Test that mark_as_read respects the commit flag
         """
-        notification = notification_factory(recipient_id = user.id, read = False)
+        notification = notification_factory(
+            recipient_id = user.id,
+            read_at = None
+        )
 
         with patch.object(db_session, "commit") as mock_commit:
             notification.mark_as_read(commit = False)
             mock_commit.assert_not_called()
 
+        notification.read_at = None
         with patch.object(db_session, "commit") as mock_commit:
             notification.mark_as_read(commit = True)
             mock_commit.assert_called_once()
 
-    def test_find_by_recipient_id(self, db_session, notification_factory, user, admin):
+    def test_find_by_recipient_id(
+        self,
+        db_session,
+        notification_factory,
+        user,
+        admin
+    ):
         """
         Test filtering notifications by recipient ID
         """
@@ -247,8 +268,10 @@ class TestNotification:
             recipient_id = user.id,
             title = "User notification"
         )
-        notification_factory(recipient_id = admin.id, title = "Admin notification")
-        notification_factory(recipient_id = None, title = "Broadcast")
+        notification_factory(
+            recipient_id = admin.id,
+            title = "Admin notification"
+        )
 
         user_notifications = Notification.find_filtered_notifications(
             recipient_id = user.id
@@ -264,18 +287,21 @@ class TestNotification:
         """
         read_notification = notification_factory(
             recipient_id = user.id,
-            read = True,
+            read_at = datetime(6969,
+                               1,
+                               1,
+                               tzinfo = UTC),
             title = "Read"
         )
         unread_notification = notification_factory(
             recipient_id = user.id,
-            read = False,
+            read_at = None,
             title = "Unread"
         )
 
         unread_notifications = Notification.find_filtered_notifications(
             recipient_id = user.id,
-            read_status = False
+            is_read = False
         )
 
         assert len(unread_notifications) == 1
@@ -283,13 +309,18 @@ class TestNotification:
 
         read_notifications = Notification.find_filtered_notifications(
             recipient_id = user.id,
-            read_status = True
+            is_read = True
         )
 
         assert len(read_notifications) == 1
         assert read_notifications[0].id == read_notification.id
 
-    def test_find_by_notification_type(self, db_session, notification_factory, user):
+    def test_find_by_notification_type(
+        self,
+        db_session,
+        notification_factory,
+        user
+    ):
         """
         Test filtering notifications by type
         """
@@ -312,21 +343,45 @@ class TestNotification:
         assert len(ticket_notifications) == 1
         assert ticket_notifications[0].id == ticket_notification.id
 
-    def test_find_broadcasts(self, db_session, notification_factory, user):
+    def test_find_by_type_with_expiration(
+        self,
+        db_session,
+        notification_factory,
+        user
+    ):
         """
-        Test filtering for broadcast notifications
+        Test filtering by type and expiration
         """
-        notification_factory(recipient_id = user.id, title = "Personal")
-        broadcast_notification = notification_factory(
-            recipient_id = None,
-            title = "Broadcast"
+        active_notification = notification_factory(
+            recipient_id = user.id,
+            type = NotificationType.TICKET_CREATE,
+            expires_at = None,
+            title = "Active"
+        )
+        notification_factory(
+            recipient_id = user.id,
+            type = NotificationType.TICKET_CREATE,
+            expires_at = datetime(6969,
+                                  1,
+                                  1),
+            title = "Expired"
         )
 
-        broadcasts = Notification.find_filtered_notifications(is_broadcast = True)
+        active_notifications = Notification.find_filtered_notifications(
+            recipient_id = user.id,
+            notification_type = NotificationType.TICKET_CREATE
+        )
 
-        assert len(broadcasts) == 1
-        assert broadcasts[0].id == broadcast_notification.id
-        assert broadcasts[0].title == "Broadcast"
+        assert len(active_notifications) == 1
+        assert active_notifications[0].id == active_notification.id
+
+        all_notifications = Notification.find_filtered_notifications(
+            recipient_id = user.id,
+            notification_type = NotificationType.TICKET_CREATE,
+            expired = True
+        )
+
+        assert len(all_notifications) == 2
 
     def test_find_with_limit(self, db_session, notification_factory, user):
         """
@@ -364,7 +419,8 @@ class TestNotification:
                                   15,
                                   10,
                                   0,
-                                  0)
+                                  0,
+                                  tzinfo = UTC)
         )
         notification_factory(
             recipient_id = user.id,
@@ -374,7 +430,8 @@ class TestNotification:
                                   17,
                                   12,
                                   0,
-                                  0)
+                                  0,
+                                  tzinfo = UTC)
         )
         notification_factory(
             recipient_id = user.id,
@@ -384,84 +441,152 @@ class TestNotification:
                                   16,
                                   11,
                                   0,
-                                  0)
+                                  0,
+                                  tzinfo = UTC)
         )
 
-        notifications = Notification.find_filtered_notifications(recipient_id = user.id)
+        notifications = Notification.find_filtered_notifications(
+            recipient_id = user.id
+        )
 
         assert len(notifications) == 3
         assert notifications[0].title == "New"
         assert notifications[1].title == "Middle"
         assert notifications[2].title == "Old"
 
-    def test_find_combined_filters(self, db_session, notification_factory, user, admin):
+    def test_find_combined_filters(
+        self,
+        db_session,
+        notification_factory,
+        user,
+        admin
+    ):
         """
         Test combining multiple filters
         """
         target_notification = notification_factory(
             recipient_id = user.id,
-            read = False,
+            read_at = None,
             type = NotificationType.TICKET_CREATE,
             title = "Target"
         )
 
         notification_factory(
             recipient_id = admin.id,
-            read = False,
+            read_at = None,
             type = NotificationType.TICKET_CREATE,
             title = "Wrong recipient"
         )
 
         notification_factory(
             recipient_id = user.id,
-            read = True,
+            read_at = datetime(6969,
+                               1,
+                               1,
+                               tzinfo = UTC),
             type = NotificationType.TICKET_CREATE,
             title = "Wrong read status"
         )
 
         notification_factory(
             recipient_id = user.id,
-            read = False,
+            read_at = None,
             type = NotificationType.ATTEMPT_SUBMISSION,
             title = "Wrong type"
         )
 
         filtered_notifications = Notification.find_filtered_notifications(
             recipient_id = user.id,
-            read_status = False,
+            is_read = False,
             notification_type = NotificationType.TICKET_CREATE
         )
 
         assert len(filtered_notifications) == 1
         assert filtered_notifications[0].id == target_notification.id
 
-    def test_delete_all(self, db_session, notification_factory, user, admin):
+    def test_get_unread_count(
+        self,
+        db_session,
+        notification_factory,
+        user,
+        admin
+    ):
         """
-        Test deleting all notifications
+        Test getting unread notification count
         """
-        notification_factory(recipient_id = user.id, title = "User 1")
-        notification_factory(recipient_id = admin.id, title = "Admin 1")
-        notification_factory(recipient_id = None, title = "Broadcast")
+        notification_factory(recipient_id = user.id, read_at = None)
+        notification_factory(recipient_id = user.id, read_at = None)
 
-        all_notifications = Notification.find_filtered_notifications()
-        assert len(all_notifications) == 3
+        notification_factory(
+            recipient_id = user.id,
+            read_at = datetime(6969,
+                               1,
+                               1,
+                               tzinfo = UTC)
+        )
+        notification_factory(recipient_id = admin.id, read_at = None)
+        notification_factory(
+            recipient_id = user.id,
+            read_at = None,
+            expires_at = datetime(6969,
+                                  1,
+                                  1,
+                                  tzinfo = UTC)
+        )
 
-        Notification.delete_all()
+        count = Notification.get_unread_count(user.id)
+        assert count == 2
 
-        remaining_notifications = Notification.find_filtered_notifications()
-        assert len(remaining_notifications) == 0
-
-    def test_delete_all_handles_exceptions(self, db_session):
+    def test_mark_all_as_read(
+        self,
+        db_session,
+        notification_factory,
+        user,
+        admin
+    ):
         """
-        Test that delete_all handles database exceptions
+        Test marking all notifications as read for a user
         """
-        with patch.object(db_session,
-                          "commit",
-                          side_effect = SQLAlchemyError("DB Error")):
-            with patch.object(db_session, "rollback") as mock_rollback:
-                with pytest.raises(SQLAlchemyError):
-                    Notification.delete_all()
-                mock_rollback.assert_called_once()
+        notification_factory(recipient_id = user.id, read_at = None)
+        notification_factory(recipient_id = user.id, read_at = None)
+        notification_factory(recipient_id = admin.id, read_at = None)
+
+        count = Notification.mark_all_as_read(user.id)
+        assert count == 2
+
+        user_unread_count = Notification.get_unread_count(user.id)
+        assert user_unread_count == 0
+
+        admin_unread_count = Notification.get_unread_count(admin.id)
+        assert admin_unread_count == 1
+
+    def test_delete_expired(self, db_session, notification_factory, user):
+        """
+        Test deleting expired notifications
+        """
+        active_notification = notification_factory(
+            recipient_id = user.id,
+            expires_at = None,
+            title = "Active"
+        )
+        notification_factory(
+            recipient_id = user.id,
+            expires_at = datetime(6969,
+                                  1,
+                                  1,
+                                  tzinfo = UTC),
+            title = "Expired"
+        )
+
+        count = Notification.delete_expired()
+        assert count == 1
+
+        remaining_notifications = Notification.find_filtered_notifications(
+            recipient_id = user.id,
+            expired = True
+        )
+        assert len(remaining_notifications) == 1
+        assert remaining_notifications[0].id == active_notification.id
 
     def test_serialize_basic(self, notification_factory, user, admin):
         """
@@ -469,28 +594,27 @@ class TestNotification:
         """
         notification = notification_factory(
             type = NotificationType.TICKET_CREATE,
-            priority = NotificationPriority.NORMAL,
+            priority = "normal",
             title = "Test Notification",
             message = "Test message",
             recipient_id = user.id,
             sender_id = admin.id,
-            read = False,
-            data = {"test": "data"}
+            read_at = None
         )
 
         data = notification.serialize()
 
         assert data["id"] == notification.id
         assert data["type"] == NotificationType.TICKET_CREATE.value
-        assert data["priority"] == NotificationPriority.NORMAL.value
+        assert data["priority"] == "normal"
         assert data["title"] == "Test Notification"
         assert data["message"] == "Test message"
         assert data["recipient_id"] == user.id
         assert data["sender_id"] == admin.id
-        assert data["read"] is False
-        assert data["data"] == {"test": "data"}
+        assert data["read_at"] is None
         assert isinstance(data["created_at"], str)
         assert data["created_at"].endswith("Z")
+        assert data["expires_at"] is None
 
     def test_serialize_with_reference_fields(
         self,
@@ -523,7 +647,11 @@ class TestNotification:
         assert "challenge_id" in data
         assert data["challenge_id"] == challenge.id
 
-    def test_serialize_without_reference_fields(self, notification_factory, user):
+    def test_serialize_without_reference_fields(
+        self,
+        notification_factory,
+        user
+    ):
         """
         Test serialization without optional reference fields
         """
@@ -542,22 +670,24 @@ class TestNotification:
         assert "event_id" not in data
         assert "challenge_id" not in data
 
-    def test_serialize_broadcast_notification(self, notification_factory):
+    def test_serialize_with_read_timestamp(self, notification_factory, user):
         """
-        Test serialization of broadcast notification
+        Test serialization with read timestamp
         """
+        read_time = datetime(6969, 1, 1, 12, 0, 0, tzinfo = UTC)
         notification = notification_factory(
-            type = NotificationType.SYSTEM_ANNOUNCEMENT,
-            recipient_id = None,
-            title = "System Announcement",
-            message = "Important system update"
+            type = NotificationType.TICKET_CREATE,
+            recipient_id = user.id,
+            title = "Read Notification",
+            message = "This has been read",
+            read_at = read_time
         )
 
         data = notification.serialize()
 
-        assert data["recipient_id"] is None
-        assert data["type"] == NotificationType.SYSTEM_ANNOUNCEMENT.value
-        assert data["title"] == "System Announcement"
+        assert data["read_at"] == "2023-01-01T12:00:00Z"
+        assert data["type"] == NotificationType.TICKET_CREATE.value
+        assert data["title"] == "Read Notification"
 
     def test_validate_valid_data(self, db_session, user, admin):
         """
@@ -568,7 +698,7 @@ class TestNotification:
                 "type": NotificationType.TICKET_CREATE,
                 "title": "Test Title",
                 "message": "Test message",
-                "priority": NotificationPriority.HIGH,
+                "priority": "high",
                 "recipient_id": user.id,
                 "sender_id": admin.id,
             }
@@ -577,83 +707,94 @@ class TestNotification:
         assert data["type"] == NotificationType.TICKET_CREATE
         assert data["title"] == "Test Title"
         assert data["message"] == "Test message"
-        assert data["priority"] == NotificationPriority.HIGH
+        assert data["priority"] == "high"
         assert data["recipient_id"] == user.id
         assert data["sender_id"] == admin.id
 
-    def test_validate_missing_type_fails(self, db_session):
+    def test_validate_missing_type_fails(self, db_session, user):
         """
         Test validation fails with missing type
         """
         with pytest.raises(ValidationError) as exc_info:
-            Notification.validate({"title": "Test Title", "message": "Test message"})
+            Notification.validate(
+                {
+                    "title": "Test Title",
+                    "message": "Test message",
+                    "recipient_id": user.id
+                }
+            )
         assert "type" in exc_info.value.errors
 
-    def test_validate_missing_title_fails(self, db_session):
+    def test_validate_missing_title_fails(self, db_session, user):
         """
         Test validation fails with missing title
         """
         with pytest.raises(ValidationError) as exc_info:
             Notification.validate(
                 {
-                    "type": NotificationType.SYSTEM_ANNOUNCEMENT,
-                    "message": "Test message"
+                    "type": NotificationType.TICKET_CREATE,
+                    "message": "Test message",
+                    "recipient_id": user.id
                 }
             )
         assert "title" in exc_info.value.errors
 
-    def test_validate_missing_message_fails(self, db_session):
+    def test_validate_missing_message_fails(self, db_session, user):
         """
         Test validation fails with missing message
         """
         with pytest.raises(ValidationError) as exc_info:
             Notification.validate(
                 {
-                    "type": NotificationType.SYSTEM_ANNOUNCEMENT,
-                    "title": "Test Title"
+                    "type": NotificationType.TICKET_CREATE,
+                    "title": "Test Title",
+                    "recipient_id": user.id
                 }
             )
         assert "message" in exc_info.value.errors
 
-    def test_validate_invalid_priority(self, db_session):
+    def test_validate_invalid_priority(self, db_session, user):
         """
         Test validation fails with invalid priority
         """
         with pytest.raises(ValidationError) as exc_info:
             Notification.validate(
                 {
-                    "type": NotificationType.SYSTEM_ANNOUNCEMENT,
+                    "type": NotificationType.TICKET_CREATE,
                     "title": "Test Title",
                     "message": "Test message",
-                    "priority": "invalid_priority"
+                    "priority": "x" * 100,
+                    "recipient_id": user.id
                 }
             )
         assert "priority" in exc_info.value.errors
 
-    def test_validate_empty_title_fails(self, db_session):
+    def test_validate_empty_title_fails(self, db_session, user):
         """
         Test that empty/whitespace titles are rejected
         """
         with pytest.raises(ValidationError) as exc_info:
             Notification.validate(
                 {
-                    "type": NotificationType.SYSTEM_ANNOUNCEMENT,
+                    "type": NotificationType.TICKET_CREATE,
                     "title": "   ",
-                    "message": "Test message"
+                    "message": "Test message",
+                    "recipient_id": user.id
                 }
             )
         assert "title" in exc_info.value.errors
 
-    def test_validate_empty_message_fails(self, db_session):
+    def test_validate_empty_message_fails(self, db_session, user):
         """
         Test that empty/whitespace messages are rejected
         """
         with pytest.raises(ValidationError) as exc_info:
             Notification.validate(
                 {
-                    "type": NotificationType.SYSTEM_ANNOUNCEMENT,
+                    "type": NotificationType.TICKET_CREATE,
                     "title": "Test Title",
-                    "message": "   "
+                    "message": "   ",
+                    "recipient_id": user.id
                 }
             )
         assert "message" in exc_info.value.errors
@@ -665,19 +806,28 @@ class TestNotification:
         assert NotificationType.TICKET_CREATE.value == "ticket_create"
         assert NotificationType.TICKET_MESSAGE.value == "ticket_message"
         assert NotificationType.TICKET_STATUS_CHANGE.value == "ticket_status_change"
+        assert NotificationType.TICKET_ASSIGNED.value == "ticket_assigned"
         assert NotificationType.ATTEMPT_SUBMISSION.value == "attempt_submission"
-        assert NotificationType.SYSTEM_ANNOUNCEMENT.value == "system_announcement"
-        assert NotificationType.LEADERBOARD_UPDATE.value == "leaderboard_update"
-        assert NotificationType.EVENT_UPDATE.value == "event_update"
+        assert NotificationType.TEAM_INVITATION.value == "team_invitation"
+        assert NotificationType.CHALLENGE_RELEASED.value == "challenge_released"
 
-    def test_notification_priority_enum_values(self):
+    def test_is_read_property(self, notification_factory, user):
         """
-        Test NotificationPriority enum values
+        Test the is_read property
         """
-        assert NotificationPriority.LOW.value == "low"
-        assert NotificationPriority.NORMAL.value == "normal"
-        assert NotificationPriority.HIGH.value == "high"
-        assert NotificationPriority.URGENT.value == "urgent"
+        unread_notification = notification_factory(
+            recipient_id = user.id,
+            read_at = None
+        )
+        read_notification = notification_factory(
+            recipient_id = user.id,
+            read_at = datetime(6969,
+                               1,
+                               1)
+        )
+
+        assert unread_notification.is_read is False
+        assert read_notification.is_read is True
 
     def test_recipient_relationship(self, notification_factory, user):
         """
@@ -697,10 +847,14 @@ class TestNotification:
         assert notification.sender is not None
         assert notification.sender.id == admin.id
 
-    def test_broadcast_notification_no_recipient(self, notification_factory):
+    def test_notification_with_expiration(self, notification_factory, user):
         """
-        Test broadcast notification has no recipient
+        Test notification with expiration date
         """
-        notification = notification_factory(recipient_id = None)
+        expiry_date = datetime(6969, 12, 31, 23, 59, 59, tzinfo = UTC)
+        notification = notification_factory(
+            recipient_id = user.id,
+            expires_at = expiry_date
+        )
 
-        assert notification.recipient is None
+        assert notification.expires_at == expiry_date.replace(tzinfo = None)

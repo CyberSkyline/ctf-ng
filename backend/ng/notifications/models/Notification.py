@@ -1,15 +1,11 @@
 """
-Defines the Notification model for notifications
+Defines the Notification model for user-specific notifications
 """
 
 from __future__ import annotations
 
-from typing import (
-    Any,
-    TypedDict,
-    NotRequired,
-)
 from enum import Enum
+from typing import Any, TypedDict, NotRequired
 
 from CTFd.models import db
 
@@ -22,30 +18,23 @@ class NotificationType(str, Enum):
     TICKET_CREATE = "ticket_create"
     TICKET_MESSAGE = "ticket_message"
     TICKET_STATUS_CHANGE = "ticket_status_change"
+    TICKET_ASSIGNED = "ticket_assigned"
     ATTEMPT_SUBMISSION = "attempt_submission"
-    SYSTEM_ANNOUNCEMENT = "system_announcement"
-    LEADERBOARD_UPDATE = "leaderboard_update"
-    EVENT_UPDATE = "event_update"
-
-
-class NotificationPriority(str, Enum):
-    LOW = "low"
-    NORMAL = "normal"
-    HIGH = "high"
-    URGENT = "urgent"
+    TEAM_INVITATION = "team_invitation"
+    CHALLENGE_RELEASED = "challenge_released"
 
 
 class SerializedNotification(TypedDict):
     id: int
     type: str
-    priority: str
+    priority: NotRequired[str | None]
     title: str
     message: str
-    data: dict[str, Any] | None
-    recipient_id: int | None
+    recipient_id: int
     sender_id: int | None
-    read: bool
+    read_at: str | None
     created_at: str
+    expires_at: str | None
     # Optional reference fields
     ticket_id: NotRequired[int | None]
     team_id: NotRequired[int | None]
@@ -59,28 +48,48 @@ class Notification(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     type = db.Column(db.Enum(NotificationType), nullable = False)
     priority = db.Column(
-        db.Enum(NotificationPriority),
-        default = NotificationPriority.NORMAL,
+        db.String(config.NOTIFICATIONS_PRIORITY_MAX_LENGTH),
+        nullable = True
+    )
+    title = db.Column(
+        db.String(config.NOTIFICATIONS_TITLE_MAX_LENGTH),
         nullable = False
     )
-    title = db.Column(db.String(config.NOTIFICATION_TITLE_MAX_LENGTH), nullable = False)
     message = db.Column(
-        db.String(config.NOTIFICATION_MESSAGE_MAX_LENGTH),
+        db.String(config.NOTIFICATIONS_MESSAGE_MAX_LENGTH),
         nullable = False
     )
-    data = db.Column(db.JSON, nullable = True)
 
-    recipient_id = db.Column(db.Integer,
-                             db.ForeignKey("users.id"),
-                             nullable = True,
-                             index = True)  # None = broadcast
-    sender_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable = True)
-    read = db.Column(db.Boolean, default = False, nullable = False)
+    recipient_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id"),
+        nullable = False,
+        index = True
+    )
+    sender_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id"),
+        nullable = True
+    )
+    read_at = db.Column(db.DateTime, nullable = True)
     created_at = db.Column(db.DateTime, default = utc_now, nullable = False)
+    expires_at = db.Column(db.DateTime, nullable = True)
 
-    ticket_id = db.Column(db.Integer, db.ForeignKey("ng_tickets.id"), nullable = True)
-    team_id = db.Column(db.Integer, db.ForeignKey("ng_teams.id"), nullable = True)
-    event_id = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable = True)
+    ticket_id = db.Column(
+        db.Integer,
+        db.ForeignKey("ng_tickets.id"),
+        nullable = True
+    )
+    team_id = db.Column(
+        db.Integer,
+        db.ForeignKey("ng_teams.id"),
+        nullable = True
+    )
+    event_id = db.Column(
+        db.Integer,
+        db.ForeignKey("ng_events.id"),
+        nullable = True
+    )
     challenge_id = db.Column(
         db.Integer,
         db.ForeignKey("ng_challenges.id"),
@@ -88,11 +97,15 @@ class Notification(db.Model):
     )
 
     __table_args__ = (
-        db.Index("ix_ng_notifications_recipient_read",
-                 "recipient_id",
-                 "read"),
+        db.Index(
+            "ix_ng_notifications_recipient_read",
+            "recipient_id",
+            "read_at"
+        ),
         db.Index("ix_ng_notifications_created",
                  "created_at"),
+        db.Index("ix_ng_notifications_expires",
+                 "expires_at"),
     )
 
     recipient = db.relationship(
@@ -109,7 +122,17 @@ class Notification(db.Model):
     def __repr__(self):
         return f"<Notification {self.id}: type={self.type.value} recipient={self.recipient_id}>"
 
-    def serialize(self, include_admin_fields: bool = False) -> SerializedNotification:
+    @property
+    def is_read(self) -> bool:
+        """
+        Check if notification has been read
+        """
+        return self.read_at is not None
+
+    def serialize(
+        self,
+        include_admin_fields: bool = False
+    ) -> SerializedNotification:
         """
         Serialize notification for API response
 
@@ -120,18 +143,28 @@ class Notification(db.Model):
             dict: Serialized notification data
         """
         data = {
-            "id": self.id,
-            "type": self.type.value,
-            "priority": self.priority.value,
-            "title": self.title,
-            "message": self.message,
-            "data": self.data,
-            "recipient_id": self.recipient_id,
-            "sender_id": self.sender_id,
-            "read": self.read,
-            "created_at": self.created_at.isoformat() + "Z",
+            "id":
+            self.id,
+            "type":
+            self.type.value,
+            "title":
+            self.title,
+            "message":
+            self.message,
+            "recipient_id":
+            self.recipient_id,
+            "sender_id":
+            self.sender_id,
+            "read_at":
+            self.read_at.isoformat() + "Z" if self.read_at else None,
+            "created_at":
+            self.created_at.isoformat() + "Z",
+            "expires_at":
+            self.expires_at.isoformat() + "Z" if self.expires_at else None,
         }
 
+        if self.priority:
+            data["priority"] = self.priority
         if self.ticket_id:
             data["ticket_id"] = self.ticket_id
         if self.team_id:
@@ -146,7 +179,7 @@ class Notification(db.Model):
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
         """
-        Validate notification data
+        Validate notification data. Raises ValidationError on failure
         """
         validator = BaseValidator()
 
@@ -157,35 +190,73 @@ class Notification(db.Model):
             required = True,
             friendly_name = "Notification type"
         )
-        validator.validate_enum(
-            data,
-            "priority",
-            NotificationPriority,
-            required = False,
-            friendly_name = "Priority"
-        )
 
         validator.validate_string(
             data,
             "title",
-            max_length = config.NOTIFICATION_TITLE_MAX_LENGTH,
+            max_length = config.NOTIFICATIONS_TITLE_MAX_LENGTH,
             required = True,
             friendly_name = "Title"
         )
         validator.validate_string(
             data,
             "message",
-            max_length = config.NOTIFICATION_MESSAGE_MAX_LENGTH,
+            max_length = config.NOTIFICATIONS_MESSAGE_MAX_LENGTH,
             required = True,
             friendly_name = "Message"
         )
 
-        validator.validate_model_id(data, "recipient_id", "Users", required = False)
-        validator.validate_model_id(data, "sender_id", "Users", required = False)
-        validator.validate_model_id(data, "ticket_id", "Ticket", required = False)
-        validator.validate_model_id(data, "team_id", "Team", required = False)
-        validator.validate_model_id(data, "event_id", "Event", required = False)
-        validator.validate_model_id(data, "challenge_id", "Challenge", required = False)
+        validator.validate_string(
+            data,
+            "priority",
+            max_length = config.NOTIFICATIONS_PRIORITY_MAX_LENGTH,
+            required = False,
+            friendly_name = "Priority"
+        )
+
+        validator.validate_model_id(
+            data,
+            "recipient_id",
+            "Users",
+            required = True
+        )
+        validator.validate_model_id(
+            data,
+            "sender_id",
+            "Users",
+            required = False
+        )
+        validator.validate_model_id(
+            data,
+            "ticket_id",
+            "Ticket",
+            required = False
+        )
+        validator.validate_model_id(
+            data,
+            "team_id",
+            "Team",
+            required = False
+        )
+        validator.validate_model_id(
+            data,
+            "event_id",
+            "Event",
+            required = False
+        )
+        validator.validate_model_id(
+            data,
+            "challenge_id",
+            "Challenge",
+            required = False
+        )
+
+        validator.validate_datetime(
+            data,
+            "expires_at",
+            required = False,
+            friendly_name = "Expiration time"
+        )
 
         return validator.validate()
 
@@ -195,32 +266,31 @@ class Notification(db.Model):
         notification_type: NotificationType,
         title: str,
         message: str,
-        recipient_id: int | None = None,
+        recipient_id: int,
         sender_id: int | None = None,
-        priority: NotificationPriority = NotificationPriority.NORMAL,
-        data: dict[str,
-                   Any] | None = None,
+        priority: str | None = None,
         ticket_id: int | None = None,
         team_id: int | None = None,
         event_id: int | None = None,
         challenge_id: int | None = None,
+        expires_at: Any | None = None,
         commit: bool = True,
     ) -> Notification:
         """
-        Create a new notification to the database
+        Create a new user notification
 
         Args:
-            notification_type: Type of notification
+            type: Type of notification
             title: Notification title
             message: Notification message
-            recipient_id: User ID to receive notification (None for broadcast)
+            recipient_id: User ID to receive notification
             sender_id: User ID sending notification
-            priority: Notification priority
-            data: Additional data payload
+            priority: Optional priority level
             ticket_id: Related ticket ID
             team_id: Related team ID
             event_id: Related event ID
             challenge_id: Related challenge ID
+            expires_at: When notification expires
             commit: Whether to commit immediately
 
         Returns:
@@ -238,6 +308,7 @@ class Notification(db.Model):
                 "team_id": team_id,
                 "event_id": event_id,
                 "challenge_id": challenge_id,
+                "expires_at": expires_at,
             }
         )
 
@@ -245,15 +316,14 @@ class Notification(db.Model):
             type = validated_data["type"],
             title = validated_data["title"],
             message = validated_data["message"],
-            priority = validated_data.get("priority",
-                                          NotificationPriority.NORMAL),
-            data = data,
-            recipient_id = validated_data.get("recipient_id"),
+            priority = validated_data.get("priority"),
+            recipient_id = validated_data["recipient_id"],
             sender_id = validated_data.get("sender_id"),
             ticket_id = validated_data.get("ticket_id"),
             team_id = validated_data.get("team_id"),
             event_id = validated_data.get("event_id"),
             challenge_id = validated_data.get("challenge_id"),
+            expires_at = validated_data.get("expires_at"),
         )
 
         db.session.add(notification)
@@ -263,44 +333,54 @@ class Notification(db.Model):
 
     def mark_as_read(self, commit: bool = True) -> None:
         """
-        Mark notification as read
+        Mark notification as read by setting read_at timestamp
         """
-        self.read = True
-        if commit:
-            db.session.commit()
+        if not self.read_at:
+            self.read_at = utc_now()
+            if commit:
+                db.session.commit()
+
+    @classmethod
+    def find_by_id(cls, notification_id: int) -> Notification | None:
+        """
+        Find a notification by ID
+        """
+        return cls.query.get(notification_id)
 
     @classmethod
     def find_filtered_notifications(
         cls,
-        recipient_id: int | None = None,
-        read_status: bool | None = None,
+        recipient_id: int,
+        is_read: bool | None = None,
         notification_type: NotificationType | None = None,
-        is_broadcast: bool | None = None,
+        expired: bool = False,
         limit: int | None = None,
     ) -> list[Notification]:
         """
         Find notifications based on filters
-
         Args:
-            recipient_id (int, optional): Filter by recipient user ID
-            read_status (bool, optional): Filter by read status
-            notification_type (NotificationType, optional): Filter by type
-            is_broadcast (bool, optional): Filter broadcasts (recipient_id=None)
-            limit (int, optional): Maximum number of results
-
+            recipient_id: Filter by recipient user ID
+            is_read: Filter by read status (True = read, False = unread)
+            notification_type: Filter by type
+            expired: Include expired notifications (default False)
+            limit: Maximum number of results
         Returns:
             list[Notification]: List of filtered notifications
         """
-        query = cls.query
+        query = cls.query.filter_by(recipient_id = recipient_id)
 
-        if recipient_id is not None:
-            query = query.filter_by(recipient_id = recipient_id)
-        if is_broadcast is True:
-            query = query.filter(cls.recipient_id.is_(None))
-        if read_status is not None:
-            query = query.filter_by(read = read_status)
+        if is_read is True:
+            query = query.filter(cls.read_at.isnot(None))
+        elif is_read is False:
+            query = query.filter(cls.read_at.is_(None))
+
         if notification_type is not None:
             query = query.filter_by(type = notification_type)
+
+        if not expired:
+            query = query.filter(
+                (cls.expires_at.is_(None)) | (cls.expires_at > utc_now())
+            )
 
         query = query.order_by(cls.created_at.desc())
 
@@ -309,26 +389,33 @@ class Notification(db.Model):
         return query.all()
 
     @classmethod
-    def find_by_id(cls, notification_id: int) -> Notification | None:
+    def get_unread_count(cls, recipient_id: int) -> int:
         """
-        Find a notification by its ID
-
-        Args:
-            notification_id: The notification ID to search for
-
-        Returns:
-            Notification | None: The notification if found, None otherwise
+        Get count of unread notifications for a user
         """
-        return cls.query.get(notification_id)
+        return cls.query.filter_by(recipient_id = recipient_id).filter(
+            cls.read_at.is_(None)
+        ).filter((cls.expires_at.is_(None))
+                 | (cls.expires_at > utc_now())).count()
 
     @classmethod
-    def delete_all(cls) -> None:
+    def mark_all_as_read(cls, recipient_id: int) -> int:
         """
-        Delete all notifications from the database
+        Mark all notifications as read for a user
         """
-        try:
-            cls.query.delete()
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-            raise
+        count = cls.query.filter_by(recipient_id = recipient_id).filter(
+            cls.read_at.is_(None)
+        ).update({"read_at": utc_now()})
+
+        db.session.commit()
+        return count
+
+    @classmethod
+    def delete_expired(cls) -> int:
+        """
+        Delete all expired notifications
+        """
+        count = cls.query.filter(cls.expires_at <= utc_now()).delete()
+
+        db.session.commit()
+        return count

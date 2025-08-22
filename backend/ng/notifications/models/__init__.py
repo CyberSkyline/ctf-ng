@@ -5,12 +5,16 @@ Ctf-ng Notification Model Package
 from .Notification import (
     Notification,
     NotificationType,
-    NotificationPriority,
+)
+from .Announcement import (
+    Announcement,
+    AnnouncementType,
 )
 
 
 __all__ = [
     "Notification",
     "NotificationType",
-    "NotificationPriority",
+    "Announcement",
+    "AnnouncementType",
 ]
