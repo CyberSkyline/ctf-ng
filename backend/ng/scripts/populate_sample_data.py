@@ -99,7 +99,7 @@ with app.app_context():
             PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
         ],
     )
-    assign_role_to_user(ng_admin_user.id, "admin")
+    assign_role_to_user(ng_admin_user.id, RoleEnum.ADMIN)
 
 # Insert sample data
 with app.app_context():

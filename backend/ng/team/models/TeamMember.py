@@ -5,7 +5,7 @@ Defines the TeamMember model, link between users, teams, and events.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, TypedDict
+from typing import Any, TypedDict, NotRequired
 
 from CTFd.models import db
 
@@ -20,7 +20,9 @@ class TeamMemberSerialized(TypedDict):
     user_id: int
     user_name: str
     team_id: int
+    team_name: NotRequired[str]
     event_id: int
+    event_name: NotRequired[str]
     joined_at: str | None
     role: str
 
@@ -73,10 +75,22 @@ class TeamMember(db.Model):
             "role": self.role.value,
         }
 
+        if self.team:
+            data["team_name"] = self.team.name
+
+        if self.event:
+            data["event_name"] = self.event.name
+
         return TeamMemberSerialized(**data)
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
+        """
+        Validate Team Memeber Data
+        """
+        from ...team.models.Team import Team
+        from ...event.models.Event import Event
+
         validator = BaseValidator()
         validator.validate_positive_integer(data, "user_id", required=True, friendly_name="User ID")
         validator.validate_positive_integer(data, "team_id", required=True, friendly_name="Team ID")
@@ -87,7 +101,11 @@ class TeamMember(db.Model):
         if existing_member:
             raise ValidationError(f"User {data['user_id']} is already a member of the event {data['event_id']}.")
 
-        # TODO - Check to ensure that max team size is not exceeded
+        team = Team.find_by_id(data["team_id"])
+        if team:
+            event = Event.find_by_id(data["event_id"])
+            if event and team.member_count >= event.max_team_size:
+                raise ValidationError(f"Team '{team.name}' is full ({team.member_count}/{event.max_team_size})")
 
         return validator.validate()
 
