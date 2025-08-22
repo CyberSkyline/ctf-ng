@@ -86,7 +86,6 @@ AWARD_MANUAL_POINTS_DOC = {
     "params": {
         "points": {
             "description": "Points to award (positive) or deduct (negative). Cannot be zero.",
-            "in": "body",
             "required": True,
             "type": "integer",
             "example": 50
@@ -134,79 +133,29 @@ GET_SCORE_HISTORY_DOC = {
     },
 }
 
-GET_TEAM_SCORE_EVENTS_DOC = {
-    "description": "Get team's score events timeline with embedded source data (attempts, hint redemptions, manual awards) and names (Admin only)",
+
+GET_TEAM_ATTEMPTS_DOC = {
+    "description": "Get all attempts (correct and incorrect) for a team in an event (Admin only)",
     "responses": {
-        200: {
-            "description": "Success - Returns timeline of score events with embedded source data",
-            "example": {
-                "score_events": [
-                    {
-                        "id": 1,
-                        "score_id": 10,
-                        "team_id": 5,
-                        "team_name": "Elite Hackers",
-                        "points": 100,
-                        "timestamp": "2025-01-15T10:30:00Z",
-                        "source_type": "attempt",
-                        "source": {
-                            "id": 45,
-                            "user_id": 12,
-                            "user_name": "alice",
-                            "team_id": 5,
-                            "team_name": "Elite Hackers",
-                            "challenge_id": 3,
-                            "challenge_name": "Web Challenge 1",
-                            "question_id": 7,
-                            "question_name": "Find the flag",
-                            "submission": "flag{found_it}",
-                            "is_correct": True,
-                            "points": 100,
-                            "timestamp": "2025-01-15T10:30:00Z"
-                        }
-                    },
-                    {
-                        "id": 2,
-                        "score_id": 10,
-                        "team_id": 5,
-                        "team_name": "Elite Hackers",
-                        "points": -10,
-                        "timestamp": "2025-01-15T10:35:00Z",
-                        "source_type": "hint_redemption",
-                        "source": {
-                            "id": 23,
-                            "hint_id": 8,
-                            "hint_preview": "Check the headers",
-                            "user_id": 12,
-                            "user_name": "alice",
-                            "team_id": 5,
-                            "team_name": "Elite Hackers",
-                            "points": -10,
-                            "timestamp": "2025-01-15T10:35:00Z"
-                        }
-                    },
-                    {
-                        "id": 3,
-                        "score_id": 10,
-                        "team_id": 5,
-                        "team_name": "Elite Hackers",
-                        "points": 50,
-                        "timestamp": "2025-01-15T11:00:00Z",
-                        "source_type": "manual_award",
-                        "source": {
-                            "id": 3,
-                            "admin_id": 1,
-                            "admin_name": "admin",
-                            "team_id": 5,
-                            "team_name": "Elite Hackers",
-                            "points": 50,
-                            "reason": "Bonus for creative solution",
-                            "timestamp": "2025-01-15T11:00:00Z"
-                        }
-                    }
-                ]
-            }
-        },
+        200: "Success - Returns list of all attempts with enriched names",
+        **ADMIN_REQUIRED_RESPONSES,
+        404: "Not found - Event or team does not exist",
+    },
+}
+
+GET_TEAM_HINT_REDEMPTIONS_DOC = {
+    "description": "Get all hint redemptions for a team in an event (Admin only)",
+    "responses": {
+        200: "Success - Returns list of hint redemptions with enriched names and challenge info",
+        **ADMIN_REQUIRED_RESPONSES,
+        404: "Not found - Event or team does not exist",
+    },
+}
+
+GET_TEAM_MANUAL_AWARDS_DOC = {
+    "description": "Get all manual point awards for a team in an event (Admin only)",
+    "responses": {
+        200: "Success - Returns list of manual awards with enriched names",
         **ADMIN_REQUIRED_RESPONSES,
         404: "Not found - Event or team does not exist",
     },

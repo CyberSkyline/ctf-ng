@@ -3,7 +3,11 @@ Defines the ScoreEvent model for tracking all scoring changes.
 """
 
 from __future__ import annotations
-from typing import Any, TypedDict, NotRequired
+from typing import (
+    Any, 
+    TypedDict, 
+    NotRequired,
+)
 
 from datetime import datetime
 from sqlalchemy.orm import selectinload
@@ -132,7 +136,7 @@ class ScoreEvent(db.Model):
         db.session.add(event)
         db.session.flush()
 
-        # LAZY-IMPORT: Tagging all necessary lazy imports for easy searchability & visibility.
+        # LAZY-IMPORT
         from .Score import Score
 
         score = Score.query.get(validated_data["score_id"])

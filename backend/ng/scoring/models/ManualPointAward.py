@@ -3,7 +3,11 @@ Defines the ManualPointAward model for admin point adjustments.
 """
 
 from __future__ import annotations
-from typing import Any, TypedDict, NotRequired
+from typing import (
+    Any, 
+    TypedDict, 
+    NotRequired,
+)
 
 from datetime import datetime
 
@@ -121,7 +125,7 @@ class ManualPointAward(db.Model):
             }
         )
 
-        # LAZY-IMPORT: Tagging all necessary lazy imports for easy searchability & visibility.
+        # LAZY-IMPORT:
         from .Score import Score
         from .ScoreEvent import ScoreEvent
 
@@ -185,6 +189,32 @@ class ManualPointAward(db.Model):
         if limit is not None:
             query = query.limit(limit)
         return query.all()  # type: ignore[no-any-return]
+
+    @classmethod
+    def find_by_team_and_event(cls, team_id: int, event_id: int) -> list[ManualPointAward]:
+        """
+        Get all manual point awards for a team in a specific event
+        
+        Args:
+            team_id: The team ID
+            event_id: The event ID
+            
+        Returns:
+            List of manual awards for the team in the event
+        """
+        # LAZY-IMPORT
+        from ...team.models.Team import Team
+        
+        return (
+            cls.query
+            .join(Team, cls.team_id == Team.id)
+            .filter(
+                cls.team_id == team_id,
+                Team.event_id == event_id
+            )
+            .order_by(cls.timestamp.desc())
+            .all()
+        )
 
     def delete_award(self, commit: bool = True) -> None:
         """

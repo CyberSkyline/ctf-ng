@@ -953,7 +953,7 @@ class TestAdminScoringEndpoints:
         # Controller returns empty list when no events
         assert data["data"] == []
 
-    def test_get_team_score_events_basic(
+    def test_get_team_attempts_basic(
         self,
         admin_client,
         admin,
@@ -961,19 +961,18 @@ class TestAdminScoringEndpoints:
         team_with_member
     ):
         """
-        Test getting basic team score events timeline
+        Test getting basic team attempts (including failed ones)
         """
         response = admin_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/score_events"
+            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/attempts"
         )
 
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
-        assert "score_events" in data["data"]
-        assert isinstance(data["data"]["score_events"], list)
+        assert isinstance(data["data"], list)
 
-    def test_get_team_score_events_with_data(
+    def test_get_team_attempts_with_data(
         self,
         admin_client,
         admin,
@@ -982,16 +981,15 @@ class TestAdminScoringEndpoints:
         user,
         challenge,
         question,
-        hint,
         db_session
     ):
         """
-        Test getting team score events timeline with embedded source data
+        Test getting team attempts with enriched names (including failed attempts)
         """
-        from ..models import Attempt, HintRedemption, ManualPointAward, ScoreEvent, Score
+        from ..models import Attempt
 
-        # Create a correct attempt that generates a score event
-        attempt = Attempt.create_attempt(
+        # Create a correct attempt
+        correct_attempt = Attempt.create_attempt(
             user_id=user.id,
             team_id=team_with_member.id,
             challenge_id=challenge.id,
@@ -999,7 +997,73 @@ class TestAdminScoringEndpoints:
             submission=question.answer,  # Correct answer
         )
 
-        # Create a hint redemption that generates a score event
+        # Create a failed attempt (this is the key - failed attempts are now included!)
+        failed_attempt = Attempt.create_attempt(
+            user_id=user.id,
+            team_id=team_with_member.id,
+            challenge_id=challenge.id,
+            question_id=question.id,
+            submission="wrong answer",  # Wrong answer
+        )
+
+        response = admin_client.get(
+            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/attempts"
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+
+        attempts = data["data"]
+        assert len(attempts) >= 2  # At least our 2 attempts
+
+        # Find our attempts
+        correct_attempt_data = next(
+            (a for a in attempts if a["id"] == correct_attempt.id), None
+        )
+        failed_attempt_data = next(
+            (a for a in attempts if a["id"] == failed_attempt.id), None
+        )
+
+        # Verify we found both attempts (including the failed one!)
+        assert correct_attempt_data is not None, "Should find correct attempt"
+        assert failed_attempt_data is not None, "Should find failed attempt"
+
+        # Check enriched names in correct attempt
+        assert "team_name" in correct_attempt_data
+        assert "challenge_name" in correct_attempt_data
+        assert "question_name" in correct_attempt_data
+        assert correct_attempt_data["team_name"] == team_with_member.name
+        assert correct_attempt_data["challenge_name"] == challenge.name
+        assert correct_attempt_data["question_name"] == question.name
+        assert correct_attempt_data["is_correct"] is True
+
+        # Check enriched names in failed attempt
+        assert "team_name" in failed_attempt_data
+        assert "challenge_name" in failed_attempt_data
+        assert "question_name" in failed_attempt_data
+        assert failed_attempt_data["team_name"] == team_with_member.name
+        assert failed_attempt_data["challenge_name"] == challenge.name
+        assert failed_attempt_data["question_name"] == question.name
+        assert failed_attempt_data["is_correct"] is False
+
+    def test_get_team_hint_redemptions_with_data(
+        self,
+        admin_client,
+        admin,
+        event,
+        team_with_member,
+        user,
+        challenge,
+        hint,
+        db_session
+    ):
+        """
+        Test getting team hint redemptions with enriched names and challenge info
+        """
+        from ..models import HintRedemption
+
+        # Create a hint redemption
         hint_redemption = HintRedemption.create_redemption(
             hint_id=hint.id,
             user_id=user.id,
@@ -1007,7 +1071,47 @@ class TestAdminScoringEndpoints:
             challenge_id=challenge.id,
         )
 
-        # Create a manual award that generates a score event
+        response = admin_client.get(
+            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/hint_redemptions"
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+
+        redemptions = data["data"]
+        assert len(redemptions) >= 1
+
+        # Find our redemption
+        redemption_data = next(
+            (r for r in redemptions if r["id"] == hint_redemption.id), None
+        )
+        assert redemption_data is not None, "Should find hint redemption"
+
+        # Check enriched names and challenge info
+        assert "team_name" in redemption_data
+        assert "hint_preview" in redemption_data
+        assert "challenge_id" in redemption_data
+        assert "challenge_name" in redemption_data
+        assert redemption_data["team_name"] == team_with_member.name
+        assert redemption_data["hint_preview"] == hint.preview
+        assert redemption_data["challenge_id"] == challenge.id
+        assert redemption_data["challenge_name"] == challenge.name
+
+    def test_get_team_manual_awards_with_data(
+        self,
+        admin_client,
+        admin,
+        event,
+        team_with_member,
+        db_session
+    ):
+        """
+        Test getting team manual awards with enriched names
+        """
+        from ..models import ManualPointAward
+
+        # Create a manual award
         manual_award = ManualPointAward.create_award(
             admin_id=admin.id,
             team_id=team_with_member.id,
@@ -1016,135 +1120,85 @@ class TestAdminScoringEndpoints:
         )
 
         response = admin_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/score_events"
+            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/manual_awards"
         )
 
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
 
-        score_events = data["data"]["score_events"]
-        assert len(score_events) >= 3  # At least our 3 events
+        awards = data["data"]
+        assert len(awards) >= 1
 
-        # Find our specific score events by checking embedded source data
-        attempt_event = None
-        hint_event = None
-        award_event = None
-
-        for event_data in score_events:
-            if "source_type" in event_data:
-                if event_data["source_type"] == "attempt" and event_data["source"]["id"] == attempt.id:
-                    attempt_event = event_data
-                elif event_data["source_type"] == "hint_redemption" and event_data["source"]["id"] == hint_redemption.id:
-                    hint_event = event_data
-                elif event_data["source_type"] == "manual_award" and event_data["source"]["id"] == manual_award.id:
-                    award_event = event_data
-
-        # Verify we found all our events
-        assert attempt_event is not None, "Should find attempt score event"
-        assert hint_event is not None, "Should find hint redemption score event"
-        assert award_event is not None, "Should find manual award score event"
-
-        # Check score event structure
-        assert "team_name" in attempt_event
-        assert attempt_event["team_name"] == team_with_member.name
-        assert "source" in attempt_event
-
-        # Check embedded attempt data includes names
-        attempt_source = attempt_event["source"]
-        assert "team_name" in attempt_source
-        assert "challenge_name" in attempt_source
-        assert "question_name" in attempt_source
-        assert attempt_source["team_name"] == team_with_member.name
-        assert attempt_source["challenge_name"] == challenge.name
-        assert attempt_source["question_name"] == question.name
-
-        # Check embedded hint redemption includes names
-        hint_source = hint_event["source"]
-        assert "team_name" in hint_source
-        assert "hint_preview" in hint_source
-        assert hint_source["team_name"] == team_with_member.name
-        assert hint_source["hint_preview"] == hint.preview
-
-        # Check embedded manual award includes names
-        award_source = award_event["source"]
-        assert "team_name" in award_source
-        assert "admin_name" in award_source
-        assert award_source["team_name"] == team_with_member.name
-        assert award_source["admin_name"] == admin.name
-        assert award_source["reason"] == "Test bonus"
-
-    def test_get_team_score_events_no_limit(
-        self,
-        admin_client,
-        admin,
-        event,
-        team_with_member,
-        score,
-        score_event_factory
-    ):
-        """Test getting team score events returns all events (no limit)"""
-        # Create multiple score events
-        for i in range(10):
-            score_event_factory(
-                score_id = score.id,
-                team_id = team_with_member.id,
-                points = 10 * (i + 1)
-            )
-
-        response = admin_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/score_events"
+        # Find our award
+        award_data = next(
+            (a for a in awards if a["id"] == manual_award.id), None
         )
+        assert award_data is not None, "Should find manual award"
 
-        assert response.status_code == 200
-        data = response.get_json()
-        assert data["success"] is True
-        # Should return all events (no limit applied)
-        assert len(data["data"]["score_events"]) >= 10
+        # Check enriched names
+        assert "team_name" in award_data
+        assert "admin_name" in award_data
+        assert award_data["team_name"] == team_with_member.name
+        assert award_data["admin_name"] == admin.name
+        assert award_data["reason"] == "Test bonus"
+        assert award_data["points"] == 50
 
-    def test_get_team_score_events_nonexistent_team(
+    def test_new_endpoints_nonexistent_team(
         self,
         admin_client,
         admin,
         event
     ):
-        """Test getting team score events for nonexistent team"""
-        response = admin_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/999999/score_events"
-        )
+        """Test that all new endpoints return 404 for nonexistent team"""
+        endpoints = [
+            f"/ng/admin/scoring/events/{event.id}/teams/999999/attempts",
+            f"/ng/admin/scoring/events/{event.id}/teams/999999/hint_redemptions",
+            f"/ng/admin/scoring/events/{event.id}/teams/999999/manual_awards",
+        ]
 
-        assert response.status_code == 404
-        data = response.get_json()
-        assert data["success"] is False
+        for endpoint in endpoints:
+            response = admin_client.get(endpoint)
+            assert response.status_code == 404
+            data = response.get_json()
+            assert data["success"] is False
 
-    def test_get_team_score_events_nonexistent_event(
+    def test_new_endpoints_nonexistent_event(
         self,
         admin_client,
         admin,
         team_with_member
     ):
-        """Test getting team score events for nonexistent event"""
-        response = admin_client.get(
-            f"/ng/admin/scoring/events/999999/teams/{team_with_member.id}/score_events"
-        )
+        """Test that all new endpoints return 404 for nonexistent event"""
+        endpoints = [
+            f"/ng/admin/scoring/events/999999/teams/{team_with_member.id}/attempts",
+            f"/ng/admin/scoring/events/999999/teams/{team_with_member.id}/hint_redemptions",
+            f"/ng/admin/scoring/events/999999/teams/{team_with_member.id}/manual_awards",
+        ]
 
-        assert response.status_code == 404
-        data = response.get_json()
-        assert data["success"] is False
+        for endpoint in endpoints:
+            response = admin_client.get(endpoint)
+            assert response.status_code == 404
+            data = response.get_json()
+            assert data["success"] is False
 
-    def test_get_team_score_events_non_admin_fails(
+    def test_new_endpoints_non_admin_fails(
         self,
         logged_in_client,
         user,
         event,
         team_with_member
     ):
-        """Test that non-admin cannot get team score events"""
-        response = logged_in_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/score_events"
-        )
+        """Test that non-admin cannot access new endpoints"""
+        endpoints = [
+            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/attempts",
+            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/hint_redemptions",
+            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/manual_awards",
+        ]
 
-        assert response.status_code == 302
+        for endpoint in endpoints:
+            response = logged_in_client.get(endpoint)
+            assert response.status_code == 302
 
     def test_unauthenticated_admin_requests(
         self,
@@ -1157,7 +1211,9 @@ class TestAdminScoringEndpoints:
             f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/award-points",
             f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/recalculate",
             f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/history",
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/score_events",
+            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/attempts",
+            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/hint_redemptions",
+            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/manual_awards",
         ]
 
         for endpoint in endpoints:

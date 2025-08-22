@@ -3,7 +3,11 @@ Defines the Attempt model for tracking answer submissions.
 """
 
 from __future__ import annotations
-from typing import Any, TypedDict, NotRequired
+from typing import (
+    Any, 
+    TypedDict, 
+    NotRequired,
+)
 
 from datetime import datetime
 
@@ -125,7 +129,7 @@ class Attempt(db.Model):
         Validate that an attempt is allowed
         """
 
-        # LAZY-IMPORT: Tagging all necessary lazy imports for easy searchability & visibility.
+        # LAZY-IMPORT
         from ...challenge.models.Question import Question
         from ...event.models.Event import Event
         from ...team.models.TeamMember import TeamMember

@@ -20,13 +20,17 @@ from ..controllers import (
     award_manual_points,
     recalculate_score,
     get_score_history,
-    get_team_score_events,
+    get_team_attempts,
+    get_team_hint_redemptions,
+    get_team_manual_awards,
 )
 from ._docs import (
     AWARD_MANUAL_POINTS_DOC,
     RECALCULATE_SCORE_DOC,
     GET_SCORE_HISTORY_DOC,
-    GET_TEAM_SCORE_EVENTS_DOC,
+    GET_TEAM_ATTEMPTS_DOC,
+    GET_TEAM_HINT_REDEMPTIONS_DOC,
+    GET_TEAM_MANUAL_AWARDS_DOC,
 )
 
 
@@ -113,21 +117,50 @@ class ScoreHistory(Resource):
         return success_response(result)
 
 
+
 @scoring_admin_namespace.route(
-    "/events/<int:event_id>/teams/<int:team_id>/score_events"
+    "/events/<int:event_id>/teams/<int:team_id>/attempts"
 )
-class TeamScoreEvents(Resource):
-    @scoring_admin_namespace.doc(**GET_TEAM_SCORE_EVENTS_DOC)
+class TeamAttempts(Resource):
+    @scoring_admin_namespace.doc(**GET_TEAM_ATTEMPTS_DOC)
     @admin_endpoint()
     @load_event(LoaderType.PARAM)
     @load_team(LoaderType.PARAM)
     def get(self, event_id: int, team_id: int, event, team, **kwargs):
         """
-        Get timeline of score events for a team with embedded source data
+        Get all attempts (correct and incorrect) for a team in an event
         """
-        score_events = get_team_score_events(
-            team_id=team_id,
-            event_id=event_id
-        )
+        attempts = get_team_attempts(team_id, event_id)
+        return success_response(attempts)
 
-        return success_response({"score_events": score_events})
+
+@scoring_admin_namespace.route(
+    "/events/<int:event_id>/teams/<int:team_id>/hint_redemptions"
+)
+class TeamHintRedemptions(Resource):
+    @scoring_admin_namespace.doc(**GET_TEAM_HINT_REDEMPTIONS_DOC)
+    @admin_endpoint()
+    @load_event(LoaderType.PARAM)
+    @load_team(LoaderType.PARAM)
+    def get(self, event_id: int, team_id: int, event, team, **kwargs):
+        """
+        Get all hint redemptions for a team in an event
+        """
+        redemptions = get_team_hint_redemptions(team_id, event_id)
+        return success_response(redemptions)
+
+
+@scoring_admin_namespace.route(
+    "/events/<int:event_id>/teams/<int:team_id>/manual_awards"
+)
+class TeamManualAwards(Resource):
+    @scoring_admin_namespace.doc(**GET_TEAM_MANUAL_AWARDS_DOC)
+    @admin_endpoint()
+    @load_event(LoaderType.PARAM)
+    @load_team(LoaderType.PARAM)
+    def get(self, event_id: int, team_id: int, event, team, **kwargs):
+        """
+        Get all manual point awards for a team in an event
+        """
+        awards = get_team_manual_awards(team_id, event_id)
+        return success_response(awards)
