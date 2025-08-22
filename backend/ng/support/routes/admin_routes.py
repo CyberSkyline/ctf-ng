@@ -173,7 +173,7 @@ class AdminTicketUnassignment(Resource):
     @load_ticket(LoaderType.PARAM)
     def put(self, ticket_id: int, ticket, current_user: User, json_data, **kwargs):
         """
-        Unassign ticket from current user
+        Unassign ticket from any user (admin only)
         """
         updated_ticket = unassign_ticket(
             ticket=ticket,
