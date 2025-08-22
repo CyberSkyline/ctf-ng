@@ -357,6 +357,7 @@ class EventTeamLeave(Resource):
 class EventChallenges(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
+    @get_permissions
     @events_user_namespace.doc(
         description="Get all challenges within an event.",
         responses={
@@ -364,8 +365,10 @@ class EventChallenges(Resource):
             404: "Event not found",
         },
     )
-    def get(self, event_id: int, event: Event, **kwargs):
+    def get(self, event_id: int, event: Event, permissions, **kwargs):
         """Get all of the challenges within an event"""
+        if PermissionEnum.CAN_VIEW_CHALLENGES not in permissions:
+            return error_response("You do not have permission to view challenges.", 403)
         challenges = event.get_all_challenges()
         return success_response(challenges)
 
@@ -376,6 +379,7 @@ class EventChallengeRender(Resource):
     @load_event(source=LoaderType.PARAM)
     @load_challenge(source=LoaderType.PARAM)
     @load_team_by_user_and_event()
+    @get_permissions
     @events_user_namespace.doc(
         description="Render a challenge for the user's team in the event.",
         responses={
@@ -383,7 +387,9 @@ class EventChallengeRender(Resource):
             404: "Challenge or Event not found",
         },
     )
-    def get(self, event_id: int, challenge_id: int, event: Event, challenge: Challenge, team: Team, **kwargs):
+    def get(self, event_id: int, challenge_id: int, event: Event, challenge: Challenge, team: Team, permissions, **kwargs):
+        if PermissionEnum.CAN_VIEW_CHALLENGES not in permissions:
+            return error_response("You do not have permission to view challenges.", 403)
         return success_response(challenge.render(team))
 
 
@@ -392,6 +398,7 @@ class EventChallengeStatuses(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
     @load_team_by_user_and_event()
+    @get_permissions
     @events_user_namespace.doc(
         description="Get all challenges and their statuses for the current user's team in the event.",
         responses={
@@ -399,8 +406,10 @@ class EventChallengeStatuses(Resource):
             404: "Event not found",
         },
     )
-    def get(self, event_id: int, event: Event, team: Team, **kwargs):
+    def get(self, event_id: int, event: Event, team: Team, permissions, **kwargs):
         """Get all challenges and their statuses for the current user's team in the event"""
+        if PermissionEnum.CAN_VIEW_CHALLENGES not in permissions:
+            return error_response("You do not have permission to view challenges.", 403)
         results = []
 
         for challenge in event.get_all_challenges():
@@ -435,6 +444,9 @@ class EventChallengeStartContainers(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
     @load_team_by_user_and_event()
-    def get(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event):
+    @get_permissions
+    def get(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event, permissions):
+        if PermissionEnum.CAN_PLAY_CHALLENGES not in permissions:
+            return error_response("You do not have permission to play challenges.", 403)
         started = start_containers(challenge_id, team.id, current_user)
         return success_response(started)

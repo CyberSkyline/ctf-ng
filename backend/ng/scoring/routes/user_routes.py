@@ -15,8 +15,10 @@ from ...core.middleware.loaders import (
     load_team_by_user_and_event,
     load_score_by_team_and_event,
 )
+from ...core.middleware.permission_middleware import get_permissions
+from ...permissions.models.enums import PermissionEnum
 from ... import config
-from ...core.utils import success_response
+from ...core.utils import success_response, error_response
 from ...core.exceptions import ValidationError
 
 from ...user.models import User
@@ -77,6 +79,7 @@ class SubmitAnswer(Resource):
     @load_challenge(LoaderType.PARAM)
     @load_question(LoaderType.PARAM)
     @load_team_by_user_and_event()
+    @get_permissions
     def post(
         self,
         event_id: int,
@@ -87,12 +90,16 @@ class SubmitAnswer(Resource):
         question,
         team,
         current_user: User,
+        permissions,
         json_data,
         **kwargs,
     ):
         """
         Submit an answer to a question
         """
+        if PermissionEnum.CAN_PLAY_CHALLENGES not in permissions:
+            return error_response("You do not have permission to play challenges.", 403)
+
         result = submit_answer(
             event=event,
             challenge=challenge,
@@ -112,6 +119,7 @@ class RedeemHint(Resource):
     @load_challenge(LoaderType.PARAM)
     @load_hint(LoaderType.PARAM)
     @load_team_by_user_and_event()
+    @get_permissions
     def post(
         self,
         event_id: int,
@@ -121,12 +129,17 @@ class RedeemHint(Resource):
         challenge,
         hint,
         team,
+        permissions,
         current_user: User,
         **kwargs,
     ):
         """
         Redeem a hint
         """
+
+        if PermissionEnum.CAN_PLAY_CHALLENGES not in permissions:
+            return error_response("You do not have permission to play challenges.", 403)
+
         result = redeem_hint(
             event=event,
             challenge=challenge,

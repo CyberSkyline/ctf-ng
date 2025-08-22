@@ -32,6 +32,7 @@ from .support.models.Ticket import Ticket
 from .support.models.TicketTag import TicketTag
 from .team.models.Team import Team
 from .user.models.User import User as NgUser
+from .core.utils import utc_now
 
 
 def create_app():
@@ -277,8 +278,8 @@ def event_factory(db_session):
             "description": "A test event.",
             "max_team_size": 4,
             "locked": False,
-            "start_time": datetime.utcnow() - timedelta(days=1),
-            "end_time": datetime.utcnow() + timedelta(days=1),
+            "start_time": utc_now() - timedelta(days=1),
+            "end_time": utc_now() + timedelta(days=1),
         }
         defaults.update(kwargs)
         event = Event.create_event(**defaults)
@@ -346,6 +347,7 @@ def team_with_members(db_session, team_factory, user_factory):
     """Creates a team with multiple members for testing."""
     users = [user_factory(name=f"User {i}", email=f"user{i}@example.com") for i in range(1, 4)]
     team = team_factory(members=users)
+    team.set_start_timestamp(utc_now())
     return team
 
 
@@ -398,7 +400,7 @@ def closed_event_client(app, db_session, event_factory, team_factory, user_facto
     user = user_factory(name="Closed Event User", email="closed_event_user@example.com")
     user2 = user_factory(name="Closed Event User 2", email="closed_event_user2@example.com")
     event = event_factory(
-        locked=True, start_time=datetime.utcnow() - timedelta(days=2), end_time=datetime.utcnow() - timedelta(days=1)
+        locked=True, start_time=utc_now() - timedelta(days=2), end_time=utc_now() - timedelta(days=1)
     )
     team = team_factory(event=event, members=[user, user2])
 
@@ -420,7 +422,7 @@ def event(db_session):
     from .event.models.Event import Event
 
     event = Event(
-        name="Test Event 1",
+        name=f"Test Event {db_session.query(Event).count() + 1}",
         description="A test event.",
         max_team_size=4,
         locked=False,
@@ -439,8 +441,8 @@ def locked_event(db_session):
         name="Locked Event",
         description="This event is locked",
         locked=True,
-        start_time=datetime.utcnow() - timedelta(days=10),
-        end_time=datetime.utcnow() - timedelta(days=5),
+        start_time=utc_now() - timedelta(days=10),
+        end_time=utc_now() - timedelta(days=5),
     )
     db_session.add(event)
     db_session.flush()
@@ -456,8 +458,8 @@ def future_event(db_session):
         name="Future Event",
         description="This event hasn't started",
         locked=False,
-        start_time=datetime.utcnow() + timedelta(days=5),
-        end_time=datetime.utcnow() + timedelta(days=10),
+        start_time=utc_now() + timedelta(days=5),
+        end_time=utc_now() + timedelta(days=10),
     )
     db_session.add(event)
     db_session.flush()
@@ -518,11 +520,12 @@ def permissions(db_session):
     permission1 = Permission.create_permission(PermissionEnum.CAN_EDIT_TEAM, "Edit team details")
     permission2 = Permission.create_permission(PermissionEnum.CAN_EDIT_USER, "Edit user details")
     permission3 = Permission.create_permission(PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS, "Manage support tickets")
+    permission4 = Permission.create_permission(PermissionEnum.CAN_VIEW_CHALLENGES, "View challenges")
+    permission5 = Permission.create_permission(PermissionEnum.CAN_PLAY_CHALLENGES, "Play challenges")
 
     db_session.commit()
 
-    return [permission1, permission2, permission3]
-
+    return [permission1, permission2, permission3, permission4, permission5]
 
 @pytest.fixture
 def challenge(db_session, event):
@@ -557,7 +560,7 @@ def ticket_tag_factory(db_session):
 
     def _factory(**kwargs):
         defaults = {
-            "name": f"tag_{datetime.utcnow().timestamp()}",
+            "name": f"tag_{utc_now().timestamp()}",
             "color": "#0000FF",
             "description": "Test tag",
         }
@@ -662,7 +665,7 @@ def ticket_factory(db_session):
 
     def _factory(**kwargs):
         defaults = {
-            "subject": f"Test Ticket {datetime.utcnow().timestamp()}",
+            "subject": f"Test Ticket {utc_now().timestamp()}",
             "author_id": kwargs.get("author_id", 1),
         }
         defaults.update(kwargs)
@@ -812,11 +815,32 @@ def score_event(db_session, score, team_with_member):
     """Create a ScoreEvent for testing."""
     from .scoring.models.ScoreEvent import ScoreEvent
 
-    score_event = ScoreEvent(score_id=score.id, team_id=team_with_member.id, points=50, timestamp=datetime.utcnow())
+    score_event = ScoreEvent(score_id=score.id, team_id=team_with_member.id, points=50, timestamp=utc_now())
     db_session.add(score_event)
     db_session.commit()
     score.adjust(50, commit=True)
     return score_event
+
+@pytest.fixture
+def hint_factory(db_session):
+
+    from .challenge.models.Hint import Hint
+    def _factory(**kwargs):
+        defaults = {
+            "challenge_id": kwargs.get("challenge_id", 1),
+            "preview": kwargs.get("preview", "Test preview"),
+            "body": kwargs.get("body", "Test body"),
+            "deduction": kwargs.get("deduction", 10),
+        }
+        defaults.update(kwargs)
+
+        hint = Hint(**defaults)
+        db_session.add(hint)
+        if kwargs.get("commit", True):
+            db_session.commit()
+        return hint
+
+    return _factory
 
 
 @pytest.fixture
@@ -834,7 +858,7 @@ def attempt_factory(db_session):
             "submission": kwargs.get("submission", "test answer"),
             "is_correct": kwargs.get("is_correct", False),
             "points": kwargs.get("points", 0),
-            "timestamp": kwargs.get("timestamp", datetime.utcnow()),
+            "timestamp": kwargs.get("timestamp", utc_now()),
         }
         defaults.update(kwargs)
 
@@ -858,7 +882,7 @@ def hint_redemption_factory(db_session):
             "user_id": kwargs.get("user_id", 1),
             "team_id": kwargs.get("team_id", 1),
             "points": kwargs.get("points", 0),
-            "timestamp": kwargs.get("timestamp", datetime.utcnow()),
+            "timestamp": kwargs.get("timestamp", utc_now()),
         }
         defaults.update(kwargs)
 
@@ -882,7 +906,7 @@ def manual_award_factory(db_session):
             "team_id": kwargs.get("team_id", 1),
             "points": kwargs.get("points", 100),
             "reason": kwargs.get("reason", "Test award"),
-            "timestamp": kwargs.get("timestamp", datetime.utcnow()),
+            "timestamp": kwargs.get("timestamp", utc_now()),
         }
         defaults.update(kwargs)
 
@@ -905,7 +929,7 @@ def score_factory(db_session):
             "team_id": kwargs.get("team_id", 1),
             "event_id": kwargs.get("event_id", 1),
             "points": kwargs.get("points", 0),
-            "last_update": kwargs.get("last_update", datetime.utcnow()),
+            "last_update": kwargs.get("last_update", utc_now()),
             "team_name": kwargs.get("team_name", "Test Team"),
         }
         defaults.update(kwargs)
@@ -929,7 +953,7 @@ def score_event_factory(db_session):
             "score_id": kwargs.get("score_id", 1),
             "team_id": kwargs.get("team_id", 1),
             "points": kwargs.get("points", 100),
-            "timestamp": kwargs.get("timestamp", datetime.utcnow()),
+            "timestamp": kwargs.get("timestamp", utc_now()),
         }
         defaults.update(kwargs)
 
