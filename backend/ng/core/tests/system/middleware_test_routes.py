@@ -85,6 +85,14 @@ def get_user_permissions(**kwargs):
     """
     return jsonify({"success": True, "permissions": kwargs.get("permissions", [])})
 
+@middleware_test_routes.route("/get_circumstantial_permissions/<int:team_id>", methods=["GET"])
+@user_endpoint()
+@load_team(source=LoaderType.PARAM)
+@get_permissions
+def get_team_permissions(**kwargs):
+
+    return jsonify({"success": True, "permissions": kwargs.get("permissions", [])})
+
 @middleware_test_routes.route("/event_only_public/<int:event_id>", methods=["GET"])
 @user_endpoint()
 @load_event(source=LoaderType.PARAM)

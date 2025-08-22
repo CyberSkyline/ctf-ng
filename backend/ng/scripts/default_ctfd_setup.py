@@ -81,6 +81,18 @@ with app.app_context():
         name=PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
         description="Can manage support tickets",
     )
+    create_permission(
+        name=PermissionEnum.CAN_IMPERSONATE_USERS,
+        description="Can impersonate other users",
+    )
+    create_permission(
+        name=PermissionEnum.CAN_VIEW_CHALLENGES,
+        description="Can view challenges",
+    )
+    create_permission(
+        name=PermissionEnum.CAN_PLAY_CHALLENGES,
+        description="Can play challenges",
+    )
 
     create_role(
         name=RoleEnum.ADMIN,
@@ -88,12 +100,16 @@ with app.app_context():
             PermissionEnum.CAN_EDIT_TEAM,
             PermissionEnum.CAN_EDIT_USER,
             PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
+            PermissionEnum.CAN_IMPERSONATE_USERS,
+            PermissionEnum.CAN_VIEW_CHALLENGES,
+            PermissionEnum.CAN_PLAY_CHALLENGES,
         ],
     )
     create_role(
         name=RoleEnum.SUPPORT,
         permissions=[
             PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
+            PermissionEnum.CAN_VIEW_CHALLENGES,
         ],
     )
     assign_role_to_user(admin_user.id, "admin")

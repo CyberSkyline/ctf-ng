@@ -18,7 +18,7 @@ def get_challenge_permissions(team: Team) -> list[str]:
 
     event = Event.find_by_id(team.event_id)
 
-    if event.start_time < datetime.utcnow():
+    if event.start_time is None or event.start_time < datetime.utcnow():
         if team.start_timestamp is not None:
             permissions.append(PermissionEnum.CAN_VIEW_CHALLENGES)
             if event.end_time is None or event.end_time > datetime.utcnow():

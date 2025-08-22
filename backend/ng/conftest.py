@@ -160,10 +160,16 @@ def middleware_client():
 
         Demographic.create_demographic(user_id=user_to_login.id, event_id=event3.id, commit=True)
 
-        Team.create_team_with_captain(
+        team = Team.create_team_with_captain(
             name="Temp Team", event_id=event.id, captain_id=user_to_login.id, invite_code="fo67ykug"
         )
+
+        team.set_start_timestamp(datetime.now())
+
         Team.create_team_with_captain(name="Second Team", event_id=event.id, captain_id=user2.id)
+
+        team3 = Team.create_team_with_captain(name="Third Team", event_id=event2.id, captain_id=user2.id)
+        team3.set_start_timestamp(datetime.now())
 
         Ticket.create_ticket(
             subject="Test Ticket",
