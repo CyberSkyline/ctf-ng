@@ -45,9 +45,8 @@ class Tickets(Resource):
             team_id=json_data.get("team_id"),
             challenge_id=json_data.get("challenge_id"),
         )
-        ticket_data = ticket.serialize()
 
-        return success_response(ticket_data, status_code=201)
+        return success_response(ticket, status_code=201)
 
 
 @support_user_namespace.route("/me/tickets")
@@ -65,9 +64,8 @@ class MyTickets(Resource):
             status=status,
             is_admin=False,
         )
-        serialized_tickets = [ticket.serialize() for ticket in tickets]
 
-        return success_response(serialized_tickets)
+        return success_response(tickets)
 
 
 @support_user_namespace.route("/me/tickets/<int:ticket_id>")
@@ -80,9 +78,8 @@ class MyTicket(Resource):
         Get ticket details with all messages
         """
         result = get_ticket(ticket=ticket)
-        ticket_data = result["ticket"].serialize()
 
-        return success_response({"ticket": ticket_data, "messages": result["messages"]})
+        return success_response(result)
 
 @support_user_namespace.route("/me/tickets/<int:ticket_id>/add_message")
 class TicketMessage(Resource):

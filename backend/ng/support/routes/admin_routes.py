@@ -76,11 +76,8 @@ class AdminTickets(Resource):
             team_id = team_id,
             is_admin = True,
         )
-        serialized_tickets = [
-            ticket.serialize(include_admin_fields = True) for ticket in tickets
-        ]
 
-        return success_response(serialized_tickets)
+        return success_response(tickets)
 
 
 @support_admin_namespace.route("/tickets/<int:ticket_id>")
