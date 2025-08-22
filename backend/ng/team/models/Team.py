@@ -239,6 +239,12 @@ class Team(db.Model):
         if commit:
             db.session.commit()
 
+    def set_start_timestamp(self, timestamp: datetime | None = None, commit=True):
+        """Set the team's start timestamp."""
+        self.start_timestamp = timestamp
+        if commit:
+            db.session.commit()
+
     def update_invite_code(self, new_code: str | None = None, commit=True):
         """Update team invite code and persist to database."""
         if new_code is None:
@@ -404,6 +410,8 @@ class Team(db.Model):
         """
         existing = cls.query.filter_by(invite_code=invite_code).first()
         return existing is None
+
+
 
     @classmethod
     def get_total_count(cls) -> int:
