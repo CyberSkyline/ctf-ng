@@ -3,7 +3,7 @@ Defines the Score model for tracking team scores per event.
 """
 
 from __future__ import annotations
-from typing import Any, TypedDict
+from typing import Any, TypedDict, NotRequired
 
 from datetime import datetime
 
@@ -25,6 +25,7 @@ class SerializedScore(TypedDict):
     id: int
     team_id: int
     event_id: int
+    event_name: NotRequired[str]
     points: int
     last_update: str
     team_name: str | None
@@ -65,6 +66,9 @@ class Score(db.Model):
             "last_update": self.last_update.isoformat() + "Z",
             "team_name": self.team_name,
         }
+
+        if self.event:
+            data["event_name"] = self.event.name
 
         return SerializedScore(**data)
 
