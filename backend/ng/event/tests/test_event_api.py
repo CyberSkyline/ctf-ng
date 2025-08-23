@@ -1,13 +1,18 @@
-import base64
+"""
+Test Event API
+"""
+
 import os
+import base64
+import pytest
 from datetime import datetime, timedelta
 
-import pytest
-
-from ...challenge.models.Challenge import Challenge
+from ...user.models.User import User
 from ...team.models.Team import Team
 from ...team.models.TeamMember import TeamMember
-from ...user.models.User import User
+from ...event.models.Demographic import Demographic
+from ...challenge.models.Challenge import Challenge
+
 
 pytestmark = pytest.mark.db
 
@@ -16,8 +21,8 @@ class Test_Public_Event_Listing:
     endpoint = "/ng/events"
 
     def test_list_public_events(self, logged_in_client, event_factory):
-        event1 = event_factory(name="Public Event 1", public=True)
-        event2 = event_factory(name="Public Event 2", public=True)
+        event1 = event_factory(name = "Public Event 1", public = True)
+        event2 = event_factory(name = "Public Event 2", public = True)
 
         response = logged_in_client.get(self.endpoint)
 
@@ -29,7 +34,7 @@ class Test_Public_Event_Listing:
         assert data["data"][1] == event2.serialize()
 
     def test_list_no_private_events(self, logged_in_client, event_factory):
-        event2 = event_factory(name="Private Event 2", public=True)
+        event2 = event_factory(name = "Private Event 2", public = True)
 
         response = logged_in_client.get(self.endpoint)
         assert response.status_code == 200
@@ -44,7 +49,7 @@ class Test_Public_Event_Detail:
         return f"/ng/events/{event_id}"
 
     def test_get_event_details(self, logged_in_client, event_factory):
-        event = event_factory(name="Event for Detail Test", public=True)
+        event = event_factory(name = "Event for Detail Test", public = True)
 
         response = logged_in_client.get(self.get_endpoint(event.id))
 
@@ -62,7 +67,10 @@ class Test_Public_Event_Detail:
         assert data["success"] is False
 
     def test_get_private_event(self, logged_in_client, event_factory):
-        event = event_factory(name="Private Event for Detail Test", public=False)
+        event = event_factory(
+            name = "Private Event for Detail Test",
+            public = False
+        )
 
         response = logged_in_client.get(self.get_endpoint(event.id))
 
@@ -76,7 +84,7 @@ class Test_Event_Eligibility:
         return f"/ng/events/{event_id}/me/eligibility"
 
     def test_check_event_eligibility(self, logged_in_client, event_factory):
-        event = event_factory(name="Eligible Event", public=True)
+        event = event_factory(name = "Eligible Event", public = True)
 
         response = logged_in_client.get(self.get_endpoint(event.id))
 
@@ -92,23 +100,15 @@ class Test_Event_Eligibility:
         data = response.get_json()
         assert data["success"] is False
 
-    def test_check_event_eligibility_not_open(self, logged_in_client, event_factory):
-        event = event_factory(name="Closed Event", public=True, registration_open=False)
-
-        response = logged_in_client.get(self.get_endpoint(event.id))
-
-        assert response.status_code == 400
-        data = response.get_json()
-        assert data["success"] is False
-        assert "errors" in data
-        assert "Event registration is closed." in data["errors"]["business_logic"]
-
-    def test_check_event_eligibility_before_start(self, logged_in_client, event_factory):
+    def test_check_event_eligibility_not_open(
+        self,
+        logged_in_client,
+        event_factory
+    ):
         event = event_factory(
-            name="Event Before Start",
-            public=True,
-            registration_start_date=datetime.utcnow() + timedelta(days=1),
-            registration_end_date=datetime.utcnow() + timedelta(days=2),
+            name = "Closed Event",
+            public = True,
+            registration_open = False
         )
 
         response = logged_in_client.get(self.get_endpoint(event.id))
@@ -117,14 +117,19 @@ class Test_Event_Eligibility:
         data = response.get_json()
         assert data["success"] is False
         assert "errors" in data
-        assert "Event registration has not started yet." in data["errors"]["business_logic"]
+        assert "Event registration is closed." in data["errors"][
+            "business_logic"]
 
-    def test_check_event_eligibility_after_end(self, logged_in_client, event_factory):
+    def test_check_event_eligibility_before_start(
+        self,
+        logged_in_client,
+        event_factory
+    ):
         event = event_factory(
-            name="Event After End",
-            public=True,
-            registration_end_date=datetime.utcnow() - timedelta(days=1),
-            registration_start_date=datetime.utcnow() - timedelta(days=2),
+            name = "Event Before Start",
+            public = True,
+            registration_start_date = datetime.utcnow() + timedelta(days = 1),
+            registration_end_date = datetime.utcnow() + timedelta(days = 2),
         )
 
         response = logged_in_client.get(self.get_endpoint(event.id))
@@ -133,14 +138,42 @@ class Test_Event_Eligibility:
         data = response.get_json()
         assert data["success"] is False
         assert "errors" in data
-        assert "Event registration has ended." in data["errors"]["business_logic"]
+        assert "Event registration has not started yet." in data["errors"][
+            "business_logic"]
 
-    def test_check_event_eligibility_already_registered(self, logged_in_client, user, event_factory, team_factory):
-        event = event_factory(name="Already Registered Event", public=True)
+    def test_check_event_eligibility_after_end(
+        self,
+        logged_in_client,
+        event_factory
+    ):
+        event = event_factory(
+            name = "Event After End",
+            public = True,
+            registration_end_date = datetime.utcnow() - timedelta(days = 1),
+            registration_start_date = datetime.utcnow() - timedelta(days = 2),
+        )
+
+        response = logged_in_client.get(self.get_endpoint(event.id))
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        assert "errors" in data
+        assert "Event registration has ended." in data["errors"][
+            "business_logic"]
+
+    def test_check_event_eligibility_already_registered(
+        self,
+        logged_in_client,
+        user,
+        event_factory,
+        team_factory
+    ):
+        event = event_factory(name = "Already Registered Event", public = True)
 
         response = logged_in_client.post(
             f"/ng/events/{event.id}/me/register",
-            json={
+            json = {
                 "team_name": "Test Team",
             },
         )
@@ -151,19 +184,25 @@ class Test_Event_Eligibility:
         data = response.get_json()
         assert data["success"] is False
         assert "errors" in data
-        assert "User is already registered for this event." in data["errors"]["business_logic"]
+        assert "User is already registered for this event." in data["errors"][
+            "business_logic"]
 
 
 class Test_Event_Registration:
     def get_endpoint(self, event_id: int) -> str:
         return f"/ng/events/{event_id}/me/register"
 
-    def test_register_for_event_with_new_team(self, logged_in_client, user, event_factory):
-        event = event_factory(name="Event for Registration", public=True)
+    def test_register_for_event_with_new_team(
+        self,
+        logged_in_client,
+        user,
+        event_factory
+    ):
+        event = event_factory(name = "Event for Registration", public = True)
 
         response = logged_in_client.post(
             self.get_endpoint(event.id),
-            json={
+            json = {
                 "team_name": "Test Team",
             },
         )
@@ -172,20 +211,35 @@ class Test_Event_Registration:
         data = response.get_json()
         assert data["success"] is True
 
-        team = Team.query.filter_by(name="Test Team", event_id=event.id).first()
+        team = Team.query.filter_by(
+            name = "Test Team",
+            event_id = event.id
+        ).first()
         assert data["data"] == team.serialize()
 
-        team_member = TeamMember.query.filter_by(user_id=user.id, team_id=team.id).first()
+        team_member = TeamMember.query.filter_by(
+            user_id = user.id,
+            team_id = team.id
+        ).first()
         assert team_member is not None
 
-    def test_register_for_event_with_existing_team(self, logged_in_client, user_factory, event_factory, team_factory):
-        event = event_factory(name="Event for Existing Team Registration", public=True)
-        user = user_factory(name="testuser", email="testuser@example.com")
-        existing_team = team_factory(event=event, members=[user])
+    def test_register_for_event_with_existing_team(
+        self,
+        logged_in_client,
+        user_factory,
+        event_factory,
+        team_factory
+    ):
+        event = event_factory(
+            name = "Event for Existing Team Registration",
+            public = True
+        )
+        user = user_factory(name = "testuser", email = "testuser@example.com")
+        existing_team = team_factory(event = event, members = [user])
 
         response = logged_in_client.post(
             self.get_endpoint(event.id),
-            json={
+            json = {
                 "invite_code": existing_team.invite_code,
             },
         )
@@ -194,18 +248,29 @@ class Test_Event_Registration:
         data = response.get_json()
         assert data["success"] is True
 
-        team = Team.query.filter_by(id=existing_team.id).first()
+        team = Team.query.filter_by(id = existing_team.id).first()
         assert data["data"] == team.serialize()
 
-        team_member = TeamMember.query.filter_by(user_id=user.id, team_id=team.id).first()
+        team_member = TeamMember.query.filter_by(
+            user_id = user.id,
+            team_id = team.id
+        ).first()
         assert team_member is not None
 
-    def test_register_member_name_cannot_be_in_team_name(self, logged_in_client, user, event_factory):
-        event = event_factory(name="Event for Invalid Team Name", public=True)
+    def test_register_member_name_cannot_be_in_team_name(
+        self,
+        logged_in_client,
+        user,
+        event_factory
+    ):
+        event = event_factory(
+            name = "Event for Invalid Team Name",
+            public = True
+        )
 
         response = logged_in_client.post(
             self.get_endpoint(event.id),
-            json={
+            json = {
                 "team_name": user.name,
             },
         )
@@ -214,12 +279,13 @@ class Test_Event_Registration:
         data = response.get_json()
         assert data["success"] is False
         assert "errors" in data
-        assert "Team name cannot include a member's name." in data["errors"]["validation"]
+        assert "Team name cannot include a member's name." in data["errors"][
+            "validation"]
 
     def test_register_for_nonexistent_event(self, logged_in_client):
         response = logged_in_client.post(
             self.get_endpoint(9999),
-            json={
+            json = {
                 "team_name": "Test Team",
             },
         )
@@ -228,10 +294,20 @@ class Test_Event_Registration:
         data = response.get_json()
         assert data["success"] is False
 
-    def test_register_without_team_name_or_invite_code(self, logged_in_client, event_factory):
-        event = event_factory(name="Event for Missing Team Info", public=True)
+    def test_register_without_team_name_or_invite_code(
+        self,
+        logged_in_client,
+        event_factory
+    ):
+        event = event_factory(
+            name = "Event for Missing Team Info",
+            public = True
+        )
 
-        response = logged_in_client.post(self.get_endpoint(event.id), json={})
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json = {}
+        )
 
         assert response.status_code == 400
         data = response.get_json()
@@ -239,11 +315,15 @@ class Test_Event_Registration:
         assert "errors" in data
 
     def test_register_closed_event(self, logged_in_client, event_factory):
-        event = event_factory(name="Closed Event", public=True, registration_open=False)
+        event = event_factory(
+            name = "Closed Event",
+            public = True,
+            registration_open = False
+        )
 
         response = logged_in_client.post(
             self.get_endpoint(event.id),
-            json={
+            json = {
                 "team_name": "Test Team",
             },
         )
@@ -251,14 +331,18 @@ class Test_Event_Registration:
         data = response.get_json()
         assert data["success"] is False
         assert "errors" in data
-        assert "Event registration is closed." in data["errors"]["business_logic"]
+        assert "Event registration is closed." in data["errors"][
+            "business_logic"]
 
     def test_register_private_event(self, logged_in_client, event_factory):
-        event = event_factory(name="Private Event for Registration", public=False)
+        event = event_factory(
+            name = "Private Event for Registration",
+            public = False
+        )
 
         response = logged_in_client.post(
             self.get_endpoint(event.id),
-            json={
+            json = {
                 "team_name": "Test Team",
             },
         )
@@ -267,17 +351,21 @@ class Test_Event_Registration:
         data = response.get_json()
         assert data["success"] is False
 
-    def test_register_event_before_start(self, logged_in_client, event_factory):
+    def test_register_event_before_start(
+        self,
+        logged_in_client,
+        event_factory
+    ):
         event = event_factory(
-            name="Event Before Start",
-            public=True,
-            registration_start_date=datetime.utcnow() + timedelta(days=1),
-            registration_end_date=datetime.utcnow() + timedelta(days=2),
+            name = "Event Before Start",
+            public = True,
+            registration_start_date = datetime.utcnow() + timedelta(days = 1),
+            registration_end_date = datetime.utcnow() + timedelta(days = 2),
         )
 
         response = logged_in_client.post(
             self.get_endpoint(event.id),
-            json={
+            json = {
                 "team_name": "Test Team",
             },
         )
@@ -286,19 +374,20 @@ class Test_Event_Registration:
         data = response.get_json()
         assert data["success"] is False
         assert "errors" in data
-        assert "Event registration has not started yet." in data["errors"]["business_logic"]
+        assert "Event registration has not started yet." in data["errors"][
+            "business_logic"]
 
     def test_register_event_after_end(self, logged_in_client, event_factory):
         event = event_factory(
-            name="Event After End",
-            public=True,
-            registration_end_date=datetime.utcnow() - timedelta(days=1),
-            registration_start_date=datetime.utcnow() - timedelta(days=2),
+            name = "Event After End",
+            public = True,
+            registration_end_date = datetime.utcnow() - timedelta(days = 1),
+            registration_start_date = datetime.utcnow() - timedelta(days = 2),
         )
 
         response = logged_in_client.post(
             self.get_endpoint(event.id),
-            json={
+            json = {
                 "team_name": "Test Team",
             },
         )
@@ -307,15 +396,24 @@ class Test_Event_Registration:
         data = response.get_json()
         assert data["success"] is False
         assert "errors" in data
-        assert "Event registration has ended." in data["errors"]["business_logic"]
+        assert "Event registration has ended." in data["errors"][
+            "business_logic"]
 
-    def test_register_twice_for_event(self, logged_in_client, user, event_factory):
-        event = event_factory(name="Event for Duplicate Registration", public=True)
+    def test_register_twice_for_event(
+        self,
+        logged_in_client,
+        user,
+        event_factory
+    ):
+        event = event_factory(
+            name = "Event for Duplicate Registration",
+            public = True
+        )
 
         # First registration
         response = logged_in_client.post(
             self.get_endpoint(event.id),
-            json={
+            json = {
                 "team_name": "First Team",
             },
         )
@@ -327,7 +425,7 @@ class Test_Event_Registration:
         # Second registration attempt
         response = logged_in_client.post(
             self.get_endpoint(event.id),
-            json={
+            json = {
                 "team_name": "Second Team",
             },
         )
@@ -336,16 +434,23 @@ class Test_Event_Registration:
         data = response.get_json()
         assert data["success"] is False
         assert "errors" in data
-        assert "User is already registered for this event." in data["errors"]["business_logic"]
+        assert "User is already registered for this event." in data["errors"][
+            "business_logic"]
 
 
 class Test_Event_Team_Lookup:
     def get_endpoint(self, event_id: int) -> str:
         return f"/ng/events/{event_id}/me/team"
 
-    def test_get_team_for_event(self, logged_in_client, user, event_factory, team_factory):
-        event = event_factory(name="Event for Team Lookup", public=True)
-        team = team_factory(event=event, members=[user])
+    def test_get_team_for_event(
+        self,
+        logged_in_client,
+        user,
+        event_factory,
+        team_factory
+    ):
+        event = event_factory(name = "Event for Team Lookup", public = True)
+        team = team_factory(event = event, members = [user])
 
         response = logged_in_client.get(self.get_endpoint(event.id))
 
@@ -366,9 +471,18 @@ class Test_Event_TeamMember_Lookup:
     def get_endpoint(self, event_id: int) -> str:
         return f"/ng/events/{event_id}/me/team/members"
 
-    def test_get_team_member_for_event(self, logged_in_client, user, event_factory, team_factory):
-        event = event_factory(name="Event for Team Member Lookup", public=True)
-        team = team_factory(event=event, members=[user])
+    def test_get_team_member_for_event(
+        self,
+        logged_in_client,
+        user,
+        event_factory,
+        team_factory
+    ):
+        event = event_factory(
+            name = "Event for Team Member Lookup",
+            public = True
+        )
+        team = team_factory(event = event, members = [user])
 
         response = logged_in_client.get(self.get_endpoint(event.id))
 
@@ -389,7 +503,10 @@ class Test_Event_Team_Management:
     def test_captain_promote(self, team_captain_client):
         """Test that the team promote endpoint works correctly."""
 
-        response = team_captain_client.post(f"/ng/events/{1}/me/team/promote", json={"user_id": 3})
+        response = team_captain_client.post(
+            f"/ng/events/{1}/me/team/promote",
+            json = {"user_id": 3}
+        )
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"]
@@ -397,7 +514,10 @@ class Test_Event_Team_Management:
     def test_captain_promote_invalid_user(self, team_captain_client):
         """Test that the team promote endpoint fails with invalid user."""
 
-        response = team_captain_client.post(f"/ng/events/{1}/me/team/promote", json={"user_id": 9999})
+        response = team_captain_client.post(
+            f"/ng/events/{1}/me/team/promote",
+            json = {"user_id": 9999}
+        )
         assert response.status_code == 404
         data = response.get_json()
         assert not data["success"]
@@ -405,7 +525,10 @@ class Test_Event_Team_Management:
 
     def test_captain_promote_self(self, team_captain_client):
         """Test that the team promote endpoint fails when trying to promote self."""
-        response = team_captain_client.post(f"/ng/events/{1}/me/team/promote", json={"user_id": 2})
+        response = team_captain_client.post(
+            f"/ng/events/{1}/me/team/promote",
+            json = {"user_id": 2}
+        )
         assert response.status_code == 400
         data = response.get_json()
         assert not data["success"]
@@ -415,7 +538,10 @@ class Test_Event_Team_Management:
     def test_captain_promote_not_privileged(self, team_member_client):
         """Test that the team promote endpoint fails when a non-captain tries to promote."""
 
-        response = team_member_client.post(f"/ng/events/{1}/me/team/promote", json={"user_id": 2})
+        response = team_member_client.post(
+            f"/ng/events/{1}/me/team/promote",
+            json = {"user_id": 2}
+        )
         assert response.status_code == 403
         data = response.get_json()
         assert not data["success"]
@@ -423,7 +549,10 @@ class Test_Event_Team_Management:
 
     def test_team_captain_promote_event_closed(self, closed_event_client):
         """Test that the team promote endpoint fails when trying to promote in a closed event."""
-        response = closed_event_client.post(f"/ng/events/{1}/me/team/promote", json={"user_id": 3})
+        response = closed_event_client.post(
+            f"/ng/events/{1}/me/team/promote",
+            json = {"user_id": 3}
+        )
         print(response.get_json())
         assert response.status_code == 403
         data = response.get_json()
@@ -433,7 +562,10 @@ class Test_Event_Team_Management:
     def test_captain_kick(self, team_captain_client):
         """Test that the team kick endpoint works correctly."""
 
-        response = team_captain_client.post(f"/ng/events/{1}/me/team/kick", json={"user_id": 3})
+        response = team_captain_client.post(
+            f"/ng/events/{1}/me/team/kick",
+            json = {"user_id": 3}
+        )
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"]
@@ -446,16 +578,23 @@ class Test_Event_Team_Management:
 
     def test_captain_kick_self(self, team_captain_client):
         """Test that the team kick endpoint fails when trying to kick self."""
-        response = team_captain_client.post(f"/ng/events/{1}/me/team/kick", json={"user_id": 2})
+        response = team_captain_client.post(
+            f"/ng/events/{1}/me/team/kick",
+            json = {"user_id": 2}
+        )
         assert response.status_code == 400
         data = response.get_json()
         assert not data["success"]
         assert "errors" in data
-        assert "You cannot kick yourself from the team." in data["errors"]["validation"]
+        assert "You cannot kick yourself from the team." in data["errors"][
+            "validation"]
 
     def test_captain_kick_invalid_user(self, team_captain_client):
         """Test that the team kick endpoint fails with invalid user."""
-        response = team_captain_client.post(f"/ng/events/{1}/me/team/kick", json={"user_id": 9999})
+        response = team_captain_client.post(
+            f"/ng/events/{1}/me/team/kick",
+            json = {"user_id": 9999}
+        )
         assert response.status_code == 404
         data = response.get_json()
         assert not data["success"]
@@ -463,17 +602,29 @@ class Test_Event_Team_Management:
 
     def test_captain_kick_not_privileged(self, team_member_client):
         """Test that the team kick endpoint fails when a non-captain tries to kick."""
-        response = team_member_client.post(f"/ng/events/{1}/me/team/kick", json={"user_id": 2})
+        response = team_member_client.post(
+            f"/ng/events/{1}/me/team/kick",
+            json = {"user_id": 2}
+        )
         assert response.status_code == 403
         data = response.get_json()
         assert not data["success"]
         assert "errors" in data
 
-    def test_cant_kick_from_other_teams(self, team_captain_client, team_factory, user_factory):
+    def test_cant_kick_from_other_teams(
+        self,
+        team_captain_client,
+        team_factory,
+        user_factory
+    ):
         """Test that the team kick endpoint fails when trying to kick a user not in the team."""
-        other_team = team_factory(event_id=1, members=[user_factory(name="Other User")])
+        other_team = team_factory(
+            event_id = 1,
+            members = [user_factory(name = "Other User")]
+        )
         response = team_captain_client.post(
-            f"/ng/events/{1}/me/team/kick", json={"user_id": other_team.members[0].user_id}
+            f"/ng/events/{1}/me/team/kick",
+            json = {"user_id": other_team.members[0].user_id}
         )
         assert response.status_code == 400
         data = response.get_json()
@@ -481,9 +632,17 @@ class Test_Event_Team_Management:
         assert "errors" in data
         assert "not a member of team" in data["errors"]["validation"]
 
-    def test_cant_kick_closed_event(self, closed_event_client, event_factory, team_factory):
+    def test_cant_kick_closed_event(
+        self,
+        closed_event_client,
+        event_factory,
+        team_factory
+    ):
         """Test that the team kick endpoint fails when trying to kick a user from a closed event."""
-        response = closed_event_client.post(f"/ng/events/{1}/me/team/kick", json={"user_id": 3})
+        response = closed_event_client.post(
+            f"/ng/events/{1}/me/team/kick",
+            json = {"user_id": 3}
+        )
         assert response.status_code == 403
         data = response.get_json()
         assert not data["success"]
@@ -491,7 +650,10 @@ class Test_Event_Team_Management:
 
     def test_member_leave(self, team_member_client):
         """Test that the team leave endpoint works correctly."""
-        response = team_member_client.post(f"/ng/events/{1}/me/team/leave", json={})
+        response = team_member_client.post(
+            f"/ng/events/{1}/me/team/leave",
+            json = {}
+        )
         assert response.status_code == 200
 
         reponse = team_member_client.get(f"/ng/events/{1}/me/team")
@@ -499,7 +661,10 @@ class Test_Event_Team_Management:
 
     def test_captain_cant_leave(self, team_captain_client):
         """Test that the team leave endpoint fails for a captain."""
-        response = team_captain_client.post(f"/ng/events/{1}/me/team/leave", json={})
+        response = team_captain_client.post(
+            f"/ng/events/{1}/me/team/leave",
+            json = {}
+        )
         assert response.status_code == 403
         data = response.get_json()
         assert not data["success"]
@@ -511,19 +676,52 @@ class Test_Event_Team_Management:
 
     def test_leave_closed_event(self, closed_event_client):
         """Test that the team leave endpoint fails when trying to leave a closed event."""
-        response = closed_event_client.post(f"/ng/events/{1}/me/team/leave", json={})
+        response = closed_event_client.post(
+            f"/ng/events/{1}/me/team/leave",
+            json = {}
+        )
         assert response.status_code == 403
         data = response.get_json()
         assert not data["success"]
         assert "errors" in data
-        assert "You cannot leave the team after the event has ended." in data["errors"]["forbidden"]
+        assert "You cannot leave the team after the event has ended." in data[
+            "errors"]["forbidden"]
 
-    # TODO - Write test case that someone on a solo team can leave
+    def test_solo_captain_can_leave(
+        self,
+        logged_in_client,
+        user,
+        event_factory,
+        team_factory,
+        db_session
+    ):
+        """Test that a captain can leave when they are the only member of the team."""
+        event = event_factory(name = "Solo Leave Test Event", public = True)
+        _team = team_factory(event = event, members = [user])  # Only one member (the captain)
+
+        Demographic.create_demographic(
+            user_id = user.id,
+            event_id = event.id,
+            commit = False
+        )
+        db_session.commit()
+
+        response = logged_in_client.post(
+            f"/ng/events/{event.id}/me/team/leave",
+            json = {}
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
 
     def test_update_name(self, team_captain_client):
         """Test that the team name can be updated."""
         new_name = "Updated Team Name"
-        response = team_captain_client.put(f"/ng/events/{1}/me/team/update_name", json={"name": new_name})
+        response = team_captain_client.put(
+            f"/ng/events/{1}/me/team/update_name",
+            json = {"name": new_name}
+        )
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"]
@@ -532,27 +730,41 @@ class Test_Event_Team_Management:
     def test_update_name_event_over(self, closed_event_client):
         """Test that the team name update fails when the event is over."""
         new_name = "Updated Team Name"
-        response = closed_event_client.put(f"/ng/events/{1}/me/team/update_name", json={"name": new_name})
+        response = closed_event_client.put(
+            f"/ng/events/{1}/me/team/update_name",
+            json = {"name": new_name}
+        )
         assert response.status_code == 403
         data = response.get_json()
         assert not data["success"]
         assert "errors" in data
-        assert "You cannot update the team name after the event has ended." in data["errors"]["forbidden"]
+        assert "You cannot update the team name after the event has ended." in data[
+            "errors"]["forbidden"]
 
 
 class Test_Event_Admin_Register:
     def post_endpoint(self, event_id: int, user_id: int) -> str:
         return f"/ng/admin/events/{event_id}/{user_id}/register"
 
-    def test_admin_register_user_for_event_code(self, admin_client, user_factory, event_factory, team_factory):
-        event = event_factory(name="Admin Register Event", public=True)
-        user = user_factory(name="testuser", email="testuser@example.com")
-        user2 = user_factory(name="testuser2", email="testuser2@example.com")
-        team = team_factory(event=event, members=[user])
+    def test_admin_register_user_for_event_code(
+        self,
+        admin_client,
+        user_factory,
+        event_factory,
+        team_factory
+    ):
+        event = event_factory(name = "Admin Register Event", public = True)
+        user = user_factory(name = "testuser", email = "testuser@example.com")
+        user2 = user_factory(
+            name = "testuser2",
+            email = "testuser2@example.com"
+        )
+        team = team_factory(event = event, members = [user])
 
         response = admin_client.post(
-            self.post_endpoint(event.id, user2.id),
-            json={
+            self.post_endpoint(event.id,
+                               user2.id),
+            json = {
                 "invite_code": team.invite_code,
             },
         )
@@ -561,12 +773,18 @@ class Test_Event_Admin_Register:
         assert data["success"] is True
         assert "data" in data
 
-    def test_admin_register_user_for_event_name(self, admin_client, user, event_factory):
-        event = event_factory(name="Admin Register Event", public=True)
+    def test_admin_register_user_for_event_name(
+        self,
+        admin_client,
+        user,
+        event_factory
+    ):
+        event = event_factory(name = "Admin Register Event", public = True)
 
         response = admin_client.post(
-            self.post_endpoint(event.id, user.id),
-            json={
+            self.post_endpoint(event.id,
+                               user.id),
+            json = {
                 "team_name": "Admin Created Team",
             },
         )
@@ -574,27 +792,47 @@ class Test_Event_Admin_Register:
         data = response.get_json()
         assert data["success"] is True
 
-    def test_non_admin_fails_registering_user_for_event(self, logged_in_client, user_factory, event_factory):
-        event = event_factory(name="Non-Admin Register Event", public=True)
-        user = user_factory(name="testuser", email="testuser@example.com")
+    def test_non_admin_fails_registering_user_for_event(
+        self,
+        logged_in_client,
+        user_factory,
+        event_factory
+    ):
+        event = event_factory(name = "Non-Admin Register Event", public = True)
+        user = user_factory(name = "testuser", email = "testuser@example.com")
 
         response = logged_in_client.post(
-            self.post_endpoint(event.id, user.id),
-            json={
+            self.post_endpoint(event.id,
+                               user.id),
+            json = {
                 "team_name": "Non-Admin Team",
             },
         )
         assert response.status_code == 403
 
-    def test_admin_can_register_user_for_locked_event(self, admin_client, user_factory, event_factory, team_factory):
-        event = event_factory(name="Admin Register Locked Event", public=True, locked=True)
-        user = user_factory(name="testuser", email="testuser@example.com")
-        user2 = user_factory(name="testuser2", email="testuser2@example.com")
-        team = team_factory(event=event, members=[user])
+    def test_admin_can_register_user_for_locked_event(
+        self,
+        admin_client,
+        user_factory,
+        event_factory,
+        team_factory
+    ):
+        event = event_factory(
+            name = "Admin Register Locked Event",
+            public = True,
+            locked = True
+        )
+        user = user_factory(name = "testuser", email = "testuser@example.com")
+        user2 = user_factory(
+            name = "testuser2",
+            email = "testuser2@example.com"
+        )
+        team = team_factory(event = event, members = [user])
 
         response = admin_client.post(
-            self.post_endpoint(event.id, user2.id),
-            json={
+            self.post_endpoint(event.id,
+                               user2.id),
+            json = {
                 "invite_code": team.invite_code,
             },
         )
@@ -605,7 +843,7 @@ class Test_Event_Admin_Register:
 
 
 def test_admin_get_private_event(admin_client, event_factory):
-    event = event_factory(name="Admin Get Private Event", public=False)
+    event = event_factory(name = "Admin Get Private Event", public = False)
 
     response = admin_client.get(f"/ng/admin/events/{event.id}")
 
@@ -620,7 +858,7 @@ class Test_Event_Admin_Get:
         return f"/ng/admin/events/{event_id}"
 
     def test_admin_get_event_details(self, admin_client, event_factory):
-        event = event_factory(name="Admin Get Event", public=True)
+        event = event_factory(name = "Admin Get Event", public = True)
 
         response = admin_client.get(self.get_endpoint(event.id))
 
@@ -629,8 +867,12 @@ class Test_Event_Admin_Get:
         assert data["success"] is True
         assert data["data"] == event.serialize()
 
-    def test_non_admin_get_event_details(self, logged_in_client, event_factory):
-        event = event_factory(name="Non-Admin Get Event", public=True)
+    def test_non_admin_get_event_details(
+        self,
+        logged_in_client,
+        event_factory
+    ):
+        event = event_factory(name = "Non-Admin Get Event", public = True)
 
         response = logged_in_client.get(self.get_endpoint(event.id))
 
@@ -642,7 +884,7 @@ class Test_Event_Admin_Put:
         return f"/ng/admin/events/{event_id}"
 
     def test_admin_update_event(self, admin_client, event_factory):
-        event = event_factory(name="Admin Update Event", public=True)
+        event = event_factory(name = "Admin Update Event", public = True)
 
         updated_data = {
             "name": "Updated Event Name",
@@ -652,7 +894,10 @@ class Test_Event_Admin_Put:
             "max_team_size": 7,
         }
 
-        response = admin_client.put(self.put_endpoint(event.id), json=updated_data)
+        response = admin_client.put(
+            self.put_endpoint(event.id),
+            json = updated_data
+        )
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -661,7 +906,7 @@ class Test_Event_Admin_Put:
         assert data["data"]["public"] is False
 
     def test_non_admin_update_event(self, logged_in_client, event_factory):
-        event = event_factory(name="Non-Admin Update Event", public=True)
+        event = event_factory(name = "Non-Admin Update Event", public = True)
 
         updated_data = {
             "name": "Updated Event Name",
@@ -669,7 +914,10 @@ class Test_Event_Admin_Put:
             "public": False,
         }
 
-        response = logged_in_client.put(self.put_endpoint(event.id), json=updated_data)
+        response = logged_in_client.put(
+            self.put_endpoint(event.id),
+            json = updated_data
+        )
 
         assert response.status_code == 403
 
@@ -687,7 +935,10 @@ class Test_Event_Admin_Create:
             "max_team_size": 5,
         }
 
-        response = admin_client.post(self.post_endpoint(), json=new_event_data)
+        response = admin_client.post(
+            self.post_endpoint(),
+            json = new_event_data
+        )
         print(response.get_json())
 
         assert response.status_code == 201
@@ -706,7 +957,10 @@ class Test_Event_Admin_Create:
             "max_team_size": 5,
         }
 
-        response = logged_in_client.post(self.post_endpoint(), json=new_event_data)
+        response = logged_in_client.post(
+            self.post_endpoint(),
+            json = new_event_data
+        )
 
         assert response.status_code == 403
 
@@ -716,7 +970,10 @@ class Test_Event_Admin_Create:
             # Missing description and public fields
         }
 
-        response = admin_client.post(self.post_endpoint(), json=new_event_data)
+        response = admin_client.post(
+            self.post_endpoint(),
+            json = new_event_data
+        )
 
         assert response.status_code == 400
         data = response.get_json()
@@ -730,22 +987,32 @@ class Test_Event_Challenge_Import:
         return f"/ng/admin/events/{event.id}/challenges"
 
     def test_challenge_import_endpoint(self, admin_client, event):
-        with open(os.path.join(os.path.dirname(__file__), "../../challenge/tests/yamls/default.yaml"), "rb") as f:
+        with open(os.path.join(os.path.dirname(__file__),
+                               "../../challenge/tests/yamls/default.yaml"),
+                  "rb") as f:
             yaml = base64.urlsafe_b64encode(f.read())
 
-        response = admin_client.post(self.get_endpoint(event), json={"yaml": yaml.decode("utf-8")})
+        response = admin_client.post(
+            self.get_endpoint(event),
+            json = {"yaml": yaml.decode("utf-8")}
+        )
 
-        challenge = Challenge.query.filter_by(name="Basic Challenge").first()
+        challenge = Challenge.query.filter_by(name = "Basic Challenge").first()
 
         assert response.status_code == 200
         assert len(challenge.hints) == 1
         assert len(challenge.questions) == 1
 
     def test_challenge_import_endpoint_bad_yaml(self, admin_client, event):
-        with open(os.path.join(os.path.dirname(__file__), "../../challenge/tests/yamls/bad.yaml"), "rb") as f:
+        with open(os.path.join(os.path.dirname(__file__),
+                               "../../challenge/tests/yamls/bad.yaml"),
+                  "rb") as f:
             yaml = base64.urlsafe_b64encode(f.read())
 
-        response = admin_client.post(self.get_endpoint(event), json={"yaml": yaml.decode("utf-8")})
+        response = admin_client.post(
+            self.get_endpoint(event),
+            json = {"yaml": yaml.decode("utf-8")}
+        )
         assert response.status_code == 400
 
 
@@ -753,10 +1020,18 @@ class Test_Event_Challenge_List:
     def get_endpoint(self, event_id: int) -> str:
         return f"/ng/events/{event_id}/challenges"
 
-    def test_list_challenges_for_event(self, logged_in_client, event_factory, challenge_factory):
-        event = event_factory(name="Event for Challenge Listing", public=True)
-        challenge1 = challenge_factory(event=event, name="Challenge 1")
-        challenge2 = challenge_factory(event=event, name="Challenge 2")
+    def test_list_challenges_for_event(
+        self,
+        logged_in_client,
+        event_factory,
+        challenge_factory
+    ):
+        event = event_factory(
+            name = "Event for Challenge Listing",
+            public = True
+        )
+        challenge1 = challenge_factory(event = event, name = "Challenge 1")
+        challenge2 = challenge_factory(event = event, name = "Challenge 2")
 
         response = logged_in_client.get(self.get_endpoint(event.id))
 
@@ -772,19 +1047,52 @@ class Test_Event_Challenge_Render:
     def get_endpoint(self, event_id: int, challenge_id: int) -> str:
         return f"/ng/events/{event_id}/challenges/{challenge_id}"
 
-    def test_render_challenge_for_event(self, logged_in_client, user, event_factory, team_factory, challenge_factory):
-        event = event_factory(name="Event for Challenge Rendering", public=True)
-        team_factory(event=event, members=[user])
-        challenge = challenge_factory(event=event, name="Challenge to Render")
+    def test_render_challenge_for_event(
+        self,
+        logged_in_client,
+        user,
+        event_factory,
+        team_factory,
+        challenge_factory
+    ):
+        event = event_factory(
+            name = "Event for Challenge Rendering",
+            public = True
+        )
+        team_factory(event = event, members = [user])
+        challenge = challenge_factory(
+            event = event,
+            name = "Challenge to Render"
+        )
 
-        response = logged_in_client.get(self.get_endpoint(event.id, challenge.id))
+        response = logged_in_client.get(
+            self.get_endpoint(event.id,
+                              challenge.id)
+        )
 
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
-        assert data["data"]["challenge"] == challenge.serialize()
+        # Check that all required render components are present
+        render_data = data["data"]
+        assert "challenge" in render_data
+        assert "questions" in render_data
+        assert "hints" in render_data
+        assert "attempts" in render_data
 
-        # TODO - Add more assertions to check the rendered challenge data
+        # Verify challenge data
+        assert render_data["challenge"] == challenge.serialize()
+        assert render_data["challenge"]["name"] == "Challenge to Render"
+        assert render_data["challenge"]["event_id"] == event.id
+
+        # Verify questions are included
+        assert len(render_data["questions"]) == 2
+        for question in render_data["questions"]:
+            assert question["challenge_id"] == challenge.id
+
+        # Verify hints and attempts are present
+        assert isinstance(render_data["hints"], list)
+        assert isinstance(render_data["attempts"], list)
 
 
 class Test_Event_Challenge_Statuses:
@@ -792,12 +1100,20 @@ class Test_Event_Challenge_Statuses:
         return f"/ng/events/{event_id}/me/challenges"
 
     def test_get_challenge_statuses_for_event(
-        self, logged_in_client, user, event_factory, team_factory, challenge_factory
+        self,
+        logged_in_client,
+        user,
+        event_factory,
+        team_factory,
+        challenge_factory
     ):
-        event = event_factory(name="Event for Challenge Statuses", public=True)
-        team_factory(event=event, members=[user])
-        challenge1 = challenge_factory(event=event, name="Challenge 1")
-        challenge2 = challenge_factory(event=event, name="Challenge 2")
+        event = event_factory(
+            name = "Event for Challenge Statuses",
+            public = True
+        )
+        team_factory(event = event, members = [user])
+        challenge1 = challenge_factory(event = event, name = "Challenge 1")
+        challenge2 = challenge_factory(event = event, name = "Challenge 2")
 
         response = logged_in_client.get(self.get_endpoint(event.id))
 
@@ -809,18 +1125,75 @@ class Test_Event_Challenge_Statuses:
         assert data["data"][0]["challenge_id"] == challenge1.id
         assert data["data"][1]["challenge_id"] == challenge2.id
 
-        # TODO - Add more assertions to check the results
+        # Verify all required fields are present in challenge progress data
+        for challenge_progress in data["data"]:
+            assert "challenge_id" in challenge_progress
+            assert "challenge_name" in challenge_progress
+            assert "challenge_icon" in challenge_progress
+            assert "total_points_available" in challenge_progress
+            assert "total_points_scored" in challenge_progress
+            assert "num_questions_solved" in challenge_progress
+            assert "num_questions_available" in challenge_progress
+            assert "num_attempts_made" in challenge_progress
+            assert "num_unique_questions_attempted" in challenge_progress
+            assert "is_completed" in challenge_progress
+
+        # Verify initial state for new challenges (no attempts yet)
+        challenge1_progress = data["data"][0]
+        challenge2_progress = data["data"][1]
+
+        assert challenge1_progress["challenge_name"] == "Challenge 1"
+        assert challenge2_progress["challenge_name"] == "Challenge 2"
+
+        # 2 questions
+        assert challenge1_progress["total_points_available"] == 300
+        assert challenge2_progress["total_points_available"] == 300
+
+        # No attempts made yet, so scored points should be 0
+        assert challenge1_progress["total_points_scored"] == 0
+        assert challenge2_progress["total_points_scored"] == 0
+
+        # No questions solved yet
+        assert challenge1_progress["num_questions_solved"] == 0
+        assert challenge2_progress["num_questions_solved"] == 0
+
+        # Each challenge has 2 questions
+        assert challenge1_progress["num_questions_available"] == 2
+        assert challenge2_progress["num_questions_available"] == 2
+
+        # No attempts made yet
+        assert challenge1_progress["num_attempts_made"] == 0
+        assert challenge2_progress["num_attempts_made"] == 0
+
+        # No questions attempted yet
+        assert challenge1_progress["num_unique_questions_attempted"] == 0
+        assert challenge2_progress["num_unique_questions_attempted"] == 0
+
+        # Not completed yet
+        assert challenge1_progress["is_completed"] is False
+        assert challenge2_progress["is_completed"] is False
 
     def test_challenge_statuses_include_challenge_name(
-        self, logged_in_client, user, event_factory, team_factory, challenge_factory
+        self,
+        logged_in_client,
+        user,
+        event_factory,
+        team_factory,
+        challenge_factory
     ):
         """
         Test that challenge statuses response includes challenge names
         """
-        event = event_factory(name="Event for Challenge Name Test", public=True)
-        team_factory(event=event, members=[user])
-        challenge1 = challenge_factory(event=event, name="Web Security Challenge")
-        challenge2 = challenge_factory(event=event, name="Crypto Puzzle")
+        event = event_factory(
+            name = "Event for Challenge Name Test",
+            public = True
+        )
+        team_factory(event = event, members = [user])
+        challenge1 = challenge_factory(
+            event = event,
+            name = "Web Security Challenge"
+        )
+        challenge2 = challenge_factory(event = event, name = "Crypto Puzzle")
 
         response = logged_in_client.get(f"/ng/events/{event.id}/me/challenges")
 
@@ -831,8 +1204,14 @@ class Test_Event_Challenge_Statuses:
 
         # Check that challenge names are included
         challenge_statuses = data["data"]
-        challenge1_status = next(cs for cs in challenge_statuses if cs["challenge_id"] == challenge1.id)
-        challenge2_status = next(cs for cs in challenge_statuses if cs["challenge_id"] == challenge2.id)
+        challenge1_status = next(
+            cs for cs in challenge_statuses
+            if cs["challenge_id"] == challenge1.id
+        )
+        challenge2_status = next(
+            cs for cs in challenge_statuses
+            if cs["challenge_id"] == challenge2.id
+        )
 
         assert challenge1_status["challenge_name"] == "Web Security Challenge"
         assert challenge2_status["challenge_name"] == "Crypto Puzzle"
@@ -843,3 +1222,181 @@ class Test_Event_Challenge_Statuses:
             assert "challenge_name" in status
             assert "total_points_available" in status
             assert "num_questions_available" in status
+
+    def test_challenge_progress_with_scoring_integration(
+        self,
+        logged_in_client,
+        user,
+        event_factory,
+        team_factory,
+        challenge_factory,
+        question_factory,
+        attempt_factory
+    ):
+        """
+        Test challenge progress endpoint with actual scoring system integration
+        """
+        event = event_factory(
+            name = "Scoring Integration Test Event",
+            public = True
+        )
+        team = team_factory(event = event, members = [user])
+
+        web_challenge = challenge_factory(event = event, name = "Web Security")
+        crypto_challenge = challenge_factory(
+            event = event,
+            name = "Cryptography"
+        )
+
+        web_q1, web_q2 = web_challenge.questions
+        crypto_q1, crypto_q2 = crypto_challenge.questions
+
+        # Correct attempt for web_q1
+        attempt_factory(
+            user_id = user.id,
+            team_id = team.id,
+            event_id = event.id,
+            challenge_id = web_challenge.id,
+            question_id = web_q1.id,
+            submission = web_q1.answer,
+            is_correct = True,
+            points = 100
+        )
+
+        # Wrong attempt for web_q2
+        attempt_factory(
+            user_id = user.id,
+            team_id = team.id,
+            event_id = event.id,
+            challenge_id = web_challenge.id,
+            question_id = web_q2.id,
+            submission = "wrong_sql",
+            is_correct = False,
+            points = 0
+        )
+
+        # Correct attempt for crypto_q1
+        attempt_factory(
+            user_id = user.id,
+            team_id = team.id,
+            event_id = event.id,
+            challenge_id = crypto_challenge.id,
+            question_id = crypto_q1.id,
+            submission = crypto_q1.answer,
+            is_correct = True,
+            points = 100
+        )
+
+        # Get challenge progress
+        response = logged_in_client.get(f"/ng/events/{event.id}/me/challenges")
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert len(data["data"]) == 2
+
+        # Find progress for each challenge
+        web_progress = next(
+            c for c in data["data"] if c["challenge_id"] == web_challenge.id
+        )
+        crypto_progress = next(
+            c for c in data["data"] if c["challenge_id"] == crypto_challenge.id
+        )
+
+        # Verify web challenge progress
+        assert web_progress["challenge_name"] == "Web Security"
+        assert web_progress["challenge_icon"] == web_challenge.icon
+        assert web_progress["total_points_available"] == 300  # 100 + 200
+        assert web_progress["total_points_scored"] == 100  # Only q1 solved
+        assert web_progress["num_questions_solved"] == 1  # Only q1 solved
+        assert web_progress["num_questions_available"] == 2  # q1 + q2
+        assert web_progress["num_attempts_made"] == 2  # 1 correct + 1 wrong
+        assert web_progress["num_unique_questions_attempted"] == 2  # Both questions attempted
+        assert web_progress["is_completed"] is False  # Not all questions solved
+
+        # Verify crypto challenge progress
+        assert crypto_progress["challenge_name"] == "Cryptography"
+        assert crypto_progress["challenge_icon"] == crypto_challenge.icon
+        assert crypto_progress["total_points_available"] == 300  # 100 + 200
+        assert crypto_progress["total_points_scored"] == 100  # Only q1 solved (q1 has 100pts, not 200)
+        assert crypto_progress["num_questions_solved"] == 1  # Only q1 solved
+        assert crypto_progress["num_questions_available"] == 2  # q1 + q2
+        assert crypto_progress["num_attempts_made"] == 1  # 1 correct attempt
+        assert crypto_progress["num_unique_questions_attempted"] == 1  # Only q1 attempted
+        assert crypto_progress["is_completed"] is False  # Not all questions solved
+
+        # Test completion scenario - solve remaining questions
+        attempt_factory(
+            user_id = user.id,
+            team_id = team.id,
+            event_id = event.id,
+            challenge_id = web_challenge.id,
+            question_id = web_q2.id,
+            submission = web_q2.answer,
+            is_correct = True,
+            points = 200
+        )
+
+        attempt_factory(
+            user_id = user.id,
+            team_id = team.id,
+            event_id = event.id,
+            challenge_id = crypto_challenge.id,
+            question_id = crypto_q2.id,
+            submission = crypto_q2.answer,
+            is_correct = True,
+            points = 200
+        )
+
+        response = logged_in_client.get(f"/ng/events/{event.id}/me/challenges")
+        assert response.status_code == 200
+        data = response.get_json()
+
+        web_progress = next(
+            c for c in data["data"] if c["challenge_id"] == web_challenge.id
+        )
+        crypto_progress = next(
+            c for c in data["data"] if c["challenge_id"] == crypto_challenge.id
+        )
+
+        assert web_progress["total_points_scored"] == 300  # 100 + 200
+        assert web_progress["num_questions_solved"] == 2  # Both solved
+        assert web_progress["is_completed"] is True  # All questions solved
+
+        assert crypto_progress["total_points_scored"] == 300  # 100 + 200
+        assert crypto_progress["num_questions_solved"] == 2  # Both solved
+        assert crypto_progress["is_completed"] is True  # All questions solved
+
+    def test_challenge_progress_no_attempts(
+        self,
+        logged_in_client,
+        user,
+        event_factory,
+        team_factory,
+        challenge_factory
+    ):
+        """
+        Test challenge progress with challenges that have no attempts
+        """
+        event = event_factory(name = "No Attempts Test Event", public = True)
+        _team = team_factory(event = event, members = [user])
+        challenge = challenge_factory(
+            event = event,
+            name = "Untouched Challenge"
+        )
+
+        response = logged_in_client.get(f"/ng/events/{event.id}/me/challenges")
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert len(data["data"]) == 1
+
+        progress = data["data"][0]
+        assert progress["challenge_id"] == challenge.id
+        assert progress["challenge_name"] == "Untouched Challenge"
+        assert progress["total_points_scored"] == 0
+        assert progress["num_questions_solved"] == 0
+        assert progress["num_attempts_made"] == 0
+        assert progress["num_unique_questions_attempted"] == 0
+        assert progress["is_completed"] is False

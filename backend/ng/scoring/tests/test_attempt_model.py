@@ -543,7 +543,7 @@ class TestAttemptSerialization:
     """Test the serialize method"""
 
     def test_serialize_basic(self, db_session, attempt_factory, user, team_with_member, event, challenge, question):
-        """Test basic serialization"""
+        """Test basic serialization includes name enrichment"""
         attempt = attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
@@ -569,10 +569,24 @@ class TestAttemptSerialization:
         assert isinstance(data["timestamp"], str)
         assert data["timestamp"].endswith("Z")
 
+        # Name enrichment should be included if relationships are loaded
+        if attempt.team:
+            assert "team_name" in data
+            assert data["team_name"] == attempt.team.name
+        if attempt.challenge:
+            assert "challenge_name" in data
+            assert data["challenge_name"] == attempt.challenge.name
+        if attempt.question:
+            assert "question_name" in data
+            assert data["question_name"] == attempt.question.name
+        if attempt.user and attempt.user.ctfd_user:
+            assert "user_name" in data
+            assert data["user_name"] == attempt.user.ctfd_user.name
+
     def test_serialize_with_admin_fields(
         self, db_session, attempt_factory, user, team_with_member, event, challenge, question
     ):
-        """Test serialization with admin fields (currently same as basic)"""
+        """Test serialization with admin fields includes same name enrichment"""
         attempt = attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
@@ -583,9 +597,23 @@ class TestAttemptSerialization:
 
         data = attempt.serialize(include_admin_fields=True)
 
-        # Currently no additional admin fields
+        # Basic fields should be present
         assert "id" in data
         assert "submission" in data
+
+        # Name enrichment should be included if relationships are loaded
+        if attempt.team:
+            assert "team_name" in data
+            assert data["team_name"] == attempt.team.name
+        if attempt.challenge:
+            assert "challenge_name" in data
+            assert data["challenge_name"] == attempt.challenge.name
+        if attempt.question:
+            assert "question_name" in data
+            assert data["question_name"] == attempt.question.name
+        if attempt.user and attempt.user.ctfd_user:
+            assert "user_name" in data
+            assert data["user_name"] == attempt.user.ctfd_user.name
 
 
 class TestAttemptValidation:

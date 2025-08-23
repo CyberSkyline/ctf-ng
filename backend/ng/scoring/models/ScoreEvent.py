@@ -3,7 +3,11 @@ Defines the ScoreEvent model for tracking all scoring changes.
 """
 
 from __future__ import annotations
-from typing import Any, TypedDict
+from typing import (
+    Any,
+    TypedDict,
+    NotRequired,
+)
 
 from datetime import datetime
 from sqlalchemy.orm import selectinload
@@ -20,6 +24,10 @@ class SerializedScoreEvent(TypedDict):
     team_id: int
     points: int
     timestamp: str
+    # Name enrichment fields
+    team_name: NotRequired[str]
+    source_type: NotRequired[str]
+    source: NotRequired[dict[str, Any]]
 
 
 class ScoreEvent(db.Model):
@@ -43,7 +51,7 @@ class ScoreEvent(db.Model):
 
     def serialize(self, include_admin_fields: bool = False) -> SerializedScoreEvent:
         """
-        Serialize score event for API response
+        Serialize score event for API response with embedded source data
         """
         data = {
             "id": self.id,
@@ -53,7 +61,21 @@ class ScoreEvent(db.Model):
             "timestamp": self.timestamp.isoformat() + "Z",
         }
 
-        return SerializedScoreEvent(**data)  # type: ignore[typeddict-item, no-any-return]
+        if self.team:
+            data["team_name"] = self.team.name
+
+        if include_admin_fields:
+            if self.attempts and len(self.attempts) > 0:
+                data["source_type"] = "attempt"
+                data["source"] = self.attempts[0].serialize(include_admin_fields=include_admin_fields)
+            elif self.hint_redemptions and len(self.hint_redemptions) > 0:
+                data["source_type"] = "hint_redemption"
+                data["source"] = self.hint_redemptions[0].serialize(include_admin_fields=include_admin_fields)
+            elif self.manual_awards and len(self.manual_awards) > 0:
+                data["source_type"] = "manual_award"
+                data["source"] = self.manual_awards[0].serialize(include_admin_fields=include_admin_fields)
+
+        return SerializedScoreEvent(**data)
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
@@ -114,7 +136,7 @@ class ScoreEvent(db.Model):
         db.session.add(event)
         db.session.flush()
 
-        # LAZY-IMPORT: Tagging all necessary lazy imports for easy searchability & visibility.
+        # LAZY-IMPORT
         from .Score import Score
 
         score = Score.query.get(validated_data["score_id"])
@@ -135,7 +157,6 @@ class ScoreEvent(db.Model):
         score_id: int | None = None,
         team_id: int | None = None,
         event_id: int | None = None,
-        limit: int | None = None,
         eager_load_source: bool = False,
     ) -> list[ScoreEvent]:
         """
@@ -145,7 +166,6 @@ class ScoreEvent(db.Model):
             score_id: Filter by score ID
             team_id: Filter by team ID
             event_id: Filter by event ID
-            limit: Maximum number of results
             eager_load_source: If True, eagerly loads the source relationships
                               (attempts, hint_redemptions, manual_awards)
         """
@@ -168,8 +188,6 @@ class ScoreEvent(db.Model):
             )
 
         query = query.order_by(cls.timestamp.desc())
-        if limit is not None:
-            query = query.limit(limit)
         return query.all()  # type: ignore[no-any-return]
 
     def delete_event(self, commit: bool = True) -> None:

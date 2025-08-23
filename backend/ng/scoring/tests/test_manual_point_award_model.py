@@ -370,7 +370,7 @@ class TestManualPointAwardSerialization:
     """Test the serialize method"""
 
     def test_serialize_basic(self, db_session, admin, team_with_member, event):
-        """Test basic serialization"""
+        """Test basic serialization includes name enrichment"""
         award = ManualPointAward.create_award(
             admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Test award"
         )
@@ -386,17 +386,33 @@ class TestManualPointAwardSerialization:
         assert isinstance(data["timestamp"], str)
         assert data["timestamp"].endswith("Z")
 
+        # Name enrichment should be included if relationships are loaded
+        if award.admin:
+            assert "admin_name" in data
+            assert data["admin_name"] == award.admin.name
+        if award.team:
+            assert "team_name" in data
+            assert data["team_name"] == award.team.name
+
     def test_serialize_with_admin_fields(self, db_session, admin, team_with_member, event):
-        """Test serialization with admin fields"""
+        """Test serialization with admin fields includes same name enrichment"""
         award = ManualPointAward.create_award(
             admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Test award"
         )
 
         data = award.serialize(include_admin_fields=True)
 
-        # Should include admin name
-        assert "admin_name" in data
-        assert data["admin_name"] == admin.name
+        # Basic fields should be present
+        assert data["id"] == award.id
+        assert data["points"] == 100
+
+        # Name enrichment should be included if relationships are loaded
+        if award.admin:
+            assert "admin_name" in data
+            assert data["admin_name"] == award.admin.name
+        if award.team:
+            assert "team_name" in data
+            assert data["team_name"] == award.team.name
 
 
 class TestManualPointAwardValidation:

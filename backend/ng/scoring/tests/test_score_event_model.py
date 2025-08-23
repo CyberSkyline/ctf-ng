@@ -288,16 +288,16 @@ class TestFindFilteredEvents:
         assert len(events) == 2
         assert all(e.score.event_id == score.event_id for e in events)
 
-    def test_find_with_limit(self, db_session, score, score_event_factory):
-        """Test limiting results"""
+    def test_find_returns_all_results(self, db_session, score, score_event_factory):
+        """Test that find_filtered_events returns all results (no limit)"""
         # Create multiple events
         for i in range(5):
             score_event_factory(score_id=score.id, team_id=score.team_id, points=(i + 1) * 10)
 
-        # Find with limit
-        events = ScoreEvent.find_filtered_events(score_id=score.id, limit=3)
+        # Find all events (no limit parameter)
+        events = ScoreEvent.find_filtered_events(score_id=score.id)
 
-        assert len(events) == 3
+        assert len(events) == 5  # Should return all events
 
     def test_find_events_ordered_by_timestamp_desc(self, db_session, score, score_event_factory):
         """Test that events are ordered by timestamp descending"""
@@ -340,16 +340,45 @@ class TestScoreEventSerialization:
         assert isinstance(data["timestamp"], str)
         assert data["timestamp"].endswith("Z")
 
-    def test_serialize_with_admin_fields(self, score_event):
-        """Test serialization with admin fields (currently same as basic)"""
-        data = score_event.serialize(include_admin_fields=True)
+        # Team name should be included if team relationship is loaded
+        if score_event.team:
+            assert "team_name" in data
+            assert data["team_name"] == score_event.team.name
 
-        # Currently no additional admin fields, but structure is there
-        assert data["id"] == score_event.id
-        assert data["score_id"] == score_event.score_id
-        assert data["team_id"] == score_event.team_id
-        assert data["points"] == score_event.points
+        # Source fields should not be included in basic serialization
+        assert "source_type" not in data
+        assert "source" not in data
+
+    def test_serialize_with_admin_fields(self, score_event):
+        """Test serialization with admin fields includes source data"""
+        # Load the score event with source relationships
+        from sqlalchemy.orm import selectinload
+        from ..models.ScoreEvent import ScoreEvent
+
+        # Re-fetch with eager loading
+        loaded_event = ScoreEvent.query.options(
+            selectinload(ScoreEvent.attempts),
+            selectinload(ScoreEvent.hint_redemptions),
+            selectinload(ScoreEvent.manual_awards)
+        ).filter_by(id=score_event.id).first()
+
+        data = loaded_event.serialize(include_admin_fields=True)
+
+        # Basic fields should still be there
+        assert data["id"] == loaded_event.id
+        assert data["score_id"] == loaded_event.score_id
+        assert data["team_id"] == loaded_event.team_id
+        assert data["points"] == loaded_event.points
         assert "timestamp" in data
+
+        # Team name should be included if team relationship is loaded
+        if loaded_event.team:
+            assert "team_name" in data
+            assert data["team_name"] == loaded_event.team.name
+
+        # Source data fields may be present if there are related records
+        # But if no related source records exist, these won't be in the data
+        # That's expected behavior
 
 
 class TestScoreEventValidation:

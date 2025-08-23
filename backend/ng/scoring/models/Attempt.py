@@ -3,7 +3,11 @@ Defines the Attempt model for tracking answer submissions.
 """
 
 from __future__ import annotations
-from typing import Any, TypedDict
+from typing import (
+    Any,
+    TypedDict,
+    NotRequired,
+)
 
 from datetime import datetime
 
@@ -30,6 +34,11 @@ class SerializedAttempt(TypedDict):
     points: int
     submission: str
     is_correct: bool
+    # Name enrichment fields
+    user_name: NotRequired[str]
+    team_name: NotRequired[str]
+    challenge_name: NotRequired[str]
+    question_name: NotRequired[str]
 
 
 class Attempt(db.Model):
@@ -80,7 +89,16 @@ class Attempt(db.Model):
             "is_correct": self.is_correct,
         }
 
-        return SerializedAttempt(**data)  # type: ignore[typeddict-item, no-any-return]
+        if self.user:
+            data["user_name"] = self.user.ctfd_user.name if self.user.ctfd_user else f"User {self.user_id}"
+        if self.team:
+            data["team_name"] = self.team.name
+        if self.challenge:
+            data["challenge_name"] = self.challenge.name
+        if self.question:
+            data["question_name"] = self.question.name
+
+        return SerializedAttempt(**data)
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
@@ -111,7 +129,7 @@ class Attempt(db.Model):
         Validate that an attempt is allowed
         """
 
-        # LAZY-IMPORT: Tagging all necessary lazy imports for easy searchability & visibility.
+        # LAZY-IMPORT
         from ...challenge.models.Question import Question
         from ...event.models.Event import Event
         from ...team.models.TeamMember import TeamMember

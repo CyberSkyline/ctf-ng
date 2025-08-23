@@ -26,6 +26,15 @@ ADMIN_REQUIRED_RESPONSES = {
 # ============ USER SCORING ENDPOINTS ============
 GET_LEADERBOARD_DOC = {
     "description": "Get the event leaderboard showing team rankings and scores with optional limit",
+    "params": {
+        "limit": {
+            "description": "Maximum number of teams to return on leaderboard",
+            "required": False,
+            "type": "integer",
+            "example": 50,
+            "default": 100
+        }
+    },
     "responses": {
         200: "Success - Returns ordered list of teams with scores and rankings",
         **AUTH_REQUIRED_RESPONSES,
@@ -44,6 +53,15 @@ GET_TEAM_SCORE_DOC = {
 
 SUBMIT_ANSWER_DOC = {
     "description": "Submit an answer to a challenge question for scoring",
+    "params": {
+        "submission": {
+            "description": "Answer submission text (4096 character max length)",
+            "in": "body",
+            "required": True,
+            "type": "string",
+            "example": "flag{example_answer}"
+        }
+    },
     "responses": {
         201: COMMON_RESPONSES[201],
         400: "Bad request - Invalid submission, exceeded max attempts, or event locked",
@@ -65,6 +83,21 @@ REDEEM_HINT_DOC = {
 # ============ ADMIN SCORING ENDPOINTS ============
 AWARD_MANUAL_POINTS_DOC = {
     "description": "Award or deduct points manually with reason for audit trail (Admin only)",
+    "params": {
+        "points": {
+            "description": "Points to award (positive) or deduct (negative). Cannot be zero.",
+            "required": True,
+            "type": "integer",
+            "example": 50
+        },
+        "reason": {
+            "description": "Reason for manual point adjustment (512 character max length)",
+            "in": "body",
+            "required": True,
+            "type": "string",
+            "example": "Bonus points for creative solution"
+        }
+    },
     "responses": {
         201: COMMON_RESPONSES[201],
         400: "Bad request - Invalid points value (cannot be zero) or missing reason",
@@ -84,9 +117,46 @@ RECALCULATE_SCORE_DOC = {
 
 GET_SCORE_HISTORY_DOC = {
     "description": "Get detailed scoring history for audit and debugging purposes (Admin only)",
+    "params": {
+        "limit": {
+            "description": "Maximum number of score events to return",
+            "required": False,
+            "type": "integer",
+            "example": 100,
+            "default": 50
+        }
+    },
     "responses": {
         200: "Success - Returns list of all score events with source details",
         400: "Bad request - Invalid limit parameter (must be 1-500)",
         **ADMIN_REQUIRED_RESPONSES,
+    },
+}
+
+
+GET_TEAM_ATTEMPTS_DOC = {
+    "description": "Get all attempts (correct and incorrect) for a team in an event (Admin only)",
+    "responses": {
+        200: "Success - Returns list of all attempts with enriched names",
+        **ADMIN_REQUIRED_RESPONSES,
+        404: "Not found - Event or team does not exist",
+    },
+}
+
+GET_TEAM_HINT_REDEMPTIONS_DOC = {
+    "description": "Get all hint redemptions for a team in an event (Admin only)",
+    "responses": {
+        200: "Success - Returns list of hint redemptions with enriched names and challenge info",
+        **ADMIN_REQUIRED_RESPONSES,
+        404: "Not found - Event or team does not exist",
+    },
+}
+
+GET_TEAM_MANUAL_AWARDS_DOC = {
+    "description": "Get all manual point awards for a team in an event (Admin only)",
+    "responses": {
+        200: "Success - Returns list of manual awards with enriched names",
+        **ADMIN_REQUIRED_RESPONSES,
+        404: "Not found - Event or team does not exist",
     },
 }

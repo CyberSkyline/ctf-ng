@@ -403,7 +403,7 @@ class TestHintRedemptionSerialization:
     """Test the serialize method"""
 
     def test_serialize_basic(self, db_session, hint_redemption_factory, user, team_with_member, hint):
-        """Test basic serialization"""
+        """Test basic serialization includes name enrichment"""
         redemption = hint_redemption_factory(hint_id=hint.id, user_id=user.id, team_id=team_with_member.id, points=-20)
 
         data = redemption.serialize()
@@ -417,16 +417,38 @@ class TestHintRedemptionSerialization:
         assert isinstance(data["timestamp"], str)
         assert data["timestamp"].endswith("Z")
 
+        # Name enrichment should be included if relationships are loaded
+        if redemption.team:
+            assert "team_name" in data
+            assert data["team_name"] == redemption.team.name
+        if redemption.hint:
+            assert "hint_preview" in data
+            assert data["hint_preview"] == redemption.hint.preview
+        if redemption.user and redemption.user.ctfd_user:
+            assert "user_name" in data
+            assert data["user_name"] == redemption.user.ctfd_user.name
+
     def test_serialize_with_admin_fields(self, db_session, hint_redemption_factory, user, team_with_member, hint):
-        """Test serialization with admin fields (currently same as basic)"""
+        """Test serialization with admin fields includes same name enrichment"""
         redemption = hint_redemption_factory(hint_id=hint.id, user_id=user.id, team_id=team_with_member.id, points=-20)
 
         data = redemption.serialize(include_admin_fields=True)
 
-        # Currently no additional admin fields
+        # Basic fields should be present
         assert "id" in data
         assert "hint_id" in data
         assert "points" in data
+
+        # Name enrichment should be included if relationships are loaded
+        if redemption.team:
+            assert "team_name" in data
+            assert data["team_name"] == redemption.team.name
+        if redemption.hint:
+            assert "hint_preview" in data
+            assert data["hint_preview"] == redemption.hint.preview
+        if redemption.user and redemption.user.ctfd_user:
+            assert "user_name" in data
+            assert data["user_name"] == redemption.user.ctfd_user.name
 
 
 class TestHintRedemptionValidation:
