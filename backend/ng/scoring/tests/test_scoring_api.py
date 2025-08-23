@@ -95,10 +95,12 @@ class TestUserScoringEndpoints:
         data = response.get_json()
         assert data["success"] is False
 
-    def test_submit_answer_correct(self, team_captain_client, user, event, challenge, question, permissions):
+    def test_submit_answer_correct(self, team_captain_client, challenge_factory, question_factory, permissions):
         """Test submitting correct answer"""
+        challenge = challenge_factory(event_id=1)
+        question = question_factory(challenge_id=challenge.id)
         response = team_captain_client.post(
-            f"/ng/events/{event.id}/challenges/{challenge.id}/questions/{question.id}/submit",
+            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/questions/{question.id}/submit",
             json={"submission": question.answer},
         )
 
@@ -112,10 +114,12 @@ class TestUserScoringEndpoints:
         assert data["data"]["is_correct"] is True
         assert data["data"]["points"] == question.points
 
-    def test_submit_answer_incorrect(self, team_captain_client, user, event, challenge, question, permissions):
+    def test_submit_answer_incorrect(self, team_captain_client, challenge_factory, question_factory, permissions):
         """Test submitting incorrect answer"""
+        challenge = challenge_factory(event_id=1)
+        question = question_factory(challenge_id=challenge.id)
         response = team_captain_client.post(
-            f"/ng/events/{event.id}/challenges/{challenge.id}/questions/{question.id}/submit",
+            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/questions/{question.id}/submit",
             json={"submission": "wrong answer"},
         )
 
@@ -181,20 +185,22 @@ class TestUserScoringEndpoints:
         assert data["success"] is False
 
     def test_submit_answer_max_attempts_reached(
-        self, team_captain_client, user, event, challenge, question, permissions
+        self, team_captain_client, challenge_factory, question_factory, permissions
     ):
         """Test submitting answer when max attempts reached"""
+        challenge = challenge_factory(event_id=1)
+        question = question_factory(challenge_id=challenge.id)
         # Submit max attempts
         for i in range(question.max_attempts):
             response = team_captain_client.post(
-                f"/ng/events/{event.id}/challenges/{challenge.id}/questions/{question.id}/submit",
+                f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/questions/{question.id}/submit",
                 json={"submission": f"attempt{i}"},
             )
             assert response.status_code == 201
 
         # Try one more - should fail
         response = team_captain_client.post(
-            f"/ng/events/{event.id}/challenges/{challenge.id}/questions/{question.id}/submit",
+            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/questions/{question.id}/submit",
             json={"submission": "final attempt"},
         )
 
@@ -202,14 +208,17 @@ class TestUserScoringEndpoints:
         data = response.get_json()
         assert data["success"] is False
 
-    def test_redeem_hint_success(self, team_captain_client, user, event, challenge, hint, permissions):
+    def test_redeem_hint_success(self, team_captain_client, challenge_factory, hint_factory, permissions):
         """Test successfully redeeming a hint"""
         # Get the CSRF token (nonce) from the session
         with team_captain_client.session_transaction() as sess:
             nonce = sess.get("nonce")
 
+        challenge = challenge_factory(event_id=1)
+        hint = hint_factory(challenge_id=challenge.id)
+
         response = team_captain_client.post(
-            f"/ng/events/{event.id}/challenges/{challenge.id}/hint/{hint.id}/redeem", data={"nonce": nonce}
+            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/hint/{hint.id}/redeem", data={"nonce": nonce}
         )
 
         assert response.status_code == 201
@@ -673,7 +682,7 @@ class TestScoringAPIIntegration:
             assert response.status_code == 201
 
         # Check final score is consistent
-        response = team_captain_client.get(f"/ng/events/1/me/team/score")
+        response = team_captain_client.get("/ng/events/1/me/team/score")
         assert response.status_code == 200
         # Score should be 0 since all were wrong answers
         assert response.get_json()["data"]["points"] == 0

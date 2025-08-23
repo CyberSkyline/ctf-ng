@@ -753,13 +753,11 @@ class Test_Event_Challenge_List:
     def get_endpoint(self, event_id: int) -> str:
         return f"/ng/events/{event_id}/challenges"
 
-    def test_list_challenges_for_event(self, logged_in_client, event_factory, challenge_factory):
-        event = event_factory(name="Event for Challenge Listing", public=True)
-        challenge1 = challenge_factory(event=event, name="Challenge 1")
-        challenge2 = challenge_factory(event=event, name="Challenge 2")
+    def test_list_challenges_for_event(self, team_captain_client, challenge_factory, permissions):
+        challenge1 = challenge_factory(event_id=1, name="Challenge 1")
+        challenge2 = challenge_factory(event_id=1, name="Challenge 2")
 
-        response = logged_in_client.get(self.get_endpoint(event.id))
-
+        response = team_captain_client.get(self.get_endpoint(challenge1.event_id))
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -772,12 +770,10 @@ class Test_Event_Challenge_Render:
     def get_endpoint(self, event_id: int, challenge_id: int) -> str:
         return f"/ng/events/{event_id}/challenges/{challenge_id}"
 
-    def test_render_challenge_for_event(self, logged_in_client, user, event_factory, team_factory, challenge_factory):
-        event = event_factory(name="Event for Challenge Rendering", public=True)
-        team_factory(event=event, members=[user])
-        challenge = challenge_factory(event=event, name="Challenge to Render")
+    def test_render_challenge_for_event(self, team_captain_client, challenge_factory, permissions):
+        challenge = challenge_factory(event_id=1, name="Challenge to Render")
 
-        response = logged_in_client.get(self.get_endpoint(event.id, challenge.id))
+        response = team_captain_client.get(self.get_endpoint(challenge.event_id, challenge.id))
 
         assert response.status_code == 200
         data = response.get_json()
@@ -792,15 +788,12 @@ class Test_Event_Challenge_Statuses:
         return f"/ng/events/{event_id}/me/challenges"
 
     def test_get_challenge_statuses_for_event(
-        self, logged_in_client, user, event_factory, team_factory, challenge_factory
+        self, team_captain_client,challenge_factory, permissions
     ):
-        event = event_factory(name="Event for Challenge Statuses", public=True)
-        team_factory(event=event, members=[user])
-        challenge1 = challenge_factory(event=event, name="Challenge 1")
-        challenge2 = challenge_factory(event=event, name="Challenge 2")
+        challenge1 = challenge_factory(event_id=1, name="Challenge 1")
+        challenge2 = challenge_factory(event_id=1, name="Challenge 2")
 
-        response = logged_in_client.get(self.get_endpoint(event.id))
-
+        response = team_captain_client.get(self.get_endpoint(1))
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -812,18 +805,15 @@ class Test_Event_Challenge_Statuses:
         # TODO - Add more assertions to check the results
 
     def test_challenge_statuses_include_challenge_name(
-        self, logged_in_client, user, event_factory, team_factory, challenge_factory
+        self, team_captain_client,challenge_factory, permissions
     ):
         """
         Test that challenge statuses response includes challenge names
         """
-        event = event_factory(name="Event for Challenge Name Test", public=True)
-        team_factory(event=event, members=[user])
-        challenge1 = challenge_factory(event=event, name="Web Security Challenge")
-        challenge2 = challenge_factory(event=event, name="Crypto Puzzle")
+        challenge1 = challenge_factory(event_id=1, name="Web Security Challenge")
+        challenge2 = challenge_factory(event_id=1, name="Crypto Puzzle")
 
-        response = logged_in_client.get(f"/ng/events/{event.id}/me/challenges")
-
+        response = team_captain_client.get(f"/ng/events/{challenge1.event_id}/me/challenges")
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True

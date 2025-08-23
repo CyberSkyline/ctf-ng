@@ -357,6 +357,7 @@ class EventTeamLeave(Resource):
 class EventChallenges(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
+    @load_team_by_user_and_event()
     @get_permissions
     @events_user_namespace.doc(
         description="Get all challenges within an event.",
