@@ -30,7 +30,7 @@ def get_users_with_roles(role_names: list[str]) -> list[User]:
     return list(users)
 
 
-def get_assignable_users() -> list[User]:
+def get_support_role_users() -> list[User]:
     """
     Get all users who can be assigned support tickets
     """

@@ -6,7 +6,7 @@ from ...core.middleware.auth import admin_endpoint
 from ...core.exceptions import ValidationError
 from ..models.Role import Role
 from ..models.UserRole import UserRole
-from ..controllers import get_users_with_roles, get_assignable_users
+from ..controllers import get_users_with_roles, get_support_role_users
 from ...core.middleware.loaders.load_role import load_role
 from ...core.middleware.loaders.load_user import load_user
 from ...core.middleware.loaders._util import LoaderType
@@ -174,8 +174,8 @@ class UsersByRoles(Resource):
         return success_response(users)
 
 
-@permissions_admin_namespace.route("/tickets/assignable_users")
-class AssignableUsers(Resource):
+@permissions_admin_namespace.route("/support_role_users")
+class SupportRoleUsers(Resource):
     """
     Convenience endpoint - gets users who can be assigned tickets (ADMIN + SUPPORT roles)
     """
@@ -191,6 +191,6 @@ class AssignableUsers(Resource):
         """
         Get users who can be assigned to tickets.
         """
-        users = get_assignable_users()
+        users = get_support_role_users()
         return success_response(users)
 

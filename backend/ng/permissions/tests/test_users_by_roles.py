@@ -13,7 +13,7 @@ from ...user.models.User import User as NgUser
 
 from ..controllers.get_users_by_roles import get_users_with_roles
 from ..controllers.assign_role_to_user import assign_role_to_user
-from ..controllers.get_users_by_roles import get_assignable_users
+from ..controllers.get_users_by_roles import get_support_role_users
 
 
 pytestmark = pytest.mark.db
@@ -294,7 +294,7 @@ class TestUsersByRolesHappyPaths:
         assert isinstance(data["data"], list)
 
 
-class TestAssignableUsersHappyPaths:
+class TestSupportRoleUsersHappyPaths:
     """
     Test the convenience endpoint for getting assignable users
     """
@@ -335,11 +335,11 @@ class TestAssignableUsersHappyPaths:
                 "regular": ng_regular,
                 }
 
-    def test_get_assignable_users(self, admin_client, mixed_role_users):
+    def test_get_support_role_users(self, admin_client, mixed_role_users):
         """
         Test getting users who can be assigned to tickets (admin + support roles)
         """
-        response = admin_client.get("/ng/admin/permissions/tickets/assignable_users")
+        response = admin_client.get("/ng/admin/permissions/support_role_users")
 
         assert response.status_code == 200
         data = response.get_json()
@@ -351,7 +351,7 @@ class TestAssignableUsersHappyPaths:
 
         assert mixed_role_users["regular"].id not in user_ids
 
-    def test_assignable_users_includes_role_info(
+    def test_support_role_users_includes_role_info(
             self,
             admin_client,
             mixed_role_users
@@ -359,7 +359,7 @@ class TestAssignableUsersHappyPaths:
         """
         Test that assignable users endpoint includes role information
         """
-        response = admin_client.get("/ng/admin/permissions/tickets/assignable_users")
+        response = admin_client.get("/ng/admin/permissions/support_role_users")
 
         assert response.status_code == 200
         data = response.get_json()
@@ -375,20 +375,20 @@ class TestAssignableUsersHappyPaths:
         assert "roles" in admin_user_data
         assert "admin" in admin_user_data["roles"]
 
-    def test_assignable_users_non_admin_cannot_access(self, logged_in_client):
+    def test_support_role_users_non_admin_cannot_access(self, logged_in_client):
         """
         Test that non admins cannot access assignable users endpoint
         """
         response = logged_in_client.get(
-                "/ng/admin/permissions/tickets/assignable_users"
+                "/ng/admin/permissions/support_role_users"
                 )
         assert response.status_code in [302, 403]
 
-    def test_assignable_users_unauthenticated_cannot_access(self, client):
+    def test_support_role_users_unauthenticated_cannot_access(self, client):
         """
         Test that unauthenticated users cannot access assignable users endpoint
         """
-        response = client.get("/ng/admin/permissions/tickets/assignable_users")
+        response = client.get("/ng/admin/permissions/support_role_users")
         assert response.status_code in [302, 403, 401]
 
 
@@ -469,7 +469,7 @@ class TestSupportTicketAssignmentIntegration:
             sess["type"] = scenario["ctfd_admin"].type
             sess["nonce"] = "test-nonce"
 
-        response = admin_client.get("/ng/admin/permissions/tickets/assignable_users")
+        response = admin_client.get("/ng/admin/permissions/support_role_users")
         assert response.status_code == 200
 
         data = response.get_json()
@@ -610,15 +610,15 @@ class TestControllerUnits:
         assert "admin" in error_msg
         assert "support" in error_msg
 
-    def test_get_assignable_users_controller(
+    def test_get_support_role_users_controller(
             self,
             db_session,
             controller_test_users
             ):
         """
-        Test get_assignable_users controller function directly
+        Test get_support_role_users controller function directly
         """
-        assignable = get_assignable_users()
+        assignable = get_support_role_users()
         assignable_ids = {u.id for u in assignable}
 
         assert controller_test_users["admin"].id in assignable_ids
@@ -829,7 +829,7 @@ class TestEdgeCases:
         user_ids = [u["id"] for u in data["data"]]
         assert len(user_ids) == len(set(user_ids)), "Response should not contain duplicate users"
 
-    def test_assignable_users_with_large_dataset(
+    def test_support_role_users_with_large_dataset(
             self,
             admin_client,
             db_session
@@ -857,7 +857,7 @@ class TestEdgeCases:
                 assign_role_to_user(ctfd_user.id, RoleEnum.SUPPORT)
                 assignable_count += 1
 
-        response = admin_client.get("/ng/admin/permissions/tickets/assignable_users")
+        response = admin_client.get("/ng/admin/permissions/support_role_users")
 
         assert response.status_code == 200
         data = response.get_json()
