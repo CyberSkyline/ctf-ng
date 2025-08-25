@@ -10,7 +10,7 @@ services:
       - "8000:8000"
       - "4000:4000"
     env_file:
-      - ${ENV_FILE:-.env.dev}   
+      - ${ENV_FILE:-.env.prod}   
     volumes:
       - .data/CTFd/logs:/var/log/CTFd
       - .data/CTFd/uploads:/var/uploads
@@ -34,11 +34,13 @@ services:
     container_name: ng-nginx
     restart: always
     volumes:
-      - ./conf/nginx/staging-http.conf:/etc/nginx/nginx.conf:ro
+      - ./conf/nginx/http.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./sslpublickey.pem:/certificates/sslpublickey.pem:ro
+      - ./privatesslkey.pem:/certificates/privatesslkey.pem:ro
       - ./frontend/dist:/var/www/vite-build:ro
     ports:
       - 80:80
-      - 5173:5173
+      - 443:443
 
   db:
     image: mariadb:10.11
@@ -74,6 +76,8 @@ services:
     container_name: ng-vite
     restart: always
     tty: true
+    ports:
+      - 5173:5173
     volumes:
       - ./frontend:/app/frontend
       - ./node_modules:/app/node_modules
