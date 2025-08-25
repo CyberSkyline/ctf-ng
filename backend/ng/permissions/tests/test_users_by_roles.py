@@ -339,7 +339,7 @@ class TestAssignableUsersHappyPaths:
         """
         Test getting users who can be assigned to tickets (admin + support roles)
         """
-        response = admin_client.get("/ng/admin/permissions/assignable_users")
+        response = admin_client.get("/ng/admin/permissions/tickets/assignable_users")
 
         assert response.status_code == 200
         data = response.get_json()
@@ -359,7 +359,7 @@ class TestAssignableUsersHappyPaths:
         """
         Test that assignable users endpoint includes role information
         """
-        response = admin_client.get("/ng/admin/permissions/assignable_users")
+        response = admin_client.get("/ng/admin/permissions/tickets/assignable_users")
 
         assert response.status_code == 200
         data = response.get_json()
@@ -380,7 +380,7 @@ class TestAssignableUsersHappyPaths:
         Test that non admins cannot access assignable users endpoint
         """
         response = logged_in_client.get(
-                "/ng/admin/permissions/assignable_users"
+                "/ng/admin/permissions/tickets/assignable_users"
                 )
         assert response.status_code in [302, 403]
 
@@ -388,7 +388,7 @@ class TestAssignableUsersHappyPaths:
         """
         Test that unauthenticated users cannot access assignable users endpoint
         """
-        response = client.get("/ng/admin/permissions/assignable_users")
+        response = client.get("/ng/admin/permissions/tickets/assignable_users")
         assert response.status_code in [302, 403, 401]
 
 
@@ -469,7 +469,7 @@ class TestSupportTicketAssignmentIntegration:
             sess["type"] = scenario["ctfd_admin"].type
             sess["nonce"] = "test-nonce"
 
-        response = admin_client.get("/ng/admin/permissions/assignable_users")
+        response = admin_client.get("/ng/admin/permissions/tickets/assignable_users")
         assert response.status_code == 200
 
         data = response.get_json()
@@ -857,7 +857,7 @@ class TestEdgeCases:
                 assign_role_to_user(ctfd_user.id, RoleEnum.SUPPORT)
                 assignable_count += 1
 
-        response = admin_client.get("/ng/admin/permissions/assignable_users")
+        response = admin_client.get("/ng/admin/permissions/tickets/assignable_users")
 
         assert response.status_code == 200
         data = response.get_json()

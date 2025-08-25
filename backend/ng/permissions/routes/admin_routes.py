@@ -174,7 +174,7 @@ class UsersByRoles(Resource):
         return success_response(users)
 
 
-@permissions_admin_namespace.route("/assignable_users")
+@permissions_admin_namespace.route("/tickets/assignable_users")
 class AssignableUsers(Resource):
     """
     Convenience endpoint - gets users who can be assigned tickets (ADMIN + SUPPORT roles)
