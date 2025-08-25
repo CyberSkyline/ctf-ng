@@ -285,9 +285,9 @@ class TestSerialize:
         assert "subject" in user_data
         assert "status" in user_data
         assert "message_count" in user_data
-        assert "tags" in user_data
         assert "assigned_to" not in user_data
         assert "muted" not in user_data
+        assert "tags" not in user_data
 
     def test_serialize_admin_fields(self, ticket_with_messages, admin):
         """Test ticket serialization with admin fields."""
@@ -298,6 +298,7 @@ class TestSerialize:
         assert "assigned_to" in admin_data
         assert "muted" in admin_data
         assert "first_admin_response_timestamp" in admin_data
+        assert "tags" in admin_data
 
 
 class TestGetTicketStats:

@@ -82,7 +82,7 @@ class TicketTag(db.Model):
             "ticket_count": len(self.tickets),
         }
 
-        return SerializedTicketTag(**data)  # type: ignore[typeddict-item]
+        return SerializedTicketTag(**data)
 
     @classmethod
     def create_tag(

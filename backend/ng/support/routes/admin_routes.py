@@ -62,44 +62,22 @@ class AdminTickets(Resource):
         """
         Get all tickets with optional filters
         """
-        user_id = request.args.get("user_id", type=int)
+        user_id = request.args.get("user_id", type = int)
         status = request.args.get("status", "all")
-        assigned_to = request.args.get("assigned_to", type=int)
-        event_id = request.args.get("event_id", type=int)
-        team_id = request.args.get("team_id", type=int)
+        assigned_to = request.args.get("assigned_to", type = int)
+        event_id = request.args.get("event_id", type = int)
+        team_id = request.args.get("team_id", type = int)
 
         tickets = list_tickets(
-            user_id=user_id,
-            status=status,
-            assigned_to=assigned_to,
-            event_id=event_id,
-            team_id=team_id,
-            is_admin=True,
+            user_id = user_id,
+            status = status,
+            assigned_to = assigned_to,
+            event_id = event_id,
+            team_id = team_id,
+            is_admin = True,
         )
 
-        # Enrich each ticket with names for API response
-        enriched_tickets = []
-        for ticket in tickets:
-            ticket_data = ticket.serialize(include_admin_fields=True)
-
-            # Add author name
-            if ticket.author:
-                ticket_data["author_name"] = ticket.author.name
-
-            # Add assigned user name
-            if ticket.assigned_to and ticket.assigned_user:
-                ticket_data["assigned_to_name"] = ticket.assigned_user.name
-
-            # Add existing name enrichments
-            if ticket.event_id:
-                ticket_data["event_name"] = ticket.event.name
-            if ticket.team_id:
-                ticket_data["team_name"] = ticket.team.name
-            if ticket.challenge_id:
-                ticket_data["challenge_name"] = ticket.challenge.name
-            enriched_tickets.append(ticket_data)
-
-        return success_response(enriched_tickets)
+        return success_response(tickets)
 
 
 @support_admin_namespace.route("/tickets/<int:ticket_id>")
