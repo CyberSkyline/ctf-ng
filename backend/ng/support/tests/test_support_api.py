@@ -248,6 +248,44 @@ class TestAdminSupportEndpoints:
         data = response.get_json()
         assert all(t["assigned_to"] == admin.id for t in data["data"])
 
+    def test_admin_tickets_include_author_and_assigned_names(self, admin_client, user, admin, event, challenge, team_factory, ticket_factory):
+        """Test that admin ticket list includes author_name and assigned_to_name"""
+        team = team_factory(event=event, members=[user])
+
+        # Create a ticket with assignment
+        ticket = ticket_factory(
+            subject="Test ticket with assignment",
+            author_id=user.id,
+            event_id=event.id,
+            team_id=team.id,
+            challenge_id=challenge.id
+        )
+        # Assign the ticket
+        ticket.assign_to_user(admin.id)
+
+        # Get all tickets via admin endpoint
+        response = admin_client.get("/ng/admin/support/tickets")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+
+        # Find our test ticket
+        test_ticket = next(t for t in data["data"] if t["subject"] == "Test ticket with assignment")
+
+        # Verify all name enrichments are present
+        assert test_ticket["author_name"] == user.name
+        assert test_ticket["assigned_to_name"] == admin.name
+        assert test_ticket["event_name"] == event.name
+        assert test_ticket["team_name"] == team.name
+        assert test_ticket["challenge_name"] == challenge.name
+
+        # Verify IDs are also present
+        assert test_ticket["author_id"] == user.id
+        assert test_ticket["assigned_to"] == admin.id
+        assert test_ticket["event_id"] == event.id
+        assert test_ticket["team_id"] == team.id
+        assert test_ticket["challenge_id"] == challenge.id
+
     def test_get_any_ticket_details(self, admin_client, ticket_with_messages):
         """Test admin can get any ticket details"""
         response = admin_client.get(f"/ng/admin/support/tickets/{ticket_with_messages.id}")
@@ -261,7 +299,7 @@ class TestAdminSupportEndpoints:
     def test_admin_add_message_reopens_ticket(self, admin_client, closed_ticket, admin):
         """Test admin message reopens closed ticket"""
         response = admin_client.post(
-            f"/ng/admin/support/tickets/{closed_ticket.id}",
+            f"/ng/admin/support/tickets/{closed_ticket.id}/add_message",
             json={"text": "I'm reopening this to help"},
         )
 

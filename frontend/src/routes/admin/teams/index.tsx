@@ -1,34 +1,11 @@
-import { EventIcon } from '@/constants';
-import { useEvent } from '@/hooks/events';
 import { useAllTeams } from '@/hooks/team';
 import type { Team } from '@/types';
 import type { ColDef } from 'ag-grid-community';
 import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
-import Entity from 'components/Entity';
+import EventCellRenderer from 'components/EventCellRenderer';
 import MemberCountBadge from 'components/MemberCountBadge';
 import TeamSidebar from './TeamSidebar';
-
-function EventCellRenderer({ value }: { value: number }) {
-  const { data, error, isLoading } = useEvent(value);
-
-  if (isLoading) {
-    return <span>Loading...</span>;
-  }
-
-  if (error) {
-    return (
-      <span>
-        Error:
-        {error.message}
-      </span>
-    );
-  }
-
-  return (
-    <Entity icon={EventIcon} to={`/admin/events?id=${value}`} label={data?.name ?? 'Unknown Event'} />
-  );
-}
 
 /**
  * Team management page for admins.

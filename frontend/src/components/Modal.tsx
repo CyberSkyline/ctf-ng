@@ -8,6 +8,7 @@ import {
 import { Form } from 'radix-ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import { TbX } from 'react-icons/tb';
+import { twMerge } from 'tailwind-merge';
 import { ErrorCallout } from './Callouts';
 
 interface ModalProps {
@@ -15,6 +16,7 @@ interface ModalProps {
   description?: string,
   children?: ReactNode,
   trigger: ReactNode,
+  className?: string,
   onSubmit?: (formData: FormData) => Promise<unknown>,
   onOpenChange?: (open: boolean) => void,
   defaultOpen?: boolean,
@@ -29,6 +31,7 @@ export default function Modal({
   description,
   children,
   trigger,
+  className,
   onSubmit,
   onOpenChange,
   defaultOpen = false,
@@ -57,7 +60,7 @@ export default function Modal({
       </Dialog.Trigger>
 
       <Dialog.Content
-        className="flex flex-col gap-3"
+        className={twMerge('flex flex-col gap-3', className)}
         // aria-describedby should be set to undefined if no description is provided, otherwise it should not be set at all.
         // as far as i know, prop spreading is the only way to accomplish this.
         // eslint-disable-next-line react/jsx-props-no-spreading

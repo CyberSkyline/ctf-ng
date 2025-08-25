@@ -3,7 +3,11 @@ Defines the HintRedemption model for tracking hint usage.
 """
 
 from __future__ import annotations
-from typing import Any, TypedDict
+from typing import (
+    Any,
+    TypedDict,
+    NotRequired,
+)
 
 from datetime import datetime
 
@@ -25,6 +29,12 @@ class SerializedHintRedemption(TypedDict):
     score_event_id: int | None
     timestamp: str
     points: int
+    # Name enrichment fields
+    user_name: NotRequired[str]
+    team_name: NotRequired[str]
+    hint_preview: NotRequired[str]
+    challenge_id: NotRequired[int]
+    challenge_name: NotRequired[str]
 
 
 class HintRedemption(db.Model):
@@ -64,6 +74,15 @@ class HintRedemption(db.Model):
             "timestamp": self.timestamp.isoformat() + "Z",
             "points": self.points,
         }
+
+        if self.user:
+            data["user_name"] = self.user.ctfd_user.name if self.user.ctfd_user else f"User {self.user_id}"
+        if self.team:
+            data["team_name"] = self.team.name
+        if self.hint:
+            data["hint_preview"] = self.hint.preview
+            data["challenge_id"] = self.hint.challenge_id
+            data["challenge_name"] = self.hint.challenge.name
 
         return SerializedHintRedemption(**data)
 
@@ -232,6 +251,34 @@ class HintRedemption(db.Model):
             query = query.join(Hint).filter(Hint.challenge_id == challenge_id)
 
         return query.order_by(cls.timestamp.desc()).all()  # type: ignore[no-any-return]
+
+    @classmethod
+    def find_by_team_and_event(cls, team_id: int, event_id: int) -> list[HintRedemption]:
+        """
+        Get all hint redemptions for a team in a specific event
+
+        Args:
+            team_id: The team ID
+            event_id: The event ID
+
+        Returns:
+            List of hint redemptions for the team in the event
+        """
+        # LAZY-IMPORT
+        from ...challenge.models.Hint import Hint
+        from ...challenge.models.Challenge import Challenge
+
+        return (
+            cls.query
+            .join(Hint, cls.hint_id == Hint.id)
+            .join(Challenge, Hint.challenge_id == Challenge.id)
+            .filter(
+                cls.team_id == team_id,
+                Challenge.event_id == event_id
+            )
+            .order_by(cls.timestamp.desc())
+            .all()
+        )
 
     def delete_redemption(self, commit: bool = True) -> None:
         """

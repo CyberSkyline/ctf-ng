@@ -7,7 +7,6 @@ from typing import Any
 
 from ...event.models.Event import Event
 from ...team.models.Team import Team
-from ...team.models.TeamMember import TeamMember
 from ...user.models.User import User
 
 
@@ -22,5 +21,4 @@ def get_data_counts() -> dict[str, Any]:
         "events": Event.get_total_count(),
         "teams": Team.get_total_count(),
         "users": User.get_total_count(),
-        "team_members": TeamMember.get_total_count(),
     }

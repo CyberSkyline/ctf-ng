@@ -75,3 +75,34 @@ def test_team_promote(admin_client, team_with_members):
     assert response.status_code == 200
     data = response.get_json()
     assert data['success']
+
+
+def test_admin_teams_list_include_name_enrichment(admin_client, event_factory, team_factory, user_factory):
+    """
+    Test that admin teams endpoint includes enriched names (event_name)
+    """
+    event = event_factory(name="Cyber Defense Championship", public=True)
+    user = user_factory(name="Team Captain", email="captain@example.com")
+    team = team_factory(event=event, members=[user], name="Red Team Alpha")
+
+    response = admin_client.get("/ng/admin/teams")
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+
+    team_data = None
+    for t in data["data"]:
+        if t["id"] == team.id:
+            team_data = t
+            break
+
+    assert team_data is not None
+
+    # Verify name enrichment is working
+    assert "event_name" in team_data
+    assert team_data["event_name"] == "Cyber Defense Championship"
+
+    # Verify IDs are still present
+    assert team_data["event_id"] == event.id
+    assert team_data["name"] == "Red Team Alpha"

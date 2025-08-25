@@ -53,6 +53,7 @@ export interface Challenge {
 
 export interface MeChallenge {
   challenge_id: number;
+  challenge_name: string;
   total_points_available: number;
   total_points_scored: number;
   num_questions_solved: number;
@@ -107,4 +108,58 @@ export interface ScoreEvent {
   team_id: number;
   points: number;
   timestamp: Date;
+}
+
+export interface Deployment {
+  id: number;
+  blueprint: number;
+  team: number;
+  challenge_name: string;
+  team_name: string;
+  challenge_id: number;
+  containers: number;
+  event_id: number;
+}
+
+export interface ContainerInstance {
+  id: number;
+  blueprint: number;
+  team: number;
+  hostip: string;
+  dockerid: string;
+}
+
+export interface ContainerStatus {
+  id: number;
+  name: string;
+  image: string;
+  docker_id: string;
+  status: 'created' | 'running' | 'paused' | 'restarting' | 'exited' | 'removing' | 'dead';
+}
+
+export interface Ticket {
+  id: number;
+  subject: string;
+  event_id?: number;
+  event_name?: string;
+  team_id?: number;
+  team_name?: string;
+  challenge_id?: number;
+  challenge_name?: string;
+  status: 'open' | 'closed' | 'inprogress';
+  last_updated: Date;
+  opened_timestamp: Date;
+  author_id: number;
+  message_count: number;
+  tags: string[]
+}
+
+export interface TicketMessage {
+  author_id: number;
+  author_name: string;
+  author_type: string;
+  created_at: Date;
+  id: number;
+  text: string;
+  ticket_id: number
 }

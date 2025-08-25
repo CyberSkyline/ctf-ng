@@ -81,6 +81,16 @@ class AdminTickets(Resource):
         enriched_tickets = []
         for ticket in tickets:
             ticket_data = ticket.serialize(include_admin_fields=True)
+
+            # Add author name
+            if ticket.author:
+                ticket_data["author_name"] = ticket.author.name
+
+            # Add assigned user name
+            if ticket.assigned_to and ticket.assigned_user:
+                ticket_data["assigned_to_name"] = ticket.assigned_user.name
+
+            # Add existing name enrichments
             if ticket.event_id:
                 ticket_data["event_name"] = ticket.event.name
             if ticket.team_id:
@@ -104,6 +114,9 @@ class AdminTicket(Resource):
         result = get_ticket(ticket=ticket)
         return success_response(result)
 
+
+@support_admin_namespace.route("/tickets/<int:ticket_id>/add_message")
+class AdminTicketMessage(Resource):
     @support_admin_namespace.doc(**ADD_ADMIN_MESSAGE_DOC)
     @admin_endpoint(json_required=True)
     @load_ticket(LoaderType.PARAM)
@@ -213,7 +226,6 @@ class AdminTicketEvent(Resource):
         """
         updated_ticket = set_ticket_event(
             event_id=json_data.get("event_id"),
-            team_id=json_data.get("team_id"),
             ticket=ticket,
         )
         return success_response(updated_ticket)

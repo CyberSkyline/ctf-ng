@@ -19,6 +19,9 @@ from ..controllers import (
     award_manual_points,
     get_score_history,
     recalculate_score,
+    get_team_attempts,
+    get_team_hint_redemptions,
+    get_team_manual_awards,
 )
 from ..models import (
     Attempt,
@@ -586,3 +589,100 @@ class TestControllerIntegration:
 
         # Score should remain the same since it was already correct
         assert recalc_result.points == current_score
+
+
+class TestGetTeamAttempts:
+    """Test the get_team_attempts controller"""
+
+    def test_get_team_attempts_empty(self, db_session, event, team_with_member):
+        """Test getting attempts for team with no attempts"""
+        result = get_team_attempts(team_id=team_with_member.id, event_id=event.id)
+        assert result == []
+
+    def test_get_team_attempts_with_data(self, db_session, event, team_with_member, user, challenge, question):
+        """Test getting attempts for team with attempts (including failed ones)"""
+        # Create a correct attempt
+        correct_attempt = Attempt.create_attempt(
+            user_id=user.id,
+            team_id=team_with_member.id,
+            challenge_id=challenge.id,
+            question_id=question.id,
+            submission=question.answer,
+        )
+
+        # Create a failed attempt
+        failed_attempt = Attempt.create_attempt(
+            user_id=user.id,
+            team_id=team_with_member.id,
+            challenge_id=challenge.id,
+            question_id=question.id,
+            submission="wrong answer",
+        )
+
+        result = get_team_attempts(team_id=team_with_member.id, event_id=event.id)
+
+        assert len(result) >= 2
+        assert all(isinstance(attempt, Attempt) for attempt in result)
+
+        # Find our specific attempts
+        correct_attempt_found = any(a.id == correct_attempt.id for a in result)
+        failed_attempt_found = any(a.id == failed_attempt.id for a in result)
+
+        assert correct_attempt_found, "Should find correct attempt"
+        assert failed_attempt_found, "Should find failed attempt"
+
+
+class TestGetTeamHintRedemptions:
+    """Test the get_team_hint_redemptions controller"""
+
+    def test_get_team_hint_redemptions_empty(self, db_session, event, team_with_member):
+        """Test getting hint redemptions for team with no redemptions"""
+        result = get_team_hint_redemptions(team_id=team_with_member.id, event_id=event.id)
+        assert result == []
+
+    def test_get_team_hint_redemptions_with_data(self, db_session, event, team_with_member, user, challenge, hint):
+        """Test getting hint redemptions for team with redemptions"""
+        # Create a hint redemption
+        redemption = HintRedemption.create_redemption(
+            hint_id=hint.id,
+            user_id=user.id,
+            team_id=team_with_member.id,
+            challenge_id=challenge.id,
+        )
+
+        result = get_team_hint_redemptions(team_id=team_with_member.id, event_id=event.id)
+
+        assert len(result) >= 1
+        assert all(isinstance(r, HintRedemption) for r in result)
+
+        # Find our specific redemption
+        redemption_found = any(r.id == redemption.id for r in result)
+        assert redemption_found, "Should find hint redemption"
+
+
+class TestGetTeamManualAwards:
+    """Test the get_team_manual_awards controller"""
+
+    def test_get_team_manual_awards_empty(self, db_session, event, team_with_member):
+        """Test getting manual awards for team with no awards"""
+        result = get_team_manual_awards(team_id=team_with_member.id, event_id=event.id)
+        assert result == []
+
+    def test_get_team_manual_awards_with_data(self, db_session, event, team_with_member, admin):
+        """Test getting manual awards for team with awards"""
+        # Create a manual award
+        award = ManualPointAward.create_award(
+            admin_id=admin.id,
+            team_id=team_with_member.id,
+            points=50,
+            reason="Test bonus"
+        )
+
+        result = get_team_manual_awards(team_id=team_with_member.id, event_id=event.id)
+
+        assert len(result) >= 1
+        assert all(isinstance(a, ManualPointAward) for a in result)
+
+        # Find our specific award
+        award_found = any(a.id == award.id for a in result)
+        assert award_found, "Should find manual award"

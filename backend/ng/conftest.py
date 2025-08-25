@@ -220,8 +220,12 @@ def admin(db_session):
     db_session.add(admin)
     db_session.flush()
     from .user.models.User import User as NgUser
+    from .permissions.models.Role import Role
     Role.create_role(RoleEnum.ADMIN)
+    Permission.create_permission(PermissionEnum.CAN_IMPERSONATE_USERS, "Impersonate users")
     Permission.create_permission(PermissionEnum.CAN_EDIT_TEAM, "Edit team details")
+    RolePermission.create_role_permission(1, 1)
+    RolePermission.create_role_permission(1, 2)
 
     NgUser.create_user(user_id=admin.id, commit=False)
     assign_role_to_user(admin.id, RoleEnum.ADMIN)
@@ -322,13 +326,24 @@ def user_factory(db_session):
     """A factory function to create User objects for tests."""
     from .user.models.User import User
 
-    def _factory(name="Test User", email="testuser@example.com", password="password"):
+    def _factory(name="Test User", email="testuser@example.com", password="password", admin=False):
         user = Users(name=name, email=email)
         db_session.add(user)
         db_session.commit()
 
         ng_user = User(id=user.id)
         db_session.add(ng_user)
+        if admin:
+            Role.create_role(RoleEnum.ADMIN)
+            Permission.create_permission(PermissionEnum.CAN_IMPERSONATE_USERS, "Impersonate users")
+            Permission.create_permission(PermissionEnum.CAN_EDIT_TEAM, "Edit team details")
+            Permission.create_permission(PermissionEnum.CAN_EDIT_USER, "Edit user details")
+            Permission.create_permission(PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS, "Manage support tickets")
+            RolePermission.create_role_permission(1, 1)
+            RolePermission.create_role_permission(1, 2)
+            RolePermission.create_role_permission(1, 3)
+            RolePermission.create_role_permission(1, 4)
+            assign_role_to_user(ng_user.id, RoleEnum.ADMIN)
         db_session.commit()
         return ng_user
 

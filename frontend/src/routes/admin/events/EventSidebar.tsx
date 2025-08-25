@@ -5,6 +5,7 @@ import { Button } from '@radix-ui/themes';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import EventHeader from 'components/EventHeader';
+import { TbPackages } from 'react-icons/tb';
 import { Link } from 'react-router';
 import AdminChallengeCard from './AdminChallengeCard';
 import ChallengeUploadModal from './ChallengeUploadModal';
@@ -16,6 +17,12 @@ export default function EventSidebar({ entity }: { entity: Event }) {
   return (
     <AdminSidebar>
       <AdminSidebarHeader title="Event Details">
+        <Button variant="soft" color={COLOR_INFO} asChild>
+          <Link to={`/admin/deployments?filter=${btoa(JSON.stringify({ event_id : { filterType : 'number', type : 'equals', filter : entity.id } }))}`}>
+            <TbPackages />
+            Deployments
+          </Link>
+        </Button>
         <Button variant="soft" color={COLOR_INFO} asChild>
           <Link to={`/admin/teams?filter=${btoa(JSON.stringify({ event_id : { filterType : 'number', type : 'equals', filter : entity.id } }))}`}>
             <TeamIcon />
