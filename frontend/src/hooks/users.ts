@@ -1,4 +1,4 @@
-import type { User } from '@/types';
+import type { Event, User } from '@/types';
 import useSWR from 'swr';
 
 /**
@@ -27,4 +27,14 @@ export function useUser(userId: number | null) {
  */
 export function useCurrentUser() {
   return useSWR<User>('/users/me');
+}
+
+/**
+ * Admin Only endpoint
+ * Get events for a specific user
+ */
+export function useUserEvents(userId: number | undefined) {
+  return useSWR<Event[],Error>(
+    userId ? `/admin/users/${userId}/events` : null,
+  );
 }
