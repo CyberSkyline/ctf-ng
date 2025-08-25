@@ -9,12 +9,12 @@ from ...models.Ticket import Ticket
 def set_ticket_event(
     event_id: int,
     ticket: Ticket,
-    team_id: int | None = None,
 ) -> Ticket:
     """
     Set ticket's event and team association
     """
-    if event_id is not None and team_id is None:
+    team_id = None
+    if event_id is not None:
         team = Team.find_by_user_and_event(
             user_id=ticket.author_id,
             event_id=event_id,

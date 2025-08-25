@@ -398,7 +398,6 @@ class TestSetTicketEvent:
 
         result = set_ticket_event(
             event_id=new_event.id,
-            team_id=new_team.id,
             ticket=ticket,
         )
 
@@ -412,9 +411,9 @@ class TestRemoveTicketEvent:
     def test_remove_event(self, db_session, ticket, event_factory, team_factory, user):
         """Test removing ticket's event association"""
         event = event_factory()
-        team = team_factory(event=event, members=[user])
+        team_factory(event=event, members=[user])
 
-        set_ticket_event(event_id=event.id, team_id=team.id, ticket=ticket)
+        set_ticket_event(event_id=event.id, ticket=ticket)
 
         db_session.refresh(ticket)
         assert ticket.event_id == event.id
