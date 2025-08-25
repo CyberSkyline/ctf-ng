@@ -96,7 +96,7 @@ with app.app_context():
             PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
         ],
     )
-    assign_role_to_user(admin_user.id, "admin")
+    assign_role_to_user(admin_user.id, RoleEnum.ADMIN)
 
     print("\n")
     # ANSI escape code for yellow background: \033[43m, reset: \033[0m

@@ -5,11 +5,20 @@ Defines the Demographic model for tracking user event registrations.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import TypedDict, NotRequired
 
 from CTFd.models import db
 
 from ...core.utils import utc_now
+
+
+class SerializedDemographic(TypedDict):
+    id: int
+    user_id: int
+    user_name: NotRequired[str]
+    event_id: int
+    event_name: NotRequired[str]
+    reg_timestamp: str
 
 
 class Demographic(db.Model):
@@ -22,26 +31,35 @@ class Demographic(db.Model):
 
     __table_args__ = (db.UniqueConstraint("user_id", "event_id", name="uq_demographic_user_event"),)
 
+    user = db.relationship("User")
+    event = db.relationship("Event")
+
     def __repr__(self):
         return f"<Demographic user_id={self.user_id} event_id={self.event_id}>"
 
-    def serialize(self, include_admin_fields: bool = False) -> dict[str, Any]:
+    def serialize(self, include_admin_fields: bool = False) -> SerializedDemographic:
         """Serialize demographic for API response.
 
         Args:
             include_admin_fields: Whether to include admin-only fields
 
         Returns:
-            dict: Serialized demographic data
+            SerializedDemographic: Serialized demographic data
         """
         data = {
             "id": self.id,
             "user_id": self.user_id,
             "event_id": self.event_id,
-            "reg_timestamp": self.reg_timestamp,
+            "reg_timestamp": self.reg_timestamp.isoformat() + "Z",
         }
 
-        return data
+        if self.user and self.user.ctfd_user:
+            data["user_name"] = self.user.ctfd_user.name
+
+        if self.event:
+            data["event_name"] = self.event.name
+
+        return SerializedDemographic(**data)
 
     @classmethod
     def create_demographic(

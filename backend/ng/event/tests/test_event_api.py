@@ -498,6 +498,28 @@ class Test_Event_TeamMember_Lookup:
         data = response.get_json()
         assert data["success"] is False
 
+    def test_team_members_include_name_enrichment(self, logged_in_client, user, event_factory, team_factory):
+        """Test that team members endpoint includes enriched names (team_name, event_name)"""
+        event = event_factory(name="Summer CTF 2024", public=True)
+        team = team_factory(event=event, members=[user], name="Elite Hackers")
+
+        response = logged_in_client.get(self.get_endpoint(event.id))
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+
+        # Verify name enrichment is working
+        member_data = data["data"][0]
+        assert "team_name" in member_data
+        assert "event_name" in member_data
+        assert member_data["team_name"] == "Elite Hackers"
+        assert member_data["event_name"] == "Summer CTF 2024"
+
+        # Verify IDs are still present
+        assert member_data["team_id"] == team.id
+        assert member_data["event_id"] == event.id
+
 
 class Test_Event_Team_Management:
     def test_captain_promote(self, team_captain_client):
@@ -1041,6 +1063,26 @@ class Test_Event_Challenge_List:
         assert len(data["data"]) == 2
         assert data["data"][0]["name"] == challenge1.name
         assert data["data"][1]["name"] == challenge2.name
+
+    def test_challenges_include_name_enrichment(self, logged_in_client, event_factory, challenge_factory):
+        """Test that challenges endpoint includes enriched names (event_name)"""
+        event = event_factory(name="Crypto Masters Tournament", public=True)
+        challenge_factory(event=event, name="RSA Decryption")
+
+        response = logged_in_client.get(self.get_endpoint(event.id))
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+
+        # Verify name enrichment is working
+        challenge_data = data["data"][0]
+        assert "event_name" in challenge_data
+        assert challenge_data["event_name"] == "Crypto Masters Tournament"
+
+        # Verify IDs are still present
+        assert challenge_data["event_id"] == event.id
+        assert challenge_data["name"] == "RSA Decryption"
 
 
 class Test_Event_Challenge_Render:

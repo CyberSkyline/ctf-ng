@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, TypedDict
+from typing import Any, TypedDict, NotRequired
 
 from CTFd.models import db
 from cyber_skyline.chall_parser.compose.challenge_info import (
@@ -14,6 +14,7 @@ from ...core.utils.validator import BaseValidator
 class SerializedHint(TypedDict):
     id: int
     challenge_id: int
+    challenge_name: NotRequired[str]
     preview: str
     body: str | None
     deduction: int
@@ -61,6 +62,9 @@ class Hint(db.Model):
 
         if include_admin_fields:
             data["body"] = self.body
+
+        if self.challenge:
+            data["challenge_name"] = self.challenge.name
 
         return SerializedHint(**data)
 

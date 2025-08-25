@@ -6,15 +6,23 @@ from __future__ import annotations
 
 import random
 import string
-from typing import Any, TypedDict, cast
-
+from typing import (
+    Any,
+    cast,
+    TypedDict,
+    NotRequired,
+)
 from CTFd.models import db
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from ... import config
-from ...core.exceptions import BusinessLogicError, ConflictError, ValidationError
+from ...core.exceptions import (
+    ConflictError,
+    ValidationError,
+    BusinessLogicError,
+)
 from ...core.utils.validator import BaseValidator
 from .enums import TeamRole
 from .TeamMember import TeamMember
@@ -27,6 +35,7 @@ class SerializedTeam(TypedDict):
     id: int
     name: str
     event_id: int
+    event_name: NotRequired[str]
     member_count: int
     ranked: bool
     locked: bool
@@ -89,6 +98,8 @@ class Team(db.Model):
             "invite_code": self.invite_code,
         }
 
+        if self.event:
+            data["event_name"] = self.event.name
 
         return SerializedTeam(**data)
 
@@ -160,13 +171,17 @@ class Team(db.Model):
 
     @classmethod
     def get_unique_invite_code(cls) -> str:
-        """Generate a unique invite code for a new team."""
-        # TODO - Raise an exception if this loops too many times
-        while True:
+        """
+        Generate a unique invite code for a new team
+        """
+        for _attempt in range(config.INVITE_CODE_GENERATION_ATTEMPTS):
             invite_code = "".join(random.choices(HEX_CHARS, k=config.INVITE_CODE_MAX_LENGTH))
             existing = cls.query.filter_by(invite_code=invite_code).first()
             if existing is None:
                 return invite_code
+        # Outcomes = 16^8=4.3B, probability of collision = existing_teams / 4.3B
+        # Probability = (existing_teams / 4.3B)^10 = Impossible!
+        raise RuntimeError(f"Failed to generate unique invite code after {config.INVITE_CODE_GENERATION_ATTEMPTS} attempts")
 
     @classmethod
     def generate_random_seed(cls) -> str:

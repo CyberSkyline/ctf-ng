@@ -208,3 +208,57 @@ class Test_Team_Name_Contains_Member_Name:
 
         assert Team.team_name_contains_member_name(team.name, [user.ctfd_user.name]) is True
 """
+
+
+class Test_TeamMember_Validation:
+
+    def test_validates_max_team_size_constraint(self, event_factory, team_factory, user_factory):
+        """
+        Test that adding a member to a full team raises ValidationError
+        """
+        # Create event with max team size of 2
+        event = event_factory(max_team_size=2)
+
+        # Create full team with 2 members
+        user1 = user_factory(name="User 1", email="user1@test.com")
+        user2 = user_factory(name="User 2", email="user2@test.com")
+        team = team_factory(event=event, members=[user1, user2])
+
+        # Try to add a third member
+        user3 = user_factory(name="User 3", email="user3@test.com")
+
+        with pytest.raises(ValidationError) as exc_info:
+            TeamMember.validate({
+                "user_id": user3.id,
+                "team_id": team.id,
+                "event_id": event.id,
+                "role": TeamRole.MEMBER
+            })
+
+        assert "is full (2/2)" in str(exc_info.value)
+
+    def test_allows_adding_member_when_team_not_full(self, event_factory, team_factory, user_factory):
+        """
+        Test that adding a member to a non full team succeeds
+        """
+        # Create event with max team size of 4
+        event = event_factory(max_team_size=4)
+
+        # Create team with 2 members
+        user1 = user_factory(name="User 1", email="user1@test.com")
+        user2 = user_factory(name="User 2", email="user2@test.com")
+        team = team_factory(event=event, members=[user1, user2])
+
+        # Try to add a third member
+        user3 = user_factory(name="User 3", email="user3@test.com")
+
+        # This should not raise an exception
+        validated_data = TeamMember.validate({
+            "user_id": user3.id,
+            "team_id": team.id,
+            "event_id": event.id,
+            "role": TeamRole.MEMBER
+        })
+
+        assert validated_data["user_id"] == user3.id
+        assert validated_data["team_id"] == team.id

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, TypedDict
+from typing import Any, TypedDict, NotRequired
 
 from CTFd.models import db
 
@@ -15,6 +15,7 @@ MAX_CHALLENGE_ICON_LENGTH = 64
 class SerializedChallenge(TypedDict):
     id: int
     event_id: int
+    event_name: NotRequired[str]
     name: str
     description: str = ""
     icon: str = ""
@@ -56,6 +57,9 @@ class Challenge(db.Model):
             "num_questions": len(self.questions),
             "total_points": sum(q.points for q in self.questions),
         }
+
+        if self.event:
+            data["event_name"] = self.event.name
 
         return SerializedChallenge(**data)
 
