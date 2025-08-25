@@ -226,7 +226,6 @@ class AdminTicketEvent(Resource):
         """
         updated_ticket = set_ticket_event(
             event_id=json_data.get("event_id"),
-            team_id=json_data.get("team_id"),
             ticket=ticket,
         )
         return success_response(updated_ticket)

@@ -346,7 +346,7 @@ UPDATE_MUTE_DOC = {
 }
 
 SET_TICKET_EVENT_DOC = {
-    "description": "Set ticket's event and team association (Admin only)",
+    "description": "Set ticket's event and team association (Admin only). Team ID is automatically derived from the ticket author's team in the event.",
     "params": {
         "ticket_id": {
             "description": "Ticket ID",
@@ -356,27 +356,21 @@ SET_TICKET_EVENT_DOC = {
         },
         "event_id": {
             "description": "Event ID to associate with ticket",
-            "required": False,
+            "required": True,
             "type": "integer",
             "example": 1
-        },
-        "team_id": {
-            "description": "Team ID to associate with ticket",
-            "required": False,
-            "type": "integer",
-            "example": 42
         }
     },
     "responses": {
         200: "Success - Event/team association updated",
-        400: "Bad request - Team does not belong to specified event",
+        400: "Bad request - Invalid event_id",
         **ADMIN_REQUIRED_RESPONSES,
-        404: "Not found - Ticket, event, or team not found",
+        404: "Not found - Ticket or event not found",
     },
 }
 
 REMOVE_TICKET_EVENT_DOC = {
-    "description": "Remove ticket's event and team association (Admin only)",
+    "description": "Remove ticket's event, team, and challenge association (Admin only). Since challenges must belong to events, removing the event also removes any challenge association to prevent data inconsistency.",
     "params": {
         "ticket_id": {
             "description": "Ticket ID",
@@ -386,7 +380,7 @@ REMOVE_TICKET_EVENT_DOC = {
         }
     },
     "responses": {
-        200: "Success - Event/team association removed",
+        200: "Success - Event/team/challenge associations removed",
         **ADMIN_REQUIRED_RESPONSES,
         404: "Not found - Ticket does not exist",
     },
