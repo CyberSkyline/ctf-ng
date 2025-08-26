@@ -1,9 +1,12 @@
+from flask import request
 from flask_restx import Namespace, Resource
 from ...core.utils.logger import get_logger
 from ...core.utils.api import error_response, success_response
 from ...core.middleware.auth import admin_endpoint
+from ...core.exceptions import ValidationError
 from ..models.Role import Role
 from ..models.UserRole import UserRole
+from ..controllers import get_users_with_roles, get_support_role_users
 from ...core.middleware.loaders.load_role import load_role
 from ...core.middleware.loaders.load_user import load_user
 from ...core.middleware.loaders._util import LoaderType
@@ -122,4 +125,72 @@ class UserRoles(Resource):
         user = UserRole.update_user_roles(user_id, data)
 
         return success_response(user)
+
+
+@permissions_admin_namespace.route("/users_by_roles")
+class UsersByRoles(Resource):
+    """
+    Get users filtered by specific roles
+    """
+    @admin_endpoint()
+    @permissions_admin_namespace.doc(
+        description="Get users who have specific roles.",
+        params={
+            "roles": {
+                "description": "Comma-separated role names (e.g., 'admin' or 'support' or 'admin,support')",
+                "in": "query",
+                "required": True,
+                "type": "string",
+                "example": "admin,support"
+            }
+        },
+        responses={
+            200: "Success - Returns users with those roles",
+            400: "Bad request - No roles specified or invalid roles",
+            403: "Forbidden - Admin access required",
+        }
+    )
+    def get(self, **kwargs):
+        """
+        Get users filtered by any roles you specify
+
+        Examples:
+        - /admin/permissions/users-by-roles?roles=admin → Get all admins
+        - /admin/permissions/users-by-roles?roles=support → Get all support staff
+        - /admin/permissions/users-by-roles?roles=admin,support → Get anyone who can handle tickets
+        """
+        roles_param = request.args.get("roles", "").strip()
+
+        if not roles_param:
+            raise ValidationError("You need to specify roles! Use ?roles=admin or ?roles=admin,support")
+
+        role_names = [role.strip() for role in roles_param.split(",") if role.strip()]
+
+        if not role_names:
+            raise ValidationError("No valid roles provided")
+
+        users = get_users_with_roles(role_names)
+
+        return success_response(users)
+
+
+@permissions_admin_namespace.route("/support_role_users")
+class SupportRoleUsers(Resource):
+    """
+    Convenience endpoint - gets users who can be assigned tickets (ADMIN + SUPPORT roles)
+    """
+    @admin_endpoint()
+    @permissions_admin_namespace.doc(
+        description="Get all users who can be assigned support tickets (convenience endpoint for ticket assignment)",
+        responses={
+            200: "Success - Returns list of users with ADMIN or SUPPORT roles",
+            403: "Forbidden - Admin access required",
+        }
+    )
+    def get(self, **kwargs):
+        """
+        Get users who can be assigned to tickets.
+        """
+        users = get_support_role_users()
+        return success_response(users)
 
