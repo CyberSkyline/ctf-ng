@@ -1,6 +1,6 @@
-name: Deploy to Staging (Zero Downtime)
-
+name: Deploy to Staging
 on:
+  pull_request:
   workflow_dispatch:
 
 jobs:
