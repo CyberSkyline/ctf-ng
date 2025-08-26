@@ -12,6 +12,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Verify SSH secrets are set
+      run: |
+        if [ -z "${{ secrets.STAGING_SSH_HOST_1 }}" ] || [ -z "${{ secrets.STAGING_SSH_HOST_2 }}" ]; then
+          echo "ERROR: SSH host secrets are not properly set"
+          echo "Please check STAGING_SSH_HOST_1 and STAGING_SSH_HOST_2 secrets"
+          exit 1
+        fi
+        echo "SSH host secrets are properly configured"
+
     - name: Setup SSH
       uses: webfactory/ssh-agent@v0.8.0
       with:
@@ -20,8 +29,20 @@ jobs:
     - name: Add known hosts
       run: |
         mkdir -p ~/.ssh
-        ssh-keyscan -H ${{ secrets.STAGING_SSH_HOST_1 }} >> ~/.ssh/known_hosts
-        ssh-keyscan -H ${{ secrets.STAGING_SSH_HOST_2 }} >> ~/.ssh/known_hosts
+        chmod 700 ~/.ssh
+        echo "Adding known hosts for ctfng-staging-1 (${{ secrets.STAGING_SSH_HOST_1 }})"
+        ssh-keyscan -H ${{ secrets.STAGING_SSH_HOST_1 }} >> ~/.ssh/known_hosts 2>/dev/null || echo "Warning: Could not keyscan host 1"
+        echo "Adding known hosts for ctfng-staging-2 (${{ secrets.STAGING_SSH_HOST_2 }})"
+        ssh-keyscan -H ${{ secrets.STAGING_SSH_HOST_2 }} >> ~/.ssh/known_hosts 2>/dev/null || echo "Warning: Could not keyscan host 2"
+        chmod 600 ~/.ssh/known_hosts
+
+    - name: Test SSH connection to instances
+      run: |
+        echo "Testing SSH connection to ctfng-staging-1..."
+        ssh -o BatchMode=yes -o ConnectTimeout=5 ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST_1 }} "echo 'SSH to ctfng-staging-1 successful'" || echo "SSH to ctfng-staging-1 failed"
+        
+        echo "Testing SSH connection to ctfng-staging-2..."
+        ssh -o BatchMode=yes -o ConnectTimeout=5 ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST_2 }} "echo 'SSH to ctfng-staging-2 successful'" || echo "SSH to ctfng-staging-2 failed"
 
     - name: Verify pre-deployment state
       id: pre-deploy
@@ -76,9 +97,6 @@ jobs:
         ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST_1 }} '
           echo "Container status:"
           docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-          
-          echo "Health check:"
-          docker ps --filter "name=ctfd" --format "{{.Names}}: {{.Status}}" | head -3
         '
 
     - name: Verify EFS synchronization
@@ -102,15 +120,6 @@ jobs:
           cd /mnt/app-dev && \
           
           echo "Restarting containers..." && \
-          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up -d --no-build --no-start && \
-          
-          echo "Starting new containers..." && \
-          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml start && \
-          
-          echo "Stopping old containers..." && \
-          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml stop && \
-          
-          echo "Cleaning up..." && \
           ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up -d && \
           
           echo "Zero-downtime restart completed"
