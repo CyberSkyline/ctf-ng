@@ -135,6 +135,7 @@ class ContainerInstance(db.Model):
         from ...challenge.models.ContainerBlueprint import ContainerBlueprint
         from ...challenge.models.Challenge import Challenge
         from ...team.models.Team import Team
+        from ...event.models.Event import Event
 
         qr = (db.session.query(
                 cls.id,
@@ -144,9 +145,11 @@ class ContainerInstance(db.Model):
                 Team.name.label("team_name"),
                 Challenge.id.label("challenge_id"),
                 func.count(cls.id.distinct()).label("containers"),
-                Challenge.event_id.label("event_id")
+                Challenge.event_id.label("event_id"),
+                Event.name.label("event_name")
             )
             .outerjoin(Team, cls.team == Team.id)
+            .outerjoin(Event, Team.event_id == Event.id)
             .outerjoin(ContainerBlueprint, cls.blueprint == ContainerBlueprint.id)
             .outerjoin(Challenge, ContainerBlueprint.challenge_id == Challenge.id)
             .group_by(Challenge.id, cls.team)

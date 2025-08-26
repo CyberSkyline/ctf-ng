@@ -21,6 +21,14 @@ export default function AdminDataList({ data }: {data: Record<string, unknown>})
               if (key === 'role') {
                 return <RoleBadge value={value!.toString()} />;
               }
+              if (key === 'roles') {
+                return (value as string[]).map((role) => (
+                  <>
+                    <RoleBadge key={role} value={role} />
+                    &nbsp;
+                  </>
+                ));
+              }
               return value?.toString();
             })()}
           </DataList.Value>

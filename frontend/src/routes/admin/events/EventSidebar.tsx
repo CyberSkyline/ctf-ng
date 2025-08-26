@@ -18,13 +18,13 @@ export default function EventSidebar({ entity }: { entity: Event }) {
     <AdminSidebar>
       <AdminSidebarHeader title="Event Details">
         <Button variant="soft" color={COLOR_INFO} asChild>
-          <Link to={`/admin/deployments?filter=${btoa(JSON.stringify({ event_id : { filterType : 'number', type : 'equals', filter : entity.id } }))}`}>
+          <Link to={`/admin/deployments?filter=${btoa(JSON.stringify({ event_name : { filterType : 'text', type : 'equals', filter : entity.name } }))}`}>
             <TbPackages />
             Deployments
           </Link>
         </Button>
         <Button variant="soft" color={COLOR_INFO} asChild>
-          <Link to={`/admin/teams?filter=${btoa(JSON.stringify({ event_id : { filterType : 'number', type : 'equals', filter : entity.id } }))}`}>
+          <Link to={`/admin/teams?filter=${btoa(JSON.stringify({ event_name : { filterType : 'text', type : 'equals', filter : entity.name } }))}`}>
             <TeamIcon />
             Teams
           </Link>

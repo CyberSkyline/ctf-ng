@@ -30,7 +30,7 @@ export default function AdminChallengeCard({ challenge }: { challenge: Challenge
         <Flex direction="row" align="center" gap="2">
           <Button variant="ghost" color={COLOR_INFO} asChild className="!m-0">
             <Link
-              to={`/admin/deployments/?filter=${btoa(JSON.stringify({ challenge_id : { filterType : 'number', type : 'equals', filter : challenge.id } }))}`}
+              to={`/admin/deployments/?filter=${btoa(JSON.stringify({ challenge_name : { filterType : 'text', type : 'equals', filter : challenge.name } }))}`}
             >
               <TbPackages />
               Deployments

@@ -2,6 +2,7 @@ import {
   COLOR_INFO,
   COLOR_NEGATIVE,
   COLOR_WARNING,
+  EventIcon,
   UserIcon,
 } from '@/constants';
 import { useTeamMembers } from '@/hooks/team';
@@ -33,16 +34,27 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
     <AdminSidebar>
       <AdminSidebarHeader title="Team Details">
         <Button variant="soft" color={COLOR_INFO} asChild>
-          <Link to={`/admin/deployments?filter=${btoa(JSON.stringify({ team : { filterType : 'number', type : 'equals', filter : entity.id } }))}`}>
+          <Link to={`/admin/deployments?filter=${btoa(JSON.stringify(
+            {
+              team_name : { filterType : 'text', type : 'equals', filter : entity.name },
+              event_name : { filterType : 'text', type : 'equals', filter : entity.event_name },
+            },
+          ))}`}
+          >
             <TbPackages />
             Deployments
+          </Link>
+        </Button>
+        <Button variant="soft" color={COLOR_INFO} asChild>
+          <Link to={`/admin/events?id=${entity.event_id}`}>
+            <EventIcon />
+            Event
           </Link>
         </Button>
       </AdminSidebarHeader>
       <AdminDataList data={{ ...entity }} />
 
       <AdminSidebarHeader title="Members" />
-
       {membersError && <ErrorCallout>{membersError.message}</ErrorCallout> }
       {members && (
         <Table.Root className="w-full">
