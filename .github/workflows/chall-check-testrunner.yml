@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - 'tools/chall-check/**'
-      - '.github/workflows/test-chall-check.yml'
+      - '.github/workflows/chall-check-testrunner.yml'
   workflow_dispatch:
 
 jobs:
