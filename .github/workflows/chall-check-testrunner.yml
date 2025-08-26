@@ -2,9 +2,7 @@ name: Test chall-check CLI
 
 on:
   pull_request:
-    paths:
-      - 'tools/chall-check/**'
-      - '.github/workflows/test-chall-check.yml'
+
   workflow_dispatch:
 
 jobs:
