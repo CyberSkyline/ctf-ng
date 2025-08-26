@@ -1,0 +1,29 @@
+name: Test chall-check CLI
+
+on:
+  pull_request:
+    paths:
+      - 'tools/chall-check/**'
+      - '.github/workflows/test-chall-check.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          cd tools/chall-check
+          pip install -e . pytest
+
+      - name: Run tests
+        working-directory: tools/chall-check
+        run: python -m pytest test/test_cli.py -v
