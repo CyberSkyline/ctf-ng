@@ -12,5 +12,6 @@ export const radixTheme = themeQuartz
       chromeBackgroundColor : 'var(--gray-2)',
       foregroundColor : 'var(--gray-12)',
       accentColor : 'var(--accent-9)',
+      fontFamily : 'var(--default-font-family)',
     },
   );

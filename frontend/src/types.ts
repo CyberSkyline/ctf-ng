@@ -16,7 +16,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: string;
+  roles: string[];
   registered_at: Date;
 }
 
@@ -24,6 +24,7 @@ export interface Team {
   id: number;
   name: string;
   event_id: number;
+  event_name?: string;
   member_count: number;
   ranked: boolean;
   locked: boolean;
@@ -119,6 +120,7 @@ export interface Deployment {
   challenge_id: number;
   containers: number;
   event_id: number;
+  event_name?: string;
 }
 
 export interface ContainerInstance {

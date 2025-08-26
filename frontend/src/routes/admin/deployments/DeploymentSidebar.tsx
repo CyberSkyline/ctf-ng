@@ -1,4 +1,9 @@
-import { COLOR_INFO, TeamIcon, UserIcon } from '@/constants';
+import {
+  COLOR_INFO,
+  EventIcon,
+  TeamIcon,
+  UserIcon,
+} from '@/constants';
 import { useDeploymentServices } from '@/hooks/container';
 import type { Deployment } from '@/types';
 import {
@@ -25,6 +30,12 @@ export default function DeploymentSidebar({ entity }: {entity: Deployment}) {
           <Link to={`/admin/teams?id=${entity.team}`}>
             <TeamIcon />
             Team
+          </Link>
+        </Button>
+        <Button variant="soft" color={COLOR_INFO} asChild>
+          <Link to={`/admin/events?id=${entity.event_id}`}>
+            <EventIcon />
+            Event
           </Link>
         </Button>
       </AdminSidebarHeader>
