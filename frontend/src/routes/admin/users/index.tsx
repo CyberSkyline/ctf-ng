@@ -8,6 +8,13 @@ import UserSidebar from './UserSidebar';
 
 const colDefs: ColDef<User>[] = [
   {
+    field : 'id',
+    width : 100,
+    headerName : 'ID',
+    filter : true,
+    floatingFilter : true,
+  },
+  {
     field : 'name',
     filter : true,
     floatingFilter : true,
@@ -36,13 +43,6 @@ const colDefs: ColDef<User>[] = [
     headerName : 'Registered At',
     width : 220,
     valueFormatter : (params) => params.value && params.value.toLocaleString(),
-    filter : true,
-    floatingFilter : true,
-  },
-  {
-    field : 'id',
-    width : 100,
-    headerName : 'ID',
     filter : true,
     floatingFilter : true,
   },

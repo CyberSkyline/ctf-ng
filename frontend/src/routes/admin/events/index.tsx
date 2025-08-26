@@ -9,10 +9,23 @@ import EventSidebar from './EventSidebar';
 
 const colDefs: ColDef<Event>[] = [
   {
-    field : 'name', width : 250, filter : true, floatingFilter : true,
+    field : 'id',
+    width : 100,
+    headerName : 'ID',
+    filter : true,
+    floatingFilter : true,
   },
   {
-    field : 'description', width : 300, filter : true, floatingFilter : true,
+    field : 'name',
+    width : 250,
+    filter : true,
+    floatingFilter : true,
+  },
+  {
+    field : 'description',
+    width : 300,
+    filter : true,
+    floatingFilter : true,
   },
   {
     field : 'start_time',
@@ -65,13 +78,6 @@ const colDefs: ColDef<Event>[] = [
   {
     field : 'locked',
     width : 100,
-    filter : true,
-    floatingFilter : true,
-  },
-  {
-    field : 'id',
-    width : 100,
-    headerName : 'ID',
     filter : true,
     floatingFilter : true,
   },

@@ -10,6 +10,13 @@ import TeamSidebar from './TeamSidebar';
 
 const colDefs: ColDef<Team>[] = [
   {
+    field : 'id',
+    width : 100,
+    headerName : 'ID',
+    filter : true,
+    floatingFilter : true,
+  },
+  {
     field : 'name',
     width : 250,
     filter : true,
@@ -29,9 +36,9 @@ const colDefs: ColDef<Team>[] = [
     }),
   },
   {
+    field : 'member_count',
     headerName : 'Members',
     width : 100,
-    field : 'member_count',
     cellRenderer : (params: { data: Team }) => MemberCountBadge({ team : params.data }),
     filter : true,
     floatingFilter : true,
