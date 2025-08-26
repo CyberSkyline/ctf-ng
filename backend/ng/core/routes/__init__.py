@@ -12,6 +12,7 @@ from ...event.routes import events_admin_namespace, events_user_namespace
 from ...permissions.routes import permissions_admin_namespace
 from ...team.routes import teams_admin_namespace
 from ...user.routes import users_admin_namespace, users_user_namespace
+from ...user.routes.authenticate import oauth_namespace
 from ...scoring.routes import scoring_admin_namespace, scoring_user_namespace
 from ...support.routes import support_user_namespace, support_admin_namespace
 
@@ -45,6 +46,7 @@ api_v1 = Api(
 # User namespaces
 api_v1.add_namespace(events_user_namespace, path="/events")
 api_v1.add_namespace(users_user_namespace, path="/users")
+api_v1.add_namespace(oauth_namespace, path="/authenticate")
 api_v1.add_namespace(scoring_user_namespace, path="/events")
 # api_v1.add_namespace(challenge_namespace, path="/challenge")
 api_v1.add_namespace(support_user_namespace, path="/support")

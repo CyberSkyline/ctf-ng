@@ -18,6 +18,7 @@ class SerializedUser(TypedDict):
     email: str
     role: str
     registered_at: str
+    oauth_id: str
 
 
 class User(db.Model):

@@ -35,6 +35,26 @@ if [ ! -f ".env.prod" ]; then
   cp ./conf/ctfd/.env.default.prod .env.prod
 fi
 
+if [ ! -f ".env.staging" ]; then
+  cp ./conf/ctfd/.env.default.prod .env.staging
+fi
+
+# Add OAuth placeholders to .env files if not already present
+for envfile in .env .env.dev .env.prod .env.staging; do
+  if [ -f "$envfile" ]; then
+    if ! grep -qi "OAuth" "$envfile"; then
+      cat <<'EOF' >> "$envfile"
+
+# OAuth
+OKTA_CLIENT_ID = -
+OKTA_CLIENT_SECRET = -
+OKTA_DOMAIN = -
+SERVER_DOMAIN = -
+EOF
+    fi
+  fi
+done
+
 # Docker
 if ! command -v docker &> /dev/null; then
   echo "Docker is not installed."
@@ -125,7 +145,7 @@ cd "$PYTHON_DIR"
 
 # Create virtual environment if not already present
 if [ ! -d "venv" ]; then
-  echo "Creating virtual environment in $PROJECT_DIR/venv..."
+  echo "Creating virtual environment in $PYTHON_DIR/venv..."
   python3 -m venv venv
 fi
 

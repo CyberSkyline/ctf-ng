@@ -6,7 +6,7 @@ import path from 'path';
 // https://vite.dev/config/
 export default defineConfig({
   server : {
-    allowedHosts : [ '.cyberskyline.com', '.localhost' ],
+    allowedHosts : [ '.cisa.gov', '.localhost' ],
     host : '0.0.0.0',
     cors : true,
     hmr : {
