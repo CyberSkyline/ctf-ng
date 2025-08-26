@@ -1,8 +1,10 @@
-name: Test chall-check CLI
+name: chall-check test runner
 
 on:
   pull_request:
-
+    paths:
+      - 'tools/chall-check/**'
+      - '.github/workflows/test-chall-check.yml'
   workflow_dispatch:
 
 jobs:
