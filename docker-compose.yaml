@@ -34,7 +34,7 @@ services:
     container_name: ng-nginx
     restart: always
     volumes:
-      - ./conf/nginx/staging-http.conf:/etc/nginx/nginx.conf:ro
+      - ./conf/nginx/http.conf:/etc/nginx/nginx.conf:ro
       - ./frontend/dist:/var/www/vite-build:ro
     ports:
       - 80:80
