@@ -1,4 +1,4 @@
-import { ChallengeIcon, TeamIcon } from '@/constants';
+import { ChallengeIcon, EventIcon, TeamIcon } from '@/constants';
 import { useAllDeployments } from '@/hooks/container';
 import type { Deployment } from '@/types';
 import { Flex } from '@radix-ui/themes';
@@ -6,8 +6,48 @@ import type { ColDef } from 'ag-grid-community';
 import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
-import EventCellRenderer from 'components/EventCellRenderer';
 import DeploymentSidebar from './DeploymentSidebar';
+
+const colDefs: ColDef<Deployment>[] = [
+  {
+    field : 'challenge_name',
+    headerName : 'Challenge',
+    cellRenderer : Entity,
+    cellRendererParams : ({ data } : { data : Deployment }) => ({
+      label : data.challenge_name ?? `UNKNOWN (${data.challenge_id})`,
+      to : `/admin/events?id=${data.event_id}`,
+      icon : ChallengeIcon,
+    }),
+    filter : true,
+    floatingFilter : true,
+  },
+  {
+    field : 'team_name',
+    headerName : 'Team',
+    cellRenderer : Entity,
+    cellRendererParams : (params: { data: { team_name?: string, team_id: number } }) => ({
+      icon : TeamIcon,
+      label : params.data.team_name ?? `UNKNOWN (${params.data.team_id})`,
+      to : `/admin/teams?id=${params.data.team_id}`,
+    }),
+    filter : true,
+    floatingFilter : true,
+  },
+  {
+    field : 'event_name',
+    headerName : 'Event',
+    width : 250,
+    filter : true,
+    floatingFilter : true,
+    cellRenderer : Entity,
+    cellRendererParams : (params: { data: {event_name?: string, event_id: number} }) => ({
+      icon : EventIcon,
+      label : params.data.event_name ?? `UNKNOWN (${params.data.event_id})`,
+      to : `/admin/events?id=${params.data.event_id}`,
+    }),
+  },
+  { field : 'containers' },
+];
 
 /**
  * Admin page to manage challenge networks/containers.
@@ -18,41 +58,6 @@ export default function AdminDeployments() {
   const { data, error, isLoading } = useAllDeployments();
 
   const rowData = data ?? [];
-
-  const colDefs: ColDef<typeof rowData[number]>[] = [
-    {
-      field : 'challenge_id',
-      headerName : 'Challenge',
-      cellRenderer : Entity,
-      cellRendererParams : (params: { data: Deployment }) => ({
-        icon : ChallengeIcon,
-        label : params.data.challenge_name,
-        to : `/admin/events?id=${params.data.event_id}`,
-      }),
-      filter : true,
-      floatingFilter : true,
-    },
-    {
-      field : 'team',
-      headerName : 'Team',
-      cellRenderer : Entity,
-      cellRendererParams : (params: { data: Deployment }) => ({
-        icon : TeamIcon,
-        label : params.data.team_name,
-        to : `/admin/teams?id=${params.data.team}`,
-      }),
-      filter : true,
-      floatingFilter : true,
-    },
-    {
-      field : 'event_id',
-      headerName : 'Event',
-      cellRenderer : EventCellRenderer,
-      filter : true,
-      floatingFilter : true,
-    },
-    { field : 'containers' },
-  ];
 
   if (error) {
     return <ErrorCallout>{error.message}</ErrorCallout>;

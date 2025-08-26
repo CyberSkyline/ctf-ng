@@ -1,11 +1,55 @@
+import { EventIcon } from '@/constants';
 import { useAllTeams } from '@/hooks/team';
 import type { Team } from '@/types';
 import type { ColDef } from 'ag-grid-community';
 import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
-import EventCellRenderer from 'components/EventCellRenderer';
+import Entity from 'components/Entity';
 import MemberCountBadge from 'components/MemberCountBadge';
 import TeamSidebar from './TeamSidebar';
+
+const colDefs: ColDef<Team>[] = [
+  {
+    field : 'name',
+    width : 250,
+    filter : true,
+    floatingFilter : true,
+  },
+  {
+    field : 'event_name',
+    headerName : 'Event',
+    width : 250,
+    filter : true,
+    floatingFilter : true,
+    cellRenderer : Entity,
+    cellRendererParams : (params: { data: {event_name?: string, event_id: number} }) => ({
+      icon : EventIcon,
+      label : params.data.event_name ?? `UNKNOWN (${params.data.event_id})`,
+      to : `/admin/events?id=${params.data.event_id}`,
+    }),
+  },
+  {
+    headerName : 'Members',
+    width : 100,
+    field : 'member_count',
+    cellRenderer : (params: { data: Team }) => MemberCountBadge({ team : params.data }),
+    filter : true,
+    floatingFilter : true,
+  },
+  {
+    field : 'ranked',
+    width : 100,
+    filter : true,
+    floatingFilter : true,
+  },
+  {
+    field : 'invite_code',
+    headerName : 'Invite Code',
+    width : 320,
+    filter : true,
+    floatingFilter : true,
+  },
+];
 
 /**
  * Team management page for admins.
@@ -18,48 +62,6 @@ export default function AdminTeams() {
   }
 
   const rowData = data ?? [];
-
-  const colDefs: ColDef<typeof rowData[number]>[] = [
-    {
-      field : 'name',
-      width : 250,
-      filter : true,
-      floatingFilter : true,
-    },
-    {
-      field : 'event_id',
-      headerName : 'Event',
-      width : 200,
-      filter : 'agNumberColumnFilter',
-      filterParams : {
-        filterOptions : [ 'equals' ],
-        maxNumConditions : 1,
-      },
-      floatingFilter : true,
-      cellRenderer : EventCellRenderer,
-    },
-    {
-      headerName : 'Members',
-      width : 100,
-      field : 'member_count',
-      cellRenderer : (params: { data: Team }) => MemberCountBadge({ team : params.data }),
-      filter : true,
-      floatingFilter : true,
-    },
-    {
-      field : 'ranked',
-      width : 100,
-      filter : true,
-      floatingFilter : true,
-    },
-    {
-      field : 'invite_code',
-      headerName : 'Invite Code',
-      width : 300,
-      filter : true,
-      floatingFilter : true,
-    },
-  ];
 
   return (
     <AdminGrid
