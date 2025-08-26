@@ -119,6 +119,7 @@ export interface Deployment {
   challenge_id: number;
   containers: number;
   event_id: number;
+  event_name?: string;
 }
 
 export interface ContainerInstance {
