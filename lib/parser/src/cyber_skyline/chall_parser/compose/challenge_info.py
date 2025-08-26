@@ -60,6 +60,7 @@ class Hint:
     Hints can be either structured (TextHint) or simple strings.
     Each hint has a preview and costs points when opened.
     """
+    name: str = attr.ib(validator=v.instance_of(str))  # Developer facing name for the hint (e.g., "hint1", "hint2")
     body: TextBody | str = attr.ib(validator=or_(
         v.instance_of(TextBody),
         v.instance_of(str)
