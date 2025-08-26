@@ -1,0 +1,159 @@
+name: Deploy to Staging (Zero Downtime)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: Staging
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+
+    - name: Add known hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.STAGING_SSH_HOST_1 }} >> ~/.ssh/known_hosts
+        ssh-keyscan -H ${{ secrets.STAGING_SSH_HOST_2 }} >> ~/.ssh/known_hosts
+
+    - name: Verify pre-deployment state
+      id: pre-deploy
+      run: |
+        echo "Checking pre-deployment state..."
+        
+        echo "ctfng-staging-1 current commit:"
+        STAGING_1_PRE_COMMIT=$(ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST_1 }} 'cd /mnt/app-dev && git rev-parse --short HEAD')
+        echo "ctfng-staging-1: $STAGING_1_PRE_COMMIT"
+        
+        echo "ctfng-staging-2 current commit:"
+        STAGING_2_PRE_COMMIT=$(ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST_2 }} 'cd /mnt/app-dev && git rev-parse --short HEAD')
+        echo "ctfng-staging-2: $STAGING_2_PRE_COMMIT"
+        
+        if [ "$STAGING_1_PRE_COMMIT" != "$STAGING_2_PRE_COMMIT" ]; then
+          echo "CRITICAL: Instances are out of sync before deployment so EFS may have issues."
+          exit 1
+        fi
+        
+        echo "Both instances in sync: $STAGING_1_PRE_COMMIT"
+
+    - name: Deployment to ctfng-staging-1
+      run: |
+        echo "Starting deployment to ctfng-staging-1..."
+        ssh -o StrictHostKeyChecking=no ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST_1 }} '
+          cd /mnt/app-dev && \
+          
+          echo "Pulling latest code..." && \
+          git pull origin staging && \
+          
+          echo "Building new images..." && \
+          yarn build && \
+          
+          echo "Deploying new containers with zero downtime..." && \
+          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up -d --build --no-start && \
+          
+          echo "Starting new containers..." && \
+          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml start && \
+          
+          echo "Stopping old containers..." && \
+          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml stop && \
+          
+          echo "Removing old containers..." && \
+          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up -d && \
+          
+          echo "Zero-downtime deployment completed"
+        '
+
+    - name: Verify ctfng-staging-1 deployment
+      run: |
+        echo "Verifying ctfng-staging-1 deployment..."
+        ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST_1 }} '
+          echo "Container status:"
+          docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+          
+          echo "Health check:"
+          docker ps --filter "name=ctfd" --format "{{.Names}}: {{.Status}}" | head -3
+        '
+
+    - name: Verify EFS synchronization
+      run: |
+        echo "Verifying EFS sync..."
+        
+        STAGING_1_COMMIT=$(ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST_1 }} 'cd /mnt/app-dev && git rev-parse --short HEAD')
+        STAGING_2_COMMIT=$(ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST_2 }} 'cd /mnt/app-dev && git rev-parse --short HEAD')
+        
+        if [ "$STAGING_1_COMMIT" != "$STAGING_2_COMMIT" ]; then
+          echo "EFS sync failed: $STAGING_1_COMMIT vs $STAGING_2_COMMIT"
+          exit 1
+        fi
+        
+        echo "EFS synchronized: $STAGING_1_COMMIT"
+
+    - name: Restart on ctfng-staging-2
+      run: |
+        echo "Restart on ctfng-staging-2..."
+        ssh -o StrictHostKeyChecking=no ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST_2 }} '
+          cd /mnt/app-dev && \
+          
+          echo "Restarting containers..." && \
+          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up -d --no-build --no-start && \
+          
+          echo "Starting new containers..." && \
+          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml start && \
+          
+          echo "Stopping old containers..." && \
+          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml stop && \
+          
+          echo "Cleaning up..." && \
+          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up -d && \
+          
+          echo "Zero-downtime restart completed"
+        '
+
+    - name: Verify both instances
+      run: |
+        echo "Final verification..."
+        
+        echo "ctfng-staging-1:"
+        ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST_1 }} '
+          docker ps --filter "name=ctfd" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+        '
+        
+        echo "ctfng-staging-2:"
+        ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST_2 }} '
+          docker ps --filter "name=ctfd" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+        '
+        
+        echo "Version consistency:"
+        STAGING_1_VER=$(ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST_1 }} 'cd /mnt/app-dev && git rev-parse --short HEAD')
+        STAGING_2_VER=$(ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST_2 }} 'cd /mnt/app-dev && git rev-parse --short HEAD')
+        
+        echo "ctfng-staging-1: $STAGING_1_VER"
+        echo "ctfng-staging-2: $STAGING_2_VER"
+        
+        if [ "$STAGING_1_VER" = "$STAGING_2_VER" ]; then
+          echo "Both instances running identical version"
+        else
+          echo "Version mismatch detected"
+          exit 1
+        fi
+
+    - name: Cleanup old images
+      run: |
+        echo "Cleaning up old images on both instances..."
+        
+        echo "ctfng-staging-1 cleanup:"
+        ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST_1 }} '
+          docker image prune -af
+        '
+        
+        echo "ctfng-staging-2 cleanup:"
+        ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST_2 }} '
+          docker image prune -af
+        '
