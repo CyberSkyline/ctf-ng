@@ -7,25 +7,17 @@ import {
 } from '@/constants';
 import { useTeamMembers } from '@/hooks/team';
 import type { Team } from '@/types';
-import {
-  Button,
-  Flex,
-  Heading,
-  Table,
-} from '@radix-ui/themes';
+import { Button, Flex, Table } from '@radix-ui/themes';
 import AdminDataList from 'components/AdminDataList';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
-import { ErrorCallout, InfoCallout } from 'components/Callouts';
+import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import RoleBadge from 'components/RoleBadge';
-import {
-  TbDoorExit,
-  TbPackages,
-  TbPlusMinus,
-  TbStar,
-} from 'react-icons/tb';
+import { TbDoorExit, TbPackages, TbStar } from 'react-icons/tb';
 import { Link } from 'react-router';
+import ScoreAdjustModal from './ScoreAdjustModal';
+import TeamActivity from './TeamActivity';
 
 export default function TeamSidebar({ entity }: { entity: Team }) {
   const { data : members, error : membersError } = useTeamMembers(entity.id);
@@ -95,19 +87,11 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
           </Table.Body>
         </Table.Root>
       )}
+
       <AdminSidebarHeader title="Activity">
-        <Button variant="soft" color="amber">
-          <TbPlusMinus />
-          Point Adjust
-        </Button>
+        <ScoreAdjustModal team={entity} />
       </AdminSidebarHeader>
-      <InfoCallout>
-        Attempts, hint redemptions, and manual awards for this team.
-      </InfoCallout>
-      <Heading>Challenges</Heading>
-      <InfoCallout>
-        Deployed challenge instances for this team.
-      </InfoCallout>
+      <TeamActivity eventId={entity.event_id} teamId={entity.id} />
     </AdminSidebar>
   );
 }
