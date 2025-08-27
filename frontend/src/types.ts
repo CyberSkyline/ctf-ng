@@ -92,6 +92,38 @@ export interface Attempt {
   points: number;
   submission: string;
   is_correct: boolean;
+  user_name?: string;
+  team_name?: string;
+  challenge_name?: string;
+  question_name?: string;
+}
+
+export interface HintRedemption {
+  id: number;
+  user_id: number;
+  team_id: number;
+  score_event_id?: number;
+  timestamp: Date;
+  points: number;
+  user_name?: string;
+  team_name?: string;
+  hint_preview?: string;
+  challenge_id: number;
+  challenge_name?: string;
+  event_id?: number;
+  event_name?: string;
+}
+
+export interface ManualPointAward {
+  id: number;
+  admin_id: number;
+  team_id: number;
+  score_event_id: number;
+  timestamp: Date;
+  points: number;
+  reason: string;
+  admin_name?: string;
+  team_name?: string;
 }
 
 export interface Score {
@@ -107,6 +139,7 @@ export interface ScoreEvent {
   id: number;
   score_id: number;
   team_id: number;
+  team_name: string;
   points: number;
   timestamp: Date;
 }
