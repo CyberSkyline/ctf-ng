@@ -34,6 +34,20 @@ from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
+def unique[TItem, TSelReturn](selector: Callable[[TItem], TSelReturn]) -> Callable[[Any, Any, list[Any]], None]:
+    """Validator to ensure all items in a list are unique based on a selector function."""
+    def validate(instance, attribute, value: list[TItem]):
+        seen = set()
+        duplicates = set()
+        for item in value:
+            key = selector(item)
+            if key in seen:
+                duplicates.add(key)
+            seen.add(key)
+        if len(duplicates) > 0:
+            raise ValueError(f"Duplicate values found for {attribute.name}: {', '.join(map(str, duplicates))}")
+    return validate
+
 def or_(*validators: Callable[[Any, Any, Any], None]) -> Callable[[Any, Any, Any], None]:
     """Combines multiple validators with a logical OR."""
     def validate(instance, attribute, value):
