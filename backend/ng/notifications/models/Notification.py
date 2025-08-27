@@ -5,7 +5,11 @@ Defines the Notification model for user-specific notifications
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, TypedDict, NotRequired
+from typing import (
+    Any,
+    TypedDict,
+    NotRequired,
+)
 
 from CTFd.models import db
 
@@ -27,7 +31,6 @@ class NotificationType(str, Enum):
 class SerializedNotification(TypedDict):
     id: int
     type: str
-    priority: NotRequired[str | None]
     title: str
     message: str
     recipient_id: int
@@ -40,6 +43,13 @@ class SerializedNotification(TypedDict):
     team_id: NotRequired[int | None]
     event_id: NotRequired[int | None]
     challenge_id: NotRequired[int | None]
+    # Name enrichment fields
+    recipient_name: NotRequired[str]
+    sender_name: NotRequired[str | None]
+    ticket_subject: NotRequired[str | None]
+    team_name: NotRequired[str | None]
+    event_name: NotRequired[str | None]
+    challenge_name: NotRequired[str | None]
 
 
 class Notification(db.Model):
@@ -47,10 +57,6 @@ class Notification(db.Model):
 
     id = db.Column(db.Integer, primary_key = True)
     type = db.Column(db.Enum(NotificationType), nullable = False)
-    priority = db.Column(
-        db.String(config.NOTIFICATIONS_PRIORITY_MAX_LENGTH),
-        nullable = True
-    )
     title = db.Column(
         db.String(config.NOTIFICATIONS_TITLE_MAX_LENGTH),
         nullable = False
@@ -118,6 +124,10 @@ class Notification(db.Model):
         foreign_keys = [sender_id],
         backref = "notifications_sent"
     )
+    ticket = db.relationship("Ticket", backref="notifications")
+    team = db.relationship("Team", backref="notifications")
+    event = db.relationship("Event", backref="notifications")
+    challenge = db.relationship("Challenge", backref="notifications")
 
     def __repr__(self):
         return f"<Notification {self.id}: type={self.type.value} recipient={self.recipient_id}>"
@@ -163,8 +173,6 @@ class Notification(db.Model):
             self.expires_at.isoformat() + "Z" if self.expires_at else None,
         }
 
-        if self.priority:
-            data["priority"] = self.priority
         if self.ticket_id:
             data["ticket_id"] = self.ticket_id
         if self.team_id:
@@ -173,6 +181,19 @@ class Notification(db.Model):
             data["event_id"] = self.event_id
         if self.challenge_id:
             data["challenge_id"] = self.challenge_id
+
+        if self.recipient:
+            data["recipient_name"] = self.recipient.name
+        if self.sender_id and self.sender:
+            data["sender_name"] = self.sender.name
+        if self.ticket_id and self.ticket:
+            data["ticket_subject"] = self.ticket.subject
+        if self.team_id and self.team:
+            data["team_name"] = self.team.name
+        if self.event_id and self.event:
+            data["event_name"] = self.event.name
+        if self.challenge_id and self.challenge:
+            data["challenge_name"] = self.challenge.name
 
         return SerializedNotification(**data)
 
@@ -206,13 +227,6 @@ class Notification(db.Model):
             friendly_name = "Message"
         )
 
-        validator.validate_string(
-            data,
-            "priority",
-            max_length = config.NOTIFICATIONS_PRIORITY_MAX_LENGTH,
-            required = False,
-            friendly_name = "Priority"
-        )
 
         validator.validate_model_id(
             data,
@@ -268,7 +282,6 @@ class Notification(db.Model):
         message: str,
         recipient_id: int,
         sender_id: int | None = None,
-        priority: str | None = None,
         ticket_id: int | None = None,
         team_id: int | None = None,
         event_id: int | None = None,
@@ -285,7 +298,6 @@ class Notification(db.Model):
             message: Notification message
             recipient_id: User ID to receive notification
             sender_id: User ID sending notification
-            priority: Optional priority level
             ticket_id: Related ticket ID
             team_id: Related team ID
             event_id: Related event ID
@@ -301,7 +313,6 @@ class Notification(db.Model):
                 "type": notification_type,
                 "title": title,
                 "message": message,
-                "priority": priority,
                 "recipient_id": recipient_id,
                 "sender_id": sender_id,
                 "ticket_id": ticket_id,
@@ -316,7 +327,6 @@ class Notification(db.Model):
             type = validated_data["type"],
             title = validated_data["title"],
             message = validated_data["message"],
-            priority = validated_data.get("priority"),
             recipient_id = validated_data["recipient_id"],
             sender_id = validated_data.get("sender_id"),
             ticket_id = validated_data.get("ticket_id"),

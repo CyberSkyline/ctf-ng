@@ -1020,7 +1020,6 @@ def notification_factory(db_session):
     def _factory(**kwargs):
         defaults = {
             "type": kwargs.get("type", NotificationType.TICKET_CREATE),
-            "priority": kwargs.get("priority", None),
             "title": kwargs.get("title", f"Test Notification {datetime.utcnow().timestamp()}"),
             "message": kwargs.get("message", "Test notification message"),
             "recipient_id": kwargs.get("recipient_id", 1),
@@ -1054,7 +1053,6 @@ def announcement_factory(db_session):
     def _factory(**kwargs):
         defaults = {
             "type": kwargs.get("type", AnnouncementType.GENERAL),
-            "priority": kwargs.get("priority", None),
             "title": kwargs.get("title", f"Test Announcement {datetime.utcnow().timestamp()}"),
             "message": kwargs.get("message", "Test announcement message"),
             "sender_id": kwargs.get("sender_id", None),

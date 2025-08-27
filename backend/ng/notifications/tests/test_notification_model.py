@@ -47,7 +47,6 @@ class TestNotification:
         Test the default values for a new instance
         """
         notification = Notification()
-        assert notification.priority is None
         assert notification.sender_id is None
         assert notification.read_at is None
         assert notification.created_at is None
@@ -73,7 +72,6 @@ class TestNotification:
         assert refreshed_notification.type == NotificationType.TICKET_CREATE
         assert refreshed_notification.title == "Test Title"
         assert refreshed_notification.message == "Test message"
-        assert refreshed_notification.priority is None
         assert refreshed_notification.recipient_id == user.id
         assert refreshed_notification.sender_id is None
         assert refreshed_notification.read_at is None
@@ -99,7 +97,6 @@ class TestNotification:
                 message = "Your ticket has been updated",
                 recipient_id = user.id,
                 sender_id = admin.id,
-                priority = "high",
                 ticket_id = ticket.id,
                 team_id = team_with_member.id,
                 event_id = event.id,
@@ -113,7 +110,6 @@ class TestNotification:
         assert refreshed_notification.message == "Your ticket has been updated"
         assert refreshed_notification.recipient_id == user.id
         assert refreshed_notification.sender_id == admin.id
-        assert refreshed_notification.priority == "high"
         assert refreshed_notification.ticket_id == ticket.id
         assert refreshed_notification.team_id == team_with_member.id
         assert refreshed_notification.event_id == event.id
@@ -611,7 +607,6 @@ class TestNotification:
         """
         notification = notification_factory(
                 type = NotificationType.TICKET_CREATE,
-                priority = "normal",
                 title = "Test Notification",
                 message = "Test message",
                 recipient_id = user.id,
@@ -623,7 +618,6 @@ class TestNotification:
 
         assert data["id"] == notification.id
         assert data["type"] == NotificationType.TICKET_CREATE.value
-        assert data["priority"] == "normal"
         assert data["title"] == "Test Notification"
         assert data["message"] == "Test message"
         assert data["recipient_id"] == user.id
@@ -719,7 +713,6 @@ class TestNotification:
                         "type": NotificationType.TICKET_CREATE,
                         "title": "Test Title",
                         "message": "Test message",
-                        "priority": "high",
                         "recipient_id": user.id,
                         "sender_id": admin.id,
                         }
@@ -728,7 +721,6 @@ class TestNotification:
         assert data["type"] == NotificationType.TICKET_CREATE
         assert data["title"] == "Test Title"
         assert data["message"] == "Test message"
-        assert data["priority"] == "high"
         assert data["recipient_id"] == user.id
         assert data["sender_id"] == admin.id
 
@@ -774,21 +766,6 @@ class TestNotification:
                     )
         assert "message" in exc_info.value.errors
 
-    def test_validate_invalid_priority(self, db_session, user):
-        """
-        Test validation fails with invalid priority
-        """
-        with pytest.raises(ValidationError) as exc_info:
-            Notification.validate(
-                    {
-                            "type": NotificationType.TICKET_CREATE,
-                            "title": "Test Title",
-                            "message": "Test message",
-                            "priority": "x" * 100,
-                            "recipient_id": user.id
-                            }
-                    )
-        assert "priority" in exc_info.value.errors
 
     def test_validate_empty_title_fails(self, db_session, user):
         """

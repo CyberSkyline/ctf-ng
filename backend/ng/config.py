@@ -38,7 +38,6 @@ MAX_HINT_BODY_LENGTH = 1024
 
 NOTIFICATIONS_TITLE_MAX_LENGTH = 200
 NOTIFICATIONS_MESSAGE_MAX_LENGTH = 1000
-NOTIFICATIONS_PRIORITY_MAX_LENGTH = 20
 
 # Docker host config
 # This will eventually be an array but just single host for mvp

@@ -45,7 +45,6 @@ class TestAnnouncement:
         Test the default values for a new instance
         """
         announcement = Announcement()
-        assert announcement.priority is None
         assert announcement.sender_id is None
         assert announcement.created_at is None
         assert announcement.expires_at is None
@@ -66,7 +65,6 @@ class TestAnnouncement:
         assert refreshed_announcement.type == AnnouncementType.GENERAL
         assert refreshed_announcement.title == "Test Title"
         assert refreshed_announcement.message == "Test message"
-        assert refreshed_announcement.priority is None
         assert refreshed_announcement.sender_id is None
         assert refreshed_announcement.created_at is not None
         assert refreshed_announcement.expires_at is None
@@ -88,7 +86,6 @@ class TestAnnouncement:
                 title = "Event Starting Soon",
                 message = "The event will begin in 30 minutes",
                 sender_id = admin.id,
-                priority = "high",
                 event_id = event.id,
                 expires_at = expires_at
                 )
@@ -99,7 +96,6 @@ class TestAnnouncement:
         assert refreshed_announcement.title == "Event Starting Soon"
         assert refreshed_announcement.message == "The event will begin in 30 minutes"
         assert refreshed_announcement.sender_id == admin.id
-        assert refreshed_announcement.priority == "high"
         assert refreshed_announcement.event_id == event.id
         assert refreshed_announcement.expires_at == datetime(
                 2025,
@@ -367,7 +363,6 @@ class TestAnnouncement:
         """
         announcement = announcement_factory(
                 type = AnnouncementType.GENERAL,
-                priority = "normal",
                 title = "Test Announcement",
                 message = "Test message",
                 sender_id = admin.id
@@ -377,7 +372,6 @@ class TestAnnouncement:
 
         assert data["id"] == announcement.id
         assert data["type"] == AnnouncementType.GENERAL.value
-        assert data["priority"] == "normal"
         assert data["title"] == "Test Announcement"
         assert data["message"] == "Test message"
         assert data["sender_id"] == admin.id
@@ -410,14 +404,12 @@ class TestAnnouncement:
         """
         announcement = announcement_factory(
                 type = AnnouncementType.GENERAL,
-                priority = None,
                 sender_id = None,
                 event_id = None
                 )
 
         data = announcement.serialize()
 
-        assert "priority" not in data
         assert "event_id" not in data
         assert data["sender_id"] is None
 
@@ -444,7 +436,6 @@ class TestAnnouncement:
                         "type": AnnouncementType.EVENT_UPDATE,
                         "title": "Test Title",
                         "message": "Test message",
-                        "priority": "high",
                         "sender_id": admin.id,
                         "event_id": event.id,
                         }
@@ -453,7 +444,6 @@ class TestAnnouncement:
         assert data["type"] == AnnouncementType.EVENT_UPDATE
         assert data["title"] == "Test Title"
         assert data["message"] == "Test message"
-        assert data["priority"] == "high"
         assert data["sender_id"] == admin.id
         assert data["event_id"] == event.id
 
@@ -496,20 +486,6 @@ class TestAnnouncement:
                     )
         assert "message" in exc_info.value.errors
 
-    def test_validate_invalid_priority(self, db_session):
-        """
-        Test validation fails with invalid priority
-        """
-        with pytest.raises(ValidationError) as exc_info:
-            Announcement.validate(
-                    {
-                            "type": AnnouncementType.GENERAL,
-                            "title": "Test Title",
-                            "message": "Test message",
-                            "priority": "x" * 100
-                            }
-                    )
-        assert "priority" in exc_info.value.errors
 
     def test_validate_empty_title_fails(self, db_session):
         """

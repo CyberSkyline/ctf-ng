@@ -5,7 +5,11 @@ Defines the Announcement model for system-wide banner messages
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, TypedDict, NotRequired
+from typing import (
+    Any,
+    TypedDict,
+    NotRequired,
+)
 
 from CTFd.models import db
 
@@ -25,7 +29,6 @@ class AnnouncementType(str, Enum):
 class SerializedAnnouncement(TypedDict):
     id: int
     type: str
-    priority: NotRequired[str | None]
     title: str
     message: str
     sender_id: int | None
@@ -33,6 +36,9 @@ class SerializedAnnouncement(TypedDict):
     expires_at: str | None
     # Optional reference fields
     event_id: NotRequired[int | None]
+    # Name enrichment fields
+    sender_name: NotRequired[str | None]
+    event_name: NotRequired[str | None]
 
 
 class Announcement(db.Model):
@@ -40,10 +46,6 @@ class Announcement(db.Model):
 
     id = db.Column(db.Integer, primary_key = True)
     type = db.Column(db.Enum(AnnouncementType), nullable = False)
-    priority = db.Column(
-        db.String(config.NOTIFICATIONS_PRIORITY_MAX_LENGTH),
-        nullable = True
-    )
     title = db.Column(
         db.String(config.NOTIFICATIONS_TITLE_MAX_LENGTH),
         nullable = False
@@ -124,10 +126,13 @@ class Announcement(db.Model):
             self.expires_at.isoformat() + "Z" if self.expires_at else None,
         }
 
-        if self.priority:
-            data["priority"] = self.priority
         if self.event_id:
             data["event_id"] = self.event_id
+
+        if self.sender_id and self.sender:
+            data["sender_name"] = self.sender.name
+        if self.event_id and self.event:
+            data["event_name"] = self.event.name
 
         return SerializedAnnouncement(**data)
 
@@ -160,13 +165,6 @@ class Announcement(db.Model):
             required = True,
             friendly_name = "Message"
         )
-        validator.validate_string(
-            data,
-            "priority",
-            max_length = config.NOTIFICATIONS_PRIORITY_MAX_LENGTH,
-            required = False,
-            friendly_name = "Priority"
-        )
 
         validator.validate_model_id(
             data,
@@ -191,7 +189,6 @@ class Announcement(db.Model):
         title: str,
         message: str,
         sender_id: int | None = None,
-        priority: str | None = None,
         event_id: int | None = None,
         expires_at: Any | None = None,
         commit: bool = True,
@@ -204,7 +201,6 @@ class Announcement(db.Model):
             title: Announcement title
             message: Announcement message
             sender_id: Admin user ID creating announcement
-            priority: Optional priority level
             event_id: Related event ID (for event-specific announcements)
             expires_at: When announcement expires
             commit: Whether to commit immediately
@@ -217,7 +213,6 @@ class Announcement(db.Model):
                 "type": announcement_type,
                 "title": title,
                 "message": message,
-                "priority": priority,
                 "sender_id": sender_id,
                 "event_id": event_id,
                 "expires_at": expires_at,
@@ -228,7 +223,6 @@ class Announcement(db.Model):
             type = validated_data["type"],
             title = validated_data["title"],
             message = validated_data["message"],
-            priority = validated_data.get("priority"),
             sender_id = validated_data.get("sender_id"),
             event_id = validated_data.get("event_id"),
             expires_at = validated_data.get("expires_at"),
