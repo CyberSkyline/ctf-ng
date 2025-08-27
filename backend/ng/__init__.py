@@ -9,6 +9,7 @@ from .core.routes import delete_unwanted_ctfd_routes, api_blueprint
 from .core.routes.views import plugin_views
 from .core.middleware.error_handler import register_error_handlers
 from .support import sockets as support_sockets
+# from .notifications import sockets as notification_sockets
 
 from .event.models.Event import Event  # noqa: F401
 from .team.models.Team import Team  # noqa: F401
@@ -28,6 +29,7 @@ from .scoring.models.ScoreEvent import ScoreEvent  # noqa: F401
 from .scoring.models.Attempt import Attempt  # noqa: F401
 from .scoring.models.HintRedemption import HintRedemption  # noqa: F401
 from .scoring.models.ManualPointAward import ManualPointAward  # noqa: F401
+from .notifications.models.Notification import Notification  # noqa: F401
 
 logger = get_logger(__name__)
 
@@ -53,6 +55,7 @@ def load(app: Any) -> None:
         app.extensions["socketio"] = socketio
 
         support_sockets.initialize_socket_handlers(socketio)
+        # notification_sockets.initialize_notification_sockets(socketio)
 
         app.register_blueprint(plugin_views)
         app.register_blueprint(api_blueprint, url_prefix="/ng")

@@ -57,7 +57,10 @@ test-challenge:
 
 test-permissions:
 	$(PYTHON_EXEC) -m pytest permissions/tests/ -v
-
+	
+test-notifications:
+	$(PYTHON_EXEC) -m pytest notifications -v
+	
 test-middleware:
 	$(PYTHON_EXEC) -m pytest -m middleware . -v
 
