@@ -956,7 +956,7 @@ class Test_Event_Admin_Create:
 
     def test_admin_create_event(self, admin_client):
         time = utc_now()
-        
+
         new_event_data = {
             "name": "New Admin Created Event",
             "description": "This is a test event created by admin.",
