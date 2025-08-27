@@ -7,6 +7,7 @@ import base64
 import pytest
 from datetime import datetime, timedelta
 
+from ...core.utils import utc_now
 from ...user.models.User import User
 from ...team.models.Team import Team
 from ...team.models.TeamMember import TeamMember
@@ -907,6 +908,7 @@ class Test_Event_Admin_Put:
 
     def test_admin_update_event(self, admin_client, event_factory):
         event = event_factory(name = "Admin Update Event", public = True)
+        time = utc_now()
 
         updated_data = {
             "name": "Updated Event Name",
@@ -914,6 +916,8 @@ class Test_Event_Admin_Put:
             "public": False,
             "registration_open": True,
             "max_team_size": 7,
+            "start_time": (time + timedelta(hours=1)).isoformat(),
+            "end_time": (time + timedelta(hours=2)).isoformat()
         }
 
         response = admin_client.put(
@@ -926,6 +930,8 @@ class Test_Event_Admin_Put:
         assert data["data"]["name"] == updated_data["name"]
         assert data["data"]["description"] == updated_data["description"]
         assert data["data"]["public"] is False
+        assert data["data"]["start_time"] == updated_data["start_time"][:-6] + "Z"
+        assert data["data"]["end_time"] == updated_data["end_time"][:-6] + "Z"
 
     def test_non_admin_update_event(self, logged_in_client, event_factory):
         event = event_factory(name = "Non-Admin Update Event", public = True)
@@ -949,12 +955,16 @@ class Test_Event_Admin_Create:
         return "/ng/admin/events"
 
     def test_admin_create_event(self, admin_client):
+        time = utc_now()
+        
         new_event_data = {
             "name": "New Admin Created Event",
             "description": "This is a test event created by admin.",
             "public": True,
             "registration_open": True,
             "max_team_size": 5,
+            "start_time": (time + timedelta(hours=1)).isoformat(),
+            "end_time": (time + timedelta(hours=2)).isoformat()
         }
 
         response = admin_client.post(
@@ -969,6 +979,8 @@ class Test_Event_Admin_Create:
         assert data["data"]["name"] == new_event_data["name"]
         assert data["data"]["description"] == new_event_data["description"]
         assert data["data"]["public"] is True
+        assert data["data"]["start_time"] == new_event_data["start_time"][:-6] + "Z"
+        assert data["data"]["end_time"] == new_event_data["end_time"][:-6] + "Z"
 
     def test_non_admin_create_event(self, logged_in_client):
         new_event_data = {
