@@ -344,7 +344,7 @@ class TestNotification:
                 )
         notification_factory(
                 recipient_id = user.id,
-                type = NotificationType.ATTEMPT_SUBMISSION,
+                type = NotificationType.TICKET_MESSAGE,
                 title = "Attempt"
                 )
 
@@ -504,7 +504,7 @@ class TestNotification:
         notification_factory(
                 recipient_id = user.id,
                 read_at = None,
-                type = NotificationType.ATTEMPT_SUBMISSION,
+                type = NotificationType.TICKET_MESSAGE,
                 title = "Wrong type"
                 )
 
@@ -805,7 +805,6 @@ class TestNotification:
         assert NotificationType.TICKET_MESSAGE.value == "ticket_message"
         assert NotificationType.TICKET_STATUS_CHANGE.value == "ticket_status_change"
         assert NotificationType.TICKET_ASSIGNED.value == "ticket_assigned"
-        assert NotificationType.ATTEMPT_SUBMISSION.value == "attempt_submission"
         assert NotificationType.TEAM_INVITATION.value == "team_invitation"
         assert NotificationType.CHALLENGE_RELEASED.value == "challenge_released"
 
