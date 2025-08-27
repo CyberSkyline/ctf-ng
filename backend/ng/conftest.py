@@ -2,7 +2,7 @@
 Ctf-ng Pytest Fixtures
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta, UTC
 
 import pytest
 from CTFd.cache import cache
@@ -1021,5 +1021,66 @@ def question_factory(db_session, challenge_factory):
         db_session.add(question)
         db_session.commit()
         return question
+
+    return _factory
+
+
+@pytest.fixture
+def notification_factory(db_session):
+    """
+    Factory to create notifications
+    """
+    from .notifications.models.Notification import Notification, NotificationType
+
+    def _factory(**kwargs):
+        defaults = {
+            "type": kwargs.get("type", NotificationType.TICKET_CREATE),
+            "title": kwargs.get("title", f"Test Notification {datetime.utcnow().timestamp()}"),
+            "message": kwargs.get("message", "Test notification message"),
+            "recipient_id": kwargs.get("recipient_id", 1),
+            "sender_id": kwargs.get("sender_id", None),
+            "read_at": kwargs.get("read_at", None),
+            "created_at": kwargs.get("created_at", datetime.now(UTC)),
+            "expires_at": kwargs.get("expires_at", None),
+            "ticket_id": kwargs.get("ticket_id", None),
+            "team_id": kwargs.get("team_id", None),
+            "event_id": kwargs.get("event_id", None),
+            "challenge_id": kwargs.get("challenge_id", None),
+        }
+        defaults.update(kwargs)
+
+        notification = Notification(**defaults)
+        db_session.add(notification)
+        if kwargs.get("commit", True):
+            db_session.commit()
+        return notification
+
+    return _factory
+
+
+@pytest.fixture
+def announcement_factory(db_session):
+    """
+    Factory to create announcements
+    """
+    from .notifications.models.Announcement import Announcement, AnnouncementType
+
+    def _factory(**kwargs):
+        defaults = {
+            "type": kwargs.get("type", AnnouncementType.GENERAL),
+            "title": kwargs.get("title", f"Test Announcement {datetime.utcnow().timestamp()}"),
+            "message": kwargs.get("message", "Test announcement message"),
+            "sender_id": kwargs.get("sender_id", None),
+            "created_at": kwargs.get("created_at", datetime.now(UTC)),
+            "expires_at": kwargs.get("expires_at", None),
+            "event_id": kwargs.get("event_id", None),
+        }
+        defaults.update(kwargs)
+
+        announcement = Announcement(**defaults)
+        db_session.add(announcement)
+        if kwargs.get("commit", True):
+            db_session.commit()
+        return announcement
 
     return _factory
