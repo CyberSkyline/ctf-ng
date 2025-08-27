@@ -35,6 +35,8 @@ class SerializedHintRedemption(TypedDict):
     hint_preview: NotRequired[str]
     challenge_id: NotRequired[int]
     challenge_name: NotRequired[str]
+    event_id: NotRequired[int]
+    event_name: NotRequired[str]
 
 
 class HintRedemption(db.Model):
@@ -82,7 +84,11 @@ class HintRedemption(db.Model):
         if self.hint:
             data["hint_preview"] = self.hint.preview
             data["challenge_id"] = self.hint.challenge_id
-            data["challenge_name"] = self.hint.challenge.name
+            if self.hint.challenge:
+                data["challenge_name"] = self.hint.challenge.name
+                data["event_id"] = self.hint.challenge.event_id
+                if self.hint.challenge.event:
+                    data["event_name"] = self.hint.challenge.event.name
 
         return SerializedHintRedemption(**data)
 
