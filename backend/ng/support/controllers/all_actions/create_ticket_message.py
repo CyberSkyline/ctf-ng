@@ -2,9 +2,9 @@
 Creates a new message in a support ticket thread.
 """
 
-from ....core.utils import emit_event
 from ...models.Ticket import Ticket
 from ...models.TicketMessage import TicketMessage
+from ....notifications.services import NotificationService
 
 
 def create_ticket_message(
@@ -29,11 +29,19 @@ def create_ticket_message(
     messages = ticket.get_messages()
     message = messages[-1]
 
-    # TODO: Refactor in near future with notifications implemenation
-    emit_event(
-        event_name="new_message",
-        data={"ticket_id": ticket.id, "message": message.serialize()},
-        room=f"ticket_{ticket.id}",
-    )
+    if is_admin and ticket.author_id != author_id:
+        NotificationService.notify_ticket_reply(
+            ticket_id=ticket.id,
+            author_id=author_id,
+            recipient_id=ticket.author_id,
+            is_admin_reply=True,
+        )
+    elif not is_admin and ticket.assigned_to:
+        NotificationService.notify_ticket_reply(
+            ticket_id=ticket.id,
+            author_id=author_id,
+            recipient_id=ticket.assigned_to,
+            is_admin_reply=False,
+        )
 
     return message

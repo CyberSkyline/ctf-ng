@@ -25,6 +25,7 @@ class NotificationType(str, Enum):
     TICKET_ASSIGNED = "ticket_assigned"
     TEAM_INVITATION = "team_invitation"
     CHALLENGE_RELEASED = "challenge_released"
+    EVENT_ANNOUNCEMENT = "event_announcement"
 
 
 class SerializedNotification(TypedDict):
@@ -410,12 +411,16 @@ class Notification(db.Model):
     @classmethod
     def mark_all_as_read(cls, recipient_id: int) -> int:
         """
-        Mark all notifications as read for a user
+        Mark all unread notifications as read for a user.
+        Returns count of notifications updated.
         """
-        count = cls.query.filter_by(recipient_id = recipient_id).filter(
+        count = cls.query.filter_by(
+            recipient_id=recipient_id,
+        ).filter(
             cls.read_at.is_(None)
-        ).update({"read_at": utc_now()})
-
+        ).update(
+            {"read_at": utc_now()}
+        )
         db.session.commit()
         return count
 

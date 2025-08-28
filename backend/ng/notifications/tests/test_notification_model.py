@@ -115,11 +115,7 @@ class TestNotification:
         assert refreshed_notification.event_id == event.id
         assert refreshed_notification.challenge_id == challenge.id
 
-    def test_create_notification_respects_commit_flag(
-            self,
-            db_session,
-            user
-            ):
+    def test_create_notification_respects_commit_flag(self, db_session, user):
         """
         Test that create respects the commit flag
         """
@@ -157,11 +153,7 @@ class TestNotification:
                     )
         assert "type" in exc_info.value.errors
 
-    def test_create_notification_missing_title_fails(
-            self,
-            db_session,
-            user
-            ):
+    def test_create_notification_missing_title_fails(self, db_session, user):
         """
         Test that creating notification without title fails validation
         """
@@ -174,11 +166,7 @@ class TestNotification:
                     )
         assert "title" in exc_info.value.errors
 
-    def test_create_notification_missing_message_fails(
-            self,
-            db_session,
-            user
-            ):
+    def test_create_notification_missing_message_fails(self, db_session, user):
         """
         Test that creating notification without message fails validation
         """
@@ -289,12 +277,7 @@ class TestNotification:
         assert user_notifications[0].id == user_notification.id
         assert user_notifications[0].title == "User notification"
 
-    def test_find_by_read_status(
-            self,
-            db_session,
-            notification_factory,
-            user
-            ):
+    def test_find_by_read_status(self, db_session, notification_factory, user):
         """
         Test filtering notifications by read status
         """
@@ -681,11 +664,7 @@ class TestNotification:
         assert "event_id" not in data
         assert "challenge_id" not in data
 
-    def test_serialize_with_read_timestamp(
-            self,
-            notification_factory,
-            user
-            ):
+    def test_serialize_with_read_timestamp(self, notification_factory, user):
         """
         Test serialization with read timestamp
         """
@@ -765,7 +744,6 @@ class TestNotification:
                             }
                     )
         assert "message" in exc_info.value.errors
-
 
     def test_validate_empty_title_fails(self, db_session, user):
         """

@@ -241,6 +241,13 @@ class Announcement(db.Model):
         return cls.query.get(announcement_id)
 
     @classmethod
+    def get_all_announcements(cls) -> list[Announcement]:
+        """
+        Get all announcements ordered by newest first
+        """
+        return cls.query.order_by(cls.created_at.desc()).all()
+
+    @classmethod
     def get_active_announcements(
         cls,
         event_id: int | None = None,
