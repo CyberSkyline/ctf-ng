@@ -157,7 +157,7 @@ export default function Detail() {
             <Section size="1">
               Status
               <Separator size="4" />
-              {StatusBadge(status)}
+              <StatusBadge status={status} />
             </Section>
           </Flex>
         </Card>
