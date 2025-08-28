@@ -46,7 +46,8 @@ x-challenge:
       answer: CTF{test_flag}
       max_attempts: 3
   hints:
-    - body: Check the logs
+    - name: check-logs
+      body: Check the logs
       preview: Log hint
       deduction: 10
   tags:
@@ -90,7 +91,8 @@ x-challenge:
       answer: CTF{test_flag}
       max_attempts: 5
   hints:
-    - body: Check the environment variables
+    - name: check-env
+      body: Check the environment variables
       preview: Environment hint
       deduction: 10
   tags:
@@ -529,12 +531,14 @@ x-challenge:
   description: Testing hint types
   questions: []
   hints:
-    - body:
+    - name: structured-hint
+      body:
         type: text
         content: Structured text hint
       preview: Structured hint
       deduction: 15
-    - body: Simple string hint
+    - name: simple-hint
+      body: Simple string hint
       preview: Simple hint 
       deduction: 5
 services:
@@ -948,7 +952,8 @@ x-challenge:
       answer: CTF{test_flag}
       max_attempts: 3
   hints:
-    - body: Check the logs
+    - name: check-logs
+      body: Check the logs
       preview: Log hint
       deduction: 10
   tags:

@@ -39,6 +39,7 @@ class TestHint:
         """Test creating a text hint."""
         text_hint = TextBody(type="text", content="This is a hint")
         hint = Hint(
+            name="hint1",
             body=text_hint,
             preview="Hint preview",
             deduction=10
@@ -50,6 +51,7 @@ class TestHint:
     def test_string_hint(self):
         """Test creating a simple string hint."""
         hint = Hint(
+            name="hint2",
             body="Simple hint text",
             preview="Simple hint",
             deduction=5
@@ -92,6 +94,7 @@ class TestChallengeInfo:
         )
         
         hint = Hint(
+            name="hint1",
             body=TextBody(type="text", content="Test hint content"),
             preview="Test preview",
             deduction=5
