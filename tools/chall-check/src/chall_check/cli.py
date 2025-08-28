@@ -32,7 +32,7 @@ from typing import Annotated, Optional
 import attr
 from cyber_skyline.chall_parser.compose.answer import Answer
 from cyber_skyline.chall_parser.compose.challenge_info import TextBody
-from cyber_skyline.chall_parser.rewriter import Template
+from cyber_skyline.chall_parser.template import Template
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
