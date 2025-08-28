@@ -22,8 +22,7 @@ import attr.validators as v
 import attr
 from cyber_skyline.chall_parser.compose.answer import Answer
 from cyber_skyline.chall_parser.rewriter import Template
-from cyber_skyline.chall_parser.compose.validators import validate_answer, validate_regex, validate_tabler_icon, validate_template_evals, or_
-
+import cyber_skyline.chall_parser.compose.validators as cv
 @attr.s
 class Question:
     """Represents a single question in the challenge.
@@ -33,9 +32,9 @@ class Question:
     name: str = attr.ib(validator=v.instance_of(str))  # Developer facing name for the question (e.g., "flag", "password")
     body: str = attr.ib(validator=v.instance_of(str))  # The actual question text presented to players
     points: int = attr.ib(validator=v.instance_of(int))  # Point value for correctly answering this question (e.g., 10, 100)
-    answer: str | Answer | Template = attr.ib(validator=or_(
-        v.and_(v.instance_of(str), validate_regex),
-        v.and_(v.instance_of(Answer), validate_answer),
+    answer: str | Answer | Template = attr.ib(validator=cv.or_(
+        v.and_(v.instance_of(str), cv.validate_regex),
+        v.and_(v.instance_of(Answer), cv.validate_answer),
         v.instance_of(Template)
     ))  # The correct answer
 
@@ -60,7 +59,8 @@ class Hint:
     Hints can be either structured (TextHint) or simple strings.
     Each hint has a preview and costs points when opened.
     """
-    body: TextBody | str = attr.ib(validator=or_(
+    name: str = attr.ib(validator=v.instance_of(str))  # Developer facing name for the hint (e.g., "hint1", "hint2")
+    body: TextBody | str = attr.ib(validator=cv.or_(
         v.instance_of(TextBody),
         v.instance_of(str)
     ))  # The hint content - can be structured or simple text, may in the future support more complex hint types
@@ -74,11 +74,18 @@ class Variable:
     Variables use the Faker library for generation and can be referenced
     throughout the compose file using YAML anchors and aliases.
     """
-    template: Template = attr.ib(validator=validate_template_evals)
+    template: Template = attr.ib(validator=cv.validate_template_evals)
                        # Python code fragment using Faker library functions
                        # e.g., "fake.bothify('SKY-????-####', letters=string.ascii_uppercase)"
     default: str = attr.ib(validator=v.instance_of(str))  # Default value with YAML anchor for referencing elsewhere
                  # This anchor can be used in services like: environment: VARIABLE1: *var1
+
+
+def _sel_hint_name(hint: Hint) -> str:
+    return hint.name
+
+def _sel_question_name(question: Question) -> str:
+    return question.name
 
 @attr.s
 class ChallengeInfo:
@@ -89,15 +96,15 @@ class ChallengeInfo:
     # Required fields
     name: str = attr.ib(validator=v.instance_of(str))  # Name of the challenge
     description: str = attr.ib(validator=v.instance_of(str))  # The description presented to players
-    questions: list[Question] = attr.ib(validator=v.deep_iterable(v.instance_of(Question), v.instance_of(list)))  # List of questions players must answer
+    questions: list[Question] = attr.ib(validator=v.deep_iterable(v.instance_of(Question), v.and_(v.instance_of(list), cv.unique(_sel_question_name))))  # List of questions players must answer
 
     # Optional fields
     icon: str | None = attr.ib(
         default=None, 
-        validator=validate_tabler_icon
+        validator=cv.validate_tabler_icon
     )  # Tabler icon name (validated against known icons)
     hints: list[Hint] | None = attr.ib(
-        default=None, validator=v.optional(v.deep_iterable(v.instance_of(Hint), v.instance_of(list))))  # List of hints players can access
+        default=None, validator=v.optional(v.deep_iterable(v.instance_of(Hint), v.and_(v.instance_of(list), cv.unique(_sel_hint_name)))))  # List of hints players can access
     summary: str | None = attr.ib(
         default=None, validator=v.optional(v.instance_of(str)))  # Optional summary text
 

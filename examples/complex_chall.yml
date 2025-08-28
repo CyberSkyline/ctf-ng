@@ -85,7 +85,8 @@ x-challenge:
   # Optional: Hints that participants can unlock (with point deductions)
   hints:
     # Text hint
-    - body:
+    - name: sql-injection-hint
+      body:
         type: text
         content: |
           Look for SQL injection vulnerabilities in the login form.
@@ -94,11 +95,13 @@ x-challenge:
       deduction: 25
     
     # Simple string hint
-    - body: "The admin panel might be accessible at /admin or /dashboard"
+    - name: admin-panel-hint
+      body: "The admin panel might be accessible at /admin or /dashboard"
       preview: "Admin panel location"
       deduction: 30
-    
-    - body:
+
+    - name: privilege-escalation-hint
+      body:
         type: text
         content: "Check for SUID binaries or writable system files for privilege escalation"
       preview: "System exploitation hint"
