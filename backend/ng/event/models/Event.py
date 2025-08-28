@@ -204,7 +204,7 @@ class Event(db.Model):
             if hasattr(self, key):
                 setattr(self, key, value)
 
-        Event.validate(kwargs)
+        Event.validate(self.serialize(include_admin_fields=True))
 
         if commit:
             db.session.commit()
