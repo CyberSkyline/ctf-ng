@@ -29,7 +29,7 @@ from typing import Literal, Any
 import attr
 import attr.validators as v
 from cyber_skyline.chall_parser.compose.validators import or_
-from cyber_skyline.chall_parser.rewriter import Template
+from cyber_skyline.chall_parser.template import Template
 
 @attr.s
 class Service:

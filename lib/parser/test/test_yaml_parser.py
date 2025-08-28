@@ -26,7 +26,7 @@ import pytest
 import tempfile
 from pathlib import Path
 from cyber_skyline.chall_parser.compose.challenge_info import ChallengeInfo, TextBody
-from cyber_skyline.chall_parser.rewriter import Template
+from cyber_skyline.chall_parser.template import Template
 from cyber_skyline.chall_parser.yaml_parser import ComposeYamlParser, parse_compose_string, parse_compose_file
 from cyber_skyline.chall_parser.compose import ComposeFile, ComposeResourceName
 from cyber_skyline.chall_parser.compose.service import Service

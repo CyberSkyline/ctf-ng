@@ -18,7 +18,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
 # IN THE SOFTWARE.
 from cyber_skyline.chall_parser.compose.challenge_info import ChallengeInfo, Hint, Question, TextBody, Variable
-from cyber_skyline.chall_parser.rewriter import Template
+from cyber_skyline.chall_parser.template import Template
 
 class TestQuestion:
     def test_basic_question(self):

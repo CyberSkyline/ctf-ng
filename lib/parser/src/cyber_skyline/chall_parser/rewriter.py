@@ -19,14 +19,7 @@
 # IN THE SOFTWARE.
 import logging
 from typing import Generator
-from yaml import AliasEvent, BaseLoader, Event, FullLoader, Loader, MappingEndEvent, MappingStartEvent, ScalarEvent, UnsafeLoader
-import yaml
-from faker import Faker
-from faker.providers import address, automotive, bank, barcode, \
-                            color, company, credit_card, currency, \
-                            date_time, doi, emoji, file, geo, internet, \
-                            isbn, job, lorem, misc, passport, person, \
-                            phone_number, profile, python, sbn, ssn, user_agent
+from yaml import AliasEvent, BaseLoader, Event, MappingEndEvent, MappingStartEvent, ScalarEvent
 logger = logging.getLogger(__name__)
 
 class Rewriter:
@@ -149,64 +142,3 @@ class Rewriter:
             else:
                 logger.debug("No more events in rewrite_aliases")
                 break
-
-
-fake = Faker()
-
-all_providers = [
-    address, automotive, bank, barcode, 
-    color, company, credit_card, currency, 
-    date_time, doi, emoji, file, geo, internet, 
-    isbn, job, lorem, misc, passport, person, 
-    phone_number, profile, python, sbn, ssn, user_agent
-]
-
-# Register all Faker providers
-for provider in all_providers:
-    fake.add_provider(provider)
-
-class Template:
-    def __init__(self, eval_str: str, parent_variable: str):
-        """Initialize a Template object with a template string and optional parent variable."""
-        logger.debug(f"Initializing Template with template: {eval_str}, parent_variable: {parent_variable}")
-        self.eval_str: str = eval_str
-        self.parent_variable: str = parent_variable
-    
-    def eval(self):
-        """Evaluate the template using Faker."""
-        logger.debug(f"Evaluating template: {self.eval_str}")
-        evaluated = None
-        if not self.eval_str:
-            logger.debug("Template is empty, returning None")
-            return None
-        try:
-            # Use eval to execute the template code
-            evaluated = eval(self.eval_str, {'fake': fake})
-        except Exception as e:
-            logger.error(f"Error evaluating template '{self.eval_str}': {e}")
-            raise ValueError(f"Invalid template: {self.eval_str}") from e
-        
-        return evaluated
-
-
-    @classmethod
-    def from_yaml(cls, loader: Loader | FullLoader | UnsafeLoader | None, node: yaml.nodes.Node) -> 'Template':
-        logger.debug(f"Creating Template from YAML node: {node}")
-        if not isinstance(node, yaml.nodes.MappingNode):
-            raise yaml.YAMLError("Template must be a mapping")
-        
-        values = {k.value: v for k, v in node.value}
-        if 'eval' not in values:
-            raise yaml.YAMLError("Template must have a 'eval' key")
-        if 'variable' not in values:
-            raise yaml.YAMLError("Template must have a 'variable' key")
-        
-        return cls(eval_str=values['eval'].value, parent_variable=values['variable'].value)
-    
-    @classmethod
-    def to_yaml(cls, dumper: yaml.Dumper, data: 'Template') -> yaml.nodes.MappingNode:
-        logger.debug(f"Converting Template to YAML: {data}")
-        return dumper.represent_mapping("!template", [
-            ('eval', data.eval_str),
-            ('variable', data.parent_variable)
-        ])

@@ -20,7 +20,7 @@
 import pytest
 import attr
 from cyber_skyline.chall_parser.compose.validators import validate_tabler_icon, validate_compose_name_pattern, validate_template_evals
-from cyber_skyline.chall_parser.rewriter import Template
+from cyber_skyline.chall_parser.template import Template
 
 @attr.s
 class MockChallengeWithIcon:
