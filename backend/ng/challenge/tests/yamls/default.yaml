@@ -19,7 +19,8 @@ x-challenge:
       answer: CTF{test_flag}
       max_attempts: 3
   hints:
-    - body: Check the logs
+    - name: H1
+      body: Check the logs
       preview: Log hint
       deduction: 10
   tags:
