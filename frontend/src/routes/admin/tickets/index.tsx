@@ -46,10 +46,6 @@ function NameLinkCell(
 
 const colDefs: ColDef<Ticket>[] = [
   {
-    field: 'id',
-    hide: true,
-  },
-  {
     field: 'status',
     headerName: 'Status',
     cellRenderer: StatusBadgeCell,

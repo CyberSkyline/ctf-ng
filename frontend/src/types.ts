@@ -194,7 +194,7 @@ export interface AdminTicket extends Ticket {
   assigned_to_name?: string;
   muted: boolean;
   closed_timestamp?: Date;
-  tags: string[];
+  tags: TicketTag[];
 }
 
 export interface TicketMessage {
@@ -205,4 +205,12 @@ export interface TicketMessage {
   id: number;
   text: string;
   ticket_id: number
+}
+
+export interface TicketTag {
+  id: number;
+  name: string;
+  color?: string;
+  description?: string;
+  ticket_count: number;
 }

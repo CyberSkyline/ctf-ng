@@ -1,6 +1,6 @@
 import useSWR, { mutate } from 'swr';
 import { apiMutation } from '@/fetchers';
-import type { AdminTicket, Ticket, TicketMessage } from '@/types';
+import type { AdminTicket, Ticket, TicketMessage, TicketTag } from '@/types';
 
 export function useMyTickets() {
   return useSWR<Ticket[], Error>('/support/me/tickets');
@@ -140,6 +140,16 @@ export function useAdminTicketMessages(ticketId : number) {
 export function addNewAdminTicketMessage(ticketId: number, text: string) {
   return apiMutation(`/admin/support/tickets/${ticketId}/add_message`, { text }, {
     method : 'POST',
+  }).then(() => {
+    mutate('/admin/support/tickets');
+    mutate(`/admin/support/tickets/${ticketId}`);
+  });
+}
+
+/* Ticket Tags */
+export function replaceTicketTags(ticketId: number, data: number[]){
+  return apiMutation(`/admin/support/tickets/${ticketId}/tag`, {tag_ids: data}, {
+    method : 'PUT',
   }).then(() => {
     mutate('/admin/support/tickets');
     mutate(`/admin/support/tickets/${ticketId}`);
