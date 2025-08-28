@@ -397,6 +397,14 @@ class TestAdminSupportEndpoints:
         assert data["success"] is True
         assert len(data["data"]["tags"]) == 2
 
+        # Verify tags are full objects with id, name, and color
+        for tag in data["data"]["tags"]:
+            assert "id" in tag
+            assert "name" in tag
+            assert "color" in tag
+            assert isinstance(tag["id"], int)
+            assert isinstance(tag["name"], str)
+
     def test_assign_ticket(self, admin_client, ticket, admin):
         """Test assigning ticket to user"""
         response = admin_client.put(
@@ -620,5 +628,68 @@ class TestAdminSupportEndpoints:
         assert ticket["team_name"] == team.name
         # Should not have challenge_name since no challenge_id
         assert "challenge_name" not in ticket
+
+    def test_admin_ticket_tags_serialization(self, admin_client, ticket, ticket_tag_factory):
+        """
+        Test that admin ticket details return full tag objects instead of just names
+        """
+        # Create tags with specific colors
+        tag1 = ticket_tag_factory(name="urgent", color="#ff0000", description="High priority issues")
+        tag2 = ticket_tag_factory(name="backend", color="#00ff00", description="Backend related")
+        tag3 = ticket_tag_factory(name="database", color=None, description="Database issues")  # Test null color
+
+        # Set tags on ticket
+        admin_client.put(
+            f"/ng/admin/support/tickets/{ticket.id}/tag",
+            json={"tag_ids": [tag1.id, tag2.id, tag3.id]},
+        )
+
+        # Get ticket details
+        response = admin_client.get(f"/ng/admin/support/tickets/{ticket.id}")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert data["success"] is True
+
+        ticket_data = data["data"]["ticket"]
+        tags = ticket_data["tags"]
+
+        # Verify we have 3 tags
+        assert len(tags) == 3
+
+        # Verify each tag has the correct structure
+        for tag in tags:
+            assert "id" in tag
+            assert "name" in tag
+            assert "color" in tag
+            assert isinstance(tag["id"], int)
+            assert isinstance(tag["name"], str)
+            # Color can be string or None
+            assert tag["color"] is None or isinstance(tag["color"], str)
+
+        # Verify specific tag data
+        tag_names = {tag["name"]: tag for tag in tags}
+
+        assert tag_names["urgent"]["id"] == tag1.id
+        assert tag_names["urgent"]["color"] == "#ff0000"
+
+        assert tag_names["backend"]["id"] == tag2.id
+        assert tag_names["backend"]["color"] == "#00ff00"
+
+        assert tag_names["database"]["id"] == tag3.id
+        assert tag_names["database"]["color"] is None
+
+    def test_user_ticket_details_do_not_include_tags(self, logged_in_client, ticket_with_tags):
+        """
+        Test that regular users don't get tag data (admin-only field)
+        """
+        response = logged_in_client.get(f"/ng/support/me/tickets/{ticket_with_tags.id}")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        ticket_data = data["data"]["ticket"]
+
+        # Regular users should not see tags (admin-only field)
+        assert "tags" not in ticket_data
 
 
