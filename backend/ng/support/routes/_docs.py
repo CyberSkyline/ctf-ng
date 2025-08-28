@@ -147,7 +147,7 @@ CLOSE_MY_TICKET_DOC = {
 
 # ============ ADMIN SUPPORT ENDPOINTS ============
 LIST_TICKETS_DOC = {
-    "description": "Get all support tickets with optional filters and enriched names (Admin only). Returns tickets with author_name, assigned_to_name, event_name, team_name, and challenge_name.",
+    "description": "Get all support tickets with optional filters and enriched names (Admin only). Returns tickets with author_name, assigned_to_name, event_name, team_name, challenge_name, and full tag objects (with id, name, color).",
     "params": {
         "user_id": {
             "description": "Filter by ticket author ID",
@@ -188,7 +188,7 @@ LIST_TICKETS_DOC = {
 }
 
 GET_TICKET_DOC = {
-    "description": "Get any support ticket with all messages (Admin only)",
+    "description": "Get any support ticket with all messages and full tag objects (Admin only)",
     "params": {
         "ticket_id": {
             "description": "Ticket ID",
@@ -232,7 +232,7 @@ ADD_ADMIN_MESSAGE_DOC = {
 
 SET_TICKET_TAGS_DOC = {
     "description":
-    "Set tags on a ticket (replaces all existing tags) (Admin only)",
+    "Set tags on a ticket (replaces all existing tags) (Admin only). Returns ticket with full tag objects containing id, name, and color.",
     "params": {
         "ticket_id": {
             "description": "Ticket ID",

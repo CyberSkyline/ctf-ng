@@ -1,0 +1,5 @@
+Requirement already satisfied: cattrs==23.1.1 in /home/yoshi/ctf-ng/backend/venv/lib/python3.12/site-packages (23.1.1)
+Requirement already satisfied: faker in /home/yoshi/ctf-ng/backend/venv/lib/python3.12/site-packages (37.5.3)
+Requirement already satisfied: pyyaml in /home/yoshi/ctf-ng/backend/venv/lib/python3.12/site-packages (6.0.2)
+Requirement already satisfied: attrs>=20 in /home/yoshi/ctf-ng/backend/venv/lib/python3.12/site-packages (from cattrs==23.1.1) (25.3.0)
+Requirement already satisfied: tzdata in /home/yoshi/ctf-ng/backend/venv/lib/python3.12/site-packages (from faker) (2025.2)
