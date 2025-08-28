@@ -21,7 +21,8 @@ import pytest
 import yaml
 import io
 from yaml import BaseLoader
-from cyber_skyline.chall_parser.rewriter import Rewriter, Template
+from cyber_skyline.chall_parser.rewriter import Rewriter
+from cyber_skyline.chall_parser.template import Template
 
 class TestRewriter:
     def test_rewriter_initialization(self):

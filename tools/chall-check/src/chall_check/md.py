@@ -1,7 +1,7 @@
 from cyber_skyline.chall_parser.compose.compose import ComposeFile
 from cyber_skyline.chall_parser.compose.answer import Answer
 from cyber_skyline.chall_parser.compose.challenge_info import TextBody
-from cyber_skyline.chall_parser.rewriter import Template
+from cyber_skyline.chall_parser.template import Template
 
 
 # # CHALLENGE_NAME

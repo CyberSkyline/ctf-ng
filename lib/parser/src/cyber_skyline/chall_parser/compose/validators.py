@@ -28,7 +28,7 @@ import logging
 import re
 from typing import Any
 from cyber_skyline.chall_parser.compose.answer import Answer, AnswerTestCase
-from cyber_skyline.chall_parser.rewriter import Template
+from cyber_skyline.chall_parser.template import Template
 from collections.abc import Callable
 
 

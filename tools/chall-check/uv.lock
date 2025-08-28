@@ -121,7 +121,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cyber-skyline-chall-parser", directory = "../../lib/parser" },
+    { name = "cyber-skyline-chall-parser", editable = "../../lib/parser" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "typer", specifier = ">=0.16.0" },
 ]
@@ -135,7 +135,7 @@ dev = [
 [[package]]
 name = "cyber-skyline-chall-parser"
 version = "0.3.0"
-source = { directory = "../../lib/parser" }
+source = { editable = "../../lib/parser" }
 dependencies = [
     { name = "attrs" },
     { name = "cattrs" },

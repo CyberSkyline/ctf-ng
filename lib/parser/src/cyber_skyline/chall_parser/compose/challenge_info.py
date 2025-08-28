@@ -21,7 +21,7 @@ from typing import Literal
 import attr.validators as v
 import attr
 from cyber_skyline.chall_parser.compose.answer import Answer
-from cyber_skyline.chall_parser.rewriter import Template
+from cyber_skyline.chall_parser.template import Template
 import cyber_skyline.chall_parser.compose.validators as cv
 @attr.s
 class Question:
