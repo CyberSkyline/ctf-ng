@@ -19,12 +19,12 @@ jobs:
         chmod 700 ~/.ssh
         echo "${{ secrets.STAGING_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy-key
         chmod 600 ~/.ssh/deploy-key
-        ssh-keyscan -H ${{ secrets.STAGING_HOST_1 }} >> ~/.ssh/known_hosts
+        ssh-keyscan -H ${{ secrets.STAGING_HOST_2 }} >> ~/.ssh/known_hosts
         chmod 600 ~/.ssh/known_hosts
 
     - name: Deploy to ctfng-staging-1
       run: |
-        ssh -i ~/.ssh/deploy-key ubuntu@${{ secrets.STAGING_HOST_1 }} '
+        ssh -i ~/.ssh/deploy-key ubuntu@${{ secrets.STAGING_HOST_2 }} '
           cd /mnt/app-dev && \
           docker compose down && \
           # docker compose run --rm vite npm run build && \
