@@ -2,6 +2,21 @@ import { apiMutation } from '@/fetchers';
 import type { ContainerInstance, ContainerStatus, Deployment } from '@/types';
 import useSWR, { mutate } from 'swr';
 
+export function useCurrentChallengeId() {
+  return useSWR<number | null>('/container/me/current_challenge');
+}
+
+export function connectWorkspace(eventId: number, challengeId: number) {
+  return apiMutation(`/events/${eventId}/challenge/${challengeId}/containers`, undefined, {
+    method : 'GET',
+  }).then(() => {
+    // refresh the current challenge ID after connecting workspace
+    mutate('/container/me/current_challenge');
+  });
+}
+
+/* ADMIN ENDPOINTS */
+
 export function useAllDeployments() {
   return useSWR<Deployment[], Error>('/admin/container');
 }
@@ -27,19 +42,6 @@ export function useProvisionerStats() {
     '/admin/container/stats',
     { refreshInterval : 30000 }, // Refresh metrics every 30 sec while they are on the page
   );
-}
-
-export function useCurrentChallengeId() {
-  return useSWR<number | null>('/container/me/current_challenge');
-}
-
-export function connectWorkspace(eventId: number, challengeId: number) {
-  return apiMutation(`/events/${eventId}/challenge/${challengeId}/containers`, undefined, {
-    method : 'GET',
-  }).then(() => {
-    // refresh the current challenge ID after connecting workspace
-    mutate('/container/me/current_challenge');
-  });
 }
 
 export function restartContainer(containerId: number) {
