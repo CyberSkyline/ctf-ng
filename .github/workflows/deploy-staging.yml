@@ -32,7 +32,11 @@ jobs:
         ssh -i ~/.ssh/deploy-key ubuntu@${{ secrets.STAGING_HOST_1 }} '
           cd /mnt/app-dev && \
           git pull origin staging && \
-          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up --build ctfd
+          # Stop and remove only the ctfd container
+          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml stop ctfd && \
+          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml rm -f ctfd && \
+          # Then build and start ctfd
+          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up --build -d ctfd
         '
 
     - name: Verify EFS synchronization
