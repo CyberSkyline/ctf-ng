@@ -28,7 +28,7 @@ jobs:
           cd /mnt/app-dev && \
           docker compose down && \
           cd ./frontend && vite build && \
-          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up -d --build ctfd
+          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up -d --build ctfd vite
         '
 
     - name: Cleanup
