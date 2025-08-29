@@ -25,8 +25,9 @@ jobs:
     - name: Deploy to ctfng-staging-1
       run: |
         ssh -i ~/.ssh/deploy-key ubuntu@${{ secrets.STAGING_HOST_1 }} '
-          cd /mnt/app-dev && docker compose down && \
-          cd ./frontend && vite build && \
+          cd /mnt/app-dev && \
+          docker compose down && \
+          docker compose run --rm vite npm run build && \
           ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up ctfd --build
         '
     - name: Cleanup
