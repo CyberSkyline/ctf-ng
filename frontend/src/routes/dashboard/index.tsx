@@ -8,6 +8,7 @@ import {
 import { ErrorCallout, InfoCallout } from 'components/Callouts';
 import EventHeader from 'components/EventHeader';
 import HeaderContainer from 'components/HeaderContainer';
+import { isEmpty } from 'lodash';
 import PastEvents from 'routes/dashboard/PastEvents';
 import UpcomingEvents from 'routes/dashboard/UpcomingEvents';
 
@@ -25,7 +26,7 @@ export default function Dashboard() {
   return (
     <>
       <HeaderContainer>
-        {(liveEvents === undefined || liveEvents.length === 0) && (
+        {isEmpty(liveEvents) && (
           <Skeleton loading={isLoading}>
             <InfoCallout>
               No events are currently running. This should eventually be something more interesting, i.e. the first upcoming event or practice area.
