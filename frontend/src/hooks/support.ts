@@ -59,7 +59,7 @@ export function resolveMyTicket(ticketId: number) {
 */
 
 export function useAdminAllTickets() {
-  return useSWR<Ticket[], Error>('/admin/support/tickets');
+  return useSWR<AdminTicket[], Error>('/admin/support/tickets');
 }
 
 /* Actions */

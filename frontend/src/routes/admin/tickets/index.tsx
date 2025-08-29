@@ -1,11 +1,11 @@
 import { useAdminAllTickets } from '@/hooks/support';
-import type { Ticket } from '@/types';
-import type { CellClickedEvent, ColDef } from 'ag-grid-community';
+import type { AdminTicket } from '@/types';
+import type { ColDef } from 'ag-grid-community';
 import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import { StatusBadgeCell } from 'components/StatusBadge';
-import { includes, isNull, isUndefined } from 'lodash';
+import { isNull, isUndefined } from 'lodash';
 import type { IconType } from 'react-icons';
 import {
   ChallengeIcon,
@@ -41,7 +41,7 @@ function NameLinkCell(
   return null;
 }
 
-const colDefs: ColDef<Ticket>[] = [
+const colDefs: ColDef<AdminTicket>[] = [
   {
     field : 'status',
     headerName : 'Status',
@@ -124,13 +124,6 @@ const colDefs: ColDef<Ticket>[] = [
 export default function AdminTickets() {
   const { data, error, isLoading } = useAdminAllTickets();
 
-  const stopCellSelection = [
-    'author_id',
-    'event_id',
-    'team_id',
-    'challenge_id',
-  ];
-
   return (
     <>
       {error && <ErrorCallout>{error.message}</ErrorCallout>}
@@ -140,13 +133,12 @@ export default function AdminTickets() {
         loading={isLoading}
         getRowId={(params) => params.data.id.toString()}
         sidebarComponent={MessagesSidebar}
-        gridOptions={{
-          onCellClicked : (e: CellClickedEvent) => {
-            if (includes(stopCellSelection, e.column.colId)) {
-              e.stopPropagation();
-            }
-          },
-        }}
+        stopCellSelection={[
+          'author_id',
+          'event_id',
+          'team_id',
+          'challenge_id',
+        ]}
       />
     </>
   );
