@@ -27,9 +27,8 @@ jobs:
       run: |
         ssh -i ~/.ssh/deploy-key ubuntu@${{ secrets.STAGING_HOST_1 }} '
           cd /mnt/app-dev && \
-          git pull origin staging && \
-          COMPOSE_PROJECT_NAME=staging ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml down && \
-          COMPOSE_PROJECT_NAME=staging ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up -d --build
+          COMPOSE_PROJECT_NAME=staging-ng ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml down && \
+          COMPOSE_PROJECT_NAME=staging-ng ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up -d --build
         '
 
     - name: Verify EFS synchronization
