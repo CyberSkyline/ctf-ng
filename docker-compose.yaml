@@ -3,14 +3,13 @@ services:
     build:
       context: ./
       dockerfile: ./dockerfiles/ctfd.Dockerfile
-    container_name: ng-ctfd
     user: root
     restart: always
     ports:
       - "8000:8000"
       - "4000:4000"
     env_file:
-      - ${ENV_FILE:-.env.dev}   
+      - ${ENV_FILE:-.env.prod}   
     volumes:
       - .data/CTFd/logs:/var/log/CTFd
       - .data/CTFd/uploads:/var/uploads
@@ -26,23 +25,22 @@ services:
       internal:
     tty: true
     entrypoint : /bin/bash
-    # command : -c "exec bash"                                                    
     command : -c "/usr/bin/supervisord -c /etc/supervisor/supervisord.conf && supervisorctl tail -f ctfd"
 
   nginx:
     image: nginx:1.28
-    container_name: ng-nginx
     restart: always
     volumes:
-      - ./conf/nginx/http.conf:/etc/nginx/nginx.conf:ro
+      - ./conf/nginx/http.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./sslpublickey.pem:/certificates/sslpublickey.pem:ro
+      - ./privatesslkey.pem:/certificates/privatesslkey.pem:ro
       - ./frontend/dist:/var/www/vite-build:ro
     ports:
       - 80:80
-      - 5173:5173
+      - 443:443
 
   db:
     image: mariadb:10.11
-    container_name: ng-db
     restart: always
     environment:
       - MARIADB_ROOT_PASSWORD=ctfd
@@ -55,12 +53,10 @@ services:
     networks:
         internal:
         default:
-    # This command is required to set important mariadb defaults
     command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --wait_timeout=28800, --log-warnings=0]
 
   cache:
     image: redis:4
-    container_name: ng-redis
     restart: always
     volumes:
     - .data/redis:/data
@@ -71,9 +67,10 @@ services:
     build:
       context: ./
       dockerfile: ./dockerfiles/vite.Dockerfile
-    container_name: ng-vite
     restart: always
     tty: true
+    ports:
+      - 5173:5173
     volumes:
       - ./frontend:/app/frontend
       - ./node_modules:/app/node_modules
