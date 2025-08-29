@@ -32,7 +32,7 @@ jobs:
         ssh -i ~/.ssh/deploy-key ubuntu@${{ secrets.STAGING_HOST_1 }} '
           cd /mnt/app-dev && \
           git pull origin staging && \
-          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml down && \
+          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml down --remove-orphans && \
           ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up --build -d
         '
 
