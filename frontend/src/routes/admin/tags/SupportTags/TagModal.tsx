@@ -9,6 +9,8 @@ import { COLOR_POSITIVE, COLOR_WARNING } from '@/constants';
 export default function CreateTagModal(
   { defaultValues }: {defaultValues?: TicketTag},
 ) {
+  const isCreating = isUndefined(defaultValues);
+
   const handleSubmit = async (data: FormData) => {
     const entries = Object.fromEntries(data.entries());
     const newTag: Omit<TicketTag, 'id | ticket_count'> = {
@@ -17,7 +19,7 @@ export default function CreateTagModal(
       description : entries.description as string,
     };
 
-    if (isUndefined(defaultValues)) {
+    if (isCreating) {
       return createSupportTag(newTag);
     }
     return putSupportTag(defaultValues?.id, newTag);
@@ -25,18 +27,18 @@ export default function CreateTagModal(
 
   return (
     <Modal
-      title={isUndefined(defaultValues) ? 'Create Support Tag' : 'Edit Support Tag'}
+      title={isCreating ? 'Create Support Tag' : 'Edit Support Tag'}
       description=""
       trigger={(
         <Button
-          variant={isUndefined(defaultValues) ? 'solid' : 'soft'}
-          color={isUndefined(defaultValues) ? COLOR_POSITIVE : COLOR_WARNING}
+          variant={isCreating ? 'solid' : 'soft'}
+          color={isCreating ? COLOR_POSITIVE : COLOR_WARNING}
         >
-          {isUndefined(defaultValues) ? 'Create Support Tag' : 'Edit Tag'}
+          {isCreating ? 'Create Support Tag' : 'Edit Tag'}
         </Button>
       )}
       onSubmit={handleSubmit}
-      submitVerb={isUndefined(defaultValues) ? 'Create' : 'Update'}
+      submitVerb={isCreating ? 'Create' : 'Update'}
       requireTouchingForm
     >
       <Form.Field name="name">
