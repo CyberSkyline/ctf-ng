@@ -1,0 +1,8 @@
+
+.cardResponder:global(.rt-Card:where(.rt-variant-surface)::before){
+  background-color: light-dark(var(--accent-2), var(--accent-5));
+}
+
+.cardSelf:global(.rt-Card:where(.rt-variant-surface)::before){
+  background-color: light-dark(var(--gray-2), var(--gray-5))
+}

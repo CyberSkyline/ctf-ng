@@ -1,9 +1,15 @@
 import { radixTheme } from '@/grid';
 import { Flex, Spinner } from '@radix-ui/themes';
-import type { ColDef, GridApi } from 'ag-grid-community';
+import type {
+  CellClickedEvent,
+  ColDef,
+  GridApi,
+  GridOptions,
+} from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
+import { includes } from 'lodash';
 
 /**
  * Wrapper around AgGridReact with common functionality for all admin grids.
@@ -14,12 +20,16 @@ export default function AdminGrid<T>({
   loading = false,
   sidebarComponent : Sidebar,
   getRowId,
+  gridOptions,
+  stopCellSelection,
 }: {
   rowData: T[];
   columnDefs: ColDef<T>[];
   loading?: boolean;
   sidebarComponent?: React.ComponentType<{entity: T}>;
   getRowId: (params: { data: T }) => string;
+  gridOptions?: GridOptions
+  stopCellSelection?: string[], // colIds of cells
 }) {
   const [ searchParams, setSearchParams ] = useSearchParams();
   const selectedId = searchParams.get('id');
@@ -79,6 +89,14 @@ export default function AdminGrid<T>({
     },
   };
 
+  const defaultGridOptions = {
+    onCellClicked : (e: CellClickedEvent) => {
+      if (includes(stopCellSelection, e.column.colId)) {
+        e.stopPropagation();
+      }
+    },
+  };
+
   return (
     <Flex direction="row" gap="4" className="w-full h-full">
       <AgGridReact
@@ -94,6 +112,11 @@ export default function AdminGrid<T>({
         loading={loading}
         loadingOverlayComponent={Spinner}
         getRowId={getRowId}
+        onRowDoubleClicked={(event) => {
+          if (event.node.isSelected()) {
+            event.node.setSelected(false);
+          }
+        }}
         onRowSelected={(event) => {
           if (event.node.isSelected() && event.node.id && event.node.id !== selectedId) {
             setSearchParams((prev) => {
@@ -136,6 +159,7 @@ export default function AdminGrid<T>({
         }}
         initialState={initialState}
         className="w-full h-full grow"
+        gridOptions={{ ...defaultGridOptions, ...gridOptions }}
       />
       {Sidebar && selectedData && (
         <Sidebar entity={selectedData} key={selectedId} />
