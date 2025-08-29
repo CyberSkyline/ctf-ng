@@ -1,4 +1,6 @@
 import {
+  Badge,
+  Box,
   Button,
   DataList,
   Flex,
@@ -16,10 +18,12 @@ import {
   putTicketChallenge,
   removeTicketChallenge,
   useAdminTicketMessages,
-  addNewAdminTicketMessage
+  addNewAdminTicketMessage,
+  useSupportTags,
+  replaceTicketTags
 } from '@/hooks/support';
 import type { AdminTicket } from '@/types';
-import { isNil, isUndefined, map } from 'lodash';
+import { includes, isNil, isUndefined, map, without } from 'lodash';
 import { useState } from 'react';
 import RichTextEditor from 'components/RichTextEditor';
 import { ErrorCallout } from 'components/Callouts';
@@ -35,14 +39,16 @@ import {
 } from '@/constants';
 import Entity from 'components/Entity';
 import { useSupportRoles } from '@/hooks/permissions';
+import { TbX } from 'react-icons/tb';
 
 export default function MessagesSidebar({ entity : selectedRow }: { selectedData: AdminTicket }) {
-  //Assign Dropdown
+  // Dropdowns
   const [ actionError, setActionError ] = useState<string | null>(null)
   const [ actionLoading, setActionLoading ] = useState<boolean>(false);
   const [ assignedUser, setAssignedUser ] = useState<string>(String(selectedRow.assigned_to));
   const [ selectedEvent, setSelectedEvent ] = useState<string | undefined>(String(selectedRow.event_id))
   const [ selectedChallenge, setSelectedChallenge ] = useState<string | undefined>(String(selectedRow.challenge_id));
+  const [ selectedTag, setSelectedTag ] = useState<string | undefined>('');
 
   // Rich Text Reply Messages
   const [ version, setVersion ] = useState<number>(0); // To reinit the RichTextEditor
@@ -53,7 +59,7 @@ export default function MessagesSidebar({ entity : selectedRow }: { selectedData
   // Data fetchers
   const { data : currentUser } = useCurrentUser();
   const { data : assignableSupportUsers } = useSupportRoles();
-  console.log(assignableSupportUsers)
+  const { data: allTags } = useSupportTags();
 
   const { data, error } = useAdminTicketMessages(selectedRow.id);
   const { data: userEvents } = useUserEvents(data?.ticket.author_id);
@@ -85,7 +91,7 @@ export default function MessagesSidebar({ entity : selectedRow }: { selectedData
     challenge_id,
     challenge_name,
     closed_timestamp,
-
+    tags,
   } = ticket;
   
   const sendNewMessage = () => {
@@ -178,6 +184,22 @@ export default function MessagesSidebar({ entity : selectedRow }: { selectedData
       .finally(() => setActionLoading(false))
   }
 
+  const updateTags = (id?: number) => {
+    let newTags = map(tags, 'id');
+
+    if(isUndefined(id)){
+      //add tag
+      if(!includes(newTags, id)){
+        newTags.push(Number(selectedTag));
+      }
+    } else {
+      //remove tag
+      newTags = without(newTags, id)
+    }
+
+    replaceTicketTags(ticketId, newTags);
+  }
+
   return (
     <AdminSidebar>
       <AdminSidebarHeader title="Ticket Details" />
@@ -198,8 +220,11 @@ export default function MessagesSidebar({ entity : selectedRow }: { selectedData
         <DataList.Item>
           <DataList.Label>Status</DataList.Label>
           <DataList.Value className='whitespace-pre-wrap'>
-            <Flex gap='2' direction='row'>
-              <StatusBadge status={status} />
+            <Flex gap='2' direction='row' align='center'>
+              <StatusBadge
+                size='3'
+                status={status}
+              />
               <Button
                 onClick={toggleClose}
                 disabled={actionLoading}
@@ -242,6 +267,60 @@ export default function MessagesSidebar({ entity : selectedRow }: { selectedData
                 loading={actionLoading}
               >
                 Unassign
+              </Button>
+            </Flex>
+          </DataList.Value>
+        </DataList.Item>
+        <DataList.Item>
+          <DataList.Label>Tags</DataList.Label>
+          <DataList.Value className='whitespace-pre-wrap'>
+            <Flex gap='2' direction='row'>
+              {map(tags, ({id, name, color}) => 
+                <Button
+                  key={id}
+                  asChild
+                  onClick={() => updateTags(id)}
+                >
+                  <Badge key={id}>
+                    <Box
+                      width='12px'
+                      height='12px'
+                      style={{backgroundColor: color}}
+                    >
+                    </Box>
+                      {name}
+                      <TbX/>
+                  </Badge>
+                </Button>
+              )}
+              <Select.Root
+                value={selectedTag}
+                onValueChange={setSelectedTag}
+                disabled={actionLoading}
+              >
+                <Select.Trigger/>
+                <Select.Content position='popper'>
+                  {map(allTags, ({id, name, color}) => 
+                    <Select.Item key={id} value={String(id)}>
+                      <Flex gap='1' className='items-center'>
+                        <Box
+                          width='12px'
+                          height='12px'
+                          style={{backgroundColor: color}}
+                        >
+                        </Box>
+                        {name}
+                      </Flex>
+                    </Select.Item>
+                  )}
+                </Select.Content>
+              </Select.Root>
+              <Button
+                onClick={() => updateTags()}
+                disabled={actionLoading || selectedTag === ''}
+                loading={actionLoading}
+              >
+                Add Tag
               </Button>
             </Flex>
           </DataList.Value>
