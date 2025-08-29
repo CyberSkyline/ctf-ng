@@ -3,6 +3,7 @@ services:
     build:
       context: ./
       dockerfile: ./dockerfiles/ctfd.Dockerfile
+    container_name: ng-ctfd
     user: root
     restart: always
     ports:
@@ -19,15 +20,18 @@ services:
       - db
       - cache
       - vite
+      - nginx
     networks:
       default:
       internal:
     tty: true
     entrypoint : /bin/bash
+    # command : -c "exec bash"                                                    
     command : -c "/usr/bin/supervisord -c /etc/supervisor/supervisord.conf && supervisorctl tail -f ctfd"
 
   nginx:
     image: nginx:1.28
+    container_name: ng-nginx
     restart: always
     volumes:
       - ./conf/nginx/http.prod.conf:/etc/nginx/nginx.conf:ro
@@ -37,12 +41,10 @@ services:
     ports:
       - 80:80
       - 443:443
-    depends_on:
-      - ctfd
-      - vite
 
   db:
     image: mariadb:10.11
+    container_name: ng-db
     restart: always
     environment:
       - MARIADB_ROOT_PASSWORD=ctfd
@@ -55,10 +57,12 @@ services:
     networks:
         internal:
         default:
+    # This command is required to set important mariadb defaults
     command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --wait_timeout=28800, --log-warnings=0]
 
   cache:
     image: redis:4
+    container_name: ng-redis
     restart: always
     volumes:
     - .data/redis:/data
@@ -69,6 +73,7 @@ services:
     build:
       context: ./
       dockerfile: ./dockerfiles/vite.Dockerfile
+    container_name: ng-vite
     restart: always
     tty: true
     ports:
