@@ -195,7 +195,7 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
 
     if (isUndefined(id)) {
       // add tag
-      if (!includes(newTags, id)) {
+      if (!includes(newTags, Number(selectedTag))) {
         newTags.push(Number(selectedTag));
       }
     } else {
