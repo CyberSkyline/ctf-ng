@@ -1,6 +1,11 @@
 import useSWR, { mutate } from 'swr';
 import { apiMutation } from '@/fetchers';
-import type { AdminTicket, Ticket, TicketMessage, TicketTag } from '@/types';
+import type {
+  AdminTicket,
+  Ticket,
+  TicketMessage,
+  TicketTag,
+} from '@/types';
 
 export function useMyTickets() {
   return useSWR<Ticket[], Error>('/support/me/tickets');
@@ -58,8 +63,8 @@ export function useAdminAllTickets() {
 }
 
 /* Actions */
-export function assignTicket(ticketId: number, user_id: number) {
-  return apiMutation(`/admin/support/tickets/${ticketId}/assign`, { user_id }, {
+export function assignTicket(ticketId: number, userId: number) {
+  return apiMutation(`/admin/support/tickets/${ticketId}/assign`, { user_id : userId }, {
     method : 'PUT',
   }).then(() => {
     mutate('/admin/support/tickets');
@@ -76,7 +81,7 @@ export function unassignTicket(ticketId: number) {
 }
 
 export function closeTicket(ticketId: number, closed: boolean) {
-    return apiMutation(`/admin/support/tickets/${ticketId}/close`, { closed }, {
+  return apiMutation(`/admin/support/tickets/${ticketId}/close`, { closed }, {
     method : 'PUT',
   }).then(() => {
     mutate('/admin/support/tickets');
@@ -85,7 +90,7 @@ export function closeTicket(ticketId: number, closed: boolean) {
 }
 
 export function muteTicket(ticketId: number, muted: boolean) {
-    return apiMutation(`/admin/support/tickets/${ticketId}/mute`, { muted }, {
+  return apiMutation(`/admin/support/tickets/${ticketId}/mute`, { muted }, {
     method : 'PUT',
   }).then(() => {
     mutate('/admin/support/tickets');
@@ -93,8 +98,8 @@ export function muteTicket(ticketId: number, muted: boolean) {
   });
 }
 
-export function putTicketEventTeam(ticketId: number, event_id: number) {
-  return apiMutation(`/admin/support/tickets/${ticketId}/event`, { event_id }, {
+export function putTicketEventTeam(ticketId: number, eventId: number) {
+  return apiMutation(`/admin/support/tickets/${ticketId}/event`, { event_id : eventId }, {
     method : 'PUT',
   }).then(() => {
     mutate('/admin/support/tickets');
@@ -110,8 +115,8 @@ export function removeTicketEventTeam(ticketId: number) {
   });
 }
 
-export function putTicketChallenge(ticketId: number, challenge_id: number) {
-  return apiMutation(`/admin/support/tickets/${ticketId}/challenge`, { challenge_id }, {
+export function putTicketChallenge(ticketId: number, challengeId: number) {
+  return apiMutation(`/admin/support/tickets/${ticketId}/challenge`, { challenge_id : challengeId }, {
     method : 'PUT',
   }).then(() => {
     mutate('/admin/support/tickets');
@@ -147,8 +152,12 @@ export function addNewAdminTicketMessage(ticketId: number, text: string) {
 }
 
 /* Ticket Tags */
-export function replaceTicketTags(ticketId: number, data: number[]){
-  return apiMutation(`/admin/support/tickets/${ticketId}/tag`, {tag_ids: data}, {
+export function useSupportTags() {
+  return useSWR<TicketTag[], Error>('/admin/support/tags');
+}
+
+export function replaceTicketTags(ticketId: number, data: number[]) {
+  return apiMutation(`/admin/support/tickets/${ticketId}/tag`, { tag_ids : data }, {
     method : 'PUT',
   }).then(() => {
     mutate('/admin/support/tickets');

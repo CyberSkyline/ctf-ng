@@ -4,8 +4,7 @@ import type { ICellRendererParams } from 'ag-grid-community';
 
 const CLOSED = 'closed';
 
-function StatusBadge({status, size = "1"} : {status: string, size?: string}) {
-  console.log('size', size)
+function StatusBadge({ status, size = '1' } : {status: string, size?: string}) {
   switch (status) {
     case CLOSED: return <Badge color={COLOR_POSITIVE} size={size}>Closed</Badge>;
     default: return <Badge color={COLOR_WARNING} size={size}>Open</Badge>;

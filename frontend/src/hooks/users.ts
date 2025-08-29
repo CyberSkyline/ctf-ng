@@ -34,7 +34,7 @@ export function useCurrentUser() {
  * Get events for a specific user
  */
 export function useUserEvents(userId: number | undefined) {
-  return useSWR<Event[],Error>(
+  return useSWR<Event[], Error>(
     userId ? `/admin/users/${userId}/events` : null,
   );
 }

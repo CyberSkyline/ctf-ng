@@ -1,10 +1,6 @@
 import { radixTheme } from '@/grid';
 import { Flex, Spinner } from '@radix-ui/themes';
-import type {
-  ColDef,
-  GridApi,
-  GridOptions,
-} from 'ag-grid-community';
+import type { ColDef, GridApi, GridOptions } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
