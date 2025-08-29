@@ -32,7 +32,7 @@ jobs:
         ssh -i ~/.ssh/deploy-key ubuntu@${{ secrets.STAGING_HOST_1 }} '
           cd /mnt/app-dev && \
           git pull origin staging && \
-          yarn build && ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up ctfd --build
+          yarn run build && ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up ctfd --build
         '
 
     - name: Verify EFS synchronization
