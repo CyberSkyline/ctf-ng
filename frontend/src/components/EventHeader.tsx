@@ -1,17 +1,17 @@
+import { DATEFORMAT } from '@/constants';
+import type { Event } from '@/types';
 import {
   AspectRatio,
   Box,
-  Link as LinkTheme,
   Flex,
   Heading,
+  Link as LinkTheme,
   Text,
 } from '@radix-ui/themes';
 import { isNull } from 'lodash';
 import type { ReactNode } from 'react';
 import { TbCalendar, TbUser } from 'react-icons/tb';
 import { Link } from 'react-router';
-import type { Event } from '@/types';
-import { DATEFORMAT } from '@/constants';
 import EventBadge from './EventBadge';
 import RadixMarkdown from './RadixMarkdown';
 
@@ -77,7 +77,9 @@ export default function EventHeader({
           {maxTeamSize && (
             <Text color="gray">
               <TbUser className="inline me-1" />
-              {maxTeamSize === 1 ? 'Individual' : `Teams of 2-${maxTeamSize}`}
+              {maxTeamSize === 1
+                ? 'Individual'
+                : `Teams of ${maxTeamSize === 2 ? '2' : `2-${maxTeamSize}`}`}
             </Text>
           )}
         </Flex>
