@@ -96,6 +96,20 @@ class NotificationService:
                 )
 
     @staticmethod
+    def notify_new_ticket(
+            ticket_id: int,
+            author_id: int,
+            subject: str,
+            ) -> None:
+        """
+        Notify admins about a new support ticket
+        """
+        NotificationService._emit_refetch(
+                path = "/ng/support/tickets",
+                room = "support_admin"
+                )
+
+    @staticmethod
     def notify_ticket_assigned(
             ticket_id: int,
             assigned_to_id: int,

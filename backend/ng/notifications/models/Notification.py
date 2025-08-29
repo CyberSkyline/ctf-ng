@@ -364,7 +364,6 @@ class Notification(db.Model):
         is_read: bool | None = None,
         notification_type: NotificationType | None = None,
         expired: bool = False,
-        limit: int | None = None,
     ) -> list[Notification]:
         """
         Find notifications based on filters
@@ -373,7 +372,6 @@ class Notification(db.Model):
             is_read: Filter by read status (True = read, False = unread)
             notification_type: Filter by type
             expired: Include expired notifications (default False)
-            limit: Maximum number of results
         Returns:
             list[Notification]: List of filtered notifications
         """
@@ -392,11 +390,7 @@ class Notification(db.Model):
                 (cls.expires_at.is_(None)) | (cls.expires_at > utc_now())
             )
 
-        query = query.order_by(cls.created_at.desc())
-
-        if limit is not None:
-            query = query.limit(limit)
-        return query.all()
+        return query.order_by(cls.created_at.desc()).all()
 
     @classmethod
     def get_unread_count(cls, recipient_id: int) -> int:

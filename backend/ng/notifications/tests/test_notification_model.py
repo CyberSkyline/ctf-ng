@@ -379,9 +379,9 @@ class TestNotification:
 
         assert len(all_notifications) == 2
 
-    def test_find_with_limit(self, db_session, notification_factory, user):
+    def test_find_returns_all_matching(self, db_session, notification_factory, user):
         """
-        Test filtering with limit parameter
+        Test that find returns all matching notifications
         """
         notifications = []
         for i in range(5):
@@ -391,12 +391,11 @@ class TestNotification:
                     )
             notifications.append(notification)
 
-        limited_notifications = Notification.find_filtered_notifications(
+        all_notifications = Notification.find_filtered_notifications(
                 recipient_id = user.id,
-                limit = 3
                 )
 
-        assert len(limited_notifications) == 3
+        assert len(all_notifications) == 5
 
     def test_find_ordered_by_created_at_desc(
             self,

@@ -2,9 +2,10 @@
 Allows users to close their own support tickets.
 """
 
-from ....core.utils import emit_event
 from ....user.models.User import User
 from ...models.Ticket import Ticket
+
+from ....notifications.services import NotificationService
 
 
 def close_my_ticket(
@@ -16,11 +17,9 @@ def close_my_ticket(
     """
     ticket.close_ticket(commit=True)
 
-    # TODO: Refactor in near future with notifications implemenation
-    emit_event(
-        event_name="ticket_closed",
-        data={"ticket_id": ticket.id, "closed_by": current_user.id},
-        room=f"ticket_{ticket.id}",
+    NotificationService._emit_refetch(
+        path=f"/ng/support/tickets/{ticket.id}",
+        room=f"ticket_{ticket.id}"
     )
 
     return ticket

@@ -13,5 +13,4 @@ def get_active_announcements(
     """
     return Announcement.get_active_announcements(
             event_id = event_id,
-            limit = None,
             )

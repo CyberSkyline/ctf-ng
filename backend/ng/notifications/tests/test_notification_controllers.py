@@ -535,7 +535,7 @@ class TestGetActiveAnnouncements:
 
         result = get_active_announcements()
 
-        mock_get_active.assert_called_once_with(event_id = None, limit = None)
+        mock_get_active.assert_called_once_with(event_id = None)
         assert result == mock_announcements
 
     @patch.object(Announcement, 'get_active_announcements')
@@ -554,8 +554,7 @@ class TestGetActiveAnnouncements:
         result = get_active_announcements(event_id = event.id)
 
         mock_get_active.assert_called_once_with(
-                event_id = event.id,
-                limit = None
+                event_id = event.id
                 )
         assert result == mock_announcements
 

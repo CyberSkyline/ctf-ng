@@ -266,13 +266,13 @@ class TestAnnouncement:
         assert event_announcements[0].id == event_announcement.id
         assert event_announcements[0].title == "Event Update"
 
-    def test_get_active_announcements_with_limit(
+    def test_get_active_announcements_returns_all(
             self,
             db_session,
             announcement_factory
             ):
         """
-        Test getting active announcements with limit
+        Test getting all active announcements
         """
         announcements = []
         for i in range(5):
@@ -283,9 +283,9 @@ class TestAnnouncement:
                     )
             announcements.append(announcement)
 
-        limited_announcements = Announcement.get_active_announcements(limit = 3)
+        all_announcements = Announcement.get_active_announcements()
 
-        assert len(limited_announcements) == 3
+        assert len(all_announcements) == 5
 
     def test_get_active_announcements_ordered_by_created_desc(
             self,

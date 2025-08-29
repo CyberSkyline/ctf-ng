@@ -3,6 +3,7 @@ Awards manual points to a team.
 """
 
 from ...models import ManualPointAward
+from ....notifications.services import NotificationService
 
 
 def award_manual_points(
@@ -21,6 +22,11 @@ def award_manual_points(
         team_id=team.id,
         points=points,
         reason=reason,
+    )
+
+    NotificationService._emit_refetch(
+        path=f"/ng/events/{event.id}/leaderboard",
+        room=f"event_{event.id}"
     )
 
     return award

@@ -256,6 +256,31 @@ class Event(db.Model):
             return cls.query.filter_by(public=True).all()
         return cls.query.all()
 
+    # TODO may need changes...
+    def start_event(self, commit: bool = True) -> None:
+        """
+        Start the event
+        """
+        if not self.locked:
+            raise BusinessLogicError("Event has already started")
+
+        self.locked = False
+        if commit:
+            db.session.commit()
+
+    # TODO may need changes...
+    def end_event(self, commit: bool = True) -> None:
+        """
+        End the event
+        """
+        if self.locked:
+            raise BusinessLogicError("Event has already ended")
+
+        self.locked = True
+        if commit:
+            db.session.commit()
+
+
     def get_event_details_with_teams(self) -> dict[str, Any]:
         """
         Gets detailed info about this event, including all its associated teams.

@@ -15,7 +15,6 @@ def get_my_notifications(
     return Notification.find_filtered_notifications(
             recipient_id = user_id,
             is_read = is_read,
-            limit = None,
             )
 
 
