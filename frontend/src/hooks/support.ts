@@ -152,15 +152,32 @@ export function addNewAdminTicketMessage(ticketId: number, text: string) {
 }
 
 /* Ticket Tags */
-export function useSupportTags() {
-  return useSWR<TicketTag[], Error>('/admin/support/tags');
-}
-
 export function replaceTicketTags(ticketId: number, data: number[]) {
   return apiMutation(`/admin/support/tickets/${ticketId}/tag`, { tag_ids : data }, {
     method : 'PUT',
   }).then(() => {
     mutate('/admin/support/tickets');
     mutate(`/admin/support/tickets/${ticketId}`);
+  });
+}
+
+/* Admin Support Tags */
+export function useSupportTags() {
+  return useSWR<TicketTag[], Error>('/admin/support/tags');
+}
+
+export function createSupportTag(data: Omit<TicketTag, 'id'>) {
+  return apiMutation('/admin/support/tags', data, {
+    method : 'POST',
+  }).then(() => {
+    mutate('/admin/support/tags');
+  });
+}
+
+export function putSupportTag(tagId: number, data: Omit<TicketTag, 'id'>) {
+  return apiMutation(`/admin/support/tags/${tagId}`, data, {
+    method : 'PUT',
+  }).then(() => {
+    mutate('/admin/support/tags');
   });
 }
