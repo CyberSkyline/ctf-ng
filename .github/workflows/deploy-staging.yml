@@ -26,7 +26,8 @@ jobs:
       run: |
         ssh -i ~/.ssh/deploy-key ubuntu@${{ secrets.STAGING_HOST_1 }} '
           cd /mnt/app-dev && docker compose down && \
-          yarn build && ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up ctfd --build
+          cd ./frontend && vite build && \
+          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up ctfd --build
         '
     - name: Cleanup
       run: |
