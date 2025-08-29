@@ -3,7 +3,7 @@ name: Deploy to Staging from Workspace
 on:
   workflow_dispatch:  # Manual trigger
   push:
-    branches: [staging]  # Auto-deploy on pushes to staging branch
+    # branches: [staging]  # Auto-deploy on pushes to staging branch
 
 jobs:
   deploy:
