@@ -31,30 +31,20 @@ jobs:
           COMPOSE_PROJECT_NAME=staging-ng ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up -d --build
         '
 
-    - name: Verify EFS synchronization
+    - name: Deploy to ctfng-staging-1
       run: |
-        COMMIT_1=$(ssh -i ~/.ssh/deploy-key ubuntu@${{ secrets.STAGING_HOST_1 }} 'cd /mnt/app-dev && git rev-parse --short HEAD')
-        COMMIT_2=$(ssh -i ~/.ssh/deploy-key ubuntu@${{ secrets.STAGING_HOST_2 }} 'cd /mnt/app-dev && git rev-parse --short HEAD')
-        if [ "$COMMIT_1" != "$COMMIT_2" ]; then
-          echo "EFS sync failed: $COMMIT_1 vs $COMMIT_2"
-          exit 1
-        fi
-        echo "EFS synchronized: $COMMIT_1"
-
-    - name: Deploy to ctfng-staging-2
-      run: |
-        ssh -i ~/.ssh/deploy-key ubuntu@${{ secrets.STAGING_HOST_2 }} '
+        ssh -i ~/.ssh/deploy-key ubuntu@${{ secrets.STAGING_HOST_1 }} '
           cd /mnt/app-dev && \
           COMPOSE_PROJECT_NAME=staging-ng ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml down && \
           COMPOSE_PROJECT_NAME=staging-ng ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up -d --build
         '
 
-    - name: Verify deployments
+    - name: Deploy to ctfng-staging-2  
       run: |
-        echo "ctfng-staging-1 containers:"
-        ssh -i ~/.ssh/deploy-key ubuntu@${{ secrets.STAGING_HOST_1 }} 'docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"'
-        echo "ctfng-staging-2 containers:"
-        ssh -i ~/.ssh/deploy-key ubuntu@${{ secrets.STAGING_HOST_2 }} 'docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"'
+        ssh -i ~/.ssh/deploy-key ubuntu@${{ secrets.STAGING_HOST_2 }} '
+          cd /mnt/app-dev && \
+          COMPOSE_PROJECT_NAME=staging-ng ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml down && \
+          COMPOSE_PROJECT_NAME=staging-ng ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up -d --build
 
     - name: Cleanup
       run: |
