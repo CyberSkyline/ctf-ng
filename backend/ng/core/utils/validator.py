@@ -66,6 +66,7 @@ class ValidationErrorMessages:
     FIELD_DATETIME_ORDER = "Start time must be before end time"
     FIELD_OUT_OF_RANGE = "{field} must be between {min_val} and {max_val}"
     FIELD_TOO_LONG = "{field} cannot be longer than {max_length} characters"
+    FIELD_TOO_SHORT = "{field} must be at least {min_length} characters"
 
 
 class BaseValidator:
@@ -92,7 +93,7 @@ class BaseValidator:
         self,
         data: dict[str, Any],
         field: str,
-        # min_length : int | None = 1, # TODO - implement min_length
+        min_length: int | None = None,
         max_length: int | None = None,
         required: bool = False,
         friendly_name: str | None = None,
@@ -105,6 +106,12 @@ class BaseValidator:
         stripped_value = value.strip()
         if len(stripped_value) == 0 and required:
             self.errors[field] = ValidationErrorMessages.FIELD_EMPTY.format(field=friendly_name)
+            return
+
+        if min_length and len(stripped_value) < min_length:
+            self.errors[field] = ValidationErrorMessages.FIELD_TOO_SHORT.format(
+                field=friendly_name, min_length=min_length
+            )
             return
 
         if max_length and len(stripped_value) > max_length:

@@ -45,14 +45,14 @@ class ContainerBlueprint(db.Model):
         validator.validate_string(
             data,
             "image",
-            MAX_CONTAINER_BLUEPRINT_IMAGE_LENGTH,
+            max_length=MAX_CONTAINER_BLUEPRINT_IMAGE_LENGTH,
             required=True,
             friendly_name="Container Image",
         )
         validator.validate_string(
             data,
             "hostname",
-            MAX_CONTAINER_BLUEPRINT_HOSTNAME_LENGTH,
+            max_length=MAX_CONTAINER_BLUEPRINT_HOSTNAME_LENGTH,
             required=True,
             friendly_name="Container Hostname",
         )

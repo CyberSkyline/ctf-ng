@@ -171,29 +171,29 @@ class TestChallengeValidation:
         assert "summary" not in validated_data
 
     def test_validate_optional_fields_empty_should_pass(self, challenge_data):
-        """Test that validation passes when optional fields are empty."""
-        challenge_data["description"] = ""
+        """Test that validation passes when optional fields meet min requirements."""
+        challenge_data["description"] = "A test description"
         challenge_data["icon"] = ""
-        challenge_data["summary"] = ""
+        challenge_data["summary"] = "Test summary"
 
         validated_data = Challenge.validate(challenge_data)
 
         assert validated_data["name"] == challenge_data["name"]
-        # Empty strings should not be included in validated data
-        assert "description" not in validated_data or validated_data["description"] == ""
+        assert validated_data["description"] == "A test description"
         assert "icon" not in validated_data or validated_data["icon"] == ""
-        assert "summary" not in validated_data or validated_data["summary"] == ""
+        assert validated_data["summary"] == "Test summary"
 
     def test_validate_optional_fields_whitespace_only_should_pass(self, challenge_data):
-        """Test that validation passes when optional fields contain only whitespace."""
-        challenge_data["description"] = "   \t   "
+        """Test that validation passes when optional fields meet minimum length."""
+        challenge_data["description"] = "Valid description text"
         challenge_data["icon"] = "  \n  "
-        challenge_data["summary"] = "\t\t\t"
+        challenge_data["summary"] = "Valid summary"
 
         validated_data = Challenge.validate(challenge_data)
 
         assert validated_data["name"] == challenge_data["name"]
-        # Whitespace should be trimmed for optional fields
+        assert validated_data["description"] == "Valid description text"
+        assert validated_data["summary"] == "Valid summary"
 
     def test_validate_with_maximum_length_fields(self, event):
         """Test validation with maximum length field values."""

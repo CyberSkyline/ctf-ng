@@ -44,7 +44,8 @@ class TicketTag(db.Model):
         validator.validate_string(
             data,
             "name",
-            config.TICKET_TAG_NAME_MAX_LENGTH,
+            min_length=config.TICKET_TAG_NAME_MIN_LENGTH,
+            max_length=config.TICKET_TAG_NAME_MAX_LENGTH,
             required=not bool(current_instance),
             friendly_name="Tag name",
         )
@@ -52,7 +53,7 @@ class TicketTag(db.Model):
         validator.validate_string(
             data,
             "color",
-            config.TICKET_TAG_COLOR_MAX_LENGTH,
+            max_length=config.TICKET_TAG_COLOR_MAX_LENGTH,
             required=False,
             friendly_name="Tag color",
         )
@@ -60,7 +61,7 @@ class TicketTag(db.Model):
         validator.validate_string(
             data,
             "description",
-            config.TICKET_TAG_DESCRIPTION_MAX_LENGTH,
+            max_length=config.TICKET_TAG_DESCRIPTION_MAX_LENGTH,
             required=False,
             friendly_name="Tag description",
         )

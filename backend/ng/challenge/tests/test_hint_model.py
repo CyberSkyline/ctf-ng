@@ -137,11 +137,11 @@ class Test_Validate:
         assert "Challenge ID" in str(exc_info.value.errors)
 
     def test_validate_with_empty_preview_should_pass(self, valid_hint_data):
-        """Test that validation passes when preview is empty (optional field)."""
-        valid_hint_data["preview"] = ""
+        """Test that validation passes when preview meets min length."""
+        valid_hint_data["preview"] = "Hint"
 
         validated_data = Hint.validate(valid_hint_data)
-        assert validated_data["preview"] == ""
+        assert validated_data["preview"] == "Hint"
 
     def test_validate_without_preview_should_pass(self, valid_hint_data):
         """Test that validation passes when preview is not provided (optional field)."""
@@ -185,7 +185,7 @@ class Test_Create_Hint:
         assert hint.id is not None
         assert hint.challenge_id == challenge.id
         assert hint.body == "Simple hint"
-        assert hint.preview == ""  # Default value
+        assert hint.preview == ""
         assert hint.deduction == 5
 
     def test_create_hint_with_invalid_data_should_fail(self, db_session, challenge):

@@ -47,7 +47,8 @@ class TicketMessage(db.Model):
         validator.validate_string(
             data,
             "text",
-            config.TICKET_MESSAGE_MAX_LENGTH,
+            min_length=config.TICKET_MESSAGE_MIN_LENGTH,
+            max_length=config.TICKET_MESSAGE_MAX_LENGTH,
             required=True,
             friendly_name="Message text",
         )

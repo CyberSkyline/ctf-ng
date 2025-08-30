@@ -7,6 +7,8 @@ from flask_restx import Namespace, Resource
 
 from CTFd.models import db
 
+from ... import config
+
 from ...core.middleware import (
     user_endpoint,
 )
@@ -135,7 +137,7 @@ class EventRegistration(Resource):
             validator.validate_string(
                 json_data,
                 "invite_code",
-                32,
+                max_length=config.INVITE_CODE_MAX_LENGTH,
                 required = False,
                 friendly_name = "Invite code"
             )
@@ -143,7 +145,8 @@ class EventRegistration(Resource):
             validator.validate_string(
                 json_data,
                 "team_name",
-                128,
+                min_length=config.TEAM_NAME_MIN_LENGTH,
+                max_length=config.TEAM_NAME_MAX_LENGTH,
                 required = False,
                 friendly_name = "Team name"
             )

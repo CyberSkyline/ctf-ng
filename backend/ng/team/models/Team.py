@@ -112,7 +112,8 @@ class Team(db.Model):
             validator.validate_string(
                 data,
                 "name",
-                config.TEAM_NAME_MAX_LENGTH,
+                min_length=config.TEAM_NAME_MIN_LENGTH,
+                max_length=config.TEAM_NAME_MAX_LENGTH,
                 required=True,
                 friendly_name="Team name",
             )
@@ -124,7 +125,7 @@ class Team(db.Model):
             validator.validate_string(
                 data,
                 "invite_code",
-                config.INVITE_CODE_MAX_LENGTH,
+                max_length=config.INVITE_CODE_MAX_LENGTH,
                 required=False,
                 friendly_name="Invite code",
             )

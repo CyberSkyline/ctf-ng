@@ -86,7 +86,8 @@ class Ticket(db.Model):
         validator.validate_string(
             data,
             "subject",
-            config.TICKET_SUBJECT_MAX_LENGTH,
+            min_length=config.TICKET_SUBJECT_MIN_LENGTH,
+            max_length=config.TICKET_SUBJECT_MAX_LENGTH,
             required=True,
             friendly_name="Ticket subject",
         )
@@ -237,7 +238,8 @@ class Ticket(db.Model):
         validator.validate_string(
             {"subject": subject},
             "subject",
-            config.TICKET_SUBJECT_MAX_LENGTH,
+            min_length=config.TICKET_SUBJECT_MIN_LENGTH,
+            max_length=config.TICKET_SUBJECT_MAX_LENGTH,
             required=True,
             friendly_name="Ticket subject"
         )

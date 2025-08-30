@@ -80,14 +80,14 @@ class Hint(db.Model):
         validator.validate_string(
             data,
             "body",
-            config.MAX_HINT_BODY_LENGTH,
+            max_length=config.MAX_HINT_BODY_LENGTH,
             required=True,
             friendly_name="Hint Body",
         )
         validator.validate_string(
             data,
             "preview",
-            config.MAX_HINT_PREVIEW_LENGTH,
+            max_length=config.MAX_HINT_PREVIEW_LENGTH,
             required=False,
             friendly_name="Hint Preview",
         )

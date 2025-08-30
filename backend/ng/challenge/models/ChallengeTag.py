@@ -30,7 +30,7 @@ class ChallengeTag(db.Model):
         validator.validate_string(
             data,
             "name",
-            MAX_CHALLENGE_TAG_NAME_LENGTH,
+            max_length=MAX_CHALLENGE_TAG_NAME_LENGTH,
             required=True,
             friendly_name="Challenge Tag Name",
         )

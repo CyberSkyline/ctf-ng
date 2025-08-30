@@ -30,7 +30,7 @@ class QuestionTestCase(db.Model):
         validator.validate_string(
             data,
             "answer",
-            MAX_QUESTION_ANSWER_LENGTH,
+            max_length=MAX_QUESTION_ANSWER_LENGTH,
             required=True,
             friendly_name="Answer",
         )

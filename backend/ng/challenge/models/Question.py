@@ -64,14 +64,14 @@ class Question(db.Model):
         validator.validate_string(
             data,
             "name",
-            MAX_QUESTION_NAME_LENGTH,
+            max_length=MAX_QUESTION_NAME_LENGTH,
             required=True,
             friendly_name="Question Name",
         )
         validator.validate_string(
             data,
             "body",
-            MAX_QUESTION_BODY_LENGTH,
+            max_length=MAX_QUESTION_BODY_LENGTH,
             required=True,
             friendly_name="Question Body",
         )
@@ -84,14 +84,14 @@ class Question(db.Model):
         validator.validate_string(
             data,
             "answer",
-            MAX_QUESTION_ANSWER_LENGTH,
+            max_length=MAX_QUESTION_ANSWER_LENGTH,
             required=True,
             friendly_name="Answer",
         )
         validator.validate_string(
             data,
             "placeholder",
-            MAX_QUESTION_ANSWER_LENGTH,
+            max_length=MAX_QUESTION_ANSWER_LENGTH,
             required=False,
             friendly_name="Placeholder",
         )

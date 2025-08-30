@@ -75,28 +75,28 @@ class Challenge(db.Model):
         validator.validate_string(
             data,
             "name",
-            MAX_CHALLENGE_NAME_LENGTH,
+            max_length=MAX_CHALLENGE_NAME_LENGTH,
             required=True,
             friendly_name="Challenge Name",
         )
         validator.validate_string(
             data,
             "description",
-            MAX_CHALLENGE_DESCRIPTION_LENGTH,
+            max_length=MAX_CHALLENGE_DESCRIPTION_LENGTH,
             required=False,
             friendly_name="Challenge Description",
         )
         validator.validate_string(
             data,
             "icon",
-            MAX_CHALLENGE_ICON_LENGTH,
+            max_length=MAX_CHALLENGE_ICON_LENGTH,
             required=False,
             friendly_name="Challenge Icon",
         )
         validator.validate_string(
             data,
             "summary",
-            MAX_CHALLENGE_SUMMARY_LENGTH,
+            max_length=MAX_CHALLENGE_SUMMARY_LENGTH,
             required=False,
             friendly_name="Challenge Summary",
         )

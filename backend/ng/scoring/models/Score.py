@@ -84,7 +84,7 @@ class Score(db.Model):
         validator.validate_integer(data, "points", required=False)
 
         validator.validate_string(
-            data, "team_name", config.TEAM_NAME_MAX_LENGTH, required=True, friendly_name="Team name"
+            data, "team_name", max_length=config.TEAM_NAME_MAX_LENGTH, required=True, friendly_name="Team name"
         )
 
         validator.validate_datetime(data, "last_update", required=False)

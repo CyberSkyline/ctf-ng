@@ -90,14 +90,15 @@ class Event(db.Model):
         validator.validate_string(
             data,
             "name",
-            config.EVENT_NAME_MAX_LENGTH,
+            min_length=config.EVENT_NAME_MIN_LENGTH,
+            max_length=config.EVENT_NAME_MAX_LENGTH,
             required=True,
             friendly_name="Event name",
         )
         validator.validate_string(
             data,
             "description",
-            config.EVENT_DESCRIPTION_MAX_LENGTH,
+            max_length=config.EVENT_DESCRIPTION_MAX_LENGTH,
             required=False,
             friendly_name="Event description",
         )
