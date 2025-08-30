@@ -6,6 +6,7 @@ import os
 import base64
 import pytest
 from datetime import datetime, timedelta
+from ...core.utils import utc_now
 
 from ...user.models.User import User
 from ...team.models.Team import Team
@@ -669,6 +670,7 @@ class Test_Event_Team_Management:
         data = response.get_json()
         assert not data["success"]
         assert "errors" in data
+        assert "You cannot kick team members" in data["errors"]["forbidden"]
 
     def test_member_leave(self, team_member_client):
         """Test that the team leave endpoint works correctly."""
@@ -749,6 +751,7 @@ class Test_Event_Team_Management:
         assert data["success"]
         assert data["data"]["name"] == new_name
 
+
     def test_update_name_event_over(self, closed_event_client):
         """Test that the team name update fails when the event is over."""
         new_name = "Updated Team Name"
@@ -760,7 +763,7 @@ class Test_Event_Team_Management:
         data = response.get_json()
         assert not data["success"]
         assert "errors" in data
-        assert "You cannot update the team name after the event has ended." in data[
+        assert "You do not have permission to update the team name" in data[
             "errors"]["forbidden"]
 
 
@@ -1043,12 +1046,12 @@ class Test_Event_Challenge_List:
         return f"/ng/events/{event_id}/challenges"
 
 
-    def test_list_challenges_for_event(self, team_captain_client, challenge_factory, permissions):
+    def test_list_challenges_for_event(self, started_player_client, challenge_factory):
         challenge1 = challenge_factory(event_id=1, name="Challenge 1")
         challenge2 = challenge_factory(event_id=1, name="Challenge 2")
 
 
-        response = team_captain_client.get(self.get_endpoint(challenge1.event_id))
+        response = started_player_client.get(self.get_endpoint(challenge1.event_id))
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -1056,13 +1059,13 @@ class Test_Event_Challenge_List:
         assert data["data"][0]["name"] == challenge1.name
         assert data["data"][1]["name"] == challenge2.name
 
-    def test_challenges_include_name_enrichment(self, logged_in_client, event_factory, challenge_factory):
+    def test_challenges_include_name_enrichment(self, started_player_client, challenge_factory):
         """Test that challenges endpoint includes enriched names (event_name)"""
-        event = event_factory(name="Crypto Masters Tournament", public=True)
-        challenge_factory(event=event, name="RSA Decryption")
 
-        response = logged_in_client.get(self.get_endpoint(event.id))
+        challenge = challenge_factory(event_id=1, name="RSA Decryption")
 
+        response = started_player_client.get(self.get_endpoint(challenge.event_id))
+        print(response.get_json())
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -1070,10 +1073,10 @@ class Test_Event_Challenge_List:
         # Verify name enrichment is working
         challenge_data = data["data"][0]
         assert "event_name" in challenge_data
-        assert challenge_data["event_name"] == "Crypto Masters Tournament"
+        assert challenge_data["event_name"] == "Test Event 1"
 
         # Verify IDs are still present
-        assert challenge_data["event_id"] == event.id
+        assert challenge_data["event_id"] == challenge.event_id
         assert challenge_data["name"] == "RSA Decryption"
 
 
@@ -1081,11 +1084,10 @@ class Test_Event_Challenge_Render:
     def get_endpoint(self, event_id: int, challenge_id: int) -> str:
         return f"/ng/events/{event_id}/challenges/{challenge_id}"
 
-    def test_render_challenge_for_event(self, team_captain_client, challenge_factory, permissions):
+    def test_render_challenge_for_event(self, started_player_client, challenge_factory):
         challenge = challenge_factory(event_id=1, name="Challenge to Render")
 
-        response = team_captain_client.get(self.get_endpoint(challenge.event_id, challenge.id))
-
+        response = started_player_client.get(self.get_endpoint(challenge.event_id, challenge.id))
 
         assert response.status_code == 200
         data = response.get_json()
@@ -1100,7 +1102,7 @@ class Test_Event_Challenge_Render:
         # Verify challenge data
         assert render_data["challenge"] == challenge.serialize()
         assert render_data["challenge"]["name"] == "Challenge to Render"
-        assert render_data["challenge"]["event_id"] == event.id
+        assert render_data["challenge"]["event_id"] == challenge.event_id
 
         # Verify questions are included
         assert len(render_data["questions"]) == 2
@@ -1117,13 +1119,13 @@ class Test_Event_Challenge_Statuses:
         return f"/ng/events/{event_id}/me/challenges"
 
     def test_get_challenge_statuses_for_event(
-        self, team_captain_client,challenge_factory, permissions
+        self, started_player_client,challenge_factory
     ):
         challenge1 = challenge_factory(event_id=1, name="Challenge 1")
         challenge2 = challenge_factory(event_id=1, name="Challenge 2")
 
 
-        response = team_captain_client.get(self.get_endpoint(1))
+        response = started_player_client.get(self.get_endpoint(1))
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -1181,7 +1183,7 @@ class Test_Event_Challenge_Statuses:
         assert challenge2_progress["is_completed"] is False
 
     def test_challenge_statuses_include_challenge_name(
-        self, team_captain_client,challenge_factory, permissions
+        self, started_player_client,challenge_factory
 
     ):
         """
@@ -1190,7 +1192,7 @@ class Test_Event_Challenge_Statuses:
         challenge1 = challenge_factory(event_id=1, name="Web Security Challenge")
         challenge2 = challenge_factory(event_id=1, name="Crypto Puzzle")
 
-        response = team_captain_client.get(f"/ng/events/{challenge1.event_id}/me/challenges")
+        response = started_player_client.get(f"/ng/events/{challenge1.event_id}/me/challenges")
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -1235,6 +1237,7 @@ class Test_Event_Challenge_Statuses:
             public = True
         )
         team = team_factory(event = event, members = [user])
+        team.set_start_timestamp(utc_now())
 
         web_challenge = challenge_factory(event = event, name = "Web Security")
         crypto_challenge = challenge_factory(
@@ -1374,6 +1377,7 @@ class Test_Event_Challenge_Statuses:
         """
         event = event_factory(name = "No Attempts Test Event", public = True)
         _team = team_factory(event = event, members = [user])
+        _team.set_start_timestamp(utc_now())
         challenge = challenge_factory(
             event = event,
             name = "Untouched Challenge"

@@ -5,7 +5,7 @@ Test routes for middleware testing isolated in a separate Flask app instance.
 
 from flask import Blueprint, jsonify
 from ...middleware.permission_middleware import (
-    get_permissions,
+    check_permissions,
     event_only_public
 
 )
@@ -19,6 +19,7 @@ from ...middleware.loaders import (
     load_ticket,
     load_ticket_tag,
 )
+from ....permissions.models.enums import PermissionEnum
 from ...middleware.loaders._util import LoaderType
 
 middleware_test_routes = Blueprint("middleware_test_routes", __name__)
@@ -77,7 +78,7 @@ def loading_model_objects(**kwargs):
 
 @middleware_test_routes.route("/get_user_permissions", methods=["GET"])
 @user_endpoint()
-@get_permissions
+@check_permissions(PermissionEnum.CAN_EDIT_TEAM, "You do not have permission to view user permissions.")
 def get_user_permissions(**kwargs):
     """
     Endpoint to retrieve user permissions.
@@ -88,7 +89,7 @@ def get_user_permissions(**kwargs):
 @middleware_test_routes.route("/get_circumstantial_permissions/<int:team_id>", methods=["GET"])
 @user_endpoint()
 @load_team(source=LoaderType.PARAM)
-@get_permissions
+@check_permissions(PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS, "You do not have permission to view team permissions.")
 def get_team_permissions(**kwargs):
 
     return jsonify({"success": True, "permissions": kwargs.get("permissions", [])})

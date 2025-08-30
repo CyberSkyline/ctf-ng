@@ -68,6 +68,15 @@ def db_session(app):
         transaction = connection.begin()
         db.session.close()
         db.session = db.create_scoped_session(options={"bind": connection, "binds": {}})
+        Role.create_role(RoleEnum.ADMIN)
+        Permission.create_permission(PermissionEnum.CAN_IMPERSONATE_USERS, "Impersonate users")
+        Permission.create_permission(PermissionEnum.CAN_EDIT_TEAM, "Edit team details")
+        Permission.create_permission(PermissionEnum.CAN_EDIT_USER, "Edit user details")
+        Permission.create_permission(PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS, "Manage support tickets")
+        RolePermission.create_role_permission(1, 1)
+        RolePermission.create_role_permission(1, 2)
+        RolePermission.create_role_permission(1, 3)
+        RolePermission.create_role_permission(1, 4)
         yield db.session
         transaction.rollback()
         connection.close()
@@ -219,13 +228,6 @@ def admin(db_session):
     admin.verified = True
     db_session.add(admin)
     db_session.flush()
-    from .user.models.User import User as NgUser
-    from .permissions.models.Role import Role
-    Role.create_role(RoleEnum.ADMIN)
-    Permission.create_permission(PermissionEnum.CAN_IMPERSONATE_USERS, "Impersonate users")
-    Permission.create_permission(PermissionEnum.CAN_EDIT_TEAM, "Edit team details")
-    RolePermission.create_role_permission(1, 1)
-    RolePermission.create_role_permission(1, 2)
 
     NgUser.create_user(user_id=admin.id, commit=False)
     assign_role_to_user(admin.id, RoleEnum.ADMIN)
@@ -334,15 +336,6 @@ def user_factory(db_session):
         ng_user = User(id=user.id)
         db_session.add(ng_user)
         if admin:
-            Role.create_role(RoleEnum.ADMIN)
-            Permission.create_permission(PermissionEnum.CAN_IMPERSONATE_USERS, "Impersonate users")
-            Permission.create_permission(PermissionEnum.CAN_EDIT_TEAM, "Edit team details")
-            Permission.create_permission(PermissionEnum.CAN_EDIT_USER, "Edit user details")
-            Permission.create_permission(PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS, "Manage support tickets")
-            RolePermission.create_role_permission(1, 1)
-            RolePermission.create_role_permission(1, 2)
-            RolePermission.create_role_permission(1, 3)
-            RolePermission.create_role_permission(1, 4)
             assign_role_to_user(ng_user.id, RoleEnum.ADMIN)
         db_session.commit()
         return ng_user
@@ -362,7 +355,6 @@ def team_with_members(db_session, team_factory, user_factory):
     """Creates a team with multiple members for testing."""
     users = [user_factory(name=f"User {i}", email=f"user{i}@example.com") for i in range(1, 4)]
     team = team_factory(members=users)
-    team.set_start_timestamp(utc_now())
     return team
 
 
@@ -376,6 +368,24 @@ def team_captain_client(app, db_session, team_with_members, role_with_permission
     client = app.test_client()
     with client.session_transaction() as sess:
         # Completely clear the session and set only what we need
+        sess.clear()
+        sess["id"] = team_with_members.members[0].user_id
+        sess["name"] = team_with_members.members[0].user.ctfd_user.name
+        sess["type"] = "team"
+        sess["nonce"] = generate_nonce()
+        sess.permanent = False
+    return client
+
+@pytest.fixture
+def started_player_client(app, db_session, team_with_members, role_with_permissions):
+    """A test client logged in as a player who has started the event."""
+
+    from CTFd.cache import cache
+
+    cache.clear()
+    team_with_members.set_start_timestamp(utc_now() - timedelta(hours=1))
+    client = app.test_client()
+    with client.session_transaction() as sess:
         sess.clear()
         sess["id"] = team_with_members.members[0].user_id
         sess["name"] = team_with_members.members[0].user.ctfd_user.name
@@ -418,6 +428,7 @@ def closed_event_client(app, db_session, event_factory, team_factory, user_facto
         locked=True, start_time=utc_now() - timedelta(days=2), end_time=utc_now() - timedelta(days=1)
     )
     team = team_factory(event=event, members=[user, user2])
+    team.set_start_timestamp(utc_now() - timedelta(days=2))
 
     client = app.test_client()
     with client.session_transaction() as sess:
@@ -526,21 +537,6 @@ def user_with_roles(db_session):
     return user
 
 
-@pytest.fixture
-def permissions(db_session):
-    if db_session is None:
-        return None
-
-    # Create some permissions
-    permission1 = Permission.create_permission(PermissionEnum.CAN_EDIT_TEAM, "Edit team details")
-    permission2 = Permission.create_permission(PermissionEnum.CAN_EDIT_USER, "Edit user details")
-    permission3 = Permission.create_permission(PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS, "Manage support tickets")
-    permission4 = Permission.create_permission(PermissionEnum.CAN_VIEW_CHALLENGES, "View challenges")
-    permission5 = Permission.create_permission(PermissionEnum.CAN_PLAY_CHALLENGES, "Play challenges")
-
-    db_session.commit()
-
-    return [permission1, permission2, permission3, permission4, permission5]
 
 @pytest.fixture
 def challenge(db_session, event):

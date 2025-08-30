@@ -6,30 +6,44 @@ from ...permissions.controllers.get_team_management_permissions import get_team_
 from ...permissions.controllers.get_user_permissions import get_user_permissions
 from ...permissions.controllers.get_challenge_permissions import get_challenge_permissions
 from ...event.models.Demographic import Demographic
+from ...permissions.models.enums import PermissionEnum, PermissionCheck, DenyReason
 
 logger = get_logger(__name__)
 
 
-def get_permissions(f):
-    """Decorator to get user permissions and append them to the request context."""
 
-    @wraps(f)
-    def wrapped(*args, **kwargs):
-        user = get_current_user()
-        if not user:
-            return error_response("User not authenticated", "unauthorized", 401)
-        permissions = get_user_permissions(user)
-        team = kwargs.get('team')
-        if team:
-            permissions.extend(get_team_management_permissions(team, user))
-            permissions.extend(get_challenge_permissions(team))
-        permissions = list({permission.name for permission in permissions})
-        if kwargs.get('permissions') is None:
-            kwargs['permissions'] = permissions
-        else:
-            kwargs['permissions'].extend(permissions)
-        return f(*args, **kwargs)
-    return wrapped
+def check_permissions(permission: PermissionEnum, error_message: str):
+    def decorator(f):
+        """Decorator to get user permissions and append them to the request context."""
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            user = get_current_user()
+            trace = PermissionCheck()
+            if not user:
+                trace.add_denial(permission, DenyReason.NOT_AUTHENTICATED)
+                return _deny(permission, trace, error_message)
+            trace.merge(get_user_permissions(user))
+            team = kwargs.get('team')
+            if team:
+                trace.merge(get_team_management_permissions(team, user))
+                trace.merge(get_challenge_permissions(team))
+            permissions = list({grant.permission.name for grant in trace.granted})
+            if kwargs.get('permissions') is None:
+                kwargs['permissions'] = permissions
+            else:
+                kwargs['permissions'].extend(permissions)
+            if permission.name not in permissions:
+                return _deny(permission, trace, error_message)
+            return f(*args, **kwargs)
+        return wrapped
+    return decorator
+
+def _deny(permission: PermissionEnum, trace: PermissionCheck, msg: str = "You do not have permission to perform this action"):
+    deny = next((d for d in trace.denied if d.permission == permission), None)
+    error_message = msg
+    if deny:
+        error_message += f": {deny.reason.name}"
+    return error_response(error_message, "forbidden", 403)
 
 def event_only_public(f):
     """Decorator to ensure the event is public."""

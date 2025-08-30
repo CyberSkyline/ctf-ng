@@ -129,11 +129,11 @@ class TestUserScoringEndpoints:
         assert data["success"] is False
 
 
-    def test_submit_answer_correct(self, team_captain_client, challenge_factory, question_factory, permissions):
+    def test_submit_answer_correct(self, started_player_client, challenge_factory, question_factory):
         """Test submitting correct answer"""
         challenge = challenge_factory(event_id=1)
         question = question_factory(challenge_id=challenge.id)
-        response = team_captain_client.post(
+        response = started_player_client.post(
             f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/questions/{question.id}/submit",
             json={"submission": question.answer},
 
@@ -149,11 +149,11 @@ class TestUserScoringEndpoints:
         assert data["data"]["is_correct"] is True
         assert data["data"]["points"] == question.points
 
-    def test_submit_answer_incorrect(self, team_captain_client, challenge_factory, question_factory, permissions):
+    def test_submit_answer_incorrect(self, started_player_client, challenge_factory, question_factory):
         """Test submitting incorrect answer"""
         challenge = challenge_factory(event_id=1)
         question = question_factory(challenge_id=challenge.id)
-        response = team_captain_client.post(
+        response = started_player_client.post(
             f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/questions/{question.id}/submit",
             json={"submission": "wrong answer"},
         )
@@ -182,12 +182,14 @@ class TestUserScoringEndpoints:
         assert data["success"] is False
 
     def test_submit_answer_missing_submission(
-        self, logged_in_client, user, event, team_with_member, challenge, question, permissions
+        self, started_player_client, event, challenge_factory
 
     ):
         """Test submitting answer without submission data"""
-        response = logged_in_client.post(
-            f"/ng/events/{event.id}/challenges/{challenge.id}/questions/{question.id}/submit",
+
+        challenge = challenge_factory(event_id=1)
+        response = started_player_client.post(
+            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/questions/{challenge.questions[0].id}/submit",
             json = {}
         )
 
@@ -195,14 +197,15 @@ class TestUserScoringEndpoints:
         data = response.get_json()
         assert data["success"] is False
 
-    def test_submit_answer_empty_submission(self, logged_in_client, user, event, team_with_member, challenge, question, permissions):
+    def test_submit_answer_empty_submission(self, started_player_client, challenge_factory):
 
         """Test submitting empty answer"""
-        response = logged_in_client.post(
-            f"/ng/events/{event.id}/challenges/{challenge.id}/questions/{question.id}/submit",
+        challenge = challenge_factory(event_id=1)
+
+        response = started_player_client.post(
+            f"/ng/events/1/challenges/{challenge.id}/questions/{challenge.questions[0].id}/submit",
             json = {"submission": "   "},
         )
-
         assert response.status_code == 400
         data = response.get_json()
         assert data["success"] is False
@@ -245,14 +248,14 @@ class TestUserScoringEndpoints:
         assert data["success"] is False
 
     def test_submit_answer_max_attempts_reached(
-        self, team_captain_client, challenge_factory, question_factory, permissions
+        self, started_player_client, challenge_factory, question_factory
     ):
         """Test submitting answer when max attempts reached"""
         challenge = challenge_factory(event_id=1)
         question = question_factory(challenge_id=challenge.id)
         # Submit max attempts
         for i in range(question.max_attempts):
-            response = team_captain_client.post(
+            response = started_player_client.post(
                 f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/questions/{question.id}/submit",
                 json={"submission": f"attempt{i}"},
 
@@ -260,7 +263,7 @@ class TestUserScoringEndpoints:
             assert response.status_code == 201
 
         # Try one more - should fail
-        response = team_captain_client.post(
+        response = started_player_client.post(
             f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/questions/{question.id}/submit",
             json={"submission": "final attempt"},
         )
@@ -270,18 +273,18 @@ class TestUserScoringEndpoints:
         assert data["success"] is False
 
 
-    def test_redeem_hint_success(self, team_captain_client, challenge_factory, hint_factory, permissions):
+    def test_redeem_hint_success(self, started_player_client, challenge_factory, hint_factory):
 
         """Test successfully redeeming a hint"""
         # Get the CSRF token (nonce) from the session
-        with team_captain_client.session_transaction() as sess:
+        with started_player_client.session_transaction() as sess:
             nonce = sess.get("nonce")
 
 
         challenge = challenge_factory(event_id=1)
         hint = hint_factory(challenge_id=challenge.id)
 
-        response = team_captain_client.post(
+        response = started_player_client.post(
             f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/hint/{hint.id}/redeem", data={"nonce": nonce}
 
         )
@@ -318,29 +321,29 @@ class TestUserScoringEndpoints:
         assert data["success"] is False
 
 
-    def test_redeem_hint_already_redeemed(self, team_captain_client, challenge_factory, hint_factory, permissions):
+    def test_redeem_hint_already_redeemed(self, started_player_client, challenge_factory, hint_factory):
 
         """Test redeeming hint that was already redeemed"""
         # Get the CSRF token (nonce) from the session
-        with team_captain_client.session_transaction() as sess:
+        with started_player_client.session_transaction() as sess:
             nonce = sess.get("nonce")
 
         challenge = challenge_factory(event_id=1)
         hint = hint_factory(challenge_id=challenge.id)
 
         # First redemption
-        response = team_captain_client.post(
+        response = started_player_client.post(
             f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/hint/{hint.id}/redeem", data={"nonce": nonce}
 
         )
         assert response.status_code == 201
 
         # Get a fresh nonce for the second redemption
-        with team_captain_client.session_transaction() as sess:
+        with started_player_client.session_transaction() as sess:
             fresh_nonce = sess.get("nonce")
 
         # Second redemption should fail
-        response = team_captain_client.post(
+        response = started_player_client.post(
             f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/hint/{hint.id}/redeem", data={"nonce": fresh_nonce}
 
         )
@@ -398,18 +401,18 @@ class TestUserScoringEndpoints:
             data = {"nonce": nonce}
         )
 
-        assert response.status_code == 400
+        assert response.status_code == 403
         data = response.get_json()
         assert data["success"] is False
 
 
-    def test_hint_visibility_through_challenge_endpoint(self, team_captain_client, challenge_factory, hint_factory, permissions):
+    def test_hint_visibility_through_challenge_endpoint(self, started_player_client, challenge_factory, hint_factory):
         """
         Test that hints are hidden before redemption and visible after through challenge endpoint
         """
         challenge = challenge_factory(event_id=1)
         hint = hint_factory(challenge_id=challenge.id)
-        response = team_captain_client.get(f"/ng/events/{challenge.event_id}/challenges/{challenge.id}")
+        response = started_player_client.get(f"/ng/events/{challenge.event_id}/challenges/{challenge.id}")
 
         assert response.status_code == 200
         data = response.get_json()
@@ -422,17 +425,17 @@ class TestUserScoringEndpoints:
         assert hint_data["preview"] == hint.preview
         assert hint_data["is_redeemed"] is False
 
-        with team_captain_client.session_transaction() as sess:
+        with started_player_client.session_transaction() as sess:
             nonce = sess.get("nonce")
 
 
-        redeem_response = team_captain_client.post(
+        redeem_response = started_player_client.post(
             f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/hint/{hint.id}/redeem",
             data={"nonce": nonce}
         )
         assert redeem_response.status_code == 201
 
-        response = team_captain_client.get(f"/ng/events/{challenge.event_id}/challenges/{challenge.id}")
+        response = started_player_client.get(f"/ng/events/{challenge.event_id}/challenges/{challenge.id}")
 
         assert response.status_code == 200
         data = response.get_json()
@@ -1201,7 +1204,7 @@ class TestScoringAPIIntegration:
     """Integration tests for scoring API endpoints"""
 
 
-    def test_concurrent_submissions(self, team_captain_client, challenge_factory, permissions):
+    def test_concurrent_submissions(self, started_player_client, challenge_factory):
 
         """Test handling of concurrent submissions"""
         # Submit multiple answers rapidly
@@ -1210,7 +1213,7 @@ class TestScoringAPIIntegration:
         responses = []
         for i in range(3):
 
-            response = team_captain_client.post(
+            response = started_player_client.post(
                 f"/ng/events/1/challenges/{challenge.id}/questions/1/submit",
                 json={"submission": f"answer{i}"},
 
@@ -1222,7 +1225,7 @@ class TestScoringAPIIntegration:
             assert response.status_code == 201
 
         # Check final score is consistent
-        response = team_captain_client.get("/ng/events/1/me/team/score")
+        response = started_player_client.get("/ng/events/1/me/team/score")
         assert response.status_code == 200
         # Score should be 0 since all were wrong answers
         assert response.get_json()["data"]["points"] == 0

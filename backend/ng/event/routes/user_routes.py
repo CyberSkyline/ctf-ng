@@ -20,7 +20,7 @@ from ...core.middleware.loaders import (
 from ...core.exceptions import ValidationError
 from ...core.utils.validator import BaseValidator
 from ...core.middleware.permission_middleware import (
-    get_permissions,
+    check_permissions,
     event_only_public,
 )
 from ...core.utils import (
@@ -201,7 +201,7 @@ class EventTeamUpdateName(Resource):
     @user_endpoint(json_required = True)
     @load_event(source = LoaderType.PARAM)
     @load_team_by_user_and_event()
-    @get_permissions
+    @check_permissions(PermissionEnum.CAN_EDIT_TEAM, "You do not have permission to update the team name.")
     def put(self, event_id, team, json_data, permissions, **kwargs):
         """
         Update team name
@@ -219,19 +219,6 @@ class EventTeamUpdateName(Resource):
                 400,
             )
 
-        if team.event.end_time and team.event.end_time < datetime.utcnow():
-            return error_response(
-                "You cannot update the team name after the event has ended.",
-                "forbidden",
-                403
-            )
-
-        if PermissionEnum.CAN_EDIT_TEAM not in permissions:
-            return error_response(
-                "You do not have permission to update the team name",
-                "forbidden",
-                403
-            )
         team.update_name(new_name)
         return success_response(team)
 
@@ -243,7 +230,7 @@ class EventTeamKick(Resource):
     @load_event(source = LoaderType.PARAM)
     @load_user(source = LoaderType.BODY)
     @load_team_by_user_and_event()
-    @get_permissions
+    @check_permissions(PermissionEnum.CAN_EDIT_TEAM, "You cannot kick team members.")
     def post(
         self,
         event_id: int,
@@ -263,26 +250,7 @@ class EventTeamKick(Resource):
                 "validation",
                 400
             )
-        if PermissionEnum.CAN_EDIT_TEAM not in permissions:
-            return error_response(
-                "You do not have permission to kick team members",
-                "forbidden",
-                403
-            )
 
-        if team.event.end_time and team.event.end_time < datetime.utcnow():
-            return error_response(
-                "Cannot kick user after event has ended.",
-                "forbidden",
-                403
-            )
-
-        if team.event.locked:
-            return error_response(
-                "Cannot change team composition after the event has been locked",
-                "forbidden",
-                403
-            )
 
         try:
             team.remove_member_and_regenerate_code(user_id, commit = False)
@@ -302,7 +270,7 @@ class EventTeamPromote(Resource):
     @load_event(source = LoaderType.PARAM)
     @load_user(source = LoaderType.BODY)
     @load_team_by_user_and_event()
-    @get_permissions
+    @check_permissions(PermissionEnum.CAN_EDIT_TEAM, "You cannot promote team members.")
     def post(
         self,
         event_id,
@@ -321,13 +289,6 @@ class EventTeamPromote(Resource):
                 "You cannot promote yourself.",
                 "validation",
                 400
-            )
-
-        if PermissionEnum.CAN_EDIT_TEAM not in permissions:
-            return error_response(
-                "You do not have permission to promote team members",
-                "forbidden",
-                403
             )
 
         result = team.remove_captain_and_promote(user.id)
@@ -386,7 +347,7 @@ class EventChallenges(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
     @load_team_by_user_and_event()
-    @get_permissions
+    @check_permissions(PermissionEnum.CAN_VIEW_CHALLENGES, "You do not have permission to view challenges.")
     @events_user_namespace.doc(
         description="Get all challenges within an event.",
         responses={
@@ -396,8 +357,6 @@ class EventChallenges(Resource):
     )
     def get(self, event_id: int, event: Event, permissions, **kwargs):
         """Get all of the challenges within an event"""
-        if PermissionEnum.CAN_VIEW_CHALLENGES not in permissions:
-            return error_response("You do not have permission to view challenges.", 403)
 
         challenges = event.get_all_challenges()
         return success_response(challenges)
@@ -410,7 +369,7 @@ class EventChallengeRender(Resource):
     @load_event(source = LoaderType.PARAM)
     @load_challenge(source = LoaderType.PARAM)
     @load_team_by_user_and_event()
-    @get_permissions
+    @check_permissions(PermissionEnum.CAN_VIEW_CHALLENGES, "You do not have permission to view challenges.")
     @events_user_namespace.doc(
         description="Render a challenge for the user's team in the event.",
         responses={
@@ -419,8 +378,6 @@ class EventChallengeRender(Resource):
         },
     )
     def get(self, event_id: int, challenge_id: int, event: Event, challenge: Challenge, team: Team, permissions, **kwargs):
-        if PermissionEnum.CAN_VIEW_CHALLENGES not in permissions:
-            return error_response("You do not have permission to view challenges.", 403)
 
         return success_response(challenge.render(team))
 
@@ -431,7 +388,7 @@ class EventChallengeStatuses(Resource):
     @user_endpoint()
     @load_event(source = LoaderType.PARAM)
     @load_team_by_user_and_event()
-    @get_permissions
+    @check_permissions(PermissionEnum.CAN_VIEW_CHALLENGES, "You do not have permission to view challenges.")
     @events_user_namespace.doc(
         description="Get all challenges and their statuses for the current user's team in the event.",
         responses={
@@ -441,9 +398,6 @@ class EventChallengeStatuses(Resource):
     )
     def get(self, event_id: int, event: Event, team: Team, permissions, **kwargs):
         """Get all challenges and their statuses for the current user's team in the event"""
-        if PermissionEnum.CAN_VIEW_CHALLENGES not in permissions:
-            return error_response("You do not have permission to view challenges.", 403)
-
 
         results = get_challenge_progress(
             event_id = event_id,
@@ -460,10 +414,8 @@ class EventChallengeStartContainers(Resource):
     @user_endpoint()
     @load_event(source = LoaderType.PARAM)
     @load_team_by_user_and_event()
-    @get_permissions
+    @check_permissions(PermissionEnum.CAN_PLAY_CHALLENGES, "You do not have permission to play challenges.")
     def get(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event, permissions):
-        if PermissionEnum.CAN_PLAY_CHALLENGES not in permissions:
-            return error_response("You do not have permission to play challenges.", 403)
 
         started = start_containers(challenge_id, team.id, current_user)
         return success_response(started)
