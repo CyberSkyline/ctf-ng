@@ -129,7 +129,11 @@ def middleware_client():
         Role.create_role(RoleEnum.ADMIN)
         Role.create_role(RoleEnum.SUPPORT)
         Permission.create_permission(PermissionEnum.CAN_EDIT_TEAM, "Edit team details")
+        Permission.create_permission(PermissionEnum.CAN_EDIT_USER, "Edit user details")
+        Permission.create_permission(PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS, "Manage support tickets")
         RolePermission.create_role_permission(1, 1)
+        RolePermission.create_role_permission(1, 2)
+        RolePermission.create_role_permission(1, 3)
 
         assign_role_to_user(user_to_login.id, RoleEnum.ADMIN)
 
