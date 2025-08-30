@@ -18,7 +18,7 @@ from ...core.middleware.loaders import (
 from ...core.middleware.permission_middleware import check_permissions
 from ...permissions.models.enums import PermissionEnum
 from ... import config
-from ...core.utils import success_response, error_response
+from ...core.utils import success_response
 from ...core.exceptions import ValidationError
 
 from ...user.models import User

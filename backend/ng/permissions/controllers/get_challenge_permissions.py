@@ -1,10 +1,9 @@
-from ..models.enums import PermissionEnum
-from datetime import datetime
 from ...event.models.Event import Event
 from ...team.models.Team import Team
+from ...core.utils import utc_now
 from ..models.enums import PermissionEnum, PermissionCheck, DenyReason
 
-def get_challenge_permissions(team: Team) -> PermissionCheck:
+def get_challenge_permissions(team: Team):
     """Get all challenge-related permissions for a specific user in a team.
 
     Args:
@@ -12,11 +11,11 @@ def get_challenge_permissions(team: Team) -> PermissionCheck:
         user (User): The user instance.
 
     Returns:
-        list[str]: A list of permission strings.
+        PermissionCheck: An object containing permission grants and denials.
     """
     trace = PermissionCheck()
     event = Event.find_by_id(team.event_id)
-    now = datetime.utcnow()
+    now = utc_now()
 
     if event.start_time is not None and event.start_time > now:
         reason = DenyReason.EVENT_NOT_STARTED

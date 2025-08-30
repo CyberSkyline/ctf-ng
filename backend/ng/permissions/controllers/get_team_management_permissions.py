@@ -1,11 +1,9 @@
 from ...team.models.TeamMember import TeamMember
 from ...team.models.enums import TeamRole
-from ..models.Permission import Permission
-from ..models.enums import PermissionEnum
 from datetime import datetime
 from ..models.enums import PermissionEnum, PermissionCheck, DenyReason
 
-def get_team_management_permissions(team,user) -> PermissionCheck:
+def get_team_management_permissions(team, user):
 
     """
     Get permissions for managing a team based on the current user's role in the team.
