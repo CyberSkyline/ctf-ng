@@ -25,7 +25,7 @@ from ...core.middleware import (
     user_endpoint
 )
 from ...core.middleware.permission_middleware import (
-    get_permissions,
+    check_permissions,
 )
 from ..docs.api import (
     GET_DETAILED_STATS_DOC,
@@ -90,7 +90,7 @@ class AdminHealth(Resource):
 class AdminImpersonate(Resource):
     @admin_endpoint(json_required=True)
     @load_user(LoaderType.BODY)
-    @get_permissions
+    @check_permissions(PermissionEnum.CAN_IMPERSONATE_USERS, "You do not have permission to impersonate users.")
     @admin_namespace.doc(
         description="Impersonate a user by ID",
         responses={
@@ -102,8 +102,6 @@ class AdminImpersonate(Resource):
     def post(self, json_data,current_user, permissions, **kwargs):
         """Impersonate a user by ID"""
         user_id = json_data.get("user_id")
-        if PermissionEnum.CAN_IMPERSONATE_USERS not in permissions:
-            return error_response("You do not have permission to impersonate users.", "permissions", 403)
 
         if user_id == current_user.id:
             return error_response("You cannot impersonate yourself.", "impersonation", 403)
