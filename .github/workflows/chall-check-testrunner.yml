@@ -25,6 +25,10 @@ jobs:
           cd tools/chall-check
           pip install -e . pytest
 
-      - name: Run tests
+      - name: Run chall-check tests
         working-directory: tools/chall-check
+        run: python -m pytest
+
+      - name: Run parser tests
+        working-directory: lib/parser
         run: python -m pytest
