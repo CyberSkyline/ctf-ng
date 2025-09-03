@@ -30,7 +30,7 @@ jobs:
           node-version: '24'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --ignore-scripts
         working-directory: ./frontend
 
       - name: Build project
