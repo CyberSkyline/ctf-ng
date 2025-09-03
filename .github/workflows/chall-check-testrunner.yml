@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'tools/chall-check/**'
+      - 'lib/parser/**'
       - '.github/workflows/chall-check-testrunner.yml'
   workflow_dispatch:
 
@@ -26,4 +27,4 @@ jobs:
 
       - name: Run tests
         working-directory: tools/chall-check
-        run: python -m pytest test/test_cli.py -v
+        run: python -m pytest
