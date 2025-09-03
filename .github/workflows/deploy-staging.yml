@@ -3,6 +3,8 @@ name: Deploy to Staging from Workspace
 on:
   workflow_dispatch:
   push:
+    branches:
+      - staging
 
 jobs:
   deploy:
