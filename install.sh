@@ -7,7 +7,7 @@ if [ "$EUID" -eq 0 ]; then
   exit 1
 fi
 
-source .yarn-scripts/utils.sh
+source .scripts/utils.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PYTHON_DIR="$SCRIPT_DIR/backend/"
@@ -105,7 +105,7 @@ if ! command -v npm &> /dev/null; then
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
     \. "$HOME/.nvm/nvm.sh"
     nvm install 24
-    corepack enable yarn
+    corepack enable pnpm
   } || {
     echo "node + vite installation aborted. Exiting."
     exit 1
@@ -124,7 +124,7 @@ fi
 
 # Install vite deps
 cd ./frontend
-yarn install
+pnpm install
 cd -
 
 # Install pip
