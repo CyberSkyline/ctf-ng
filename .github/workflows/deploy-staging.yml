@@ -3,8 +3,6 @@ name: Deploy to Staging from Workspace
 on:
   workflow_dispatch:
   push:
-    branches:
-      - staging
 
 jobs:
   deploy:
@@ -24,12 +22,15 @@ jobs:
         ssh-keyscan -H ${{ secrets.STAGING_HOST_1 }} >> ~/.ssh/known_hosts
         chmod 600 ~/.ssh/known_hosts
 
-    - name: Deploy to ctfng-staging-1
-      run: |
-        ssh -i ~/.ssh/deploy-key ubuntu@${{ secrets.STAGING_HOST_1 }} '
-          cd /mnt/app-dev && \
-          ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up -d --build --no-deps ctfd
-        '
+        - name: Deploy to ctfng-staging-1
+        run: |
+          ssh -i ~/.ssh/deploy-key ubuntu@${{ secrets.STAGING_HOST_1 }} '
+            cd /mnt/app-dev && \
+            git fetch origin && \
+            git checkout staging && \
+            git pull origin staging && \
+            ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up -d --build --no-deps ctfd
+          '
 
     - name: Cleanup
       run: |
