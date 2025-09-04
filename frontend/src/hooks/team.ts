@@ -1,11 +1,5 @@
-import type { Score, Team, TeamMember } from '@/types';
+import type { Team, TeamMember } from '@/types';
 import useSWR from 'swr';
-
-export function useMyTeamScore(eventId: number | null) {
-  return useSWR<Score, Error>(
-    eventId ? `/events/${eventId}/me/team/score` : null,
-  );
-}
 
 /* ADMIN ENDPOINTS */
 
