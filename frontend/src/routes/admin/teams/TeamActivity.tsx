@@ -7,7 +7,7 @@ import {
   UserIcon,
 } from '@/constants';
 import { radixTheme } from '@/grid';
-import { useTeamAttempts, useTeamHintRedemptions, useTeamManualAwards } from '@/hooks/team';
+import { useTeamAttempts, useTeamHintRedemptions, useTeamManualAwards } from '@/hooks/scoring';
 import type { Attempt, HintRedemption, ManualPointAward } from '@/types';
 import { Badge } from '@radix-ui/themes';
 import type { ColDef } from 'ag-grid-community';

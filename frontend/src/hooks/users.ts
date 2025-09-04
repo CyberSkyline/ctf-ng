@@ -1,5 +1,34 @@
-import type { Event, User } from '@/types';
+import type { Event, Team, User } from '@/types';
 import useSWR from 'swr';
+
+/**
+ * Get the currently signed in user.
+ */
+export function useCurrentUser() {
+  return useSWR<User>('/users/me');
+}
+
+/**
+ * Get a list of teams the currently signed in user is part of.
+ */
+export function useMyTeams() {
+  return useSWR<Team[], Error>(
+    '/users/me/teams',
+  );
+}
+
+/* ADMIN ENDPOINTS */
+
+/**
+ * Get a list of teams the given user is part of.
+ * This is an admin-only endpoint.
+ * @param userId The ID of the user to fetch teams for, or null if this should not be fetched.
+ */
+export function useUserTeams(userId: number | null) {
+  return useSWR<Team[], Error>(
+    userId ? `/admin/users/${userId}/teams` : null,
+  );
+}
 
 /**
  * Get a list of all users.
@@ -20,13 +49,6 @@ export function useUser(userId: number | null) {
   return useSWR<User, Error>(
     userId ? `/admin/users/${userId}` : null,
   );
-}
-
-/**
- * Get the currently signed in user.
- */
-export function useCurrentUser() {
-  return useSWR<User>('/users/me');
 }
 
 /**
