@@ -38,6 +38,7 @@ class Challenge(db.Model):
     hints = db.relationship("Hint", back_populates="challenge", cascade="all, delete-orphan")
     tags = db.relationship("ChallengeTag", back_populates="challenge", cascade="all, delete-orphan")
     questions = db.relationship("Question", back_populates="challenge", cascade="all, delete-orphan")
+    variables = db.relationship("ChallengeVariable", back_populates="challenge", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<NgChallenge {self.id}, name={self.name}, icon={self.icon}>"

@@ -8,12 +8,15 @@ from cyber_skyline.chall_parser.compose.answer import Answer
 from cyber_skyline.chall_parser.compose.challenge_info import TextBody
 from cyber_skyline.chall_parser.yaml_parser import parse_compose_string
 
+from ng.challenge.models import ChallengeVariable
+
 from ....challenge.models import Challenge, ChallengeTag, ContainerBlueprint, Hint, Question
 from ....core.exceptions import ValidationError
 
 if TYPE_CHECKING:
     from ....event.models.Event import Event
 
+# TODO: Will this handle updating challenges as well?
 
 def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
     """
@@ -43,6 +46,8 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
         tags = compose_file.challenge.tags or []
         questions = compose_file.challenge.questions or []
         services = compose_file.services or {}
+        variables = compose_file.challenge.variables or {}
+        db_variables: dict[str, ChallengeVariable] = {}
 
         for hint in hints:
             Hint.create_hint(
@@ -57,6 +62,15 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
             ChallengeTag.create_tag(
                 challenge_id=challenge.id,
                 name=tag,
+                commit=False,
+            )
+
+        for (key, variable) in variables.items():
+            db_variables[key] = ChallengeVariable.create_variable(
+                challenge_id=challenge.id,
+                name=key,
+                default=variable.default,
+                template=variable.template.eval_str,
                 commit=False,
             )
 
@@ -80,10 +94,13 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
                 test_cases = question.answer.test_cases or []
                 for test_case in test_cases: # noqa B007
                     # TODO - create test cases
+                    # Do test cases need to be updated or
+                    # can we just throw them out and restart
                     pass
             # Answer uses a template
             else:
-                # TODO - implement
+                variable = db_variables.get(question.answer.parent_variable)
+                question_payload["template"] = True
                 question_payload["answer"] = "TODO - IMPLEMENT"
                 pass
 
@@ -92,6 +109,7 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
         for service in services.items():
             service_data = service[1]
 
+            # TODO: Handle templates in environment
             payload = {
                 "challenge_id": challenge.id,
                 "image": service_data.image,

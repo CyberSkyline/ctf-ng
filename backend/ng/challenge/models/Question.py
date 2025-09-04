@@ -6,7 +6,11 @@ from CTFd.models import db
 from cyber_skyline.chall_parser.compose.challenge_info import Question as QuestionAttr
 from faker import Faker
 
+from ng.challenge.models.Challenge import Challenge
+from ng.challenge.models.ChallengeVariable import ChallengeVariable
+
 from ...core.utils.validator import BaseValidator
+import re
 
 if TYPE_CHECKING:
     from ...team.models.Team import Team
@@ -16,21 +20,25 @@ MAX_QUESTION_NAME_LENGTH = 256
 MAX_QUESTION_BODY_LENGTH = 1024
 MAX_QUESTION_ANSWER_LENGTH = 512
 
+
 SEED_FORMAT_STRING = "{event_id}:{challenge_id}:{question_id}:{team_seed}"
 
 
 class Question(db.Model):
     __tablename__ = "ng_challenge_questions"
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(MAX_QUESTION_NAME_LENGTH), nullable=False)
-    body = db.Column(db.String(MAX_QUESTION_BODY_LENGTH), nullable=False)
-    points = db.Column(db.Integer, nullable=False)
-    answer = db.Column(db.String(MAX_QUESTION_ANSWER_LENGTH), nullable=False)
-    placeholder = db.Column(db.String(MAX_QUESTION_ANSWER_LENGTH), nullable=True)
-    max_attempts = db.Column(db.Integer, nullable=False)
-    challenge_id = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
+    id: int = db.Column(db.Integer, primary_key=True)
+    name: str = db.Column(db.String(MAX_QUESTION_NAME_LENGTH), nullable=False)
+    body: str = db.Column(db.String(MAX_QUESTION_BODY_LENGTH), nullable=False)
+    points: int = db.Column(db.Integer, nullable=False)
+    templated: bool = db.Column(db.Boolean, nullable=False)
+    answer: str | None = db.Column(db.String(MAX_QUESTION_ANSWER_LENGTH), nullable=True)
+    answer_variable_id: int | None = db.Column(db.Integer, db.ForeignKey("ng_challenge_variables.id"), nullable=True)
+    placeholder: str | None = db.Column(db.String(MAX_QUESTION_ANSWER_LENGTH), nullable=True)
+    max_attempts: int = db.Column(db.Integer, nullable=False)
+    challenge_id: int = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
 
-    challenge = db.relationship("Challenge", back_populates="questions")
+    challenge: Challenge = db.relationship("Challenge", back_populates="questions")
+    answer_variable: ChallengeVariable | None = db.relationship("ChallengeVariable", back_populates="questions")
 
     def __repr__(self):
         return f"<NgChallengeQuestion {self.id}, name={self.name}, points={self.points}>"
@@ -61,6 +69,7 @@ class Question(db.Model):
         """
         validator = BaseValidator()
 
+        templated = data.get("templated", False)
         validator.validate_string(
             data,
             "name",
@@ -81,12 +90,24 @@ class Question(db.Model):
             required=True,
             friendly_name="Points",
         )
+        validator.validate_boolean(
+            data,
+            "templated",
+            required=True,
+            friendly_name="Templated",
+        )
         validator.validate_string(
             data,
             "answer",
             MAX_QUESTION_ANSWER_LENGTH,
-            required=True,
+            required=not templated,
             friendly_name="Answer",
+        )
+        validator.validate_model_id(
+            data,
+            "answer_variable_id",
+            required=templated,
+            friendly_name="Answer Variable ID",
         )
         validator.validate_string(
             data,
@@ -117,10 +138,12 @@ class Question(db.Model):
         name: str,
         body: str,
         points: int,
-        answer: str,
+        templated: bool,
+        answer: str | None,
+        answer_variable_id: int | None,
         max_attempts: int,
         challenge_id: int,
-        placeholder: str | None = "",
+        placeholder: str | None = None,
         commit=True,
     ) -> Question:
         try:
@@ -129,7 +152,9 @@ class Question(db.Model):
                     "name": name,
                     "body": body,
                     "points": points,
+                    "templated": templated,
                     "answer": answer,
+                    "answer_variable_id": answer_variable_id,
                     "placeholder": placeholder,
                     "max_attempts": max_attempts,
                     "challenge_id": challenge_id,
@@ -166,11 +191,19 @@ class Question(db.Model):
             )
         )
 
-        # Answers can be a string|Answer|Template
+        # TODO: What cleanup needs to occur on the submitted answer and is that already handled before it's passed in?
 
-        # Render the answer template
-        # evaluated_answer =
-        # print(self.answer)
+        if self.templated and isinstance(self.answer_variable, ChallengeVariable):
+            variable = self.answer_variable.as_attr()
+            evaluated_answer = variable.template.eval(SEED_FORMAT_STRING.format_map({
+                "event_id": team.event_id,
+                "challenge_id": self.challenge_id,
+                "question_id": self.id,
+                "team_seed": team.seed
+            }))
+            return evaluated_answer == answer
+        elif self.answer is not None:
+            return re.search(self.answer, answer) is not None
 
         return False
 
