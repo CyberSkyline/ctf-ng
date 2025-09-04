@@ -39,7 +39,15 @@ teams_admin_namespace = Namespace(
 @teams_admin_namespace.route("")
 class TeamList(Resource):
     @admin_endpoint()
-    @teams_admin_namespace.doc(**GET_ALL_TEAMS_DOC)
+    @teams_admin_namespace.doc(
+        description="Get all teams",
+        responses={
+            200: "Success",
+            403: "Forbidden - Admin access required",
+            404: "No teams found",
+            500: "Internal Server Error",
+        },
+    )
     def get(self, **kwargs):
         """
         Get all teams
@@ -52,7 +60,15 @@ class TeamList(Resource):
 class TeamDetail(Resource):
     @admin_endpoint(json_required = False, validation_func = Team.validate)
     @load_team(source = LoaderType.PARAM)
-    @teams_admin_namespace.doc(**GET_TEAM_DOC)
+    @teams_admin_namespace.doc(
+        description="Get a team by ID",
+        responses={
+            200: "Success",
+            404: "Team not found",
+            403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
+        },
+    )
     def get(self, team_id, team, **kwargs):
         """
         Get a team
@@ -61,7 +77,27 @@ class TeamDetail(Resource):
 
     @admin_endpoint(json_required = True, validation_func = Team.validate)
     @load_team(source = LoaderType.PARAM)
-    @teams_admin_namespace.doc(**UPDATE_TEAM_DOC)
+    @teams_admin_namespace.doc(
+        description="Update a team by ID",
+        params={
+            "json_data": {
+                "description": "Updated team data",
+                "in": "body",
+                "required": True,
+                "example": {
+                    "name": "New Team Name",
+                    "description": "Updated description"
+                }
+            }
+        },
+        responses={
+            200: "Success",
+            404: "Team not found",
+            400: "Bad Request if validation fails",
+            403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
+        },
+    )
     def put(self, team_id, team, validated_data, **kwargs):
         """
         Update a team
@@ -84,7 +120,15 @@ class TeamDetail(Resource):
 class TeamMembers(Resource):
     @admin_endpoint()
     @load_team(source = LoaderType.PARAM)
-    @teams_admin_namespace.doc(**GET_TEAM_MEMBERS_DOC)
+    @teams_admin_namespace.doc(
+        description="Get all members of a team",
+        responses={
+            200: "Success",
+            404: "Team not found",
+            403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
+        },
+    )   
     def get(self, team_id, team, **kwargs):
         """
         Get all members of a team
@@ -97,7 +141,26 @@ class TeamKick(Resource):
     @admin_endpoint(json_required = True, validation_func = User.validate)
     @load_team(source = LoaderType.PARAM)
     @load_user(source = LoaderType.BODY)
-    @teams_admin_namespace.doc(**KICK_TEAM_MEMBER_DOC)
+    @teams_admin_namespace.doc(
+        description="Kick a user from a team",
+        params={
+            "user_id": {
+                "description": "User ID to kick from the team",
+                "in": "body",
+                "required": True,
+            "example": {
+                "user_id": 123
+                }
+            }
+        },
+        responses={
+            200: "Success",
+            404: "Team or User not found",
+            400: "Bad Request if user is not a member of the team",
+            403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
+        },
+    )
     def post(self, team_id, user, team, **kwargs):
         """
         Kick a user from a team
@@ -111,7 +174,26 @@ class TeamPromote(Resource):
     @admin_endpoint(json_required = True)
     @load_team(source = LoaderType.PARAM)
     @load_user(source = LoaderType.BODY)
-    @teams_admin_namespace.doc(**PROMOTE_TEAM_MEMBER_DOC)
+    @teams_admin_namespace.doc(
+        description="Promote a user to team leader",
+        params={
+            "user_id": {
+                "description": "User ID to promote to team leader",
+                "in": "body",
+                "required": True,
+                "example": {
+                    "user_id": 123
+                }
+            }
+        },
+        responses={
+            200: "Success",
+            404: "Team or User not found",
+            400: "Bad Request if user is not a member of the team",
+            403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
+        }
+    )
     def post(self, team_id, user, team, **kwargs):
         """
         Promote a user to team leader
