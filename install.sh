@@ -9,6 +9,7 @@ fi
 
 source .scripts/utils.sh
 
+PROJECT_DIR="$(pwd)"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PYTHON_DIR="$SCRIPT_DIR/backend/"
 
@@ -122,10 +123,10 @@ if ! command -v vite &> /dev/null; then
   }
 fi
 
-# Install vite deps
-cd ./frontend
-pnpm install
-cd -
+# # Install vite deps
+# cd ./frontend
+# pnpm install
+# cd -
 
 # Install pip
 if ! command -v pip3 &> /dev/null; then
@@ -154,7 +155,7 @@ source "$PYTHON_DIR"venv/bin/activate
 pip install --upgrade pip
 pip install -r "$SCRIPT_DIR/external/CTFd/requirements.txt" # Install CTFd requirements
 pip install -r "$PYTHON_DIR"ng/requirements.txt # Install our additional requirements
-pip install cyber-skyline-chall-check
+pip install --upgrade cyber-skyline-chall-check
 chall-check --install-completion
 
 # Install ruff
@@ -177,57 +178,64 @@ if ! command -v pytest &> /dev/null; then
   }
 fi
 
-prompt_user "Would you like to generate tls certs for docker? You will be prompted" && {
-  mkdir ssl
-  cd ssl
-  read -p "Please enter the ip of your dev instance" machineip
-  openssl genrsa -aes256 -out ca-key.pem 4096
-  openssl req -new -x509 -days 365 -key ca-key.pem -sha256 -out ca.pem
-  openssl genrsa -out server-key.pem 4096
-  openssl req -subj "/CN=$machineip" -sha256 -new -key server-key.pem -out server.csr
-  echo subjectAltName = IP:$machineip,IP:127.0.0.1 >> extfile.cnf
-  echo extendedKeyUsage = serverAuth >> extfile.cnf
-  openssl x509 -req -days 365 -sha256 -in server.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out server-cert.pem -extfile extfile.cnf
-  echo "Server keys generated moving to client keys"
-  mkdir client
-  cd client
-  openssl genrsa -out key.pem 4096
-  openssl req -subj '/CN=client' -new -key key.pem -out client.csr
-  echo extendedKeyUsage = clientAuth > extfile-client.cnf
-  openssl x509 -req -days 365 -sha256 -in client.csr -CA ../ca.pem -CAkey ../ca-key.pem -CAcreateserial -out cert.pem -extfile extfile-client.cnf
+# pnpm install
+cd $PROJECT_DIR
+pnpm install
 
-  echo "Certs generated"
-  echo "Copying certs and configs"
-  mkdir -p ~/.docker/
-  cp ../ca.pem ~/.docker/
-  cp cert.pem ~/.docker/
-  cp key.pem ~/.docker/
-  sudo mkdir -p /var/lib/certs/ssl/
-  sudo cp ~/.docker/* /var/lib/certs/ssl/
-  cd ../
-  sudo mkdir -p /etc/docker/ssl
-  sudo cp ca.pem /etc/docker/ssl
-  sudo cp server-cert.pem /etc/docker/ssl
-  sudo cp server-key.pem /etc/docker/ssl
-  echo '{
-    "tlsverify": true,
-    "tlscacert": "/etc/docker/ssl/ca.pem",
-    "tlscert": "/etc/docker/ssl/server-cert.pem",
-    "tlskey": "/etc/docker/ssl/server-key.pem",
-    "default-ulimit": "nofile=50:100",
-    "hosts": ["unix:///var/run/docker.sock", "tcp://0.0.0.0:2376"]
-  }' > daemon.json
-  sudo cp daemon.json /etc/docker/
-  rm daemon.json
-  echo "Please restart your docker daemon. You may have to start it mannually from the cli calling dockerd"
-  echo "Add the following to your zshrc/bashrc/fishrc make sure the homepath is reflective of your user"
-  echo 'export DOCKER_HOST="127.0.0.1:2376"
-export DOCKER_TLS_VERIFY="true"
-export DOCKER_CERT_PATH=/home/ubuntu/.docker/'
-  
-} || {
-  echo "TLS gen aborted"
-  exit 1
-}
+if ! compgen -G "$HOME/.docker/*.pem" > /dev/null; then
+  prompt_user "Would you like to generate tls certs for docker? You will be prompted" && {
+    mkdir ssl
+    cd ssl
+    read -p "Please enter the ip of your dev instance" machineip
+    openssl genrsa -aes256 -out ca-key.pem 4096
+    openssl req -new -x509 -days 365 -key ca-key.pem -sha256 -out ca.pem
+    openssl genrsa -out server-key.pem 4096
+    openssl req -subj "/CN=$machineip" -sha256 -new -key server-key.pem -out server.csr
+    echo subjectAltName = IP:$machineip,IP:127.0.0.1 >> extfile.cnf
+    echo extendedKeyUsage = serverAuth >> extfile.cnf
+    openssl x509 -req -days 365 -sha256 -in server.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out server-cert.pem -extfile extfile.cnf
+    echo "Server keys generated moving to client keys"
+    mkdir client
+    cd client
+    openssl genrsa -out key.pem 4096
+    openssl req -subj '/CN=client' -new -key key.pem -out client.csr
+    echo extendedKeyUsage = clientAuth > extfile-client.cnf
+    openssl x509 -req -days 365 -sha256 -in client.csr -CA ../ca.pem -CAkey ../ca-key.pem -CAcreateserial -out cert.pem -extfile extfile-client.cnf
+
+    echo "Certs generated"
+    echo "Copying certs and configs"
+    mkdir -p ~/.docker/
+    cp ../ca.pem ~/.docker/
+    cp cert.pem ~/.docker/
+    cp key.pem ~/.docker/
+    sudo mkdir -p /var/lib/certs/ssl/
+    sudo cp ~/.docker/* /var/lib/certs/ssl/
+    cd ../
+    sudo mkdir -p /etc/docker/ssl
+    sudo cp ca.pem /etc/docker/ssl
+    sudo cp server-cert.pem /etc/docker/ssl
+    sudo cp server-key.pem /etc/docker/ssl
+    echo '{
+      "tlsverify": true,
+      "tlscacert": "/etc/docker/ssl/ca.pem",
+      "tlscert": "/etc/docker/ssl/server-cert.pem",
+      "tlskey": "/etc/docker/ssl/server-key.pem",
+      "default-ulimit": "nofile=50:100",
+      "hosts": ["unix:///var/run/docker.sock", "tcp://0.0.0.0:2376"]
+    }' > daemon.json
+    sudo cp daemon.json /etc/docker/
+    rm daemon.json
+    echo "Please restart your docker daemon. You may have to start it mannually from the cli calling dockerd"
+    echo "Add the following to your zshrc/bashrc/fishrc make sure the homepath is reflective of your user"
+    echo 'export DOCKER_HOST="127.0.0.1:2376"
+  export DOCKER_TLS_VERIFY="true"
+  export DOCKER_CERT_PATH=/home/ubuntu/.docker/'
+    
+  } || {
+    echo "TLS gen aborted"
+    exit 1
+  }
+fi
+
 
 echo "Installation completed successfully. Please restart your terminal session before attempting to start the server."
