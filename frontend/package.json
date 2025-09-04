@@ -57,5 +57,5 @@
     "typescript-eslint": "^8.35.0",
     "vite": "^7.0.0"
   },
-  "packageManager": "yarn@4.9.2"
+  "packageManager": "pnpm@10.15.1"
 }

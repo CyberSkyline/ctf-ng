@@ -33,11 +33,11 @@ __pycache__/
 lib/**/build/
 tools/**/build/
 
-# Node / yarn
+# Node / yarn / pnpm
 node_modules/
 .yarn/*
-!.yarn/plugins/
-!.yarn/plugins/**
+*/.yarn/*
+.pnp.*
 
 # SSL certs
 privatesslkey.pem
