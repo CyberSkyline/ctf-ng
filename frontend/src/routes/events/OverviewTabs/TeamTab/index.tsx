@@ -1,5 +1,10 @@
 import { useMemo } from 'react';
-import { Flex, Table, Text } from '@radix-ui/themes';
+import {
+  Container,
+  Flex,
+  Table,
+  Text,
+} from '@radix-ui/themes';
 import { find, isUndefined, map } from 'lodash';
 import { useParams } from 'react-router';
 import { useCurrentUser } from '@/hooks/users';
@@ -38,7 +43,7 @@ export default function TeamManagement() {
   const { event_id : eventId, name : teamName } = team;
 
   return (
-    <>
+    <Container size="4">
       <Flex gap="4" direction="column">
         {
           (userIsCaptain && !team.locked)
@@ -101,6 +106,6 @@ export default function TeamManagement() {
           ))}
         </Table.Body>
       </Table.Root>
-    </>
+    </Container>
   );
 }
