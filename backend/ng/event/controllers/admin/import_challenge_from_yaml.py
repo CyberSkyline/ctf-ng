@@ -51,6 +51,7 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
 
         for hint in hints:
             Hint.create_hint(
+                name=hint.name,
                 challenge_id=challenge.id,
                 body=hint.body.content if isinstance(hint.body, TextBody) else hint.body,
                 preview=hint.preview,

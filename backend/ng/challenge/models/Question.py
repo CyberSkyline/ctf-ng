@@ -9,6 +9,7 @@ from faker import Faker
 from ng.challenge.models.Challenge import Challenge
 from ng.challenge.models.ChallengeVariable import ChallengeVariable
 
+from ... import config
 from ...core.utils.validator import BaseValidator
 import re
 
@@ -16,9 +17,6 @@ if TYPE_CHECKING:
     from ...team.models.Team import Team
 
 
-MAX_QUESTION_NAME_LENGTH = 256
-MAX_QUESTION_BODY_LENGTH = 1024
-MAX_QUESTION_ANSWER_LENGTH = 512
 
 
 SEED_FORMAT_STRING = "{event_id}:{challenge_id}:{question_id}:{team_seed}"
@@ -27,13 +25,13 @@ SEED_FORMAT_STRING = "{event_id}:{challenge_id}:{question_id}:{team_seed}"
 class Question(db.Model):
     __tablename__ = "ng_challenge_questions"
     id: int = db.Column(db.Integer, primary_key=True)
-    name: str = db.Column(db.String(MAX_QUESTION_NAME_LENGTH), nullable=False)
-    body: str = db.Column(db.String(MAX_QUESTION_BODY_LENGTH), nullable=False)
+    name: str = db.Column(db.String(config.MAX_QUESTION_NAME_LENGTH), nullable=False)
+    body: str = db.Column(db.String(config.MAX_QUESTION_BODY_LENGTH), nullable=False)
     points: int = db.Column(db.Integer, nullable=False)
     templated: bool = db.Column(db.Boolean, nullable=False)
-    answer: str | None = db.Column(db.String(MAX_QUESTION_ANSWER_LENGTH), nullable=True)
+    answer: str | None = db.Column(db.String(config.MAX_QUESTION_ANSWER_LENGTH), nullable=True)
     answer_variable_id: int | None = db.Column(db.Integer, db.ForeignKey("ng_challenge_variables.id"), nullable=True)
-    placeholder: str | None = db.Column(db.String(MAX_QUESTION_ANSWER_LENGTH), nullable=True)
+    placeholder: str | None = db.Column(db.String(config.MAX_QUESTION_ANSWER_LENGTH), nullable=True)
     max_attempts: int = db.Column(db.Integer, nullable=False)
     challenge_id: int = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
 
@@ -73,14 +71,14 @@ class Question(db.Model):
         validator.validate_string(
             data,
             "name",
-            MAX_QUESTION_NAME_LENGTH,
+            config.MAX_QUESTION_NAME_LENGTH,
             required=True,
             friendly_name="Question Name",
         )
         validator.validate_string(
             data,
             "body",
-            MAX_QUESTION_BODY_LENGTH,
+            config.MAX_QUESTION_BODY_LENGTH,
             required=True,
             friendly_name="Question Body",
         )
@@ -99,7 +97,7 @@ class Question(db.Model):
         validator.validate_string(
             data,
             "answer",
-            MAX_QUESTION_ANSWER_LENGTH,
+            config.MAX_QUESTION_ANSWER_LENGTH,
             required=not templated,
             friendly_name="Answer",
         )
@@ -112,7 +110,7 @@ class Question(db.Model):
         validator.validate_string(
             data,
             "placeholder",
-            MAX_QUESTION_ANSWER_LENGTH,
+            config.MAX_QUESTION_ANSWER_LENGTH,
             required=False,
             friendly_name="Placeholder",
         )
