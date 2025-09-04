@@ -1,6 +1,6 @@
 import { COLOR_POSITIVE, EventIcon, TeamIcon } from '@/constants';
-import { useUserEvents } from '@/hooks/events';
-import { useTeamMembers, useUserTeams } from '@/hooks/team';
+import { useTeamMembers } from '@/hooks/team';
+import { useUserEvents, useUserTeams } from '@/hooks/users';
 import type { Event, Team, User } from '@/types';
 import { Button, Table } from '@radix-ui/themes';
 import AdminDataList from 'components/AdminDataList';

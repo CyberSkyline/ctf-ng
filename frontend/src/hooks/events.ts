@@ -35,18 +35,6 @@ export function useAdminEvent(eventId: number | null) {
 }
 
 /**
- * Gets the events a user is registered for.
- * This is an admin-only endpoint.
- * @param userId The ID of the user to fetch events for, or null if this should not be fetched.
- * @returns
- */
-export function useUserEvents(userId: number | null) {
-  return useSWR<Event[], Error>(
-    userId ? `/admin/users/${userId}/events` : null,
-  );
-}
-
-/**
  * Registeres user for a specific event
  * @param event_id The event id
  * @param team_name The leaderboard name for solo events or team name for team creation

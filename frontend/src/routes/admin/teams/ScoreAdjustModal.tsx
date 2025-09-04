@@ -1,5 +1,5 @@
 import { COLOR_WARNING } from '@/constants';
-import { adjustPoints } from '@/hooks/team';
+import { adjustPoints } from '@/hooks/scoring';
 import type { Team } from '@/types';
 import { Button, TextField } from '@radix-ui/themes';
 import Modal from 'components/Modal';
