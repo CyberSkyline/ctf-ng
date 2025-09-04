@@ -318,7 +318,7 @@ class AdminTicketStatus(Resource):
     def put(self, ticket_id: int, ticket, current_user: User, json_data, **kwargs):
         """
         Toggle ticket open/closed status
-        """ 
+        """
         updated_ticket = update_ticket_status(
             closed=json_data.get("closed", False),
             ticket=ticket,

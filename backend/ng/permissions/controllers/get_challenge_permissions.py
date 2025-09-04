@@ -23,6 +23,12 @@ def get_challenge_permissions(team: Team) -> PermissionCheck:
         trace.add_denial(PermissionEnum.CAN_PLAY_CHALLENGES, reason)
         return trace
 
+    if team.end_time is not None and team.end_time < now:
+        reason = DenyReason.TIME_LIMIT_EXCEEDED
+        trace.add_denial(PermissionEnum.CAN_VIEW_CHALLENGES, reason)
+        trace.add_denial(PermissionEnum.CAN_PLAY_CHALLENGES, reason)
+        return trace
+
     if team.start_timestamp is None:
         reason = DenyReason.TEAM_NOT_STARTED
         trace.add_denial(PermissionEnum.CAN_VIEW_CHALLENGES, reason)

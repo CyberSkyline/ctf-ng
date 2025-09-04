@@ -6,7 +6,7 @@ from datetime import datetime
 from flask_restx import Namespace, Resource
 
 from CTFd.models import db
-
+from ...core.utils import utc_now
 from ...core.middleware import (
     user_endpoint,
 )
@@ -430,6 +430,28 @@ class EventTeamLeave(Resource):
                 500
             )
         return success_response()
+
+@events_user_namespace.route("/<int:event_id>/me/team/start")
+class EventTeamStart(Resource):
+    @user_endpoint()
+    @load_event(source=LoaderType.PARAM)
+    @load_team_by_user_and_event()
+    @check_permissions(PermissionEnum.CAN_START_TEAM_TIMER, "You do not have permission to start your team")
+    @events_user_namespace.doc(
+        description="Start the event for the user's team.",
+        responses={
+            200: "Team started successfully",
+            403: "Forbidden if user does not have permission to start the event",
+            404: "Not Found if event or team does not exist",
+        },
+    )
+    def post(self, event_id, event, team, permissions, **kwargs):
+        """
+        Start the event for the user's team
+        """
+        team.set_start_timestamp(utc_now())
+        team.set_end_time(utc_now() + event.time_limit if event.time_limit else None)
+        return success_response(team)
 
 
 @events_user_namespace.route("/<int:event_id>/challenges")

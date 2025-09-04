@@ -93,6 +93,10 @@ with app.app_context():
         name=PermissionEnum.CAN_PLAY_CHALLENGES,
         description="Can play challenges",
     )
+    create_permission(
+        name=PermissionEnum.CAN_START_TEAM_TIMER,
+        description="Can start the team timer",
+    )
 
     create_role(
         name=RoleEnum.ADMIN,
@@ -103,6 +107,7 @@ with app.app_context():
             PermissionEnum.CAN_IMPERSONATE_USERS,
             PermissionEnum.CAN_VIEW_CHALLENGES,
             PermissionEnum.CAN_PLAY_CHALLENGES,
+            PermissionEnum.CAN_START_TEAM_TIMER,
         ],
     )
     create_role(

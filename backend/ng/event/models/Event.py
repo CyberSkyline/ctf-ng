@@ -4,7 +4,7 @@ Defines the Event database model.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from CTFd.models import db
@@ -31,6 +31,7 @@ class Event(db.Model):
     registration_start_date = db.Column(db.DateTime, nullable=True)
     registration_end_date = db.Column(db.DateTime, nullable=True)
     hints_enabled = db.Column(db.Boolean, default=False, nullable=False)
+    time_limit_minutes = db.Column(db.Integer, nullable=True)
 
     __table_args__ = (
         CheckConstraint(
@@ -55,6 +56,11 @@ class Event(db.Model):
 
     teams = db.relationship("Team", backref="event", cascade="all, delete-orphan")
     challenges = db.relationship("Challenge", back_populates="event", cascade="all, delete-orphan")
+
+    @property
+    def time_limit(self) -> int | None:
+        """Get the event time limit as a timedelta"""
+        return timedelta(minutes=self.time_limit_minutes) if self.time_limit_minutes else None
 
     def __repr__(self):
         return f"<Event {self.name}>"
@@ -81,6 +87,7 @@ class Event(db.Model):
             "registration_start_date": self.registration_start_date.isoformat() + "Z" if self.registration_start_date else None,
             "registration_end_date": self.registration_end_date.isoformat() + "Z" if self.registration_end_date else None,
             "hints_enabled": self.hints_enabled,
+            "time_limit": self.time_limit_minutes,
         }
 
         return data
@@ -155,6 +162,7 @@ class Event(db.Model):
         registration_start_date: datetime | None = None,
         registration_end_date: datetime | None = None,
         hints_enabled: bool = False,
+        time_limit_minutes: int | None = None,
         commit: bool = True,
     ):
         """Create and persist a new event to the database.
@@ -187,6 +195,7 @@ class Event(db.Model):
             registration_start_date=registration_start_date,
             registration_end_date=registration_end_date,
             hints_enabled=hints_enabled,
+            time_limit_minutes=time_limit_minutes,
         )
 
         db.session.add(event)

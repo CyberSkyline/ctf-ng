@@ -74,7 +74,7 @@ class UserAdminResource(Resource):
         """Update a specific user"""
         target_user.update(**validated_data)
         return success_response(target_user)
-    
+
 @users_admin_namespace.route("/delete")
 class UserDeleteAdminResource(Resource):
     @admin_endpoint(json_required=True)

@@ -20,15 +20,6 @@ from ...core.middleware.loaders import (
 from ..models.Team import Team
 from ...user.models.User import User
 
-from ._docs import (
-    GET_ALL_TEAMS_DOC,
-    GET_TEAM_DOC,
-    UPDATE_TEAM_DOC,
-    GET_TEAM_MEMBERS_DOC,
-    KICK_TEAM_MEMBER_DOC,
-    PROMOTE_TEAM_MEMBER_DOC,
-)
-
 
 teams_admin_namespace = Namespace(
     "/admin/teams",
@@ -128,7 +119,7 @@ class TeamMembers(Resource):
             403: "Forbidden - Admin access required",
             500: "Internal Server Error",
         },
-    )   
+    )
     def get(self, team_id, team, **kwargs):
         """
         Get all members of a team
