@@ -52,7 +52,7 @@ with app.app_context():
 
 with app.app_context():
     # Import plugin modules after app initialization
-    # This script is designed to run in production via 'yarn populate-data'
+    # This script is designed to run in production via 'pnpm populate-data'
     # where the plugin is properly located at /opt/CTFd/CTFd/plugins/ng
     try:
         from CTFd.plugins.ng.permissions.controllers.assign_role_to_user import assign_role_to_user  # type: ignore
@@ -62,7 +62,7 @@ with app.app_context():
         from CTFd.plugins.ng.user.models.User import User  # type: ignore
     except ImportError as e:
         print(f"Failed to import plugin modules: {e}")
-        print("This script should be run via 'yarn populate-data' from the project root.")
+        print("This script should be run via 'pnpm populate-data' from the project root.")
         raise
 
     admin_user = User.query.filter_by(id=1).first()

@@ -12,7 +12,7 @@ prompt_user() {
 
 check_ctfd_running() {
   if ! docker ps --format '{{.Names}}' | grep -q '^ng-ctfd$'; then
-    echo "The 'ng-ctfd' container is not running. Please run 'yarn start' to start the container"
+    echo "The 'ng-ctfd' container is not running. Please run 'pnpm start' to start the container"
     exit 1
   fi
 }
