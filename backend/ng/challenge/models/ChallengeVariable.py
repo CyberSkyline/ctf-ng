@@ -15,7 +15,7 @@ class ChallengeVariable(db.Model):
     __tablename__ = "ng_challenge_variables"
 
     id = db.Column(db.Integer, primary_key=True)
-    challenge_id = db.Column(db.Integer, db.ForeignKey("challenges.id"), nullable=False)
+    challenge_id = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False)
     name = db.Column(db.String(MAX_VARIABLE_NAME_LENGTH), nullable=False)
     default = db.Column(db.String(MAX_VARIABLE_DEFAULT_LENGTH), nullable=False)
     template = db.Column(db.String(MAX_VARIABLE_TEMPLATE_LENGTH), nullable=False)
