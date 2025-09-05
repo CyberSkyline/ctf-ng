@@ -538,8 +538,7 @@ class EventChallengeStartContainers(Resource):
             400: "Bad request",
         },
     )
-    def get(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event, permissions):
-
+    def post(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event, permissions):
         started = start_containers(challenge_id, team.id, current_user)
         return success_response(started)
 
@@ -559,7 +558,7 @@ class EventChallengeRestartContainers(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
     @load_team_by_user_and_event()
-    def get(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event):
+    def post(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event):
         started = reboot_containers(challenge_id, team.id, current_user)
         return success_response(started)
 
@@ -579,7 +578,7 @@ class EventChallengeRecycleContainers(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
     @load_team_by_user_and_event()
-    def get(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event):
+    def post(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event):
         started = recycle_containers(challenge_id, team.id, current_user)
         return success_response(started)
 
