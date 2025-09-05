@@ -4,6 +4,7 @@ Defines the Team database model and its properties
 
 from __future__ import annotations
 
+from datetime import datetime
 import random
 import string
 from typing import (
@@ -26,6 +27,7 @@ from ...core.exceptions import (
 from ...core.utils.validator import BaseValidator
 from .enums import TeamRole
 from .TeamMember import TeamMember
+from ...event.models.Event import Event
 
 HEX_CHARS = string.hexdigits.lower()[:16]  # '0123456789abcdef'
 SEED_LENGTH = 16  # 8 bytes for random seed
@@ -38,7 +40,6 @@ class SerializedTeam(TypedDict):
     event_name: NotRequired[str]
     member_count: int
     ranked: bool
-    locked: bool
     seed: str | None
     invite_code: str | None  # Optional for non-admin views
 
@@ -52,7 +53,6 @@ class Team(db.Model):
     invite_code = db.Column(db.String(config.INVITE_CODE_MAX_LENGTH), nullable=False, unique=True)
     seed: str = db.Column(db.String(SEED_LENGTH), nullable=False, default=lambda: Team.generate_random_seed())
     event_id: int = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
-    locked = db.Column(db.Boolean, default=False, nullable=False)
     start_timestamp = db.Column(db.DateTime, nullable=True)
 
     __table_args__ = (
@@ -69,6 +69,17 @@ class Team(db.Model):
     @hybrid_property
     def member_count(self):
         return len(self.members)
+
+    @hybrid_property
+    def can_manage_team(self):
+        if self.start_timestamp is not None:
+            return False
+        event = Event.find_by_id(self.event_id)
+        if event.locked:
+            return False
+        if event.end_time < datetime.utcnow():
+            return False
+        return True
 
     # Required SQLAlchemy pattern: the expression must be named after the property.
     @member_count.expression  # type: ignore[misc]
@@ -94,7 +105,6 @@ class Team(db.Model):
             "event_id": self.event_id,
             "member_count": self.member_count,
             "ranked": self.ranked,
-            "locked": self.locked,
             "invite_code": self.invite_code,
         }
 
@@ -241,6 +251,12 @@ class Team(db.Model):
             raise BusinessLogicError("Cannot disband team with members. Remove all members first.")
 
         db.session.delete(self)
+        if commit:
+            db.session.commit()
+
+    def set_start_timestamp(self, timestamp: datetime | None = None, commit=True):
+        """Set the team's start timestamp."""
+        self.start_timestamp = timestamp
         if commit:
             db.session.commit()
 
@@ -409,6 +425,8 @@ class Team(db.Model):
         """
         existing = cls.query.filter_by(invite_code=invite_code).first()
         return existing is None
+
+
 
     @classmethod
     def get_total_count(cls) -> int:

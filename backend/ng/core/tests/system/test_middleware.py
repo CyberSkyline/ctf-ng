@@ -64,6 +64,55 @@ def test_get_user_role_permissions(middleware_client):
     assert len(data["permissions"]) > 0
     assert "CAN_EDIT_TEAM" in data["permissions"]
 
+def test_get_user_challenge_permissions(middleware_client):
+    """
+    Test the get_user_challenge_permissions middleware decorator.
+    This checks if the decorator correctly retrieves user challenge permissions.
+    """
+    response = middleware_client.get("/get_circumstantial_permissions/1")
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert "permissions" in data
+    assert isinstance(data["permissions"], list)
+    assert len(data["permissions"]) > 0
+    assert "CAN_VIEW_CHALLENGES" in data["permissions"]
+    assert "CAN_PLAY_CHALLENGES" in data["permissions"]
+
+def test_get_user_challenge_permissions_no_timestamp(middleware_client):
+    """
+    Test the get_user_challenge_permissions middleware decorator.
+    This checks if the decorator bars access to users without a start timestamp.
+    """
+    response = middleware_client.get("/get_circumstantial_permissions/2")
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert "permissions" in data
+    assert isinstance(data["permissions"], list)
+    assert len(data["permissions"]) > 0
+    assert "CAN_VIEW_CHALLENGES" not in data["permissions"]
+    assert "CAN_PLAY_CHALLENGES" not in data["permissions"]
+
+def test_can_view_but_not_play(middleware_client):
+    """
+    Test the get_user_challenge_permissions middleware decorator.
+    This checks if the decorator correctly retrieves the CAN_VIEW_CHALLENGES permission. but not the CAN_PLAY_CHALLENGES permission.
+    when an event a team has started has ended
+    """
+    response = middleware_client.get("/get_circumstantial_permissions/3")
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert "permissions" in data
+    assert isinstance(data["permissions"], list)
+    assert len(data["permissions"]) > 0
+    assert "CAN_VIEW_CHALLENGES" in data["permissions"]
+    assert "CAN_PLAY_CHALLENGES" not in data["permissions"]
+
 def test_event_only_public(middleware_client):
     """
     Test the event_only_public decorator.

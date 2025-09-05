@@ -77,6 +77,7 @@ export default function AdminTeams() {
       loading={isLoading}
       getRowId={(params) => params.data.id.toString()}
       sidebarComponent={TeamSidebar}
+      stopCellSelection={[ 'event_name' ]}
     />
   );
 }

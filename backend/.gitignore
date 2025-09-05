@@ -12,8 +12,5 @@ venv/
 .cache/
 .pytest_cache/
 
-# Yarn
-.yarn/
-
 ## Docker ssl gen certs
 ssl/

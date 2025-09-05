@@ -131,7 +131,7 @@ class HintRedemption(db.Model):
         if event and event.locked:
             raise BusinessLogicError("Cannot redeem hints for a locked event.")
 
-        if event and event.end_time and event.end_time < utc_now():
+        if event and event.end_time and event.end_time <datetime.utcnow():
             raise BusinessLogicError("Cannot redeem hints after an event has ended.")
 
         hint = Hint.query.get(hint_id)

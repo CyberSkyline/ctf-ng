@@ -1,5 +1,3 @@
 # Node / Vite Files
-node_modules/
-.yarn/
 .vite/
 dist/

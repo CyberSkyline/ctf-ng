@@ -62,15 +62,6 @@ export function redeemHint(
   });
 }
 
-export function createChallenge(eventId: number, yaml: string) {
-  return apiMutation(`/admin/events/${eventId}/challenges`, { yaml : btoa(yaml) }, {
-    method : 'POST',
-  }).then(() => {
-    // refresh the challenges list when a new challenge is created
-    mutate(`/events/${eventId}/challenges`);
-  });
-}
-
 export function submitFlag(
   eventId: number,
   challengeId: number,
@@ -84,5 +75,16 @@ export function submitFlag(
   }).then(() => {
     // refresh the challenge data after submitting a flag
     mutate(`/events/${eventId}/challenges/${challengeId}`);
+  });
+}
+
+/* ADMIN ENDPOINTS */
+
+export function createChallenge(eventId: number, yaml: string) {
+  return apiMutation(`/admin/events/${eventId}/challenges`, { yaml : btoa(yaml) }, {
+    method : 'POST',
+  }).then(() => {
+    // refresh the challenges list when a new challenge is created
+    mutate(`/events/${eventId}/challenges`);
   });
 }
