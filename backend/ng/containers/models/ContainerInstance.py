@@ -176,6 +176,19 @@ class ContainerInstance(db.Model):
 
         return [instance.serialize() for instance in instances]
 
+    @classmethod
+    def get_instance_group(cls, challenge_id: int, team_id: int):
+        from ...challenge.models.ContainerBlueprint import ContainerBlueprint
+
+        blueprints = ContainerBlueprint.query.filter_by(challenge_id=challenge_id).all()
+
+        blueprint_ids = [blueprint.id for blueprint in blueprints]
+
+        instances = db.session.scalars(
+            select(cls)
+            .where(cls.blueprint.in_(blueprint_ids), cls.team == team_id)
+        ).all()
+        return instances
 
     @classmethod
     def get_instance_by_id(cls, instance_id: int):
