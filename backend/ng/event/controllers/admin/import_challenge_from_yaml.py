@@ -2,21 +2,44 @@ from __future__ import annotations
 
 import base64
 from typing import TYPE_CHECKING
+from collections.abc import Callable
 
 from CTFd.models import db
 from cyber_skyline.chall_parser.compose.answer import Answer
 from cyber_skyline.chall_parser.compose.challenge_info import TextBody
+from cyber_skyline.chall_parser.template import Template
 from cyber_skyline.chall_parser.yaml_parser import parse_compose_string
 
 from ng.challenge.models import ChallengeVariable
 
 from ....challenge.models import Challenge, ChallengeTag, ContainerBlueprint, Hint, Question
+from ....challenge.utils import generate_seed
 from ....core.exceptions import ValidationError
+from functools import partial
 
 if TYPE_CHECKING:
     from ....event.models.Event import Event
 
 # TODO: Will this handle updating challenges as well?
+
+def render_template(template: Template, event_id: int, challenge_id: int, question_id: int, team_seed: str) -> str:
+    result = template.eval(generate_seed(event_id, challenge_id, question_id, team_seed))
+    return str(result) if result else ""
+
+def resolve_environment_value(value: str | Template, challenge: Challenge, question_id: int):
+    if isinstance(value, Template):
+        return partial(render_template, template=value, event_id=challenge.event_id, challenge_id=challenge.id, question_id=question_id)
+    return value
+
+def partial_environment(environment: dict[str, str | Template] | list[str] | None, challenge: Challenge, variable_questions: dict[str, Question]) -> dict[str, str | Callable[[str], str]] | list[str] | None:
+    if environment is None:
+        return None
+
+    if isinstance(environment, list):
+        return environment
+
+    return {k: resolve_environment_value(v, challenge, variable_questions[k].id) for k, v in environment.items() if v is not None}
+
 
 def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
     """
@@ -48,6 +71,7 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
         services = compose_file.services or {}
         variables = compose_file.challenge.variables or {}
         db_variables: dict[str, ChallengeVariable] = {}
+        db_variable_questions: dict[str, Question] = {}
 
         for hint in hints:
             Hint.create_hint(
@@ -87,10 +111,11 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
 
             # Answer is regular string
             if isinstance(question.answer, str):
+                question_payload["templated"] = False
                 question_payload["answer"] = question.answer
-
             # Answer has test cases
             elif isinstance(question.answer, Answer):
+                question_payload["templated"] = False
                 question_payload["answer"] = question.answer.body
                 test_cases = question.answer.test_cases or []
                 for test_case in test_cases: # noqa B007
@@ -101,15 +126,15 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
             # Answer uses a template
             else:
                 variable = db_variables.get(question.answer.parent_variable)
-                question_payload["template"] = True
-                question_payload["answer"] = "TODO - IMPLEMENT"
-                pass
+                question_payload["templated"] = True
+                question_payload["answer_variable_id"] = variable.id if variable else None
 
-            Question.create_question(**question_payload, commit=False)
+            db_question = Question.create_question(**question_payload, commit=False)
 
-        for service in services.items():
-            service_data = service[1]
+            if isinstance(db_question.answer, Template):
+                db_variable_questions[question.answer.parent_variable] = db_question
 
+        for service_data in services.values():
             # TODO: Handle templates in environment
             payload = {
                 "challenge_id": challenge.id,
@@ -118,7 +143,7 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
                 "stdin_open": service_data.stdin_open,
                 "tty": service_data.tty,
                 "entrypoint": service_data.entrypoint,
-                "environment": service_data.environment,
+                "environment": partial_environment(service_data.environment, challenge, db_variable_questions),
                 "networks": service_data.networks,
                 "cap_add": service_data.cap_add,
                 "mem_limit": service_data.mem_limit,

@@ -1,4 +1,5 @@
 from typing import Any
+from collections.abc import Callable
 
 from CTFd.models import db
 
@@ -21,7 +22,7 @@ class ContainerBlueprint(db.Model):
     tty = db.Column(db.Boolean, nullable=True)
     command = db.Column(db.PickleType, nullable=True)
     entrypoint = db.Column(db.PickleType, nullable=True)
-    environment = db.Column(db.PickleType, nullable=True)
+    environment: dict[str, str | Callable[[str], str]] | list[str] | None = db.Column(db.PickleType, nullable=True)
     networks = db.Column(db.PickleType, nullable=True)
     cap_add = db.Column(db.PickleType, nullable=True)
     mem_limit = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_MEM_LIMIT_LENGTH), nullable=True)
@@ -90,7 +91,7 @@ class ContainerBlueprint(db.Model):
         tty: bool | None = None,
         command: list[str] | None = None,
         entrypoint: list[str] | None = None,
-        environment: dict[str, str] | None = None,
+        environment: dict[str, str | Callable[[str], str]] | None = None,
         networks: list[str] | None = None,
         cap_add: list[str] | None = None,
         mem_limit: str | None = None,
@@ -126,3 +127,12 @@ class ContainerBlueprint(db.Model):
         except Exception as e:
             db.session.rollback()
             raise e
+
+    def render_environment(self, team_seed: str) -> dict[str, str] | list[str]:
+        if not self.environment:
+            return {}
+
+        if isinstance(self.environment, list):
+            return self.environment
+
+        return {k: (v(team_seed) if isinstance(v, Callable) else v) for k, v in self.environment.items()}

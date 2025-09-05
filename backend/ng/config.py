@@ -37,6 +37,7 @@ MAX_HINT_PREVIEW_LENGTH = 256
 MAX_HINT_BODY_LENGTH = 1024
 MAX_HINT_NAME_LENGTH = 128
 
+# TODO: When should a constant be put in the config file?
 # Question Model Field Length Limits
 MAX_QUESTION_NAME_LENGTH = 256
 MAX_QUESTION_BODY_LENGTH = 1024

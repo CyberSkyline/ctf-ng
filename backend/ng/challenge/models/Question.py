@@ -4,22 +4,17 @@ from typing import TYPE_CHECKING, Any
 
 from CTFd.models import db
 from cyber_skyline.chall_parser.compose.challenge_info import Question as QuestionAttr
-from faker import Faker
 
 from ng.challenge.models.Challenge import Challenge
 from ng.challenge.models.ChallengeVariable import ChallengeVariable
 
 from ... import config
 from ...core.utils.validator import BaseValidator
+from ...challenge.utils import generate_seed
 import re
 
 if TYPE_CHECKING:
     from ...team.models.Team import Team
-
-
-
-
-SEED_FORMAT_STRING = "{event_id}:{challenge_id}:{question_id}:{team_seed}"
 
 
 class Question(db.Model):
@@ -181,24 +176,17 @@ class Question(db.Model):
         :param answer: The answer to check.
         :return: True if the answer matches, False otherwise.
         """
-        # Seed faker
-        faker = Faker()
-        faker.seed_instance(
-            SEED_FORMAT_STRING.format(
-                event_id=team.event_id, challenge_id=self.challenge, question_id=self.id, team_seed=team.seed
-            )
-        )
 
         # TODO: What cleanup needs to occur on the submitted answer and is that already handled before it's passed in?
 
         if self.templated and isinstance(self.answer_variable, ChallengeVariable):
             variable = self.answer_variable.as_attr()
-            evaluated_answer = variable.template.eval(SEED_FORMAT_STRING.format_map({
-                "event_id": team.event_id,
-                "challenge_id": self.challenge_id,
-                "question_id": self.id,
-                "team_seed": team.seed
-            }))
+            evaluated_answer = variable.template.eval(generate_seed(
+                event_id=team.event_id,
+                challenge_id=self.challenge_id,
+                question_id=self.id,
+                team_seed=team.seed
+            ))
             return evaluated_answer == answer
         elif self.answer is not None:
             return re.search(self.answer, answer) is not None

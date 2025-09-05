@@ -50,8 +50,8 @@ class Team(db.Model):
     name = db.Column(db.String(config.TEAM_NAME_MAX_LENGTH), nullable=False)
     ranked = db.Column(db.Boolean, default=False, nullable=False)
     invite_code = db.Column(db.String(config.INVITE_CODE_MAX_LENGTH), nullable=False, unique=True)
-    seed = db.Column(db.String(SEED_LENGTH), nullable=False, default=lambda: Team.generate_random_seed())
-    event_id = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
+    seed: str = db.Column(db.String(SEED_LENGTH), nullable=False, default=lambda: Team.generate_random_seed())
+    event_id: int = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
     locked = db.Column(db.Boolean, default=False, nullable=False)
     start_timestamp = db.Column(db.DateTime, nullable=True)
 
