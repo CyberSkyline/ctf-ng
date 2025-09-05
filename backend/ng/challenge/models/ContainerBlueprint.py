@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 from collections.abc import Callable
 
 from CTFd.models import db
@@ -90,12 +90,12 @@ class ContainerBlueprint(db.Model):
         stdin_open: bool | None = None,
         tty: bool | None = None,
         command: list[str] | None = None,
-        entrypoint: list[str] | None = None,
-        environment: dict[str, str | Callable[[str], str]] | None = None,
-        networks: list[str] | None = None,
-        cap_add: list[str] | None = None,
-        mem_limit: str | None = None,
-        memswap_limit: str | None = None,
+        entrypoint: str | list[str] | None = None,
+        environment: dict[str, str | Callable[[str], str]] | list[str] | None = None,
+        networks: list[str] | dict[str, None] | None = None,
+        cap_add: list[Literal['NET_ADMIN', 'SYS_PTRACE']] | None = None,
+        mem_limit: int | str | None = None,
+        memswap_limit: int | str | None = None,
         cpus: float | None = None,
         user: str | None = None,
         commit=True,

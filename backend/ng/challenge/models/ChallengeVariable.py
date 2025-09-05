@@ -59,6 +59,7 @@ class ChallengeVariable(db.Model):
         validator.validate_model_id(
             data,
             "challenge_id",
+            "Challenge",
             required=True,
             friendly_name="Challenge ID",
         )

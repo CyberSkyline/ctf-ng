@@ -100,23 +100,15 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
             )
 
         for question in questions:
-            question_payload = {
-                "challenge_id": challenge.id,
-                "name": question.name,
-                "body": question.body,
-                "points": question.points,
-                "placeholder": question.placeholder,
-                "max_attempts": question.max_attempts,
-            }
+            answer = None
+            answer_variable_id = None
 
             # Answer is regular string
             if isinstance(question.answer, str):
-                question_payload["templated"] = False
-                question_payload["answer"] = question.answer
+                answer = question.answer
             # Answer has test cases
             elif isinstance(question.answer, Answer):
-                question_payload["templated"] = False
-                question_payload["answer"] = question.answer.body
+                answer = question.answer.body
                 test_cases = question.answer.test_cases or []
                 for test_case in test_cases: # noqa B007
                     # TODO - create test cases
@@ -126,33 +118,38 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
             # Answer uses a template
             else:
                 variable = db_variables.get(question.answer.parent_variable)
-                question_payload["templated"] = True
-                question_payload["answer_variable_id"] = variable.id if variable else None
+                answer_variable_id = variable.id if variable else None
 
-            db_question = Question.create_question(**question_payload, commit=False)
+            db_question = Question.create_question(
+                challenge_id=challenge.id,
+                name=question.name,
+                body=question.body,
+                points=question.points,
+                placeholder=question.placeholder,
+                max_attempts=question.max_attempts,
+                answer=answer,
+                answer_variable_id=answer_variable_id,
+                commit=False
+            )
 
             if isinstance(db_question.answer, Template):
                 db_variable_questions[question.answer.parent_variable] = db_question
 
         for service_data in services.values():
-            # TODO: Handle templates in environment
-            payload = {
-                "challenge_id": challenge.id,
-                "image": service_data.image,
-                "hostname": service_data.hostname,
-                "stdin_open": service_data.stdin_open,
-                "tty": service_data.tty,
-                "entrypoint": service_data.entrypoint,
-                "environment": partial_environment(service_data.environment, challenge, db_variable_questions),
-                "networks": service_data.networks,
-                "cap_add": service_data.cap_add,
-                "mem_limit": service_data.mem_limit,
-                "memswap_limit": service_data.memswap_limit,
-                "cpus": service_data.cpus,
-                "user": service_data.user,
-            }
             ContainerBlueprint.create_container_blueprint(
-                **payload,
+                challenge_id=challenge.id,
+                image=service_data.image,
+                hostname=service_data.hostname,
+                stdin_open=service_data.stdin_open,
+                tty=service_data.tty,
+                entrypoint=service_data.entrypoint,
+                environment=partial_environment(service_data.environment, challenge, db_variable_questions),
+                networks=service_data.networks,
+                cap_add=service_data.cap_add,
+                mem_limit=service_data.mem_limit,
+                memswap_limit=service_data.memswap_limit,
+                cpus=float(service_data.cpus) if service_data.cpus else None,
+                user=service_data.user,
                 commit=False,
             )
 

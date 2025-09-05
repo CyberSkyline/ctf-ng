@@ -7,6 +7,7 @@ from cyber_skyline.chall_parser.compose.challenge_info import Question as Questi
 
 from ng.challenge.models.Challenge import Challenge
 from ng.challenge.models.ChallengeVariable import ChallengeVariable
+from ng.core.exceptions import ValidationError
 
 from ... import config
 from ...core.utils.validator import BaseValidator
@@ -23,7 +24,6 @@ class Question(db.Model):
     name: str = db.Column(db.String(config.MAX_QUESTION_NAME_LENGTH), nullable=False)
     body: str = db.Column(db.String(config.MAX_QUESTION_BODY_LENGTH), nullable=False)
     points: int = db.Column(db.Integer, nullable=False)
-    templated: bool = db.Column(db.Boolean, nullable=False)
     answer: str | None = db.Column(db.String(config.MAX_QUESTION_ANSWER_LENGTH), nullable=True)
     answer_variable_id: int | None = db.Column(db.Integer, db.ForeignKey("ng_challenge_variables.id"), nullable=True)
     placeholder: str | None = db.Column(db.String(config.MAX_QUESTION_ANSWER_LENGTH), nullable=True)
@@ -62,7 +62,14 @@ class Question(db.Model):
         """
         validator = BaseValidator()
 
-        templated = data.get("templated", False)
+        # TODO: This feels like an incorrect way to handle this to play nicely with the global exception handler
+        if data.get("answer") is None and data.get("answer_variable_id") is None:
+            raise ValidationError("Either 'answer' or 'answer_variable_id' must be provided.")
+
+        if data.get("answer") is not None and data.get("answer_variable_id") is not None:
+            raise ValidationError("Only 'answer' or 'answer_variable_id' can be provided.")
+
+        templated = data.get("answer_variable_id") is not None
         validator.validate_string(
             data,
             "name",
@@ -82,12 +89,6 @@ class Question(db.Model):
             "points",
             required=True,
             friendly_name="Points",
-        )
-        validator.validate_boolean(
-            data,
-            "templated",
-            required=True,
-            friendly_name="Templated",
         )
         validator.validate_string(
             data,
@@ -131,11 +132,10 @@ class Question(db.Model):
         name: str,
         body: str,
         points: int,
-        templated: bool,
-        answer: str | None,
-        answer_variable_id: int | None,
         max_attempts: int,
         challenge_id: int,
+        answer: str | None = None,
+        answer_variable_id: int | None = None,
         placeholder: str | None = None,
         commit=True,
     ) -> Question:
@@ -145,7 +145,6 @@ class Question(db.Model):
                     "name": name,
                     "body": body,
                     "points": points,
-                    "templated": templated,
                     "answer": answer,
                     "answer_variable_id": answer_variable_id,
                     "placeholder": placeholder,
@@ -179,7 +178,8 @@ class Question(db.Model):
 
         # TODO: What cleanup needs to occur on the submitted answer and is that already handled before it's passed in?
 
-        if self.templated and isinstance(self.answer_variable, ChallengeVariable):
+        templated = self.answer is not None
+        if templated and isinstance(self.answer_variable, ChallengeVariable):
             variable = self.answer_variable.as_attr()
             evaluated_answer = variable.template.eval(generate_seed(
                 event_id=team.event_id,
