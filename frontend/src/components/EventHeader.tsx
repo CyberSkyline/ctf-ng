@@ -1,4 +1,3 @@
-import { DATEFORMAT } from '@/constants';
 import type { Event } from '@/types';
 import {
   AspectRatio,
@@ -42,8 +41,7 @@ export default function EventHeader({
     state = 'live';
   }
 
-  const dateRange = (!isNull(startTime) && !isNull(endTime))
-    && new Intl.DateTimeFormat('en', DATEFORMAT.range).formatRange(startTime, endTime);
+  const dateRange = (!isNull(startTime) && !isNull(endTime)) && `${startTime?.toLocaleString()} - ${endTime?.toLocaleString()}`;
 
   return (
     <Flex direction="row" gap="6" align="start">

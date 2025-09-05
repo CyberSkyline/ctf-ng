@@ -88,7 +88,7 @@ export default function NavBar() {
                   Admin Portal
                 </NavLink>
               </DropdownMenu.Item>
-              <ThemeToggle className="ml-3" />
+              <ThemeToggle className="ml-3 py-2" />
               <DropdownMenu.Separator className="h-px bg-gray-200 my-1" />
               <DropdownMenu.Item asChild>
                 <button
