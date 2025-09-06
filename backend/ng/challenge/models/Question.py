@@ -7,7 +7,6 @@ from cyber_skyline.chall_parser.compose.challenge_info import Question as Questi
 
 from ng.challenge.models.Challenge import Challenge
 from ng.challenge.models.ChallengeVariable import ChallengeVariable
-from ng.core.exceptions import ValidationError
 
 from ... import config
 from ...core.utils.validator import BaseValidator
@@ -76,7 +75,7 @@ class Question(db.Model):
 
         # We should only check these if there are no validation errors so far
         # as if there are then we had an error with the provided answer or
-        # answer_variable_id already. 
+        # answer_variable_id already.
         if len(validator.errors) == 0:
             validator.validate_string(
                 data,
