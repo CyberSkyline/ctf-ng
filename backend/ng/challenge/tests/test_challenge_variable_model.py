@@ -82,11 +82,11 @@ def test_variable_challenge_relationship(db_session, valid_variable_data, challe
 
 
 @pytest.mark.db
-def test_variable_questions_relationship(db_session, valid_variable_data, challenge):
-    """Test that the questions relationship is empty by default."""
+def test_variable_question_relationship(db_session, valid_variable_data, challenge):
+    """Test that the question relationship is empty by default."""
     variable = ChallengeVariable.create_variable(**valid_variable_data)
-    assert hasattr(variable, "questions")
-    assert variable.questions == []
+    assert hasattr(variable, "question")
+    assert variable.question is None
 
 faker_templates = [
     ("fake.password(length=12)", "db_password", r"^.{12}$"),

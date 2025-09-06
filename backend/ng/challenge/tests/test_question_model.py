@@ -9,8 +9,7 @@ import pytest
 
 from ...core.exceptions import ValidationError
 from ..models import Challenge
-from ..models.Question import Question
-from ... import config
+from ..models.Question import Question, MAX_QUESTION_ANSWER_LENGTH, MAX_QUESTION_BODY_LENGTH, MAX_QUESTION_NAME_LENGTH
 
 
 @pytest.fixture
@@ -60,7 +59,7 @@ class Test_Question_Validate:
 
     def test_validate_name_too_long_should_fail(self, valid_question_data):
         """Test that validation fails when name exceeds maximum length."""
-        valid_question_data["name"] = "a" * (config.MAX_QUESTION_NAME_LENGTH + 1)
+        valid_question_data["name"] = "a" * (MAX_QUESTION_NAME_LENGTH + 1)
 
         with pytest.raises(ValidationError) as exc_info:
             Question.validate(valid_question_data)
@@ -87,7 +86,7 @@ class Test_Question_Validate:
 
     def test_validate_body_too_long_should_fail(self, valid_question_data):
         """Test that validation fails when body exceeds maximum length."""
-        valid_question_data["body"] = "a" * (config.MAX_QUESTION_BODY_LENGTH + 1)
+        valid_question_data["body"] = "a" * (MAX_QUESTION_BODY_LENGTH + 1)
 
         with pytest.raises(ValidationError) as exc_info:
             Question.validate(valid_question_data)
@@ -141,7 +140,7 @@ class Test_Question_Validate:
 
     def test_validate_answer_too_long_should_fail(self, valid_question_data):
         """Test that validation fails when answer exceeds maximum length."""
-        valid_question_data["answer"] = "a" * (config.MAX_QUESTION_ANSWER_LENGTH + 1)
+        valid_question_data["answer"] = "a" * (MAX_QUESTION_ANSWER_LENGTH + 1)
 
         with pytest.raises(ValidationError) as exc_info:
             Question.validate(valid_question_data)

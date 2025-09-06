@@ -187,9 +187,6 @@ class Question(db.Model):
         :param answer: The answer to check.
         :return: True if the answer matches, False otherwise.
         """
-
-        # TODO: What cleanup needs to occur on the submitted answer and is that already handled before it's passed in?
-
         templated = self.answer is not None
         if templated and isinstance(self.answer_variable, ChallengeVariable):
             variable = self.answer_variable.as_attr()
