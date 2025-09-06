@@ -61,15 +61,37 @@ class Question(db.Model):
         :return: The validated data.
         """
         validator = BaseValidator()
-
         # TODO: This feels like an incorrect way to handle this to play nicely with the global exception handler
         if data.get("answer") is None and data.get("answer_variable_id") is None:
-            raise ValidationError("Either 'answer' or 'answer_variable_id' must be provided.")
+            message = "Either the Answer or the Answer Variable ID must be provided."
+            validator.errors["answer"] = message
+            validator.errors["answer_variable_id"] = message
 
         if data.get("answer") is not None and data.get("answer_variable_id") is not None:
-            raise ValidationError("Only 'answer' or 'answer_variable_id' can be provided.")
+            message = "Only the Answer or the Answer Variable ID should be provided not both."
+            validator.errors["answer"] = message
+            validator.errors["answer_variable_id"] = message
 
         templated = data.get("answer_variable_id") is not None
+
+        # We should only check these if there are no validation errors so far
+        # as if there are then we had an error with the provided answer or
+        # answer_variable_id already. 
+        if len(validator.errors) == 0:
+            validator.validate_string(
+                data,
+                "answer",
+                config.MAX_QUESTION_ANSWER_LENGTH,
+                required=not templated,
+                friendly_name="Answer",
+            )
+            validator.validate_model_id(
+                data,
+                "answer_variable_id",
+                required=templated,
+                friendly_name="Answer Variable ID",
+            )
+
         validator.validate_string(
             data,
             "name",
@@ -90,19 +112,7 @@ class Question(db.Model):
             required=True,
             friendly_name="Points",
         )
-        validator.validate_string(
-            data,
-            "answer",
-            config.MAX_QUESTION_ANSWER_LENGTH,
-            required=not templated,
-            friendly_name="Answer",
-        )
-        validator.validate_model_id(
-            data,
-            "answer_variable_id",
-            required=templated,
-            friendly_name="Answer Variable ID",
-        )
+
         validator.validate_string(
             data,
             "placeholder",
