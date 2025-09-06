@@ -27,13 +27,14 @@ class Question(db.Model):
     body: Mapped[str] = db.Column(db.String(MAX_QUESTION_BODY_LENGTH), nullable=False)
     points: Mapped[int] = db.Column(db.Integer, nullable=False)
     answer: Mapped[str | None] = db.Column(db.String(MAX_QUESTION_ANSWER_LENGTH), nullable=True)
-    answer_variable_id: Mapped[int | None] = db.Column(db.Integer, db.ForeignKey("ng_challenge_variables.id"), nullable=True)
+    # Make this unique to enforce the one-to-one relationship between questions and challenge variables
+    answer_variable_id: Mapped[int | None] = db.Column(db.Integer, db.ForeignKey("ng_challenge_variables.id"), nullable=True, unique=True)
     placeholder: Mapped[str | None] = db.Column(db.String(MAX_QUESTION_ANSWER_LENGTH), nullable=True)
     max_attempts: Mapped[int] = db.Column(db.Integer, nullable=False)
     challenge_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
 
     challenge: Challenge = db.relationship("Challenge", back_populates="questions")
-    answer_variable: ChallengeVariable | None = db.relationship("ChallengeVariable", back_populates="questions")
+    answer_variable: ChallengeVariable | None = db.relationship("ChallengeVariable", back_populates="question")
 
     def __repr__(self):
         return f"<NgChallengeQuestion {self.id}, name={self.name}, points={self.points}>"

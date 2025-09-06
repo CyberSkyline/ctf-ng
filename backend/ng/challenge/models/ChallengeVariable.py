@@ -22,7 +22,8 @@ class ChallengeVariable(db.Model):
     template: Mapped[str] = db.Column(db.String(MAX_VARIABLE_TEMPLATE_LENGTH), nullable=False)
 
     challenge = db.relationship("Challenge", back_populates="variables")
-    questions = db.relationship("Question", back_populates="answer_variable")
+    # ChallengeVariable is the parent of Question so to only have one question, we need to set uselist=False
+    question = db.relationship("Question", back_populates="answer_variable", use_list=False)
 
     def __repr__(self):
         return f"<NgChallengeVariable {self.id}, name={self.name}>"
