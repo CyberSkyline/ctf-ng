@@ -4,6 +4,7 @@ from CTFd.models import db
 
 from cyber_skyline.chall_parser.compose import Variable as VariableAttr
 from cyber_skyline.chall_parser.template import Template as TemplateAttr
+from sqlalchemy.orm import Mapped
 from typing import Any
 from ...core.utils.validator import BaseValidator
 
@@ -14,11 +15,11 @@ MAX_VARIABLE_TEMPLATE_LENGTH = 1000
 class ChallengeVariable(db.Model):
     __tablename__ = "ng_challenge_variables"
 
-    id = db.Column(db.Integer, primary_key=True)
-    challenge_id = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False)
-    name = db.Column(db.String(MAX_VARIABLE_NAME_LENGTH), nullable=False)
-    default = db.Column(db.String(MAX_VARIABLE_DEFAULT_LENGTH), nullable=False)
-    template = db.Column(db.String(MAX_VARIABLE_TEMPLATE_LENGTH), nullable=False)
+    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    challenge_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False)
+    name: Mapped[str] = db.Column(db.String(MAX_VARIABLE_NAME_LENGTH), nullable=False)
+    default: Mapped[str] = db.Column(db.String(MAX_VARIABLE_DEFAULT_LENGTH), nullable=False)
+    template: Mapped[str] = db.Column(db.String(MAX_VARIABLE_TEMPLATE_LENGTH), nullable=False)
 
     challenge = db.relationship("Challenge", back_populates="variables")
     questions = db.relationship("Question", back_populates="answer_variable")
