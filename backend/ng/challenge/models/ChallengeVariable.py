@@ -23,7 +23,7 @@ class ChallengeVariable(db.Model):
 
     challenge = db.relationship("Challenge", back_populates="variables")
     # ChallengeVariable is the parent of Question so to only have one question, we need to set uselist=False
-    question = db.relationship("Question", back_populates="answer_variable", use_list=False)
+    question = db.relationship("Question", back_populates="answer_variable", uselist=False)
 
     def __repr__(self):
         return f"<NgChallengeVariable {self.id}, name={self.name}>"
