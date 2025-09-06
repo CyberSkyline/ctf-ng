@@ -2,6 +2,7 @@ from typing import Any, Literal
 from collections.abc import Callable
 
 from CTFd.models import db
+from sqlalchemy.orm import Mapped
 
 from ...core.utils.validator import BaseValidator
 
@@ -22,7 +23,7 @@ class ContainerBlueprint(db.Model):
     tty = db.Column(db.Boolean, nullable=True)
     command = db.Column(db.PickleType, nullable=True)
     entrypoint = db.Column(db.PickleType, nullable=True)
-    environment: dict[str, str | Callable[[str], str]] | list[str] | None = db.Column(db.PickleType, nullable=True)
+    environment: Mapped[dict[str, str | Callable[[str], str]] | list[str] | None] = db.Column(db.PickleType, nullable=True)
     networks = db.Column(db.PickleType, nullable=True)
     cap_add = db.Column(db.PickleType, nullable=True)
     mem_limit = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_MEM_LIMIT_LENGTH), nullable=True)

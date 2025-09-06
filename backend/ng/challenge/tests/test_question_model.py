@@ -128,7 +128,6 @@ class Test_Question_Validate:
         with pytest.raises(ValidationError) as exc_info:
             Question.validate(valid_question_data)
 
-        # TODO: This ties into the incorrectness mentioned earlier with the global exception handler
         assert "Answer" in str(exc_info.value.errors)
 
     def test_validate_empty_answer_should_fail(self, valid_question_data):

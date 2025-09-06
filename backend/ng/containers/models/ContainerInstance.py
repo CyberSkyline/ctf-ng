@@ -1,6 +1,7 @@
 from CTFd.models import db
 import docker
 from sqlalchemy import func, select
+from sqlalchemy.orm import Mapped
 from typing import TypedDict
 
 from ..utils.get_client import get_client
@@ -30,7 +31,7 @@ class ContainerInstance(db.Model):
     blueprint = db.Column(db.Integer, db.ForeignKey("ng_container_blueprints.id"), nullable=False)
     team_id = db.Column(db.Integer, db.ForeignKey("ng_teams.id"), nullable=False)
     hostip = db.Column(db.String(255), nullable=False)
-    dockerid: str = db.Column(db.String(255), nullable=False)
+    dockerid: Mapped[str] = db.Column(db.String(255), nullable=False)
 
     def __repr__(self):
         return f"<ContainerInstance {self.id}>"

@@ -3,12 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from CTFd.models import db
+from sqlalchemy.orm import Mapped
 from cyber_skyline.chall_parser.compose.challenge_info import Question as QuestionAttr
 
 from ng.challenge.models.Challenge import Challenge
 from ng.challenge.models.ChallengeVariable import ChallengeVariable
 
-from ... import config
 from ...core.utils.validator import BaseValidator
 from ...challenge.utils import generate_seed
 import re
@@ -16,18 +16,21 @@ import re
 if TYPE_CHECKING:
     from ...team.models.Team import Team
 
+MAX_QUESTION_NAME_LENGTH = 256
+MAX_QUESTION_BODY_LENGTH = 1024
+MAX_QUESTION_ANSWER_LENGTH = 512
 
 class Question(db.Model):
     __tablename__ = "ng_challenge_questions"
-    id: int = db.Column(db.Integer, primary_key=True)
-    name: str = db.Column(db.String(config.MAX_QUESTION_NAME_LENGTH), nullable=False)
-    body: str = db.Column(db.String(config.MAX_QUESTION_BODY_LENGTH), nullable=False)
-    points: int = db.Column(db.Integer, nullable=False)
-    answer: str | None = db.Column(db.String(config.MAX_QUESTION_ANSWER_LENGTH), nullable=True)
-    answer_variable_id: int | None = db.Column(db.Integer, db.ForeignKey("ng_challenge_variables.id"), nullable=True)
-    placeholder: str | None = db.Column(db.String(config.MAX_QUESTION_ANSWER_LENGTH), nullable=True)
-    max_attempts: int = db.Column(db.Integer, nullable=False)
-    challenge_id: int = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
+    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    name: Mapped[str] = db.Column(db.String(MAX_QUESTION_NAME_LENGTH), nullable=False)
+    body: Mapped[str] = db.Column(db.String(MAX_QUESTION_BODY_LENGTH), nullable=False)
+    points: Mapped[int] = db.Column(db.Integer, nullable=False)
+    answer: Mapped[str | None] = db.Column(db.String(MAX_QUESTION_ANSWER_LENGTH), nullable=True)
+    answer_variable_id: Mapped[int | None] = db.Column(db.Integer, db.ForeignKey("ng_challenge_variables.id"), nullable=True)
+    placeholder: Mapped[str | None] = db.Column(db.String(MAX_QUESTION_ANSWER_LENGTH), nullable=True)
+    max_attempts: Mapped[int] = db.Column(db.Integer, nullable=False)
+    challenge_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
 
     challenge: Challenge = db.relationship("Challenge", back_populates="questions")
     answer_variable: ChallengeVariable | None = db.relationship("ChallengeVariable", back_populates="questions")
@@ -60,7 +63,6 @@ class Question(db.Model):
         :return: The validated data.
         """
         validator = BaseValidator()
-        # TODO: This feels like an incorrect way to handle this to play nicely with the global exception handler
         if data.get("answer") is None and data.get("answer_variable_id") is None:
             message = "Either the Answer or the Answer Variable ID must be provided."
             validator.errors["answer"] = message
@@ -80,7 +82,7 @@ class Question(db.Model):
             validator.validate_string(
                 data,
                 "answer",
-                config.MAX_QUESTION_ANSWER_LENGTH,
+                MAX_QUESTION_ANSWER_LENGTH,
                 required=not templated,
                 friendly_name="Answer",
             )
@@ -94,14 +96,14 @@ class Question(db.Model):
         validator.validate_string(
             data,
             "name",
-            config.MAX_QUESTION_NAME_LENGTH,
+            MAX_QUESTION_NAME_LENGTH,
             required=True,
             friendly_name="Question Name",
         )
         validator.validate_string(
             data,
             "body",
-            config.MAX_QUESTION_BODY_LENGTH,
+            MAX_QUESTION_BODY_LENGTH,
             required=True,
             friendly_name="Question Body",
         )
@@ -115,7 +117,7 @@ class Question(db.Model):
         validator.validate_string(
             data,
             "placeholder",
-            config.MAX_QUESTION_ANSWER_LENGTH,
+            MAX_QUESTION_ANSWER_LENGTH,
             required=False,
             friendly_name="Placeholder",
         )
