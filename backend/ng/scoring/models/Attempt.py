@@ -213,9 +213,9 @@ class Attempt(db.Model):
         # LAZY-IMPORT
         from ...challenge.models.Question import Question
 
-        question = Question.query.get(validated_data["question_id"])
+        question: Question = Question.query.get(validated_data["question_id"])
 
-        is_correct = question.check_answer(validated_data["submission"])
+        is_correct = question.check_answer(team, validated_data["submission"])
         points = question.points if is_correct else 0
 
         attempt = cls(

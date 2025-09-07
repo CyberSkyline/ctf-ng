@@ -1027,12 +1027,40 @@ def multiple_teams_with_scores(db_session, event, team_factory, score_factory):
     return teams_data
 
 @pytest.fixture
+def variable_factory(db_session, challenge_factory):
+    """A factory function to create ChallengeVariable objects for tests."""
+
+    from .challenge.models.ChallengeVariable import ChallengeVariable
+    from .challenge.models.Challenge import Challenge
+
+    def _factory(challenge: Challenge | None = None, **kwargs) -> ChallengeVariable:
+        if challenge is None:
+            challenge = challenge_factory()
+        count = db_session.query(ChallengeVariable).count() + 1
+
+        defaults = {
+            "challenge_id": challenge.id,
+            "name": f"variable_{count}",
+            "default": f"default_{count}",
+            "template": f"fake.password(length=11) + '{count}'"
+        }
+        defaults.update(kwargs)
+        variable = ChallengeVariable(**defaults)
+        db_session.add(variable)
+        db_session.commit()
+        return variable
+
+    return _factory
+
+@pytest.fixture
 def question_factory(db_session, challenge_factory):
     """A factory function to create Question objects for tests."""
 
     from .challenge.models.Question import Question
+    from .challenge.models.Challenge import Challenge
+    from .challenge.models.ChallengeVariable import ChallengeVariable
 
-    def _factory(challenge=None, **kwargs):
+    def _factory(challenge: Challenge | None = None, answer_variable: ChallengeVariable | None = None, **kwargs) -> Question:
         if challenge is None:
             challenge = challenge_factory()
         count = db_session.query(Question).count() + 1
@@ -1041,11 +1069,14 @@ def question_factory(db_session, challenge_factory):
             "challenge_id": challenge.id,
             "name": f"Test Question {count} for Challenge {challenge.id}",
             "body": f"test question body_{count}",
-            "answer": f"answer_{count}",
             "points": 100 * count,
             "placeholder": f"placeholder_{count}",
             "max_attempts": 3,
         }
+        if answer_variable is None:
+            defaults['answer'] = f"answer_{count}"
+        else:
+            defaults['answer_variable_id'] = answer_variable.id
         defaults.update(kwargs)
         question = Question(**defaults)
         db_session.add(question)

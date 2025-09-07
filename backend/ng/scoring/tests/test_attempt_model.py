@@ -6,6 +6,9 @@ import pytest
 from unittest.mock import patch
 from datetime import datetime, timezone, timedelta, UTC
 
+from ng.challenge.models.ChallengeVariable import ChallengeVariable
+from ng.challenge.utils import generate_seed
+
 from ...core.exceptions import (
     ValidationError,
     BusinessLogicError,
@@ -81,10 +84,68 @@ class TestCreateAttempt:
         db_session.refresh(score)
         assert score.points == question.points
 
+    def test_create_attempt_correct_templated_answer(self, db_session, user, team_with_member, score, event, challenge, question_factory, variable_factory):
+        """Test creating an attempt with correct answer"""
+        variable: ChallengeVariable = variable_factory(challenge=challenge)
+        question: Question = question_factory(challenge=challenge, answer_variable=variable)
+        correct_answer: str = str(res) if (res := variable.as_attr().template.eval(generate_seed(event_id=event.id, challenge_id=challenge.id, question_id=question.id, team_seed=team_with_member.seed))) else ""
+        attempt = Attempt.create_attempt(
+            user_id=user.id,
+            team_id=team_with_member.id,
+            challenge_id=challenge.id,
+            question_id=question.id,
+            submission=correct_answer,  # Correct answer
+        )
+
+        assert attempt.user_id == user.id
+        assert attempt.team_id == team_with_member.id
+        assert attempt.event_id == event.id
+        assert attempt.challenge_id == challenge.id
+        assert attempt.question_id == question.id
+        assert attempt.submission == correct_answer
+        assert attempt.is_correct is True
+        assert attempt.points == question.points
+        assert isinstance(attempt.timestamp, datetime)
+
+        # Should have created a score event
+        assert attempt.score_event_id is not None
+        score_event = ScoreEvent.query.get(attempt.score_event_id)
+        assert score_event is not None
+        assert score_event.points == question.points
+
+        # Score should be updated
+        db_session.refresh(score)
+        assert score.points == question.points
+
     def test_create_attempt_incorrect_answer(
         self, db_session, user, team_with_member, score, event, challenge, question
     ):
         """Test creating an attempt with incorrect answer"""
+        attempt = Attempt.create_attempt(
+            user_id=user.id,
+            team_id=team_with_member.id,
+            challenge_id=challenge.id,
+            question_id=question.id,
+            submission="wrong answer",
+        )
+
+        assert attempt.submission == "wrong answer"
+        assert attempt.is_correct is False
+        assert attempt.points == 0
+
+        # Should NOT have created a score event
+        assert attempt.score_event_id is None
+
+        # Score should not change
+        db_session.refresh(score)
+        assert score.points == 0
+
+    def test_create_attempt_incorrect_templated_answer(
+        self, db_session, user, team_with_member, score, event, challenge, question_factory, variable_factory
+    ):
+        """Test creating an attempt with incorrect answer"""
+        variable: ChallengeVariable = variable_factory(challenge=challenge)
+        question: Question = question_factory(challenge=challenge, answer_variable=variable)
         attempt = Attempt.create_attempt(
             user_id=user.id,
             team_id=team_with_member.id,

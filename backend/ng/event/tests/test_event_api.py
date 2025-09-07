@@ -1036,7 +1036,6 @@ class Test_Event_Challenge_Import:
 
         challenge = Challenge.query.filter_by(name = "Basic Challenge").first()
 
-        print(response.get_json())
         assert response.status_code == 200
         assert len(challenge.hints) == 1
         assert len(challenge.questions) == 1
