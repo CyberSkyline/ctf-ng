@@ -187,7 +187,7 @@ class Question(db.Model):
         :param answer: The answer to check.
         :return: True if the answer matches, False otherwise.
         """
-        templated = self.answer is not None
+        templated = self.answer is None
         if templated and isinstance(self.answer_variable, ChallengeVariable):
             variable = self.answer_variable.as_attr()
             evaluated_answer = variable.template.eval(generate_seed(
