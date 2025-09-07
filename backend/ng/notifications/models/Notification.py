@@ -334,6 +334,7 @@ class Notification(db.Model):
             event_id = validated_data.get("event_id"),
             challenge_id = validated_data.get("challenge_id"),
             expires_at = validated_data.get("expires_at"),
+            created_at = utc_now(),
         )
 
         db.session.add(notification)

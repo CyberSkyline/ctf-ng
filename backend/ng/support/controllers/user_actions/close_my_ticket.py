@@ -17,9 +17,13 @@ def close_my_ticket(
     """
     ticket.close_ticket(commit=True)
 
+    user_ids = [ticket.author_id]
+    if ticket.assigned_to and ticket.assigned_to != ticket.author_id:
+        user_ids.append(ticket.assigned_to)
+
     NotificationService._emit_refetch(
         path=f"/ng/support/tickets/{ticket.id}",
-        room=f"ticket_{ticket.id}"
+        user_ids=user_ids
     )
 
     return ticket

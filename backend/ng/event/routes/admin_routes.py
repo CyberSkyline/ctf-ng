@@ -14,8 +14,6 @@ from ...core.middleware import (
     admin_endpoint,
 )
 from ..controllers import (
-    start_event,
-    end_event,
     join_event_controller,
     import_challenge_from_yaml,
 )
@@ -28,8 +26,6 @@ from ._docs import (
     ADMIN_UPDATE_EVENT_DOC,
     ADMIN_REGISTER_USER_DOC,
     ADMIN_CREATE_CHALLENGE_DOC,
-    START_EVENT_DOC,
-    END_EVENT_DOC,
 )
 
 
@@ -122,28 +118,3 @@ class EventChallenges(Resource):
         challenge = import_challenge_from_yaml(event, json_data)
         return success_response(challenge)
 
-
-@events_admin_namespace.route("/<int:event_id>/start_event")
-class EventStart(Resource):
-    @events_admin_namespace.doc(**START_EVENT_DOC)
-    @admin_endpoint()
-    @load_event(source = LoaderType.PARAM)
-    def post(self, event_id, event, **kwargs):
-        """
-        Manually start event
-        """
-        updated_event = start_event(event)
-        return success_response(updated_event)
-
-
-@events_admin_namespace.route("/<int:event_id>/end_event")
-class EventEnd(Resource):
-    @events_admin_namespace.doc(**END_EVENT_DOC)
-    @admin_endpoint()
-    @load_event(source = LoaderType.PARAM)
-    def post(self, event_id, event, **kwargs):
-        """
-        Manually end event
-        """
-        updated_event = end_event(event)
-        return success_response(updated_event)

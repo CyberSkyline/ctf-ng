@@ -5,7 +5,14 @@ notifications and WebSocket refetch events
 
 from CTFd.models import db
 
-from ...core.utils import emit_event
+from ...core.utils.emitters import (
+    emit_to_user,
+    emit_to_users,
+    emit_to_team,
+    emit_to_event,
+    emit_to_admins,
+    emit_event
+)
 
 from ..models import (
     Notification,
@@ -18,27 +25,41 @@ from ...team.models import TeamMember
 
 class NotificationService:
     """
-    Stored notifications & WebSocket refetch events
+    Stored notifications & WebSocket refetch events using Redis pub/sub
     """
     @staticmethod
-    def _emit_refetch(path: str, room: str | None = None) -> None:
+    def _emit_refetch(
+        path: str,
+        user_ids = None,
+        team_id = None,
+        event_id = None
+    ):
         """
         Notify frontend to refetch data at path
         """
         try:
-            emit_event(event_name = "refetch", data = {"path": path}, room = room)
+            if user_ids:
+                emit_to_users("refetch", {"path": path}, user_ids)
+            elif team_id:
+                emit_to_team("refetch", {"path": path}, team_id)
+            elif event_id:
+                emit_to_event("refetch", {"path": path}, event_id)
+            else:
+                # Fallback to admin broadcast
+                emit_to_admins("refetch", {"path": path})
+
         except Exception:
             pass
 
     @staticmethod
     def _emit_notification(notification: Notification) -> None:
         """
-        Send WebSocket event for a new notification
+        Send WebSocket event for a new notification to specific user
         """
-        emit_event(
-            event_name = "notification",
-            data = notification.serialize(),
-            room = f"user_{notification.recipient_id}"
+        emit_to_user(
+            "notification",
+            notification.serialize(),
+            user_id = notification.recipient_id
         )
 
     @staticmethod
@@ -65,7 +86,8 @@ class NotificationService:
 
         NotificationService._emit_refetch(
             path = f"/ng/support/tickets/{ticket_id}",
-            room = f"ticket_{ticket_id}"
+            user_ids = [recipient_id,
+                        author_id]
         )
 
     @staticmethod
@@ -91,7 +113,7 @@ class NotificationService:
 
         NotificationService._emit_refetch(
             path = f"/ng/support/tickets/{ticket_id}",
-            room = f"ticket_{ticket_id}"
+            user_ids = [recipient_id]
         )
 
     @staticmethod
@@ -105,7 +127,7 @@ class NotificationService:
         """
         NotificationService._emit_refetch(
             path = "/ng/support/tickets",
-            room = "support_admin"
+            user_ids = None  # Via _emit_refetch fallback
         )
 
     @staticmethod
@@ -136,16 +158,16 @@ class NotificationService:
         question_id: int,
     ) -> None:
         """
-        Broadcast attempt submission to members of team
+        Broadcast attempt submission to team members and event leaderboard update
         """
         NotificationService._emit_refetch(
             path = f"/ng/events/{event_id}/challenges/{challenge_id}",
-            room = f"team_{team_id}"
+            team_id = team_id
         )
 
         NotificationService._emit_refetch(
             path = f"/ng/events/{event_id}/leaderboard",
-            room = f"event_{event_id}"
+            event_id = event_id
         )
 
     @staticmethod
@@ -155,11 +177,11 @@ class NotificationService:
         challenge_id: int,
     ) -> None:
         """
-        Broadcast hint redemption to members of team
+        Broadcast hint redemption to team members
         """
         NotificationService._emit_refetch(
             path = f"/ng/events/{event_id}/challenges/{challenge_id}",
-            room = f"team_{team_id}"
+            team_id = team_id
         )
 
     @staticmethod
@@ -182,12 +204,14 @@ class NotificationService:
         )
 
         participants = TeamMember.query.filter_by(event_id = event_id).all()
-        for member in participants:
+        participant_user_ids = [member.user_id for member in participants]
+
+        for user_id in participant_user_ids:
             notification = Notification.create_notification(
                 notification_type = NotificationType.EVENT_ANNOUNCEMENT,
                 title = title,
                 message = message,
-                recipient_id = member.user_id,
+                recipient_id = user_id,
                 sender_id = sender_id,
                 event_id = event_id,
                 commit = False,
@@ -198,8 +222,9 @@ class NotificationService:
 
         NotificationService._emit_refetch(
             path = f"/ng/events/{event_id}/announcements",
-            room = f"event_{event_id}"
+            event_id = event_id
         )
+
         return announcement
 
     @staticmethod
@@ -209,7 +234,7 @@ class NotificationService:
         sender_id: int | None = None,
     ) -> Announcement:
         """
-        Send system wide announcement
+        Send system wide announcement to all connected users
         """
         announcement = Announcement.create_announcement(
             announcement_type = AnnouncementType.GENERAL,
@@ -224,7 +249,7 @@ class NotificationService:
                 "title": title,
                 "message": message,
             },
-            room = None
+            user_ids = None  # Broadcast
         )
 
         return announcement
@@ -256,11 +281,11 @@ class NotificationService:
         update_type: str,
     ) -> None:
         """
-        Broadcast team changes
+        Broadcast team changes to team members
         """
         NotificationService._emit_refetch(
             path = f"/ng/teams/{team_id}",
-            room = f"team_{team_id}"
+            team_id = team_id
         )
 
     @staticmethod
@@ -273,13 +298,14 @@ class NotificationService:
         Notify participants about new challenge
         """
         participants = TeamMember.query.filter_by(event_id = event_id).all()
+        participant_user_ids = [member.user_id for member in participants]
 
-        for member in participants:
+        for user_id in participant_user_ids:
             notification = Notification.create_notification(
                 notification_type = NotificationType.CHALLENGE_RELEASED,
                 title = "New Challenge Available",
                 message = f"Challenge '{challenge_name}' is now available",
-                recipient_id = member.user_id,
+                recipient_id = user_id,
                 event_id = event_id,
                 challenge_id = challenge_id,
                 commit = False,
@@ -290,5 +316,5 @@ class NotificationService:
 
         NotificationService._emit_refetch(
             path = f"/ng/events/{event_id}/challenges",
-            room = f"event_{event_id}"
+            event_id = event_id
         )

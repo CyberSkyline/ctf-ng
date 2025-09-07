@@ -4,7 +4,6 @@ from .api import (
     serialize_model_for_api,
     success_response,
 )
-from .emitters import emit_event
 from .logger import (
     get_logger,
     logger,
@@ -65,5 +64,4 @@ __all__ = [
     "serialize_model_for_api",
     "success_response",
     "error_response",
-    "emit_event",
 ]

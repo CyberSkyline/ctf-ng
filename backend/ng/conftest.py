@@ -1033,26 +1033,41 @@ def notification_factory(db_session):
     from .notifications.models.Notification import Notification, NotificationType
 
     def _factory(**kwargs):
+        clean_kwargs = kwargs.copy()
+        read_at = clean_kwargs.pop("read_at", None)
+        created_at = clean_kwargs.pop("created_at", None)
+        notification_type = clean_kwargs.pop("type", NotificationType.TICKET_CREATE)
+        expires_at = kwargs.get("expires_at")
+
+        if expires_at and hasattr(expires_at, 'isoformat'):
+            expires_at = expires_at.isoformat()
+
         defaults = {
-            "type": kwargs.get("type", NotificationType.TICKET_CREATE),
+            "notification_type": notification_type,
             "title": kwargs.get("title", f"Test Notification {datetime.utcnow().timestamp()}"),
             "message": kwargs.get("message", "Test notification message"),
             "recipient_id": kwargs.get("recipient_id", 1),
             "sender_id": kwargs.get("sender_id", None),
-            "read_at": kwargs.get("read_at", None),
-            "created_at": kwargs.get("created_at", datetime.now(UTC)),
-            "expires_at": kwargs.get("expires_at", None),
+            "expires_at": expires_at,
             "ticket_id": kwargs.get("ticket_id", None),
             "team_id": kwargs.get("team_id", None),
             "event_id": kwargs.get("event_id", None),
             "challenge_id": kwargs.get("challenge_id", None),
         }
-        defaults.update(kwargs)
 
-        notification = Notification(**defaults)
-        db_session.add(notification)
-        if kwargs.get("commit", True):
-            db_session.commit()
+        notification = Notification.create_notification(**defaults, commit=kwargs.get("commit", True))
+
+        # Override created_at if provided
+        if created_at is not None:
+            notification.created_at = created_at
+            if kwargs.get("commit", True):
+                db_session.commit()
+
+        if read_at is not None:
+            notification.read_at = read_at
+            if kwargs.get("commit", True):
+                db_session.commit()
+
         return notification
 
     return _factory
@@ -1066,21 +1081,22 @@ def announcement_factory(db_session):
     from .notifications.models.Announcement import Announcement, AnnouncementType
 
     def _factory(**kwargs):
+        announcement_type = kwargs.pop("type", AnnouncementType.GENERAL)
+        expires_at = kwargs.get("expires_at")
+
+        if expires_at and hasattr(expires_at, 'isoformat'):
+            expires_at = expires_at.isoformat()
+
         defaults = {
-            "type": kwargs.get("type", AnnouncementType.GENERAL),
+            "announcement_type": announcement_type,
             "title": kwargs.get("title", f"Test Announcement {datetime.utcnow().timestamp()}"),
             "message": kwargs.get("message", "Test announcement message"),
             "sender_id": kwargs.get("sender_id", None),
-            "created_at": kwargs.get("created_at", datetime.now(UTC)),
-            "expires_at": kwargs.get("expires_at", None),
+            "expires_at": expires_at,
             "event_id": kwargs.get("event_id", None),
         }
-        defaults.update(kwargs)
 
-        announcement = Announcement(**defaults)
-        db_session.add(announcement)
-        if kwargs.get("commit", True):
-            db_session.commit()
+        announcement = Announcement.create_announcement(**defaults, commit=kwargs.get("commit", True))
         return announcement
 
     return _factory

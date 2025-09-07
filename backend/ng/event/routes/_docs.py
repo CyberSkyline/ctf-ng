@@ -190,26 +190,6 @@ ADMIN_CREATE_CHALLENGE_DOC = {
     },
 }
 
-START_EVENT_DOC = {
-    "description": "Manually start an event and notify all participants",
-    "responses": {
-        200: "Success - Event started and notifications sent",
-        400: "Bad request - Event has already started",
-        404: "Not found - Event does not exist",
-        **ADMIN_REQUIRED_RESPONSES,
-    },
-}
-
-END_EVENT_DOC = {
-    "description": "Manually end an event and notify all participants",
-    "responses": {
-        200: "Success - Event ended and notifications sent",
-        400: "Bad request - Event is already ended",
-        404: "Not found - Event does not exist",
-        **ADMIN_REQUIRED_RESPONSES,
-    },
-}
-
 # ============ USER EVENT ENDPOINTS ============
 USER_LIST_EVENTS_DOC = {
     "description": "Get all public events available to users",

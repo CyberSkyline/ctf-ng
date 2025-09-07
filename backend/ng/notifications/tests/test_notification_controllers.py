@@ -338,8 +338,7 @@ class TestSendAnnouncement:
         mock_send_system.assert_called_once_with(
             title = "Test Announcement",
             message = "Test message",
-            sender_id = admin.id,
-            persist = True
+            sender_id = admin.id
         )
         assert result == mock_announcement
 
@@ -359,8 +358,7 @@ class TestSendAnnouncement:
         mock_send_system.assert_called_once_with(
             title = "System Announcement",
             message = "Automated message",
-            sender_id = None,
-            persist = True
+            sender_id = None
         )
         assert result is None
 
@@ -690,8 +688,7 @@ class TestControllerIntegration:
         mock_send_system.assert_called_once_with(
             title = "System Maintenance",
             message = "Scheduled maintenance tonight",
-            sender_id = admin.id,
-            persist = True
+            sender_id = admin.id
         )
         mock_send_event.assert_called_once_with(
             event_id = event.id,

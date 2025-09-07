@@ -23,7 +23,6 @@ def send_announcement(
         title = title,
         message = message,
         sender_id = sender_id,
-        persist = True,
     )
 
 

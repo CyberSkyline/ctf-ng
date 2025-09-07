@@ -357,9 +357,7 @@ class TestNotification:
         notification_factory(
                 recipient_id = user.id,
                 type = NotificationType.TICKET_CREATE,
-                expires_at = datetime(1969,
-                                      1,
-                                      1),
+                expires_at = datetime(1969, 1, 1, tzinfo=UTC),
                 title = "Expired"
                 )
 
