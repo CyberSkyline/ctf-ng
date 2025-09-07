@@ -215,7 +215,7 @@ class Attempt(db.Model):
 
         question = Question.query.get(validated_data["question_id"])
 
-        is_correct = submission.strip().lower() == question.answer.strip().lower()
+        is_correct = question.check_answer(validated_data["submission"])
         points = question.points if is_correct else 0
 
         attempt = cls(
