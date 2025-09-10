@@ -55,6 +55,7 @@ class Team(db.Model):
     seed: Mapped[str] = db.Column(db.String(SEED_LENGTH), nullable=False, default=lambda: Team.generate_random_seed())
     event_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
     start_timestamp = db.Column(db.DateTime, nullable=True)
+    end_time = db.Column(db.DateTime, nullable=True)
 
     __table_args__ = (
         db.UniqueConstraint("event_id", "name", name="uq_team_event_name"),
@@ -107,6 +108,8 @@ class Team(db.Model):
             "member_count": self.member_count,
             "ranked": self.ranked,
             "invite_code": self.invite_code,
+            "start_timestamp": self.start_timestamp.isoformat() if self.start_timestamp else None,
+            "end_time": self.end_time.isoformat() if self.end_time else None,
         }
 
         if self.event:
@@ -252,6 +255,12 @@ class Team(db.Model):
             raise BusinessLogicError("Cannot disband team with members. Remove all members first.")
 
         db.session.delete(self)
+        if commit:
+            db.session.commit()
+
+    def set_end_time(self, end_time: datetime | None = None, commit=True):
+        """Set the team's end time."""
+        self.end_time = end_time
         if commit:
             db.session.commit()
 

@@ -29,21 +29,32 @@ from ..controllers import (
     submit_answer,
     redeem_hint,
 )
-from ._docs import (
-    GET_LEADERBOARD_DOC,
-    GET_TEAM_SCORE_DOC,
-    SUBMIT_ANSWER_DOC,
-    REDEEM_HINT_DOC,
-)
 
 scoring_user_namespace = Namespace("scoring", description="Scoring operations for users")
 
 
 @scoring_user_namespace.route("/<int:event_id>/leaderboard")
 class EventLeaderboard(Resource):
-    @scoring_user_namespace.doc(**GET_LEADERBOARD_DOC)
     @user_endpoint()
     @load_event(LoaderType.PARAM)
+    @scoring_user_namespace.doc(
+        description="Get the event leaderboard showing team rankings and scores with optional limit",
+        params={
+            "limit": {
+                "description": "Maximum number of teams to return on leaderboard",
+                "required": False,
+                "type": "integer",
+                "example": 50,
+                "default": 100
+            }
+        },
+        responses={
+            200: "Success - Returns ordered list of teams with scores and rankings",
+            403: "Forbidden - Authentication required",
+            404: "Not found - Event does not exist or has no scores",
+            500: "Internal Server Error",
+        },
+    )
     def get(self, event_id: int, event, current_user: User, **kwargs):
         """
         Get event leaderboard
@@ -58,7 +69,15 @@ class EventLeaderboard(Resource):
 
 @scoring_user_namespace.route("/<int:event_id>/me/team/score")
 class MyTeamScore(Resource):
-    @scoring_user_namespace.doc(**GET_TEAM_SCORE_DOC)
+    @scoring_user_namespace.doc(
+        description="Get current team score, rank, and optionally recent scoring history",
+        responses={
+            200: "Success - Returns team score, rank, and optional history",
+            403: "Forbidden - Authentication required",
+            404: "Not found - Team not found in event or no score exists",
+            500: "Internal Server Error",
+        },
+    )
     @user_endpoint()
     @load_event(LoaderType.PARAM)
     @load_team_by_user_and_event()
@@ -73,13 +92,30 @@ class MyTeamScore(Resource):
 
 @scoring_user_namespace.route("/<int:event_id>/challenges/<int:challenge_id>/questions/<int:question_id>/submit")
 class SubmitAnswer(Resource):
-    @scoring_user_namespace.doc(**SUBMIT_ANSWER_DOC)
     @user_endpoint(json_required=True)
     @load_event(LoaderType.PARAM)
     @load_challenge(LoaderType.PARAM)
     @load_question(LoaderType.PARAM)
     @load_team_by_user_and_event()
     @check_permissions(PermissionEnum.CAN_PLAY_CHALLENGES, "You do not have permission to play challenges.")
+    @scoring_user_namespace.doc(
+        description="Submit an answer to a challenge question for scoring",
+        params={
+            "submission": {
+                "description": "Answer submission text (4096 character max length)",
+                "in": "body",
+                "required": True,
+                "type": "string",
+                "example": "flag{example_answer}"
+            }
+        },
+        responses={
+            201: "Success - Answer accepted and scored",
+            400: "Bad request - Invalid submission, exceeded max attempts, or event locked",
+            401: "Unauthorized - Authentication required",
+            404: "Not found - Question, challenge, or team not found",
+        },
+    )
     def post(
         self,
         event_id: int,
@@ -111,13 +147,21 @@ class SubmitAnswer(Resource):
 
 @scoring_user_namespace.route("/<int:event_id>/challenges/<int:challenge_id>/hint/<int:hint_id>/redeem")
 class RedeemHint(Resource):
-    @scoring_user_namespace.doc(**REDEEM_HINT_DOC)
     @user_endpoint(json_required=False)
     @load_event(LoaderType.PARAM)
     @load_challenge(LoaderType.PARAM)
     @load_hint(LoaderType.PARAM)
     @load_team_by_user_and_event()
     @check_permissions(PermissionEnum.CAN_PLAY_CHALLENGES, "You do not have permission to play challenges.")
+    @scoring_user_namespace.doc(
+        description="Redeem a hint for a challenge, deducting points from the team's score",
+        responses={
+            201: "Success - Hint redeemed successfully",
+            400: "Bad request - Hint already redeemed, event locked, or hint doesn't belong to challenge",
+            401: "Unauthorized - Authentication required",
+            404: "Not found - Event, challenge, hint, or team not found",
+        },
+    )
     def post(
         self,
         event_id: int,

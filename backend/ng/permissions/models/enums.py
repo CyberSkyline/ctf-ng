@@ -8,6 +8,7 @@ class PermissionEnum(str,Enum):
     CAN_IMPERSONATE_USERS = "CAN_IMPERSONATE_USERS"
     CAN_VIEW_CHALLENGES = "CAN_VIEW_CHALLENGES"
     CAN_PLAY_CHALLENGES = "CAN_PLAY_CHALLENGES"
+    CAN_START_TEAM_TIMER = "CAN_START_TEAM_TIMER"
 
 class RoleEnum(str,Enum):
     ADMIN = "admin"
@@ -24,6 +25,7 @@ class DenyReason(Enum):
     TEAM_HAS_STARTED = auto()
     MISSING_ROLE = auto()
     GENERIC = auto()
+    TIME_LIMIT_EXCEEDED = auto()
 
 @dataclass
 class Denial:
