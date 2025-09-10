@@ -1,6 +1,8 @@
-from typing import Any
+from typing import Any, Literal
+from collections.abc import Callable
 
 from CTFd.models import db
+from sqlalchemy.orm import Mapped
 
 from ...core.utils.validator import BaseValidator
 
@@ -21,7 +23,7 @@ class ContainerBlueprint(db.Model):
     tty = db.Column(db.Boolean, nullable=True)
     command = db.Column(db.PickleType, nullable=True)
     entrypoint = db.Column(db.PickleType, nullable=True)
-    environment = db.Column(db.PickleType, nullable=True)
+    environment: Mapped[dict[str, str | Callable[[str], str]] | list[str] | None] = db.Column(db.PickleType, nullable=True)
     networks = db.Column(db.PickleType, nullable=True)
     cap_add = db.Column(db.PickleType, nullable=True)
     mem_limit = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_MEM_LIMIT_LENGTH), nullable=True)
@@ -89,12 +91,12 @@ class ContainerBlueprint(db.Model):
         stdin_open: bool | None = None,
         tty: bool | None = None,
         command: list[str] | None = None,
-        entrypoint: list[str] | None = None,
-        environment: dict[str, str] | None = None,
-        networks: list[str] | None = None,
-        cap_add: list[str] | None = None,
-        mem_limit: str | None = None,
-        memswap_limit: str | None = None,
+        entrypoint: str | list[str] | None = None,
+        environment: dict[str, str | Callable[[str], str]] | list[str] | None = None,
+        networks: list[str] | dict[str, None] | None = None,
+        cap_add: list[Literal['NET_ADMIN', 'SYS_PTRACE']] | None = None,
+        mem_limit: int | str | None = None,
+        memswap_limit: int | str | None = None,
         cpus: float | None = None,
         user: str | None = None,
         commit=True,
@@ -126,3 +128,12 @@ class ContainerBlueprint(db.Model):
         except Exception as e:
             db.session.rollback()
             raise e
+
+    def render_environment(self, team_seed: str) -> dict[str, str] | list[str]:
+        if not self.environment:
+            return {}
+
+        if isinstance(self.environment, list):
+            return self.environment
+
+        return {k: (v(team_seed) if isinstance(v, Callable) else v) for k, v in self.environment.items()}

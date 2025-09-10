@@ -1,11 +1,15 @@
 from CTFd.models import db
 import docker
 from sqlalchemy import func, select
+from sqlalchemy.orm import Mapped
 from typing import TypedDict
+
 from ..utils.get_client import get_client
+from ..utils.Client import Client
 from ... import config
 from .. constants import DOCKER_RUNNING, DOCKER_BRIDGE
 from ...challenge.models.ContainerBlueprint import ContainerBlueprint
+from ...team.models.Team import Team
 
 class SerializedInstanceStats(TypedDict):
     id: int
@@ -25,9 +29,9 @@ class ContainerInstance(db.Model):
     __tablename__ = "ng_container_instances"
     id = db.Column(db.Integer, primary_key=True)
     blueprint = db.Column(db.Integer, db.ForeignKey("ng_container_blueprints.id"), nullable=False)
-    team = db.Column(db.Integer, db.ForeignKey("ng_teams.id"), nullable=False)
+    team_id = db.Column(db.Integer, db.ForeignKey("ng_teams.id"), nullable=False)
     hostip = db.Column(db.String(255), nullable=False)
-    dockerid = db.Column(db.String(255), nullable=False)
+    dockerid: Mapped[str] = db.Column(db.String(255), nullable=False)
 
     def __repr__(self):
         return f"<ContainerInstance {self.id}>"
@@ -37,10 +41,10 @@ class ContainerInstance(db.Model):
         return cls.query.filter_by(id=instance_id).first()
 
     @classmethod
-    def create_container_instance(cls, blueprint: int, team: int, commit: bool = True):
+    def create_container_instance(cls, blueprint: int, team: Team, commit: bool = True):
         blueprint_obj = ContainerBlueprint.query.filter_by(id=blueprint).first()
 
-        db_exists = cls.query.filter_by(blueprint=blueprint, team=team).first()
+        db_exists = cls.query.filter_by(blueprint=blueprint, team=team.id).first()
 
         client = get_client(config.DOCKER_HOST)
 
@@ -100,15 +104,15 @@ class ContainerInstance(db.Model):
         }
 
     @staticmethod
-    def run_container(client, team, blueprint_obj):
+    def run_container(client: Client, team: Team, blueprint_obj: ContainerBlueprint):
         ctr = client.containers.run(
             blueprint_obj.image,
-            environment=blueprint_obj.environment,
-            name=ContainerInstance.render_container_name(team, blueprint_obj.hostname, blueprint_obj.challenge_id),
+            environment=blueprint_obj.render_environment(team.seed),
+            name=ContainerInstance.render_container_name(team.id, blueprint_obj.hostname, blueprint_obj.challenge_id),
             detach=True,
         )
 
-        # Get bridge network and remove to isolate challenge containres
+        # Get bridge network and remove to isolate challenge containers
         # From reaching out
         net = client.networks.list(names=[DOCKER_BRIDGE])
         net[0].disconnect(ctr)
@@ -132,7 +136,6 @@ class ContainerInstance(db.Model):
 
     @classmethod
     def get_service_instances(cls):
-        from ...challenge.models.ContainerBlueprint import ContainerBlueprint
         from ...challenge.models.Challenge import Challenge
         from ...team.models.Team import Team
         from ...event.models.Event import Event
@@ -140,7 +143,7 @@ class ContainerInstance(db.Model):
         qr = (db.session.query(
                 cls.id,
                 cls.blueprint,
-                cls.team,
+                cls.team_id,
                 Challenge.name.label("challenge_name"),
                 Team.name.label("team_name"),
                 Challenge.id.label("challenge_id"),
@@ -148,26 +151,24 @@ class ContainerInstance(db.Model):
                 Challenge.event_id.label("event_id"),
                 Event.name.label("event_name")
             )
-            .outerjoin(Team, cls.team == Team.id)
+            .outerjoin(Team, cls.team_id == Team.id)
             .outerjoin(Event, Team.event_id == Event.id)
             .outerjoin(ContainerBlueprint, cls.blueprint == ContainerBlueprint.id)
             .outerjoin(Challenge, ContainerBlueprint.challenge_id == Challenge.id)
-            .group_by(Challenge.id, cls.team)
+            .group_by(Challenge.id, cls.team_id)
             .all())
 
         return qr
 
     @classmethod
     def get_service_group(cls, challenge_id: int, team_id: int) -> list[SerializedContainerInstance]:
-        from ...challenge.models.ContainerBlueprint import ContainerBlueprint
-
         blueprints = ContainerBlueprint.query.filter_by(challenge_id=challenge_id).all()
 
         blueprint_ids = [blueprint.id for blueprint in blueprints]
 
         instances = db.session.scalars(
             select(cls)
-            .where(cls.blueprint.in_(blueprint_ids), cls.team == team_id)
+            .where(cls.blueprint.in_(blueprint_ids), cls.team_id == team_id)
         ).all()
 
 
@@ -204,7 +205,7 @@ class ContainerInstance(db.Model):
         return SerializedContainerInstance(
             id=self.id,
             blueprint=self.blueprint,
-            team=self.team,
+            team=self.team_id,
             hostip=self.hostip,
             dockerid=self.dockerid,
        )
@@ -234,9 +235,9 @@ class ContainerInstance(db.Model):
             pass
 
         finally:
-            new_ctr = self.run_container(client, self.team, blueprint_obj)
+            new_ctr = self.run_container(client, self.team_id, blueprint_obj)
 
-            self.connect_networks(client, self.team, blueprint_obj, new_ctr)
+            self.connect_networks(client, self.team_id, blueprint_obj, new_ctr)
 
             self.dockerid = new_ctr.id
             db.session.commit()

@@ -28,10 +28,11 @@ class TestHintVisibilityBeforeRedemption:
         Test that hint body is hidden when not yet redeemed
         """
         hint = Hint.create_hint(
-            challenge_id = challenge.id,
-            body = "The secret is in the cookies",
-            preview = "Check the HTTP headers",
-            deduction = 20,
+            name="Hint Name",
+            challenge_id=challenge.id,
+            body="The secret is in the cookies",
+            preview="Check the HTTP headers",
+            deduction=20,
         )
 
         serialized = hint.serialize(team = team_with_member)
@@ -59,6 +60,7 @@ class TestHintVisibilityBeforeRedemption:
         team2 = team_factory(event = event, members = [user2])
 
         hint = Hint.create_hint(
+            name = "Hint Name",
             challenge_id = challenge.id,
             body = "Use SQL injection on the login form",
             preview = "Database vulnerability",
@@ -92,10 +94,11 @@ class TestHintRedemptionFlow:
         Test that redeeming a hint reveals its body to that team only
         """
         hint = Hint.create_hint(
-            challenge_id = challenge.id,
-            body = "The flag format is FLAG{...}",
-            preview = "Flag format hint",
-            deduction = 15,
+            name="Hint Name",
+            challenge_id=challenge.id,
+            body="The flag format is FLAG{...}",
+            preview="Flag format hint",
+            deduction=15,
         )
 
         before = hint.serialize(team = team_with_member)
@@ -141,6 +144,7 @@ class TestHintRedemptionFlow:
         other_team = team_factory(event = event, members = [other_user])
 
         hint = Hint.create_hint(
+            name="Hint Name",
             challenge_id = challenge.id,
             body = "Check port 8080 for the admin panel",
             preview = "Hidden service",
@@ -175,10 +179,11 @@ class TestHintRedemptionFlow:
         Test that a team cannot redeem the same hint twice
         """
         hint = Hint.create_hint(
-            challenge_id = challenge.id,
-            body = "Duplicate redemption test",
-            preview = "Test hint",
-            deduction = 10,
+            name="Hint Name",
+            challenge_id=challenge.id,
+            body="Duplicate redemption test",
+            preview="Test hint",
+            deduction=10,
         )
 
         first_result = redeem_hint(
@@ -219,10 +224,11 @@ class TestChallengeRenderWithHintRedemption:
         hints = []
         for i in range(3):
             hint = Hint.create_hint(
-                challenge_id = challenge.id,
-                body = f"Full body of hint {i+1}",
-                preview = f"Preview of hint {i+1}",
-                deduction = 10 * (i + 1),
+                name=f"Hint {i+1}",
+                challenge_id=challenge.id,
+                body=f"Full body of hint {i+1}",
+                preview=f"Preview of hint {i+1}",
+                deduction=10 * (i + 1),
             )
             hints.append(hint)
 
@@ -269,16 +275,18 @@ class TestChallengeRenderWithHintRedemption:
         team2 = team_factory(event = event, members = [user2])
 
         hint1 = Hint.create_hint(
-            challenge_id = challenge.id,
-            body = "Team-specific body 1",
-            preview = "Hint 1",
-            deduction = 10,
+            name="Hint 1",
+            challenge_id=challenge.id,
+            body="Team-specific body 1",
+            preview="Hint 1",
+            deduction=10,
         )
         hint2 = Hint.create_hint(
-            challenge_id = challenge.id,
-            body = "Team-specific body 2",
-            preview = "Hint 2",
-            deduction = 20,
+            name="Hint 2",
+            challenge_id=challenge.id,
+            body="Team-specific body 2",
+            preview="Hint 2",
+            deduction=20,
         )
 
         HintRedemption.create_redemption(
@@ -334,16 +342,18 @@ class TestHintRedemptionWithScoring:
         db_session.commit()
 
         hint1 = Hint.create_hint(
-            challenge_id = challenge.id,
-            body = "First hint",
-            preview = "Hint 1",
-            deduction = 10,
+            name="Hint 1",
+            challenge_id=challenge.id,
+            body="First hint",
+            preview="Hint 1",
+            deduction=10,
         )
         hint2 = Hint.create_hint(
-            challenge_id = challenge.id,
-            body = "Second hint",
-            preview = "Hint 2",
-            deduction = 25,
+            name="Hint 2",
+            challenge_id=challenge.id,
+            body="Second hint",
+            preview="Hint 2",
+            deduction=25,
         )
 
         redeem_hint(
@@ -423,10 +433,11 @@ class TestAdminHintVisibility:
         Test that admins can see all hint bodies regardless of redemption
         """
         hint = Hint.create_hint(
-            challenge_id = challenge.id,
-            body = "Admin should see this",
-            preview = "Admin test",
-            deduction = 15,
+            name="Admin Hint",
+            challenge_id=challenge.id,
+            body="Admin should see this",
+            preview="Admin test",
+            deduction=15,
         )
 
         admin_view = hint.serialize(include_admin_fields = True)
@@ -446,10 +457,11 @@ class TestAdminHintVisibility:
         Test that admin with team context sees actual redemption state
         """
         hint = Hint.create_hint(
-            challenge_id = challenge.id,
-            body = "Admin with team context",
-            preview = "Test",
-            deduction = 20,
+            name="Admin with team context",
+            challenge_id=challenge.id,
+            body="Admin with team context",
+            preview="Test",
+            deduction=20,
         )
 
         HintRedemption.create_redemption(
@@ -487,13 +499,15 @@ class TestHintRedemptionEdgeCases:
         other_challenge = Challenge.create_challenge(
             name = "Other Challenge",
             event_id = event.id,
+            challenge_yaml="Initial Fake Data",  # TODO: Replace with actual data once round tripping is set up
         )
 
         hint = Hint.create_hint(
-            challenge_id = other_challenge.id,
-            body = "Wrong challenge hint",
-            preview = "Test",
-            deduction = 10,
+            name="Wrong Challenge Hint",
+            challenge_id=other_challenge.id,
+            body="Wrong challenge hint",
+            preview="Test",
+            deduction=10,
         )
 
         with pytest.raises(BusinessLogicError) as exc:
@@ -517,10 +531,11 @@ class TestHintRedemptionEdgeCases:
         Test that hints remain visible after event ends if already redeemed
         """
         hint = Hint.create_hint(
-            challenge_id = challenge.id,
-            body = "Historical hint",
-            preview = "Old hint",
-            deduction = 15,
+            name="Historical Hint",
+            challenge_id=challenge.id,
+            body="Historical hint",
+            preview="Old hint",
+            deduction=15,
         )
 
         HintRedemption.create_redemption(
@@ -561,22 +576,25 @@ class TestCompleteUserJourney:
         db_session.commit()
 
         easy_hint = Hint.create_hint(
-            challenge_id = challenge.id,
-            body = "Start by looking at the network traffic",
-            preview = "Where to begin?",
-            deduction = 5,
+            name="Hint 1",
+            challenge_id=challenge.id,
+            body="Start by looking at the network traffic",
+            preview="Where to begin?",
+            deduction=5,
         )
         medium_hint = Hint.create_hint(
-            challenge_id = challenge.id,
-            body = "The vulnerability is in the authentication header",
-            preview = "Authentication issue",
-            deduction = 15,
+            name="Hint 2",
+            challenge_id=challenge.id,
+            body="The vulnerability is in the authentication header",
+            preview="Authentication issue",
+            deduction=15,
         )
         hard_hint = Hint.create_hint(
-            challenge_id = challenge.id,
-            body = "Use base64 decode on the JWT token",
-            preview = "Decoding required",
-            deduction = 30,
+            name="Hint 3",
+            challenge_id=challenge.id,
+            body="Use base64 decode on the JWT token",
+            preview="Decoding required",
+            deduction=30,
         )
 
         initial_render = challenge.render(team_with_member)
