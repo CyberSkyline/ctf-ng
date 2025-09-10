@@ -72,11 +72,17 @@ def db_session(app):
         Permission.create_permission(PermissionEnum.CAN_IMPERSONATE_USERS, "Impersonate users")
         Permission.create_permission(PermissionEnum.CAN_EDIT_TEAM, "Edit team details")
         Permission.create_permission(PermissionEnum.CAN_EDIT_USER, "Edit user details")
+        Permission.create_permission(PermissionEnum.CAN_VIEW_CHALLENGES, "View challenges")
+        Permission.create_permission(PermissionEnum.CAN_PLAY_CHALLENGES, "Play challenges")
         Permission.create_permission(PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS, "Manage support tickets")
+        Permission.create_permission(PermissionEnum.CAN_START_TEAM_TIMER, "Start team timer")
         RolePermission.create_role_permission(1, 1)
         RolePermission.create_role_permission(1, 2)
         RolePermission.create_role_permission(1, 3)
         RolePermission.create_role_permission(1, 4)
+        RolePermission.create_role_permission(1, 5)
+        RolePermission.create_role_permission(1, 6)
+        RolePermission.create_role_permission(1, 7)
         yield db.session
         transaction.rollback()
         connection.close()
@@ -290,6 +296,7 @@ def event_factory(db_session):
             "locked": False,
             "start_time": utc_now() - timedelta(days=1),
             "end_time": utc_now() + timedelta(days=1),
+            "time_limit_minutes": 120,
         }
         defaults.update(kwargs)
         event = Event.create_event(**defaults)
@@ -361,6 +368,14 @@ def team_with_members(db_session, team_factory, user_factory):
     team = team_factory(members=users)
     return team
 
+@pytest.fixture
+def team_in_time_limited_event(db_session, event_factory, team_factory, user_factory):
+    """A test event with a time limit for testing time-limited access."""
+    user = user_factory(name="Time Limited User", email="timelimited@example.com")
+    event = event_factory(time_limit_minutes=1)
+    team = team_factory(event=event, members=[user])
+    return team
+
 
 @pytest.fixture
 def team_captain_client(app, db_session, team_with_members, role_with_permissions):
@@ -393,6 +408,23 @@ def started_player_client(app, db_session, team_with_members, role_with_permissi
         sess.clear()
         sess["id"] = team_with_members.members[0].user_id
         sess["name"] = team_with_members.members[0].user.ctfd_user.name
+        sess["type"] = "team"
+        sess["nonce"] = generate_nonce()
+        sess.permanent = False
+    return client
+
+@pytest.fixture
+def time_limited_player_client(app, db_session, team_in_time_limited_event , role_with_permissions):
+    """A test client logged in as a player who has exceeded their time limit."""
+
+    from CTFd.cache import cache
+
+    cache.clear()
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess.clear()
+        sess["id"] = team_in_time_limited_event.members[0].user_id
+        sess["name"] = team_in_time_limited_event.members[0].user.ctfd_user.name
         sess["type"] = "team"
         sess["nonce"] = generate_nonce()
         sess.permanent = False

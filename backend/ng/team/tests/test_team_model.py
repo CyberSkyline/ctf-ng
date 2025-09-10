@@ -3,7 +3,7 @@ import pytest
 # from sqlalchemy.exc import IntegrityError
 
 from ...core.exceptions import ValidationError
-
+from datetime import datetime
 from ..models.Team import Team
 from ..models.TeamMember import TeamMember
 from ..models.enums import TeamRole
@@ -262,3 +262,16 @@ class Test_TeamMember_Validation:
 
         assert validated_data["user_id"] == user3.id
         assert validated_data["team_id"] == team.id
+
+class Test_Setting_Team_End_Time:
+    def test_should_set_end_time(self, team_factory, user):
+        team = team_factory(members=[user])
+        assert team.end_time is None
+
+        team.set_end_time(end_time=datetime(2024, 12, 31, 23, 59, 59))
+
+        refreshed_team = Team.query.get(team.id)
+
+        assert refreshed_team.end_time is not None
+        assert str(refreshed_team.end_time) == "2024-12-31 23:59:59"
+

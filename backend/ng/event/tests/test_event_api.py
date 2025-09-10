@@ -767,6 +767,65 @@ class Test_Event_Team_Management:
         assert "You do not have permission to update the team name" in data[
             "errors"]["forbidden"]
 
+class Test_Event_Team_Start:
+    def post_endpoint(self, event_id: int) -> str:
+        return f"/ng/events/{event_id}/me/team/start"
+
+    def test_start_event_for_team(self, team_captain_client):
+        response = team_captain_client.post(
+            self.post_endpoint(1),
+            json = {}
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"]
+        assert "start_timestamp" in data["data"]
+        assert data["data"]["start_timestamp"] is not None
+
+    def test_start_event_for_team_not_privileged(self, team_member_client):
+        response = team_member_client.post(
+            self.post_endpoint(1),
+            json = {}
+        )
+        assert response.status_code == 403
+        data = response.get_json()
+        assert not data["success"]
+        assert "errors" in data
+        assert "MISSING_ROLE" in data["errors"]["forbidden"]
+
+    def test_start_event_for_team_event_closed(self, closed_event_client):
+        response = closed_event_client.post(
+            self.post_endpoint(1),
+            json = {}
+        )
+        assert response.status_code == 403
+        data = response.get_json()
+
+        assert not data["success"]
+        assert "errors" in data
+        assert "EVENT_LOCKED" in data["errors"]["forbidden"]
+
+    def test_start_event_for_team_already_started(self, team_captain_client):
+        # Start the event first time
+        response = team_captain_client.post(
+            self.post_endpoint(1),
+            json = {}
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"]
+
+        # Attempt to start the event again
+        response = team_captain_client.post(
+            self.post_endpoint(1),
+            json = {}
+        )
+        assert response.status_code == 403
+        data = response.get_json()
+        assert not data["success"]
+        assert "errors" in data
+        assert "TEAM_HAS_STARTED" in data["errors"]["forbidden"]
+
 
 class Test_Event_Admin_Register:
     def post_endpoint(self, event_id: int, user_id: int) -> str:
@@ -1077,7 +1136,6 @@ class Test_Event_Challenge_List:
         challenge = challenge_factory(event_id=1, name="RSA Decryption")
 
         response = started_player_client.get(self.get_endpoint(challenge.event_id))
-        print(response.get_json())
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
