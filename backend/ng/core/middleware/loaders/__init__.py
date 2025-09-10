@@ -13,6 +13,7 @@ from .load_ticket_tag import load_ticket_tag
 from .load_user import load_user
 from .load_container_instance import load_container_instance
 from .load_indvidual_container_by_user import load_indvidual_container_by_user
+from .load_notification import load_notification
 
 __all__ = [
     "LoaderType",
@@ -30,4 +31,5 @@ __all__ = [
     "load_team_by_user_and_event",
     "load_container_instance",
     "load_indvidual_container_by_user",
+    "load_notification",
 ]

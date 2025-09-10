@@ -3,6 +3,7 @@ Notification service handling both stored
 notifications and WebSocket refetch events
 """
 
+from enum import Enum
 from CTFd.models import db
 
 from ...core.utils.emitters import (
@@ -23,6 +24,15 @@ from ..models import (
 from ...team.models import TeamMember
 
 
+class WebSocketEvent(str, Enum):
+    """
+    Enum for WebSocket event names for type safety
+    """
+    REFETCH = "refetch"
+    NOTIFICATION = "notification"
+    SYSTEM_ANNOUNCEMENT = "system_announcement"
+
+
 class NotificationService:
     """
     Stored notifications & WebSocket refetch events using Redis pub/sub
@@ -39,14 +49,14 @@ class NotificationService:
         """
         try:
             if user_ids:
-                emit_to_users("refetch", {"path": path}, user_ids)
+                emit_to_users(WebSocketEvent.REFETCH, {"path": path}, user_ids)
             elif team_id:
-                emit_to_team("refetch", {"path": path}, team_id)
+                emit_to_team(WebSocketEvent.REFETCH, {"path": path}, team_id)
             elif event_id:
-                emit_to_event("refetch", {"path": path}, event_id)
+                emit_to_event(WebSocketEvent.REFETCH, {"path": path}, event_id)
             else:
                 # Fallback to admin broadcast
-                emit_to_admins("refetch", {"path": path})
+                emit_to_admins(WebSocketEvent.REFETCH, {"path": path})
 
         except Exception:
             pass
@@ -57,7 +67,7 @@ class NotificationService:
         Send WebSocket event for a new notification to specific user
         """
         emit_to_user(
-            "notification",
+            WebSocketEvent.NOTIFICATION,
             notification.serialize(),
             user_id = notification.recipient_id
         )
@@ -244,7 +254,7 @@ class NotificationService:
         )
 
         emit_event(
-            event_name = "system_announcement",
+            event_name = WebSocketEvent.SYSTEM_ANNOUNCEMENT,
             data = {
                 "title": title,
                 "message": message,

@@ -172,48 +172,12 @@ class TestMarkNotificationRead:
             title = "Unread notification"
         )
 
-        result = mark_notification_read(
-            notification_id = notification.id,
-            user_id = user.id
-        )
+        result = mark_notification_read(notification)
 
         assert isinstance(result, Notification)
         assert result.id == notification.id
         assert result.is_read is True
         assert result.read_at is not None
-
-    def test_mark_notification_read_not_found(self, db_session, user):
-        """
-        Test marking non-existent notification fails
-        """
-        with pytest.raises(NotFoundError) as exc_info:
-            mark_notification_read(notification_id = 99999, user_id = user.id)
-
-        assert "Notification 99999 not found" in str(exc_info.value)
-
-    def test_mark_notification_read_permission_denied(
-        self,
-        db_session,
-        user,
-        admin,
-        notification_factory
-    ):
-        """
-        Test marking other user's notification fails
-        """
-        notification = notification_factory(
-            recipient_id = admin.id,
-            read_at = None,
-            title = "Admin's notification"
-        )
-
-        with pytest.raises(PermissionError) as exc_info:
-            mark_notification_read(
-                notification_id = notification.id,
-                user_id = user.id
-            )
-
-        assert "cannot mark other users' notifications" in str(exc_info.value)
 
     def test_mark_notification_read_already_read(
         self,
@@ -231,10 +195,7 @@ class TestMarkNotificationRead:
             title = "Already read"
         )
 
-        result = mark_notification_read(
-            notification_id = notification.id,
-            user_id = user.id
-        )
+        result = mark_notification_read(notification)
 
         assert result.read_at == read_time.replace(tzinfo = None)
 
@@ -614,10 +575,7 @@ class TestControllerIntegration:
         assert len(unread_notifications) == 2
 
         # 3. Mark one as read
-        mark_notification_read(
-            notification_id = notification1.id,
-            user_id = user.id
-        )
+        mark_notification_read(notification1)
 
         # 4. Check updated counts
         unread_notifications = get_my_notifications(

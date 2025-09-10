@@ -40,14 +40,16 @@ def emit_event(event_name, data, user_ids = None):
                 data = data
             )
             logger.info(
-                f"Published WebSocket event '{event_name}' for {len(target_user_ids)} users."
+                "Published WebSocket event '%s' for %d users.",
+                event_name, len(target_user_ids)
             )
         else:
-            logger.debug(f"No target users found for event '{event_name}'")
+            logger.debug("No target users found for event '%s'", event_name)
 
     except Exception as e:
         logger.error(
-            f"Failed to emit WebSocket event '{event_name}': {e}",
+            "Failed to emit WebSocket event '%s': %s",
+            event_name, e,
             exc_info = True
         )
 
@@ -61,7 +63,7 @@ def _get_team_member_user_ids(team_id):
         members = TeamMember.query.filter_by(team_id = team_id).all()
         return [member.user_id for member in members]
     except Exception as e:
-        logger.error(f"Error getting team members for team {team_id}: {e}")
+        logger.error("Error getting team members for team %s: %s", team_id, e)
         return []
 
 
@@ -75,7 +77,8 @@ def _get_event_participant_user_ids(event_id):
         return [member.user_id for member in members]
     except Exception as e:
         logger.error(
-            f"Error getting event participants for event {event_id}: {e}"
+            "Error getting event participants for event %s: %s",
+            event_id, e
         )
         return []
 
@@ -89,7 +92,7 @@ def _get_admin_user_ids():
         admins = Users.query.filter_by(type = 'admin').all()
         return [admin.id for admin in admins]
     except Exception as e:
-        logger.error(f"Error getting admin users: {e}")
+        logger.error("Error getting admin users: %s", e)
         return []
 
 

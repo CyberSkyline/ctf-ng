@@ -177,7 +177,9 @@ class TestNotificationEndpoints:
         assert data["data"]["count"] == 2
 
     def test_get_unread_count_zero(self, logged_in_client, user):
-        """Test getting unread count when no unread notifications"""
+        """
+        Test getting unread count when no unread notifications
+        """
         response = logged_in_client.get("/ng/notifications/me/unread-count")
 
         assert response.status_code == 200
@@ -352,7 +354,9 @@ class TestNotificationEndpoints:
             assert notification.read_at is not None
 
     def test_mark_all_read_empty(self, logged_in_client):
-        """Test marking all as read when no notifications exist"""
+        """
+        Test marking all as read when no notifications exist
+        """
         with logged_in_client.session_transaction() as sess:
             nonce = sess.get("nonce")
 
@@ -441,7 +445,9 @@ class TestNotificationEndpoints:
         assert data["data"] == []
 
     def test_unauthenticated_user_requests_fail(self, client):
-        """Test that unauthenticated requests fail"""
+        """
+        Test that unauthenticated requests fail
+        """
         endpoints = [
             "/ng/notifications/me",
             "/ng/notifications/me/unread-count",
@@ -463,7 +469,9 @@ class TestNotificationEndpoints:
         admin,
         db_session
     ):
-        """Test sending system-wide announcement"""
+        """
+        Test sending system-wide announcement
+        """
         response = admin_client.post(
             "/ng/admin/notifications/announce",
             json = {

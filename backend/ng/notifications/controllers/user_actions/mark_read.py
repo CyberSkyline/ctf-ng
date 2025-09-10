@@ -2,28 +2,13 @@
 Mark notifications as read
 """
 
-from ....core.exceptions import (
-    NotFoundError,
-    PermissionError,
-)
 from ...models import Notification
 
 
-def mark_notification_read(
-    notification_id: int,
-    user_id: int,
-) -> Notification:
+def mark_notification_read(notification: Notification) -> Notification:
     """
-    Mark a single notification as read.
+    Mark a single notification as read
     """
-    notification = Notification.find_by_id(notification_id)
-
-    if not notification:
-        raise NotFoundError(f"Notification {notification_id} not found")
-
-    if notification.recipient_id != user_id:
-        raise PermissionError("You cannot mark other users' notifications as read")
-
     notification.mark_as_read()
     return notification
 

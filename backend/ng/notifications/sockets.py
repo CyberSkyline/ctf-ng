@@ -37,7 +37,8 @@ def initialize_notification_sockets(socketio):
 
         user_connections[user.id].append(request.sid)
         logger.debug(
-            f"User {user.id} connected with SID {request.sid}. Total connections: {len(user_connections[user.id])}"
+            "User %s connected with SID %s. Total connections: %d",
+            user.id, request.sid, len(user_connections[user.id])
         )
         return True
 
@@ -57,7 +58,8 @@ def initialize_notification_sockets(socketio):
                 del user_connections[user.id]
 
             logger.debug(
-                f"User {user.id} disconnected. Remaining connections: {len(user_connections.get(user.id, []))}"
+                "User %s disconnected. Remaining connections: %d",
+                user.id, len(user_connections.get(user.id, []))
             )
 
     @socketio.on("ping")

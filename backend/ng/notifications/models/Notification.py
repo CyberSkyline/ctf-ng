@@ -281,6 +281,7 @@ class Notification(db.Model):
         title: str,
         message: str,
         recipient_id: int,
+        *,
         sender_id: int | None = None,
         ticket_id: int | None = None,
         team_id: int | None = None,

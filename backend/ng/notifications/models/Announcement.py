@@ -188,6 +188,7 @@ class Announcement(db.Model):
         announcement_type: AnnouncementType,
         title: str,
         message: str,
+        *,
         sender_id: int | None = None,
         event_id: int | None = None,
         expires_at: Any | None = None,
