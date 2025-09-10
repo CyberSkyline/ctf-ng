@@ -63,6 +63,7 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
             description=challenge_info.description,
             summary=challenge_info.summary,
             commit=False,
+            challenge_yaml=payload.decode("utf-8"),
         )
 
         hints = compose_file.challenge.hints or []

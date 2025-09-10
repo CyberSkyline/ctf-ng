@@ -499,6 +499,7 @@ class TestHintRedemptionEdgeCases:
         other_challenge = Challenge.create_challenge(
             name = "Other Challenge",
             event_id = event.id,
+            challenge_yaml="Initial Fake Data",  # TODO: Replace with actual data once round tripping is set up
         )
 
         hint = Hint.create_hint(

@@ -33,6 +33,7 @@ class Challenge(db.Model):
     icon = db.Column(db.String(MAX_CHALLENGE_ICON_LENGTH), nullable=True)
     summary = db.Column(db.String(MAX_CHALLENGE_SUMMARY_LENGTH), nullable=True)
     event_id = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
+    challenge_yaml = db.Column(db.Text, nullable=True)
 
     event = db.relationship("Event", back_populates="challenges")
     hints = db.relationship("Hint", back_populates="challenge", cascade="all, delete-orphan")
@@ -108,6 +109,12 @@ class Challenge(db.Model):
             required=True,
             friendly_name="Event ID",
         )
+        validator.validate_string(
+            data,
+            "challenge_yaml",
+            required=True,
+            friendly_name="Challenge YAML",
+        )
 
         return validator.validate()
 
@@ -115,6 +122,7 @@ class Challenge(db.Model):
     def create_challenge(
         cls,
         name: str,
+        challenge_yaml: str,
         icon: str | None = "",
         description: str | None = "",
         summary: str | None = "",
@@ -129,6 +137,7 @@ class Challenge(db.Model):
                     "description": description,
                     "summary": summary,
                     "event_id": event_id,
+                    "challenge_yaml": challenge_yaml,
                 }
             )
             challenge = cls(**validated_data)
