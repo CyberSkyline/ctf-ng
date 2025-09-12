@@ -10,7 +10,7 @@
     "external"
   ],
   "stubPath": "typings",
-  "reportMissingImports": false,
+  "reportMissingImports": true,
   "reportMissingTypeStubs": false,
   "reportAttributeAccessIssue": false,
   "reportOptionalMemberAccess": false,

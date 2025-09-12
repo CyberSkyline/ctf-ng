@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 from typing import Any, TypedDict, NotRequired
+from sqlalchemy.orm import Mapped
 
 from CTFd.models import db
+from ng.challenge.models import ChallengeTag, ChallengeVariable, ContainerBlueprint, Hint, Question
+from ng.event.models import Event
 
 from ...core.utils.validator import BaseValidator
 
@@ -27,19 +30,20 @@ class SerializedChallenge(TypedDict):
 class Challenge(db.Model):
     __tablename__ = "ng_challenges"
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(MAX_CHALLENGE_NAME_LENGTH), nullable=False)
-    description = db.Column(db.String(MAX_CHALLENGE_DESCRIPTION_LENGTH), nullable=True)
-    icon = db.Column(db.String(MAX_CHALLENGE_ICON_LENGTH), nullable=True)
-    summary = db.Column(db.String(MAX_CHALLENGE_SUMMARY_LENGTH), nullable=True)
-    event_id = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
-    challenge_yaml = db.Column(db.Text, nullable=True)
+    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    name: Mapped[str] = db.Column(db.String(MAX_CHALLENGE_NAME_LENGTH), nullable=False)
+    description: Mapped[str] = db.Column(db.String(MAX_CHALLENGE_DESCRIPTION_LENGTH), nullable=True)
+    icon: Mapped[str] = db.Column(db.String(MAX_CHALLENGE_ICON_LENGTH), nullable=True)
+    summary: Mapped[str] = db.Column(db.String(MAX_CHALLENGE_SUMMARY_LENGTH), nullable=True)
+    event_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
+    challenge_yaml: Mapped[str] = db.Column(db.Text, nullable=True)
 
-    event = db.relationship("Event", back_populates="challenges")
-    hints = db.relationship("Hint", back_populates="challenge", cascade="all, delete-orphan")
-    tags = db.relationship("ChallengeTag", back_populates="challenge", cascade="all, delete-orphan")
-    questions = db.relationship("Question", back_populates="challenge", cascade="all, delete-orphan")
-    variables = db.relationship("ChallengeVariable", back_populates="challenge", cascade="all, delete-orphan")
+    event: Mapped[Event] = db.relationship("Event", back_populates="challenges")
+    hints: Mapped[list[Hint]] = db.relationship("Hint", back_populates="challenge", cascade="all, delete-orphan")
+    tags: Mapped[list[ChallengeTag]] = db.relationship("ChallengeTag", back_populates="challenge", cascade="all, delete-orphan")
+    questions: Mapped[list[Question]] = db.relationship("Question", back_populates="challenge", cascade="all, delete-orphan")
+    variables: Mapped[list[ChallengeVariable]] = db.relationship("ChallengeVariable", back_populates="challenge", cascade="all, delete-orphan")
+    blueprints: Mapped[list[ContainerBlueprint]] = db.relationship("ContainerBlueprint", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<NgChallenge {self.id}, name={self.name}, icon={self.icon}>"

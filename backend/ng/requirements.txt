@@ -12,6 +12,7 @@ Flask-SocketIO==5.5.1
 python-socketio==5.13.0
 gevent-websocket==0.10.1
 types-Flask-SocketIO==5.5.0.20250809
+types-Flask-SQLAlchemy==2.5.1
 #redis==6.2.0
 docker==7.1.0
 types-docker==7.1.0.20250822
