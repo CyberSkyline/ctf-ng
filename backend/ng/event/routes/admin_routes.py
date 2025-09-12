@@ -19,14 +19,6 @@ from ..controllers import (
 )
 from ...event.models.Event import Event
 
-from ._docs import (
-    ADMIN_LIST_EVENTS_DOC,
-    ADMIN_CREATE_EVENT_DOC,
-    ADMIN_GET_EVENT_DOC,
-    ADMIN_UPDATE_EVENT_DOC,
-    ADMIN_REGISTER_USER_DOC,
-    ADMIN_CREATE_CHALLENGE_DOC,
-)
 
 
 events_admin_namespace = Namespace(
@@ -37,7 +29,15 @@ events_admin_namespace = Namespace(
 
 @events_admin_namespace.route("")
 class EventList(Resource):
-    @events_admin_namespace.doc(**ADMIN_LIST_EVENTS_DOC)
+    @events_admin_namespace.doc(
+        description="Get all events (public and private) for admin management",
+        responses={
+            200: "Success - Returns list of all events",
+            404: "Not found - No events found",
+            403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
+        },
+    )
     @admin_endpoint()
     def get(self, **kwargs):
         """
@@ -46,7 +46,45 @@ class EventList(Resource):
         events = Event.get_all_events(public_only = False)
         return success_response(events)
 
-    @events_admin_namespace.doc(**ADMIN_CREATE_EVENT_DOC)
+    @events_admin_namespace.doc(
+        description="Create a new event with scheduling and configuration options",
+        params={
+            "name": {
+                "description": "Event name (256 character max length)",
+                "in": "body",
+                "required": True,
+            "type": "string",
+            "example": "New CTF Event"
+            },
+            "description": {
+                "description": "Event description (1000 character max length)",
+                "in": "body",
+                "required": False,
+                "type": "string",
+                "example": "Description of the new event"
+            },
+            "start_time": {
+                "description": "Event start time in ISO format",
+                "in": "body",
+                "required": False,
+                "type": "string",
+                "example": "2023-10-01T00:00:00Z"
+            },
+            "end_time": {
+                "description": "Event end time in ISO format",
+                "in": "body",
+                "required": False,
+                "type": "string",
+                "example": "2023-10-31T23:59:59Z"
+            }
+        },
+        responses={
+            201: "Success - Event created successfully",
+            400: "Bad request - Validation failed or name conflict",
+            403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
+        }
+    )
     @admin_endpoint(json_required = True, validation_func = Event.validate)
     def post(self, validated_data, **kwargs):
         """
@@ -59,7 +97,13 @@ class EventList(Resource):
 
 @events_admin_namespace.route("/<int:event_id>")
 class EventDetail(Resource):
-    @events_admin_namespace.doc(**ADMIN_GET_EVENT_DOC)
+    @events_admin_namespace.doc(description="Get detailed information about a specific event",
+    responses={
+        200: "Success - Returns event details",
+        404: "Not found - Event does not exist",
+        403: "Forbidden - Admin access required",
+        500: "Internal Server Error",
+    },)
     @admin_endpoint()
     @load_event(source = LoaderType.PARAM)
     def get(self, event_id, event, **kwargs):
@@ -68,7 +112,46 @@ class EventDetail(Resource):
         """
         return success_response(event)
 
-    @events_admin_namespace.doc(**ADMIN_UPDATE_EVENT_DOC)
+    @events_admin_namespace.doc(
+        description="Update an existing event's configuration and settings",
+        params={
+            "name": {
+                "description": "Updated event name (256 character max length)",
+                "in": "body",
+                "required": False,
+            "type": "string",
+            "example": "Updated Event Name"
+        },
+        "description": {
+            "description": "Updated event description (1000 character max length)",
+            "in": "body",
+            "required": False,
+            "type": "string",
+            "example": "Updated description of the event"
+        },
+        "start_time": {
+            "description": "Updated event start time in ISO format",
+            "in": "body",
+            "required": False,
+            "type": "string",
+            "example": "2023-10-01T00:00:00Z"
+        },
+        "end_time": {
+            "description": "Updated event end time in ISO format",
+            "in": "body",
+            "required": False,
+            "type": "string",
+            "example": "2023-10-31T23:59:59Z"
+        }
+    },
+        responses={
+            200: "Success - Event updated successfully",
+            400: "Bad request - Validation failed",
+            404: "Not found - Event does not exist",
+            403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
+        }
+    )
     @admin_endpoint(json_required = True, validation_func = Event.validate)
     @load_event(source = LoaderType.PARAM)
     def put(self, event_id, event, validated_data, **kwargs):
@@ -82,7 +165,32 @@ class EventDetail(Resource):
 
 @events_admin_namespace.route("/<int:event_id>/<int:user_id>/register")
 class EventRegister(Resource):
-    @events_admin_namespace.doc(**ADMIN_REGISTER_USER_DOC)
+    @events_admin_namespace.doc(
+        description="Register a user for an event using invite code or team name",
+        params={
+            "invite_code": {
+                "description": "Invite code for joining an existing team",
+                "in": "body",
+                "required": False,
+            "type": "string",
+            "example": "xchfg459fghj"
+        },
+        "team_name": {
+            "description": "Name for creating a new team",
+            "in": "body",
+            "required": False,
+            "type": "string",
+            "example": "My Team"
+        }
+    },
+        responses={
+            200: "Success - User registered for event",
+            400: "Bad request - Missing invite_code or team_name",
+            404: "Not found - Event or user does not exist",
+            403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
+        },
+    )
     @admin_endpoint(json_required = True)
     @load_event(source = LoaderType.PARAM)
     @load_user(source = LoaderType.PARAM)
@@ -108,7 +216,46 @@ class EventRegister(Resource):
 
 @events_admin_namespace.route("/<int:event_id>/challenges")
 class EventChallenges(Resource):
-    @events_admin_namespace.doc(**ADMIN_CREATE_CHALLENGE_DOC)
+    @events_admin_namespace.doc(
+        description="Create a challenge for an event using YAML configuration",
+        params={
+            "name": {
+                "description": "Challenge name",
+                "in": "body",
+                "required": True,
+            "type": "string",
+            "example": "Web Security Challenge"
+        },
+        "description": {
+            "description": "Challenge description and instructions",
+            "in": "body",
+            "required": True,
+            "type": "string",
+            "example": "Find the vulnerability in this web application"
+        },
+        "value": {
+            "description": "Point value for the challenge",
+            "in": "body",
+            "required": True,
+            "type": "integer",
+            "example": 100
+        },
+        "category": {
+            "description": "Challenge category",
+            "in": "body",
+            "required": True,
+            "type": "string",
+            "example": "Web"
+        }
+    },
+    responses={
+        200: "Success - Challenge created successfully",
+        400: "Bad request - Invalid challenge data",
+        404: "Not found - Event does not exist",
+        403: "Forbidden - Admin access required",
+        500: "Internal Server Error",
+    },
+)
     @admin_endpoint(json_required = True)
     @load_event(source = LoaderType.PARAM)
     def post(self, event_id, event, json_data, **kwargs):

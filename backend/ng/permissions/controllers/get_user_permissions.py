@@ -1,16 +1,17 @@
 from ..models.UserRole import UserRole
 from ..models.Role import Role
-
+from ..models.enums import PermissionCheck
 
 def get_user_permissions(user):
-    """Get all permissions for a specific user.
+    """Get all Role based permissions for a specific user.
 
     Args:
         user (User): The user object.
 
     Returns:
-        list: A list of permissions assigned to the user.
+        PermissionCheck: An object containing permission grants and denials.
     """
+    trace = PermissionCheck()
     user_roles = UserRole.get_user_roles(user.id)
     permissions = []
 
@@ -18,4 +19,7 @@ def get_user_permissions(user):
         role_permissions = Role.get_permissions(role.id)
         permissions.extend(role_permissions)
 
-    return list(set(permissions))
+    for permission in set(permissions):
+        trace.add_grant(permission)
+
+    return trace

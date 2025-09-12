@@ -175,18 +175,34 @@ export interface ContainerStatus {
 export interface Ticket {
   id: number;
   subject: string;
+  author_id: number;
+  author_name: string;
+  status: string;
+  opened_timestamp: Date;
+  last_updated: Date;
   event_id?: number;
   event_name?: string;
   team_id?: number;
   team_name?: string;
   challenge_id?: number;
   challenge_name?: string;
-  status: 'open' | 'closed' | 'inprogress';
-  last_updated: Date;
-  opened_timestamp: Date;
-  author_id: number;
   message_count: number;
-  tags: string[]
+}
+
+export interface TicketTag {
+  id: number;
+  name: string;
+  color?: string;
+  description?: string;
+  ticket_count: number;
+}
+
+export interface AdminTicket extends Ticket {
+  assigned_to?: number;
+  assigned_to_name?: string;
+  muted: boolean;
+  closed_timestamp?: Date;
+  tags: TicketTag[];
 }
 
 export interface TicketMessage {

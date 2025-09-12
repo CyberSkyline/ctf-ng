@@ -39,7 +39,7 @@ class SerializedTicket(TypedDict):
     closed_timestamp: NotRequired[str | None]
     muted: NotRequired[bool]
     first_admin_response_timestamp: NotRequired[str | None]
-    tags: NotRequired[list[str]]
+    tags: NotRequired[list[dict[str, str | int | None]]]
     # Admin name enrichment fields
     assigned_to_name: NotRequired[str | None]
 
@@ -167,7 +167,7 @@ class Ticket(db.Model):
                     "closed_timestamp": self.closed_timestamp.isoformat() + "Z" if self.closed_timestamp else None,
                     "muted": self.muted,
                     "first_admin_response_timestamp": first_admin_response_timestamp,
-                    "tags": [tag.name for tag in self.tags],
+                    "tags": [{"id": tag.id, "name": tag.name, "color": tag.color} for tag in self.tags],
                 }
             )
 

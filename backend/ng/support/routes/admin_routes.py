@@ -33,31 +33,55 @@ from ..controllers import (
     create_ticket_message,
 )
 
-from ._docs import (
-    LIST_TICKETS_DOC,
-    GET_TICKET_DOC,
-    ADD_ADMIN_MESSAGE_DOC,
-    SET_TICKET_TAGS_DOC,
-    ASSIGN_TICKET_DOC,
-    UNASSIGN_TICKET_DOC,
-    UPDATE_STATUS_DOC,
-    UPDATE_MUTE_DOC,
-    SET_TICKET_EVENT_DOC,
-    REMOVE_TICKET_EVENT_DOC,
-    SET_TICKET_CHALLENGE_DOC,
-    REMOVE_TICKET_CHALLENGE_DOC,
-    LIST_TAGS_DOC,
-    CREATE_TAG_DOC,
-    UPDATE_TAG_DOC,
-)
+
 
 support_admin_namespace = Namespace("admin/support", description="Admin support ticket operations")
 
 
 @support_admin_namespace.route("/tickets")
 class AdminTickets(Resource):
-    @support_admin_namespace.doc(**LIST_TICKETS_DOC)
     @admin_endpoint()
+    @support_admin_namespace.doc(
+        description="Get all support tickets with optional filters and enriched names (Admin only). Returns tickets with author_name, assigned_to_name, event_name, team_name, challenge_name, and full tag objects (with id, name, color).",
+        params={
+            "user_id": {
+                "description": "Filter by ticket author ID",
+                "required": False,
+                "type": "integer",
+                "example": 123
+            },
+            "status": {
+                "description": "Filter by ticket status. Options: 'all', 'open', 'closed'. Default: 'all'",
+                "required": False,
+                "type": "string",
+                "example": "open"
+            },
+            "assigned_to": {
+                "description": "Filter by assigned user ID",
+                "required": False,
+                "type": "integer",
+                "example": 456
+            },
+            "event_id": {
+                "description": "Filter by event ID",
+                "required": False,
+                "type": "integer",
+                "example": 1
+            },
+            "team_id": {
+                "description": "Filter by team ID",
+                "required": False,
+                "type": "integer",
+                "example": 42
+            }
+        },
+        returns={
+            200: "Success - Returns filtered list of tickets",
+            400: "Bad request - Invalid filter parameters",
+            403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
+        },
+    )
     def get(self, current_user: User, **kwargs):
         """
         Get all tickets with optional filters
@@ -82,9 +106,25 @@ class AdminTickets(Resource):
 
 @support_admin_namespace.route("/tickets/<int:ticket_id>")
 class AdminTicket(Resource):
-    @support_admin_namespace.doc(**GET_TICKET_DOC)
     @admin_endpoint()
     @load_ticket(LoaderType.PARAM)
+    @support_admin_namespace.doc(
+        description="Get any support ticket with all messages and full tag objects (Admin only)",
+        params={
+            "ticket_id": {
+                "description": "Ticket ID",
+                "required": True,
+                "type": "integer",
+                "example": 123
+            }
+        },
+        responses={
+            200: "Success - Returns ticket details and message thread",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Ticket does not exist",
+            500: "Internal Server Error",
+        },
+    )
     def get(self, ticket_id: int, ticket, current_user: User, **kwargs):
         """
         Get any ticket with all messages
@@ -95,9 +135,33 @@ class AdminTicket(Resource):
 
 @support_admin_namespace.route("/tickets/<int:ticket_id>/add_message")
 class AdminTicketMessage(Resource):
-    @support_admin_namespace.doc(**ADD_ADMIN_MESSAGE_DOC)
     @admin_endpoint(json_required=True)
     @load_ticket(LoaderType.PARAM)
+    @support_admin_namespace.doc(
+        description="Add admin message to any ticket (reopens closed tickets) (Admin only)",
+        params={
+            "ticket_id": {
+                "description": "Ticket ID",
+                "required": True,
+                "type": "integer",
+                "example": 123
+            },
+            "text": {
+                "description": "Message content (4096 character max length)",
+                "in": "body",
+                "required": True,
+                "type": "string",
+                "example": "Hi there! I've reviewed your issue and here's the solution..."
+            }
+        },
+        responses={
+            201: "Success - Message added and ticket reopened if necessary",
+            400: "Bad request - Missing message text",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Ticket does not exist",
+            500: "Internal Server Error",
+        },
+    )
     def post(self, ticket_id: int, ticket, current_user: User, json_data, **kwargs):
         """
         Add admin message (reopens closed tickets)
@@ -113,9 +177,33 @@ class AdminTicketMessage(Resource):
 
 @support_admin_namespace.route("/tickets/<int:ticket_id>/tag")
 class AdminTicketTags(Resource):
-    @support_admin_namespace.doc(**SET_TICKET_TAGS_DOC)
     @admin_endpoint(json_required=True)
     @load_ticket(LoaderType.PARAM)
+    @support_admin_namespace.doc(
+        description="Set tags on a ticket (replaces all existing tags) (Admin only). Returns ticket with full tag objects containing id, name, and color.",
+        params={
+            "ticket_id": {
+                "description": "Ticket ID",
+                "required": True,
+                "type": "integer",
+                "example": 123
+            },
+            "tag_ids": {
+                "description": "Array of tag IDs to assign (empty array to clear all tags)",
+                "in": "body",
+                "required": True,
+                "type": "array",
+                "example": [1, 3, 5]
+            }
+        },
+        responses={
+            200: "Success - Tags updated",
+            400: "Bad request - Invalid tag_ids array",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Ticket or tag IDs not found",
+            500: "Internal Server Error",
+        },
+    )
     def put(self, ticket_id: int, ticket, current_user: User, json_data, **kwargs):
         """
         Set ticket tags (replaces all existing tags)
@@ -129,10 +217,34 @@ class AdminTicketTags(Resource):
 
 @support_admin_namespace.route("/tickets/<int:ticket_id>/assign")
 class AdminTicketAssignment(Resource):
-    @support_admin_namespace.doc(**ASSIGN_TICKET_DOC)
     @admin_endpoint(json_required=True)
     @load_ticket(LoaderType.PARAM)
     @load_user(source=LoaderType.BODY)
+    @support_admin_namespace.doc(
+        description="Assign ticket to a user (Admin only)",
+        params={
+            "ticket_id": {
+                "description": "Ticket ID",
+                "required": True,
+                "type": "integer",
+                "example": 123
+            },
+            "user_id": {
+                "description": "User ID to assign the ticket to",
+                "in": "body",
+                "required": True,
+                "type": "integer",
+                "example": 456
+            }
+        },
+        responses={
+            200: "Success - Assignment updated",
+            400: "Bad request - Invalid user_id or already assigned",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Ticket or user not found",
+            500: "Internal Server Error",
+        },
+    )
     def put(self, ticket_id: int, ticket, user, current_user: User, json_data, **kwargs):
         """
         Assign ticket to a user
@@ -146,9 +258,25 @@ class AdminTicketAssignment(Resource):
 
 @support_admin_namespace.route("/tickets/<int:ticket_id>/unassign")
 class AdminTicketUnassignment(Resource):
-    @support_admin_namespace.doc(**UNASSIGN_TICKET_DOC)
     @admin_endpoint(json_required=True)
     @load_ticket(LoaderType.PARAM)
+    @support_admin_namespace.doc(
+        description="Unassign a ticket from any user (Admin only)",
+        params={
+            "ticket_id": {
+                "description": "Ticket ID",
+                "required": True,
+                "type": "integer",
+                "example": 123
+            }
+        },
+        responses={
+            200: "Success - Ticket unassigned",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Ticket does not exist",
+            500: "Internal Server Error",
+        },
+    )
     def put(self, ticket_id: int, ticket, current_user: User, json_data, **kwargs):
         """
         Unassign ticket from any user (admin only)
@@ -161,9 +289,32 @@ class AdminTicketUnassignment(Resource):
 
 @support_admin_namespace.route("/tickets/<int:ticket_id>/close")
 class AdminTicketStatus(Resource):
-    @support_admin_namespace.doc(**UPDATE_STATUS_DOC)
     @admin_endpoint(json_required=True)
     @load_ticket(LoaderType.PARAM)
+    @support_admin_namespace.doc(
+        description="Toggle ticket open/closed status (Admin only)",
+        params={
+            "ticket_id": {
+                "description": "Ticket ID",
+                "required": True,
+                "type": "integer",
+                "example": 123
+            },
+            "closed": {
+                "description": "Whether to close the ticket",
+                "required": True,
+                "type": "boolean",
+                "example": True
+            }
+        },
+        responses={
+            200: "Success - Status updated",
+            400: "Bad request - Missing or invalid closed boolean",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Ticket does not exist",
+            500: "Internal Server Error",
+        },
+    )
     def put(self, ticket_id: int, ticket, current_user: User, json_data, **kwargs):
         """
         Toggle ticket open/closed status
@@ -178,9 +329,32 @@ class AdminTicketStatus(Resource):
 
 @support_admin_namespace.route("/tickets/<int:ticket_id>/mute")
 class AdminTicketMute(Resource):
-    @support_admin_namespace.doc(**UPDATE_MUTE_DOC)
     @admin_endpoint(json_required=True)
     @load_ticket(LoaderType.PARAM)
+    @support_admin_namespace.doc(
+        description="Toggle ticket mute status (Admin only)",
+        params={
+            "ticket_id": {
+                "description": "Ticket ID",
+                "required": True,
+                "type": "integer",
+                "example": 123
+            },
+            "muted": {
+                "description": "Whether to mute the ticket",
+                "required": True,
+                "type": "boolean",
+                "example": True
+            }
+        },
+        responses={
+            200: "Success - Mute status updated",
+            400: "Bad request - Missing or invalid muted boolean",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Ticket does not exist",
+            500: "Internal Server Error",
+        },
+    )
     def put(self, ticket_id: int, ticket, current_user: User, json_data, **kwargs):
         """
         Toggle ticket mute status
@@ -195,9 +369,32 @@ class AdminTicketMute(Resource):
 
 @support_admin_namespace.route("/tickets/<int:ticket_id>/event")
 class AdminTicketEvent(Resource):
-    @support_admin_namespace.doc(**SET_TICKET_EVENT_DOC)
     @admin_endpoint(json_required=True)
     @load_ticket(LoaderType.PARAM)
+    @support_admin_namespace.doc(
+        description="Set ticket's event and team association (Admin only). Team ID is automatically derived from the ticket author's team in the event.",
+        params={
+            "ticket_id": {
+                "description": "Ticket ID",
+                "required": True,
+                "type": "integer",
+                "example": 123
+            },
+            "event_id": {
+                "description": "Event ID to associate with ticket",
+                "required": True,
+                "type": "integer",
+                "example": 1
+            }
+        },
+        responses={
+            200: "Success - Event/team association updated",
+            400: "Bad request - Invalid event_id",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Ticket or event not found",
+            500: "Internal Server Error",
+        },
+    )
     def put(self, ticket_id: int, ticket, current_user: User, json_data, **kwargs):
         """
         Set ticket event/team association
@@ -211,9 +408,25 @@ class AdminTicketEvent(Resource):
 
 @support_admin_namespace.route("/tickets/<int:ticket_id>/event/remove")
 class AdminTicketEventRemove(Resource):
-    @support_admin_namespace.doc(**REMOVE_TICKET_EVENT_DOC)
     @admin_endpoint(json_required=True)
     @load_ticket(LoaderType.PARAM)
+    @support_admin_namespace.doc(
+        description="Remove ticket's event, team, and challenge association (Admin only). Since challenges must belong to events, removing the event also removes any challenge association to prevent data inconsistency.",
+        params={
+            "ticket_id": {
+                "description": "Ticket ID",
+                "required": True,
+                "type": "integer",
+                "example": 123
+            }
+        },
+        responses={
+            200: "Success - Event/team/challenge associations removed",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Ticket does not exist",
+            500: "Internal Server Error",
+        },
+    )
     def put(self, ticket_id: int, ticket, current_user: User, json_data, **kwargs):
         """
         Remove ticket event/team association
@@ -226,9 +439,32 @@ class AdminTicketEventRemove(Resource):
 
 @support_admin_namespace.route("/tickets/<int:ticket_id>/challenge")
 class AdminTicketChallenge(Resource):
-    @support_admin_namespace.doc(**SET_TICKET_CHALLENGE_DOC)
     @admin_endpoint(json_required=True)
     @load_ticket(LoaderType.PARAM)
+    @support_admin_namespace.doc(
+        description="Set ticket's challenge association (Admin only)",
+        params={
+            "ticket_id": {
+                "description": "Ticket ID",
+                "required": True,
+                "type": "integer",
+                "example": 123
+            },
+            "challenge_id": {
+                "description": "Challenge ID to associate with ticket",
+                "required": True,
+                "type": "integer",
+                "example": 15
+            }
+        },
+        responses={
+            200: "Success - Challenge association updated",
+            400: "Bad request - Invalid challenge_id",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Ticket or challenge not found",
+            500: "Internal Server Error",
+        },
+    )
     def put(self, ticket_id: int, ticket, current_user: User, json_data, **kwargs):
         """
         Set ticket challenge association
@@ -242,9 +478,25 @@ class AdminTicketChallenge(Resource):
 
 @support_admin_namespace.route("/tickets/<int:ticket_id>/challenge/remove")
 class AdminTicketChallengeRemove(Resource):
-    @support_admin_namespace.doc(**REMOVE_TICKET_CHALLENGE_DOC)
     @admin_endpoint(json_required=True)
     @load_ticket(LoaderType.PARAM)
+    @support_admin_namespace.doc(
+        description="Remove ticket's challenge association (Admin only)",
+        params={
+            "ticket_id": {
+                "description": "Ticket ID",
+                "required": True,
+                "type": "integer",
+                "example": 123
+            }
+        },
+        responses={
+            200: "Success - Challenge association removed",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Ticket does not exist",
+            500: "Internal Server Error",
+        },
+    )
     def put(self, ticket_id: int, ticket, current_user: User, json_data, **kwargs):
         """
         Remove ticket challenge association
@@ -257,8 +509,15 @@ class AdminTicketChallengeRemove(Resource):
 
 @support_admin_namespace.route("/tags")
 class AdminTags(Resource):
-    @support_admin_namespace.doc(**LIST_TAGS_DOC)
     @admin_endpoint()
+    @support_admin_namespace.doc(
+        description="Get all available support ticket tags (Admin only)",
+        responses={
+            200: "Success - Returns list of all tags ordered by name",
+            403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
+        },
+    )
     def get(self, current_user: User, **kwargs):
         """
         Get all ticket tags
@@ -266,8 +525,40 @@ class AdminTags(Resource):
         tags = list_tags()
         return success_response(tags)
 
-    @support_admin_namespace.doc(**CREATE_TAG_DOC)
     @admin_endpoint(json_required=True)
+    @support_admin_namespace.doc(
+        description="Create a new support ticket tag (Admin only)",
+        params={
+            "name": {
+                "description": "Tag name (50 character max length, must be unique)",
+                "in": "body",
+                "required": True,
+                "type": "string",
+                "example": "urgent"
+            },
+            "color": {
+                "description": "Tag color (hex color code e.g #FFFFFF)",
+                "in": "body",
+                "required": False,
+                "type": "string",
+                "example": "#FF4444"
+            },
+            "description": {
+                "description": "Tag description (200 character max length)",
+                "in": "body",
+                "required": False,
+                "type": "string",
+                "example": "High priority tickets that need immediate attention"
+            }
+        },
+        responses={
+            201: "Success - Tag created",
+            400: "Bad request - Missing name or invalid color format",
+            403: "Forbidden - Admin access required",
+            409: "Conflict - Tag name already exists",
+            500: "Internal Server Error",
+        },
+    )
     def post(self, current_user: User, json_data, **kwargs):
         """
         Create a new tag
@@ -282,9 +573,48 @@ class AdminTags(Resource):
 
 @support_admin_namespace.route("/tags/<int:ticket_tag_id>")
 class AdminTag(Resource):
-    @support_admin_namespace.doc(**UPDATE_TAG_DOC)
     @admin_endpoint(json_required=True)
     @load_ticket_tag(LoaderType.PARAM)
+    @support_admin_namespace.doc(
+        description="Update an existing support ticket tag (Admin only)",
+        params={
+            "ticket_tag_id": {
+                "description": "Tag ID",
+                "required": True,
+                "type": "integer",
+                "example": 1
+            },
+            "name": {
+                "description": "Tag name (50 character max length)",
+                "in": "body",
+                "required": False,
+                "type": "string",
+                "example": "high-priority"
+            },
+            "color": {
+                "description": "Tag color (hex color code e.g #FF0000)",
+                "in": "body",
+                "required": False,
+                "type": "string",
+                "example": "#FF0000"
+            },
+            "description": {
+                "description": "Tag description (200 character max length)",
+                "in": "body",
+                "required": False,
+                "type": "string",
+                "example": "Updated description for high priority tickets"
+            }
+        },
+        responses={
+            200: "Success - Tag updated",
+            400: "Bad request - Invalid name or color format",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Tag does not exist",
+            409: "Conflict - Tag name already exists",
+            500: "Internal Server Error",
+        },
+    )
     def put(self, ticket_tag_id: int, ticket_tag, current_user: User, json_data, **kwargs):
         """
         Update an existing tag

@@ -71,6 +71,7 @@ export default function AdminDeployments() {
         loading={isLoading}
         getRowId={(params) => params.data.id.toString()}
         sidebarComponent={DeploymentSidebar}
+        stopCellSelection={[ 'challenge_name', 'team_name', 'event_name' ]}
       />
     </Flex>
   );

@@ -6,7 +6,7 @@ from datetime import datetime
 from flask_restx import Namespace, Resource
 
 from CTFd.models import db
-
+from ...core.utils import utc_now
 from ...core.middleware import (
     user_endpoint,
 )
@@ -20,7 +20,7 @@ from ...core.middleware.loaders import (
 from ...core.exceptions import ValidationError
 from ...core.utils.validator import BaseValidator
 from ...core.middleware.permission_middleware import (
-    get_permissions,
+    check_permissions,
     event_only_public,
 )
 from ...core.utils import (
@@ -44,23 +44,6 @@ from ...event.models.Demographic import Demographic
 from ...challenge.models.Challenge import Challenge
 from ...permissions.models.enums import PermissionEnum
 
-from ._docs import (
-    USER_LIST_EVENTS_DOC,
-    USER_GET_EVENT_DOC,
-    CHECK_ELIGIBILITY_DOC,
-    REGISTER_FOR_EVENT_DOC,
-    GET_MY_TEAM_DOC,
-    GET_TEAM_MEMBERS_DOC,
-    UPDATE_TEAM_NAME_DOC,
-    KICK_TEAM_MEMBER_DOC,
-    PROMOTE_TEAM_MEMBER_DOC,
-    LEAVE_TEAM_DOC,
-    LIST_CHALLENGES_DOC,
-    GET_CHALLENGE_DOC,
-    GET_CHALLENGE_PROGRESS_DOC,
-    START_CHALLENGE_CONTAINERS_DOC,
-)
-
 
 events_user_namespace = Namespace(
     "/events",
@@ -70,8 +53,15 @@ events_user_namespace = Namespace(
 
 @events_user_namespace.route("")
 class EventList(Resource):
-    @events_user_namespace.doc(**USER_LIST_EVENTS_DOC)
     @user_endpoint()
+    @events_user_namespace.doc(
+        description="Get all public events",
+        responses={
+            200: "Success - Returns list of public events",
+            403: "Forbidden - Authentication required",
+            500: "Internal Server Error",
+        },
+    )
     def get(self, **kwargs):
         """
         Get all public events
@@ -82,10 +72,18 @@ class EventList(Resource):
 
 @events_user_namespace.route("/<int:event_id>")
 class EventDetail(Resource):
-    @events_user_namespace.doc(**USER_GET_EVENT_DOC)
+
     @user_endpoint()
     @load_event(source = LoaderType.PARAM)
     @event_only_public
+    @events_user_namespace.doc(
+        description="Get event details.",
+        responses={
+            200: "Success",
+            404: "Event not found",
+            403: "Forbidden if event is not public",
+        },
+    )
     def get(self, event_id, event, **kwargs):
         """
         Get event details
@@ -95,10 +93,17 @@ class EventDetail(Resource):
 
 @events_user_namespace.route("/<int:event_id>/me/eligibility")
 class EventEligibility(Resource):
-    @events_user_namespace.doc(**CHECK_ELIGIBILITY_DOC)
     @user_endpoint()
     @load_event(source = LoaderType.PARAM)
     @event_only_public
+    @events_user_namespace.doc(
+        description="Check if the current user is eligible to join the event.",
+        responses={
+            200: "Eligible",
+            403: "Forbidden if not eligible",
+            404: "Event not found",
+        },
+    )
     def get(self, event_id, event, current_user, **kwargs):
         """
         Check event eligibility
@@ -109,10 +114,32 @@ class EventEligibility(Resource):
 
 @events_user_namespace.route("/<int:event_id>/me/register")
 class EventRegistration(Resource):
-    @events_user_namespace.doc(**REGISTER_FOR_EVENT_DOC)
     @user_endpoint(json_required = True)
     @load_event(source = LoaderType.PARAM)
     @event_only_public
+    @events_user_namespace.doc(
+        description="Register for an event.",
+        responses={
+            201: "Registered successfully",
+            400: "Bad Request if invite_code or team_name is missing",
+            403: "Forbidden if not eligible or event is locked",
+            404: "Not Found if event does not exist",
+        },
+        params={
+            "invite_code": {
+                "description": "Invite code for the event",
+                "in": "body",
+                "required": False,
+                "example": "12lkjgchldjkzz",
+            },
+            "team_name": {
+                "description": "Name of the team to join or create",
+                "in": "body",
+                "required": False,
+                "example": "My new team",
+            },
+        },
+    )
     def post(self, event_id: str, current_user: User, json_data, event):
         """
         Register for event
@@ -171,10 +198,16 @@ class EventRegistration(Resource):
 
 @events_user_namespace.route("/<int:event_id>/me/team")
 class EventTeam(Resource):
-    @events_user_namespace.doc(**GET_MY_TEAM_DOC)
     @user_endpoint()
     @load_event(source = LoaderType.PARAM)
     @load_team_by_user_and_event()
+    @events_user_namespace.doc(
+        description="Get the user's team in the event.",
+        responses={
+            200: "Success",
+            404: "Not Found if user is not part of a team",
+        },
+    )
     def get(self, event_id: int, team: Team, **kwargs):
         """
         Get team details
@@ -184,10 +217,16 @@ class EventTeam(Resource):
 
 @events_user_namespace.route("/<int:event_id>/me/team/members")
 class EventTeamMembers(Resource):
-    @events_user_namespace.doc(**GET_TEAM_MEMBERS_DOC)
     @user_endpoint()
     @load_event(source = LoaderType.PARAM)
     @load_team_by_user_and_event()
+    @events_user_namespace.doc(
+        description="Get all members of the user's team in the event.",
+        responses={
+            200: "Success",
+            404: "Not Found if user is not part of a team",
+        },
+    )
     def get(self, event_id: int, team: Team, **kwargs):
         """
         Get team members
@@ -197,11 +236,26 @@ class EventTeamMembers(Resource):
 
 @events_user_namespace.route("/<int:event_id>/me/team/update_name")
 class EventTeamUpdateName(Resource):
-    @events_user_namespace.doc(**UPDATE_TEAM_NAME_DOC)
     @user_endpoint(json_required = True)
     @load_event(source = LoaderType.PARAM)
     @load_team_by_user_and_event()
-    @get_permissions
+    @check_permissions(PermissionEnum.CAN_EDIT_TEAM, "You do not have permission to update the team name.")
+    @events_user_namespace.doc(
+        description="Update the user's team name in the event.",
+        responses={
+            200: "Team name updated successfully",
+            400: "Bad Request if team name is invalid",
+            403: "Forbidden if user does not have permission to edit team or event has ended",
+        },
+        params={
+            "name": {
+                "description": "New name for the team",
+                "in": "body",
+                "required": True,
+                "example": "New Team Name",
+            }
+        },
+    )
     def put(self, event_id, team, json_data, permissions, **kwargs):
         """
         Update team name
@@ -219,31 +273,33 @@ class EventTeamUpdateName(Resource):
                 400,
             )
 
-        if team.event.end_time and team.event.end_time < datetime.utcnow():
-            return error_response(
-                "You cannot update the team name after the event has ended.",
-                "forbidden",
-                403
-            )
-
-        if PermissionEnum.CAN_EDIT_TEAM not in permissions:
-            return error_response(
-                "You do not have permission to update the team name",
-                "forbidden",
-                403
-            )
         team.update_name(new_name)
         return success_response(team)
 
 
 @events_user_namespace.route("/<int:event_id>/me/team/kick")
 class EventTeamKick(Resource):
-    @events_user_namespace.doc(**KICK_TEAM_MEMBER_DOC)
     @user_endpoint(json_required = True)
     @load_event(source = LoaderType.PARAM)
     @load_user(source = LoaderType.BODY)
     @load_team_by_user_and_event()
-    @get_permissions
+    @check_permissions(PermissionEnum.CAN_EDIT_TEAM, "You cannot kick team members.")
+    @events_user_namespace.doc(
+        description="Kick a user from the user's team in the event.",
+        responses={
+            200: "User kicked successfully",
+            400: "Bad Request if user_id is missing or invalid",
+            403: "Forbidden if user does not have permission to kick team members or event has ended",
+        },
+        params={
+            "user_id": {
+                "description": "ID of the user to kick from the team",
+                "in": "body",
+                "required": True,
+                "example": "12345",
+            }
+        },
+    )
     def post(
         self,
         event_id: int,
@@ -263,26 +319,7 @@ class EventTeamKick(Resource):
                 "validation",
                 400
             )
-        if PermissionEnum.CAN_EDIT_TEAM not in permissions:
-            return error_response(
-                "You do not have permission to kick team members",
-                "forbidden",
-                403
-            )
 
-        if team.event.end_time and team.event.end_time < datetime.utcnow():
-            return error_response(
-                "Cannot kick user after event has ended.",
-                "forbidden",
-                403
-            )
-
-        if team.event.locked:
-            return error_response(
-                "Cannot change team composition after the event has been locked",
-                "forbidden",
-                403
-            )
 
         try:
             team.remove_member_and_regenerate_code(user_id, commit = False)
@@ -297,12 +334,27 @@ class EventTeamKick(Resource):
 
 @events_user_namespace.route("/<int:event_id>/me/team/promote")
 class EventTeamPromote(Resource):
-    @events_user_namespace.doc(**PROMOTE_TEAM_MEMBER_DOC)
     @user_endpoint(json_required = True)
     @load_event(source = LoaderType.PARAM)
     @load_user(source = LoaderType.BODY)
     @load_team_by_user_and_event()
-    @get_permissions
+    @check_permissions(PermissionEnum.CAN_EDIT_TEAM, "You cannot promote team members.")
+    @events_user_namespace.doc(
+        description="Removes the current user as team captain and promotes the supplied user to be the team captain.",
+        responses={
+            200: "User promoted successfully",
+            400: "Bad Request if user_id is missing or invalid",
+            403: "Forbidden if user does not have permission to promote team members or event has ended",
+        },
+        params={
+            "user_id": {
+                "description": "ID of the user to promote to team leader",
+                "in": "body",
+                "required": True,
+                "example": "12345",
+            }
+        },
+    )
     def post(
         self,
         event_id,
@@ -323,23 +375,23 @@ class EventTeamPromote(Resource):
                 400
             )
 
-        if PermissionEnum.CAN_EDIT_TEAM not in permissions:
-            return error_response(
-                "You do not have permission to promote team members",
-                "forbidden",
-                403
-            )
-
         result = team.remove_captain_and_promote(user.id)
         return success_response(result)
 
 
 @events_user_namespace.route("/<int:event_id>/me/team/leave")
 class EventTeamLeave(Resource):
-    @events_user_namespace.doc(**LEAVE_TEAM_DOC)
     @user_endpoint()
     @load_event(source = LoaderType.PARAM)
     @load_team_by_user_and_event()
+    @events_user_namespace.doc(
+        description="Leave the user's team in the event.",
+        responses={
+            200: "Left team successfully",
+            403: "Forbidden if user is a captain or event has ended",
+            404: "Not Found if user is not part of a team",
+        },
+    )
     def post(self, event_id, event, team, current_user, **kwargs):
         """
         Leave the user's team in the event
@@ -379,52 +431,85 @@ class EventTeamLeave(Resource):
             )
         return success_response()
 
+@events_user_namespace.route("/<int:event_id>/me/team/start")
+class EventTeamStart(Resource):
+    @user_endpoint()
+    @load_event(source=LoaderType.PARAM)
+    @load_team_by_user_and_event()
+    @check_permissions(PermissionEnum.CAN_START_TEAM_TIMER, "You do not have permission to start your team")
+    @events_user_namespace.doc(
+        description="Start the event for the user's team.",
+        responses={
+            200: "Team started successfully",
+            403: "Forbidden if user does not have permission to start the event",
+            404: "Not Found if event or team does not exist",
+        },
+    )
+    def post(self, event_id, event, team, permissions, **kwargs):
+        """
+        Start the event for the user's team
+        """
+        team.set_start_timestamp(utc_now())
+        team.set_end_time(utc_now() + event.time_limit if event.time_limit else None)
+        return success_response(team)
+
 
 @events_user_namespace.route("/<int:event_id>/challenges")
 class EventChallenges(Resource):
-    @events_user_namespace.doc(**LIST_CHALLENGES_DOC)
     @user_endpoint()
-    @load_event(source = LoaderType.PARAM)
-    def get(self, event_id: int, event: Event, **kwargs):
-        """
-        Get all of the challenges within an event
-        """
+    @load_event(source=LoaderType.PARAM)
+    @load_team_by_user_and_event()
+    @check_permissions(PermissionEnum.CAN_VIEW_CHALLENGES, "You do not have permission to view challenges.")
+    @events_user_namespace.doc(
+        description="Get all challenges within an event.",
+        responses={
+            200: "Success",
+            404: "Event not found",
+        },
+    )
+    def get(self, event_id: int, event: Event, permissions, **kwargs):
+        """Get all of the challenges within an event"""
+
         challenges = event.get_all_challenges()
         return success_response(challenges)
 
 
 @events_user_namespace.route("/<int:event_id>/challenges/<int:challenge_id>")
 class EventChallengeRender(Resource):
-    @events_user_namespace.doc(**GET_CHALLENGE_DOC)
     @user_endpoint()
     @load_event(source = LoaderType.PARAM)
     @load_challenge(source = LoaderType.PARAM)
     @load_team_by_user_and_event()
-    def get(
-        self,
-        event_id: int,
-        challenge_id: int,
-        event: Event,
-        challenge: Challenge,
-        team: Team,
-        **kwargs
-    ):
-        """
-        Render Challenge
-        """
+    @check_permissions(PermissionEnum.CAN_VIEW_CHALLENGES, "You do not have permission to view challenges.")
+    @events_user_namespace.doc(
+        description="Render a challenge for the user's team in the event.",
+        responses={
+            200: "Success",
+            404: "Challenge or Event not found",
+        },
+    )
+    def get(self, event_id: int, challenge_id: int, event: Event, challenge: Challenge, team: Team, permissions, **kwargs):
+
         return success_response(challenge.render(team))
 
 
 @events_user_namespace.route("/<int:event_id>/me/challenges")
 class EventChallengeStatuses(Resource):
-    @events_user_namespace.doc(**GET_CHALLENGE_PROGRESS_DOC)
     @user_endpoint()
     @load_event(source = LoaderType.PARAM)
     @load_team_by_user_and_event()
-    def get(self, event_id: int, event: Event, team: Team, **kwargs):
-        """
-        Get all challenges and their status
-        """
+    @check_permissions(PermissionEnum.CAN_VIEW_CHALLENGES, "You do not have permission to view challenges.")
+    @events_user_namespace.doc(
+        description="Get all challenges and their statuses for the current user's team in the event.",
+        responses={
+            200: "Success",
+            403: "Forbidden - Authentication required",
+            404: "Event not found",
+        },
+    )
+    def get(self, event_id: int, event: Event, team: Team, permissions, **kwargs):
+        """Get all challenges and their statuses for the current user's team in the event"""
+
         results = get_challenge_progress(
             event_id = event_id,
             team_id = team.id
@@ -436,20 +521,22 @@ class EventChallengeStatuses(Resource):
     "/<int:event_id>/challenge/<int:challenge_id>/containers"
 )
 class EventChallengeStartContainers(Resource):
-    @events_user_namespace.doc(**START_CHALLENGE_CONTAINERS_DOC)
     @user_endpoint()
     @load_event(source = LoaderType.PARAM)
     @load_team_by_user_and_event()
-    def get(
-        self,
-        team: Team,
-        current_user: User,
-        challenge_id: int,
-        event_id: int,
-        event: Event
-    ):
-        """
-        Challenge containers
-        """
+    @check_permissions(PermissionEnum.CAN_PLAY_CHALLENGES, "You do not have permission to play challenges.")
+    @events_user_namespace.doc(
+        description="Start a challenges containers",
+        params={
+            "event_id": "Event id challenge is in",
+            "challenge_id": "Challenge id to start containers for",
+        },
+        responses={
+            200: "Sucess",
+            400: "Bad request",
+        },
+    )
+    def get(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event, permissions):
+
         started = start_containers(challenge_id, team.id, current_user)
         return success_response(started)

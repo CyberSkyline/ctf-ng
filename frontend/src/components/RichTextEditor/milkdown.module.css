@@ -1,11 +1,16 @@
 /* Milkdown Overrides */
 
 .milkdownEditor :global(.milkdown) {
-  --crepe-color-on-background : rgba(0, 0, 0, 0.87);
+  /* Text color */
+  --crepe-color-on-background : var(--gray-12);
+  /* Background color */
+  --crepe-color-background: var(--gray-1);
 }
 
 .milkdownEditor :global(.milkdown .editor) {
   padding : 1em;
+  border: 1px solid var(--gray-7);
+  border-radius: 8px;
 }
 
 /* Hide the handle to drop/drop blocks */
@@ -18,8 +23,4 @@
 
 .milkdownEditor :global(.milkdown .milkdown-slash-menu), .milkdownEditor :global(.milkdown .milkdown-toolbar) {
   z-index: 3;
-}
-
-.milkdownEditor {
-  border: 1px solid rgba(34, 36, 38, 0.15);
 }

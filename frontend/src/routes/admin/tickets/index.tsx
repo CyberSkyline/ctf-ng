@@ -1,81 +1,145 @@
-import {
-  Button,
-  Card,
-  Flex,
-  Heading,
-  Text,
-  TextArea,
-} from '@radix-ui/themes';
+import { useAdminAllTickets } from '@/hooks/support';
+import type { AdminTicket } from '@/types';
 import type { ColDef } from 'ag-grid-community';
-import { AgGridReact } from 'ag-grid-react';
-import { radixTheme } from '@/grid';
+import AdminGrid from 'components/AdminGrid';
+import { ErrorCallout } from 'components/Callouts';
+import Entity from 'components/Entity';
+import { StatusBadgeCell } from 'components/StatusBadge';
+import { isNull, isUndefined } from 'lodash';
+import type { IconType } from 'react-icons';
+import {
+  ChallengeIcon,
+  EventIcon,
+  TeamIcon,
+  UserIcon,
+} from '@/constants';
+import MessagesSidebar from './MessagesSidebar';
 
-/**
- * Support ticket management page for admins.
- */
+function NameLinkCell(
+  {
+    name,
+    id,
+    linkTo,
+    icon,
+  }: {
+    name: string,
+    id: number,
+    linkTo: string,
+    icon: IconType
+  },
+) {
+  if (!isNull(id) && !isUndefined(name)) {
+    return (
+      <Entity
+        to={linkTo}
+        label={name}
+        icon={icon}
+      />
+    );
+  }
+
+  return null;
+}
+
+const colDefs: ColDef<AdminTicket>[] = [
+  {
+    field : 'status',
+    headerName : 'Status',
+    cellRenderer : StatusBadgeCell,
+  },
+  {
+    field : 'subject',
+    headerName : 'Subject',
+    filter : true,
+    floatingFilter : true,
+  },
+  {
+    field : 'author_id',
+    headerName : 'Author',
+    cellRenderer : NameLinkCell,
+    cellRendererParams : (params) => ({
+      id : params.data.author_id,
+      name : params.data.author_name,
+      linkTo : `/admin/users?id=${params.data.author_id}`,
+      icon : UserIcon,
+    }),
+    filter : true,
+    floatingFilter : true,
+  },
+  {
+    field : 'last_updated',
+    headerName : 'Updated Date',
+    valueFormatter : (params) => params.value && params.value.toLocaleString(),
+    filter : true,
+    floatingFilter : true,
+  },
+  {
+    field : 'event_id',
+    headerName : 'Event',
+    cellRenderer : NameLinkCell,
+    cellRendererParams : (params) => ({
+      id : params.data.event_id,
+      name : params.data.event_name,
+      linkTo : `/admin/events?id=${params.data.event_id}`,
+      icon : EventIcon,
+    }),
+    filter : true,
+    floatingFilter : true,
+  },
+  {
+    field : 'team_id',
+    headerName : 'Team',
+    cellRenderer : NameLinkCell,
+    cellRendererParams : (params) => ({
+      id : params.data.team_id,
+      name : params.data.team_name,
+      linkTo : `/admin/teams?id=${params.data.team_id}`,
+      icon : TeamIcon,
+    }),
+    filter : true,
+    floatingFilter : true,
+  },
+  {
+    field : 'challenge_id',
+    headerName : 'Challenge',
+    cellRenderer : NameLinkCell,
+    cellRendererParams : (params) => ({
+      id : params.data.challenge_id,
+      name : params.data.challenge_name,
+      linkTo : `/admin/events?id=${params.data.event_id}`,
+      icon : ChallengeIcon,
+    }),
+    filter : true,
+    floatingFilter : true,
+  },
+  {
+    field : 'opened_timestamp',
+    headerName : 'Created Date',
+    valueFormatter : (params) => params.value && params.value.toLocaleString(),
+    filter : true,
+    floatingFilter : true,
+  },
+];
+
 export default function AdminTickets() {
-  const rowData = [
-    {
-      subject : 'Help!!!', user : 'user123', status : 'Open', created : 'xxxx-yy-zz', updated : 'aaaa-bb-cc', event : 'pc7-teams', challenge : null,
-    },
-  ];
-  const colDefs: ColDef<typeof rowData[number]>[] = [
-    { field : 'subject' },
-    { field : 'user' },
-    { field : 'status', width : 100 },
-    { field : 'created', width : 150 },
-    { field : 'updated', width : 150 },
-    { field : 'event' },
-    { field : 'challenge' },
-  ];
+  const { data, error, isLoading } = useAdminAllTickets();
 
   return (
-    <Flex direction="row" gap="4" className="h-full w-full">
-      <AgGridReact
-        className="grow basis-1/2"
-        theme={radixTheme}
-        rowData={rowData}
+    <>
+      {error && <ErrorCallout>{error.message}</ErrorCallout>}
+      <AdminGrid
+        rowData={data || []}
         columnDefs={colDefs}
-        gridOptions={{
-          rowSelection : {
-            mode : 'singleRow',
-            checkboxes : false,
-            enableClickSelection : true,
-          },
-        }}
+        loading={isLoading}
+        getRowId={(params) => params.data.id.toString()}
+        sidebarComponent={MessagesSidebar}
+        stopCellSelection={[
+          'author_id',
+          'event_id',
+          'team_id',
+          'challenge_id',
+        ]}
       />
-      <Flex direction="column" gap="4" className="grow basis-1/2">
-        <Flex direction="column" gap="4" flexGrow="1" overflowY="auto">
-          <Card className="shrink-0">
-            <Heading>Message</Heading>
-            <Text as="p">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-              Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-              Alienum in tempor orci dapibus ultrices in iaculis nunc sed augue.
-            </Text>
-          </Card>
-          <Card className="shrink-0">
-            <Heading>Message</Heading>
-            <Text as="p">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-              Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-              Alienum in tempor orci dapibus ultrices in iaculis nunc sed augue.
-            </Text>
-          </Card>
-          <Card className="shrink-0">
-            <Heading>Message</Heading>
-            <Text as="p">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-              Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-              Alienum in tempor orci dapibus ultrices in iaculis nunc sed augue.
-            </Text>
-          </Card>
-        </Flex>
-        <TextArea placeholder="Response" />
-        <Button variant="soft">
-          Send
-        </Button>
-      </Flex>
-    </Flex>
+    </>
   );
 }

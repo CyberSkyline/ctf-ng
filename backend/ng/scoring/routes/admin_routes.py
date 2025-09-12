@@ -24,15 +24,6 @@ from ..controllers import (
     get_team_hint_redemptions,
     get_team_manual_awards,
 )
-from ._docs import (
-    AWARD_MANUAL_POINTS_DOC,
-    RECALCULATE_SCORE_DOC,
-    GET_SCORE_HISTORY_DOC,
-    GET_TEAM_ATTEMPTS_DOC,
-    GET_TEAM_HINT_REDEMPTIONS_DOC,
-    GET_TEAM_MANUAL_AWARDS_DOC,
-)
-
 
 scoring_admin_namespace = Namespace(
     "admin/scoring",
@@ -44,11 +35,34 @@ scoring_admin_namespace = Namespace(
     "/events/<int:event_id>/teams/<int:team_id>/award-points"
 )
 class AwardPoints(Resource):
-    @scoring_admin_namespace.doc(**AWARD_MANUAL_POINTS_DOC)
     @admin_endpoint(json_required = True)
     @load_event(LoaderType.PARAM)
     @load_team(LoaderType.PARAM)
     @load_score_by_team_and_event()
+    @scoring_admin_namespace.doc(
+        description="Award or deduct points manually with reason for audit trail (Admin only)",
+        params={
+            "points": {
+                "description": "Points to award (positive) or deduct (negative). Cannot be zero.",
+                "required": True,
+                "type": "integer",
+                "example": 50
+            },
+            "reason": {
+                "description": "Reason for manual point adjustment (512 character max length)",
+                "in": "body",
+                "required": True,
+                "type": "string",
+                "example": "Bonus points for creative solution"
+            }
+        },
+        responses={
+        201: "Success - Points awarded or deducted successfully",
+        400: "Bad request - Invalid points value (cannot be zero) or missing reason",
+        403: "Forbidden - Admin access required",
+        404: "Not found - Team has no score in the specified event",
+        500: "Internal Server Error",
+    },)
     def post(
         self,
         event_id: int,
@@ -78,11 +92,19 @@ class AwardPoints(Resource):
     "/events/<int:event_id>/teams/<int:team_id>/recalculate"
 )
 class RecalculateScore(Resource):
-    @scoring_admin_namespace.doc(**RECALCULATE_SCORE_DOC)
     @admin_endpoint(json_required = False)
     @load_event(LoaderType.PARAM)
     @load_team(LoaderType.PARAM)
     @load_score_by_team_and_event()
+    @scoring_admin_namespace.doc(
+        description="Recalculate a team's score from all score events (Admin only)",
+        responses={
+            200: "Success - Score recalculated with old/new values and difference",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Team has no score in the specified event",
+            500: "Internal Server Error",
+        },
+    )
     def post(self, event_id: int, team_id: int, event, team, score, **kwargs):
         """
         Recalculate a team's score (if needed)
@@ -95,10 +117,27 @@ class RecalculateScore(Resource):
     "/events/<int:event_id>/teams/<int:team_id>/history"
 )
 class ScoreHistory(Resource):
-    @scoring_admin_namespace.doc(**GET_SCORE_HISTORY_DOC)
     @admin_endpoint()
     @load_event(LoaderType.PARAM)
     @load_team(LoaderType.PARAM)
+    @scoring_admin_namespace.doc(
+        description="Get detailed scoring history for audit and debugging purposes (Admin only)",
+        params={
+            "limit": {
+                "description": "Maximum number of score events to return",
+                "required": False,
+                "type": "integer",
+                "example": 100,
+                "default": 50
+            }
+        },
+        responses={
+            200: "Success - Returns list of all score events with source details",
+            400: "Bad request - Invalid limit parameter (must be 1-500)",
+            403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
+        },
+    )
     def get(self, event_id: int, team_id: int, event, team, **kwargs):
         """
         Get scoring history for a team
@@ -122,10 +161,18 @@ class ScoreHistory(Resource):
     "/events/<int:event_id>/teams/<int:team_id>/attempts"
 )
 class TeamAttempts(Resource):
-    @scoring_admin_namespace.doc(**GET_TEAM_ATTEMPTS_DOC)
     @admin_endpoint()
     @load_event(LoaderType.PARAM)
     @load_team(LoaderType.PARAM)
+    @scoring_admin_namespace.doc(
+        description="Get all attempts (correct and incorrect) for a team in an event (Admin only)",
+        responses={
+            200: "Success - Returns list of all attempts with enriched names",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Event or team does not exist",
+            500: "Internal Server Error",
+        },
+    )
     def get(self, event_id: int, team_id: int, event, team, **kwargs):
         """
         Get all attempts (correct and incorrect) for a team in an event
@@ -138,10 +185,18 @@ class TeamAttempts(Resource):
     "/events/<int:event_id>/teams/<int:team_id>/hint_redemptions"
 )
 class TeamHintRedemptions(Resource):
-    @scoring_admin_namespace.doc(**GET_TEAM_HINT_REDEMPTIONS_DOC)
     @admin_endpoint()
     @load_event(LoaderType.PARAM)
     @load_team(LoaderType.PARAM)
+    @scoring_admin_namespace.doc(
+        description="Get all hint redemptions for a team in an event (Admin only)",
+        responses={
+            200: "Success - Returns list of hint redemptions with enriched names and challenge info",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Event or team does not exist",
+            500: "Internal Server Error",
+        },
+    )
     def get(self, event_id: int, team_id: int, event, team, **kwargs):
         """
         Get all hint redemptions for a team in an event
@@ -154,10 +209,18 @@ class TeamHintRedemptions(Resource):
     "/events/<int:event_id>/teams/<int:team_id>/manual_awards"
 )
 class TeamManualAwards(Resource):
-    @scoring_admin_namespace.doc(**GET_TEAM_MANUAL_AWARDS_DOC)
     @admin_endpoint()
     @load_event(LoaderType.PARAM)
     @load_team(LoaderType.PARAM)
+    @scoring_admin_namespace.doc(
+        description="Get all manual point awards for a team in an event (Admin only)",
+        responses={
+            200: "Success - Returns list of all manual point awards with enriched names",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Event or team does not exist",
+            500: "Internal Server Error",
+        },
+    )
     def get(self, event_id: int, team_id: int, event, team, **kwargs):
         """
         Get all manual point awards for a team in an event

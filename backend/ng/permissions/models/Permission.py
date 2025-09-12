@@ -55,6 +55,7 @@ class Permission(db.Model):
         Returns:
             Permission: The permission instance if found, else None
         """
+
         return cls.query.filter_by(name=name.value).first()
 
     def serialize(self):

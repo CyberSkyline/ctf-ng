@@ -62,11 +62,3 @@ export const ROLES: Record<string, { color: AccentColor; icon: IconType }> = {
     icon : UserIcon,
   },
 };
-
-export const DATEFORMAT = {
-  range : {
-    year : 'numeric',
-    month : 'long',
-    day : 'numeric',
-  },
-};
