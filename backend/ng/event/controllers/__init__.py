@@ -6,7 +6,7 @@ from .user import (
     join_event_controller,
     get_challenge_progress,
 )
-from .admin.import_challenge_from_yaml import (
+from .admin import (
     import_challenge_from_yaml,
 )
 

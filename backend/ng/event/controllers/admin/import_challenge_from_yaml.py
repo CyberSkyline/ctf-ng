@@ -10,8 +10,8 @@ from cyber_skyline.chall_parser.compose.challenge_info import TextBody
 from cyber_skyline.chall_parser.template import Template
 from cyber_skyline.chall_parser.yaml_parser import parse_compose_string
 
+from ....notifications.services import NotificationService
 from ng.challenge.models import ChallengeVariable
-
 from ....challenge.models import Challenge, ChallengeTag, ContainerBlueprint, Hint, Question
 from ....challenge.utils import generate_seed
 from ....core.exceptions import ValidationError
@@ -155,6 +155,13 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
             )
 
         db.session.commit()
+
+        NotificationService.notify_challenge_released(
+            event_id=event.id,
+            challenge_id=challenge.id,
+            challenge_name=challenge.name,
+        )
+
         return challenge
     except Exception as e:
         db.session.rollback()

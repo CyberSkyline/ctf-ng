@@ -32,9 +32,8 @@ def serialize_model_for_api(obj: Any, is_admin_request: bool | None = False) -> 
     if isinstance(obj, datetime):
         if obj.tzinfo is None:
             return obj.isoformat() + "Z"
-        else:
-            utc_dt = obj.utctimetuple()
-            return datetime(*utc_dt[:6]).isoformat() + "Z"
+        utc_dt = obj.utctimetuple()
+        return datetime(*utc_dt[:6]).isoformat() + "Z"
 
     if hasattr(obj, "value"):
         return obj.value
