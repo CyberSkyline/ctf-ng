@@ -4,8 +4,8 @@ Test cases for validate_model_id functionality.
 
 import pytest
 
-from ng.challenge.models import Challenge
-from ng.core.utils.validator import BaseValidator
+from ....challenge.models import Challenge
+from ....core.utils.validator import BaseValidator
 
 
 class TestValidateModelId:
