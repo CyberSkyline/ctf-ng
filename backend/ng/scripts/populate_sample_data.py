@@ -54,7 +54,7 @@ with app.app_context():
 # Configure app permission system
 with app.app_context():
     try:
-        # This script is designed to run in production via 'yarn populate-data'
+        # This script is designed to run in production via 'pnpm populate-data'
         # where the plugin is properly located at /opt/CTFd/CTFd/plugins/ng
         from CTFd.plugins.ng.permissions.controllers.assign_role_to_user import assign_role_to_user  # type: ignore
         from CTFd.plugins.ng.permissions.controllers.create_permission import create_permission  # type: ignore
@@ -63,7 +63,7 @@ with app.app_context():
         from CTFd.plugins.ng.user.models.User import User as NgUser  # type: ignore
     except ImportError as e:
         print(f"Failed to import plugin modules: {e}")
-        print("This script should be run via 'yarn populate-data' from the project root.")
+        print("This script should be run via 'pnpm populate-data' from the project root.")
         raise
 
     # Get the admin user and create NG user extension
@@ -104,7 +104,7 @@ with app.app_context():
 # Insert sample data
 with app.app_context():
     try:
-        # This script is designed to run in production via 'yarn populate-data'
+        # This script is designed to run in production via 'pnpm populate-data'
         # where the plugin is properly located at /opt/CTFd/CTFd/plugins/ng
         from CTFd.plugins.ng.event.controllers.admin.import_challenge_from_yaml import (  # type: ignore
             import_challenge_from_yaml,  # type: ignore
@@ -114,7 +114,7 @@ with app.app_context():
         from CTFd.plugins.ng.user.models.User import User as NgUser  # type: ignore
     except ImportError as e:
         print(f"Failed to import plugin modules: {e}")
-        print("This script should be run via 'yarn populate-data' from the project root.")
+        print("This script should be run via 'pnpm populate-data' from the project root.")
         raise
 
     # Create sample events with different settings

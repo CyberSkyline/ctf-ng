@@ -97,6 +97,7 @@ export default function ChallengeQuestion({
                 color={color || COLOR_QUESTION}
                 placeholder={placeholder}
                 required
+                autoComplete="off"
                 disabled={status === 'correct' || attemptsRemaining <= 0}
               >
                 <TextField.Slot>

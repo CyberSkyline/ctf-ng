@@ -25,6 +25,7 @@ class Hint(db.Model):
     __tablename__ = "ng_challenge_hints"
     id = db.Column(db.Integer, primary_key=True)
     challenge_id = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
+    name = db.Column(db.String(config.MAX_HINT_NAME_LENGTH), nullable=True)
     preview = db.Column(db.String(config.MAX_HINT_PREVIEW_LENGTH), nullable=False)
     body = db.Column(db.String(config.MAX_HINT_BODY_LENGTH), nullable=False)
     deduction = db.Column(db.Integer, nullable=False)
@@ -47,6 +48,7 @@ class Hint(db.Model):
 
         data = {
             "id": self.id,
+            "name": self.name,
             "challenge_id": self.challenge_id,
             "preview": self.preview,
             "body": None,
@@ -79,6 +81,13 @@ class Hint(db.Model):
 
         validator.validate_string(
             data,
+            "name",
+            config.MAX_HINT_NAME_LENGTH,
+            required=True,
+            friendly_name="Hint Name",
+        )
+        validator.validate_string(
+            data,
             "body",
             config.MAX_HINT_BODY_LENGTH,
             required=True,
@@ -108,10 +117,10 @@ class Hint(db.Model):
         return validator.validate()
 
     @classmethod
-    def create_hint(cls, challenge_id: int, body: str, preview: str = "", deduction: int = 0, commit=True):
+    def create_hint(cls, challenge_id: int, name: str, body: str, preview: str = "", deduction: int = 0, commit=True):
         try:
             validated_data = cls.validate(
-                {"preview": preview, "body": body, "deduction": deduction, "challenge_id": challenge_id}
+                {"name": name, "preview": preview, "body": body, "deduction": deduction, "challenge_id": challenge_id}
             )
             hint = cls(**validated_data)
             db.session.add(hint)

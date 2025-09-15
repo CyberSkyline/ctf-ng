@@ -1,57 +1,56 @@
-import type { Event } from '@/types';
-import {
-  Callout,
-  Grid,
-  Heading,
-  Link as RadixLink,
-} from '@radix-ui/themes';
-import { TbInfoCircle } from 'react-icons/tb';
+import { useMyEvents } from '@/hooks/events';
+import { Grid, Link as RadixLink, Skeleton } from '@radix-ui/themes';
+import { ErrorCallout, InfoCallout } from 'components/Callouts';
 import { Link } from 'react-router';
 import EventCard from './EventCard';
 
-export default function UpcomingEvents({ events }: { events: Event[] }) {
-  const heading = <Heading size="6">Your Upcoming Events</Heading>;
+export default function UpcomingEvents() {
+  const { data, error, isLoading } = useMyEvents();
+  const upcomingEvents = data?.filter((event) => !event.start_time || new Date() < event.start_time);
 
-  if (events.length === 0) {
+  if (error) {
     return (
-      <>
-        {heading}
-        <Callout.Root color="jade" variant="surface">
-          <Callout.Icon>
-            <TbInfoCircle />
-          </Callout.Icon>
-          <Callout.Text>
-            You are not registered for any upcoming events.
-            {' '}
-            <RadixLink asChild><Link to="/events">Register for an upcoming event</Link></RadixLink>
-            {' '}
-            or head to the
-            {' '}
-            <RadixLink asChild><Link to="/practice">practice area</Link></RadixLink>
-            {' '}
-            to hone your skills!
-          </Callout.Text>
-        </Callout.Root>
-      </>
+      <ErrorCallout>{error.message}</ErrorCallout>
+    );
+  }
+
+  if (upcomingEvents !== undefined && upcomingEvents.length === 0) {
+    return (
+      <InfoCallout>
+        You are not registered for any upcoming events.
+        {' '}
+        <RadixLink asChild><Link to="/events">Register for an upcoming event</Link></RadixLink>
+        {' '}
+        or head to the
+        {' '}
+        <RadixLink asChild><Link to="/practice">practice area</Link></RadixLink>
+        {' '}
+        to hone your skills!
+      </InfoCallout>
     );
   }
 
   return (
-    <>
-      {heading}
-      <Grid
-        columns={{
-          initial : '1', xs : '1', sm : '2', lg : '3',
-        }}
-        gap="4"
-      >
-        {events.map((event) => (
-          <EventCard
-            key={event.id}
-            event={event}
-          />
-        ))}
-      </Grid>
-    </>
+    <Grid
+      columns={{
+        initial : '1', xs : '1', sm : '2', lg : '3',
+      }}
+      gap="4"
+    >
+      {isLoading && (
+        <>
+          <Skeleton className="min-h-48" />
+          <Skeleton className="min-h-48" />
+          <Skeleton className="min-h-48" />
+        </>
+      )}
+
+      {upcomingEvents?.map((event) => (
+        <EventCard
+          key={event.id}
+          event={event}
+        />
+      ))}
+    </Grid>
   );
 }

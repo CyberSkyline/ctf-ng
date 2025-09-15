@@ -135,6 +135,7 @@ class BaseValidator:
             "Attempt": "ng_attempts",
             "Challenge": "ng_challenges",
             "ChallengeTag": "ng_challenge_tags",
+            "ChallengeVariable": "ng_challenge_variables",
             "ContainerBlueprint": "ng_container_blueprints",
             "Demographic": "ng_demographics",
             "Event": "ng_events",

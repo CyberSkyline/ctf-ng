@@ -9,7 +9,7 @@ import pytest
 
 from ...core.exceptions import ValidationError
 from ..models import Challenge
-from ..models.Question import MAX_QUESTION_ANSWER_LENGTH, MAX_QUESTION_BODY_LENGTH, MAX_QUESTION_NAME_LENGTH, Question
+from ..models.Question import Question, MAX_QUESTION_ANSWER_LENGTH, MAX_QUESTION_BODY_LENGTH, MAX_QUESTION_NAME_LENGTH
 
 
 @pytest.fixture

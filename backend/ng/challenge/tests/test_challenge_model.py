@@ -23,6 +23,7 @@ def challenge_data(event):
         "description": "A comprehensive test challenge description",
         "icon": "challenge-icon",
         "summary": "Challenge summary for testing",
+        "challenge_yaml": "Initial Fake Data" # TODO: Replace with actual data once round tripping is set up
     }
 
 
@@ -39,6 +40,12 @@ class TestChallengeValidation:
         assert validated_data["name"] == challenge_data["name"]
         assert "description" in validated_data
         assert validated_data["description"] == challenge_data["description"]
+        assert "icon" in validated_data
+        assert validated_data["icon"] == challenge_data["icon"]
+        assert "summary" in validated_data
+        assert validated_data["summary"] == challenge_data["summary"]
+        assert "challenge_yaml" in validated_data
+        assert validated_data["challenge_yaml"] == challenge_data["challenge_yaml"]
 
     def test_validate_missing_name_should_fail(self, challenge_data):
         """Test that missing name field fails validation."""
@@ -160,7 +167,7 @@ class TestChallengeValidation:
 
     def test_validate_optional_fields_missing_should_pass(self, event):
         """Test that validation passes when optional fields are missing."""
-        minimal_data = {"event_id": event.id, "name": "Minimal Challenge"}
+        minimal_data = {"event_id": event.id, "name": "Minimal Challenge", "challenge_yaml": "Initial Fake Data"}
 
         validated_data = Challenge.validate(minimal_data)
 
@@ -203,6 +210,7 @@ class TestChallengeValidation:
             "description": "b" * MAX_CHALLENGE_DESCRIPTION_LENGTH,
             "icon": "c" * MAX_CHALLENGE_ICON_LENGTH,
             "summary": "d" * MAX_CHALLENGE_SUMMARY_LENGTH,
+            "challenge_yaml": "Initial Fake Data"
         }
 
         validated_data = Challenge.validate(max_data)
@@ -220,6 +228,7 @@ class TestChallengeValidation:
             "description": "This challenge contains 🔐 unicode characters и кириллицу",
             "icon": "🎯",
             "summary": "Résumé avec caractères spéciaux",
+            "challenge_yaml": "Initial Fake Data"
         }
 
         validated_data = Challenge.validate(unicode_data)
@@ -239,7 +248,7 @@ class TestChallengeValidation:
         ]
 
         for name in mixed_case_names:
-            data = {"event_id": event.id, "name": name}
+            data = {"event_id": event.id, "name": name, "challenge_yaml": "Initial Fake Data"}
             validated_data = Challenge.validate(data)
             assert validated_data["name"] == name
 
@@ -254,7 +263,7 @@ class TestChallengeValidation:
         ]
 
         for name in alphanumeric_names:
-            data = {"event_id": event.id, "name": name}
+            data = {"event_id": event.id, "name": name, "challenge_yaml": "Initial Fake Data"}
             validated_data = Challenge.validate(data)
             assert validated_data["name"] == name
 
@@ -266,6 +275,7 @@ class TestChallengeValidation:
             "description": "  Description with edges  ",
             "icon": "  icon  ",
             "summary": "  Summary content  ",
+            "challenge_yaml": "Initial Fake Data"
         }
 
         validated_data = Challenge.validate(whitespace_data)
@@ -291,7 +301,7 @@ class TestChallengeEdgeCases:
         - Empty lines
         - Various whitespace"""
 
-        data = {"event_id": event.id, "name": "Multiline Challenge", "description": multiline_description}
+        data = {"event_id": event.id, "name": "Multiline Challenge", "description": multiline_description, "challenge_yaml": "Initial Fake Data"}
 
         validated_data = Challenge.validate(data)
         assert validated_data["description"] == multiline_description
@@ -303,6 +313,7 @@ class TestChallengeEdgeCases:
             "name": "Challenge <script>alert('xss')</script>",
             "description": "<p>This looks like HTML but should be treated as text</p>",
             "summary": "<div>Summary with tags</div>",
+            "challenge_yaml": "Initial Fake Data"
         }
 
         validated_data = Challenge.validate(html_data)
@@ -318,6 +329,7 @@ class TestChallengeEdgeCases:
             "event_id": event.id,
             "name": "Challenge'; DROP TABLE challenges; --",
             "description": "Description with ' OR 1=1 --",
+            "challenge_yaml": "Initial Fake Data"
         }
 
         validated_data = Challenge.validate(sql_data)
@@ -329,14 +341,14 @@ class TestChallengeEdgeCases:
     def test_challenge_with_very_long_words(self, event):
         """Test challenge with very long words (no spaces)."""
         long_word = "a" * (MAX_CHALLENGE_NAME_LENGTH - 10)
-        data = {"event_id": event.id, "name": f"Test{long_word}"}
+        data = {"event_id": event.id, "name": f"Test{long_word}", "challenge_yaml": "Initial Fake Data"}
 
         validated_data = Challenge.validate(data)
         assert len(validated_data["name"]) <= MAX_CHALLENGE_NAME_LENGTH
 
     def test_challenge_validation_with_none_values(self, event):
         """Test challenge validation when None is passed for optional fields."""
-        data = {"event_id": event.id, "name": "Test Challenge", "description": None, "icon": None, "summary": None}
+        data = {"event_id": event.id, "name": "Test Challenge", "challenge_yaml": "initial fake data","description": None, "icon": None, "summary": None}
 
         # None values should be handled gracefully by the validator
         validated_data = Challenge.validate(data)

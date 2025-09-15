@@ -28,6 +28,7 @@ import AdminReports from 'routes/admin/reports';
 import AdminSettings from 'routes/admin/settings';
 import AdminTeams from 'routes/admin/teams';
 import AdminTickets from 'routes/admin/tickets';
+import AdminTags from 'routes/admin/tags';
 import AdminUsers from 'routes/admin/users';
 
 function Routes() {
@@ -72,6 +73,7 @@ function Routes() {
         { path : 'deployments', element : <AdminDeployments /> },
         { path : 'notifications', element : <AdminNotifications /> },
         { path : 'tickets', element : <AdminTickets /> },
+        { path : 'tags', element : <AdminTags /> },
         { path : 'settings', element : <AdminSettings /> },
         { path : 'api-test', element : <AdminApiTest /> },
       ],

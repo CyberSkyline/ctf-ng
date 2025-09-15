@@ -34,7 +34,7 @@ export default function MemberCountBadge({ team }: { team: Team }) {
 
   return (
     event && (
-    <Badge variant="soft" color={getBadgeColor(team.member_count, event.max_team_size)} size="2">
+    <Badge variant="soft" color={getBadgeColor(team.member_count, event.max_team_size)} size="2" className="tabular-nums">
       {team.member_count}
       /
       {event.max_team_size}

@@ -25,13 +25,7 @@ from ...core.middleware import (
     user_endpoint
 )
 from ...core.middleware.permission_middleware import (
-    get_permissions,
-)
-from ..docs.api import (
-    GET_DETAILED_STATS_DOC,
-    GET_DATA_COUNTS_DOC,
-    RESET_EVENT_DATA_DOC,
-    SYSTEM_HEALTH_DOC,
+    check_permissions,
 )
 
 logger = get_logger(__name__)
@@ -41,7 +35,14 @@ admin_namespace = Namespace("admin", description="admin operations")
 @admin_namespace.route("/stats")
 class AdminStats(Resource):
     @admin_endpoint()
-    @admin_namespace.doc(**GET_DETAILED_STATS_DOC)
+    @admin_namespace.doc(
+        description="Get comprehensive system statistics including per-event breakdowns, empty teams, and data integrity warnings (Admin only)",
+        responses={
+            200: "Success - Returns detailed system statistics with per-event data and potential issues",
+            403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
+        },
+    )
     def get(self, **kwargs):
         """Get system stats"""
         result = get_detailed_stats()
@@ -51,7 +52,14 @@ class AdminStats(Resource):
 @admin_namespace.route("/stats/counts")
 class AdminStatsCounts(Resource):
     @admin_endpoint()
-    @admin_namespace.doc(**GET_DATA_COUNTS_DOC)
+    @admin_namespace.doc(
+        description="Get basic data counts for all plugin entities including events, teams, users, and team members (Admin only)",
+        responses={
+            200: "Success - Returns counts of events, teams, users, and team members",
+            403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
+        },
+    )
     def get(self, **kwargs):
         """Get data counts"""
 
@@ -64,7 +72,15 @@ class AdminStatsCounts(Resource):
 class AdminEventReset(Resource):
     @admin_endpoint()
     @load_event(LoaderType.PARAM)
-    @admin_namespace.doc(**RESET_EVENT_DATA_DOC)
+    @admin_namespace.doc(
+        description="**DESTRUCTIVE**: Reset all data for a specific event including teams and team members (Admin only)",
+        responses={
+            200: "Success - Event data reset successfully",
+            400: "Bad request - Event does not exist or missing confirmation",
+            403: "Forbidden - Admin access required",
+            500: "Internal error - Reset failed, data may be in inconsistent state",
+        },
+)
     def post(self, event_id, **kwargs):
         """Reset event data"""
         reset_event_data(event_id)
@@ -73,7 +89,14 @@ class AdminEventReset(Resource):
 @admin_namespace.route("/health")
 class AdminHealth(Resource):
     @admin_endpoint()
-    @admin_namespace.doc(**SYSTEM_HEALTH_DOC)
+    @admin_namespace.doc(
+        description="Check system health and data integrity with warnings for potential issues (Admin only)",
+        responses={
+            200: "Success - System health report with warnings and data integrity status",
+            403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
+        },
+)
     def get(self, **kwargs):
         """Check system health"""
         counts = get_data_counts()
@@ -90,7 +113,7 @@ class AdminHealth(Resource):
 class AdminImpersonate(Resource):
     @admin_endpoint(json_required=True)
     @load_user(LoaderType.BODY)
-    @get_permissions
+    @check_permissions(PermissionEnum.CAN_IMPERSONATE_USERS, "You do not have permission to impersonate users.")
     @admin_namespace.doc(
         description="Impersonate a user by ID",
         responses={
@@ -102,8 +125,6 @@ class AdminImpersonate(Resource):
     def post(self, json_data,current_user, permissions, **kwargs):
         """Impersonate a user by ID"""
         user_id = json_data.get("user_id")
-        if PermissionEnum.CAN_IMPERSONATE_USERS not in permissions:
-            return error_response("You do not have permission to impersonate users.", "permissions", 403)
 
         if user_id == current_user.id:
             return error_response("You cannot impersonate yourself.", "impersonation", 403)

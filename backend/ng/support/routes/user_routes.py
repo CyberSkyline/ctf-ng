@@ -18,21 +18,50 @@ from ..controllers import (
     create_ticket_message,
 )
 
-from ._docs import (
-    CREATE_TICKET_DOC,
-    LIST_MY_TICKETS_DOC,
-    GET_MY_TICKET_DOC,
-    ADD_MESSAGE_DOC,
-    CLOSE_MY_TICKET_DOC,
-)
 
 support_user_namespace = Namespace("support", description="Support ticket operations for users")
 
 
 @support_user_namespace.route("/tickets/create")
 class Tickets(Resource):
-    @support_user_namespace.doc(**CREATE_TICKET_DOC)
     @user_endpoint(json_required=True)
+    @support_user_namespace.doc(
+        description="Create a new support ticket with initial message. Team ID is automatically derived from the user and event.",
+        params={
+            "subject": {
+                "description": "Ticket subject line (128 character max length)",
+                "required": True,
+                "type": "string",
+                "example": "Can't access my team dashboard"
+            },
+            "text": {
+                "description": "Initial message text",
+                "in": "body",
+                "required": True,
+                "type": "string",
+                "example": "I'm getting a 404 error when trying to access the team dashboard. Can you help?"
+            },
+            "event_id": {
+                "description": "Event ID to associate ticket with",
+                "required": False,
+                "type": "integer",
+                "example": 1
+            },
+            "challenge_id": {
+                "description": "Challenge ID to associate ticket with",
+                "required": False,
+                "type": "integer",
+                "example": 15
+            }
+        },
+        responses={
+            201: "Success - Ticket created with initial message",
+            400: "Bad request - Missing required fields (subject, text) or invalid associations, or user not in team for event",
+            401: "Unauthorized - Authentication required",
+            404: "Not found - Event, team, or challenge association not found",
+            500: "Internal Server Error",
+        },
+    )
     def post(self, current_user: User, json_data, **kwargs):
         """
         Create a new support ticket
@@ -51,8 +80,24 @@ class Tickets(Resource):
 
 @support_user_namespace.route("/me/tickets")
 class MyTickets(Resource):
-    @support_user_namespace.doc(**LIST_MY_TICKETS_DOC)
     @user_endpoint()
+    @support_user_namespace.doc(
+        description="Get all support tickets created by the current user with optional status filter.",
+        params={
+            "status": {
+                "description": "Filter by ticket status. Options: 'all', 'open', 'closed'. Default: 'all'",
+                "required": False,
+                "type": "string",
+                "example": "open"
+            }
+        },
+        responses={
+            200: "Success - Returns list of user's tickets",
+            400: "Bad request - Invalid status filter (must be: all, open, closed)",
+            401: "Unauthorized - Authentication required",
+            500: "Internal Server Error",
+        },
+    )
     def get(self, current_user: User, **kwargs):
         """
         Get all tickets for the current user
@@ -70,10 +115,27 @@ class MyTickets(Resource):
 
 @support_user_namespace.route("/me/tickets/<int:ticket_id>")
 class MyTicket(Resource):
-    @support_user_namespace.doc(**GET_MY_TICKET_DOC)
     @user_endpoint()
     @load_ticket(LoaderType.PARAM)
     @check_ownership(resource_key="ticket", user_field="author_id")
+    @support_user_namespace.doc(
+        description="Get a specific ticket with all messages (user must own the ticket)",
+        params={
+            "ticket_id": {
+                "description": "Ticket ID",
+                "required": True,
+                "type": "integer",
+                "example": 123
+            }
+        },
+        responses={
+            200: "Success - Returns ticket details and message thread",
+            401: "Unauthorized - Authentication required",
+            403: "Forbidden - You can only access your own tickets",
+            404: "Not found - Ticket does not exist",
+            500: "Internal Server Error",
+        },
+    )
     def get(self, ticket_id: int, ticket, current_user: User, **kwargs):
         """
         Get ticket details with all messages
@@ -84,10 +146,35 @@ class MyTicket(Resource):
 
 @support_user_namespace.route("/me/tickets/<int:ticket_id>/add_message")
 class TicketMessage(Resource):
-    @support_user_namespace.doc(**ADD_MESSAGE_DOC)
     @user_endpoint(json_required=True)
     @load_ticket(LoaderType.PARAM)
     @check_ownership(resource_key="ticket", user_field="author_id")
+    @support_user_namespace.doc(
+        description="Add a new message to an existing support ticket thread",
+        params={
+            "ticket_id": {
+                "description": "Ticket ID",
+                "required": True,
+                "type": "integer",
+                "example": 123
+            },
+            "text": {
+                "description": "Message content (4096 character max length)",
+                "in": "body",
+                "required": True,
+                "type": "string",
+                "example": "Thanks for the quick response! That solved my issue."
+            }
+        },
+        responses={
+            201: "Success - Message added to ticket thread",
+            400: "Bad request - Missing message text",
+            401: "Unauthorized - Authentication required",
+            403: "Forbidden - You can only message on your own tickets",
+            404: "Not found - Ticket does not exist",
+            500: "Internal Server Error",
+        },
+    )
     def post(self, ticket_id: int, ticket, current_user: User, json_data, **kwargs):
         """
         Add a new message to the ticket
@@ -103,10 +190,28 @@ class TicketMessage(Resource):
 
 @support_user_namespace.route("/me/tickets/<int:ticket_id>/close")
 class CloseMyTicket(Resource):
-    @support_user_namespace.doc(**CLOSE_MY_TICKET_DOC)
     @user_endpoint()
     @load_ticket(LoaderType.PARAM)
     @check_ownership(resource_key="ticket", user_field="author_id")
+    @support_user_namespace.doc(
+        description="Close a support ticket (user must own the ticket)",
+        params={
+            "ticket_id": {
+                "description": "Ticket ID",
+                "required": True,
+                "type": "integer",
+                "example": 123
+            }
+        },
+        responses={
+            200: "Success - Ticket closed",
+            400: "Bad request - Ticket is already closed",
+            401: "Unauthorized - Authentication required",
+            403: "Forbidden - You can only close your own tickets",
+            404: "Not found - Ticket does not exist",
+            500: "Internal Server Error",
+        },
+    )
     def post(self, ticket_id: int, ticket, current_user: User, **kwargs):
         """
         Close user's own ticket

@@ -3,34 +3,38 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from CTFd.models import db
+from sqlalchemy.orm import Mapped
 from cyber_skyline.chall_parser.compose.challenge_info import Question as QuestionAttr
-from faker import Faker
+
+from ng.challenge.models.Challenge import Challenge
+from ng.challenge.models.ChallengeVariable import ChallengeVariable
 
 from ...core.utils.validator import BaseValidator
+from ...challenge.utils import generate_seed
+import re
 
 if TYPE_CHECKING:
     from ...team.models.Team import Team
-
 
 MAX_QUESTION_NAME_LENGTH = 256
 MAX_QUESTION_BODY_LENGTH = 1024
 MAX_QUESTION_ANSWER_LENGTH = 512
 
-SEED_FORMAT_STRING = "{event_id}:{challenge_id}:{question_id}:{team_seed}"
-
-
 class Question(db.Model):
     __tablename__ = "ng_challenge_questions"
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(MAX_QUESTION_NAME_LENGTH), nullable=False)
-    body = db.Column(db.String(MAX_QUESTION_BODY_LENGTH), nullable=False)
-    points = db.Column(db.Integer, nullable=False)
-    answer = db.Column(db.String(MAX_QUESTION_ANSWER_LENGTH), nullable=False)
-    placeholder = db.Column(db.String(MAX_QUESTION_ANSWER_LENGTH), nullable=True)
-    max_attempts = db.Column(db.Integer, nullable=False)
-    challenge_id = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
+    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    name: Mapped[str] = db.Column(db.String(MAX_QUESTION_NAME_LENGTH), nullable=False)
+    body: Mapped[str] = db.Column(db.String(MAX_QUESTION_BODY_LENGTH), nullable=False)
+    points: Mapped[int] = db.Column(db.Integer, nullable=False)
+    answer: Mapped[str | None] = db.Column(db.String(MAX_QUESTION_ANSWER_LENGTH), nullable=True)
+    # Make this unique to enforce the one-to-one relationship between questions and challenge variables
+    answer_variable_id: Mapped[int | None] = db.Column(db.Integer, db.ForeignKey("ng_challenge_variables.id"), nullable=True, unique=True)
+    placeholder: Mapped[str | None] = db.Column(db.String(MAX_QUESTION_ANSWER_LENGTH), nullable=True)
+    max_attempts: Mapped[int] = db.Column(db.Integer, nullable=False)
+    challenge_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
 
-    challenge = db.relationship("Challenge", back_populates="questions")
+    challenge: Challenge = db.relationship("Challenge", back_populates="questions")
+    answer_variable: ChallengeVariable | None = db.relationship("ChallengeVariable", back_populates="question")
 
     def __repr__(self):
         return f"<NgChallengeQuestion {self.id}, name={self.name}, points={self.points}>"
@@ -60,6 +64,35 @@ class Question(db.Model):
         :return: The validated data.
         """
         validator = BaseValidator()
+        if data.get("answer") is None and data.get("answer_variable_id") is None:
+            message = "Either the Answer or the Answer Variable ID must be provided."
+            validator.errors["answer"] = message
+            validator.errors["answer_variable_id"] = message
+
+        if data.get("answer") is not None and data.get("answer_variable_id") is not None:
+            message = "Only the Answer or the Answer Variable ID should be provided not both."
+            validator.errors["answer"] = message
+            validator.errors["answer_variable_id"] = message
+
+        templated = data.get("answer_variable_id") is not None
+
+        # We should only check these if there are no validation errors so far
+        # as if there are then we had an error with the provided answer or
+        # answer_variable_id already.
+        if len(validator.errors) == 0:
+            validator.validate_string(
+                data,
+                "answer",
+                MAX_QUESTION_ANSWER_LENGTH,
+                required=not templated,
+                friendly_name="Answer",
+            )
+            validator.validate_model_id(
+                data,
+                "answer_variable_id",
+                required=templated,
+                friendly_name="Answer Variable ID",
+            )
 
         validator.validate_string(
             data,
@@ -81,13 +114,7 @@ class Question(db.Model):
             required=True,
             friendly_name="Points",
         )
-        validator.validate_string(
-            data,
-            "answer",
-            MAX_QUESTION_ANSWER_LENGTH,
-            required=True,
-            friendly_name="Answer",
-        )
+
         validator.validate_string(
             data,
             "placeholder",
@@ -117,10 +144,11 @@ class Question(db.Model):
         name: str,
         body: str,
         points: int,
-        answer: str,
         max_attempts: int,
         challenge_id: int,
-        placeholder: str | None = "",
+        answer: str | None = None,
+        answer_variable_id: int | None = None,
+        placeholder: str | None = None,
         commit=True,
     ) -> Question:
         try:
@@ -130,6 +158,7 @@ class Question(db.Model):
                     "body": body,
                     "points": points,
                     "answer": answer,
+                    "answer_variable_id": answer_variable_id,
                     "placeholder": placeholder,
                     "max_attempts": max_attempts,
                     "challenge_id": challenge_id,
@@ -158,19 +187,18 @@ class Question(db.Model):
         :param answer: The answer to check.
         :return: True if the answer matches, False otherwise.
         """
-        # Seed faker
-        faker = Faker()
-        faker.seed_instance(
-            SEED_FORMAT_STRING.format(
-                event_id=team.event_id, challenge_id=self.challenge, question_id=self.id, team_seed=team.seed
-            )
-        )
-
-        # Answers can be a string|Answer|Template
-
-        # Render the answer template
-        # evaluated_answer =
-        # print(self.answer)
+        templated = self.answer is None
+        if templated and isinstance(self.answer_variable, ChallengeVariable):
+            variable = self.answer_variable.as_attr()
+            evaluated_answer = variable.template.eval(generate_seed(
+                event_id=team.event_id,
+                challenge_id=self.challenge_id,
+                question_id=self.id,
+                team_seed=team.seed
+            ))
+            return evaluated_answer == answer
+        elif self.answer is not None:
+            return re.search(self.answer, answer) is not None
 
         return False
 

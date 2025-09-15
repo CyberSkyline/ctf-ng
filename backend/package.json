@@ -3,8 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "lint": ".yarn-scripts/lint.sh",
-    "test": ".yarn-scripts/tesh.sh"
+    "lint": ".scripts/lint.sh",
+    "test": ".scripts/tesh.sh",
+    "preinstall": ".scripts/pip_install.sh"
   },
-  "packageManager": "yarn@4.9.2"
+  "packageManager": "pnpm@10.15.1"
 }
