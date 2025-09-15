@@ -188,6 +188,7 @@ class Announcement(db.Model):
         announcement_type: AnnouncementType,
         title: str,
         message: str,
+        *,
         sender_id: int | None = None,
         event_id: int | None = None,
         expires_at: Any | None = None,
@@ -241,16 +242,21 @@ class Announcement(db.Model):
         return cls.query.get(announcement_id)
 
     @classmethod
+    def get_all_announcements(cls) -> list[Announcement]:
+        """
+        Get all announcements ordered by newest first
+        """
+        return cls.query.order_by(cls.created_at.desc()).all()
+
+    @classmethod
     def get_active_announcements(
         cls,
         event_id: int | None = None,
-        limit: int | None = None,
     ) -> list[Announcement]:
         """
         Get active announcements (not expired)
         Args:
             event_id: Filter by event (None = global announcements)
-            limit: Maximum number of results
         Returns:
             list[Announcement]: List of active announcements
         """
@@ -263,12 +269,7 @@ class Announcement(db.Model):
         else:
             query = query.filter(cls.event_id.is_(None))
 
-        query = query.order_by(cls.created_at.desc())
-
-        if limit:
-            query = query.limit(limit)
-
-        return query.all()
+        return query.order_by(cls.created_at.desc()).all()
 
     @classmethod
     def delete_expired(cls) -> int:

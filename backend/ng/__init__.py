@@ -8,8 +8,8 @@ from .core.utils.logger import get_logger
 from .core.routes import delete_unwanted_ctfd_routes, api_blueprint
 from .core.routes.views import plugin_views
 from .core.middleware.error_handler import register_error_handlers
-from .support import sockets as support_sockets
-# from .notifications import sockets as notification_sockets
+from .core.utils.redis_notifications import initialize_redis_notifications
+from .notifications import sockets as notification_sockets
 
 from .event.models.Event import Event  # noqa: F401
 from .team.models.Team import Team  # noqa: F401
@@ -44,18 +44,23 @@ def load(app: Any) -> None:
 
         register_error_handlers(app)
 
-        # Will be ignored for now
         socketio = SocketIO(
             app,
             async_mode="gevent",
             message_queue=app.config.get("REDIS_URL"),
             cors_allowed_origins="*",
+            logger=False,
+            engineio_logger=False
         )
 
         app.extensions["socketio"] = socketio
 
-        support_sockets.initialize_socket_handlers(socketio)
-        # notification_sockets.initialize_notification_sockets(socketio)
+        notification_sockets.initialize_notification_sockets(socketio)
+        redis_manager = initialize_redis_notifications(socketio)
+        if redis_manager:
+            logger.info("Redis notification system initialized successfully")
+        else:
+            logger.warning("Redis notification system failed to initialize")
 
         app.register_blueprint(plugin_views)
         app.register_blueprint(api_blueprint, url_prefix="/ng")
@@ -65,6 +70,7 @@ def load(app: Any) -> None:
                 "context": {
                     "stage": "completed",
                     "blueprints": ["plugin_views", "api_blueprint"],
+                    "features": ["socketio", "redis_pubsub", "notifications"]
                 }
             },
         )

@@ -4,7 +4,6 @@ from .api import (
     serialize_model_for_api,
     success_response,
 )
-from .emitters import emit_event
 from .logger import (
     get_logger,
     logger,
@@ -22,6 +21,7 @@ def get_models():
     """Lazy import of models to avoid SQLAlchemy table creation during import."""
     from ...challenge.models import Challenge, ChallengeTag, ContainerBlueprint, Hint, Question
     from ...event.models import Demographic, Event
+    from ...notifications.models import Notification, Announcement
     from ...permissions.models import Permission, Role, RolePermission, UserRole
     from ...scoring.models import Attempt, HintRedemption, ManualPointAward, Score, ScoreEvent
     from ...support.models import Ticket, TicketMessage, TicketTag
@@ -31,6 +31,7 @@ def get_models():
     from ...containers.models.ContainerInstance import ContainerInstance
 
     return {
+        "Announcement": Announcement,
         "Attempt": Attempt,
         "Challenge": Challenge,
         "ChallengeTag": ChallengeTag,
@@ -40,6 +41,7 @@ def get_models():
         "Hint": Hint,
         "HintRedemption": HintRedemption,
         "ManualPointAward": ManualPointAward,
+        "Notification": Notification,
         "Permission": Permission,
         "Question": Question,
         "Role": Role,
@@ -65,5 +67,4 @@ __all__ = [
     "serialize_model_for_api",
     "success_response",
     "error_response",
-    "emit_event",
 ]

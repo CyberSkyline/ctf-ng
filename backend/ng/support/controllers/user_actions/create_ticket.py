@@ -2,11 +2,11 @@
 Creates a new support ticket with initial message.
 """
 
-from ....core.utils import emit_event
 from ....core.exceptions import NotFoundError
 from ....user.models.User import User
 from ....team.models.Team import Team
 from ...models.Ticket import Ticket
+from ....notifications.services import NotificationService
 
 def create_ticket(
     subject: str,
@@ -41,11 +41,10 @@ def create_ticket(
         commit=True,
     )
 
-    # TODO: Refactor in near future with notifications implemenation
-    emit_event(
-        event_name="new_ticket",
-        data={"ticket": ticket.serialize()},
-        room="support_admin",
+    NotificationService.notify_new_ticket(
+        ticket_id=ticket.id,
+        author_id=current_user.id,
+        subject=subject,
     )
 
     return ticket

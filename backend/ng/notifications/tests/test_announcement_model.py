@@ -70,12 +70,7 @@ class TestAnnouncement:
         assert refreshed_announcement.expires_at is None
         assert refreshed_announcement.event_id is None
 
-    def test_create_announcement_full_fields(
-            self,
-            db_session,
-            admin,
-            event
-            ):
+    def test_create_announcement_full_fields(self, db_session, admin, event):
         """
         Test creating an announcement with all fields populated
         """
@@ -196,10 +191,7 @@ class TestAnnouncement:
         announcement = announcement_factory(expires_at = None)
         assert announcement.is_active is True
 
-    def test_is_active_property_future_expiration(
-            self,
-            announcement_factory
-            ):
+    def test_is_active_property_future_expiration(self, announcement_factory):
         """
         Test is_active property for announcement with future expiration
         """
@@ -274,13 +266,13 @@ class TestAnnouncement:
         assert event_announcements[0].id == event_announcement.id
         assert event_announcements[0].title == "Event Update"
 
-    def test_get_active_announcements_with_limit(
+    def test_get_active_announcements_returns_all(
             self,
             db_session,
             announcement_factory
             ):
         """
-        Test getting active announcements with limit
+        Test getting all active announcements
         """
         announcements = []
         for i in range(5):
@@ -291,11 +283,9 @@ class TestAnnouncement:
                     )
             announcements.append(announcement)
 
-        limited_announcements = Announcement.get_active_announcements(
-                limit = 3
-                )
+        all_announcements = Announcement.get_active_announcements()
 
-        assert len(limited_announcements) == 3
+        assert len(all_announcements) == 5
 
     def test_get_active_announcements_ordered_by_created_desc(
             self,
@@ -379,11 +369,7 @@ class TestAnnouncement:
         assert data["created_at"].endswith("Z")
         assert data["expires_at"] is None
 
-    def test_serialize_with_event_reference(
-            self,
-            announcement_factory,
-            event
-            ):
+    def test_serialize_with_event_reference(self, announcement_factory, event):
         """
         Test serialization with event reference
         """
@@ -485,7 +471,6 @@ class TestAnnouncement:
                             }
                     )
         assert "message" in exc_info.value.errors
-
 
     def test_validate_empty_title_fails(self, db_session):
         """

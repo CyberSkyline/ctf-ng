@@ -264,3 +264,4 @@ class EventChallenges(Resource):
         """
         challenge = import_challenge_from_yaml(event, json_data)
         return success_response(challenge)
+
