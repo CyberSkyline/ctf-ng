@@ -11,7 +11,7 @@ from cyber_skyline.chall_parser.template import Template
 from cyber_skyline.chall_parser.yaml_parser import parse_compose_string
 
 from ....notifications.services import NotificationService
-from ng.challenge.models import ChallengeVariable
+from ....challenge.models import ChallengeVariable
 from ....challenge.models import Challenge, ChallengeTag, ContainerBlueprint, Hint, Question
 from ....challenge.utils import generate_seed
 from ....core.exceptions import ValidationError

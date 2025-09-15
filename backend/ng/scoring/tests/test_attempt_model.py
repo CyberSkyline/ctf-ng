@@ -6,8 +6,8 @@ import pytest
 from unittest.mock import patch
 from datetime import datetime, timezone, timedelta, UTC
 
-from ng.challenge.models.ChallengeVariable import ChallengeVariable
-from ng.challenge.utils import generate_seed
+from ...challenge.models.ChallengeVariable import ChallengeVariable
+from ...challenge.utils import generate_seed
 
 from ...core.exceptions import (
     ValidationError,
