@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from typing import Any, TypedDict, NotRequired
+from typing import Any, TypedDict, NotRequired, TYPE_CHECKING
 
 from CTFd.models import db
 from cyber_skyline.chall_parser.compose.challenge_info import (
     Hint as HintAttr,
 )
 from sqlalchemy.orm import Mapped
-from ng.challenge.models.Challenge import Challenge
+if TYPE_CHECKING:
+    from ..models.Challenge import Challenge
 
 from ... import config
 from ...core.utils.validator import BaseValidator

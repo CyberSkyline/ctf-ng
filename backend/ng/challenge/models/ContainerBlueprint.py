@@ -24,7 +24,7 @@ class ContainerBlueprint(db.Model):
     hostname: Mapped[str] = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_HOSTNAME_LENGTH), nullable=False)
     stdin_open: Mapped[bool] = db.Column(db.Boolean, nullable=True)
     tty: Mapped[bool] = db.Column(db.Boolean, nullable=True)
-    command: Mapped[list[str]] = db.Column(db.PickleType, nullable=True)
+    command: Mapped[str | list[str] | None] = db.Column(db.PickleType, nullable=True)
     entrypoint: Mapped[str | list[str] | None] = db.Column(db.PickleType, nullable=True)
     environment: Mapped[dict[str, str | Callable[[str], str]] | list[str] | None] = db.Column(db.PickleType, nullable=True)
     networks: Mapped[list[str] | dict[str, None] | None] = db.Column(db.PickleType, nullable=True)
@@ -93,7 +93,7 @@ class ContainerBlueprint(db.Model):
         challenge_id: int,
         stdin_open: bool | None = None,
         tty: bool | None = None,
-        command: list[str] | None = None,
+        command: str | list[str] | None = None,
         entrypoint: str | list[str] | None = None,
         environment: dict[str, str | Callable[[str], str]] | list[str] | None = None,
         networks: list[str] | dict[str, None] | None = None,

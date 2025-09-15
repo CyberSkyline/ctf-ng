@@ -1,19 +1,20 @@
 from __future__ import annotations
 
-from typing import Any, TypedDict, NotRequired
+from typing import Any, TypedDict, NotRequired, TYPE_CHECKING
 from sqlalchemy.orm import Mapped
 
 from CTFd.models import db
-from ng.challenge.models import ChallengeTag, ChallengeVariable, ContainerBlueprint, Hint, Question
-from ng.event.models import Event
 
+if TYPE_CHECKING:
+    from ..models import ChallengeTag, ChallengeVariable, ContainerBlueprint, Hint, Question
+
+from ...event.models import Event
 from ...core.utils.validator import BaseValidator
 
 MAX_CHALLENGE_NAME_LENGTH = 128
 MAX_CHALLENGE_DESCRIPTION_LENGTH = 4096
 MAX_CHALLENGE_SUMMARY_LENGTH = 4096
 MAX_CHALLENGE_ICON_LENGTH = 64
-
 
 class SerializedChallenge(TypedDict):
     id: int
