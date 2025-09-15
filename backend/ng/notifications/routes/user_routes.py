@@ -10,7 +10,7 @@ from ...core.middleware.loaders import (
     load_notification,
 )
 from ...core.utils import success_response
-from ...core.middleware import user_endpoint
+from ...core.middleware import user_endpoint, check_ownership
 
 from ..controllers import (
     get_my_notifications,
@@ -84,6 +84,7 @@ class UnreadCount(Resource):
 class MarkRead(Resource):
     @user_endpoint()
     @load_notification(source=LoaderType.PARAM)
+    @check_ownership(resource_key="notification", user_field="recipient_id")
     @notifications_user_namespace.doc(
         description="Mark a specific notification as read",
         responses={

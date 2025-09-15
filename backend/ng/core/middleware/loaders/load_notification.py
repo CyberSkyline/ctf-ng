@@ -8,12 +8,10 @@ from ._util import (
     get_model_class,
     check_output_exists,
 )
-from ...exceptions import (
-    NotFoundError,
-    PermissionError,
-)
 from functools import wraps
 from collections.abc import Callable
+
+from ...exceptions import NotFoundError
 
 
 def load_notification(
@@ -22,7 +20,7 @@ def load_notification(
     output_key = "notification"
 ) -> Callable:
     """
-    Load notification middleware with user
+    Load notification middleware
     """
     def decorator(f):
         @wraps(f)
@@ -41,15 +39,6 @@ def load_notification(
             if not notification:
                 raise NotFoundError(
                     f"Notification {notification_id} not found"
-                )
-
-            current_user = kwargs.get("current_user")
-            if not current_user:
-                raise ValueError("User must be loaded first")
-
-            if notification.recipient_id != current_user.id:
-                raise PermissionError(
-                    "You cannot access other users' notifications"
                 )
 
             kwargs[output_key] = notification

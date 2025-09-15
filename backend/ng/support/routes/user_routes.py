@@ -5,8 +5,8 @@ User API routes for support tickets
 from flask import request
 from flask_restx import Namespace, Resource
 
-from ...core.middleware import user_endpoint
-from ...core.middleware.loaders import load_ticket_with_user
+from ...core.middleware import user_endpoint, check_ownership
+from ...core.middleware.loaders import LoaderType, load_ticket
 from ...core.utils import success_response
 from ...user.models import User
 
@@ -72,7 +72,8 @@ class MyTickets(Resource):
 class MyTicket(Resource):
     @support_user_namespace.doc(**GET_MY_TICKET_DOC)
     @user_endpoint()
-    @load_ticket_with_user()
+    @load_ticket(LoaderType.PARAM)
+    @check_ownership(resource_key="ticket", user_field="author_id")
     def get(self, ticket_id: int, ticket, current_user: User, **kwargs):
         """
         Get ticket details with all messages
@@ -85,7 +86,8 @@ class MyTicket(Resource):
 class TicketMessage(Resource):
     @support_user_namespace.doc(**ADD_MESSAGE_DOC)
     @user_endpoint(json_required=True)
-    @load_ticket_with_user()
+    @load_ticket(LoaderType.PARAM)
+    @check_ownership(resource_key="ticket", user_field="author_id")
     def post(self, ticket_id: int, ticket, current_user: User, json_data, **kwargs):
         """
         Add a new message to the ticket
@@ -103,7 +105,8 @@ class TicketMessage(Resource):
 class CloseMyTicket(Resource):
     @support_user_namespace.doc(**CLOSE_MY_TICKET_DOC)
     @user_endpoint()
-    @load_ticket_with_user()
+    @load_ticket(LoaderType.PARAM)
+    @check_ownership(resource_key="ticket", user_field="author_id")
     def post(self, ticket_id: int, ticket, current_user: User, **kwargs):
         """
         Close user's own ticket

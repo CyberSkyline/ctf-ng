@@ -8,7 +8,6 @@ from .load_team import load_team
 from .load_team_by_invite_code import load_team_by_invite_code
 from .load_team_by_user_and_event import load_team_by_user_and_event
 from .load_ticket import load_ticket
-from .load_ticket_with_user import load_ticket_with_user
 from .load_ticket_tag import load_ticket_tag
 from .load_user import load_user
 from .load_container_instance import load_container_instance

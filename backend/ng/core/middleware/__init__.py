@@ -12,6 +12,7 @@ from .auth import (
     admin_endpoint,
     public_endpoint,
 )
+from .ownership_middleware import check_ownership
 
 __all__ = [
     # Core Decorators
@@ -20,4 +21,5 @@ __all__ = [
     "user_endpoint",
     "admin_endpoint",
     "public_endpoint",
+    "check_ownership",
 ]
