@@ -23,7 +23,7 @@ import cattrs
 from typing import TextIO, Union
 from pathlib import Path
 from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn
-from cyber_skyline.chall_parser.strategies import configure_union_passthrough, configure_tagged_union
+from cattrs.strategies import configure_union_passthrough, configure_tagged_union
 from typing import get_origin, get_args
 from cyber_skyline.chall_parser.compose import ComposeFile, TextBody
 from cyber_skyline.chall_parser.rewriter import Rewriter
