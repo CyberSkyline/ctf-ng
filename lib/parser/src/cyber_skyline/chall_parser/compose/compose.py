@@ -25,22 +25,30 @@ for CTF challenge deployment. It enforces security constraints and validation wh
 supporting the x-challenge extension for CTF-specific metadata.
 """
 
-from typing import Literal, NewType, Dict
-import attr
-import attr.validators as v
+from typing import Iterator, NewType, Dict
+import attrs.validators as v
+from attrs import define, field
 
 from cyber_skyline.chall_parser.compose.service import Service
 from cyber_skyline.chall_parser.compose.challenge_info import ChallengeInfo
 from cyber_skyline.chall_parser.compose.validators import validate_compose_name_pattern
+from cyber_skyline.chall_parser.warnings import Warnings
 
-@attr.s
+@define
 class Network:
     """Represents a Docker Compose network configuration for CTF challenges.
     
     This is a heavily simplified network definition that only supports internal networks.
     External network access is explicitly disabled for security reasons.
     """
-    internal: Literal[True] = attr.ib(validator=v.in_([True]))  # All networks must be internal (no external access)
+    internal: bool | None = None # All networks must be internal (no external access)
+
+    def warnings(self) -> Iterator[str]:
+        if self.internal is None:
+            yield "internal field does not exist, this network will not be created in production"
+        elif self.internal is False:
+            yield "internal field is False, this network will not be created in production"
+            
 
 # Custom types for pattern-validated dictionaries
 # These provide type safety while enforcing naming constraints
@@ -48,7 +56,7 @@ ComposeResourceName = NewType('ComposeResourceName', str)
 ServicesDict = Dict[ComposeResourceName, Service]
 NetworksDict = Dict[ComposeResourceName, Network]
 
-@attr.s
+@define
 class ComposeFile:
     """Main Docker Compose file structure for CTF challenges.
     
@@ -57,12 +65,12 @@ class ComposeFile:
     """
     
     # CTF-specific extension - this is the core purpose of our custom format
-    challenge: ChallengeInfo = attr.ib() # Required x-challenge block with CTF metadata
+    challenge: ChallengeInfo = field() # Required x-challenge block with CTF metadata
     # Every compose file must define challenge information since this is
     # specifically for CTF challenge deployment, not general Docker orchestration
     
     # Core Docker Compose sections with security constraints
-    services: ServicesDict = attr.ib(
+    services: ServicesDict = field(
         default=None, 
         validator=v.optional(validate_compose_name_pattern)
     )
@@ -71,7 +79,7 @@ class ComposeFile:
     # - Each service is constrained to CTF-appropriate configurations
     # TODO: Consider if we should require at least one service
 
-    networks: NetworksDict | None = attr.ib(
+    networks: NetworksDict | None = field(
         default=None,
         validator=v.optional(validate_compose_name_pattern)
     )
@@ -79,6 +87,21 @@ class ComposeFile:
     # - All networks are internal-only for security
     # - Names must follow Docker naming conventions
     # - Optional since simple challenges might not need custom networking
+    
+    def _warnings(self) -> Iterator[str]:
+        if self.services is None or len(self.services) == 0:
+            yield "No services defined, challenge will not be deployable"
+        if self.networks is None or len(self.networks) == 0:
+            yield "No networks defined, default network will be used"
+
+    def _field_warnings(self) -> Iterator[Warnings]:
+        for net_name, net in (self.networks or {}).items():
+            yield Warnings(f"{net_name}", net.warnings(), None)
+        for serv_name, serv in (self.services or {}).items():
+            yield Warnings(f"{serv_name}", serv.warnings(), None)
+
+    def warnings(self) -> Warnings:
+        return Warnings("ComposeFile", self._warnings(), self._field_warnings())
 
 # Deliberately excluded Docker Compose features:
 # - volumes: Persistent storage could be a security risk and complexity issue
