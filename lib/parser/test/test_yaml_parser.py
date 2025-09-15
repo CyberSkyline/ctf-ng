@@ -850,8 +850,15 @@ networks:
   external_net:
     internal: false  # Should be true
 """
-        with pytest.raises(Exception):  # Should fail - networks must be internal
-            parse_compose_string(yaml_content)
+        # Previously this raised an Exception; after update we return a ComposeFile
+        # and surface some issues as warnings instead. Ensure a network warning is
+        # returned for external networks.
+        compose = parse_compose_string(yaml_content)
+        w = compose.warnings()
+        # Field warnings yield Warnings objects per resource; find the network warning
+        field_warnings = list(w.field_warnings or [])
+        # There should be a warning for the external network 'external_net'
+        assert any(fw.key == 'external_net' and any('internal field is False' in msg for msg in (fw.self_warnings or [])) for fw in field_warnings)
 
     def test_invalid_question_types(self):
         """Test error when question fields have wrong types."""
