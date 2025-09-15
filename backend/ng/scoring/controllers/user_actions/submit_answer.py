@@ -3,6 +3,7 @@ Handles answer submission for challenges.
 """
 
 from ...models import Attempt
+from ....notifications.services import NotificationService
 
 
 def submit_answer(
@@ -22,6 +23,13 @@ def submit_answer(
         challenge_id=challenge.id,
         question_id=question.id,
         submission=submission,
+    )
+
+    NotificationService.broadcast_attempt_update(
+        event_id=event.id,
+        team_id=team.id,
+        challenge_id=challenge.id,
+        question_id=question.id,
     )
 
     return attempt

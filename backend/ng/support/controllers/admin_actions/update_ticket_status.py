@@ -2,9 +2,9 @@
 Toggles ticket open/closed status (admin only).
 """
 
-from ....core.utils import emit_event
 from ....user.models.User import User
 from ...models.Ticket import Ticket
+from ....notifications.services import NotificationService
 
 
 def update_ticket_status(
@@ -17,16 +17,17 @@ def update_ticket_status(
     """
     if closed:
         ticket.close_ticket(commit=True)
-        event_name = "ticket_closed"
+        status = "closed"
     else:
         ticket.reopen_ticket(commit=True)
-        event_name = "ticket_reopened"
+        status = "reopened"
 
-    # TODO: Refactor in near future with notifications implemenation
-    emit_event(
-        event_name=event_name,
-        data={"ticket_id": ticket.id, "changed_by": current_user.id},
-        room=f"ticket_{ticket.id}",
+    # Notify ticket author about status change
+    NotificationService.notify_ticket_status_change(
+        ticket_id=ticket.id,
+        recipient_id=ticket.author_id,
+        new_status=status,
+        changed_by_id=current_user.id,
     )
 
     return ticket

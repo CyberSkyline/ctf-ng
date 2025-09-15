@@ -131,6 +131,7 @@ class BaseValidator:
 
         # Map model names to table names
         model_table_mapping = {
+            "Announcement": "ng_announcements",
             "Attempt": "ng_attempts",
             "Challenge": "ng_challenges",
             "ChallengeTag": "ng_challenge_tags",
@@ -141,6 +142,7 @@ class BaseValidator:
             "Hint": "ng_challenge_hints",
             "HintRedemption": "ng_hint_redemptions",
             "ManualPointAward": "ng_manual_point_awards",
+            "Notification": "ng_notifications",
             "Permission": "ng_permissions",
             "Question": "ng_challenge_questions",
             "Role": "ng_roles",

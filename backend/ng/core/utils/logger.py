@@ -57,7 +57,7 @@ def _configure_logger():
 
     logger.propagate = False
 
-    logger.info(f"Plugin logger configured with level: {log_level_str}")
+    logger.info("Plugin logger configured with level: %s", log_level_str)
 
 
 _configure_logger()

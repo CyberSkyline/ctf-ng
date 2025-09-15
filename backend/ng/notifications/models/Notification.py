@@ -25,6 +25,7 @@ class NotificationType(str, Enum):
     TICKET_ASSIGNED = "ticket_assigned"
     TEAM_INVITATION = "team_invitation"
     CHALLENGE_RELEASED = "challenge_released"
+    EVENT_ANNOUNCEMENT = "event_announcement"
 
 
 class SerializedNotification(TypedDict):
@@ -280,6 +281,7 @@ class Notification(db.Model):
         title: str,
         message: str,
         recipient_id: int,
+        *,
         sender_id: int | None = None,
         ticket_id: int | None = None,
         team_id: int | None = None,
@@ -333,6 +335,7 @@ class Notification(db.Model):
             event_id = validated_data.get("event_id"),
             challenge_id = validated_data.get("challenge_id"),
             expires_at = validated_data.get("expires_at"),
+            created_at = utc_now(),
         )
 
         db.session.add(notification)
@@ -363,7 +366,6 @@ class Notification(db.Model):
         is_read: bool | None = None,
         notification_type: NotificationType | None = None,
         expired: bool = False,
-        limit: int | None = None,
     ) -> list[Notification]:
         """
         Find notifications based on filters
@@ -372,7 +374,6 @@ class Notification(db.Model):
             is_read: Filter by read status (True = read, False = unread)
             notification_type: Filter by type
             expired: Include expired notifications (default False)
-            limit: Maximum number of results
         Returns:
             list[Notification]: List of filtered notifications
         """
@@ -391,11 +392,7 @@ class Notification(db.Model):
                 (cls.expires_at.is_(None)) | (cls.expires_at > utc_now())
             )
 
-        query = query.order_by(cls.created_at.desc())
-
-        if limit is not None:
-            query = query.limit(limit)
-        return query.all()
+        return query.order_by(cls.created_at.desc()).all()
 
     @classmethod
     def get_unread_count(cls, recipient_id: int) -> int:
@@ -410,12 +407,16 @@ class Notification(db.Model):
     @classmethod
     def mark_all_as_read(cls, recipient_id: int) -> int:
         """
-        Mark all notifications as read for a user
+        Mark all unread notifications as read for a user.
+        Returns count of notifications updated.
         """
-        count = cls.query.filter_by(recipient_id = recipient_id).filter(
+        count = cls.query.filter_by(
+            recipient_id=recipient_id,
+        ).filter(
             cls.read_at.is_(None)
-        ).update({"read_at": utc_now()})
-
+        ).update(
+            {"read_at": utc_now()}
+        )
         db.session.commit()
         return count
 

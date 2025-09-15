@@ -3,6 +3,7 @@ Handles hint redemption for challenges.
 """
 
 from ...models import HintRedemption
+from ....notifications.services import NotificationService
 
 
 def redeem_hint(
@@ -18,6 +19,12 @@ def redeem_hint(
     HintRedemption.create_redemption(
         hint_id=hint.id,
         user_id=current_user.id,
+        team_id=team.id,
+        challenge_id=challenge.id,
+    )
+
+    NotificationService.broadcast_hint_redeemed(
+        event_id=event.id,
         team_id=team.id,
         challenge_id=challenge.id,
     )
