@@ -333,5 +333,5 @@ def update_challenge_from_yaml(challenge_id: int, json_data: dict[str, Any]) -> 
         db.session.commit()
         return challenge
     except Exception as e:
-        print(e)
-        raise ValidationError(f"Invalid challenge data in YAML: {e}") from e
+        db.session.rollback()
+        raise e
