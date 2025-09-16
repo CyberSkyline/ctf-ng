@@ -1,15 +1,9 @@
 import { radixTheme } from '@/grid';
 import { Flex, Spinner } from '@radix-ui/themes';
-import type {
-  CellClickedEvent,
-  ColDef,
-  GridApi,
-  GridOptions,
-} from 'ag-grid-community';
+import type { ColDef, GridApi, GridOptions } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
-import { includes } from 'lodash';
 
 /**
  * Wrapper around AgGridReact with common functionality for all admin grids.
@@ -89,14 +83,6 @@ export default function AdminGrid<T>({
     },
   };
 
-  const defaultGridOptions = {
-    onCellClicked : (e: CellClickedEvent) => {
-      if (includes(stopCellSelection, e.column.colId)) {
-        e.stopPropagation();
-      }
-    },
-  };
-
   return (
     <Flex direction="row" gap="4" className="w-full h-full">
       <AgGridReact
@@ -107,11 +93,15 @@ export default function AdminGrid<T>({
         rowSelection={{
           mode : 'singleRow',
           checkboxes : true,
-          enableClickSelection : true,
         }}
         loading={loading}
         loadingOverlayComponent={Spinner}
         getRowId={getRowId}
+        onCellClicked={(e) => {
+          if (!stopCellSelection?.includes(e.column.getColId())) {
+            e.node.setSelected(true);
+          }
+        }}
         onRowDoubleClicked={(event) => {
           if (event.node.isSelected()) {
             event.node.setSelected(false);
@@ -159,7 +149,7 @@ export default function AdminGrid<T>({
         }}
         initialState={initialState}
         className="w-full h-full grow"
-        gridOptions={{ ...defaultGridOptions, ...gridOptions }}
+        gridOptions={gridOptions}
       />
       {Sidebar && selectedData && (
         <Sidebar entity={selectedData} key={selectedId} />
