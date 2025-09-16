@@ -10,7 +10,6 @@ import { Button } from '@radix-ui/themes';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import EventHeader from 'components/EventHeader';
-import { TbPackages } from 'react-icons/tb';
 import { Link } from 'react-router';
 import AdminChallengeCard from './AdminChallengeCard';
 import ChallengeUploadModal from './ChallengeUploadModal';

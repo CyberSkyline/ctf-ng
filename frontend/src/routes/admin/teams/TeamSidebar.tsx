@@ -1,5 +1,7 @@
 import {
   COLOR_INFO,
+  COLOR_NEGATIVE,
+  COLOR_WARNING,
   DeploymentIcon,
   EventIcon,
   TeamIcon,
@@ -14,7 +16,7 @@ import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import RoleBadge from 'components/RoleBadge';
-import { TbDoorExit, TbPackages, TbStar } from 'react-icons/tb';
+import { TbDoorExit, TbStar } from 'react-icons/tb';
 import { Link } from 'react-router';
 import ScoreAdjustModal from './ScoreAdjustModal';
 import TeamActivity from './TeamActivity';

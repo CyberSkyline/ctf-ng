@@ -9,7 +9,6 @@ import {
   Text,
 } from '@radix-ui/themes';
 import ChallengeIcon from 'components/ChallengeIcon';
-import { TbPackages } from 'react-icons/tb';
 import { Link } from 'react-router';
 
 export default function AdminChallengeCard({ challenge }: { challenge: Challenge }) {

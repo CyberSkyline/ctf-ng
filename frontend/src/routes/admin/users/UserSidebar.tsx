@@ -1,4 +1,4 @@
-import { 
+import {
   COLOR_POSITIVE,
   EventIcon,
   TeamIcon,
