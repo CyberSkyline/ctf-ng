@@ -21,13 +21,13 @@ import { Link } from 'react-router';
 import ServiceRow from './ServiceRow';
 
 export default function DeploymentSidebar({ entity }: {entity: Deployment}) {
-  const { data : serviceData, error } = useDeploymentServices(entity.challenge_id, entity.team);
+  const { data : serviceData, error } = useDeploymentServices(entity.challenge_id, entity.team_id);
 
   return (
     <AdminSidebar>
       <AdminSidebarHeader title="Deployment Details">
         <Button variant="soft" color={COLOR_INFO} asChild>
-          <Link to={`/admin/teams?id=${entity.team}`}>
+          <Link to={`/admin/teams?id=${entity.team_id}`}>
             <TeamIcon />
             Team
           </Link>
