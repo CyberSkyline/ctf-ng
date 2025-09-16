@@ -1,25 +1,5 @@
 """
-Just wanted to thank Miguel Grinberg for the extremely detailed and *only* documentation for the SocketIOTestClient
-———
-""
-test_client(app, namespace=None, query_string=None, headers=None, auth=None, flask_test_client=None)
-The Socket.IO test client is useful for testing a Flask-SocketIO server. It works in a similar way to the Flask Test Client, but adapted to the Socket.IO server.
-
-Parameters:
-app – The Flask application instance.
-
-namespace – The namespace for the client. If not provided, the client connects to the server on the global namespace.
-
-query_string – A string with custom query string arguments.
-
-headers – A dictionary with custom HTTP headers.
-
-auth – Optional authentication data, given as a dictionary.
-
-flask_test_client – The instance of the Flask test client currently in use. Passing the Flask test client is optional, but is necessary if you want the Flask user session and any other cookies set in HTTP routes accessible from Socket.IO events.""
-""
-—————
-Wow. Encyclopedic!
+Redis | Socket - Integration Tests
 """
 
 import time
