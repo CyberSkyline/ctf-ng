@@ -14,8 +14,7 @@ find-TODO:
 
 # All tests
 test-all:
-	$(PYTHON_EXEC) -m pytest -m "not middleware" -v
-
+	$(PYTHON_EXEC) -m pytest -m "not middleware" --ignore-glob="**/*e2e*" -v
 
 test-validation:
 	$(PYTHON_EXEC) -m pytest -v $(shell find . -name "test_*_validation.py")

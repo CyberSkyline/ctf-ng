@@ -13,4 +13,4 @@ def get_leaderboard(event_id: int, limit: int | None = config.DEFAULT_LEADERBOAR
     Retrieves the cached leaderboard for a given event
     """
     leaderboard_data = Score.get_leaderboard(event_id=event_id, limit=limit)
-    return leaderboard_data  # type: ignore[no-any-return]
+    return leaderboard_data

@@ -6,8 +6,8 @@ from CTFd.models import db
 from sqlalchemy.orm import Mapped
 from cyber_skyline.chall_parser.compose.challenge_info import Question as QuestionAttr
 
-from ng.challenge.models.Challenge import Challenge
-from ng.challenge.models.ChallengeVariable import ChallengeVariable
+from .Challenge import Challenge
+from .ChallengeVariable import ChallengeVariable
 
 from ...core.utils.validator import BaseValidator
 from ...challenge.utils import generate_seed
