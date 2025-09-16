@@ -11,7 +11,7 @@ Flask-SocketIO==5.5.1
 python-socketio==5.13.0
 gevent-websocket==0.10.1
 types-Flask-SocketIO==5.5.0.20250809
-redis==6.4.0
+redis==4.5.5
 docker==7.1.0
 types-docker==7.1.0.20250822
 requests-oauthlib==1.3.0
