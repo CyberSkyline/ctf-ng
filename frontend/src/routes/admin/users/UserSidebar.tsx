@@ -1,4 +1,9 @@
-import { COLOR_POSITIVE, EventIcon, TeamIcon } from '@/constants';
+import { 
+  COLOR_POSITIVE,
+  EventIcon,
+  TeamIcon,
+  UserIcon,
+} from '@/constants';
 import { useTeamMembers } from '@/hooks/team';
 import { useUserEvents, useUserTeams } from '@/hooks/users';
 import type { Event, Team, User } from '@/types';
@@ -53,7 +58,7 @@ export default function UserSidebar({ entity }: { entity: User }) {
 
   return (
     <AdminSidebar>
-      <AdminSidebarHeader title="User Details" />
+      <AdminSidebarHeader title={entity.name} icon={<UserIcon />} />
 
       <AdminDataList data={{ ...entity }} />
 

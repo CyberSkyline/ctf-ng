@@ -1,4 +1,9 @@
-import { COLOR_INFO, TeamIcon } from '@/constants';
+import {
+  COLOR_INFO,
+  DeploymentIcon,
+  EventIcon,
+  TeamIcon,
+} from '@/constants';
 import { useEventChallenges } from '@/hooks/challenge';
 import type { Event } from '@/types';
 import { Button } from '@radix-ui/themes';
@@ -16,10 +21,10 @@ export default function EventSidebar({ entity }: { entity: Event }) {
 
   return (
     <AdminSidebar>
-      <AdminSidebarHeader title="Event Details">
+      <AdminSidebarHeader title={entity.name} icon={<EventIcon />}>
         <Button variant="soft" color={COLOR_INFO} asChild>
           <Link to={`/admin/deployments?filter=${btoa(JSON.stringify({ event_name : { filterType : 'text', type : 'equals', filter : entity.name } }))}`}>
-            <TbPackages />
+            <DeploymentIcon />
             Deployments
           </Link>
         </Button>

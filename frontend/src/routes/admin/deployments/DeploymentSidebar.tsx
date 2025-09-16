@@ -1,5 +1,6 @@
 import {
   COLOR_INFO,
+  DeploymentIcon,
   EventIcon,
   TeamIcon,
   UserIcon,
@@ -12,7 +13,6 @@ import {
   Skeleton,
   Table,
 } from '@radix-ui/themes';
-import AdminDataList from 'components/AdminDataList';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { ErrorCallout, WarningCallout } from 'components/Callouts';
@@ -25,7 +25,7 @@ export default function DeploymentSidebar({ entity }: {entity: Deployment}) {
 
   return (
     <AdminSidebar>
-      <AdminSidebarHeader title="Deployment Details">
+      <AdminSidebarHeader title={`${entity.challenge_name} - ${entity.team_name}`} icon={<DeploymentIcon />}>
         <Button variant="soft" color={COLOR_INFO} asChild>
           <Link to={`/admin/teams?id=${entity.team}`}>
             <TeamIcon />
@@ -39,12 +39,6 @@ export default function DeploymentSidebar({ entity }: {entity: Deployment}) {
           </Link>
         </Button>
       </AdminSidebarHeader>
-      <AdminDataList
-        data={{
-          team : entity.team_name,
-          challenge : entity.challenge_name,
-        }}
-      />
 
       <AdminSidebarHeader title="Services" />
       {error && <ErrorCallout>{error.message}</ErrorCallout>}

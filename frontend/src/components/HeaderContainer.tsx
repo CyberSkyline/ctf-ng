@@ -8,11 +8,11 @@ export default function HeaderContainer({ children = undefined }: {
     children && (
       <Container
         size="2"
-        px="4"
+        px="3"
         py="9"
-        mx="-4"
-        mt="-4"
-        mb="4"
+        mx="-3"
+        mt="-3"
+        mb="3"
         className="bg-dots-2"
       >
         {children}

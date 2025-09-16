@@ -1,8 +1,8 @@
 import {
   COLOR_INFO,
-  COLOR_NEGATIVE,
-  COLOR_WARNING,
+  DeploymentIcon,
   EventIcon,
+  TeamIcon,
   UserIcon,
 } from '@/constants';
 import { useTeamMembers } from '@/hooks/team';
@@ -24,7 +24,7 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
 
   return (
     <AdminSidebar>
-      <AdminSidebarHeader title="Team Details">
+      <AdminSidebarHeader title={entity.name} icon={<TeamIcon />}>
         <Button variant="soft" color={COLOR_INFO} asChild>
           <Link to={`/admin/deployments?filter=${btoa(JSON.stringify(
             {
@@ -33,7 +33,7 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
             },
           ))}`}
           >
-            <TbPackages />
+            <DeploymentIcon />
             Deployments
           </Link>
         </Button>
