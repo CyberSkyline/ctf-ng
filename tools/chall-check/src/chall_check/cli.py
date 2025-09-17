@@ -37,6 +37,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich.syntax import Syntax
+from rich.markdown import Markdown
 import typer
 from cattrs import ClassValidationError, transform_error
 from cattrs.v import format_exception
@@ -45,6 +46,7 @@ import json
 from importlib.metadata import version as get_version
 from cyber_skyline.chall_parser.yaml_parser import parse_compose_file, parse_compose_string, ComposeYamlParser
 from cyber_skyline.chall_parser.compose import ComposeFile, ChallengeInfo
+from cyber_skyline.chall_parser.warnings import Warnings
 from chall_check.md import compose_to_markdown
 
 app = typer.Typer(
@@ -164,7 +166,7 @@ def display_challenge_summary(challenge: ChallengeInfo):
         challenge_table.add_row("Tags", ", ".join(challenge.tags))
     
     console.print(challenge_table)
-    console.print()
+    console.print() 
     
     # Display questions
     if challenge.questions:
@@ -283,6 +285,14 @@ def display_services_summary(compose: ComposeFile):
     
     console.print(services_table)
 
+def display_warnings(compose: ComposeFile):
+    """Display any warnings found during validation."""
+    warning = compose.warnings()
+    if not warning:
+        return
+    
+    console.print(Panel(title="Warnings", renderable=Markdown(warning.render()), border_style="yellow"))
+
 class OutputFormat(str, Enum):
     TABLE = "table"
     JSON = "json"
@@ -320,6 +330,7 @@ def validate(
             if output_format == OutputFormat.TABLE:
                 display_challenge_summary(compose.challenge)
                 display_services_summary(compose)
+                display_warnings(compose)
             elif output_format == OutputFormat.JSON:
                 parser = ComposeYamlParser()
                 data = parser.converter.unstructure(compose)
