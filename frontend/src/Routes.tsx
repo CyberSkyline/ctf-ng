@@ -81,7 +81,7 @@ function Routes() {
   ]);
 
   return (
-    <div className="p-4 min-h-[calc(100vh-var(--NavBarHeight)-var(--FooterBarHeight))] relative mb-[var(--FooterBarHeight)]">
+    <div className="p-3 min-h-[calc(100vh-var(--NavBarHeight)-var(--FooterBarHeight))] relative mb-[var(--FooterBarHeight)]">
       {routes}
     </div>
   );

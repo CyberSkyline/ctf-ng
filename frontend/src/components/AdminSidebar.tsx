@@ -1,7 +1,7 @@
 import { Flex } from '@radix-ui/themes';
 import { useEffect, useRef, type ReactNode } from 'react';
 
-export default function AdminSidebar({ children }: {children: ReactNode}) {
+export default function AdminSidebar({ basis, children }: {basis?: string, children: ReactNode}) {
   const headerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -11,7 +11,14 @@ export default function AdminSidebar({ children }: {children: ReactNode}) {
   }, []);
 
   return (
-    <Flex direction="column" gap="4" className="basis-1/2 min-w-128 grow-0 shrink-0 overflow-y-auto outline-0" ref={headerRef} tabIndex={-1}>
+    <Flex
+      direction="column"
+      gap="3"
+      className="min-w-128 overflow-y-auto outline-0 -m-3 p-3"
+      ref={headerRef}
+      tabIndex={-1}
+      flexBasis={basis || '50%'}
+    >
       {children}
     </Flex>
   );

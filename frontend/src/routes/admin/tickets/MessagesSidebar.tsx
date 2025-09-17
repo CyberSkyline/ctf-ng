@@ -1,4 +1,28 @@
 import {
+  ChallengeIcon,
+  EventIcon,
+  TeamIcon,
+  UserIcon,
+} from '@/constants';
+import { useEventChallenges } from '@/hooks/challenge';
+import { useSupportRoles } from '@/hooks/permissions';
+import {
+  addNewAdminTicketMessage,
+  assignTicket,
+  closeTicket,
+  muteTicket,
+  putTicketChallenge,
+  putTicketEventTeam,
+  removeTicketChallenge,
+  removeTicketEventTeam,
+  replaceTicketTags,
+  unassignTicket,
+  useAdminTicketMessages,
+  useSupportTags,
+} from '@/hooks/support';
+import { useCurrentUser, useUserEvents } from '@/hooks/users';
+import type { AdminTicket } from '@/types';
+import {
   Badge,
   Box,
   Button,
@@ -8,21 +32,11 @@ import {
 } from '@radix-ui/themes';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
-import {
-  unassignTicket,
-  assignTicket,
-  closeTicket,
-  muteTicket,
-  putTicketEventTeam,
-  removeTicketEventTeam,
-  putTicketChallenge,
-  removeTicketChallenge,
-  useAdminTicketMessages,
-  addNewAdminTicketMessage,
-  useSupportTags,
-  replaceTicketTags,
-} from '@/hooks/support';
-import type { AdminTicket } from '@/types';
+import { ErrorCallout } from 'components/Callouts';
+import Entity from 'components/Entity';
+import RichTextEditor from 'components/RichTextEditor';
+import { StatusBadge } from 'components/StatusBadge';
+import TicketMessagesCard from 'components/TicketMessagesCard';
 import {
   includes,
   isNil,
@@ -31,21 +45,7 @@ import {
   without,
 } from 'lodash';
 import { useState } from 'react';
-import RichTextEditor from 'components/RichTextEditor';
-import { ErrorCallout } from 'components/Callouts';
-import TicketMessagesCard from 'components/TicketMessagesCard';
-import { useCurrentUser, useUserEvents } from '@/hooks/users';
-import { useEventChallenges } from '@/hooks/challenge';
-import { StatusBadge } from 'components/StatusBadge';
-import {
-  ChallengeIcon,
-  EventIcon,
-  TeamIcon,
-  UserIcon,
-} from '@/constants';
-import Entity from 'components/Entity';
-import { useSupportRoles } from '@/hooks/permissions';
-import { TbX } from 'react-icons/tb';
+import { TbMessage, TbX } from 'react-icons/tb';
 
 export default function MessagesSidebar({ entity : selectedRow }: { entity: AdminTicket }) {
   // Dropdowns
@@ -214,7 +214,7 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
 
   return (
     <AdminSidebar>
-      <AdminSidebarHeader title="Ticket Details" />
+      <AdminSidebarHeader title={ticket.subject} icon={<TbMessage />} />
       {actionError && <ErrorCallout>{actionError}</ErrorCallout>}
       <DataList.Root>
         <DataList.Item>
