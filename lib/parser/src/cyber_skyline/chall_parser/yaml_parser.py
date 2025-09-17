@@ -26,6 +26,7 @@ from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn
 from cattrs.strategies import configure_union_passthrough, configure_tagged_union
 from typing import get_origin, get_args
 from cyber_skyline.chall_parser.compose import ComposeFile, TextBody
+from .compose.compose import Network
 from cyber_skyline.chall_parser.rewriter import Rewriter
 from cyber_skyline.chall_parser.template import Template
 
@@ -81,7 +82,7 @@ class ComposeYamlParser:
         converter = cattrs.Converter(forbid_extra_keys=True)
         
         # Configure union passthrough for compose union types
-        configure_union_passthrough(int | bool | str | Template | None, converter)
+        configure_union_passthrough(int | bool | str | Template | Network | None, converter)
         configure_tagged_union(TextBody | str, converter, tag_name='type')
         
         # Register hooks for handling x-challenge extension
