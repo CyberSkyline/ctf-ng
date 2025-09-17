@@ -1,6 +1,6 @@
 name: Notification E2E Tests
 
-on: [push]
+on: [pull_request]
 
 jobs:
   notification-e2e:
