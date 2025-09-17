@@ -58,7 +58,7 @@ function NavItem({
  */
 export default function AdminLayout() {
   return (
-    <Flex direction="row" className="absolute inset-0">
+    <Flex direction="row" className="absolute inset-0 overflow-hidden">
       <div className="flex-shrink-0 h-full p-3 pr-0">
         <Card className="h-full w-48">
           <NavigationMenu.Root orientation="vertical" aria-label="Sidebar" className="h-full overflow-y-auto">
