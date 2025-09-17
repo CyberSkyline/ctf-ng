@@ -24,7 +24,7 @@ from .. import sockets as notification_sockets
 class TestWebSocket:
     @pytest.fixture(scope = "session")
     def redis_server(self):
-        """
+    """
 	Start Redis server for testing
 	"""
         redis_process = subprocess.Popen(
