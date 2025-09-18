@@ -114,6 +114,20 @@ export function useMyTeamMembers(eventId: number | undefined) {
 }
 
 /**
+ * Starts the user's team for a specific event. User must be captain.
+ * @param eventId The id of the event
+ */
+export function startMyTeam(eventId: number) {
+  return apiMutation(`/events/${eventId}/me/team/start`, undefined, {
+    method : 'POST',
+  }).then(() => {
+    mutate(`/events/${eventId}/me/team`);
+    mutate(`/events/${eventId}/challenges`);
+    mutate(`/events/${eventId}/me/challenges`);
+  });
+}
+
+/**
  * @param eventId The id of the event
  * @param teamName The new name for the team
  * @returns a new team object
