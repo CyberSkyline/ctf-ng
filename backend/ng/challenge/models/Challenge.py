@@ -5,11 +5,11 @@ from sqlalchemy.orm import Mapped
 
 from CTFd.models import db
 
-if TYPE_CHECKING:
-    from ..models import ChallengeTag, ChallengeVariable, ContainerBlueprint, Hint, Question
-
 from ...event.models import Event
 from ...core.utils.validator import BaseValidator
+
+if TYPE_CHECKING:
+    from ..models import ChallengeTag, ChallengeVariable, ContainerBlueprint, Hint, Question, ChallengeYaml
 
 MAX_CHALLENGE_NAME_LENGTH = 128
 MAX_CHALLENGE_DESCRIPTION_LENGTH = 4096
@@ -37,9 +37,9 @@ class Challenge(db.Model):
     icon: Mapped[str] = db.Column(db.String(MAX_CHALLENGE_ICON_LENGTH), nullable=True)
     summary: Mapped[str] = db.Column(db.String(MAX_CHALLENGE_SUMMARY_LENGTH), nullable=True)
     event_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
-    challenge_yaml: Mapped[str] = db.Column(db.Text, nullable=True)
 
     event: Mapped[Event] = db.relationship("Event", back_populates="challenges")
+    yaml: Mapped[ChallengeYaml] = db.relationship("ChallengeYaml", back_populates="challenge", uselist=False, cascade="all, delete-orphan")
     hints: Mapped[list[Hint]] = db.relationship("Hint", back_populates="challenge", cascade="all, delete-orphan")
     tags: Mapped[list[ChallengeTag]] = db.relationship("ChallengeTag", back_populates="challenge", cascade="all, delete-orphan")
     questions: Mapped[list[Question]] = db.relationship("Question", back_populates="challenge", cascade="all, delete-orphan")
@@ -114,12 +114,6 @@ class Challenge(db.Model):
             required=True,
             friendly_name="Event ID",
         )
-        validator.validate_string(
-            data,
-            "challenge_yaml",
-            required=True,
-            friendly_name="Challenge YAML",
-        )
 
         return validator.validate()
 
@@ -127,7 +121,6 @@ class Challenge(db.Model):
     def create_challenge(
         cls,
         name: str,
-        challenge_yaml: str,
         icon: str | None = "",
         description: str | None = "",
         summary: str | None = "",
@@ -141,8 +134,7 @@ class Challenge(db.Model):
                     "icon": icon,
                     "description": description,
                     "summary": summary,
-                    "event_id": event_id,
-                    "challenge_yaml": challenge_yaml,
+                    "event_id": event_id
                 }
             )
             challenge = cls(**validated_data)

@@ -10,6 +10,8 @@ from cyber_skyline.chall_parser.compose.challenge_info import TextBody
 from cyber_skyline.chall_parser.template import Template as ParserTemplate
 from cyber_skyline.chall_parser.yaml_parser import parse_compose_string
 
+from ....challenge.models.ChallengeYaml import ChallengeYaml
+
 from ....notifications.services import NotificationService
 from ....challenge.models import Challenge, ChallengeTag, ContainerBlueprint, Hint, Question, ChallengeVariable
 from ....challenge.utils import generate_seed
@@ -52,6 +54,7 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
         raise ValidationError(f"Invalid YAML format: {e}") from e
 
     try:
+
         challenge_info = compose_file.challenge
         challenge = Challenge.create_challenge(
             event_id=event.id,
@@ -59,8 +62,13 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
             icon=challenge_info.icon,
             description=challenge_info.description,
             summary=challenge_info.summary,
+            commit=False
+        )
+
+        ChallengeYaml.create_yaml(
+            challenge_id=challenge.id,
+            yaml=payload.decode("utf-8"),
             commit=False,
-            challenge_yaml=payload.decode("utf-8"),
         )
 
         hints = compose_file.challenge.hints or []
@@ -187,7 +195,10 @@ def update_challenge_from_yaml(challenge_id: int, json_data: dict[str, Any]) -> 
         challenge.icon = uploaded_challenge.icon
         challenge.description = uploaded_challenge.description
         challenge.summary = uploaded_challenge.summary
-        challenge.challenge_yaml = payload.decode("utf-8")
+
+        if not challenge.yaml:
+            raise ValidationError(f"Challenge YAML for challenge ID {challenge.id} does not exist.")
+        challenge.yaml.body = payload.decode("utf-8")
 
         hints = {hint.name: hint for hint in challenge.hints}
         uploaded_hints = {h.name: h for h in uploaded_challenge.hints or []}

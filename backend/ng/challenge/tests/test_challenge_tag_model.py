@@ -194,7 +194,6 @@ class Test_Create_Tag:
             name="Test Challenge 2",
             description="Another test challenge",
             commit=True,
-            challenge_yaml="Initial Fake Data",  # TODO: Replace with actual data once round tripping is set up
         )
 
         tag2 = ChallengeTag.create_tag(challenge_id=challenge2.id, name="misc", commit=True)
