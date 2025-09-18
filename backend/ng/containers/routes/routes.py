@@ -40,3 +40,4 @@ class GetCurrentChallenge(Resource):
     def get(self, current_user):
         current_chall = get_current_connected_challenge(current_user.id)
         return success_response(current_chall)
+

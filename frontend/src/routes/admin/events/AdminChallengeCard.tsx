@@ -1,4 +1,4 @@
-import { COLOR_INFO } from '@/constants';
+import { COLOR_INFO, DeploymentIcon } from '@/constants';
 import type { Challenge } from '@/types';
 import {
   Box,
@@ -9,7 +9,6 @@ import {
   Text,
 } from '@radix-ui/themes';
 import ChallengeIcon from 'components/ChallengeIcon';
-import { TbPackages } from 'react-icons/tb';
 import { Link } from 'react-router';
 
 export default function AdminChallengeCard({ challenge }: { challenge: Challenge }) {
@@ -32,7 +31,7 @@ export default function AdminChallengeCard({ challenge }: { challenge: Challenge
             <Link
               to={`/admin/deployments/?filter=${btoa(JSON.stringify({ challenge_name : { filterType : 'text', type : 'equals', filter : challenge.name } }))}`}
             >
-              <TbPackages />
+              <DeploymentIcon />
               Deployments
             </Link>
           </Button>

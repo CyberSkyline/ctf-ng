@@ -1,4 +1,9 @@
-import { EventIcon, TeamIcon, UserIcon } from '@/constants';
+import {
+  DeploymentIcon,
+  EventIcon,
+  TeamIcon,
+  UserIcon,
+} from '@/constants';
 import { Card, Flex } from '@radix-ui/themes';
 import { NavigationMenu } from 'radix-ui';
 import type { IconType } from 'react-icons';
@@ -8,7 +13,6 @@ import {
   TbChartPie,
   TbLayoutDashboard,
   TbMessage,
-  TbPackages,
   TbSettings,
   TbTags,
 } from 'react-icons/tb';
@@ -54,17 +58,17 @@ function NavItem({
  */
 export default function AdminLayout() {
   return (
-    <Flex direction="row" className="absolute top-0 bottom-0 left-0 right-0">
-      <div className="flex-shrink-0 h-full p-4 pr-0">
-        <Card asChild className="h-full w-48 overflow-hidden">
-          <NavigationMenu.Root orientation="vertical" aria-label="Sidebar">
+    <Flex direction="row" className="absolute inset-0 overflow-hidden">
+      <div className="flex-shrink-0 h-full p-3 pr-0">
+        <Card className="h-full w-48">
+          <NavigationMenu.Root orientation="vertical" aria-label="Sidebar" className="h-full overflow-y-auto">
             <NavigationMenu.List>
               <NavItem to="/admin" label="Dashboard" icon={TbLayoutDashboard} />
               <NavItem to="/admin/reports" label="Reports" icon={TbChartPie} />
               <NavItem to="/admin/events" label="Events" icon={EventIcon} />
               <NavItem to="/admin/users" label="Users" icon={UserIcon} />
               <NavItem to="/admin/teams" label="Teams" icon={TeamIcon} />
-              <NavItem to="/admin/deployments" label="Deployments" icon={TbPackages} />
+              <NavItem to="/admin/deployments" label="Deployments" icon={DeploymentIcon} />
               <NavItem to="/admin/notifications" label="Notifications" icon={TbBell} />
               <NavItem to="/admin/tickets" label="Tickets" icon={TbMessage} />
               <NavItem to="/admin/tags" label="Tags" icon={TbTags} />
@@ -74,7 +78,7 @@ export default function AdminLayout() {
           </NavigationMenu.Root>
         </Card>
       </div>
-      <main className="flex-grow overflow-y-auto p-4">
+      <main className="flex-grow overflow-y-auto p-3">
         <Outlet />
       </main>
     </Flex>

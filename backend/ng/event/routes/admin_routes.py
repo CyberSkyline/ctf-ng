@@ -217,6 +217,24 @@ class EventRegister(Resource):
 @events_admin_namespace.route("/<int:event_id>/challenges")
 class EventChallenges(Resource):
     @events_admin_namespace.doc(
+        description="Get all challenges for a specific event",
+        responses={
+            200: "Success - Returns list of challenges for the event",
+            404: "Not found - Event does not exist",
+            403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
+        },
+    )
+    @admin_endpoint()
+    @load_event(source=LoaderType.PARAM)
+    def get(self, event: Event, **kwargs):
+        """
+        Get all challenges for an event
+        """
+        challenges = event.get_all_challenges()
+        return success_response(challenges)
+
+    @events_admin_namespace.doc(
         description="Create a challenge for an event using YAML configuration",
         params={
             "name": {
