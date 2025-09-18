@@ -25,9 +25,9 @@ def render_template(template: ParserTemplate, event_id: int, challenge_id: int, 
     result = template.eval(generate_seed(event_id, challenge_id, question_id, team_seed))
     return str(result) if result else ""
 
-def resolve_environment_value(value: str | ParserTemplate, challenge: Challenge, question_id: int):
+def resolve_environment_value(value: str | ParserTemplate, challenge: Challenge, variable_questions: dict[str, Question]):
     if isinstance(value, ParserTemplate):
-        return partial(render_template, template=value, event_id=challenge.event_id, challenge_id=challenge.id, question_id=question_id)
+        return partial(render_template, template=value, event_id=challenge.event_id, challenge_id=challenge.id, question_id=variable_questions[value.parent_variable].id)
     return value
 
 def partial_environment(environment: dict[str, str | ParserTemplate] | list[str] | None, challenge: Challenge, variable_questions: dict[str, Question]) -> dict[str, str | Callable[[str], str]] | list[str] | None:
@@ -37,7 +37,7 @@ def partial_environment(environment: dict[str, str | ParserTemplate] | list[str]
     if isinstance(environment, list):
         return environment
 
-    return {k: resolve_environment_value(v, challenge, variable_questions[k].id) for k, v in environment.items() if v is not None}
+    return {k: resolve_environment_value(v, challenge, variable_questions) for k, v in environment.items() if v is not None}
 
 
 def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
