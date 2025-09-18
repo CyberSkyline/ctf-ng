@@ -79,6 +79,11 @@ export function submitFlag(
 }
 
 /* ADMIN ENDPOINTS */
+export function useAdminEventChallenges(eventId: number | null) {
+  return useSWR<Challenge[], Error>(
+    eventId ? `/admin/events/${eventId}/challenges` : null,
+  );
+}
 
 export function createChallenge(eventId: number, yaml: string) {
   return apiMutation(`/admin/events/${eventId}/challenges`, { yaml : btoa(yaml) }, {
