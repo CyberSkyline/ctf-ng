@@ -4,11 +4,12 @@ import {
   EventIcon,
   TeamIcon,
 } from '@/constants';
-import { useEventChallenges } from '@/hooks/challenge';
+import { useAdminEventChallenges } from '@/hooks/challenge';
 import type { Event } from '@/types';
 import { Button } from '@radix-ui/themes';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
+import { ErrorCallout } from 'components/Callouts';
 import EventHeader from 'components/EventHeader';
 import { Link } from 'react-router';
 import AdminChallengeCard from './AdminChallengeCard';
@@ -16,7 +17,7 @@ import ChallengeUploadModal from './ChallengeUploadModal';
 import EventModal from './EventModal';
 
 export default function EventSidebar({ entity }: { entity: Event }) {
-  const { data : challenges } = useEventChallenges(entity.id);
+  const { data : challenges, error } = useAdminEventChallenges(entity.id);
 
   return (
     <AdminSidebar>
@@ -43,6 +44,8 @@ export default function EventSidebar({ entity }: { entity: Event }) {
       <AdminSidebarHeader title="Challenges">
         <ChallengeUploadModal eventId={entity.id} />
       </AdminSidebarHeader>
+
+      {error && <ErrorCallout>{error.message}</ErrorCallout>}
 
       {challenges && challenges.length > 0 && (
         challenges.map((challenge) => (
