@@ -67,7 +67,7 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
 
         ChallengeYaml.create_yaml(
             challenge_id=challenge.id,
-            yaml=payload.decode("utf-8"),
+            body=payload.decode("utf-8"),
             commit=False,
         )
 
@@ -235,23 +235,24 @@ def update_challenge_from_yaml(challenge_id: int, json_data: dict[str, Any]) -> 
                 )
 
         variables = {var.name: var for var in challenge.variables}
-        uploaded_variables = set(uploaded_challenge.variables.keys() or {})
-        for var in set(variables.keys()) - uploaded_variables:
-            db.session.delete(variables[var])
+        if uploaded_challenge.variables is not None:
+            uploaded_variables = set(uploaded_challenge.variables.keys() or {})
+            for var in set(variables.keys()) - uploaded_variables:
+                db.session.delete(variables[var])
 
-        for (key, variable) in (compose_file.challenge.variables or {}).items():
-            if key in variables:
-                existing_var = variables[key]
-                existing_var.default = variable.default
-                existing_var.template = variable.template.eval_str
-            else:
-                variables[key] = ChallengeVariable.create_variable(
-                    challenge_id=challenge.id,
-                    name=key,
-                    default=variable.default,
-                    template=variable.template.eval_str,
-                    commit=False,
-                )
+            for (key, variable) in (compose_file.challenge.variables or {}).items():
+                if key in variables:
+                    existing_var = variables[key]
+                    existing_var.default = variable.default
+                    existing_var.template = variable.template.eval_str
+                else:
+                    variables[key] = ChallengeVariable.create_variable(
+                        challenge_id=challenge.id,
+                        name=key,
+                        default=variable.default,
+                        template=variable.template.eval_str,
+                        commit=False,
+                    )
 
         questions: dict[str, Question] = {question.name: question for question in challenge.questions}
         uploaded_questions = {q.name: q for q in uploaded_challenge.questions or []}

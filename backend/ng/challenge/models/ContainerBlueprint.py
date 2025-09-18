@@ -19,7 +19,7 @@ class ContainerBlueprint(db.Model):
     __tablename__ = "ng_container_blueprints"
 
     id: Mapped[int] = db.Column(db.Integer, primary_key=True)
-    name: Mapped[str] = db.Column(db.String(), nullable=True)
+    name: Mapped[str] = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_NAME_LENGTH), nullable=True)
     image: Mapped[str] = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_IMAGE_LENGTH), nullable=False)
     hostname: Mapped[str] = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_HOSTNAME_LENGTH), nullable=False)
     stdin_open: Mapped[bool] = db.Column(db.Boolean, nullable=True)

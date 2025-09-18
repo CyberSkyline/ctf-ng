@@ -39,11 +39,11 @@ class ChallengeYaml(db.Model):
         return validator.validate()
 
     @classmethod
-    def create_yaml(cls, challenge_id: int, yaml: str, commit=True):
+    def create_yaml(cls, challenge_id: int, body: str, commit=True):
         try:
             validated_data = cls.validate({"challenge_id": challenge_id})
 
-            challenge_yaml = cls(**validated_data, yaml=yaml)
+            challenge_yaml = cls(**validated_data, body=body)
             db.session.add(challenge_yaml)
             db.session.flush()
 
