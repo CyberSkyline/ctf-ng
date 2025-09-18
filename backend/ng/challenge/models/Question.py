@@ -89,6 +89,7 @@ class Question(db.Model):
             validator.validate_model_id(
                 data,
                 "answer_variable_id",
+                "ChallengeVariable",
                 required=templated,
                 friendly_name="Answer Variable ID",
             )
