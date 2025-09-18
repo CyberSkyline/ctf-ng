@@ -90,6 +90,6 @@ export function createChallenge(eventId: number, yaml: string) {
     method : 'POST',
   }).then(() => {
     // refresh the challenges list when a new challenge is created
-    mutate(`/events/${eventId}/challenges`);
+    mutate(`/admin/events/${eventId}/challenges`);
   });
 }
