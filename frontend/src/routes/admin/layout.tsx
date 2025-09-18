@@ -1,4 +1,5 @@
 import {
+  ChallengeIcon,
   DeploymentIcon,
   EventIcon,
   TeamIcon,
@@ -68,6 +69,7 @@ export default function AdminLayout() {
               <NavItem to="/admin/events" label="Events" icon={EventIcon} />
               <NavItem to="/admin/users" label="Users" icon={UserIcon} />
               <NavItem to="/admin/teams" label="Teams" icon={TeamIcon} />
+              <NavItem to="/admin/challenges" label="Challenges" icon={ChallengeIcon} />
               <NavItem to="/admin/deployments" label="Deployments" icon={DeploymentIcon} />
               <NavItem to="/admin/notifications" label="Notifications" icon={TbBell} />
               <NavItem to="/admin/tickets" label="Tickets" icon={TbMessage} />
