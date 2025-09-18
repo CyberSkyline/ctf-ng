@@ -20,9 +20,9 @@ plugins = ["sqlalchemy.ext.mypy.plugin"]
 mypy_path = "typings"
 
 # Ignore missing imports for CTFd modules
-# [[tool.mypy.overrides]]
-# module = "CTFd.*"
-# ignore_missing_imports = true
+[[tool.mypy.overrides]]
+module = "CTFd.*"
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"
