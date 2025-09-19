@@ -25,7 +25,7 @@ for CTF challenge deployment. It enforces security constraints and validation wh
 supporting the x-challenge extension for CTF-specific metadata.
 """
 
-from typing import Iterator, NewType, Dict
+from typing import Iterable, Iterator, NewType, Dict
 import attrs.validators as v
 from attrs import define, field
 
@@ -54,7 +54,7 @@ class Network:
 # These provide type safety while enforcing naming constraints
 ComposeResourceName = NewType('ComposeResourceName', str)
 ServicesDict = Dict[ComposeResourceName, Service]
-NetworksDict = Dict[ComposeResourceName, Network]
+NetworksDict = Dict[ComposeResourceName, Network | None]
 
 @define
 class ComposeFile:
@@ -95,10 +95,46 @@ class ComposeFile:
             yield "No networks defined, default network will be used"
 
     def _field_warnings(self) -> Iterator[Warnings]:
-        for net_name, net in (self.networks or {}).items():
-            yield Warnings(f"{net_name}", net.warnings(), None)
-        for serv_name, serv in (self.services or {}).items():
-            yield Warnings(f"{serv_name}", serv.warnings(), None)
+        def _network_warnings(name: str, net: Network | None) -> Warnings | None:
+            return_warnings = None
+            if net is not None and (w := list(net.warnings())) and len(w) > 0:
+                return_warnings = w
+            elif net is None:
+                return_warnings = ["is not defined, so is external and will not be created"]
+
+            if return_warnings is None:
+                return None
+            
+            return Warnings(name, return_warnings, None)
+        
+        network_warnings = [
+            w
+            for net_name, net in (self.networks or {}).items() 
+            if (w := _network_warnings(net_name, net)) is not None
+        ]
+        if network_warnings:
+            yield Warnings("network warnings", None, network_warnings)
+
+
+        def _service_warnings(name: str, serv: Service | None) -> Warnings | None:
+            return_warnings = None
+            if serv is not None and (w := list(serv.warnings())) and len(w) > 0:
+                return_warnings = w
+            elif serv is None:
+                return_warnings = ["is not defined and so will not be created"]
+
+            if return_warnings is None:
+                return None
+            
+            return Warnings(name, return_warnings, None)
+
+        service_warnings = [
+            w 
+            for serv_name, serv in (self.services or {}).items()
+            if (w := _service_warnings(serv_name, serv)) is not None
+        ]
+        if service_warnings:
+            yield Warnings("service warnings", None, service_warnings)
 
     def warnings(self) -> Warnings:
         return Warnings("ComposeFile", self._warnings(), self._field_warnings())

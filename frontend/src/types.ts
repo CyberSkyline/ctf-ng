@@ -147,7 +147,7 @@ export interface ScoreEvent {
 export interface Deployment {
   id: number;
   blueprint: number;
-  team: number;
+  team_id: number;
   challenge_name: string;
   team_name: string;
   challenge_id: number;
@@ -159,7 +159,7 @@ export interface Deployment {
 export interface ContainerInstance {
   id: number;
   blueprint: number;
-  team: number;
+  team_id: number;
   hostip: string;
   dockerid: string;
 }
