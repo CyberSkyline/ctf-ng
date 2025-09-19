@@ -28,28 +28,28 @@ class TestWebSocket:
 	Start Redis server for testing
 	"""
         redis_process = subprocess.Popen(
-                [
-                        'redis-server',
-                        '--port',
-                        '6381',
-                        '--save',
-                        '',
-                        '--appendonly',
-                        'no',
-                        '--loglevel',
-                        'warning'
-                        ],
-                stdout = subprocess.DEVNULL,
-                stderr = subprocess.DEVNULL
-                )
+            [
+                'redis-server',
+                '--port',
+                '6381',
+                '--save',
+                '',
+                '--appendonly',
+                'no',
+                '--loglevel',
+                'warning'
+            ],
+            stdout = subprocess.DEVNULL,
+            stderr = subprocess.DEVNULL
+        )
 
         time.sleep(2)
 
         test_client = redis.Redis(
-                host = 'localhost',
-                port = 6381,
-                decode_responses = True
-                )
+            host = 'localhost',
+            port = 6381,
+            decode_responses = True
+        )
         try:
             test_client.ping()
         except redis.ConnectionError:
@@ -78,8 +78,8 @@ class TestWebSocket:
                     pytest.skip("SocketIO not initialized")
 
                 notification_sockets.initialize_notification_sockets(
-                        socketio
-                        )
+                    socketio
+                )
 
                 redis_manager = initialize_redis_notifications(socketio)
                 if not redis_manager:
@@ -130,41 +130,41 @@ class TestWebSocket:
             sess.permanent = False
 
         user_socketio_client = SocketIOTestClient(
-                redis_app,
-                socketio,
-                flask_test_client = user_flask_client
-                )
+            redis_app,
+            socketio,
+            flask_test_client = user_flask_client
+        )
 
         admin_socketio_client = SocketIOTestClient(
-                redis_app,
-                socketio,
-                flask_test_client = admin_flask_client
-                )
+            redis_app,
+            socketio,
+            flask_test_client = admin_flask_client
+        )
 
         clients = {
-                'user': user_socketio_client,
-                'admin': admin_socketio_client,
-                'user_flask': user_flask_client,
-                'admin_flask': admin_flask_client
-                }
+            'user': user_socketio_client,
+            'admin': admin_socketio_client,
+            'user_flask': user_flask_client,
+            'admin_flask': admin_flask_client
+        }
 
         yield clients
 
         for key, client in clients.items():
-            if 'flask' not in key and hasattr(client,
-                                              'connected'
-                                              ) and client.connected:
+            if 'flask' not in key and hasattr(
+                    client,
+                    'connected') and client.connected:
                 client.disconnect()
 
         notification_sockets.user_connections.clear()
 
     def test_full_refetch_pipeline_with_auth(
-            self,
-            authenticated_socketio_clients,
-            user,
-            ticket,
-            redis_app
-            ):
+        self,
+        authenticated_socketio_clients,
+        user,
+        ticket,
+        redis_app
+    ):
         """
         Test complete authenticated refetch pipeline
         """
@@ -175,29 +175,29 @@ class TestWebSocket:
 
         with redis_app.app_context():
             NotificationService._emit_refetch(
-                    path = f"/ng/support/tickets/{ticket.id}",
-                    user_ids = [user.id]
-                    )
+                path = f"/ng/support/tickets/{ticket.id}",
+                user_ids = [user.id]
+            )
 
         time.sleep(1.0)
 
         received = user_client.get_received()
         refetch_events = [
-                e for e in received if e.get('name') == 'refetch'
-                ]
+            e for e in received if e.get('name') == 'refetch'
+        ]
 
         assert len(refetch_events) > 0, f"Expected refetch event, got: {received}"
         assert refetch_events[0]['args'][0][
-                'path'] == f"/ng/support/tickets/{ticket.id}"
+            'path'] == f"/ng/support/tickets/{ticket.id}"
 
     def test_notification_service_full_flow(
-            self,
-            authenticated_socketio_clients,
-            user,
-            admin,
-            ticket,
-            redis_app
-            ):
+        self,
+        authenticated_socketio_clients,
+        user,
+        admin,
+        ticket,
+        redis_app
+    ):
         """
         Test NotificationService creates both DB notification and WebSocket events
         """
@@ -208,40 +208,40 @@ class TestWebSocket:
 
         with redis_app.app_context():
             NotificationService.notify_ticket_reply(
-                    ticket_id = ticket.id,
-                    author_id = admin.id,
-                    recipient_id = user.id,
-                    is_admin_reply = True
-                    )
+                ticket_id = ticket.id,
+                author_id = admin.id,
+                recipient_id = user.id,
+                is_admin_reply = True
+            )
 
             notifications = Notification.find_filtered_notifications(
-                    recipient_id = user.id
-                    )
+                recipient_id = user.id
+            )
             ticket_notifications = [
-                    n for n in notifications if n.ticket_id == ticket.id
-                    ]
+                n for n in notifications if n.ticket_id == ticket.id
+            ]
             assert len(ticket_notifications) > 0, "Should create DB notification"
 
         time.sleep(1.0)
 
         received = user_client.get_received()
         notification_events = [
-                e for e in received if e.get('name') == 'notification'
-                ]
+            e for e in received if e.get('name') == 'notification'
+        ]
         refetch_events = [
-                e for e in received if e.get('name') == 'refetch'
-                ]
+            e for e in received if e.get('name') == 'refetch'
+        ]
 
         assert len(notification_events) > 0, "Should receive notification WebSocket event"
         assert len(refetch_events) > 0, "Should receive refetch WebSocket event"
 
     def test_cross_instance_coordination_with_auth(
-            self,
-            authenticated_socketio_clients,
-            user,
-            redis_app,
-            redis_server
-            ):
+        self,
+        authenticated_socketio_clients,
+        user,
+        redis_app,
+        redis_server
+    ):
         """
         Test multi instance coordination through Redis with authenticated clients
         """
@@ -252,17 +252,17 @@ class TestWebSocket:
         instance2_socketio = SocketIO()
 
         instance2_manager = RedisNotificationManager(
-                socketio = instance2_socketio
-                )
+            socketio = instance2_socketio
+        )
         instance2_manager.redis_client = redis.from_url(
-                redis_server,
-                decode_responses = True
-                )
+            redis_server,
+            decode_responses = True
+        )
 
         received_messages = []
         instance2_manager._handle_notification_message = lambda msg: received_messages.append(
-                msg
-                )
+            msg
+        )
 
         instance2_manager.start_subscriber()
         time.sleep(0.5)
@@ -270,9 +270,9 @@ class TestWebSocket:
         try:
             with redis_app.app_context():
                 NotificationService._emit_refetch(
-                        path = "/test/cross/instance",
-                        user_ids = [user.id]
-                        )
+                    path = "/test/cross/instance",
+                    user_ids = [user.id]
+                )
 
             time.sleep(1.0)
 
@@ -280,20 +280,20 @@ class TestWebSocket:
 
             received = user_client.get_received()
             refetch_events = [
-                    e for e in received if e.get('name') == 'refetch'
-                    ]
+                e for e in received if e.get('name') == 'refetch'
+            ]
             assert len(refetch_events) > 0, "Instance1 client should receive message"
 
         finally:
             instance2_manager.stop_subscriber()
 
     def test_team_broadcast_with_auth(
-            self,
-            authenticated_socketio_clients,
-            user,
-            team_with_member,
-            redis_app
-            ):
+        self,
+        authenticated_socketio_clients,
+        user,
+        team_with_member,
+        redis_app
+    ):
         """
         Test team broadcasts with authenticated clients
         """
@@ -303,16 +303,16 @@ class TestWebSocket:
 
         with redis_app.app_context():
             NotificationService._emit_refetch(
-                    path = f"/ng/teams/{team_with_member.id}",
-                    team_id = team_with_member.id
-                    )
+                path = f"/ng/teams/{team_with_member.id}",
+                team_id = team_with_member.id
+            )
 
         time.sleep(1.0)
 
         received = user_client.get_received()
         refetch_events = [
-                e for e in received if e.get('name') == 'refetch'
-                ]
+            e for e in received if e.get('name') == 'refetch'
+        ]
 
         assert len(refetch_events) > 0, "Team member should receive team broadcast"
 
@@ -325,20 +325,20 @@ class TestWebSocket:
         unauthenticated_flask_client = redis_app.test_client()
 
         unauthenticated_socketio_client = SocketIOTestClient(
-                redis_app,
-                socketio,
-                flask_test_client = unauthenticated_flask_client
-                )
+            redis_app,
+            socketio,
+            flask_test_client = unauthenticated_flask_client
+        )
 
         connected = unauthenticated_socketio_client.is_connected()
         assert not connected, "Unauthenticated connection should be rejected"
 
     def test_connection_lifecycle_with_auth(
-            self,
-            authenticated_socketio_clients,
-            user,
-            redis_app
-            ):
+        self,
+        authenticated_socketio_clients,
+        user,
+        redis_app
+    ):
         """
         Test connection lifecycle with auth
         """
@@ -360,15 +360,15 @@ class TestWebSocket:
 
         with redis_app.app_context():
             NotificationService._emit_refetch(
-                    path = "/test/lifecycle",
-                    user_ids = [user.id]
-                    )
+                path = "/test/lifecycle",
+                user_ids = [user.id]
+            )
 
         time.sleep(1.0)
         received = user_client.get_received()
         refetch_events = [
-                e for e in received if e.get('name') == 'refetch'
-                ]
+            e for e in received if e.get('name') == 'refetch'
+        ]
         assert len(refetch_events) > 0, "Should receive message while connected"
 
         user_client.disconnect()
@@ -379,14 +379,14 @@ class TestWebSocket:
                       "Should be removed from tracking after disconnect"
 
     def test_create_ticket_with_real_websockets(
-            self,
-            authenticated_socketio_clients,
-            user,
-            admin,
-            event,
-            team_with_member,
-            redis_app
-            ):
+        self,
+        authenticated_socketio_clients,
+        user,
+        admin,
+        event,
+        team_with_member,
+        redis_app
+    ):
         """
         Test create_ticket controller with WebSocket notifications
         """
@@ -397,35 +397,35 @@ class TestWebSocket:
         admin_client.get_received()
 
         response = user_flask.post(
-                "/ng/support/tickets/create",
-                json = {
-                        "subject": "WebSocket Test Ticket",
-                        "text": "Testing real socket integration",
-                        "event_id": event.id,
-                        },
-                )
+            "/ng/support/tickets/create",
+            json = {
+                "subject": "WebSocket Test Ticket",
+                "text": "Testing real socket integration",
+                "event_id": event.id,
+            },
+        )
 
         assert response.status_code == 201
         time.sleep(1.0)
 
         received = admin_client.get_received()
         refetch_events = [
-                e for e in received if e.get('name') == 'refetch'
-                ]
+            e for e in received if e.get('name') == 'refetch'
+        ]
 
         assert len(refetch_events) > 0, f"Expected refetch event, got: {received}"
         assert "/ng/support/tickets" in refetch_events[0]['args'][0]['path'
                                                                      ]
 
     def test_submit_answer_with_real_websockets(
-            self,
-            authenticated_socketio_clients,
-            user,
-            redis_app,
-            challenge_factory,
-            question_factory,
-            team_with_member
-            ):
+        self,
+        authenticated_socketio_clients,
+        user,
+        redis_app,
+        challenge_factory,
+        question_factory,
+        team_with_member
+    ):
         """
         Test submit_answer controller with WebSocket notifications
         """
@@ -444,24 +444,24 @@ class TestWebSocket:
 
             db.session.add(team_with_member)
             team_with_member.set_start_timestamp(
-                    utc_now() - timedelta(hours = 1)
-                    )
+                utc_now() - timedelta(hours = 1)
+            )
 
         assert user_client.is_connected()
         user_client.get_received()
 
         response = user_flask.post(
-                f"/ng/events/{event_id}/challenges/{challenge_id}/questions/{question_id}/submit",
-                json = {"submission": answer},
-                )
+            f"/ng/events/{event_id}/challenges/{challenge_id}/questions/{question_id}/submit",
+            json = {"submission": answer},
+        )
 
         assert response.status_code == 201
         time.sleep(1.0)
 
         received = user_client.get_received()
         refetch_events = [
-                e for e in received if e.get('name') == 'refetch'
-                ]
+            e for e in received if e.get('name') == 'refetch'
+        ]
 
         assert len(refetch_events) >= 2, f"Expected at least 2 refetch events, got: {received}"
         paths = [event['args'][0]['path'] for event in refetch_events]
@@ -469,14 +469,14 @@ class TestWebSocket:
         assert any("/leaderboard" in path for path in paths), f"Expected leaderboard path in: {paths}"
 
     def test_redeem_hint_with_real_websockets(
-            self,
-            authenticated_socketio_clients,
-            user,
-            redis_app,
-            challenge_factory,
-            hint_factory,
-            team_with_member
-            ):
+        self,
+        authenticated_socketio_clients,
+        user,
+        redis_app,
+        challenge_factory,
+        hint_factory,
+        team_with_member
+    ):
         """
         Test redeem_hint controller with WebSocket notifications
         """
@@ -493,8 +493,8 @@ class TestWebSocket:
         with redis_app.app_context():
             db.session.add(team_with_member)
             team_with_member.set_start_timestamp(
-                    utc_now() - timedelta(hours = 1)
-                    )
+                utc_now() - timedelta(hours = 1)
+            )
 
         assert user_client.is_connected()
         user_client.get_received()
@@ -503,30 +503,30 @@ class TestWebSocket:
             nonce = sess.get("nonce")
 
         response = user_flask.post(
-                f"/ng/events/{event_id}/challenges/{challenge_id}/hint/{hint_id}/redeem",
-                data = {"nonce": nonce}
-                )
+            f"/ng/events/{event_id}/challenges/{challenge_id}/hint/{hint_id}/redeem",
+            data = {"nonce": nonce}
+        )
 
         assert response.status_code == 201
         time.sleep(1.0)
 
         received = user_client.get_received()
         refetch_events = [
-                e for e in received if e.get('name') == 'refetch'
-                ]
+            e for e in received if e.get('name') == 'refetch'
+        ]
 
         assert len(refetch_events) > 0, f"Expected refetch event, got: {received}"
         assert f"/challenges/{challenge_id}" in refetch_events[0]['args'][
-                0]['path']
+            0]['path']
 
     def test_create_ticket_message_with_real_websockets(
-            self,
-            authenticated_socketio_clients,
-            user,
-            admin,
-            ticket,
-            redis_app
-            ):
+        self,
+        authenticated_socketio_clients,
+        user,
+        admin,
+        ticket,
+        redis_app
+    ):
         """
         Test create_ticket_message controller with WebSocket notifications
         """
@@ -537,34 +537,34 @@ class TestWebSocket:
         user_client.get_received()
 
         response = admin_flask.post(
-                f"/ng/admin/support/tickets/{ticket.id}/add_message",
-                json = {"text": "Admin response via WebSocket test"},
-                )
+            f"/ng/admin/support/tickets/{ticket.id}/add_message",
+            json = {"text": "Admin response via WebSocket test"},
+        )
 
         assert response.status_code == 201
         time.sleep(1.0)
 
         received = user_client.get_received()
         notification_events = [
-                e for e in received if e.get('name') == 'notification'
-                ]
+            e for e in received if e.get('name') == 'notification'
+        ]
         refetch_events = [
-                e for e in received if e.get('name') == 'refetch'
-                ]
+            e for e in received if e.get('name') == 'refetch'
+        ]
 
         assert len(notification_events) > 0, f"Expected notification event, got: {received}"
         assert len(refetch_events) > 0, f"Expected refetch event, got: {received}"
         assert f"/tickets/{ticket.id}" in refetch_events[0]['args'][0][
-                'path']
+            'path']
 
     def test_update_ticket_status_with_real_websockets(
-            self,
-            authenticated_socketio_clients,
-            user,
-            admin,
-            ticket,
-            redis_app
-            ):
+        self,
+        authenticated_socketio_clients,
+        user,
+        admin,
+        ticket,
+        redis_app
+    ):
         """
         Test update_ticket_status controller with real WebSocket notifications
         """
@@ -575,31 +575,31 @@ class TestWebSocket:
         user_client.get_received()
 
         response = admin_flask.put(
-                f"/ng/admin/support/tickets/{ticket.id}/close",
-                json = {"closed": True},
-                )
+            f"/ng/admin/support/tickets/{ticket.id}/close",
+            json = {"closed": True},
+        )
 
         assert response.status_code == 200
         time.sleep(1.0)
 
         received = user_client.get_received()
         notification_events = [
-                e for e in received if e.get('name') == 'notification'
-                ]
+            e for e in received if e.get('name') == 'notification'
+        ]
 
         assert len(notification_events) > 0, f"Expected notification event, got: {received}"
         notif_data = notification_events[0]['args'][0]
         assert "closed" in notif_data['message'].lower()
 
     def test_multi_user_ticket_workflow_with_real_websockets(
-            self,
-            authenticated_socketio_clients,
-            user,
-            admin,
-            event,
-            team_with_member,
-            redis_app
-            ):
+        self,
+        authenticated_socketio_clients,
+        user,
+        admin,
+        event,
+        team_with_member,
+        redis_app
+    ):
         """
         Test complete ticket workflow with multiple users and real WebSockets
         """
@@ -612,13 +612,13 @@ class TestWebSocket:
         admin_client.get_received()
 
         response = user_flask.post(
-                "/ng/support/tickets/create",
-                json = {
-                        "subject": "Multi-user WebSocket Test",
-                        "text": "Initial ticket message",
-                        "event_id": event.id,
-                        },
-                )
+            "/ng/support/tickets/create",
+            json = {
+                "subject": "Multi-user WebSocket Test",
+                "text": "Initial ticket message",
+                "event_id": event.id,
+            },
+        )
 
         assert response.status_code == 201
         ticket_id = response.get_json()["data"]["id"]
@@ -626,52 +626,52 @@ class TestWebSocket:
 
         admin_received = admin_client.get_received()
         admin_refetch = [
-                e for e in admin_received if e.get('name') == 'refetch'
-                ]
+            e for e in admin_received if e.get('name') == 'refetch'
+        ]
         assert len(admin_refetch) > 0, f"Admin should receive ticket creation, got: {admin_received}"
 
         admin_flask.post(
-                f"/ng/admin/support/tickets/{ticket_id}/add_message",
-                json = {"text": "Admin response"},
-                )
+            f"/ng/admin/support/tickets/{ticket_id}/add_message",
+            json = {"text": "Admin response"},
+        )
         time.sleep(1.0)
 
         user_received = user_client.get_received()
         user_notifications = [
-                e for e in user_received if e.get('name') == 'notification'
-                ]
+            e for e in user_received if e.get('name') == 'notification'
+        ]
         user_refetch = [
-                e for e in user_received if e.get('name') == 'refetch'
-                ]
+            e for e in user_received if e.get('name') == 'refetch'
+        ]
 
         assert len(user_notifications) > 0, f"User should receive admin reply notification, got: {user_received}"
         assert len(user_refetch) > 0, f"User should receive refetch event, got: {user_received}"
 
         admin_flask.put(
-                f"/ng/admin/support/tickets/{ticket_id}/close",
-                json = {"closed": True},
-                )
+            f"/ng/admin/support/tickets/{ticket_id}/close",
+            json = {"closed": True},
+        )
         time.sleep(1.0)
 
         final_user_received = user_client.get_received()
         status_notifications = [
-                e for e in final_user_received
-                if e.get('name') == 'notification'
-                ]
+            e for e in final_user_received
+            if e.get('name') == 'notification'
+        ]
 
         assert len(status_notifications) > 0, f"User should receive status change notification, got: {final_user_received}"
         assert "closed" in status_notifications[0]['args'][0]['message'
                                                               ].lower()
 
     def test_concurrent_answer_submissions_with_real_websockets(
-            self,
-            authenticated_socketio_clients,
-            user,
-            redis_app,
-            challenge_factory,
-            question_factory,
-            team_with_member
-            ):
+        self,
+        authenticated_socketio_clients,
+        user,
+        redis_app,
+        challenge_factory,
+        question_factory,
+        team_with_member
+    ):
         """
         Test multiple rapid answer submissions with WebSocket coordination
         """
@@ -688,8 +688,8 @@ class TestWebSocket:
         with redis_app.app_context():
             db.session.add(team_with_member)
             team_with_member.set_start_timestamp(
-                    utc_now() - timedelta(hours = 1)
-                    )
+                utc_now() - timedelta(hours = 1)
+            )
 
         assert user_client.is_connected()
         user_client.get_received()
@@ -697,9 +697,9 @@ class TestWebSocket:
         responses = []
         for i in range(3):
             response = user_flask.post(
-                    f"/ng/events/{event_id}/challenges/{challenge_id}/questions/{question_id}/submit",
-                    json = {"submission": f"wrong_answer_{i}"},
-                    )
+                f"/ng/events/{event_id}/challenges/{challenge_id}/questions/{question_id}/submit",
+                json = {"submission": f"wrong_answer_{i}"},
+            )
             responses.append(response)
 
         for response in responses:
@@ -709,20 +709,20 @@ class TestWebSocket:
 
         received = user_client.get_received()
         refetch_events = [
-                e for e in received if e.get('name') == 'refetch'
-                ]
+            e for e in received if e.get('name') == 'refetch'
+        ]
 
         assert len(refetch_events) >= 3, f"Expected at least 3 refetch events for rapid submissions, got: {len(refetch_events)}"
 
     def test_notification_service_integration_with_controllers(
-            self,
-            authenticated_socketio_clients,
-            user,
-            admin,
-            event,
-            team_with_member,
-            redis_app
-            ):
+        self,
+        authenticated_socketio_clients,
+        user,
+        admin,
+        event,
+        team_with_member,
+        redis_app
+    ):
         """
         Test that NotificationService properly integrates with controller actions
         """
@@ -735,13 +735,13 @@ class TestWebSocket:
         admin_client.get_received()
 
         response = user_flask.post(
-                "/ng/support/tickets/create",
-                json = {
-                        "subject": "Service Integration Test",
-                        "text": "Testing service integration",
-                        "event_id": event.id,
-                        },
-                )
+            "/ng/support/tickets/create",
+            json = {
+                "subject": "Service Integration Test",
+                "text": "Testing service integration",
+                "event_id": event.id,
+            },
+        )
 
         assert response.status_code == 201
         ticket_id = response.get_json()["data"]["id"]
@@ -751,29 +751,29 @@ class TestWebSocket:
         assert len(admin_received) > 0, "Admin should receive WebSocket events from NotificationService"
 
         admin_flask.put(
-                f"/ng/admin/support/tickets/{ticket_id}/assign",
-                json = {"user_id": admin.id},
-                )
+            f"/ng/admin/support/tickets/{ticket_id}/assign",
+            json = {"user_id": admin.id},
+        )
         time.sleep(1.0)
 
         admin_flask.post(
-                f"/ng/admin/support/tickets/{ticket_id}/add_message",
-                json = {"text": "I'll help you with this"},
-                )
+            f"/ng/admin/support/tickets/{ticket_id}/add_message",
+            json = {"text": "I'll help you with this"},
+        )
         time.sleep(1.0)
 
         user_received = user_client.get_received()
         user_notifications = [
-                e for e in user_received if e.get('name') == 'notification'
-                ]
+            e for e in user_received if e.get('name') == 'notification'
+        ]
 
         assert len(user_notifications) > 0, "User should receive admin reply notification via WebSocket"
 
         with redis_app.app_context():
             notifications = Notification.find_filtered_notifications(
-                    recipient_id = user.id
-                    )
+                recipient_id = user.id
+            )
             ticket_notifications = [
-                    n for n in notifications if n.ticket_id == ticket_id
-                    ]
+                n for n in notifications if n.ticket_id == ticket_id
+            ]
             assert len(ticket_notifications) > 0, "Notification should be stored in database"

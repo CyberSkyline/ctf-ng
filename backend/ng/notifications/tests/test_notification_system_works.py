@@ -5,10 +5,10 @@ import pytest
 from flask_socketio import SocketIOTestClient
 
 from ..sockets import (
-        user_connections,
-        get_connected_users,
-        has_connections,
-        )
+    user_connections,
+    get_connected_users,
+    has_connections,
+)
 
 
 def test_notification_system_connection(app, user):
@@ -27,10 +27,10 @@ def test_notification_system_connection(app, user):
         sess['nonce'] = 'test-nonce'
 
     socketio_client = SocketIOTestClient(
-            app,
-            socketio,
-            flask_test_client = flask_client
-            )
+        app,
+        socketio,
+        flask_test_client = flask_client
+    )
 
     connected = socketio_client.is_connected()
 
@@ -42,8 +42,8 @@ def test_notification_system_connection(app, user):
         print(f"User connections after disconnect: {user_connections}")
 
         pong_received = any(
-                msg.get('name') == 'test_pong' for msg in received_messages
-                )
+            msg.get('name') == 'test_pong' for msg in received_messages
+        )
         assert pong_received, f"Expected 'test_pong' event, got {received_messages}"
 
     assert connected, "Notification system should be able to establish connections"
@@ -83,18 +83,18 @@ def test_user_connection_tracking(app, user):
         sess['nonce'] = 'test-nonce'
 
     socketio_client = SocketIOTestClient(
-            app,
-            socketio,
-            flask_test_client = flask_client
-            )
+        app,
+        socketio,
+        flask_test_client = flask_client
+    )
 
     if socketio_client.is_connected():
         print("Connection established, checking tracking...")
         print(f"User connections: {user_connections}")
         print(f"Connected users: {get_connected_users()}")
         print(
-                f"User {user.id} has connections: {has_connections(user.id)}"
-                )
+            f"User {user.id} has connections: {has_connections(user.id)}"
+        )
 
         socketio_client.disconnect()
 

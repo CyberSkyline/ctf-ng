@@ -8,6 +8,7 @@ import pytest
 import requests
 import socketio
 from queue import Queue, Empty
+from ....config import CTFD_BASE_URL
 
 
 class TestExternalIntegration:
@@ -18,14 +19,14 @@ class TestExternalIntegration:
         """
         Verify CTFd is accessible
         """
-        resp = requests.get("http://localhost:8001/")
+        resp = requests.get(f"{CTFD_BASE_URL}/")
         assert resp.status_code == 200
 
     def test_api_accessible(self):
         """
         Verify API is working
         """
-        resp = requests.get("http://localhost:8001/api/v1/users")
+        resp = requests.get(f"{CTFD_BASE_URL}/api/v1/users")
         assert resp.status_code == 200
 
     def test_create_user_and_login(self):
@@ -35,23 +36,23 @@ class TestExternalIntegration:
         session = requests.Session()
 
         user_data = {
+            "name": "testuser",
+            "email": "test@example.com",
+            "password": "testpass123"
+        }
+
+        session.post(
+            f"{CTFD_BASE_URL}/api/v1/users",
+            json = user_data
+        )
+
+        session.post(
+            f"{CTFD_BASE_URL}/login",
+            data = {
                 "name": "testuser",
-                "email": "test@example.com",
                 "password": "testpass123"
-                }
-
-        session.post(
-                "http://localhost:8001/api/v1/users",
-                json = user_data
-                )
-
-        session.post(
-                "http://localhost:8001/login",
-                data = {
-                        "name": "testuser",
-                        "password": "testpass123"
-                        }
-                )
+            }
+        )
 
         assert session.cookies.get('session') is not None
 
@@ -62,36 +63,33 @@ class TestExternalIntegration:
         session = requests.Session()
 
         try:
-            session.post(
-                    "http://localhost:8001/reset",
-                    timeout = 5
-                    )
+            session.post(f"{CTFD_BASE_URL}/reset", timeout = 5)
         except Exception:
             pass
 
         credentials_to_try = [
-                ("admin",
-                 "ctfng_password"),
-                ("admin",
-                 "admin123"),
-                ("admin",
-                 "password")
-                ]
+            ("admin",
+             "ctfng_password"),
+            ("admin",
+             "admin123"),
+            ("admin",
+             "password")
+        ]
 
-        login_page = session.get("http://localhost:8001/login")
+        login_page = session.get(f"{CTFD_BASE_URL}/login")
 
         csrf_token = None
         if "csrf_token" in login_page.text or "nonce" in login_page.text:
             csrf_match = re.search(
-                    r'name="nonce" value="([^"]+)"',
-                    login_page.text
-                    )
+                r'name="nonce" value="([^"]+)"',
+                login_page.text
+            )
             if not csrf_match:
                 alt_patterns = [
-                        r'name=["\']nonce["\'] value=["\']([^"\']+)["\']',
-                        r'<input[^>]*name=["\']nonce["\'][^>]*value=["\']([^"\']+)["\']',
-                        r'"nonce":\s*"([^"]+)"'
-                        ]
+                    r'name=["\']nonce["\'] value=["\']([^"\']+)["\']',
+                    r'<input[^>]*name=["\']nonce["\'][^>]*value=["\']([^"\']+)["\']',
+                    r'"nonce":\s*"([^"]+)"'
+                ]
                 for pattern in alt_patterns:
                     csrf_match = re.search(pattern, login_page.text)
                     if csrf_match:
@@ -110,9 +108,9 @@ class TestExternalIntegration:
                 login_data["nonce"] = csrf_token
 
             login_resp = session.post(
-                    "http://localhost:8001/login",
-                    data = login_data
-                    )
+                f"{CTFD_BASE_URL}/login",
+                data = login_data
+            )
 
             if "login" not in login_resp.url and "setup" not in login_resp.url:
                 successful_login = True
@@ -122,10 +120,10 @@ class TestExternalIntegration:
 
         if not successful_login:
             pytest.skip(
-                    "Cannot authenticate with test CTFd instance - check credentials"
-                    )
+                "Cannot authenticate with test CTFd instance - check credentials"
+            )
 
-        profile_resp = session.get("http://localhost:8001/profile")
+        profile_resp = session.get(f"{CTFD_BASE_URL}/profile")
         assert profile_resp.status_code == 200, "Authentication failed - not logged in"
 
         cookie = session.cookies.get('session')
@@ -139,9 +137,9 @@ class TestExternalIntegration:
             connected.append(True)
 
         sio.connect(
-                "http://localhost:8001",
-                headers = {'Cookie': f'session={cookie}'}
-                )
+            CTFD_BASE_URL,
+            headers = {'Cookie': f'session={cookie}'}
+        )
 
         time.sleep(2)
         assert len(connected) > 0
