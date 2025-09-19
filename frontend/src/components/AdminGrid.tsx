@@ -1,15 +1,14 @@
 import { radixTheme } from '@/grid';
 import { Flex, Spinner } from '@radix-ui/themes';
-import type {
-  CellClickedEvent,
-  ColDef,
-  GridApi,
-  GridOptions,
-} from 'ag-grid-community';
+import type { ColDef, GridApi, GridOptions } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
-import { useCallback, useEffect, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useSearchParams } from 'react-router';
-import { includes } from 'lodash';
 
 /**
  * Wrapper around AgGridReact with common functionality for all admin grids.
@@ -19,6 +18,7 @@ export default function AdminGrid<T>({
   columnDefs,
   loading = false,
   sidebarComponent : Sidebar,
+  toolbar,
   getRowId,
   gridOptions,
   stopCellSelection,
@@ -27,6 +27,7 @@ export default function AdminGrid<T>({
   columnDefs: ColDef<T>[];
   loading?: boolean;
   sidebarComponent?: React.ComponentType<{entity: T}>;
+  toolbar?: ReactNode;
   getRowId: (params: { data: T }) => string;
   gridOptions?: GridOptions;
   stopCellSelection?: string[]; // colIds of cells
@@ -89,78 +90,77 @@ export default function AdminGrid<T>({
     },
   };
 
-  const defaultGridOptions = {
-    onCellClicked : (e: CellClickedEvent) => {
-      if (includes(stopCellSelection, e.column.colId)) {
-        e.stopPropagation();
-      }
-    },
-  };
-
   return (
-    <Flex direction="row" gap="4" className="w-full h-full">
-      <AgGridReact
-        key="admin-grid"
-        theme={radixTheme}
-        rowData={rowData}
-        columnDefs={columnDefs}
-        rowSelection={{
-          mode : 'singleRow',
-          checkboxes : true,
-          enableClickSelection : true,
-        }}
-        loading={loading}
-        loadingOverlayComponent={Spinner}
-        getRowId={getRowId}
-        onRowDoubleClicked={(event) => {
-          if (event.node.isSelected()) {
-            event.node.setSelected(false);
-          }
-        }}
-        onRowSelected={(event) => {
-          if (event.node.isSelected() && event.node.id && event.node.id !== selectedId) {
-            setSearchParams((prev) => {
-              prev.set('id', event.node.id!);
-              return prev;
-            });
-          }
-          if (event.api.getSelectedNodes().length === 0 && selectedId) {
-            setSearchParams((prev) => {
-              prev.delete('id');
-              return prev;
-            });
-          }
-        }}
-        onRowDataUpdated={updateSelection} // ensure selection is accurate when grid rows load
-        onGridReady={(params) => {
-          setGridApi(params.api);
-        }}
-        onFilterChanged={(params) => {
+    <Flex direction="row" gap="3" className="w-full h-full">
+      <Flex direction="column" gap="3" className="grow">
+        {toolbar}
+        <AgGridReact
+          key="admin-grid"
+          theme={radixTheme}
+          rowData={rowData}
+          columnDefs={columnDefs}
+          rowSelection={{
+            mode : 'singleRow',
+            checkboxes : true,
+          }}
+          loading={loading}
+          loadingOverlayComponent={Spinner}
+          getRowId={getRowId}
+          onCellClicked={(e) => {
+            if (!stopCellSelection?.includes(e.column.getColId())) {
+              e.node.setSelected(true);
+            }
+          }}
+          onRowDoubleClicked={(event) => {
+            if (event.node.isSelected()) {
+              event.node.setSelected(false);
+            }
+          }}
+          onRowSelected={(event) => {
+            if (event.node.isSelected() && event.node.id && event.node.id !== selectedId) {
+              setSearchParams((prev) => {
+                prev.set('id', event.node.id!);
+                return prev;
+              });
+            }
+            if (event.api.getSelectedNodes().length === 0 && selectedId) {
+              setSearchParams((prev) => {
+                prev.delete('id');
+                return prev;
+              });
+            }
+          }}
+          onRowDataUpdated={updateSelection} // ensure selection is accurate when grid rows load
+          onGridReady={(params) => {
+            setGridApi(params.api);
+          }}
+          onFilterChanged={(params) => {
           // Update the URL when grid filter model changes
-          const filterModel = params.api.getFilterModel();
-          if (Object.keys(filterModel).length > 0) {
-            const filterString = btoa(JSON.stringify(filterModel));
+            const filterModel = params.api.getFilterModel();
+            if (Object.keys(filterModel).length > 0) {
+              const filterString = btoa(JSON.stringify(filterModel));
 
-            // don't double nav if the filter won't change
-            if (searchParams.get('filter') === filterString) return;
+              // don't double nav if the filter won't change
+              if (searchParams.get('filter') === filterString) return;
 
-            setSearchParams((prev) => {
-              prev.set('filter', filterString);
-              return prev;
-            });
-          } else {
-            if (!searchParams.has('filter')) return;
+              setSearchParams((prev) => {
+                prev.set('filter', filterString);
+                return prev;
+              });
+            } else {
+              if (!searchParams.has('filter')) return;
 
-            setSearchParams((prev) => {
-              prev.delete('filter');
-              return prev;
-            });
-          }
-        }}
-        initialState={initialState}
-        className="w-full h-full grow"
-        gridOptions={{ ...defaultGridOptions, ...gridOptions }}
-      />
+              setSearchParams((prev) => {
+                prev.delete('filter');
+                return prev;
+              });
+            }
+          }}
+          initialState={initialState}
+          className="w-full h-full grow"
+          gridOptions={gridOptions}
+        />
+      </Flex>
       {Sidebar && selectedData && (
         <Sidebar entity={selectedData} key={selectedId} />
       )}

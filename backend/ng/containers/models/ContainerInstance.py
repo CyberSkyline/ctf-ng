@@ -21,7 +21,7 @@ class SerializedInstanceStats(TypedDict):
 class SerializedContainerInstance(TypedDict):
     id: int
     blueprint: int
-    team: int
+    team_id: int
     hostip: str
     dockerid: str
 
@@ -32,6 +32,8 @@ class ContainerInstance(db.Model):
     team_id = db.Column(db.Integer, db.ForeignKey("ng_teams.id"), nullable=False)
     hostip = db.Column(db.String(255), nullable=False)
     dockerid: Mapped[str] = db.Column(db.String(255), nullable=False)
+
+    team = db.relationship("Team")
 
     def __repr__(self):
         return f"<ContainerInstance {self.id}>"
@@ -44,7 +46,7 @@ class ContainerInstance(db.Model):
     def create_container_instance(cls, blueprint: int, team: Team, commit: bool = True):
         blueprint_obj = ContainerBlueprint.query.filter_by(id=blueprint).first()
 
-        db_exists = cls.query.filter_by(blueprint=blueprint, team=team.id).first()
+        db_exists = cls.query.filter_by(blueprint=blueprint, team_id=team.id).first()
 
         client = get_client(config.DOCKER_HOST)
 
@@ -63,7 +65,7 @@ class ContainerInstance(db.Model):
         ctr = None
         try:
             ctr = client.get_running(
-                cls.render_container_name(team, blueprint_obj.hostname, blueprint_obj.challenge_id)
+                cls.render_container_name(team.id, blueprint_obj.hostname, blueprint_obj.challenge_id)
             )
 
         ## Container Needs created
@@ -76,7 +78,7 @@ class ContainerInstance(db.Model):
 
         container_instance = cls(
             blueprint=blueprint,
-            team=team,
+            team_id=team.id,
             hostip=config.DOCKER_HOST,
             dockerid=ctr.id,
         )
@@ -120,10 +122,10 @@ class ContainerInstance(db.Model):
         return ctr
 
     @staticmethod
-    def connect_networks(client, team, blueprint_obj, ctr):
+    def connect_networks(client: Client, team: Team, blueprint_obj: ContainerBlueprint, ctr):
         if blueprint_obj.networks:
             for network in blueprint_obj.networks:
-                networkname = ContainerInstance.render_network_name(team, network, blueprint_obj.challenge_id)
+                networkname = ContainerInstance.render_network_name(team.id, network, blueprint_obj.challenge_id)
                 net_exists = client.networks.list(names=[networkname])
                 if len(net_exists) == 0:
                     net = client.networks.create(name=networkname, internal=True, attachable=True)
@@ -174,6 +176,19 @@ class ContainerInstance(db.Model):
 
         return [instance.serialize() for instance in instances]
 
+    @classmethod
+    def get_instance_group(cls, challenge_id: int, team_id: int):
+        from ...challenge.models.ContainerBlueprint import ContainerBlueprint
+
+        blueprints = ContainerBlueprint.query.filter_by(challenge_id=challenge_id).all()
+
+        blueprint_ids = [blueprint.id for blueprint in blueprints]
+
+        instances = db.session.scalars(
+            select(cls)
+            .where(cls.blueprint.in_(blueprint_ids), cls.team == team_id)
+        ).all()
+        return instances
 
     @classmethod
     def get_instance_by_id(cls, instance_id: int):
@@ -205,7 +220,7 @@ class ContainerInstance(db.Model):
         return SerializedContainerInstance(
             id=self.id,
             blueprint=self.blueprint,
-            team=self.team_id,
+            team_id=self.team_id,
             hostip=self.hostip,
             dockerid=self.dockerid,
        )
@@ -235,9 +250,9 @@ class ContainerInstance(db.Model):
             pass
 
         finally:
-            new_ctr = self.run_container(client, self.team_id, blueprint_obj)
+            new_ctr = self.run_container(client, self.team, blueprint_obj)
 
-            self.connect_networks(client, self.team_id, blueprint_obj, new_ctr)
+            self.connect_networks(client, self.team, blueprint_obj, new_ctr)
 
             self.dockerid = new_ctr.id
             db.session.commit()

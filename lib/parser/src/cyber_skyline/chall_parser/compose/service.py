@@ -106,13 +106,13 @@ class Service:
 
     def warnings(self) -> Iterator[str]:
         if self.build:
-            yield "build field is ignored and won't be used in production"
+            yield "build field is ignored in production"
         if self.ports:
-            yield "ports field is ignored and won't be used in production"
+            yield "ports field is ignored in production"
         if self.stdin_open:
-            yield "stdin_open field is ignored and won't be used in production"
+            yield "stdin_open field is ignored in production"
         if self.tty:
-            yield "tty field is ignored and won't be used in production"
+            yield "tty field is ignored in production"
         if self.logging:
             yield "logging field is currently unsupported and will be ignored"
         if self.healthcheck:

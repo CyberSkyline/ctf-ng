@@ -4,6 +4,7 @@ import {
   TbCalendarEvent,
   TbCube,
   TbLifebuoy,
+  TbPackages,
   TbStarFilled,
   TbTools,
   TbUser,
@@ -20,6 +21,7 @@ export const EventIcon = TbCalendarEvent;
 export const UserIcon = TbUser;
 export const TeamIcon = TbUsersGroup;
 export const ChallengeIcon = TbCube;
+export const DeploymentIcon = TbPackages;
 
 // Semantic colors for UI.
 // Use instead of default accent for things that carry semantic meaning.
