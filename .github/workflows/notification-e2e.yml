@@ -40,9 +40,11 @@ jobs:
 
       - name: Wait for CTFd to be ready
         run: |
-          echo "Waiting for CTFd to be ready on http://localhost:8001..."
+          # Import CTFD_BASE_URL from config
+          CTFD_BASE_URL=$(python3 -c "from backend.ng.config import CTFD_BASE_URL; print(CTFD_BASE_URL)")
+          echo "Waiting for CTFd to be ready on ${CTFD_BASE_URL}..."
           for i in {1..30}; do
-            if curl -s http://localhost:8001/ > /dev/null; then
+            if curl -s ${CTFD_BASE_URL}/ > /dev/null; then
               echo "CTFd is ready!"
               break
             fi
@@ -50,7 +52,7 @@ jobs:
             sleep 10
           done
 
-          if ! curl -s http://localhost:8001/ > /dev/null; then
+          if ! curl -s ${CTFD_BASE_URL}/ > /dev/null; then
             echo "CTFd failed to start within timeout"
             docker compose -f backend/ng/notifications/tests/integration/docker-compose.test.yml logs
             exit 1
