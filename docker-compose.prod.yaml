@@ -10,7 +10,10 @@ services:
       - "8000:8000"
       - "4000:4000"
     env_file:
-      - ${ENV_FILE:-.env.prod}   
+      - ${ENV_FILE:-.env.prod}
+    environment:
+      - WORKER_CLASS=geventwebsocket.gunicorn.workers.GeventWebSocketWorker
+      - THREADS=100   
     volumes:
       - .data/CTFd/logs:/var/log/CTFd
       - .data/CTFd/uploads:/var/uploads
@@ -61,13 +64,16 @@ services:
     command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --wait_timeout=28800, --log-warnings=0]
 
   cache:
-    image: redis:4
+    image: redis:7-alpine
     container_name: ng-redis
     restart: always
     volumes:
-    - .data/redis:/data
+      - .data/redis:/data
     networks:
-        internal:
+      internal:
+      default:
+    ports:
+      - "6379:6379"
 
   vite:
     build:

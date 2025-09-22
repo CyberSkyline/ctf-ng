@@ -9,4 +9,4 @@ def get_team_score(score) -> Score:
     """
     Get the current score for a team
     """
-    return score  # type: ignore[no-any-return]
+    return score

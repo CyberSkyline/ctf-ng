@@ -39,6 +39,14 @@ module = "*.models.*"
 # Disable TypedDict errors for model serialization methods
 disable_error_code = ["typeddict-item", "no-any-return"]
 
+[[tool.mypy.overrides]]
+module = "ng.scoring.controllers.all_actions.get_team_score"
+disable_error_code = ["no-any-return"]
+
+[[tool.mypy.overrides]]
+module = "ng.scoring.controllers.all_actions.get_leaderboard"
+disable_error_code = ["no-any-return"]
+
 [tool.ruff]
 line-length = 120
 target-version = "py312"

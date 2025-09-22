@@ -10,7 +10,10 @@ services:
       - "8000:8000"
       - "4000:4000"
     env_file:
-      - ${ENV_FILE:-.env.dev}   
+      - ${ENV_FILE:-.env.dev}
+    environment:
+      - WORKER_CLASS=geventwebsocket.gunicorn.workers.GeventWebSocketWorker
+      - THREADS=100   
     volumes:
       - .data/CTFd/logs:/var/log/CTFd
       - .data/CTFd/uploads:/var/uploads
@@ -69,7 +72,6 @@ services:
       default:
     ports:
       - "6379:6379"
-     # dev
 
   vite:
     build:
