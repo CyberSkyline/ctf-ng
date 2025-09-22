@@ -19,7 +19,7 @@ start_dev() {
 
 start_prod() {
   WORKERS=${WORKERS:-1}
-  WORKER_CLASS=${WORKER_CLASS:-gevent}
+  WORKER_CLASS=${WORKER_CLASS:-geventwebsocket.gunicorn.workers.GeventWebSocketWorker}
   ACCESS_LOG=${ACCESS_LOG:--}
   ERROR_LOG=${ERROR_LOG:--}
   WORKER_TEMP_DIR=${WORKER_TEMP_DIR:-/dev/shm}

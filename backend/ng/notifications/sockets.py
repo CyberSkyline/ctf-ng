@@ -4,7 +4,7 @@ Manages user connections without using socket.io rooms
 """
 
 from flask import request
-from flask_socketio import disconnect
+from flask_socketio import disconnect, emit
 
 from CTFd.utils.user import get_current_user
 
@@ -27,6 +27,7 @@ def initialize_notification_sockets(socketio):
         Handle new socket connection - add to user lookup table
         """
         user = get_current_user()
+
         if not user:
             logger.warning("Unauthenticated connection attempt")
             disconnect()
@@ -69,6 +70,12 @@ def initialize_notification_sockets(socketio):
         """
         return "pong"
 
+    @socketio.on("test_ping")
+    def handle_test_ping():
+        """
+        Test-specific ping that emits response for test verification
+        """
+        emit("test_pong")
 
 def get_connected_users():
     """

@@ -8,6 +8,7 @@ from ....team.models.Team import Team
 from ...models.Ticket import Ticket
 from ....notifications.services import NotificationService
 
+
 def create_ticket(
     subject: str,
     text: str,

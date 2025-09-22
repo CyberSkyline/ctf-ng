@@ -46,16 +46,15 @@ def load(app: Any) -> None:
 
         socketio = SocketIO(
             app,
-            async_mode="gevent",
             message_queue=app.config.get("REDIS_URL"),
             cors_allowed_origins="*",
-            logger=False,
-            engineio_logger=False
+            logger=True,
+            engineio_logger=True
         )
 
-        app.extensions["socketio"] = socketio
-
         notification_sockets.initialize_notification_sockets(socketio)
+
+        app.extensions["socketio"] = socketio
         redis_manager = initialize_redis_notifications(socketio)
         if redis_manager:
             logger.info("Redis notification system initialized successfully")

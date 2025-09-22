@@ -2,8 +2,8 @@
 Toggles ticket open/closed status (admin only).
 """
 
-from ....user.models.User import User
 from ...models.Ticket import Ticket
+from ....user.models.User import User
 from ....notifications.services import NotificationService
 
 
@@ -22,7 +22,6 @@ def update_ticket_status(
         ticket.reopen_ticket(commit=True)
         status = "reopened"
 
-    # Notify ticket author about status change
     NotificationService.notify_ticket_status_change(
         ticket_id=ticket.id,
         recipient_id=ticket.author_id,
