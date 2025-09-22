@@ -19,6 +19,7 @@
     "frontend"
   ],
   "scripts": {
+    "aws-login": ".bin/aws-login.sh $1",
     "setup-ctfd": ".scripts/default_ctfd_setup.sh",
     "populate-data": ".scripts/populate_data.sh",
     "lint": "pnpm -r lint",

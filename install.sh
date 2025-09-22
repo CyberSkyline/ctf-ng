@@ -1,5 +1,7 @@
 #!/bin/bash
 
+### THIS SCRIPT IS ONLY DESIGNED FOR INSTALLS ON APT-BASED SYSTEMS. ###
+
 set -euo pipefail
 
 if [ "$EUID" -eq 0 ]; then
@@ -174,6 +176,22 @@ if ! command -v pytest &> /dev/null; then
     pip install -U pytest
   } || {
     echo "pytest installation aborted. Exiting."
+    exit 1
+  }
+fi
+
+# Install awscli
+if ! command -v pytest &> /dev/null; then
+  prompt_user "Would you like to install aws-cli?" && {
+    cd /tmp/
+    sudo apt-get install zip
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    unzip awscliv2.zip
+    sudo ./aws/install
+    rm -r ./aws awscliv2.zip
+    cd -
+  } || {
+    echo "aws-cli installation aborted. Exiting."
     exit 1
   }
 fi
