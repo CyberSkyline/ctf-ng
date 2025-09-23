@@ -42,4 +42,4 @@ if args.profile:
     toolbar.init_app(app)
     print(f" * Flask profiling running at http://0.0.0.0:${args.port}/flask-profiler/")
 
-app.run(debug=True, threaded=True, host="0.0.0.0", port=args.port)
+app.extensions["socketio"].run(app, host="0.0.0.0", port=args.port, debug=True)
