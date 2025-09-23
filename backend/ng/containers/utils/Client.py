@@ -1,5 +1,5 @@
 import docker
-import os 
+import os
 from ..constants import DOCKER_RUNNING
 
 class Client(docker.DockerClient):
