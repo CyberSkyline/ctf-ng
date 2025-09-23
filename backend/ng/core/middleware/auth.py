@@ -5,7 +5,6 @@ Resource loading and permissions are handled by separate decorators.
 
 from functools import wraps
 
-from CTFd.utils.decorators import authed_only
 from CTFd.utils.user import get_current_user
 from flask import request, redirect, url_for, abort
 

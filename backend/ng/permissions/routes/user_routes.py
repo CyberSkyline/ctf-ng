@@ -1,12 +1,7 @@
-from flask import request
 from flask_restx import Namespace, Resource
 from ...core.utils.logger import get_logger
-from ...core.utils.api import error_response, success_response
+from ...core.utils.api import success_response
 from ...core.middleware.auth import user_endpoint
-from ...core.exceptions import ValidationError
-from ..models.Role import Role
-from ..models.UserRole import UserRole
-from ..controllers import get_users_with_roles, get_support_role_users
 from ...core.middleware.loaders.load_event import load_event
 from ...core.middleware.loaders.load_team_by_user_and_event import load_team_by_user_and_event
 from ...core.middleware.loaders._util import LoaderType

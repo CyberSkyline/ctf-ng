@@ -59,7 +59,6 @@ class EventLeaderboard(Resource):
         """
         Get event leaderboard
         """
-        current_user = kwargs.get("current_user", None)
         limit = request.args.get("limit", config.DEFAULT_LEADERBOARD_LIMIT, type=int)
         if limit < 1 or limit > config.MAX_LEADERBOARD_LIMIT:
             raise ValidationError(f"Limit must be between 1 and {config.MAX_LEADERBOARD_LIMIT}")
