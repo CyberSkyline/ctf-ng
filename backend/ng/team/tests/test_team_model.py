@@ -113,7 +113,7 @@ class Test_Update_Name:
         old_name = team.name
         new_name = "Updated Team Name"
 
-        team.update_name(new_name)
+        team.update_team(name=new_name)
 
         refreshed_team = Team.query.get(team.id)
 

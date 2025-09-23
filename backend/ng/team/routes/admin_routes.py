@@ -93,17 +93,9 @@ class TeamDetail(Resource):
         """
         Update a team
         """
-        new_name = validated_data.get("name", team.name)
-        if Team.team_name_contains_member_name(
-                name = new_name,
-                member_names = [m.user.ctfd_user.name for m in team.members]):
-            return error_response(
-                "Team name cannot include a member's name.",
-                "validation",
-                400,
-            )
-
-        team.update_name(new_name)
+        if Team.team_name_contains_member_name(validated_data.get("name", team.name),[member.user.ctfd_user.name for member in team.members]):
+            return error_response("Team name cannot include a member's name.", "validation",400)
+        team.update_team(**validated_data)
         return success_response(team)
 
 

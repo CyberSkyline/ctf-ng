@@ -43,6 +43,15 @@ def test_teamdetail_update_invalid_name(admin_client, event, team_factory, user)
     data = response.get_json()
     assert data['errors']['validation'] == "Team name cannot include a member's name."
 
+def test_update_team_ranked_status(admin_client, event, team_factory, user):
+    """Test that the team detail endpoint can update the ranked status of a team."""
+    team = team_factory(event=event, members=[user], ranked=False)
+    response = admin_client.put(f"/ng/admin/teams/{team.id}", json={"ranked": True})
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['data']["ranked"] is True
+    assert data['success']
+
 def test_teammembers(admin_client, team_with_member):
     """Test that the team members endpoint returns the correct data."""
     team = team_with_member
