@@ -47,8 +47,6 @@ def api_endpoint(auth_required=True, admin_required=False, json_required=False, 
         def decorated_function(*args, **kwargs):
             if admin_required:
                 return admins_only(_auth_handler(f, auth_required, json_required, validation_func))(*args, **kwargs)
-            elif auth_required:
-                return authed_only(_auth_handler(f, auth_required, json_required, validation_func))(*args, **kwargs)
             else:
                 return _auth_handler(f, auth_required, json_required, validation_func)(*args, **kwargs)
 
@@ -66,7 +64,7 @@ def _auth_handler(f, auth_required, json_required, validation_func):
         if auth_required:
             current_user = get_current_user()
             if not current_user:
-                raise PermissionError("Authentication is required to access this resource.")
+                abort(401)
             kwargs["current_user"] = User.find_or_create_by_ctfd_id(current_user.id)
         if json_required:
             if not request.is_json:
@@ -108,7 +106,7 @@ def admins_only(f):
 
 
 # Convenience decorators for common patterns
-def user_endpoint(json_required=False, validation_func=None):
+def user_endpoint(auth_required=True, json_required=False, validation_func=None):
     """Shorthand for authenticated user endpoints"""
     return api_endpoint(
         auth_required=True,

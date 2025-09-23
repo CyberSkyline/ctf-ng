@@ -1,0 +1,45 @@
+from flask import request
+from flask_restx import Namespace, Resource
+from ...core.utils.logger import get_logger
+from ...core.utils.api import error_response, success_response
+from ...core.middleware.auth import user_endpoint
+from ...core.exceptions import ValidationError
+from ..models.Role import Role
+from ..models.UserRole import UserRole
+from ..controllers import get_users_with_roles, get_support_role_users
+from ...core.middleware.loaders.load_event import load_event
+from ...core.middleware.loaders.load_team_by_user_and_event import load_team_by_user_and_event
+from ...core.middleware.loaders._util import LoaderType
+from ...core.middleware.permission_middleware import (
+    check_permissions,
+)
+
+
+permissions_user_namespace = Namespace("/permissions", description="Permissions management endpoints for users")
+logger = get_logger(__name__)
+
+
+@permissions_user_namespace.route("/<int:event_id>/me")
+class UserPermissions(Resource):
+    """
+    Resource to get the current user's permissions.
+    """
+    @user_endpoint()
+    @load_event(source=LoaderType.PARAM, output_key="event")
+    @load_team_by_user_and_event(output_key="team")
+    @check_permissions(None, "")
+    @permissions_user_namespace.doc(
+        description="Get the current user's permissions",
+        responses={200: "Success", 401: "Unauthorized"},
+    )
+    def get(self, **kwargs):
+        """
+        Get the current user's permissions.
+        """
+        current_user = kwargs.get("current_user")
+        permissions = kwargs.get("permissions", [])
+
+        return success_response({
+            "user_id": current_user.id,
+            "permissions": permissions
+        })

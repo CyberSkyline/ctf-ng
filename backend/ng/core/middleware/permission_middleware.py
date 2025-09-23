@@ -32,7 +32,7 @@ def check_permissions(permission: PermissionEnum, error_message: str):
                 kwargs['permissions'] = permissions
             else:
                 kwargs['permissions'].extend(permissions)
-            if permission.name not in permissions:
+            if permission is not None and permission.name not in permissions:
                 return _deny(permission, trace, error_message)
             return f(*args, **kwargs)
         return wrapped

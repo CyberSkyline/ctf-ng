@@ -89,4 +89,14 @@ def test_update_user_roles_invalid_role(admin_client, user_with_roles):
     assert "errors" in data
     assert "validation" in data["errors"]
 
+def test_get_user_permissions(team_captain_client, user_with_roles):
+    """Check that a user can get their own permissions."""
+    response = team_captain_client.get("/ng/permissions/1/me")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"]
+    assert "permissions" in data["data"]
+    assert isinstance(data["data"]["permissions"], list)
+    assert len(data["data"]["permissions"]) > 0
+
 
