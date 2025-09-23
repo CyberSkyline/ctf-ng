@@ -7,7 +7,8 @@ source $DIR/utils.sh
 
 check_ctfd_running
 
-echo -e "\e[43m\e[30mTHIS WILL DELETE THE EXISTING DATABASE AND RESET IT TO THE DEFAULT CTFD SETUP\e[0m"
+highlight "THIS WILL DELETE THE EXISTING DATABASE AND INSERT SAMPLE DATA\n"
+
 prompt_user "Are you sure you want to continue?" && {
   docker exec ng-ctfd /bin/bash -c "PYTHONPATH=/opt/CTFd/ SCRIPT=true /opt/CTFd/CTFd/plugins/ng/scripts/default_ctfd_setup.py"
 }

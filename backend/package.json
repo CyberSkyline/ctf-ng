@@ -7,5 +7,5 @@
     "test": ".scripts/tesh.sh",
     "preinstall": ".scripts/pip_install.sh"
   },
-  "packageManager": "pnpm@10.15.1"
+  "packageManager": "pnpm@10.17.1"
 }

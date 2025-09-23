@@ -1,18 +1,18 @@
 #!/bin/bash
 
-PROJECT_ROOT=$(pwd)
+set -euo pipefail
 
-# Load env
-ENV_PATH=$(realpath "$PROJECT_ROOT/.env")
-source $ENV_PATH
+DIR=$(dirname $BASH_SOURCE)
+source $DIR/utils.sh
+load_env
 
 # Check if awscli is configured
-if [[ -z "$AWS_ACCESS_KEY_ID" || -z "$AWS_SECRET_ACCESS_KEY" ]]; then
+if [[ -z "$AWS_ACCESS_KEY_ID" || "$AWS_ACCESS_KEY_ID" == "-" || -z "$AWS_SECRET_ACCESS_KEY" || "$AWS_SECRET_ACCESS_KEY" == "-" ]]; then
   echo "Error: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must both be set in your .env"
   exit 1
 fi
 
-if [[ -z "$AWS_MFA_ARN" ]]; then
+if [[ -z "$AWS_MFA_ARN" || "$AWS_MFA_ARN" == "-" ]]; then
   echo "Error: AWS_MFA_ARN must be set in your .env"
   exit 1
 fi
