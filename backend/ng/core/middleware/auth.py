@@ -64,7 +64,7 @@ def _auth_handler(f, auth_required, json_required, validation_func):
         if auth_required:
             current_user = get_current_user()
             if not current_user:
-                raise PermissionError("Authentication is required to access this endpoint.")
+                raise PermissionError("Authentication is required to access this resource.")
             kwargs["current_user"] = User.find_or_create_by_ctfd_id(current_user.id)
         if json_required:
             if not request.is_json:
