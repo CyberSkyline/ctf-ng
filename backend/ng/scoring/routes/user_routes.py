@@ -5,7 +5,7 @@ User API routes for scoring
 from flask import request
 from flask_restx import Namespace, Resource
 
-from ...core.middleware import user_endpoint
+from ...core.middleware import user_endpoint, public_endpoint
 from ...core.middleware.loaders import (
     LoaderType,
     load_event,
@@ -35,7 +35,7 @@ scoring_user_namespace = Namespace("scoring", description="Scoring operations fo
 
 @scoring_user_namespace.route("/<int:event_id>/leaderboard")
 class EventLeaderboard(Resource):
-    @user_endpoint()
+    @public_endpoint()
     @load_event(LoaderType.PARAM)
     @scoring_user_namespace.doc(
         description="Get the event leaderboard showing team rankings and scores with optional limit",
