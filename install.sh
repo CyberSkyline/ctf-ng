@@ -1,5 +1,7 @@
 #!/bin/bash
 
+### THIS SCRIPT IS ONLY DESIGNED FOR INSTALLS ON APT-BASED SYSTEMS. ###
+
 set -euo pipefail
 
 if [ "$EUID" -eq 0 ]; then
@@ -7,7 +9,7 @@ if [ "$EUID" -eq 0 ]; then
   exit 1
 fi
 
-source .scripts/utils.sh
+source .bin/utils.sh
 
 PROJECT_DIR="$(pwd)"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -19,15 +21,11 @@ sudo apt-get update
 git submodule update --init --recursive # Initialize submodules
 git config --local submodule.recurse true # Configures git to automatically update submodules when pulling or switching branches
 
-# Add CTFd to the pythonpath via .env file
-PYTHONPATH_LINE="PYTHONPATH=$(pwd)/external/CTFd"
+# Set up default .env, .env.dev, .env.prod, .env.staging files if they do not exist
 if [ ! -f ".env" ]; then
-  echo "$PYTHONPATH_LINE" > ".env"
-elif ! grep -Fxq "PYTHONPATH" ".env"; then
-  echo "$PYTHONPATH_LINE" >> ".env"
+  cp ./conf/.env.default .env
 fi
 
-# Set up default .env.dev and .env.prod files if they do not exist
 if [ ! -f ".env.dev" ]; then
   cp ./conf/ctfd/.env.default.dev .env.dev
 fi
@@ -37,24 +35,8 @@ if [ ! -f ".env.prod" ]; then
 fi
 
 if [ ! -f ".env.staging" ]; then
-  cp ./conf/ctfd/.env.default.prod .env.staging
+  cp ./conf/ctfd/.env.default.staging .env.staging
 fi
-
-# Add OAuth placeholders to .env files if not already present
-for envfile in .env .env.dev .env.prod .env.staging; do
-  if [ -f "$envfile" ]; then
-    if ! grep -qi "OAuth" "$envfile"; then
-      cat <<'EOF' >> "$envfile"
-
-# OAuth
-OKTA_CLIENT_ID = -
-OKTA_CLIENT_SECRET = -
-OKTA_DOMAIN = -
-SERVER_DOMAIN = -
-EOF
-    fi
-  fi
-done
 
 # Docker
 if ! command -v docker &> /dev/null; then
@@ -123,11 +105,6 @@ if ! command -v vite &> /dev/null; then
   }
 fi
 
-# # Install vite deps
-# cd ./frontend
-# pnpm install
-# cd -
-
 # Install pip
 if ! command -v pip3 &> /dev/null; then
   prompt_user "Would you like to install pip?" && {
@@ -174,6 +151,22 @@ if ! command -v pytest &> /dev/null; then
     pip install -U pytest
   } || {
     echo "pytest installation aborted. Exiting."
+    exit 1
+  }
+fi
+
+# Install awscli
+if ! command -v pytest &> /dev/null; then
+  prompt_user "Would you like to install aws-cli?" && {
+    cd /tmp/
+    sudo apt-get install zip
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    unzip awscliv2.zip
+    sudo ./aws/install
+    rm -r ./aws awscliv2.zip
+    cd -
+  } || {
+    echo "aws-cli installation aborted. Exiting."
     exit 1
   }
 fi
