@@ -5,6 +5,8 @@ from CTFd.models import db
 from sqlalchemy.orm import Mapped
 
 from ...core.utils.validator import BaseValidator
+from ...containers.utils.get_client import get_client
+from ... import config
 
 MAX_CONTAINER_BLUEPRINT_IMAGE_LENGTH = 1024
 MAX_CONTAINER_BLUEPRINT_HOSTNAME_LENGTH = 256
@@ -57,6 +59,10 @@ class ContainerBlueprint(db.Model):
 
     def __repr__(self):
         return f"<NgContainerBlueprint {self.id}>"
+
+    @classmethod
+    def get_for_challenge(cls, challenge_id: int):
+        return cls.query.filter_by(challenge_id=challenge_id).all()
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
@@ -160,3 +166,8 @@ class ContainerBlueprint(db.Model):
             return self.environment
 
         return {k: (v(team_seed) if isinstance(v, Callable) else v) for k, v in self.environment.items()}
+
+    def pull_image(self):
+        client = get_client(config.DOCKER_HOST)
+
+        client.pull_image(self.image)

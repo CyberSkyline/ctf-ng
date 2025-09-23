@@ -1,13 +1,16 @@
 """
 User Routes for Event Operations
 """
-
+import multiprocessing
 from flask_restx import Namespace, Resource
 
 from ...core.utils import success_response
+from ...core.utils.emitters import emit_to_user
+
 from ...core.middleware.loaders import (
     LoaderType,
     load_event,
+    load_challenge,
     load_user,
 )
 from ...core.middleware import (
@@ -18,6 +21,8 @@ from ..controllers import (
     import_challenge_from_yaml,
 )
 from ...event.models.Event import Event
+from ...challenge.models.Challenge import Challenge
+from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 
 
 
@@ -283,3 +288,37 @@ class EventChallenges(Resource):
         challenge = import_challenge_from_yaml(event, json_data)
         return success_response(challenge)
 
+@events_admin_namespace.route("/<int:event_id>/challenge/<int:challenge_id>/pull")
+class PullImages(Resource):
+    @events_admin_namespace.doc(
+        description="Pull all container images for a given challenge, Status of images returned via websockets",
+        responses={
+            200: "Success - Returns true",
+            404: "Not found - Event does not exist",
+            403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
+        },
+    )
+    @admin_endpoint()
+    @load_challenge(source=LoaderType.PARAM)
+    def get(self, challenge: Challenge, current_user, **kwargs):
+        blueprints = ContainerBlueprint.get_for_challenge(challenge.id)
+        for blueprint in blueprints:
+            # Will emit a websocket event to the user
+            # On pull or fail
+            def background_task(blueprint, current_user):
+                try:
+                    blueprint.pull_image()
+                    emit_to_user(
+                        "pull-success",
+                        { "id" : blueprint.id, "image": blueprint.image },
+                        current_user
+                    )
+                except Exception as err:
+                    emit_to_user("pull-fail", {"error": str(err)}, current_user)
+
+
+            proc = multiprocessing.Process(target=background_task, args=(blueprint, current_user))
+            proc.start()
+
+        return success_response(True)
