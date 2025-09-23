@@ -262,6 +262,12 @@ def logged_in_client(app, db_session, user):
         sess.permanent = False
     return client
 
+@pytest.fixture(scope="function")
+def public_client(app, db_session):
+    """A test client for making public requests."""
+    cache.clear()
+    return app.test_client()
+
 
 @pytest.fixture(scope="function")
 def admin_client(app, db_session, admin):
