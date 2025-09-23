@@ -106,7 +106,7 @@ def admins_only(f):
 
 
 # Convenience decorators for common patterns
-def user_endpoint(auth_required=True, json_required=False, validation_func=None):
+def user_endpoint(json_required=False, validation_func=None):
     """Shorthand for authenticated user endpoints"""
     return api_endpoint(
         auth_required=True,

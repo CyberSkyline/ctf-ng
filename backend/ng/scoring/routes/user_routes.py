@@ -55,10 +55,11 @@ class EventLeaderboard(Resource):
             500: "Internal Server Error",
         },
     )
-    def get(self, event_id: int, event, current_user: User, **kwargs):
+    def get(self, event_id: int, event, **kwargs):
         """
         Get event leaderboard
         """
+        current_user = kwargs.get("current_user", None)
         limit = request.args.get("limit", config.DEFAULT_LEADERBOARD_LIMIT, type=int)
         if limit < 1 or limit > config.MAX_LEADERBOARD_LIMIT:
             raise ValidationError(f"Limit must be between 1 and {config.MAX_LEADERBOARD_LIMIT}")
