@@ -83,7 +83,7 @@ class Service:
     # Template support allows dynamic variable generation for each challenge instance
     
     # Networking configuration
-    networks: list[str] | dict[str, None] | None = field(default=None)
+    networks: list[str] | dict[str, ServiceNetwork | None] | None = field(default=None)
     # Network connections for the service
     # - list form: ["network1", "network2"] - simple network attachment
     # - dict form: {"network1": None} - allows for future network-specific configuration
