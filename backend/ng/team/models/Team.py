@@ -282,6 +282,9 @@ class Team(db.Model):
         """Update team attributes and persist to database."""
         for key, value in kwargs.items():
             setattr(self, key, value)
+        
+        if "name" in kwargs:
+            Score.query.filter_by(team_id=self.id).update({"team_name": kwargs["name"]})
 
         self.self_validate()
         db.session.commit()
