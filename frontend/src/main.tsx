@@ -1,7 +1,7 @@
 import { Theme } from '@radix-ui/themes';
-import { ThemeProvider } from 'next-themes';
 import FooterBar from 'components/Footer';
 import NavBar from 'components/NavBar';
+import { ThemeProvider } from 'next-themes';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
@@ -12,6 +12,7 @@ import { apiFetcher } from '@/fetchers';
 import Routes from './Routes';
 import './grid';
 import './index.css';
+import './socket';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
