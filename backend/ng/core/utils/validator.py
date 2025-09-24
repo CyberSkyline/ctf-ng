@@ -43,7 +43,9 @@ def validation_field(func: Callable) -> Callable:
 
         # Early return for None values on non-required fields
         if value is None and not required:
-            self._add_parsed_data(field, None)
+            if field in data:
+                # if none is explicitly provided, pass it through
+                self._add_parsed_data(field, None)
             return None
 
         # Call the original function with the processed parameters
