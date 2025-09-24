@@ -1,10 +1,12 @@
 import { useEventChallenges, useMyChallenges } from '@/hooks/challenge';
+import { useMyTeam } from '@/hooks/events';
 import {
   Container,
   Grid,
   Text,
   TextField,
 } from '@radix-ui/themes';
+import { ErrorCallout } from 'components/Callouts';
 import { keyBy } from 'lodash';
 import { useMemo, useState } from 'react';
 import { TbCancel, TbSearch } from 'react-icons/tb';
@@ -13,8 +15,8 @@ import ChallengeCard from './ChallengeCard';
 
 export default function ChallengesTab() {
   const { idEvent } = useParams<{idEvent: string}>();
-  const { data } = useEventChallenges(Number(idEvent));
-  const { data : myChallenges } = useMyChallenges(Number(idEvent));
+  const { data, error } = useEventChallenges(Number(idEvent));
+  const { data : myChallenges, error : myError } = useMyChallenges(Number(idEvent));
 
   const challengeProgressMap = useMemo(() => keyBy(myChallenges, (progress) => progress.challenge_id), [ myChallenges ]);
 
@@ -26,8 +28,10 @@ export default function ChallengesTab() {
       || challenge.summary.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [ data, searchQuery ]);
 
-  // Are we in the event window/team start time?
-  const challengesAvailable = true;
+  // NAIVE PERMISSION CHECK - SHOULD BE BASED ON CAN_VIEW_CHALLENGES
+  // For now, just check if the user's team has a start timestamp
+  const { data : myTeam } = useMyTeam(Number(idEvent));
+  const challengesAvailable = myTeam?.start_timestamp;
 
   if (!challengesAvailable) {
     return (
@@ -41,9 +45,17 @@ export default function ChallengesTab() {
     );
   }
 
+  if (error) {
+    return (
+      <Container size="4">
+        <ErrorCallout>{error.message}</ErrorCallout>
+      </Container>
+    );
+  }
+
   return (
     <>
-      <Container size="2" mb="4">
+      <Container size="2" mb="3">
         <TextField.Root placeholder="Search challenges..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}>
           <TextField.Slot>
             <TbSearch height="16" width="16" />
@@ -51,7 +63,8 @@ export default function ChallengesTab() {
         </TextField.Root>
       </Container>
       <Container size="4">
-        <Grid columns={{ xs : '1', sm : '2', md : '3' }} gap="4">
+        {myError && (<ErrorCallout className="mb-3">Failed to load your progress.</ErrorCallout>)}
+        <Grid columns={{ xs : '1', sm : '2', md : '3' }} gap="3">
           {filteredChallenges.map((challenge) => (
             <ChallengeCard
               challenge={challenge}
