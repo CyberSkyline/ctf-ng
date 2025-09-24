@@ -19,6 +19,7 @@ import Challenge from 'routes/events/challenge';
 
 // Admin Section
 import AdminApiTest from 'routes/admin/api-test';
+import AdminChallenges from 'routes/admin/challenges';
 import AdminDashboard from 'routes/admin/dashboard';
 import AdminDeployments from 'routes/admin/deployments';
 import AdminEvents from 'routes/admin/events';
@@ -26,9 +27,9 @@ import AdminLayout from 'routes/admin/layout';
 import AdminNotifications from 'routes/admin/notifications';
 import AdminReports from 'routes/admin/reports';
 import AdminSettings from 'routes/admin/settings';
+import AdminTags from 'routes/admin/tags';
 import AdminTeams from 'routes/admin/teams';
 import AdminTickets from 'routes/admin/tickets';
-import AdminTags from 'routes/admin/tags';
 import AdminUsers from 'routes/admin/users';
 
 function Routes() {
@@ -70,6 +71,7 @@ function Routes() {
         { path : 'events', element : <AdminEvents /> },
         { path : 'users', element : <AdminUsers /> },
         { path : 'teams', element : <AdminTeams /> },
+        { path : 'challenges', element : <AdminChallenges /> },
         { path : 'deployments', element : <AdminDeployments /> },
         { path : 'notifications', element : <AdminNotifications /> },
         { path : 'tickets', element : <AdminTickets /> },

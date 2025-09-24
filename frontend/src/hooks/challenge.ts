@@ -1,7 +1,9 @@
 import { apiMutation } from '@/fetchers';
 import type {
+  AdminQuestion,
   Attempt,
   Challenge,
+  ContainerBlueprint,
   Hint,
   MeChallenge,
   Question,
@@ -79,9 +81,37 @@ export function submitFlag(
 }
 
 /* ADMIN ENDPOINTS */
+export function useAllChallenges() {
+  return useSWR<Challenge[], Error>('/admin/challenges');
+}
+
 export function useAdminEventChallenges(eventId: number | null) {
   return useSWR<Challenge[], Error>(
     eventId ? `/admin/events/${eventId}/challenges` : null,
+  );
+}
+
+export function useAdminChallengeAttempts(challengeId: number | null) {
+  return useSWR<Attempt[], Error>(
+    challengeId ? `/admin/challenges/${challengeId}/attempts` : null,
+  );
+}
+
+export function useAdminChallengeQuestions(challengeId: number | null) {
+  return useSWR<AdminQuestion[], Error>(
+    challengeId ? `/admin/challenges/${challengeId}/questions` : null,
+  );
+}
+
+export function useAdminChallengeHints(challengeId: number | null) {
+  return useSWR<Hint[], Error>(
+    challengeId ? `/admin/challenges/${challengeId}/hints` : null,
+  );
+}
+
+export function useAdminChallengeBlueprints(challengeId: number | null) {
+  return useSWR<ContainerBlueprint[], Error>(
+    challengeId ? `/admin/challenges/${challengeId}/blueprints` : null,
   );
 }
 

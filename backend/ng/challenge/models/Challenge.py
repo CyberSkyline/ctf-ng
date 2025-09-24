@@ -159,6 +159,10 @@ class Challenge(db.Model):
         """
         return cls.query.filter_by(id=challenge_id).first()
 
+    @classmethod
+    def get_all_challenges(cls) -> list[Challenge]:
+        return cls.query.all()
+
     def render(self, team):
         """
         Render the challenge for a specific team.
