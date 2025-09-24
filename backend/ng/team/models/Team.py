@@ -164,7 +164,7 @@ class Team(db.Model):
         try:
             Team.validate(data=cast(dict[str, Any], self.serialize(include_admin_fields=True)))
         except ValidationError as e:
-            raise ValidationError(f"Team validation failed: {e}")
+            raise ValidationError(f"Team validation failed: {e}") from e
 
     @classmethod
     def team_name_contains_member_name(cls, name, member_names) -> bool:
@@ -285,7 +285,7 @@ class Team(db.Model):
 
         # LAZY-IMPORT
         from ...scoring.models.Score import Score
-        
+
         if "name" in kwargs:
             Score.query.filter_by(team_id=self.id).update({"team_name": kwargs["name"]})
 
