@@ -290,7 +290,6 @@ def update_challenge_from_yaml(challenge_id: int, json_data: dict[str, Any]) -> 
                     else:
                         raise ValidationError(f"Variable {question.answer.parent_variable} does not exist but is used in {question.name}")
 
-                # Assuming a create_question method exists
                 db_question = Question.create_question(
                     challenge_id=challenge.id,
                     name=question.name,
