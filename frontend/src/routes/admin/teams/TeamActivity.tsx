@@ -111,7 +111,7 @@ const colDefs: ColDef<Attempt | HintRedemption | ManualPointAward>[] = [
         component : Entity,
         params : {
           label : value,
-          to : `/admin/events?id=${data.event_id}`,
+          to : `/admin/challenges?id=${data.challenge_id}`,
           icon : ChallengeIcon,
         },
       };

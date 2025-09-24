@@ -15,7 +15,7 @@ const colDefs: ColDef<Deployment>[] = [
     cellRenderer : Entity,
     cellRendererParams : ({ data } : { data : Deployment }) => ({
       label : data.challenge_name ?? `UNKNOWN (${data.challenge_id})`,
-      to : `/admin/events?id=${data.event_id}`,
+      to : `/admin/challenges?id=${data.challenge_id}`,
       icon : ChallengeIcon,
     }),
     filter : true,

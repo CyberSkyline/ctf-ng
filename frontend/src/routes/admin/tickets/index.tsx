@@ -57,7 +57,7 @@ const colDefs: ColDef<AdminTicket>[] = [
     field : 'author_id',
     headerName : 'Author',
     cellRenderer : NameLinkCell,
-    cellRendererParams : (params) => ({
+    cellRendererParams : (params: { data: { author_id: number; author_name: string; }; }) => ({
       id : params.data.author_id,
       name : params.data.author_name,
       linkTo : `/admin/users?id=${params.data.author_id}`,
@@ -77,7 +77,7 @@ const colDefs: ColDef<AdminTicket>[] = [
     field : 'event_id',
     headerName : 'Event',
     cellRenderer : NameLinkCell,
-    cellRendererParams : (params) => ({
+    cellRendererParams : (params: { data: { event_id: number; event_name: string; }; }) => ({
       id : params.data.event_id,
       name : params.data.event_name,
       linkTo : `/admin/events?id=${params.data.event_id}`,
@@ -90,7 +90,7 @@ const colDefs: ColDef<AdminTicket>[] = [
     field : 'team_id',
     headerName : 'Team',
     cellRenderer : NameLinkCell,
-    cellRendererParams : (params) => ({
+    cellRendererParams : (params: { data: { team_id: number; team_name: string; }; }) => ({
       id : params.data.team_id,
       name : params.data.team_name,
       linkTo : `/admin/teams?id=${params.data.team_id}`,
@@ -103,7 +103,7 @@ const colDefs: ColDef<AdminTicket>[] = [
     field : 'challenge_id',
     headerName : 'Challenge',
     cellRenderer : NameLinkCell,
-    cellRendererParams : (params) => ({
+    cellRendererParams : (params: { data: { challenge_id: number; challenge_name: string; event_id: number; }; }) => ({
       id : params.data.challenge_id,
       name : params.data.challenge_name,
       linkTo : `/admin/events?id=${params.data.event_id}`,

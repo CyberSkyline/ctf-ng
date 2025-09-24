@@ -35,6 +35,29 @@ class ContainerBlueprint(db.Model):
     user: Mapped[str | None] = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_USER_LENGTH), nullable=True)
     challenge_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
 
+    def serialize(self, include_admin_fields: bool) -> dict[str, Any]:
+        """
+        Serialize the container blueprint to a dictionary.
+        :return: A dictionary representation of the container blueprint.
+        """
+        return {
+            "id": self.id,
+            "image": self.image,
+            "hostname": self.hostname,
+            "stdin_open": self.stdin_open,
+            "tty": self.tty,
+            "command": self.command,
+            "entrypoint": self.entrypoint,
+            "environment": self.environment,
+            "networks": self.networks,
+            "cap_add": self.cap_add,
+            "mem_limit": self.mem_limit,
+            "memswap_limit": self.memswap_limit,
+            "cpus": float(self.cpus) if self.cpus is not None else None,
+            "user": self.user,
+            "challenge_id": self.challenge_id,
+        }
+
     def __repr__(self):
         return f"<NgContainerBlueprint {self.id}>"
 

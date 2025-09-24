@@ -1,0 +1,78 @@
+name: Notification E2E Tests
+
+on: [pull_request]
+
+jobs:
+  notification-e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize and update submodules
+        run: git submodule update --init --recursive
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest requests python-socketio[client] -r backend/ng/requirements.txt -r external/CTFd/requirements.txt
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+
+      - name: Start Docker services
+        working-directory: backend/ng/notifications/tests/integration
+        run: |
+          docker compose -f docker-compose.test.yml up -d
+          echo "Waiting for services to start..."
+          sleep 10
+
+      - name: Wait for CTFd to be ready
+        run: |
+          CTFD_BASE_URL=$(grep "^CTFD_BASE_URL" backend/ng/config.py | cut -d'"' -f2)
+          echo "Waiting for CTFd to be ready on ${CTFD_BASE_URL}..."
+          for i in {1..30}; do
+            if curl -s ${CTFD_BASE_URL}/ > /dev/null; then
+              echo "CTFd is ready!"
+              break
+            fi
+            echo "Attempt $i/30: CTFd not ready yet, waiting 10 seconds..."
+            sleep 10
+          done
+
+          if ! curl -s ${CTFD_BASE_URL}/ > /dev/null; then
+            echo "CTFd failed to start within timeout"
+            docker compose -f backend/ng/notifications/tests/integration/docker-compose.test.yml logs
+            exit 1
+          fi
+
+      - name: Run notification E2E tests
+        working-directory: backend/ng/notifications/tests/integration
+        run: |
+          pytest test_notification_e2e.py -v
+
+      - name: Show Docker logs on failure
+        if: failure()
+        working-directory: backend/ng/notifications/tests/integration
+        run: |
+          echo "=== Docker Compose Logs ==="
+          docker compose -f docker-compose.test.yml logs
+
+      - name: Cleanup Docker services
+        if: always()
+        working-directory: backend/ng/notifications/tests/integration
+        run: |
+          docker compose -f docker-compose.test.yml down -v

@@ -29,6 +29,8 @@ export interface Team {
   ranked: boolean;
   locked: boolean;
   invite_code?: string;
+  start_timestamp: Date | null;
+  end_time: Date | null;
 }
 
 export interface TeamMember {
@@ -48,8 +50,9 @@ export interface Challenge {
   description: string;
   icon: string;
   summary: string;
-  total_questions: number;
+  num_questions: number;
   total_points: number;
+  event_name?: string;
 }
 
 export interface MeChallenge {
@@ -70,6 +73,10 @@ export interface Question {
   points: number;
   max_attempts: number;
   challenge_id: number;
+}
+
+export interface AdminQuestion extends Question {
+  answer: string;
 }
 
 export interface Hint {
@@ -154,6 +161,24 @@ export interface Deployment {
   containers: number;
   event_id: number;
   event_name?: string;
+}
+
+export interface ContainerBlueprint {
+  id: number;
+  image: string;
+  hostname: string;
+  stdin_open: boolean;
+  tty: boolean;
+  command: string[];
+  entrypoint: string[];
+  environment: Record<string, string>;
+  networks: string[];
+  cap_add: string[];
+  mem_limit: string;
+  memswap_limit: string;
+  cpus: number;
+  user: string;
+  challenge_id: number;
 }
 
 export interface ContainerInstance {

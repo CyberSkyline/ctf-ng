@@ -48,5 +48,8 @@ DOCKER_HOST = "172.17.0.1"
 NOVNC_CONTAINER = "consol/debian-xfce-vnc"
 NOVNC_PORT = 6901
 
+# For Testing
+CTFD_BASE_URL = "http://localhost:8001"
+
 CONTAINER_REGISTRY_USER = ""
 CONTAINER_REGISTRY_PASSWORD = ""

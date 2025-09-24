@@ -29,8 +29,16 @@ from typing import Iterator, Literal, Any
 from attrs import define, field
 import attrs.validators as v
 from cyber_skyline.chall_parser.template import Template
+from cyber_skyline.chall_parser.compose.validators import is_ipv4
 
 type CapAdd = Literal['NET_ADMIN', 'SYS_PTRACE']
+
+@define
+class ServiceNetwork:
+    """Represents a network attachment for a service.
+    """
+    ipv4_address: str | None = field(default=None, validator=v.optional(is_ipv4))  # Static IPv4 address for the service on this network
+    
 
 @define
 class Service:
@@ -75,7 +83,7 @@ class Service:
     # Template support allows dynamic variable generation for each challenge instance
     
     # Networking configuration
-    networks: list[str] | dict[str, None] | None = field(default=None)
+    networks: list[str] | dict[str, ServiceNetwork | None] | None = field(default=None)
     # Network connections for the service
     # - list form: ["network1", "network2"] - simple network attachment
     # - dict form: {"network1": None} - allows for future network-specific configuration

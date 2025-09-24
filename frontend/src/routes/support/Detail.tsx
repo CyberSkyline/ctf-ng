@@ -108,7 +108,7 @@ export default function Detail() {
           </Box>
           <TicketMessagesCard
             messages={messages}
-            currentUserId={currentUser?.id}
+            currentUserId={currentUser!.id}
           />
           <Flex gap="2" direction="column">
             <RichTextEditor

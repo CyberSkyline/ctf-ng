@@ -1,0 +1,33 @@
+services:
+  test-ctfd:
+    build:
+      context: ../../../../..
+      dockerfile: dockerfiles/ctfd.Dockerfile
+    environment:
+      DATABASE_URL: mysql+pymysql://test:test@test-db/test_ctfd
+      REDIS_URL: redis://test-cache:6379
+      DEBUG: "true"
+      SECRET_KEY: "test_secret_key_12345"
+      WORKER_CLASS: geventwebsocket.gunicorn.workers.GeventWebSocketWorker
+      THREADS: 100
+      PRESET_ADMIN_NAME: "admin"
+      PRESET_ADMIN_EMAIL: "admin@example.com"
+      PRESET_ADMIN_PASSWORD: "ctfng_password"
+    ports:
+      - "8001:8000"
+    depends_on:
+      - test-db
+      - test-cache
+
+  test-db:
+    image: mariadb:10.11
+    environment:
+      MARIADB_ROOT_PASSWORD: test
+      MARIADB_DATABASE: test_ctfd
+      MARIADB_USER: test
+      MARIADB_PASSWORD: test
+
+  test-cache:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
