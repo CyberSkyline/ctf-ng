@@ -3,9 +3,16 @@ import type {
   Attempt,
   HintRedemption,
   ManualPointAward,
+  Score,
   ScoreEvent,
 } from '@/types';
 import useSWR, { mutate } from 'swr';
+
+export function useMyTeamScore(eventId: number | null) {
+  return useSWR<Score, Error>(
+    eventId ? `/events/${eventId}/me/team/score` : null,
+  );
+}
 
 /* ADMIN ENDPOINTS */
 export function useTeamScoreHistory(eventId: number| null, teamId: number | null) {

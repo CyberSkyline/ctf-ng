@@ -1,6 +1,11 @@
-import useSWR, { mutate } from 'swr';
 import { apiMutation } from '@/fetchers';
-import type { Event, Team, TeamMember } from '@/types';
+import type {
+  Event,
+  Score,
+  Team,
+  TeamMember,
+} from '@/types';
+import useSWR, { mutate } from 'swr';
 
 /**
  * Retrieves a list of all public and registerable events.
@@ -173,4 +178,8 @@ export function updateEvent(eventId: number, updated: Omit<Event, 'id'>) {
     mutate(`/admin/events/${eventId}`);
     mutate('/admin/events');
   });
+}
+
+export function useLeaderboard(eventId: number) {
+  return useSWR<Score[], Error>(eventId ? `/events/${eventId}/leaderboard` : null);
 }
