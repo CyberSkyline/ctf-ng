@@ -20,7 +20,12 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install dependencies
+      - name: Install parser dependencies
+        run: |
+          cd lib/parser
+          pip install -e .
+
+      - name: Install chall-check dependencies
         run: |
           cd tools/chall-check
           pip install -e . pytest

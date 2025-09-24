@@ -25,30 +25,15 @@ for CTF challenge deployment. It enforces security constraints and validation wh
 supporting the x-challenge extension for CTF-specific metadata.
 """
 
-from typing import Iterable, Iterator, NewType, Dict
+from typing import Iterator, NewType, Dict
 import attrs.validators as v
 from attrs import define, field
 
 from cyber_skyline.chall_parser.compose.service import Service
+from cyber_skyline.chall_parser.compose.network import Network
 from cyber_skyline.chall_parser.compose.challenge_info import ChallengeInfo
 from cyber_skyline.chall_parser.compose.validators import validate_compose_name_pattern
-from cyber_skyline.chall_parser.warnings import Warnings
-
-@define
-class Network:
-    """Represents a Docker Compose network configuration for CTF challenges.
-    
-    This is a heavily simplified network definition that only supports internal networks.
-    External network access is explicitly disabled for security reasons.
-    """
-    internal: bool | None = None # All networks must be internal (no external access)
-
-    def warnings(self) -> Iterator[str]:
-        if self.internal is None:
-            yield "internal field does not exist, this network will not be created in production"
-        elif self.internal is False:
-            yield "internal field is False, this network will not be created in production"
-            
+from cyber_skyline.chall_parser.warnings import Warnings    
 
 # Custom types for pattern-validated dictionaries
 # These provide type safety while enforcing naming constraints

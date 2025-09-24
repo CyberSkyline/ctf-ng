@@ -26,6 +26,7 @@ use valid values, particularly for UI elements like icons.
 
 import logging
 import re
+import ipaddress
 from typing import Any
 from cyber_skyline.chall_parser.compose.answer import Answer, AnswerTestCase
 from cyber_skyline.chall_parser.template import Template
@@ -33,6 +34,36 @@ from collections.abc import Callable
 
 
 logger = logging.getLogger(__name__)
+
+def is_ipv4(instance, attribute, value: str) -> None:
+    """Validator to ensure a string is a valid IPv4 address.
+    
+    Args:
+        instance: The instance being validated
+        attribute: The attribute being validated
+        value: The string value to validate as an IPv4 address
+    Raises:
+        ValueError: If the value is not a valid IPv4 address
+    """
+    try:
+        ipaddress.IPv4Address(value)
+    except ipaddress.AddressValueError as e:
+        raise ValueError(f"Value '{value}' for {attribute.name} is not a valid IPv4 address") from e
+
+def is_ipv4_cidr(instance, attribute, value: str) -> None:
+    """Validator to ensure a string is a valid IPv4 CIDR notation.
+    
+    Args:
+        instance: The instance being validated
+        attribute: The attribute being validated
+        value: The string value to validate as an IPv4 CIDR
+    Raises:
+        ValueError: If the value is not a valid IPv4 CIDR notation
+    """
+    try:
+        ipaddress.IPv4Network(value, strict=False)
+    except (ValueError, ipaddress.AddressValueError, ipaddress.NetmaskValueError) as e:
+        raise ValueError(f"Value '{value}' for {attribute.name} is not valid IPv4 CIDR notation") from e
 
 def unique[TItem, TSelReturn](selector: Callable[[TItem], TSelReturn]) -> Callable[[Any, Any, list[Any]], None]:
     """Validator to ensure all items in a list are unique based on a selector function."""
