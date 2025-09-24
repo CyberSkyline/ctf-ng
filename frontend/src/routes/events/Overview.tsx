@@ -10,6 +10,7 @@ import HeaderContainer from 'components/HeaderContainer';
 import ChallengesTab from './OverviewTabs/ChallengesTab';
 import LeaderboardTab from './OverviewTabs/LeaderboardTab';
 import TeamTab from './OverviewTabs/TeamTab';
+import StartModal from './StartModal';
 
 export default function Overview() {
   const [ searchParams, setSearchParams ] = useSearchParams();
@@ -24,14 +25,16 @@ export default function Overview() {
         {data && (
           <EventHeader
             event={data}
-          />
+          >
+            {data && <StartModal eventId={data.id} />}
+          </EventHeader>
         )}
       </HeaderContainer>
 
       <Tabs.Root
         value={currentTab}
         onValueChange={(tab) => {
-          if (tab === searchParams.get('tab')) {
+          if (tab === currentTab) {
             return;
           }
           setSearchParams((prev) => {
@@ -39,6 +42,7 @@ export default function Overview() {
             return prev;
           });
         }}
+        activationMode="manual"
       >
         <Container size="2" mb="4">
           <Tabs.List className="*:!basis-0 *:!grow" loop={false}>
