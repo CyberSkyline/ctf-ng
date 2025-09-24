@@ -1,13 +1,12 @@
 import { COLOR_POSITIVE } from '@/constants';
 import { startMyTeam, useMyTeam } from '@/hooks/events';
-import type { Event } from '@/types';
 import { Button } from '@radix-ui/themes';
 import Modal from 'components/Modal';
 import { TbPlayerPlay } from 'react-icons/tb';
 
-export default function StartModal({ event }: {event: Event}) {
-  const { data : myTeam } = useMyTeam(event.id);
-  const handleStart = async () => startMyTeam(event.id);
+export default function StartModal({ eventId }: {eventId: number}) {
+  const { data : myTeam } = useMyTeam(eventId);
+  const handleStart = async () => startMyTeam(eventId);
 
   if (!myTeam) return null;
 
