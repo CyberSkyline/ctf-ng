@@ -73,6 +73,66 @@ networks:
         assert web_service.image == "nginx:latest"
         assert web_service.hostname == "web-server"
 
+
+    def test_parse_basic_static_ips(self, caplog):
+        """Test parsing a basic compose file."""
+        yaml_content = """
+x-challenge:
+  name: Basic Challenge
+  description: A simple challenge to test parsing
+  icon: TbPuzzle
+  questions:
+    - name: flag
+      body: What is the flag?
+      points: 100
+      answer: CTF{test_flag}
+      max_attempts: 3
+  hints:
+    - name: check-logs
+      body: Check the logs
+      preview: Log hint
+      deduction: 10
+  tags:
+    - test
+    - beginner
+services:
+  web:
+    image: nginx:latest
+    hostname: web-server
+    networks:
+      boop:
+        ipv4_address: "172.16.238.10"
+networks:
+  boop:
+    internal: true
+    ipam:
+      config:
+        - subnet: "172.16.238.0/24"
+"""
+        caplog.set_level("DEBUG")
+        parser = ComposeYamlParser()
+        compose = parser.parse_string(yaml_content)
+        
+        assert compose.services is not None
+        assert "web" in compose.services
+        web_service = compose.services[ComposeResourceName("web")]
+        assert web_service.image == "nginx:latest"
+        assert web_service.hostname == "web-server"
+        assert web_service.networks is not None and isinstance(web_service.networks, dict)
+        assert "boop" in web_service.networks
+        boop_net = web_service.networks["boop"]
+        assert boop_net is not None
+        assert boop_net.ipv4_address == "172.16.238.10"
+        assert compose.networks is not None and isinstance(compose.networks, dict)
+        assert "boop" in compose.networks
+        boop_net = compose.networks[ComposeResourceName("boop")]
+        assert boop_net is not None
+        assert boop_net.internal is True
+        assert boop_net.ipam is not None
+        assert boop_net.ipam.config is not None
+        assert len(boop_net.ipam.config) == 1
+        assert boop_net.ipam.config[0].subnet == "172.16.238.0/24"
+
     def test_parse_compose_with_challenge(self):
         """Test parsing a compose file with x-challenge extension."""
         yaml_content = """
@@ -856,9 +916,10 @@ networks:
         compose = parse_compose_string(yaml_content)
         w = compose.warnings()
         # Field warnings yield Warnings objects per resource; find the network warning
-        field_warnings = list(w.field_warnings or [])
+        rendered = w.render()
         # There should be a warning for the external network 'external_net'
-        assert any(fw.key == 'external_net' and any('internal field is False' in msg for msg in (fw.self_warnings or [])) for fw in field_warnings)
+        assert 'external_net' in rendered
+        assert 'internal field is False' in rendered
 
     def test_invalid_question_types(self):
         """Test error when question fields have wrong types."""

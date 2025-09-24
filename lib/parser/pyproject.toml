@@ -1,6 +1,6 @@
 [project]
 name = "cyber-skyline-chall-parser"
-version = "0.4.2"
+version = "0.4.3"
 description = "Parser library for handling the specialized challenge docker compose format"
 readme = "README.md"
 authors = [
