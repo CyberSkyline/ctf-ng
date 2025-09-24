@@ -69,7 +69,7 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
 
   const { data, error } = useAdminTicketMessages(selectedRow.id);
   const { data : userEvents } = useUserEvents(data?.ticket.author_id);
-  const { data : userChallenges } = useEventChallenges(data?.ticket.event_id);
+  const { data : userChallenges } = useEventChallenges(data?.ticket.event_id || null);
 
   if (isNil(data) || error) {
     return (
@@ -446,7 +446,7 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
       <AdminSidebarHeader title="Messages" />
       <TicketMessagesCard
         messages={messages}
-        currentUserId={currentUser.id}
+        currentUserId={currentUser!.id}
       />
       <Flex gap="2" direction="column">
         <RichTextEditor

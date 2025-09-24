@@ -13,7 +13,7 @@ export default function CreateTagModal(
 
   const handleSubmit = async (data: FormData) => {
     const entries = Object.fromEntries(data.entries());
-    const newTag: Omit<TicketTag, 'id | ticket_count'> = {
+    const newTag: Omit<TicketTag, 'id' | 'ticket_count'> = {
       name : entries.name as string,
       color : entries.color as string,
       description : entries.description as string,
