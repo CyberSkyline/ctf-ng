@@ -166,7 +166,7 @@ export function useSupportTags() {
   return useSWR<TicketTag[], Error>('/admin/support/tags');
 }
 
-export function createSupportTag(data: Omit<TicketTag, 'id'>) {
+export function createSupportTag(data: Omit<TicketTag, 'id' | 'ticket_count'>) {
   return apiMutation('/admin/support/tags', data, {
     method : 'POST',
   }).then(() => {
@@ -174,7 +174,7 @@ export function createSupportTag(data: Omit<TicketTag, 'id'>) {
   });
 }
 
-export function putSupportTag(tagId: number, data: Omit<TicketTag, 'id'>) {
+export function putSupportTag(tagId: number, data: Omit<TicketTag, 'id' | 'ticket_count'>) {
   return apiMutation(`/admin/support/tags/${tagId}`, data, {
     method : 'PUT',
   }).then(() => {
