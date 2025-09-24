@@ -29,7 +29,7 @@ export default function EditTeamName(
     }
   }, [ isEditing ]);
 
-  const updateName = (e) => {
+  const updateName = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
@@ -45,7 +45,7 @@ export default function EditTeamName(
       });
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,

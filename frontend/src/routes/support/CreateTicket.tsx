@@ -42,7 +42,8 @@ export default function CreateTicket() {
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
     const parsed = {
-      ...data,
+      subject : data?.subject as string,
+      text : data?.text as string,
       event_id : data?.event_id ? Number(data.event_id) : undefined,
       challenge_id : data?.challenge_id ? Number(data.challenge_id) : undefined,
     };
