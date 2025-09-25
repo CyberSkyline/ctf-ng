@@ -8,8 +8,10 @@ from ...core.utils.validator import BaseValidator
 from ...containers.utils.get_client import get_client
 from ... import config
 
+MAX_CONTAINER_BLUEPRINT_NAME_LENGTH = 128
 MAX_CONTAINER_BLUEPRINT_IMAGE_LENGTH = 1024
 MAX_CONTAINER_BLUEPRINT_HOSTNAME_LENGTH = 256
+
 MAX_CONTAINER_BLUEPRINT_MEM_LIMIT_LENGTH = 256
 MAX_CONTAINER_BLUEPRINT_MEMSWAP_LIMIT_LENGTH = 256
 MAX_CONTAINER_BLUEPRINT_USER_LENGTH = 256
@@ -18,21 +20,22 @@ MAX_CONTAINER_BLUEPRINT_USER_LENGTH = 256
 class ContainerBlueprint(db.Model):
     __tablename__ = "ng_container_blueprints"
 
-    id = db.Column(db.Integer, primary_key=True)
-    image = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_IMAGE_LENGTH), nullable=False)
-    hostname = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_HOSTNAME_LENGTH), nullable=False)
-    stdin_open = db.Column(db.Boolean, nullable=True)
-    tty = db.Column(db.Boolean, nullable=True)
-    command = db.Column(db.PickleType, nullable=True)
-    entrypoint = db.Column(db.PickleType, nullable=True)
+    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    name: Mapped[str] = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_NAME_LENGTH), nullable=True)
+    image: Mapped[str] = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_IMAGE_LENGTH), nullable=False)
+    hostname: Mapped[str] = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_HOSTNAME_LENGTH), nullable=False)
+    stdin_open: Mapped[bool] = db.Column(db.Boolean, nullable=True)
+    tty: Mapped[bool] = db.Column(db.Boolean, nullable=True)
+    command: Mapped[str | list[str] | None] = db.Column(db.PickleType, nullable=True)
+    entrypoint: Mapped[str | list[str] | None] = db.Column(db.PickleType, nullable=True)
     environment: Mapped[dict[str, str | Callable[[str], str]] | list[str] | None] = db.Column(db.PickleType, nullable=True)
-    networks = db.Column(db.PickleType, nullable=True)
-    cap_add = db.Column(db.PickleType, nullable=True)
-    mem_limit = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_MEM_LIMIT_LENGTH), nullable=True)
-    memswap_limit = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_MEMSWAP_LIMIT_LENGTH), nullable=True)
-    cpus = db.Column(db.Numeric, nullable=True)
-    user = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_USER_LENGTH), nullable=True)
-    challenge_id = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
+    networks: Mapped[list[str] | dict[str, None] | None] = db.Column(db.PickleType, nullable=True)
+    cap_add: Mapped[list[Literal['NET_ADMIN', 'SYS_PTRACE']] | None] = db.Column(db.PickleType, nullable=True)
+    mem_limit: Mapped[int | str | None] = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_MEM_LIMIT_LENGTH), nullable=True)
+    memswap_limit: Mapped[int | str | None] = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_MEMSWAP_LIMIT_LENGTH), nullable=True)
+    cpus: Mapped[float | None] = db.Column(db.Numeric, nullable=True)
+    user: Mapped[str | None] = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_USER_LENGTH), nullable=True)
+    challenge_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
 
     def serialize(self, include_admin_fields: bool) -> dict[str, Any]:
         """
@@ -119,7 +122,7 @@ class ContainerBlueprint(db.Model):
         challenge_id: int,
         stdin_open: bool | None = None,
         tty: bool | None = None,
-        command: list[str] | None = None,
+        command: str | list[str] | None = None,
         entrypoint: str | list[str] | None = None,
         environment: dict[str, str | Callable[[str], str]] | list[str] | None = None,
         networks: list[str] | dict[str, None] | None = None,

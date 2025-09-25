@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from typing import Any, TypedDict, NotRequired
+from typing import Any, TypedDict, NotRequired, TYPE_CHECKING
 
 from CTFd.models import db
 from cyber_skyline.chall_parser.compose.challenge_info import (
     Hint as HintAttr,
 )
+from sqlalchemy.orm import Mapped
+if TYPE_CHECKING:
+    from ..models.Challenge import Challenge
 
 from ... import config
 from ...core.utils.validator import BaseValidator
@@ -23,14 +26,14 @@ class SerializedHint(TypedDict):
 
 class Hint(db.Model):
     __tablename__ = "ng_challenge_hints"
-    id = db.Column(db.Integer, primary_key=True)
-    challenge_id = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
-    name = db.Column(db.String(config.MAX_HINT_NAME_LENGTH), nullable=True)
-    preview = db.Column(db.String(config.MAX_HINT_PREVIEW_LENGTH), nullable=False)
-    body = db.Column(db.String(config.MAX_HINT_BODY_LENGTH), nullable=False)
-    deduction = db.Column(db.Integer, nullable=False)
+    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    challenge_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
+    name: Mapped[str] = db.Column(db.String(config.MAX_HINT_NAME_LENGTH), nullable=True)
+    preview: Mapped[str] = db.Column(db.String(config.MAX_HINT_PREVIEW_LENGTH), nullable=False)
+    body: Mapped[str] = db.Column(db.String(config.MAX_HINT_BODY_LENGTH), nullable=False)
+    deduction: Mapped[int] = db.Column(db.Integer, nullable=False)
 
-    challenge = db.relationship("Challenge", back_populates="hints")
+    challenge: Mapped[Challenge] = db.relationship("Challenge", back_populates="hints")
 
     def __repr__(self):
         return f"<NgHint {self.id}, deduction={self.deduction}, preview={self.preview}, body={self.body}>"
