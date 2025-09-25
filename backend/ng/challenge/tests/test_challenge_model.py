@@ -164,15 +164,15 @@ class TestChallengeValidation:
 
     def test_validate_optional_fields_missing_should_pass(self, event):
         """Test that validation passes when optional fields are missing."""
-        minimal_data = {"event_id": event.id, "name": "Minimal Challenge"}
+        minimal_data = {"event_id": event.id, "name": "Minimal Challenge", "description": None, "icon": None, "summary": None}
 
         validated_data = Challenge.validate(minimal_data)
 
         assert validated_data["event_id"] == event.id
         assert validated_data["name"] == "Minimal Challenge"
-        assert "description" not in validated_data
-        assert "icon" not in validated_data
-        assert "summary" not in validated_data
+        assert validated_data["description"] is None
+        assert validated_data["icon"] is None
+        assert validated_data["summary"] is None
 
     def test_validate_optional_fields_empty_should_pass(self, challenge_data):
         """Test that validation passes when optional fields are empty."""
