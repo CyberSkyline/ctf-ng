@@ -106,10 +106,10 @@ class PullImages(Resource):
                     emit_to_user(
                         "pull-success",
                         { "id" : blueprint.id, "image": blueprint.image },
-                        current_user
+                        current_user.id
                     )
                 except Exception as err:
-                    emit_to_user("pull-fail", {"error": str(err)}, current_user)
+                    emit_to_user("pull-fail", {"error": str(err)}, current_user.id)
 
 
             proc = multiprocessing.Process(target=background_task, args=(blueprint, current_user))

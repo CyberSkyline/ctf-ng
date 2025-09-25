@@ -1,6 +1,7 @@
 import docker
-import os
 from ..constants import DOCKER_RUNNING
+from CTFd.utils import get_app_config
+
 
 class Client(docker.DockerClient):
     def get_running(self, ctr):
@@ -11,8 +12,7 @@ class Client(docker.DockerClient):
 
     def pull_image(self, image):
         auth = {
-            "username": os.getenv("CONTAINER_REGISTRY_USER"),
-            "password": os.getenv("CONTAINER_REGISTRY_PASSWORD"),
+            "username": get_app_config("CONTAINER_REGISTRY_USER"),
+            "password": get_app_config("CONTAINER_REGISTRY_PASSWORD"),
         }
         self.images.pull(image, auth_config=auth)
-
