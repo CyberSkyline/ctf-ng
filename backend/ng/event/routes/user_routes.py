@@ -275,7 +275,7 @@ class EventTeamUpdateName(Resource):
                 400,
             )
 
-        team.update_name(new_name)
+        team.update_team(name = new_name)
         return success_response(team)
 
 
