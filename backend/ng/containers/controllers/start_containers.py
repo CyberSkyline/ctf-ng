@@ -1,9 +1,10 @@
 from ...team.models.Team import Team
+from ...user.models.User import User
 from ..models.ContainerInstance import ContainerInstance
 from ..models.IndvidualContainer import IndvidualContainer
 from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 
-def start_containers(challenge_id: int, team_id: int, current_user: int) -> bool:
+def start_containers(challenge_id: int, team_id: int, current_user: User) -> bool:
     blueprints = ContainerBlueprint.query.filter_by(challenge_id=challenge_id).all()
     team = Team.query.filter_by(id=team_id).first()
 

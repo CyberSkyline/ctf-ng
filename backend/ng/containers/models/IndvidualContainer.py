@@ -113,23 +113,27 @@ class IndvidualContainer(db.Model):
 
         return host_port
 
-    def get_current_challenge(self) -> int:
+    def get_current_challenge(self) -> int | None:
         client = get_client(self.hostip)
-        ctr_info = client.api.inspect_container(self.dockerid)
+        try:
+            ctr_info = client.api.inspect_container(self.dockerid)
+            current_challenge_network = None
 
-        current_challenge_network = None
+            networks = ctr_info["NetworkSettings"]["Networks"]
+            for network in networks:
+                if network != DOCKER_BRIDGE:
+                    current_challenge_network = network
 
-        networks = ctr_info["NetworkSettings"]["Networks"]
-        for network in networks:
-            if network != DOCKER_BRIDGE:
-                current_challenge_network = network
+            if not current_challenge_network:
+                return None
 
-        if not current_challenge_network:
+            parsed_network = ContainerInstance.parse_network_name(current_challenge_network)
+
+            return parsed_network["challenge_id"]
+
+        except docker.errors.NotFound:
+            # If the user workspace container doesn't exist, there is no current challenge
             return None
-
-        parsed_network = ContainerInstance.parse_network_name(current_challenge_network)
-
-        return parsed_network["challenge_id"]
 
     def restart(self):
         client = get_client(self.hostip)
