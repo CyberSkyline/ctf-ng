@@ -142,8 +142,6 @@ class Team(db.Model):
                 required=False,
                 friendly_name="Invite code",
             )
-            if not Team.is_invite_code_unique(data["invite_code"]):
-                raise ValidationError(f"Invite code '{data['invite_code']}' already exists.")
 
         # Check if team name is unique within event
         if "name" in data and "event_id" in data:
@@ -166,7 +164,7 @@ class Team(db.Model):
         try:
             Team.validate(data=cast(dict[str, Any], self.serialize(include_admin_fields=True)))
         except ValidationError as e:
-            raise ValidationError(f"Team validation failed: {e.errors}") from e
+            raise ValidationError(f"Team validation failed: {e}") from e
 
     @classmethod
     def team_name_contains_member_name(cls, name, member_names) -> bool:
@@ -280,18 +278,20 @@ class Team(db.Model):
         if commit:
             db.session.commit()
 
-    def update_name(self, new_name: str, commit: bool = True) -> None:
-        """
-        Updates the team's name and synchronizes the cached name
-        """
+    def update_team(self, **kwargs):
+        """Update team attributes and persist to database."""
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
         # LAZY-IMPORT
         from ...scoring.models.Score import Score
 
-        self.name = new_name
-        Score.query.filter_by(team_id=self.id).update({"team_name": new_name})
+        if "name" in kwargs:
+            Score.query.filter_by(team_id=self.id).update({"team_name": kwargs["name"]})
 
-        if commit:
-            db.session.commit()
+        self.self_validate()
+        db.session.commit()
+        return self
 
     def add_member(self, user_id: int, role: TeamRole = TeamRole.MEMBER, commit=True):
         """Add a member to the team.
