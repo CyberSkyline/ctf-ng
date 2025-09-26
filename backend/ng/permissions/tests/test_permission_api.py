@@ -122,7 +122,7 @@ def test_get_user_roles_endpoint(team_captain_client, user_with_roles):
 def test_get_user_roles_with_roles(admin_client):
     """Check that we can get roles for a specific user with multiple roles."""
 
-    response = admin_client.get(f"/ng/permissions/me/roles")
+    response = admin_client.get("/ng/permissions/me/roles")
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"]

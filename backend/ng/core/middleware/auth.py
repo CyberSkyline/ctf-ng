@@ -6,10 +6,10 @@ Resource loading and permissions are handled by separate decorators.
 from functools import wraps
 
 from CTFd.utils.user import get_current_user
-from flask import request, redirect, url_for, abort
+from flask import request, abort
 
 from ...user.models.User import User
-from ..exceptions import PermissionError, ValidationError, AuthenticationError
+from ..exceptions import ValidationError, AuthenticationError
 from ...permissions.models.enums import RoleEnum
 from ...permissions.controllers.get_user_roles import get_user_roles
 from .error_handler import handle_exceptions
