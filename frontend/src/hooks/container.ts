@@ -8,7 +8,7 @@ export function useCurrentChallengeId() {
 
 export function connectWorkspace(eventId: number, challengeId: number) {
   return apiMutation(`/events/${eventId}/challenge/${challengeId}/containers`, undefined, {
-    method : 'GET',
+    method : 'POST',
   }).then(() => {
     // refresh the current challenge ID after connecting workspace
     mutate('/container/me/current_challenge');
@@ -46,7 +46,7 @@ export function useProvisionerStats() {
 
 export function restartContainer(containerId: number) {
   return apiMutation(`/admin/container/${containerId}/restart`, undefined, {
-    method : 'GET',
+    method : 'POST',
   }).then(() => {
     mutate(`/admin/container/${containerId}/status`);
   });
@@ -54,7 +54,7 @@ export function restartContainer(containerId: number) {
 
 export function recycleContainer(containerId: number) {
   return apiMutation(`/admin/container/${containerId}/recycle`, undefined, {
-    method : 'GET',
+    method : 'POST',
   }).then(() => {
     mutate(`/admin/container/${containerId}/status`);
   });
