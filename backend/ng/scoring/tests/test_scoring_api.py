@@ -479,7 +479,7 @@ class TestUserScoringEndpoints:
             else:
                 response = client.get(endpoint)
 
-            assert response.status_code in [302, 403]
+            assert response.status_code == 401
 
 
 class TestAdminScoringEndpoints:
@@ -907,7 +907,7 @@ class TestAdminScoringEndpoints:
         )
 
         # CTFd returns 302 redirect for non admin access to admin endpoints in test environment
-        assert response.status_code == 302
+        assert response.status_code == 403
 
     def test_get_score_history_empty(
         self,
@@ -1174,7 +1174,7 @@ class TestAdminScoringEndpoints:
 
         for endpoint in endpoints:
             response = logged_in_client.get(endpoint)
-            assert response.status_code == 302
+            assert response.status_code == 403
 
     def test_unauthenticated_admin_requests(
         self,

@@ -989,7 +989,7 @@ class Test_Event_Admin_Get:
 
         response = logged_in_client.get(self.get_endpoint(event.id))
 
-        assert response.status_code == 302
+        assert response.status_code == 403
 
 
 class Test_Event_Admin_Put:
