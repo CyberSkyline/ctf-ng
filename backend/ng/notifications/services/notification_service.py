@@ -1,10 +1,12 @@
 """
-Notification service handling both stored
-notifications and WebSocket refetch events
+Notification service with email support for tickets
 """
 
 from enum import Enum
-from CTFd.models import db
+from flask import current_app
+from sqlalchemy.exc import SQLAlchemyError
+
+from CTFd.models import db, Users
 
 from ...core.utils.emitters import (
     emit_to_user,
@@ -14,6 +16,7 @@ from ...core.utils.emitters import (
     emit_to_admins,
     emit_event
 )
+from ...core.utils.logger import get_logger
 
 from ..models import (
     Notification,
@@ -22,6 +25,13 @@ from ..models import (
     AnnouncementType,
 )
 from ...team.models import TeamMember
+from ...support.models.Ticket import Ticket
+
+from .email_service import get_email_service
+from .email_templates import TicketEmailTemplates
+
+
+logger = get_logger(__name__)
 
 
 class WebSocketEvent(str, Enum):
@@ -35,8 +45,90 @@ class WebSocketEvent(str, Enum):
 
 class NotificationService:
     """
-    Stored notifications & WebSocket refetch events using Redis pub/sub
+    Notification service with email support for tickets
     """
+    @staticmethod
+    def _get_team_inbox_emails() -> list[str]:
+        """
+        Get the list of team inbox email addresses for notifications
+        """
+        team_emails = current_app.config.get('SUPPORT_TEAM_INBOX_EMAILS', '')
+        if not team_emails:
+            return []
+
+        emails = [
+            email.strip()
+            for email in team_emails.split(',')
+            if email.strip()
+        ]
+        return emails
+
+    @staticmethod
+    def _send_ticket_email(
+        ticket_data: dict,
+        email_type: str,
+        additional_data: dict | None = None
+    ) -> None:
+        """
+        Send ticket related email if configured
+
+        Args:
+            ticket_data: Ticket information
+            email_type: Type of email (new_ticket, reply, status_change, assigned)
+            additional_data: Additional data for specific email types
+        """
+        email_service = get_email_service()
+        team_emails = NotificationService._get_team_inbox_emails()
+
+        if not team_emails:
+            return
+
+        try:
+            if email_type == "new_ticket":
+                subject, html_body, text_body = TicketEmailTemplates.new_ticket(ticket_data)
+
+            elif email_type == "reply":
+                if additional_data is None:
+                    return
+                message_data = additional_data.get('message_data', {})
+                is_admin_reply = additional_data.get('is_admin_reply', False)
+                subject, html_body, text_body = TicketEmailTemplates.ticket_reply(
+                    ticket_data, message_data, is_admin_reply
+                )
+
+            elif email_type == "status_change":
+                if additional_data is None:
+                    return
+                new_status = additional_data.get('new_status', 'updated')
+                subject, html_body, text_body = TicketEmailTemplates.ticket_status_change(
+                    ticket_data, new_status
+                )
+
+            elif email_type == "assigned":
+                if additional_data is None:
+                    return
+                assigned_to_name = additional_data.get(
+                    'assigned_to_name',
+                    'Unknown'
+                )
+                subject, html_body, text_body = TicketEmailTemplates.ticket_assigned(
+                    ticket_data, assigned_to_name
+                )
+            else:
+                return
+
+            email_service.send_email(
+                to_emails = team_emails,
+                subject = subject,
+                html_body = html_body,
+                text_body = text_body
+            )
+
+        except (SQLAlchemyError, ConnectionError) as e:
+            logger.error("Database or connection error sending ticket email: %s", e)
+        except Exception as e:
+            logger.error("Failed to send ticket email notification: %s", e)
+
     @staticmethod
     def _emit_refetch(
         path: str,
@@ -49,15 +141,25 @@ class NotificationService:
         """
         try:
             if user_ids:
-                emit_to_users(WebSocketEvent.REFETCH, {"path": path}, user_ids)
+                emit_to_users(
+                    WebSocketEvent.REFETCH,
+                    {"path": path},
+                    user_ids
+                )
             elif team_id:
                 emit_to_team(WebSocketEvent.REFETCH, {"path": path}, team_id)
             elif event_id:
-                emit_to_event(WebSocketEvent.REFETCH, {"path": path}, event_id)
+                emit_to_event(
+                    WebSocketEvent.REFETCH,
+                    {"path": path},
+                    event_id
+                )
             else:
                 # Fallback to admin broadcast
                 emit_to_admins(WebSocketEvent.REFETCH, {"path": path})
 
+        except (ConnectionError, OSError) as e:
+            logger.debug("WebSocket emit error (non-critical): %s", e)
         except Exception:
             pass
 
@@ -80,7 +182,7 @@ class NotificationService:
         is_admin_reply: bool = False,
     ) -> None:
         """
-        Notify about support ticket reply
+        Notify about support ticket reply - with email
         """
         notification = Notification.create_notification(
             notification_type = NotificationType.TICKET_MESSAGE,
@@ -100,6 +202,34 @@ class NotificationService:
                         author_id]
         )
 
+        try:
+            ticket = Ticket.find_by_id(ticket_id)
+            if ticket:
+                messages = ticket.get_messages()
+                latest_message = messages[-1] if messages else None
+
+                if latest_message:
+                    NotificationService._send_ticket_email(
+                        ticket_data = ticket.serialize(
+                            include_admin_fields = True
+                        ),
+                        email_type = "reply",
+                        additional_data = {
+                            'message_data':
+                            latest_message.serialize(
+                                include_admin_fields = True
+                            ),
+                            'is_admin_reply':
+                            is_admin_reply
+                        }
+                    )
+        except SQLAlchemyError as e:
+            logger.error("Database error sending reply email notification: %s", e)
+        except Exception as e:
+            logger.error("Failed to send reply email notification: %s", e)
+
+    # Not sure if this was a requirement,
+    # will remove email functionality if not
     @staticmethod
     def notify_ticket_status_change(
         ticket_id: int,
@@ -108,7 +238,7 @@ class NotificationService:
         changed_by_id: int,
     ) -> None:
         """
-        Notify about ticket status change
+        Notify about ticket status change - with email
         """
         notification = Notification.create_notification(
             notification_type = NotificationType.TICKET_STATUS_CHANGE,
@@ -126,6 +256,27 @@ class NotificationService:
             user_ids = [recipient_id]
         )
 
+        try:
+            ticket = Ticket.find_by_id(ticket_id)
+            if ticket:
+                NotificationService._send_ticket_email(
+                    ticket_data = ticket.serialize(
+                        include_admin_fields = True
+                    ),
+                    email_type = "status_change",
+                    additional_data = {'new_status': new_status}
+                )
+        except SQLAlchemyError as e:
+            logger.error(
+                "Database error sending status change email notification: %s", e
+            )
+        except Exception as e:
+            logger.error(
+                "Failed to send status change email notification: %s", e
+            )
+
+    # Not sure if this was a requirement to have admins notified as well,
+    # will remove email functionality if not
     @staticmethod
     def notify_new_ticket(
         ticket_id: int,
@@ -133,13 +284,33 @@ class NotificationService:
         subject: str,
     ) -> None:
         """
-        Notify admins about a new support ticket
+        Notify admins about a new support ticket - with email
         """
         NotificationService._emit_refetch(
             path = "/ng/support/tickets",
             user_ids = None  # Via _emit_refetch fallback
         )
 
+        try:
+            ticket = Ticket.find_by_id(ticket_id)
+            if ticket:
+                NotificationService._send_ticket_email(
+                    ticket_data = ticket.serialize(
+                        include_admin_fields = True
+                    ),
+                    email_type = "new_ticket"
+                )
+        except SQLAlchemyError as e:
+            logger.error(
+                "Database error sending new ticket email notification: %s", e
+            )
+        except Exception as e:
+            logger.error(
+                "Failed to send new ticket email notification: %s", e
+            )
+
+    # Not sure if this was a requirement to have admins notified as well,
+    # will remove email functionality if not
     @staticmethod
     def notify_ticket_assigned(
         ticket_id: int,
@@ -147,7 +318,7 @@ class NotificationService:
         assigned_by_id: int,
     ) -> None:
         """
-        Notify admin when ticket is assigned to them
+        Notify admin when ticket is assigned to them - with email
         """
         notification = Notification.create_notification(
             notification_type = NotificationType.TICKET_ASSIGNED,
@@ -159,6 +330,29 @@ class NotificationService:
         )
 
         NotificationService._emit_notification(notification)
+
+        try:
+            ticket = Ticket.find_by_id(ticket_id)
+            assigned_user = Users.query.get(assigned_to_id)
+
+            if ticket and assigned_user:
+                NotificationService._send_ticket_email(
+                    ticket_data = ticket.serialize(
+                        include_admin_fields = True
+                    ),
+                    email_type = "assigned",
+                    additional_data = {
+                        'assigned_to_name': assigned_user.name
+                    }
+                )
+        except SQLAlchemyError as e:
+            logger.error(
+                "Database error sending assignment email notification: %s", e
+            )
+        except Exception as e:
+            logger.error(
+                "Failed to send assignment email notification: %s", e
+            )
 
     @staticmethod
     def broadcast_attempt_update(
