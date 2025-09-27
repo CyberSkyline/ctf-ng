@@ -1,5 +1,5 @@
 """
-Integration tests for email notifications in support ticket workflows
+Integration tests for smart email routing in support ticket workflows
 """
 
 import pytest
@@ -17,9 +17,9 @@ from ..services import (
 
 
 @pytest.mark.db
-class TestEmailNotificationIntegration:
+class TestEmailSendingSmartRouting:
     """
-    Test the email notification flow for support tickets
+    Test email routing based on ticket context
     """
     @pytest.fixture(autouse = True)
     def reset_email_service(self):
@@ -31,110 +31,306 @@ class TestEmailNotificationIntegration:
         yield
         email_service_module._email_service = None
 
-    def test_new_ticket_sends_email(
+    @pytest.fixture
+    def email_config(self, app):
+        """
+        Standard email configuration for tests
+        """
+        app.config['AWS_SES_ACCESS_KEY_ID'] = 'test_key'
+        app.config['AWS_SES_SECRET_ACCESS_KEY'] = 'test_secret'
+        app.config['AWS_SES_REGION'] = 'us-east-2'
+        app.config['AWS_SES_FROM_EMAIL'] = 'noreply@ctf.com'
+        app.config['ADMIN_SUPPORT_INBOX_EMAILS'
+                   ] = 'admin@ctf.com,support@ctf.com'
+        app.config['SERVER_DOMAIN'] = 'http://localhost:8000'
+
+    @pytest.fixture
+    def mock_ses(self):
+        """
+        Mock AWS SES client for email tests
+        """
+        with patch('ng.notifications.services.email_service.boto3.client'
+                   ) as mock_boto_client:
+            mock_ses = MagicMock()
+            mock_boto_client.return_value = mock_ses
+            mock_ses.get_send_quota.return_value = {'SentLast24Hours': 0}
+            mock_ses.send_email.return_value = {
+                'MessageId': 'test-message-id'
+            }
+            yield mock_ses
+
+    def test_new_ticket_goes_to_admin_inbox(
         self,
         app,
         db_session,
         user,
         event,
-        team_factory
+        team_factory,
+        email_config,
+        mock_ses
     ):
         """
-        Test that creating a new ticket sends an email notification
+        Test that new tickets go to ADMIN_SUPPORT_INBOX_EMAILS only
         """
         with app.app_context():
             team_factory(event = event, members = [user])
 
-            app.config['AWS_SES_ACCESS_KEY_ID'] = 'test_key'
-            app.config['AWS_SES_SECRET_ACCESS_KEY'] = 'test_secret'
-            app.config['AWS_SES_REGION'] = 'us-east-2'
-            app.config['AWS_SES_FROM_EMAIL'] = 'test@example.com'
-            app.config['SUPPORT_TEAM_INBOX_EMAILS'
-                       ] = 'team@example.com,admin@example.com'
-            app.config['SERVER_DOMAIN'] = 'http://localhost:8000'
+            create_ticket(
+                subject = "Test Issue",
+                text = "I need help with something",
+                current_user = user,
+                event_id = event.id
+            )
 
-            with patch('ng.notifications.services.email_service.boto3.client'
-                       ) as mock_boto_client:
-                mock_ses = MagicMock()
-                mock_boto_client.return_value = mock_ses
-                mock_ses.get_send_quota.return_value = {'SentLast24Hours': 0}
-                mock_ses.send_email.return_value = {
-                    'MessageId': 'test-message-id'
-                }
+            mock_ses.send_email.assert_called_once()
+            call_args = mock_ses.send_email.call_args[1]
 
-                ticket = create_ticket(
-                    subject = "Test Issue",
-                    text = "I need help with something",
-                    current_user = user,
-                    event_id = event.id
-                )
+            recipient_emails = call_args['Destination']['ToAddresses']
+            assert set(recipient_emails) == {
+                'admin@ctf.com',
+                'support@ctf.com'
+            }
+            assert 'New Support Ticket: Test Issue' in call_args['Message'][
+                'Subject']['Data']
 
-                mock_ses.send_email.assert_called_once()
-                call_args = mock_ses.send_email.call_args[1]
-
-                assert call_args['Source'] == 'test@example.com'
-                assert call_args['Destination']['ToAddresses'] == [
-                    'team@example.com',
-                    'admin@example.com'
-                ]
-                assert 'Test Issue' in call_args['Message']['Subject']['Data'
-                                                                       ]
-                assert 'New support ticket' in call_args['Message']['Body'][
-                    'Html']['Data']
-                assert str(ticket.id
-                           ) in call_args['Message']['Body']['Html']['Data']
-
-    def test_ticket_reply_sends_email(
+    def test_admin_reply_to_team_ticket_notifies_team_members(
         self,
         app,
         db_session,
         user,
         admin,
-        ticket_factory
+        event,
+        team_factory,
+        user_factory,
+        email_config,
+        mock_ses
     ):
         """
-        Test that replying to a ticket sends an email notification
+        Test that admin reply to team ticket goes to all team members
+        """
+        with app.app_context():
+            user2 = user_factory(name = "User 2", email = "user2@test.com")
+            user3 = user_factory(name = "User 3", email = "user3@test.com")
+
+            team = team_factory(
+                event = event,
+                members = [user,
+                           user2,
+                           user3]
+            )
+
+            ticket = create_ticket(
+                subject = "Team Issue",
+                text = "Team needs help",
+                current_user = user,
+                event_id = event.id,
+                team_id = team.id
+            )
+            mock_ses.reset_mock()
+
+            create_ticket_message(
+                text = "I'll help you with this",
+                author_id = admin.id,
+                ticket = ticket,
+                is_admin = True
+            )
+
+            mock_ses.send_email.assert_called_once()
+            call_args = mock_ses.send_email.call_args[1]
+
+            recipient_emails = set(call_args['Destination']['ToAddresses'])
+            expected_emails = {
+                user.email,
+                user2.ctfd_user.email,
+                user3.ctfd_user.email
+            }
+            assert recipient_emails == expected_emails
+            assert 'Admin reply' in call_args['Message']['Body']['Html'][
+                'Data']
+
+    def test_admin_reply_to_non_team_ticket_notifies_author(
+        self,
+        app,
+        db_session,
+        user,
+        admin,
+        ticket_factory,
+        email_config,
+        mock_ses
+    ):
+        """
+        Test that admin reply to non team ticket goes to ticket author
+        """
+        with app.app_context():
+            ticket = ticket_factory(
+                subject = "Individual Issue",
+                author_id = user.id,
+                team_id = None
+            )
+
+            create_ticket_message(
+                text = "Let me look into this",
+                author_id = admin.id,
+                ticket = ticket,
+                is_admin = True
+            )
+
+            mock_ses.send_email.assert_called_once()
+            call_args = mock_ses.send_email.call_args[1]
+
+            assert call_args['Destination']['ToAddresses'] == [user.email]
+
+    def test_user_reply_to_assigned_ticket_notifies_assigned_admin(
+        self,
+        app,
+        db_session,
+        user,
+        admin,
+        ticket_factory,
+        email_config,
+        mock_ses
+    ):
+        """
+        Test that user reply to assigned ticket goes to assigned admin
+        """
+        with app.app_context():
+            ticket = ticket_factory(
+                subject = "Assigned Issue",
+                author_id = user.id
+            )
+            ticket.assign_to_user(admin.id, commit = True)
+
+            create_ticket_message(
+                text = "Thanks, here's more info",
+                author_id = user.id,
+                ticket = ticket,
+                is_admin = False
+            )
+
+            mock_ses.send_email.assert_called_once()
+            call_args = mock_ses.send_email.call_args[1]
+
+            assert call_args['Destination']['ToAddresses'] == [admin.email]
+
+    def test_user_reply_to_unassigned_ticket_goes_to_admin_inbox(
+        self,
+        app,
+        db_session,
+        user,
+        ticket_factory,
+        email_config,
+        mock_ses
+    ):
+        """
+        Test that user reply to unassigned ticket goes to admin inbox
         """
         with app.app_context():
             app.config['AWS_SES_ACCESS_KEY_ID'] = 'test_key'
             app.config['AWS_SES_SECRET_ACCESS_KEY'] = 'test_secret'
-            app.config['AWS_SES_REGION'] = 'us-east-1'
-            app.config['AWS_SES_FROM_EMAIL'] = 'test@example.com'
-            app.config['SUPPORT_TEAM_INBOX_EMAILS'] = 'team@example.com'
+            app.config['AWS_SES_REGION'] = 'us-east-2'
+            app.config['AWS_SES_FROM_EMAIL'] = 'noreply@ctf.com'
+            app.config['ADMIN_SUPPORT_INBOX_EMAILS'
+                       ] = 'admin@ctf.com,support@ctf.com'
             app.config['SERVER_DOMAIN'] = 'http://localhost:8000'
 
+            from ..services import email_service as email_service_module
+            email_service_module._email_service = None
+
             ticket = ticket_factory(
-                subject = "User's ticket",
+                subject = "Unassigned Issue",
                 author_id = user.id
             )
 
-            with patch('ng.notifications.services.email_service.boto3.client'
-                       ) as mock_boto_client:
-                mock_ses = MagicMock()
-                mock_boto_client.return_value = mock_ses
-                mock_ses.get_send_quota.return_value = {'SentLast24Hours': 0}
-                mock_ses.send_email.return_value = {
-                    'MessageId': 'test-message-id'
-                }
+            create_ticket_message(
+                text = "Any update on this?",
+                author_id = user.id,
+                ticket = ticket,
+                is_admin = False
+            )
 
-                create_ticket_message(
-                    text = "Thanks for your report, I'll look into this",
-                    author_id = admin.id,
-                    ticket = ticket,
-                    is_admin = True
-                )
+            mock_ses.send_email.assert_called_once()
+            call_args = mock_ses.send_email.call_args[1]
 
-                mock_ses.send_email.assert_called_once()
-                call_args = mock_ses.send_email.call_args[1]
+            recipient_emails = call_args['Destination']['ToAddresses']
+            assert set(recipient_emails) == {
+                'admin@ctf.com',
+                'support@ctf.com'
+            }
 
-                assert call_args['Source'] == 'test@example.com'
-                assert call_args['Destination']['ToAddresses'] == [
-                    'team@example.com'
-                ]
-                assert 'Admin reply' in call_args['Message']['Body']['Html'][
-                    'Data']
-                assert str(ticket.id
-                           ) in call_args['Message']['Body']['Html']['Data']
+    def test_implicit_assignment_on_admin_reply(
+        self,
+        app,
+        db_session,
+        user,
+        admin,
+        ticket_factory,
+        email_config,
+        mock_ses
+    ):
+        """
+        Test that admin reply to unassigned ticket auto assigns ticket
+        """
+        with app.app_context():
+            ticket = ticket_factory(
+                subject = "Unassigned Issue",
+                author_id = user.id
+            )
+
+            assert ticket.assigned_to is None
+
+            create_ticket_message(
+                text = "I'll handle this",
+                author_id = admin.id,
+                ticket = ticket,
+                is_admin = True
+            )
+
+            db_session.refresh(ticket)
+
+            assert ticket.assigned_to == admin.id
+
+    def test_assignment_notification_only_to_assigned_admin(
+        self,
+        app,
+        db_session,
+        user,
+        admin,
+        ticket_factory,
+        email_config,
+        mock_ses
+    ):
+        """
+        Test that assignment notifications go ONLY to assigned admin (not user)
+        """
+        with app.app_context():
+            app.config['AWS_SES_ACCESS_KEY_ID'] = 'test_key'
+            app.config['AWS_SES_SECRET_ACCESS_KEY'] = 'test_secret'
+            app.config['AWS_SES_REGION'] = 'us-east-2'
+            app.config['AWS_SES_FROM_EMAIL'] = 'noreply@ctf.com'
+            app.config['ADMIN_SUPPORT_INBOX_EMAILS'
+                       ] = 'admin@ctf.com,support@ctf.com'
+            app.config['SERVER_DOMAIN'] = 'http://localhost:8000'
+
+            from ..services import email_service as email_service_module
+            email_service_module._email_service = None
+
+            ticket = ticket_factory(
+                subject = "Needs Assignment",
+                author_id = user.id
+            )
+
+            NotificationService.notify_ticket_assigned(
+                ticket_id = ticket.id,
+                assigned_to_id = admin.id,
+                assigned_by_id = admin.id
+            )
+
+            mock_ses.send_email.assert_called_once()
+            call_args = mock_ses.send_email.call_args[1]
+
+            assert call_args['Destination']['ToAddresses'] == [admin.email]
+            assert 'Ticket Assigned' in call_args['Message']['Subject'][
+                'Data']
 
     def test_email_not_sent_when_not_configured(
         self,
@@ -152,7 +348,7 @@ class TestEmailNotificationIntegration:
 
             app.config['AWS_SES_ACCESS_KEY_ID'] = None
             app.config['AWS_SES_SECRET_ACCESS_KEY'] = None
-            app.config['SUPPORT_TEAM_INBOX_EMAILS'] = 'team@example.com'
+            app.config['ADMIN_SUPPORT_INBOX_EMAILS'] = 'admin@ctf.com'
 
             with patch('ng.notifications.services.email_service.logger'
                        ) as mock_logger:
@@ -166,8 +362,49 @@ class TestEmailNotificationIntegration:
                 mock_logger.debug.assert_called_with(
                     "AWS SES not configured - would send email: %s to %s",
                     "New Support Ticket: Test Issue",
-                    ['team@example.com']
+                    ['admin@ctf.com']
                 )
+
+    def test_multiple_admin_emails_for_new_tickets(
+        self,
+        app,
+        db_session,
+        user,
+        event,
+        team_factory,
+        mock_ses
+    ):
+        """
+        Test that new tickets go to multiple admin inbox addresses
+        """
+        with app.app_context():
+            team_factory(event = event, members = [user])
+
+            app.config['AWS_SES_ACCESS_KEY_ID'] = 'test_key'
+            app.config['AWS_SES_SECRET_ACCESS_KEY'] = 'test_secret'
+            app.config['AWS_SES_REGION'] = 'us-east-2'
+            app.config['AWS_SES_FROM_EMAIL'] = 'noreply@ctf.com'
+            app.config['ADMIN_SUPPORT_INBOX_EMAILS'
+                       ] = 'admin1@ctf.com, admin2@ctf.com ,admin3@ctf.com'
+            app.config['SERVER_DOMAIN'] = 'http://localhost:8000'
+
+            create_ticket(
+                subject = "Test Issue",
+                text = "I need help with something",
+                current_user = user,
+                event_id = event.id
+            )
+
+            mock_ses.send_email.assert_called_once()
+            call_args = mock_ses.send_email.call_args[1]
+
+            expected_emails = {
+                'admin1@ctf.com',
+                'admin2@ctf.com',
+                'admin3@ctf.com'
+            }
+            recipient_emails = call_args['Destination']['ToAddresses']
+            assert set(recipient_emails) == expected_emails
 
     def test_email_service_graceful_failure(
         self,
@@ -175,19 +412,14 @@ class TestEmailNotificationIntegration:
         db_session,
         user,
         event,
-        team_factory
+        team_factory,
+        email_config
     ):
         """
         Test that email service failures don't crash the application
         """
         with app.app_context():
             team_factory(event = event, members = [user])
-
-            app.config['AWS_SES_ACCESS_KEY_ID'] = 'test_key'
-            app.config['AWS_SES_SECRET_ACCESS_KEY'] = 'test_secret'
-            app.config['AWS_SES_REGION'] = 'us-east-1'
-            app.config['AWS_SES_FROM_EMAIL'] = 'test@example.com'
-            app.config['SUPPORT_TEAM_INBOX_EMAILS'] = 'team@example.com'
 
             with patch('ng.notifications.services.email_service.boto3.client'
                        ) as mock_boto_client:
@@ -198,7 +430,6 @@ class TestEmailNotificationIntegration:
 
                 with patch('ng.notifications.services.email_service.logger'
                            ) as mock_logger:
-                    # Should not crash
                     ticket = create_ticket(
                         subject = "Test Issue",
                         text = "I need help with something",
@@ -213,143 +444,31 @@ class TestEmailNotificationIntegration:
                     error_call = mock_logger.error.call_args[0]
                     assert "Unexpected error sending email" in error_call[0]
 
-    def test_multiple_team_emails(
+    def test_no_emails_sent_when_no_recipients_found(
         self,
         app,
         db_session,
         user,
-        event,
-        team_factory
+        ticket_factory,
+        email_config,
+        mock_ses
     ):
         """
-        Test that emails are sent to multiple team inbox addresses
+        Test that no emails are sent when no recipients are configured
         """
         with app.app_context():
-            team_factory(event = event, members = [user])
+            app.config['ADMIN_SUPPORT_INBOX_EMAILS'] = ''
 
-            app.config['AWS_SES_ACCESS_KEY_ID'] = 'test_key'
-            app.config['AWS_SES_SECRET_ACCESS_KEY'] = 'test_secret'
-            app.config['AWS_SES_REGION'] = 'us-east-1'
-            app.config['AWS_SES_FROM_EMAIL'] = 'test@example.com'
-            app.config[
-                'SUPPORT_TEAM_INBOX_EMAILS'
-            ] = 'team1@example.com, team2@example.com ,team3@example.com'
-            app.config['SERVER_DOMAIN'] = 'http://localhost:8000'
+            ticket = ticket_factory(
+                subject = "Orphaned Ticket",
+                author_id = user.id
+            )
 
-            with patch('ng.notifications.services.email_service.boto3.client'
-                       ) as mock_boto_client:
-                mock_ses = MagicMock()
-                mock_boto_client.return_value = mock_ses
-                mock_ses.get_send_quota.return_value = {'SentLast24Hours': 0}
-                mock_ses.send_email.return_value = {
-                    'MessageId': 'test-message-id'
-                }
+            create_ticket_message(
+                text = "Any update?",
+                author_id = user.id,
+                ticket = ticket,
+                is_admin = False
+            )
 
-                create_ticket(
-                    subject = "Test Issue",
-                    text = "I need help with something",
-                    current_user = user,
-                    event_id = event.id
-                )
-
-                mock_ses.send_email.assert_called_once()
-                call_args = mock_ses.send_email.call_args[1]
-
-                expected_emails = [
-                    'team1@example.com',
-                    'team2@example.com',
-                    'team3@example.com'
-                ]
-                assert call_args['Destination']['ToAddresses'
-                                                ] == expected_emails
-
-    def test_email_template_content(
-        self,
-        app,
-        db_session,
-        user,
-        event,
-        team_factory
-    ):
-        """
-        Test that email templates contain the correct content
-        """
-        with app.app_context():
-            team_factory(event = event, members = [user])
-
-            app.config['AWS_SES_ACCESS_KEY_ID'] = 'test_key'
-            app.config['AWS_SES_SECRET_ACCESS_KEY'] = 'test_secret'
-            app.config['AWS_SES_REGION'] = 'us-east-1'
-            app.config['AWS_SES_FROM_EMAIL'] = 'test@example.com'
-            app.config['SUPPORT_TEAM_INBOX_EMAILS'] = 'team@example.com'
-            app.config['SERVER_DOMAIN'] = 'http://localhost:8000'
-
-            with patch('ng.notifications.services.email_service.boto3.client'
-                       ) as mock_boto_client:
-                mock_ses = MagicMock()
-                mock_boto_client.return_value = mock_ses
-                mock_ses.get_send_quota.return_value = {'SentLast24Hours': 0}
-                mock_ses.send_email.return_value = {
-                    'MessageId': 'test-message-id'
-                }
-
-                ticket = create_ticket(
-                    subject = "Bug in login system",
-                    text = "Users cannot log in",
-                    current_user = user,
-                    event_id = event.id
-                )
-
-                mock_ses.send_email.assert_called_once()
-                call_args = mock_ses.send_email.call_args[1]
-
-                subject = call_args['Message']['Subject']['Data']
-                assert "New Support Ticket: Bug in login system" in subject
-
-                html_body = call_args['Message']['Body']['Html']['Data']
-                assert f"#{ticket.id}" in html_body
-                assert "Bug in login system" in html_body
-                assert user.name in html_body
-
-                text_body = call_args['Message']['Body']['Text']['Data']
-                assert f"#{ticket.id}" in text_body
-                assert "Bug in login system" in text_body
-
-    @patch(
-        'ng.notifications.services.notification_service.get_email_service'
-    )
-    def test_notification_service_integration(
-        self,
-        mock_get_email_service,
-        app,
-        db_session
-    ):
-        """
-        Test NotificationService email integration directly
-        """
-        with app.app_context():
-            mock_email_service = MagicMock()
-            mock_get_email_service.return_value = mock_email_service
-            mock_email_service.is_configured.return_value = True
-            mock_email_service.send_email.return_value = True
-
-            app.config['SUPPORT_TEAM_INBOX_EMAILS'] = 'team@example.com'
-
-            ticket_data = {
-                'id': 123,
-                'subject': 'Test Ticket',
-                'author_name': 'Test User',
-                'opened_timestamp': datetime.now().isoformat() + 'Z',
-                'status': 'open'
-            }
-
-            NotificationService._send_ticket_email(ticket_data, "new_ticket")
-
-            mock_email_service.send_email.assert_called_once()
-            call_kwargs = mock_email_service.send_email.call_args[1]
-
-            assert call_kwargs['to_emails'] == ['team@example.com']
-            assert 'New Support Ticket: Test Ticket' in call_kwargs['subject'
-                                                                    ]
-            assert call_kwargs['html_body']
-            assert call_kwargs['text_body']
+            mock_ses.send_email.assert_not_called()

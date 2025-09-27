@@ -80,7 +80,7 @@ def test_email_configuration():
                 'AWS_SES_SECRET_ACCESS_KEY': os.getenv('AWS_SES_SECRET_ACCESS_KEY'),
                 'AWS_SES_REGION': os.getenv('AWS_SES_REGION'),
                 'AWS_SES_FROM_EMAIL': os.getenv('AWS_SES_FROM_EMAIL'),
-                'SUPPORT_TEAM_INBOX_EMAILS': os.getenv('SUPPORT_TEAM_INBOX_EMAILS'),
+                'ADMIN_SUPPORT_INBOX_EMAILS': os.getenv('ADMIN_SUPPORT_INBOX_EMAILS'),
                 'SERVER_DOMAIN': os.getenv('SERVER_DOMAIN')
             }
 
@@ -91,7 +91,7 @@ def test_email_configuration():
             print(f"AWS SES Secret Key: {'SET' if app.config['AWS_SES_SECRET_ACCESS_KEY'] else 'NOT SET'}")
             print(f"AWS SES Region: {app.config['AWS_SES_REGION']}")
             print(f"From Email: {app.config['AWS_SES_FROM_EMAIL']}")
-            print(f"Team Emails: {app.config['SUPPORT_TEAM_INBOX_EMAILS']}")
+            print(f"Team Emails: {app.config['ADMIN_SUPPORT_INBOX_EMAILS']}")
             print(f"Server Domain: {app.config['SERVER_DOMAIN']}")
 
             email_service = get_email_service()
@@ -111,7 +111,7 @@ def test_email_configuration():
                 print(f"HTML Body: {len(html_body)} characters")
                 print(f"Text Body: {len(text_body)} characters")
 
-                team_emails_str = app.config['SUPPORT_TEAM_INBOX_EMAILS']
+                team_emails_str = app.config['ADMIN_SUPPORT_INBOX_EMAILS']
                 if team_emails_str:
                     team_emails = [email.strip() for email in team_emails_str.split(',') if email.strip()]
                     print(f"Sending test email to: {team_emails}")
