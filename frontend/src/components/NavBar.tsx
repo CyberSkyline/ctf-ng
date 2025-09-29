@@ -1,15 +1,11 @@
-import { NavigationMenu } from 'radix-ui';
 import { DropdownMenu } from '@radix-ui/themes';
-import { NavLink, useLocation } from 'react-router';
-import { TbUserCircle } from 'react-icons/tb';
-import { twMerge } from 'tailwind-merge';
 import ThemeToggle from 'components/ThemeToggle';
+import { NavigationMenu } from 'radix-ui';
+import { TbUserCircle } from 'react-icons/tb';
+import { NavLink, useLocation } from 'react-router';
+import { twMerge } from 'tailwind-merge';
 
 export default function NavBar() {
-  const logout = () => {
-    // perform a logout
-  };
-
   const location = useLocation();
 
   const defaultLinkClass = `
@@ -91,13 +87,7 @@ export default function NavBar() {
               <ThemeToggle className="ml-3 py-2" />
               <DropdownMenu.Separator className="h-px bg-gray-200 my-1" />
               <DropdownMenu.Item asChild>
-                <button
-                  type="button"
-                  onClick={logout}
-                  className={dropdownClass}
-                >
-                  Log Out*
-                </button>
+                <a href="/logout">Log Out</a>
               </DropdownMenu.Item>
             </DropdownMenu.Content>
           </DropdownMenu.Root>
