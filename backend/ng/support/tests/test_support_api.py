@@ -221,7 +221,7 @@ class TestUserSupportEndpoints:
             else:
                 response = client.post(endpoint, json=json_data)
 
-            assert response.status_code in [302, 403]
+            assert response.status_code in [401,403]
 
 
 class TestAdminSupportEndpoints:

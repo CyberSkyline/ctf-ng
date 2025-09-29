@@ -93,9 +93,9 @@ def test_non_admin_endpoints(logged_in_client, user):
     Test that non-admins cannot access the admin users endpoint
     """
     response = logged_in_client.get("/ng/admin/users")
-    assert response.status_code == 302
+    assert response.status_code == 403
     response = logged_in_client.get(f"/ng/admin/users/{user.id}")
-    assert response.status_code == 302
+    assert response.status_code == 403
     response = logged_in_client.put(f"/ng/admin/users/{user.id}", json = {})
     assert response.status_code == 403
     response = logged_in_client.delete(
@@ -104,9 +104,9 @@ def test_non_admin_endpoints(logged_in_client, user):
     )
     assert response.status_code == 403
     response = logged_in_client.get(f"/ng/admin/users/{user.id}/events")
-    assert response.status_code == 302
+    assert response.status_code == 403
     response = logged_in_client.get(f"/ng/admin/users/{user.id}/teams")
-    assert response.status_code == 302
+    assert response.status_code == 403
 
 
 def test_admin_get_user_events(admin_client, user_factory, event_factory, team_factory):

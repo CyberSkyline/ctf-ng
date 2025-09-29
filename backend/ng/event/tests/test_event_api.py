@@ -45,6 +45,19 @@ class Test_Public_Event_Listing:
         assert len(data["data"]) == 1
         assert data["data"][0] == event2.serialize()
 
+    def test_public_can_list_events(self, public_client, event_factory):
+        event1 = event_factory(name = "Public Event 1", public = True)
+        event2 = event_factory(name = "Public Event 2", public = True)
+
+        response = public_client.get(self.endpoint)
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert len(data["data"]) == 2
+        assert data["data"][0] == event1.serialize()
+        assert data["data"][1] == event2.serialize()
+
 
 class Test_Public_Event_Detail:
     def get_endpoint(self, event_id: int) -> str:
@@ -79,6 +92,21 @@ class Test_Public_Event_Detail:
         assert response.status_code == 404
         data = response.get_json()
         assert data["success"] is False
+
+    def test_public_can_get_public_event_details(
+        self,
+        public_client,
+        event_factory
+    ):
+        event = event_factory(name = "Public Event for Detail Test", public = True)
+
+        response = public_client.get(self.get_endpoint(event.id))
+
+        assert response.status_code == 200
+        data = response.get_json()
+
+        assert data["success"] is True
+        assert data["data"] == event.serialize()
 
 
 class Test_Event_Eligibility:
@@ -961,7 +989,7 @@ class Test_Event_Admin_Get:
 
         response = logged_in_client.get(self.get_endpoint(event.id))
 
-        assert response.status_code == 302
+        assert response.status_code == 403
 
 
 class Test_Event_Admin_Put:

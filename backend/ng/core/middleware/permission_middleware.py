@@ -32,7 +32,7 @@ def check_permissions(permission: PermissionEnum, error_message: str):
                 kwargs['permissions'] = permissions
             else:
                 kwargs['permissions'].extend(permissions)
-            if permission.name not in permissions:
+            if permission is not None and permission.name not in permissions:
                 return _deny(permission, trace, error_message)
             return f(*args, **kwargs)
         return wrapped
@@ -52,7 +52,8 @@ def event_only_public(f):
     def wrapped(*args, **kwargs):
         event = kwargs.get('event')
         current_user = kwargs.get('current_user')
-        if Demographic.find_by_user_and_event(current_user.id, event.id) is None:
+        id = current_user.id if current_user else None
+        if Demographic.find_by_user_and_event(id, event.id) is None:
             if not event.public:
                 return error_response("Event not found", "not_found", 404)
         return f(*args, **kwargs)

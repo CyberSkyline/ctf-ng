@@ -5,12 +5,11 @@ Resource loading and permissions are handled by separate decorators.
 
 from functools import wraps
 
-from CTFd.utils.decorators import authed_only
 from CTFd.utils.user import get_current_user
-from flask import request, redirect, url_for, abort
+from flask import request, abort
 
 from ...user.models.User import User
-from ..exceptions import PermissionError, ValidationError
+from ..exceptions import ValidationError, AuthenticationError
 from ...permissions.models.enums import RoleEnum
 from ...permissions.controllers.get_user_roles import get_user_roles
 from .error_handler import handle_exceptions
@@ -47,8 +46,6 @@ def api_endpoint(auth_required=True, admin_required=False, json_required=False, 
         def decorated_function(*args, **kwargs):
             if admin_required:
                 return admins_only(_auth_handler(f, auth_required, json_required, validation_func))(*args, **kwargs)
-            elif auth_required:
-                return authed_only(_auth_handler(f, auth_required, json_required, validation_func))(*args, **kwargs)
             else:
                 return _auth_handler(f, auth_required, json_required, validation_func)(*args, **kwargs)
 
@@ -66,7 +63,7 @@ def _auth_handler(f, auth_required, json_required, validation_func):
         if auth_required:
             current_user = get_current_user()
             if not current_user:
-                raise PermissionError("Authentication is required to access this resource.")
+                raise AuthenticationError("Authentication is required to access this resource.")
             kwargs["current_user"] = User.find_or_create_by_ctfd_id(current_user.id)
         if json_required:
             if not request.is_json:
@@ -99,10 +96,7 @@ def admins_only(f):
         if RoleEnum.ADMIN in get_user_roles():
             return f(*args, **kwargs)
         else:
-            if request.content_type == "application/json":
-                abort(403)
-            else:
-                return redirect(url_for("auth.login", next=request.full_path))
+            abort(403)
 
     return admins_only_wrapper
 

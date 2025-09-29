@@ -72,6 +72,16 @@ class TestUserScoringEndpoints:
         data = response.get_json()
         assert data["success"] is False
 
+    def test_public_access_leaderboard(self, public_client, event, multiple_teams_with_scores):
+        """Test that public client can access leaderboard"""
+        response = public_client.get(f"/ng/events/{event.id}/leaderboard")
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert len(data["data"]) == 5
+
+
     def test_get_my_team_score_basic(
         self,
         logged_in_client,
@@ -458,7 +468,6 @@ class TestUserScoringEndpoints:
     ):
         """Test that unauthenticated requests fail"""
         endpoints = [
-            f"/ng/events/{event.id}/leaderboard",
             f"/ng/events/{event.id}/me/team/score",
             f"/ng/events/{event.id}/challenges/{challenge.id}/questions/{question.id}/submit",
             f"/ng/events/{event.id}/challenges/{challenge.id}/hint/{hint.id}/redeem",
@@ -470,7 +479,7 @@ class TestUserScoringEndpoints:
             else:
                 response = client.get(endpoint)
 
-            assert response.status_code in [302, 403]
+            assert response.status_code == 401
 
 
 class TestAdminScoringEndpoints:
@@ -898,7 +907,7 @@ class TestAdminScoringEndpoints:
         )
 
         # CTFd returns 302 redirect for non admin access to admin endpoints in test environment
-        assert response.status_code == 302
+        assert response.status_code == 403
 
     def test_get_score_history_empty(
         self,
@@ -1165,7 +1174,7 @@ class TestAdminScoringEndpoints:
 
         for endpoint in endpoints:
             response = logged_in_client.get(endpoint)
-            assert response.status_code == 302
+            assert response.status_code == 403
 
     def test_unauthenticated_admin_requests(
         self,
