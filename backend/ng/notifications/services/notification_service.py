@@ -155,7 +155,6 @@ class NotificationService:
 
         NotificationService._emit_refetch(
             path = "/ng/support/tickets",
-            user_ids = None
         )
 
     @staticmethod
@@ -185,7 +184,6 @@ class NotificationService:
 
         NotificationService._emit_refetch(
             path = f"/ng/support/tickets/{ticket_id}",
-            user_ids = None
         )
 
     @staticmethod
