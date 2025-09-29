@@ -3,6 +3,8 @@ Ctf-ng Pytest Fixtures
 """
 
 from datetime import datetime, timezone, timedelta, UTC
+from collections.abc import Callable
+from unittest.mock import Mock
 
 import pytest
 from CTFd.cache import cache
@@ -831,7 +833,7 @@ def hint(db_session, challenge):
     db_session.commit()
     return hint
 
-
+# TODO: Figure out why there are two versions of this with the same name
 @pytest.fixture
 def team_with_member(db_session, event, user):
     """Create a team with a member for scoring tests."""
@@ -1059,7 +1061,7 @@ def multiple_teams_with_scores(db_session, event, team_factory, score_factory):
     return teams_data
 
 @pytest.fixture
-def variable_factory(db_session, challenge_factory):
+def variable_factory(db_session, challenge_factory: Callable[[], Challenge]):
     """A factory function to create ChallengeVariable objects for tests."""
 
     from .challenge.models.ChallengeVariable import ChallengeVariable
@@ -1085,7 +1087,7 @@ def variable_factory(db_session, challenge_factory):
     return _factory
 
 @pytest.fixture
-def question_factory(db_session, challenge_factory):
+def question_factory(db_session, challenge_factory: Callable[[], Challenge]):
     """A factory function to create Question objects for tests."""
 
     from .challenge.models.Question import Question

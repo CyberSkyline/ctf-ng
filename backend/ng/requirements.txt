@@ -4,13 +4,14 @@ pre-commit==4.2.0
 ruff==0.12.0
 attrs==25.3.0
 cattrs==25.2.0
-cyber-skyline-chall-parser>=0.4.0
+cyber-skyline-chall-parser>=0.4.2
 faker>=37.4.0
 pyyaml>=6.0.2
 Flask-SocketIO==5.5.1
 python-socketio==5.13.0
 gevent-websocket==0.10.1
 types-Flask-SocketIO==5.5.0.20250809
+types-Flask-SQLAlchemy==2.5.1
 redis==4.5.5
 docker==7.1.0
 types-docker==7.1.0.20250822

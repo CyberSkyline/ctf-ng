@@ -43,6 +43,9 @@ def validation_field(func: Callable) -> Callable:
 
         # Early return for None values on non-required fields
         if value is None and not required:
+            if field in data:
+                # if none is explicitly provided, pass it through
+                self._add_parsed_data(field, None)
             return None
 
         # Call the original function with the processed parameters
@@ -388,8 +391,8 @@ class BaseValidator:
         Validates a start/end time window, ensuring both or neither are present
         and that start is before end.
         """
-        start_time = self.validate_datetime(data, start_field, required=False, allow_past=False)
-        end_time = self.validate_datetime(data, end_field, required=False, allow_past=False)
+        start_time = self.validate_datetime(data, start_field, required=False)
+        end_time = self.validate_datetime(data, end_field, required=False)
 
         has_start = start_field in data and data.get(start_field) is not None
         has_end = end_field in data and data.get(end_field) is not None

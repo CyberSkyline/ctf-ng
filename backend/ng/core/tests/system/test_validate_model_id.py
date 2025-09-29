@@ -1,12 +1,7 @@
 """
 Test cases for validate_model_id functionality.
 """
-
-import pytest
-
-from ....challenge.models import Challenge
 from ....core.utils.validator import BaseValidator
-
 
 class TestValidateModelId:
     """Test the validate_model_id function."""
@@ -75,7 +70,7 @@ class TestValidateModelId:
         validator.validate_model_id(data, "challenge_id", "Challenge", required=False)
 
         assert "challenge_id" not in validator.errors
-        assert "challenge_id" not in validator.parsed_data
+        assert validator.parsed_data["challenge_id"] is None
 
     def test_validate_model_id_custom_friendly_name(self):
         """Test that custom friendly names are used in error messages."""

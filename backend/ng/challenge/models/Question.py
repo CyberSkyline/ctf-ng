@@ -8,7 +8,6 @@ from cyber_skyline.chall_parser.compose.challenge_info import Question as Questi
 
 from .Challenge import Challenge
 from .ChallengeVariable import ChallengeVariable
-
 from ...core.utils.validator import BaseValidator
 from ...challenge.utils import generate_seed
 import re
@@ -90,6 +89,7 @@ class Question(db.Model):
             validator.validate_model_id(
                 data,
                 "answer_variable_id",
+                "ChallengeVariable",
                 required=templated,
                 friendly_name="Answer Variable ID",
             )

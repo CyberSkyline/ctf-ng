@@ -4,6 +4,7 @@ from .ContainerBlueprint import ContainerBlueprint
 from .Hint import Hint
 from .Question import Question
 from .ChallengeVariable import ChallengeVariable
+from .ChallengeYaml import ChallengeYaml
 
 __all__ = [
     "Challenge",
@@ -12,4 +13,5 @@ __all__ = [
     "Hint",
     "Question",
     "ChallengeVariable",
+    "ChallengeYaml",
 ]

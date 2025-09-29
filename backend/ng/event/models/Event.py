@@ -87,7 +87,7 @@ class Event(db.Model):
             "registration_start_date": self.registration_start_date.isoformat() + "Z" if self.registration_start_date else None,
             "registration_end_date": self.registration_end_date.isoformat() + "Z" if self.registration_end_date else None,
             "hints_enabled": self.hints_enabled,
-            "time_limit": self.time_limit_minutes,
+            "time_limit_minutes": self.time_limit_minutes,
         }
 
         return data
@@ -144,6 +144,18 @@ class Event(db.Model):
             data,
             "registration_open",
             friendly_name="Registration open status",
+        )
+        validator.validate_positive_integer(
+            data,
+            "time_limit_minutes",
+            required=False,
+            friendly_name="Time limit (minutes)",
+        )
+        validator.validate_boolean(
+            data,
+            "hints_enabled",
+            required=False,
+            friendly_name="Hints enabled",
         )
 
         return validator.validate()

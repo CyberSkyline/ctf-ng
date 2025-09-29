@@ -99,7 +99,7 @@ class InstanceRestart(Resource):
     )
     @admin_endpoint()
     @load_container_instance(source=LoaderType.PARAM)
-    def get(self, container_instance, container_instance_id, **kwargs):
+    def post(self, container_instance, **kwargs):
         container_instance.restart()
         return success_response(True)
 
@@ -117,7 +117,7 @@ class InstanceRecycle(Resource):
     )
     @admin_endpoint()
     @load_container_instance(source=LoaderType.PARAM)
-    def get(self, container_instance, **kwargs):
+    def post(self, container_instance, **kwargs):
         container_instance.recycle()
         return success_response(True)
 

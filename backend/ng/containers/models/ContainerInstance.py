@@ -186,7 +186,7 @@ class ContainerInstance(db.Model):
 
         instances = db.session.scalars(
             select(cls)
-            .where(cls.blueprint.in_(blueprint_ids), cls.team == team_id)
+            .where(cls.blueprint.in_(blueprint_ids), cls.team_id == team_id)
         ).all()
         return instances
 

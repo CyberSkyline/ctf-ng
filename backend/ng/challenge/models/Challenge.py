@@ -1,16 +1,20 @@
 from __future__ import annotations
 
-from typing import Any, TypedDict, NotRequired
+from typing import Any, TypedDict, NotRequired, TYPE_CHECKING
+from sqlalchemy.orm import Mapped
 
 from CTFd.models import db
 
+from ...event.models import Event
 from ...core.utils.validator import BaseValidator
+
+if TYPE_CHECKING:
+    from ..models import ChallengeTag, ChallengeVariable, ContainerBlueprint, Hint, Question, ChallengeYaml
 
 MAX_CHALLENGE_NAME_LENGTH = 128
 MAX_CHALLENGE_DESCRIPTION_LENGTH = 4096
 MAX_CHALLENGE_SUMMARY_LENGTH = 4096
 MAX_CHALLENGE_ICON_LENGTH = 64
-
 
 class SerializedChallenge(TypedDict):
     id: int
@@ -27,19 +31,20 @@ class SerializedChallenge(TypedDict):
 class Challenge(db.Model):
     __tablename__ = "ng_challenges"
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(MAX_CHALLENGE_NAME_LENGTH), nullable=False)
-    description = db.Column(db.String(MAX_CHALLENGE_DESCRIPTION_LENGTH), nullable=True)
-    icon = db.Column(db.String(MAX_CHALLENGE_ICON_LENGTH), nullable=True)
-    summary = db.Column(db.String(MAX_CHALLENGE_SUMMARY_LENGTH), nullable=True)
-    event_id = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
-    challenge_yaml = db.Column(db.Text, nullable=True)
+    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    name: Mapped[str] = db.Column(db.String(MAX_CHALLENGE_NAME_LENGTH), nullable=False)
+    description: Mapped[str] = db.Column(db.String(MAX_CHALLENGE_DESCRIPTION_LENGTH), nullable=True)
+    icon: Mapped[str] = db.Column(db.String(MAX_CHALLENGE_ICON_LENGTH), nullable=True)
+    summary: Mapped[str] = db.Column(db.String(MAX_CHALLENGE_SUMMARY_LENGTH), nullable=True)
+    event_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
 
-    event = db.relationship("Event", back_populates="challenges")
-    hints = db.relationship("Hint", back_populates="challenge", cascade="all, delete-orphan")
-    tags = db.relationship("ChallengeTag", back_populates="challenge", cascade="all, delete-orphan")
-    questions = db.relationship("Question", back_populates="challenge", cascade="all, delete-orphan")
-    variables = db.relationship("ChallengeVariable", back_populates="challenge", cascade="all, delete-orphan")
+    event: Mapped[Event] = db.relationship("Event", back_populates="challenges")
+    yaml: Mapped[ChallengeYaml] = db.relationship("ChallengeYaml", back_populates="challenge", uselist=False, cascade="all, delete-orphan")
+    hints: Mapped[list[Hint]] = db.relationship("Hint", back_populates="challenge", cascade="all, delete-orphan")
+    tags: Mapped[list[ChallengeTag]] = db.relationship("ChallengeTag", back_populates="challenge", cascade="all, delete-orphan")
+    questions: Mapped[list[Question]] = db.relationship("Question", back_populates="challenge", cascade="all, delete-orphan")
+    variables: Mapped[list[ChallengeVariable]] = db.relationship("ChallengeVariable", back_populates="challenge", cascade="all, delete-orphan")
+    blueprints: Mapped[list[ContainerBlueprint]] = db.relationship("ContainerBlueprint", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<NgChallenge {self.id}, name={self.name}, icon={self.icon}>"
@@ -109,12 +114,6 @@ class Challenge(db.Model):
             required=True,
             friendly_name="Event ID",
         )
-        validator.validate_string(
-            data,
-            "challenge_yaml",
-            required=True,
-            friendly_name="Challenge YAML",
-        )
 
         return validator.validate()
 
@@ -122,7 +121,6 @@ class Challenge(db.Model):
     def create_challenge(
         cls,
         name: str,
-        challenge_yaml: str,
         icon: str | None = "",
         description: str | None = "",
         summary: str | None = "",
@@ -136,8 +134,7 @@ class Challenge(db.Model):
                     "icon": icon,
                     "description": description,
                     "summary": summary,
-                    "event_id": event_id,
-                    "challenge_yaml": challenge_yaml,
+                    "event_id": event_id
                 }
             )
             challenge = cls(**validated_data)

@@ -5,7 +5,6 @@ import pytest
 import re
 from ...core.exceptions import ValidationError
 from ..models.ChallengeVariable import ChallengeVariable, MAX_VARIABLE_NAME_LENGTH, MAX_VARIABLE_DEFAULT_LENGTH, MAX_VARIABLE_TEMPLATE_LENGTH
-from ..models import Challenge
 
 
 
