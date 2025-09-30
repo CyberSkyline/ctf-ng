@@ -10,6 +10,9 @@ class Client(docker.DockerClient):
             ctr.start()
         return ctr
 
+    def get_network_by_name(self, name):
+        return self.networks.list(names=[f"^{name}$"])[0]
+
     def pull_image(self, image):
         auth = {
             "username": get_app_config("CONTAINER_REGISTRY_USER"),

@@ -1,5 +1,6 @@
 from CTFd.models import db
 import docker
+import re
 from sqlalchemy import func, select
 from sqlalchemy.orm import Mapped
 from typing import TypedDict
@@ -126,15 +127,19 @@ class ContainerInstance(db.Model):
         if blueprint_obj.networks:
             for network in blueprint_obj.networks:
                 networkname = ContainerInstance.render_network_name(team.id, network, blueprint_obj.challenge_id)
-                net_exists = client.networks.list(names=[networkname])
+                net_exists = client.networks.list(names=[f"^{networkname}$"])
                 if len(net_exists) == 0:
                     net = client.networks.create(name=networkname, internal=True, attachable=True)
                     net.connect(ctr, aliases=[blueprint_obj.hostname])
 
                 else:
                     ## Network was created for another container apart of the challenge
-                    net_exists[0].connect(ctr, aliases=[blueprint_obj.hostname])
-
+                    try:
+                        net_exists[0].connect(ctr, aliases=[blueprint_obj.hostname])
+                    except docker.errors.APIError as err:
+                        # Check if container is already connected to the network
+                        if not re.search("endpoint.*already exists in", str(err)):
+                            raise err
 
     @classmethod
     def get_service_instances(cls):

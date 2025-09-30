@@ -98,7 +98,7 @@ class IndvidualContainer(db.Model):
         client = get_client(self.hostip)
         ctr = client.containers.get(self.dockerid)
 
-        network = client.networks.list(names=[network_name])[0]
+        network = client.get_network_by_name(network_name)
 
         network.connect(ctr)
 
