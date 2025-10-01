@@ -159,7 +159,7 @@ fi
 if ! command -v aws &> /dev/null; then
   prompt_user "Would you like to install aws-cli?" && {
     cd /tmp/
-    sudo apt-get install zip
+    sudo apt-get install zip -y
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
     unzip awscliv2.zip
     sudo ./aws/install
