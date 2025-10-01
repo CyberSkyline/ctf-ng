@@ -134,25 +134,8 @@ class NotificationService:
         subject: str,
     ) -> None:
         """
-        Notify all support staff about a new support ticket with DB notifications
+        Notify all support staff about a new support ticket via refetch only
         """
-        support_users = get_support_role_users()
-
-        for support_user in support_users:
-            notification = Notification.create_notification(
-                notification_type = NotificationType.TICKET_CREATE,
-                title = "New Support Ticket",
-                message = f"New ticket created: {subject}",
-                recipient_id = support_user.ctfd_user.id,
-                sender_id = author_id,
-                ticket_id = ticket_id,
-                commit = False,
-            )
-
-            NotificationService._emit_notification(notification)
-
-        db.session.commit()
-
         NotificationService._emit_refetch(
             path = "/ng/support/tickets",
         )

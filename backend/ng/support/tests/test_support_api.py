@@ -620,7 +620,7 @@ class TestAdminSupportEndpoints:
         assert ticket["team_id"] == team.id
         assert ticket["team_name"] == team.name
 
-    def test_user_creates_ticket_support_staff_get_notification(
+    def test_user_creates_ticket_support_staff_do_not_get_notification(
         self,
         logged_in_client,
         user,
@@ -628,11 +628,11 @@ class TestAdminSupportEndpoints:
         db_session,
     ):
         """
-        Test that when a user creates a ticket, ALL support staff (ADMIN + SUPPORT roles) receive DB notifications
+        Test that when a user creates a ticket, support staff do not receive DB notifications
+        (only WebSocket refetch events are sent)
         """
         Role.create_role(RoleEnum.SUPPORT)
 
-        # Create a SUPPORT role user to test both roles get notifications
         support_user_ctfd = Users(name="supportuser", email="support@example.com", password="password")
         support_user_ctfd.verified = True
         db_session.add(support_user_ctfd)
@@ -654,29 +654,19 @@ class TestAdminSupportEndpoints:
         assert response.status_code == 201
         ticket_id = response.get_json()["data"]["id"]
 
-        # Check that ADMIN got notification
         admin_notifications = Notification.query.filter_by(
             recipient_id=admin.id,
             ticket_id=ticket_id
         ).all()
 
-        assert len(admin_notifications) == 1
-        notification = admin_notifications[0]
-        assert notification.type.value == "ticket_create"
-        assert notification.title == "New Support Ticket"
-        assert "Need help with login" in notification.message
-        assert notification.sender_id == user.id
+        assert len(admin_notifications) == 0
 
-        # Check that SUPPORT role user also got notification
         support_notifications = Notification.query.filter_by(
             recipient_id=support_user_ctfd.id,
             ticket_id=ticket_id
         ).all()
 
-        assert len(support_notifications) == 1
-        support_notification = support_notifications[0]
-        assert support_notification.type.value == "ticket_create"
-        assert support_notification.title == "New Support Ticket"
+        assert len(support_notifications) == 0
 
     def test_admin_replies_without_assignment_user_gets_notification(
         self,
