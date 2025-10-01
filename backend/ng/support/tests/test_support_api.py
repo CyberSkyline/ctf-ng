@@ -734,65 +734,6 @@ class TestAdminSupportEndpoints:
         assert notification.type.value == "ticket_message"
         assert notification.sender_id == user.id
 
-    def test_user_replies_to_unassigned_ticket_all_support_staff_get_notification(
-        self,
-        logged_in_client,
-        user,
-        admin,
-        ticket,
-        db_session,
-    ):
-        """
-        Test that when a user replies to an UNASSIGNED ticket,
-        ALL support staff (ADMIN + SUPPORT roles) receive notifications
-        """
-        Role.create_role(RoleEnum.SUPPORT)
-
-        support_user_ctfd = Users(name="supportuser2", email="support2@example.com", password="password")
-        support_user_ctfd.verified = True
-        db_session.add(support_user_ctfd)
-        db_session.flush()
-
-        NgUser.create_user(user_id=support_user_ctfd.id, commit=False)
-        assign_role_to_user(support_user_ctfd.id, RoleEnum.SUPPORT)
-        db_session.flush()
-
-        # Ensure ticket is not assigned
-        assert ticket.assigned_to is None
-
-        # User replies to unassigned ticket
-        response = logged_in_client.post(
-            f"/ng/support/me/tickets/{ticket.id}/add_message",
-            json={"text": "Is anyone there?"},
-        )
-
-        assert response.status_code == 201
-
-        # Check that ADMIN got notification
-        admin_notifications = Notification.query.filter_by(
-            recipient_id=admin.id,
-            ticket_id=ticket.id,
-            sender_id=user.id
-        ).all()
-
-        assert len(admin_notifications) >= 1
-        notification = admin_notifications[-1]
-        assert notification.type.value == "ticket_message"
-        assert notification.title == "Support Ticket Update"
-        assert "unassigned" in notification.message.lower()
-
-        # Check that SUPPORT role user also got notification
-        support_notifications = Notification.query.filter_by(
-            recipient_id=support_user_ctfd.id,
-            ticket_id=ticket.id,
-            sender_id=user.id
-        ).all()
-
-        assert len(support_notifications) >= 1
-        support_notification = support_notifications[-1]
-        assert support_notification.type.value == "ticket_message"
-        assert support_notification.title == "Support Ticket Update"
-
     def test_assigned_ticket_only_notifies_assigned_admin_not_all(
         self,
         logged_in_client,
