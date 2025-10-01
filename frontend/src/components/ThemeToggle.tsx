@@ -16,7 +16,12 @@ export default function ThemeToggle({ className }: {className : string}) {
         checked={theme === 'dark'}
         onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
       />
-      <Text size="2">{theme.charAt(0).toUpperCase() + theme.slice(1)}</Text>
+      <Text
+        className="dark:text-(--gray-a11)"
+        size="3"
+      >
+        {theme.charAt(0).toUpperCase() + theme.slice(1)}
+      </Text>
     </Flex>
   );
 }
