@@ -9,6 +9,7 @@ from CTFd.models import db
 from ...core.utils import utc_now
 from ...core.middleware import (
     user_endpoint,
+    public_endpoint,
 )
 from ...core.middleware.loaders import (
     load_user,
@@ -55,7 +56,7 @@ events_user_namespace = Namespace(
 
 @events_user_namespace.route("")
 class EventList(Resource):
-    @user_endpoint()
+    @public_endpoint()
     @events_user_namespace.doc(
         description="Get all public events",
         responses={
@@ -75,7 +76,7 @@ class EventList(Resource):
 @events_user_namespace.route("/<int:event_id>")
 class EventDetail(Resource):
 
-    @user_endpoint()
+    @public_endpoint()
     @load_event(source = LoaderType.PARAM)
     @event_only_public
     @events_user_namespace.doc(

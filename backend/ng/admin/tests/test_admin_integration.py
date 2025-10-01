@@ -172,7 +172,7 @@ class TestAdminImpersonation:
         assert response.status_code == 200
 
         response = admin_client.get("/ng/admin/health")
-        assert response.status_code == 302
+        assert response.status_code == 403
 
     def test_cannot_impersonate_nonexistent_user(self, admin_client):
         """Test that admin cannot impersonate a nonexistent user."""

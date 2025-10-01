@@ -26,7 +26,7 @@ export default function Overview() {
           <EventHeader
             event={data}
           >
-            {data && <StartModal event={data} />}
+            {data && <StartModal eventId={data.id} />}
           </EventHeader>
         )}
       </HeaderContainer>

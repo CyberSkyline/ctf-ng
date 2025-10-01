@@ -19,7 +19,7 @@ def test_role_endpoints_not_authenticated(logged_in_client, role_with_permission
     """Check that role endpoints are not accessible without authentication as an admin."""
     role = role_with_permissions
     response = logged_in_client.get(f"/ng/admin/permissions/{role.id}/details")
-    assert response.status_code == 302
+    assert response.status_code == 403
     response = logged_in_client.put(f"/ng/admin/permissions/{role.id}/details", json={
         "permissions": ["can_edit_team", "can_edit_user"]
     })
@@ -62,7 +62,7 @@ def test_get_user_roles(admin_client, user_with_roles):
 def test_user_endpoints_not_authenticated(logged_in_client, user_with_roles):
     """Check that user endpoints are not accessible without authentication as an admin."""
     response = logged_in_client.get(f"/ng/admin/permissions/{user_with_roles.id}/roles")
-    assert response.status_code == 302
+    assert response.status_code == 403
     response = logged_in_client.put(f"/ng/admin/permissions/{user_with_roles.id}/roles", json={
         "roles": ["Test Role"]
     })
@@ -88,5 +88,47 @@ def test_update_user_roles_invalid_role(admin_client, user_with_roles):
     assert not data["success"]
     assert "errors" in data
     assert "validation" in data["errors"]
+
+def test_get_user_permissions(team_captain_client, user_with_roles):
+    """Check that a user can get their own permissions."""
+    response = team_captain_client.get("/ng/permissions/1/me")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"]
+    assert "permissions" in data["data"]
+    assert isinstance(data["data"]["permissions"], list)
+    assert len(data["data"]["permissions"]) > 0
+
+def test_get_user_global_permissions(admin_client, user_with_roles):
+    """Check that a user can get their own global permissions."""
+    response = admin_client.get("/ng/permissions/me")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"]
+    assert "permissions" in data["data"]
+    assert isinstance(data["data"]["permissions"], list)
+    assert len(data["data"]["permissions"]) > 0
+
+def test_get_user_roles_endpoint(team_captain_client, user_with_roles):
+    """Check that a user can get their own roles."""
+    response = team_captain_client.get("/ng/permissions/me/roles")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"]
+    assert "roles" in data["data"]
+    assert isinstance(data["data"]["roles"], list)
+    assert len(data["data"]["roles"]) == 0
+
+def test_get_user_roles_with_roles(admin_client):
+    """Check that we can get roles for a specific user with multiple roles."""
+
+    response = admin_client.get("/ng/permissions/me/roles")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"]
+    assert "roles" in data["data"]
+    assert isinstance(data["data"]["roles"], list)
+    assert len(data["data"]["roles"]) > 0
+    assert "admin" in data["data"]["roles"]
 
 

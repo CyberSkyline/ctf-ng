@@ -6,6 +6,14 @@ import json
 import pytest
 from datetime import datetime
 
+from CTFd.models import Users
+
+from ...permissions.models.Role import Role
+from ...user.models.User import User as NgUser
+from ...notifications.models import Notification
+from ...permissions.models.enums import RoleEnum
+from ...permissions.controllers import assign_role_to_user
+
 
 class TestUserSupportEndpoints:
     """Tests for user support API endpoints"""
@@ -221,7 +229,7 @@ class TestUserSupportEndpoints:
             else:
                 response = client.post(endpoint, json=json_data)
 
-            assert response.status_code in [302, 403]
+            assert response.status_code in [401,403]
 
 
 class TestAdminSupportEndpoints:
@@ -417,6 +425,23 @@ class TestAdminSupportEndpoints:
         assert data["success"] is True
         assert data["data"]["assigned_to"] == admin.id
 
+    def test_assign_ticket_to_non_support_user_fails(self, admin_client, ticket, user, db_session):
+        """
+        Test that assigning a ticket to a non-support user fails with validation error
+        """
+        # Try to assign ticket to regular user (not admin/support)
+        response = admin_client.put(
+            f"/ng/admin/support/tickets/{ticket.id}/assign",
+            json={"user_id": user.id},
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        # Check error message in response
+        response_str = str(data)
+        assert "ADMIN" in response_str or "SUPPORT" in response_str or "role" in response_str.lower()
+
     def test_unassign_ticket(self, admin_client, assigned_ticket):
         """Test unassigning ticket"""
         response = admin_client.put(
@@ -594,6 +619,285 @@ class TestAdminSupportEndpoints:
         assert ticket["event_name"] == event.name
         assert ticket["team_id"] == team.id
         assert ticket["team_name"] == team.name
+
+    def test_user_creates_ticket_support_staff_do_not_get_notification(
+        self,
+        logged_in_client,
+        user,
+        admin,
+        db_session,
+    ):
+        """
+        Test that when a user creates a ticket, support staff do not receive DB notifications
+        (only WebSocket refetch events are sent)
+        """
+        Role.create_role(RoleEnum.SUPPORT)
+
+        support_user_ctfd = Users(name="supportuser", email="support@example.com", password="password")
+        support_user_ctfd.verified = True
+        db_session.add(support_user_ctfd)
+        db_session.flush()
+
+        NgUser.create_user(user_id=support_user_ctfd.id, commit=False)
+        assign_role_to_user(support_user_ctfd.id, RoleEnum.SUPPORT)
+        db_session.flush()
+
+        # Create ticket
+        response = logged_in_client.post(
+            "/ng/support/tickets/create",
+            json={
+                "subject": "Need help with login",
+                "text": "I can't log in",
+            },
+        )
+
+        assert response.status_code == 201
+        ticket_id = response.get_json()["data"]["id"]
+
+        admin_notifications = Notification.query.filter_by(
+            recipient_id=admin.id,
+            ticket_id=ticket_id
+        ).all()
+
+        assert len(admin_notifications) == 0
+
+        support_notifications = Notification.query.filter_by(
+            recipient_id=support_user_ctfd.id,
+            ticket_id=ticket_id
+        ).all()
+
+        assert len(support_notifications) == 0
+
+    def test_admin_replies_without_assignment_user_gets_notification(
+        self,
+        admin_client,
+        user,
+        admin,
+        ticket,
+        db_session,
+    ):
+        """
+        Test that when an admin replies to a ticket WITHOUT being assigned,
+        the user still receives a notification
+        """
+        # Admin replies without being assigned
+        response = admin_client.post(
+            f"/ng/admin/support/tickets/{ticket.id}/add_message",
+            json={"text": "I can help you with this"},
+        )
+
+        assert response.status_code == 201
+
+        # Check that user got notification
+        user_notifications = Notification.query.filter_by(
+            recipient_id=user.id,
+            ticket_id=ticket.id,
+            sender_id=admin.id
+        ).all()
+
+        assert len(user_notifications) >= 1
+        notification = user_notifications[-1]  # Get most recent
+        assert notification.type.value == "ticket_message"
+        assert notification.title == "Support Ticket Update"
+        assert "replied" in notification.message.lower()
+
+    def test_user_replies_to_assigned_ticket_admin_gets_notification(
+        self,
+        logged_in_client,
+        user,
+        admin,
+        assigned_ticket,
+        db_session,
+    ):
+        """
+        Test that when a user replies to an assigned ticket,
+        the assigned admin receives a notification
+        """
+        # User replies to assigned ticket
+        response = logged_in_client.post(
+            f"/ng/support/me/tickets/{assigned_ticket.id}/add_message",
+            json={"text": "Thanks for the help!"},
+        )
+
+        assert response.status_code == 201
+
+        # Check that assigned admin got notification
+        # NOTE: ONLY SUPPORT admins can be assigned in the first place
+        admin_notifications = Notification.query.filter_by(
+            recipient_id=admin.id,
+            ticket_id=assigned_ticket.id,
+            sender_id=user.id
+        ).all()
+
+        assert len(admin_notifications) >= 1
+        notification = admin_notifications[-1]
+        assert notification.type.value == "ticket_message"
+        assert notification.sender_id == user.id
+
+    def test_assigned_ticket_only_notifies_assigned_admin_not_all(
+        self,
+        logged_in_client,
+        user,
+        admin,
+        ticket,
+        db_session,
+    ):
+        """
+        Test that when a ticket IS assigned, user replies only notify
+        the ASSIGNED admin, NOT all admins
+        """
+        # Create second admin
+        admin2_ctfd = Users(name="admin2", email="admin2@example.com", password="password", type="admin")
+        admin2_ctfd.verified = True
+        db_session.add(admin2_ctfd)
+        db_session.flush()
+
+        NgUser.create_user(user_id=admin2_ctfd.id, commit=False)
+        assign_role_to_user(admin2_ctfd.id, RoleEnum.ADMIN)
+        db_session.flush()
+
+        # Assign ticket to admin (not admin2)
+        ticket.assign_to_user(admin.id)
+        db_session.commit()
+
+        # User replies to assigned ticket
+        response = logged_in_client.post(
+            f"/ng/support/me/tickets/{ticket.id}/add_message",
+            json={"text": "Thanks for helping!"},
+        )
+
+        assert response.status_code == 201
+
+        # Check that ASSIGNED admin got notification
+        admin_notifications = Notification.query.filter_by(
+            recipient_id=admin.id,
+            ticket_id=ticket.id,
+        ).filter(
+            Notification.type == "ticket_message"
+        ).all()
+        assert len(admin_notifications) >= 1
+
+        # Check that OTHER admin did NOT get notification
+        admin2_notifications = Notification.query.filter_by(
+            recipient_id=admin2_ctfd.id,
+            ticket_id=ticket.id,
+        ).filter(
+            Notification.type == "ticket_message"
+        ).all()
+        assert len(admin2_notifications) == 0  # Should be ZERO!
+
+    def test_muted_ticket_does_not_send_notifications(
+        self,
+        logged_in_client,
+        user,
+        admin,
+        ticket,
+        db_session,
+    ):
+        """
+        Test that muted tickets do NOT send notifications when users reply
+        """
+        # Mute the ticket
+        ticket.toggle_mute(True)
+        db_session.commit()
+
+        # User replies to muted ticket
+        response = logged_in_client.post(
+            f"/ng/support/me/tickets/{ticket.id}/add_message",
+            json={"text": "Hello? Anyone there?"},
+        )
+
+        assert response.status_code == 201
+
+        # Check that NO notifications were created
+        admin_notifications = Notification.query.filter_by(
+            recipient_id=admin.id,
+            ticket_id=ticket.id,
+        ).filter(
+            Notification.type == "ticket_message"
+        ).all()
+
+        assert len(admin_notifications) == 0  # No notifications
+
+    def test_admin_assigns_self_then_replies_user_gets_notification(
+        self,
+        admin_client,
+        user,
+        admin,
+        ticket,
+        db_session,
+    ):
+        """
+        Test the full flow: admin assigns ticket to themselves, then replies
+        """
+        # Admin assigns ticket to themselves
+        assign_response = admin_client.put(
+            f"/ng/admin/support/tickets/{ticket.id}/assign",
+            json={"user_id": admin.id},
+        )
+        assert assign_response.status_code == 200
+
+        # Check admin got assignment notification
+        assignment_notifications = Notification.query.filter_by(
+            recipient_id=admin.id,
+            ticket_id=ticket.id,
+        ).filter(
+            Notification.type == "ticket_assigned"
+        ).all()
+        assert len(assignment_notifications) == 1
+
+        # Admin replies to ticket
+        reply_response = admin_client.post(
+            f"/ng/admin/support/tickets/{ticket.id}/add_message",
+            json={"text": "I've been assigned and I'm here to help"},
+        )
+        assert reply_response.status_code == 201
+
+        # Check that user got reply notification
+        reply_notifications = Notification.query.filter_by(
+            recipient_id=user.id,
+            ticket_id=ticket.id,
+            sender_id=admin.id
+        ).filter(
+            Notification.type == "ticket_message"
+        ).all()
+
+        assert len(reply_notifications) >= 1
+        notification = reply_notifications[-1]
+        assert "replied" in notification.message.lower()
+
+    def test_admin_closes_ticket_user_gets_notification(
+        self,
+        admin_client,
+        user,
+        admin,
+        ticket,
+        db_session,
+    ):
+        """
+        Test that when an admin closes a ticket, the user receives a notification
+        """
+        # Admin closes ticket
+        response = admin_client.put(
+            f"/ng/admin/support/tickets/{ticket.id}/close",
+            json={"closed": True},
+        )
+
+        assert response.status_code == 200
+
+        # Check that user got notification
+        user_notifications = Notification.query.filter_by(
+            recipient_id=user.id,
+            ticket_id=ticket.id,
+        ).filter(
+            Notification.type == "ticket_status_change"
+        ).all()
+
+        assert len(user_notifications) >= 1
+        notification = user_notifications[-1]
+        assert notification.title == "Ticket Status Changed"
+        assert "closed" in notification.message.lower()
+        assert notification.sender_id == admin.id
 
     def test_ticket_list_without_challenge(self, logged_in_client, user, event, team_factory):
         """

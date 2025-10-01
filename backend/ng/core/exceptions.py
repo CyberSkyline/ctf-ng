@@ -62,6 +62,13 @@ class PermissionError(APIException):
     message = "You do not have permission to perform this action."
     error_field = "permission"
 
+class AuthenticationError(APIException):
+    """Raised when authentication fails or is required."""
+
+    status_code = 401
+    message = "Authentication is required to access this resource."
+    error_field = "authentication"
+
 
 class ConflictError(APIException):
     """Raised when a request conflicts with the current state of the resource"""

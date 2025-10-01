@@ -129,7 +129,6 @@ class NotificationService:
         """
         NotificationService._emit_refetch(
             path="/ng/support/tickets",
-            user_ids=None  # Via _emit_refetch fallback
         )
 
     @staticmethod

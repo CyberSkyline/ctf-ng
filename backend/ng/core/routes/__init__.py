@@ -10,6 +10,7 @@ from flask_restx import Api
 from ...challenge.routes import challenge_admin_namespace
 from ...event.routes import events_admin_namespace, events_user_namespace
 from ...permissions.routes import permissions_admin_namespace
+from ...permissions.routes.user_routes import permissions_user_namespace
 from ...team.routes import teams_admin_namespace
 from ...user.routes import users_admin_namespace, users_user_namespace
 from ...user.routes.authenticate import oauth_namespace
@@ -62,6 +63,7 @@ api_v1.add_namespace(support_user_namespace, path="/support")
 api_v1.add_namespace(container_namespace, path="/container")
 api_v1.add_namespace(notifications_namespace, path="/notifications")
 api_v1.add_namespace(announcements_user_namespace, path="/announcements")
+api_v1.add_namespace(permissions_user_namespace, path="/permissions")
 
 # Admin namespaces
 api_v1.add_namespace(admin_namespace, path="/admin")
