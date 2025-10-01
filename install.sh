@@ -156,7 +156,7 @@ if ! command -v pytest &> /dev/null; then
 fi
 
 # Install awscli
-if ! command -v pytest &> /dev/null; then
+if ! command -v aws &> /dev/null; then
   prompt_user "Would you like to install aws-cli?" && {
     cd /tmp/
     sudo apt-get install zip
