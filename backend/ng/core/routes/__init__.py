@@ -23,8 +23,11 @@ from ...containers.routes.routes import container_namespace
 from ...containers.routes.admin_routes import admin_container_namespace
 
 from ...notifications.routes import (
-    notifications_user_namespace,
-    notifications_admin_namespace,
+    notifications_namespace,
+)
+from ...announcements.routes import (
+    announcements_user_namespace,
+    announcements_admin_namespace,
 )
 
 
@@ -57,7 +60,8 @@ api_v1.add_namespace(scoring_user_namespace, path="/events")
 # api_v1.add_namespace(challenge_namespace, path="/challenge")
 api_v1.add_namespace(support_user_namespace, path="/support")
 api_v1.add_namespace(container_namespace, path="/container")
-api_v1.add_namespace(notifications_user_namespace, path="/notifications")
+api_v1.add_namespace(notifications_namespace, path="/notifications")
+api_v1.add_namespace(announcements_user_namespace, path="/announcements")
 
 # Admin namespaces
 api_v1.add_namespace(admin_namespace, path="/admin")
@@ -69,4 +73,4 @@ api_v1.add_namespace(permissions_admin_namespace, path="/admin/permissions")
 api_v1.add_namespace(challenge_admin_namespace, path="/admin/challenges")
 api_v1.add_namespace(scoring_admin_namespace, path="/admin/scoring")
 api_v1.add_namespace(admin_container_namespace, path="/admin/container")
-api_v1.add_namespace(notifications_admin_namespace, path="/admin/notifications")
+api_v1.add_namespace(announcements_admin_namespace, path="/admin/announcements")

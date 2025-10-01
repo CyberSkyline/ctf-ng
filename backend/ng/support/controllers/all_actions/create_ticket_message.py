@@ -6,7 +6,7 @@ from ...models.Ticket import Ticket
 from ...models.TicketMessage import TicketMessage
 
 from ....notifications.services import NotificationService
-from ....notifications.services.notification_service import EmailType
+from ....emails.services import TicketEmailService
 
 
 def create_ticket_message(
@@ -35,29 +35,20 @@ def create_ticket_message(
     messages = ticket.get_messages()
     message = messages[-1]
 
-    if is_admin and ticket.author_id != author_id:
-        NotificationService.notify_ticket_reply(
-            ticket_id=ticket.id,
-            author_id=author_id,
-            recipient_id=ticket.author_id,
-            is_admin_reply=True,
+    # Handle DB notifications + WebSocket events
+    NotificationService.handle_ticket_message_notifications(
+        ticket=ticket,
+        message=message,
+        author_id=author_id,
+        is_admin=is_admin,
+    )
+
+    # Handle email notifications (separate service)
+    if not ticket.muted:
+        TicketEmailService.send_ticket_reply_email(
+            ticket=ticket,
+            message=message,
+            is_admin_reply=is_admin
         )
-    elif not is_admin:
-        if ticket.assigned_to:
-            NotificationService.notify_ticket_reply(
-                ticket_id=ticket.id,
-                author_id=author_id,
-                recipient_id=ticket.assigned_to,
-                is_admin_reply=False,
-            )
-        else:
-            NotificationService._send_ticket_email(
-                ticket=ticket,
-                email_type=EmailType.REPLY,
-                additional_data={
-                    'message_data': message.serialize(include_admin_fields=True),
-                    'is_admin_reply': False
-                }
-            )
 
     return message

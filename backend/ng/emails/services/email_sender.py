@@ -32,9 +32,7 @@ class AWSEmailService:
         """
         try:
             aws_access_key = current_app.config.get('AWS_SES_ACCESS_KEY_ID')
-            aws_secret_key = current_app.config.get(
-                'AWS_SES_SECRET_ACCESS_KEY'
-            )
+            aws_secret_key = current_app.config.get('AWS_SES_SECRET_ACCESS_KEY')
             aws_region = current_app.config.get('AWS_SES_REGION')
 
             if not aws_access_key or not aws_secret_key:
@@ -146,11 +144,7 @@ class AWSEmailService:
 
         except ClientError as e:
             error_code = e.response.get('Error', {}).get('Code', 'Unknown')
-            logger.error(
-                "AWS SES error sending email: %s - %s",
-                error_code,
-                e
-            )
+            logger.error("AWS SES error sending email: %s - %s", error_code, e)
             return False
         except (BotoCoreError, EndpointConnectionError) as e:
             logger.error("AWS connection error sending email: %s", e)

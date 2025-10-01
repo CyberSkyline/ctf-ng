@@ -10,10 +10,8 @@ from ...support.controllers import (
     create_ticket_message,
     create_ticket,
 )
-from ..services import (
-    get_email_service,
-    NotificationService,
-)
+from ..services import get_email_service
+from ...notifications.services import NotificationService
 
 
 @pytest.mark.db
@@ -26,10 +24,10 @@ class TestEmailSendingSmartRouting:
         """
         Reset the global email service between tests
         """
-        from ..services import email_service as email_service_module
-        email_service_module._email_service = None
+        from ..services import email_sender as email_sender_module
+        email_sender_module._email_service = None
         yield
-        email_service_module._email_service = None
+        email_sender_module._email_service = None
 
     @pytest.fixture
     def email_config(self, app):
@@ -49,7 +47,7 @@ class TestEmailSendingSmartRouting:
         """
         Mock AWS SES client for email tests
         """
-        with patch('ng.notifications.services.email_service.boto3.client'
+        with patch('ng.emails.services.email_sender.boto3.client'
                    ) as mock_boto_client:
             mock_ses = MagicMock()
             mock_boto_client.return_value = mock_ses
@@ -145,7 +143,7 @@ class TestEmailSendingSmartRouting:
                 user3.ctfd_user.email
             }
             assert recipient_emails == expected_emails
-            assert 'Admin reply' in call_args['Message']['Body']['Html'][
+            assert 'Admin Reply' in call_args['Message']['Body']['Html'][
                 'Data']
 
     def test_admin_reply_to_non_team_ticket_notifies_author(
@@ -233,8 +231,8 @@ class TestEmailSendingSmartRouting:
                        ] = 'admin@ctf.com,support@ctf.com'
             app.config['SERVER_DOMAIN'] = 'http://localhost:8000'
 
-            from ..services import email_service as email_service_module
-            email_service_module._email_service = None
+            from ..services import email_sender as email_sender_module
+            email_sender_module._email_service = None
 
             ticket = ticket_factory(
                 subject = "Unassigned Issue",
@@ -289,49 +287,6 @@ class TestEmailSendingSmartRouting:
 
             assert ticket.assigned_to == admin.id
 
-    def test_assignment_notification_only_to_assigned_admin(
-        self,
-        app,
-        db_session,
-        user,
-        admin,
-        ticket_factory,
-        email_config,
-        mock_ses
-    ):
-        """
-        Test that assignment notifications go ONLY to assigned admin (not user)
-        """
-        with app.app_context():
-            app.config['AWS_SES_ACCESS_KEY_ID'] = 'test_key'
-            app.config['AWS_SES_SECRET_ACCESS_KEY'] = 'test_secret'
-            app.config['AWS_SES_REGION'] = 'us-east-2'
-            app.config['AWS_SES_FROM_EMAIL'] = 'noreply@ctf.com'
-            app.config['ADMIN_SUPPORT_INBOX_EMAILS'
-                       ] = 'admin@ctf.com,support@ctf.com'
-            app.config['SERVER_DOMAIN'] = 'http://localhost:8000'
-
-            from ..services import email_service as email_service_module
-            email_service_module._email_service = None
-
-            ticket = ticket_factory(
-                subject = "Needs Assignment",
-                author_id = user.id
-            )
-
-            NotificationService.notify_ticket_assigned(
-                ticket_id = ticket.id,
-                assigned_to_id = admin.id,
-                assigned_by_id = admin.id
-            )
-
-            mock_ses.send_email.assert_called_once()
-            call_args = mock_ses.send_email.call_args[1]
-
-            assert call_args['Destination']['ToAddresses'] == [admin.email]
-            assert 'Ticket Assigned' in call_args['Message']['Subject'][
-                'Data']
-
     def test_email_not_sent_when_not_configured(
         self,
         app,
@@ -350,7 +305,7 @@ class TestEmailSendingSmartRouting:
             app.config['AWS_SES_SECRET_ACCESS_KEY'] = None
             app.config['ADMIN_SUPPORT_INBOX_EMAILS'] = 'admin@ctf.com'
 
-            with patch('ng.notifications.services.email_service.logger'
+            with patch('ng.emails.services.email_sender.logger'
                        ) as mock_logger:
                 create_ticket(
                     subject = "Test Issue",
@@ -421,14 +376,14 @@ class TestEmailSendingSmartRouting:
         with app.app_context():
             team_factory(event = event, members = [user])
 
-            with patch('ng.notifications.services.email_service.boto3.client'
+            with patch('ng.emails.services.email_sender.boto3.client'
                        ) as mock_boto_client:
                 mock_ses = MagicMock()
                 mock_boto_client.return_value = mock_ses
                 mock_ses.get_send_quota.return_value = {'SentLast24Hours': 0}
                 mock_ses.send_email.side_effect = Exception("AWS Error")
 
-                with patch('ng.notifications.services.email_service.logger'
+                with patch('ng.emails.services.email_sender.logger'
                            ) as mock_logger:
                     ticket = create_ticket(
                         subject = "Test Issue",

@@ -1,5 +1,5 @@
 """
-Admin API routes for notifications
+Admin API routes for announcements
 """
 
 from flask_restx import Namespace, Resource
@@ -15,16 +15,36 @@ from ..controllers import (
 )
 
 
-notifications_admin_namespace = Namespace(
-    "admin/notifications",
-    description = "Admin notification operations"
+announcements_admin_namespace = Namespace(
+    "admin/announcements",
+    description = "Admin announcement operations"
 )
 
 
-@notifications_admin_namespace.route("/announce")
+@announcements_admin_namespace.route("")
+class AllAnnouncements(Resource):
+    @admin_endpoint()
+    @announcements_admin_namespace.doc(
+        description="Get all announcements for admin management (includes expired)",
+        responses={
+            200: "Success - Returns list of all announcements",
+            401: "Unauthorized - Authentication required",
+            403: "Forbidden - Admin access required",
+            500: "Internal server error",
+        },
+    )
+    def get(self, **kwargs):
+        """
+        Get all announcements
+        """
+        announcements = get_all_announcements()
+        return success_response(announcements)
+
+
+@announcements_admin_namespace.route("/announce")
 class SystemAnnouncement(Resource):
     @admin_endpoint(json_required = True)
-    @notifications_admin_namespace.doc(
+    @announcements_admin_namespace.doc(
         description="Send system-wide announcement to all users",
         params={
             "title": {
@@ -62,11 +82,11 @@ class SystemAnnouncement(Resource):
         return success_response(result)
 
 
-@notifications_admin_namespace.route("/events/<int:event_id>/announce")
+@announcements_admin_namespace.route("/events/<int:event_id>/announce")
 class EventAnnouncement(Resource):
     @admin_endpoint(json_required = True)
     @load_event(source = LoaderType.PARAM)
-    @notifications_admin_namespace.doc(
+    @announcements_admin_namespace.doc(
         description="Send announcement to all participants in a specific event",
         params={
             "title": {
@@ -115,22 +135,3 @@ class EventAnnouncement(Resource):
         )
         return success_response(announcement)
 
-
-@notifications_admin_namespace.route("/announcements")
-class AllAnnouncements(Resource):
-    @admin_endpoint()
-    @notifications_admin_namespace.doc(
-        description="Get all announcements for admin management (includes expired)",
-        responses={
-            200: "Success - Returns list of all announcements",
-            401: "Unauthorized - Authentication required",
-            403: "Forbidden - Admin access required",
-            500: "Internal server error",
-        },
-    )
-    def get(self, **kwargs):
-        """
-        Get all announcements
-        """
-        announcements = get_all_announcements()
-        return success_response(announcements)

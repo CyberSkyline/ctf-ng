@@ -13,8 +13,8 @@ find-TODO:
 	pylint --disable=all --enable=W0511 .
 
 # Script Tests
-test-email:
-	$(PYTHON_EXEC) scripts/_test/_test_email_send.py
+test-email-send:
+	$(PYTHON_EXEC) emails/_test_email_send.py
 
 # All tests
 test-all:
@@ -62,7 +62,13 @@ test-permissions:
 	
 test-notifications:
 	$(PYTHON_EXEC) -m pytest notifications --ignore-glob="**/*e2e*" -v
-	
+
+test-announcements:
+	$(PYTHON_EXEC) -m pytest announcements -v
+
+test-emails:
+	$(PYTHON_EXEC) -m pytest emails/tests -v
+		
 test-middleware:
 	$(PYTHON_EXEC) -m pytest -m middleware . -v
 

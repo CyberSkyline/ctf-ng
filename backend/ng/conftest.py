@@ -1173,7 +1173,7 @@ def announcement_factory(db_session):
     """
     Factory to create announcements
     """
-    from .notifications.models.Announcement import Announcement, AnnouncementType
+    from .announcements.models.Announcement import Announcement, AnnouncementType
 
     def _factory(**kwargs):
         announcement_type = kwargs.pop("type", AnnouncementType.GENERAL)

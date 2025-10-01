@@ -2,7 +2,7 @@
 Get active announcements
 """
 
-from ...models import Announcement
+from ..models import Announcement
 
 
 def get_active_announcements(

@@ -14,7 +14,7 @@ def setup_project_paths():
     """
     script_dir = Path(__file__).parent.absolute()
 
-    project_root = script_dir.parent.parent.parent.parent
+    project_root = script_dir.parent.parent.parent
 
     ctfd_path = project_root / "external" / "CTFd"
     backend_path = project_root / "backend"
@@ -61,8 +61,8 @@ def test_email_configuration():
             return False
 
         from ng.core.tests.helpers import create_ctfd, destroy_ctfd
-        from ng.notifications.services.email_service import get_email_service
-        from ng.notifications.services.email_templates import TicketEmailTemplates
+        from ng.emails.services.email_sender import get_email_service
+        from ng.emails.services.email_templates import TicketEmailTemplates
 
     except ImportError as e:
         print(f"Import error: {e}")
@@ -91,7 +91,7 @@ def test_email_configuration():
             print(f"AWS SES Secret Key: {'SET' if app.config['AWS_SES_SECRET_ACCESS_KEY'] else 'NOT SET'}")
             print(f"AWS SES Region: {app.config['AWS_SES_REGION']}")
             print(f"From Email: {app.config['AWS_SES_FROM_EMAIL']}")
-            print(f"Team Emails: {app.config['ADMIN_SUPPORT_INBOX_EMAILS']}")
+            print(f"Admin Emails: {app.config['ADMIN_SUPPORT_INBOX_EMAILS']}")
             print(f"Server Domain: {app.config['SERVER_DOMAIN']}")
 
             email_service = get_email_service()
