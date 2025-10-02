@@ -33,7 +33,7 @@ class AWSEmailService:
         try:
             aws_access_key = current_app.config.get('AWS_SES_ACCESS_KEY_ID')
             aws_secret_key = current_app.config.get('AWS_SES_SECRET_ACCESS_KEY')
-            aws_region = current_app.config.get('AWS_SES_REGION')
+            aws_region = current_app.config.get('AWS_DEFAULT_REGION', 'us-east-1')
 
             if not aws_access_key or not aws_secret_key:
                 logger.debug(

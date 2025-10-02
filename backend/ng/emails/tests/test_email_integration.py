@@ -36,7 +36,7 @@ class TestEmailSendingSmartRouting:
         """
         app.config['AWS_SES_ACCESS_KEY_ID'] = 'test_key'
         app.config['AWS_SES_SECRET_ACCESS_KEY'] = 'test_secret'
-        app.config['AWS_SES_REGION'] = 'us-east-2'
+        app.config['AWS_DEFAULT_REGION'] = 'us-east-1'
         app.config['AWS_SES_FROM_EMAIL'] = 'noreply@ctf.com'
         app.config['ADMIN_SUPPORT_INBOX_EMAILS'
                    ] = 'admin@ctf.com,support@ctf.com'
@@ -225,7 +225,7 @@ class TestEmailSendingSmartRouting:
         with app.app_context():
             app.config['AWS_SES_ACCESS_KEY_ID'] = 'test_key'
             app.config['AWS_SES_SECRET_ACCESS_KEY'] = 'test_secret'
-            app.config['AWS_SES_REGION'] = 'us-east-2'
+            app.config['AWS_DEFAULT_REGION'] = 'us-east-1'
             app.config['AWS_SES_FROM_EMAIL'] = 'noreply@ctf.com'
             app.config['ADMIN_SUPPORT_INBOX_EMAILS'
                        ] = 'admin@ctf.com,support@ctf.com'
@@ -337,7 +337,7 @@ class TestEmailSendingSmartRouting:
 
             app.config['AWS_SES_ACCESS_KEY_ID'] = 'test_key'
             app.config['AWS_SES_SECRET_ACCESS_KEY'] = 'test_secret'
-            app.config['AWS_SES_REGION'] = 'us-east-2'
+            app.config['AWS_DEFAULT_REGION'] = 'us-east-1'
             app.config['AWS_SES_FROM_EMAIL'] = 'noreply@ctf.com'
             app.config['ADMIN_SUPPORT_INBOX_EMAILS'
                        ] = 'admin1@ctf.com, admin2@ctf.com ,admin3@ctf.com'
