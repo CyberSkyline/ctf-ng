@@ -1,28 +1,21 @@
-import Modal from 'components/Modal';
-import { Button, TextField } from '@radix-ui/themes';
-import { Form } from 'radix-ui';
+import { COLOR_POSITIVE, COLOR_WARNING } from '@/constants';
 import { createSupportTag, putSupportTag } from '@/hooks/support';
 import type { TicketTag } from '@/types';
-import { isUndefined } from 'lodash';
-import { COLOR_POSITIVE, COLOR_WARNING } from '@/constants';
+import { Button, Flex, TextField } from '@radix-ui/themes';
+import FormField from 'components/FormField';
+import Modal from 'components/Modal';
+import { isUndefined, omit } from 'lodash';
 
 export default function CreateTagModal(
   { defaultValues }: {defaultValues?: TicketTag},
 ) {
   const isCreating = isUndefined(defaultValues);
 
-  const handleSubmit = async (data: FormData) => {
-    const entries = Object.fromEntries(data.entries());
-    const newTag: Omit<TicketTag, 'id' | 'ticket_count'> = {
-      name : entries.name as string,
-      color : entries.color as string,
-      description : entries.description as string,
-    };
-
+  const handleSubmit = async (data: Omit<TicketTag, 'id' | 'ticket_count'>) => {
     if (isCreating) {
-      return createSupportTag(newTag);
+      return createSupportTag(data);
     }
-    return putSupportTag(defaultValues?.id, newTag);
+    return putSupportTag(defaultValues?.id, data);
   };
 
   return (
@@ -39,45 +32,55 @@ export default function CreateTagModal(
       )}
       onSubmit={handleSubmit}
       submitVerb={isCreating ? 'Create' : 'Update'}
+      defaultValues={omit(defaultValues, 'id', 'ticket_count')}
       requireTouchingForm
     >
-      <Form.Field name="name">
-        <Form.Label>Name</Form.Label>
-        <Form.Control asChild>
-          <TextField.Root
-            defaultValue={defaultValues?.name}
-            placeholder="Enter a tag name"
-            required
-          />
-        </Form.Control>
-        <Form.Message match="valueMissing">
-          Please enter a name.
-        </Form.Message>
-      </Form.Field>
-      <Form.Field name="color">
-        <Form.Label>Hex Color</Form.Label>
-        <Form.Control asChild>
-          <TextField.Root
-            defaultValue={defaultValues?.color}
-            placeholder="Enter a hex color"
-          />
-        </Form.Control>
-        <Form.Message match="valueMissing">
-          Please enter a name.
-        </Form.Message>
-      </Form.Field>
-      <Form.Field name="description">
-        <Form.Label>Description</Form.Label>
-        <Form.Control asChild>
-          <TextField.Root
-            defaultValue={defaultValues?.description}
-            placeholder="Enter a description"
-          />
-        </Form.Control>
-        <Form.Message match="valueMissing">
-          Please enter a name.
-        </Form.Message>
-      </Form.Field>
+      {({ register, formState : { errors } }) => (
+        <>
+          <Flex direction="row" gap="2" className="*:first:grow">
+            <FormField label="Name" error={errors?.name}>
+              {(injected) => (
+                <TextField.Root
+                  placeholder="Enter a tag name"
+                  // eslint-disable-next-line react/jsx-props-no-spreading
+                  {...register('name', {
+                    required : 'Please enter a name.',
+                  })}
+                  // eslint-disable-next-line react/jsx-props-no-spreading
+                  {...injected}
+                />
+              )}
+            </FormField>
+            <FormField label="Color" error={errors?.color}>
+              {(injected) => (
+                <input
+                  type="color"
+                  className="rounded"
+                  // eslint-disable-next-line react/jsx-props-no-spreading
+                  {...register('color', {
+                    required : 'Please enter a color.',
+                  })}
+                  // eslint-disable-next-line react/jsx-props-no-spreading
+                  {...injected}
+                />
+              )}
+            </FormField>
+          </Flex>
+          <FormField label="Description" error={errors?.description}>
+            {(injected) => (
+              <TextField.Root
+                placeholder="Enter a description"
+                // eslint-disable-next-line react/jsx-props-no-spreading
+                {...register('description', {
+                  required : 'Please enter a description.',
+                })}
+                // eslint-disable-next-line react/jsx-props-no-spreading
+                {...injected}
+              />
+            )}
+          </FormField>
+        </>
+      )}
     </Modal>
   );
 }

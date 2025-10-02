@@ -2,16 +2,18 @@ import { COLOR_WARNING } from '@/constants';
 import { adjustPoints } from '@/hooks/scoring';
 import type { Team } from '@/types';
 import { Button, TextField } from '@radix-ui/themes';
+import FormField from 'components/FormField';
 import Modal from 'components/Modal';
-import { Form } from 'radix-ui';
 import { TbPlusMinus } from 'react-icons/tb';
 
 export default function ScoreAdjustModal({ team }: { team: Team }) {
-  const handleSubmit = async (data: FormData) => {
-    const { points, reason } = Object.fromEntries(data.entries());
-
-    return adjustPoints(team.event_id, team.id, Number(points), reason as string);
-  };
+  const handleSubmit = async ({
+    adjustment,
+    reason,
+  }: {
+    adjustment: number;
+    reason: string;
+  }) => adjustPoints(team.event_id, team.id, adjustment, reason);
 
   return (
     <Modal
@@ -27,21 +29,39 @@ export default function ScoreAdjustModal({ team }: { team: Team }) {
       submitVerb="Adjust"
       submitColor={COLOR_WARNING}
     >
-      <Form.Field name="points">
-        <Form.Label>Adjustment</Form.Label>
-        <Form.Control asChild>
-          <TextField.Root type="number" placeholder="Number of points" required />
-        </Form.Control>
-        <Form.Message match="valueMissing" />
-        <Form.Message match="badInput" />
-      </Form.Field>
-      <Form.Field name="reason">
-        <Form.Label>Reason</Form.Label>
-        <Form.Control asChild>
-          <TextField.Root placeholder="Reason for adjustment" required />
-        </Form.Control>
-        <Form.Message match="valueMissing" />
-      </Form.Field>
+      {({ register, formState : { errors } }) => (
+
+        <>
+          <FormField label="Adjustment" error={errors?.adjustment}>
+            {(injected) => (
+              <TextField.Root
+                placeholder="Number of points"
+                type="number"
+                // eslint-disable-next-line react/jsx-props-no-spreading
+                {...register('adjustment', {
+                  required : 'Point value is required',
+                  valueAsNumber : true,
+                })}
+                // eslint-disable-next-line react/jsx-props-no-spreading
+                {...injected}
+              />
+            )}
+          </FormField>
+          <FormField label="Reason" error={errors?.reason}>
+            {(injected) => (
+              <TextField.Root
+                placeholder="Reason for adjustment"
+                // eslint-disable-next-line react/jsx-props-no-spreading
+                {...register('reason', { required : 'Reason is required' })}
+                // eslint-disable-next-line react/jsx-props-no-spreading
+                {...injected}
+              />
+            )}
+          </FormField>
+        </>
+
+      )}
+
     </Modal>
   );
 }

@@ -10,6 +10,8 @@ export interface Event {
   registration_open: boolean;
   registration_start_date?: Date;
   registration_end_date?: Date;
+  hints_enabled: boolean;
+  time_limit_minutes: number | null;
 }
 
 export interface User {
@@ -165,6 +167,7 @@ export interface Deployment {
 
 export interface ContainerBlueprint {
   id: number;
+  name: string;
   image: string;
   hostname: string;
   stdin_open: boolean;
