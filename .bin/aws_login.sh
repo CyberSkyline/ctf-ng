@@ -17,6 +17,11 @@ if [[ -z "$AWS_MFA_ARN" || "$AWS_MFA_ARN" == "-" ]]; then
   exit 1
 fi
 
+if [[ -z "$AWS_DEFAULT_REGION" || "$AWS_DEFAULT_REGION" == "-" ]]; then
+  echo "Error: AWS_DEFAULT_REGION must be set in your .env"
+  exit 1
+fi
+
 # Check if MFA specified
 MFA_CODE=$1
 if [[ -z "$MFA_CODE" ]]; then
@@ -25,7 +30,7 @@ if [[ -z "$MFA_CODE" ]]; then
 fi
 
 # Sign in to AWS
-creds=$(AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY aws sts get-session-token --serial-number $AWS_MFA_ARN --token-code $MFA_CODE)
+creds=$(AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION aws sts get-session-token --serial-number $AWS_MFA_ARN --token-code $MFA_CODE)
 
 if [[ $? -ne 0 ]]; then
   echo "Error: Failed to get AWS session token."
@@ -43,4 +48,4 @@ if [[ -z "$AWS_ECR_URI" ]]; then
   echo "Error: AWS_ECR_URI must be set in your .env"
   exit 1
 fi
-AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN aws ecr get-login-password | docker login --username AWS --password-stdin $AWS_ECR_URI
+AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION aws ecr get-login-password | docker login --username AWS --password-stdin $AWS_ECR_URI

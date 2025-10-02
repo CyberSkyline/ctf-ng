@@ -1,9 +1,9 @@
 import { NavigationMenu } from 'radix-ui';
-import { DropdownMenu } from '@radix-ui/themes';
 import { NavLink, useLocation } from 'react-router';
 import { TbUserCircle } from 'react-icons/tb';
 import { twMerge } from 'tailwind-merge';
 import ThemeToggle from 'components/ThemeToggle';
+import { useTheme } from 'next-themes';
 
 export default function NavBar() {
   const logout = () => {
@@ -11,6 +11,7 @@ export default function NavBar() {
   };
 
   const location = useLocation();
+  const { theme } = useTheme(); // Drop Content wouldn't obey otherwise
 
   const defaultLinkClass = `
     p-2
@@ -31,7 +32,43 @@ export default function NavBar() {
     underline-offset-8
     decoration-2`;
 
-  const dropdownClass = 'flex items-center gap-2 px-2 py-1.5 rounded';
+  const contentBase = `
+    absolute 
+    top-full 
+    mt-1
+    z-50 
+    max-w-[90vw] 
+    right-4 
+    rounded-md 
+    shadow-lg
+    border-(--gray-a6)
+    border-1
+  `;
+
+  const contentLight = `
+    bg-white
+    text-(--gray-a11)
+  `;
+
+  const contentDark = `
+    dark:bg-black
+    dark:text-(--gray-12)
+  `;
+
+  const contentItem = `
+    w-full
+    flex
+    items-center
+    gap-2
+    px-2
+    py-1.5
+    rounded
+    hover:bg-(--gray-3)
+    dark:hover:bg-(--gray-3)
+    dark:hover:text-(--gray-12)
+    text-(--gray-a11)
+    dark:text-(--gray-a11)
+  `;
 
   return (
     <NavigationMenu.Root className="h-[var(--NavBarHeight)]">
@@ -47,11 +84,11 @@ export default function NavBar() {
               Events
             </NavigationMenu.Item>
           </NavLink>
-          <NavLink className={location.pathname === '/practice' ? activeLinkClass : defaultLinkClass}>
+          {/* <NavLink className={location.pathname === '/practice' ? activeLinkClass : defaultLinkClass}>
             <NavigationMenu.Item>
               Practice*
             </NavigationMenu.Item>
-          </NavLink>
+          </NavLink> */}
         </div>
         <div className="flex ml-auto">
           <NavLink to="/support" className={location.pathname === '/support' ? activeLinkClass : defaultLinkClass}>
@@ -63,46 +100,45 @@ export default function NavBar() {
             Notifications*
           </NavigationMenu.Item>
 
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger>
-              <NavigationMenu.Item className={twMerge(defaultLinkClass, 'pt-3')}>
-                <TbUserCircle />
-              </NavigationMenu.Item>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Content
-              className="mt-2 rounded-md shadow-lg p-2 border"
-            >
-              <DropdownMenu.Item asChild>
-                <NavLink
-                  // to="/profile"
-                  className={dropdownClass}
-                >
-                  Profile*
-                </NavLink>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item asChild>
-                <NavLink
-                  to="/admin"
-                  className={dropdownClass}
-                >
-                  Admin Portal
-                </NavLink>
-              </DropdownMenu.Item>
-              <ThemeToggle className="ml-3 py-2" />
-              <DropdownMenu.Separator className="h-px bg-gray-200 my-1" />
-              <DropdownMenu.Item asChild>
-                <button
-                  type="button"
-                  onClick={logout}
-                  className={dropdownClass}
-                >
-                  Log Out*
-                </button>
-              </DropdownMenu.Item>
-            </DropdownMenu.Content>
-          </DropdownMenu.Root>
+          <NavigationMenu.Item>
+            <NavigationMenu.Trigger className={twMerge(defaultLinkClass, 'pt-3')}>
+              <TbUserCircle />
+            </NavigationMenu.Trigger>
+            <NavigationMenu.Content className={twMerge(contentBase, theme === 'dark' ? contentDark : contentLight)}>
+              <ul className="grid gap-2 p-3">
+                <li>
+                  <NavLink
+                    to="/profile"
+                    className={contentItem}
+                  >
+                    Profile*
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/admin"
+                    className={contentItem}
+                  >
+                    Admin Portal
+                  </NavLink>
+                </li>
+                <li>
+                  <ThemeToggle className="ml-3 py-2" />
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={logout}
+                    className={contentItem}
+                  >
+                    Log Out*
+                  </button>
+                </li>
+              </ul>
+            </NavigationMenu.Content>
+          </NavigationMenu.Item>
         </div>
-        <NavigationMenu.Indicator className="NavigationMenuIndicator" />
+        <NavigationMenu.Indicator />
       </NavigationMenu.List>
     </NavigationMenu.Root>
   );
