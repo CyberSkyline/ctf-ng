@@ -12,7 +12,6 @@ import { Controller, type UseFormReturn } from 'react-hook-form';
 export default function EventDataForm({
   rhf,
 }: {
-  initial?: Omit<Event, 'id'>,
   rhf: UseFormReturn<Omit<Event, 'id'>>,
 }) {
   const { register, formState : { errors } } = rhf;
@@ -25,7 +24,7 @@ export default function EventDataForm({
             placeholder="Event Name"
             // eslint-disable-next-line react/jsx-props-no-spreading
             {...register('name', {
-              required : 'Event name is required.',
+              required : 'Event name is required',
             })}
             // eslint-disable-next-line react/jsx-props-no-spreading
             {...injected}
@@ -54,6 +53,7 @@ export default function EventDataForm({
             <Controller
               control={rhf.control}
               name="public"
+              defaultValue
               rules={{}}
               render={({ field }) => (
                 <Box>
@@ -79,6 +79,7 @@ export default function EventDataForm({
             <Controller
               control={rhf.control}
               name="hints_enabled"
+              defaultValue={false}
               rules={{}}
               render={({ field }) => (
                 <Box>
@@ -104,6 +105,7 @@ export default function EventDataForm({
             <Controller
               control={rhf.control}
               name="locked"
+              defaultValue={false}
               rules={{}}
               render={({ field }) => (
                 <Box>
