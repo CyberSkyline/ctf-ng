@@ -37,12 +37,10 @@ export default function ScoreAdjustModal({ team }: { team: Team }) {
               <TextField.Root
                 placeholder="Number of points"
                 type="number"
-                // eslint-disable-next-line react/jsx-props-no-spreading
                 {...register('adjustment', {
                   required : 'Point value is required',
                   valueAsNumber : true,
                 })}
-                // eslint-disable-next-line react/jsx-props-no-spreading
                 {...injected}
               />
             )}
@@ -51,9 +49,7 @@ export default function ScoreAdjustModal({ team }: { team: Team }) {
             {(injected) => (
               <TextField.Root
                 placeholder="Reason for adjustment"
-                // eslint-disable-next-line react/jsx-props-no-spreading
                 {...register('reason', { required : 'Reason is required' })}
-                // eslint-disable-next-line react/jsx-props-no-spreading
                 {...injected}
               />
             )}

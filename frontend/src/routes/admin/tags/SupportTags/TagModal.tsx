@@ -41,11 +41,9 @@ export default function CreateTagModal(
               {(injected) => (
                 <TextField.Root
                   placeholder="Enter a tag name"
-                  // eslint-disable-next-line react/jsx-props-no-spreading
                   {...register('name', {
                     required : 'Please enter a name.',
                   })}
-                  // eslint-disable-next-line react/jsx-props-no-spreading
                   {...injected}
                 />
               )}
@@ -55,11 +53,9 @@ export default function CreateTagModal(
                 <input
                   type="color"
                   className="rounded"
-                  // eslint-disable-next-line react/jsx-props-no-spreading
                   {...register('color', {
                     required : 'Please enter a color.',
                   })}
-                  // eslint-disable-next-line react/jsx-props-no-spreading
                   {...injected}
                 />
               )}
@@ -69,11 +65,9 @@ export default function CreateTagModal(
             {(injected) => (
               <TextField.Root
                 placeholder="Enter a description"
-                // eslint-disable-next-line react/jsx-props-no-spreading
                 {...register('description', {
                   required : 'Please enter a description.',
                 })}
-                // eslint-disable-next-line react/jsx-props-no-spreading
                 {...injected}
               />
             )}

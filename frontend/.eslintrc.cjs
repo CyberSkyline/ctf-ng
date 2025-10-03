@@ -29,6 +29,7 @@ module.exports = {
     '@typescript-eslint/no-unused-vars' : [ 'error' ], // Enable the TypeScript version of the rule
     'react/prop-types' : 'off', // Disable prop-types check since TypeScript already handles types
     'react/react-in-jsx-scope' : 'off', // React 17+ doesn't require `import React` in every file
+    'react/jsx-props-no-spreading' : 'off', // Allow prop spreading - react-hook-form relies on this (but make sure it's used responsibly elsewhere)
     'import/extensions' : [
       'error',
       'ignorePackages',

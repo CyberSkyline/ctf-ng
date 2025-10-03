@@ -22,11 +22,9 @@ export default function EventDataForm({
         {(injected) => (
           <TextField.Root
             placeholder="Event Name"
-            // eslint-disable-next-line react/jsx-props-no-spreading
             {...register('name', {
               required : 'Event name is required',
             })}
-            // eslint-disable-next-line react/jsx-props-no-spreading
             {...injected}
           />
         )}
@@ -38,9 +36,7 @@ export default function EventDataForm({
             placeholder="Event Description"
             rows={4}
             resize="vertical"
-            // eslint-disable-next-line react/jsx-props-no-spreading
             {...register('description')}
-            // eslint-disable-next-line react/jsx-props-no-spreading
             {...injected}
           />
         )}
@@ -65,7 +61,6 @@ export default function EventDataForm({
                     name={field.name}
                     ref={field.ref}
                     size="3"
-                    // eslint-disable-next-line react/jsx-props-no-spreading
                     {...injected}
                   />
                 </Box>
@@ -91,7 +86,6 @@ export default function EventDataForm({
                     name={field.name}
                     ref={field.ref}
                     size="3"
-                    // eslint-disable-next-line react/jsx-props-no-spreading
                     {...injected}
                   />
                 </Box>
@@ -117,7 +111,6 @@ export default function EventDataForm({
                     name={field.name}
                     ref={field.ref}
                     size="3"
-                    // eslint-disable-next-line react/jsx-props-no-spreading
                     {...injected}
                   />
                 </Box>
@@ -133,7 +126,6 @@ export default function EventDataForm({
           {(injected) => (
             <TextField.Root
               type="number"
-              // eslint-disable-next-line react/jsx-props-no-spreading
               {...register('max_team_size', {
                 required : 'Max team size is required',
                 valueAsNumber : true,
@@ -146,7 +138,6 @@ export default function EventDataForm({
                   message : 'Max team size cannot exceed 8',
                 },
               })}
-              // eslint-disable-next-line react/jsx-props-no-spreading
               {...injected}
             />
           )}
@@ -158,7 +149,6 @@ export default function EventDataForm({
               type="number"
               placeholder="No time limit"
               step={1}
-              // eslint-disable-next-line react/jsx-props-no-spreading
               {...register('time_limit_minutes', {
                 valueAsNumber : true,
                 min : {
@@ -166,7 +156,6 @@ export default function EventDataForm({
                   message : 'Time limit must be at least 1 minute',
                 },
               })}
-              // eslint-disable-next-line react/jsx-props-no-spreading
               {...injected}
             />
           )}
@@ -178,11 +167,9 @@ export default function EventDataForm({
           {(injected) => (
             <TextField.Root
               type="datetime-local"
-              // eslint-disable-next-line react/jsx-props-no-spreading
               {...register('registration_start_date', {
                 valueAsDate : true,
               })}
-              // eslint-disable-next-line react/jsx-props-no-spreading
               {...injected}
             />
 
@@ -192,11 +179,9 @@ export default function EventDataForm({
           {(injected) => (
             <TextField.Root
               type="datetime-local"
-              // eslint-disable-next-line react/jsx-props-no-spreading
               {...register('registration_end_date', {
                 valueAsDate : true,
               })}
-              // eslint-disable-next-line react/jsx-props-no-spreading
               {...injected}
             />
           )}
@@ -208,11 +193,9 @@ export default function EventDataForm({
           {(injected) => (
             <TextField.Root
               type="datetime-local"
-              // eslint-disable-next-line react/jsx-props-no-spreading
               {...register('start_time', {
                 valueAsDate : true,
               })}
-              // eslint-disable-next-line react/jsx-props-no-spreading
               {...injected}
             />
           )}
@@ -221,11 +204,9 @@ export default function EventDataForm({
           {(injected) => (
             <TextField.Root
               type="datetime-local"
-              // eslint-disable-next-line react/jsx-props-no-spreading
               {...register('end_time', {
                 valueAsDate : true,
               })}
-              // eslint-disable-next-line react/jsx-props-no-spreading
               {...injected}
             />
           )}

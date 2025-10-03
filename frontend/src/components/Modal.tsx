@@ -74,7 +74,6 @@ export default function Modal<T extends FieldValues>({
         className={twMerge('flex flex-col gap-3', className)}
         // aria-describedby should be set to undefined if no description is provided, otherwise it should not be set at all.
         // as far as i know, prop spreading is the only way to accomplish this.
-        // eslint-disable-next-line react/jsx-props-no-spreading
         {
           ...(!description ? { 'aria-describedby' : undefined } : {})
         }

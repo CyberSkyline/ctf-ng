@@ -94,7 +94,6 @@ export default function RegistrationModal({ eventId, eventName, isTeamGame }: {e
                 {(injected) => (
                   <TextField.Root
                     placeholder={isTeamGame ? 'Enter your team name' : 'Enter your leaderboard name'}
-                    // eslint-disable-next-line react/jsx-props-no-spreading
                     {...register('leaderboardName', {
                       required : {
                         value : true, message : 'This field is required',
@@ -103,7 +102,6 @@ export default function RegistrationModal({ eventId, eventName, isTeamGame }: {e
                         value : 100, message : 'Name must be at most 100 characters',
                       },
                     })}
-                    // eslint-disable-next-line react/jsx-props-no-spreading
                     {...injected}
                   />
                 )}
@@ -122,7 +120,6 @@ export default function RegistrationModal({ eventId, eventName, isTeamGame }: {e
                 {(injected) => (
                   <TextField.Root
                     readOnly={joinWithCode}
-                    // eslint-disable-next-line react/jsx-props-no-spreading
                     {...register('joinCode', {
                       required : {
                         value : true, message : 'An invite code is required to join an existing team',
@@ -134,7 +131,6 @@ export default function RegistrationModal({ eventId, eventName, isTeamGame }: {e
                         value : 32, message : 'Invite code should be 32 characters',
                       },
                     })}
-                    // eslint-disable-next-line react/jsx-props-no-spreading
                     {...injected}
                   />
                 )}
