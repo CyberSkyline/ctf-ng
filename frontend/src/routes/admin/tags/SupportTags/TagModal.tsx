@@ -33,7 +33,6 @@ export default function CreateTagModal(
       onSubmit={handleSubmit}
       submitVerb={isCreating ? 'Create' : 'Update'}
       defaultValues={omit(defaultValues, 'id', 'ticket_count')}
-      requireTouchingForm
     >
       {({ register, formState : { errors } }) => (
         <>

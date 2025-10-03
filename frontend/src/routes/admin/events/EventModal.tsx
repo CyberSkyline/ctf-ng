@@ -62,7 +62,6 @@ export default function EventModal({
       onSubmit={handleSubmit}
       submitVerb={eventToUpdate ? 'Update' : 'Create'}
       submitColor={eventToUpdate ? COLOR_WARNING : COLOR_POSITIVE}
-      requireTouchingForm={!!eventToUpdate}
       defaultValues={defaultValues}
     >
       {(rhf) => <EventDataForm rhf={rhf} />}

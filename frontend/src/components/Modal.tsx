@@ -5,7 +5,6 @@ import {
   Dialog,
   Flex,
 } from '@radix-ui/themes';
-import { isEmpty } from 'lodash';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   useForm,
@@ -30,7 +29,6 @@ interface ModalProps<T extends FieldValues> {
   submitVerb?: string,
   submitColor?: AccentColor,
   submitDisabled?: boolean,
-  requireTouchingForm?: boolean,
 }
 
 export default function Modal<T extends FieldValues>({
@@ -137,9 +135,7 @@ export default function Modal<T extends FieldValues>({
               variant={onSubmit ? 'solid' : 'soft'}
               loading={loading}
               disabled={
-                loading
-                || submitDisabled
-                || (Object.keys(rhf.getValues()).length > 0 && isEmpty(rhf.formState.dirtyFields))
+                loading || submitDisabled
               }
             >
               {onSubmit ? submitVerb : 'Close'}
