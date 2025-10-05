@@ -37,7 +37,7 @@ def remove_blueprint(app, blueprint_name: str):
 
     app.blueprints.pop(blueprint_name, None)
 
-    
+
     for d in (
         app.before_request_funcs,
         app.after_request_funcs,
@@ -51,17 +51,17 @@ def remove_blueprint(app, blueprint_name: str):
         if endpoint.startswith(prefix):
             app.view_functions.pop(endpoint, None)
 
-    
+
     kept = []
     for r in app.url_map.iter_rules():
         if not r.endpoint.startswith(prefix):
-            kept.append(r.empty()) 
+            kept.append(r.empty())
 
 
     new_map = Map(
         strict_slashes=app.url_map.strict_slashes,
         host_matching=app.url_map.host_matching,
-        redirect_defaults=app.url_map.redirect_defaults,  
+        redirect_defaults=app.url_map.redirect_defaults,
     )
 
     for r in kept:
@@ -79,7 +79,7 @@ def remove_blueprint(app, blueprint_name: str):
         app.url_map._remap = True
     except Exception:
         pass
-    
+
 
 def delete_unwanted_ctfd_routes(app: Any) -> None:
     """Remove or override CTFd routes that conflict with our plugin."""
@@ -120,7 +120,6 @@ def delete_unwanted_ctfd_routes(app: Any) -> None:
 
 def _remove_appwide_handler(bucket: dict, predicate):
     lst = bucket.get(None, [])
-    before = list(lst)
     keep = [f for f in lst if not predicate(f)]
     lst[:] = keep
 
@@ -140,7 +139,7 @@ def remove_registered_errorhandlers(app):
 
 
 
-    
+
 
 
 # Swagger Docs

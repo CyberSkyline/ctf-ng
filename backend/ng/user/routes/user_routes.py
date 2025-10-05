@@ -1,14 +1,11 @@
 """
 My User API routes
 """
-from CTFd.utils import get_app_config
-from CTFd.plugins import bypass_csrf_protection
 from CTFd.models import Users
 from CTFd.utils.crypto import verify_password
 from CTFd.utils.security.csrf import generate_nonce
 from CTFd.utils.security.signing import hmac
 from flask_restx import Namespace, Resource
-from flask import current_app as app
 from flask import session
 from ...core.utils import success_response
 from ...core.middleware import (
@@ -93,11 +90,7 @@ class UserLogin(Resource):
 
         if user:
             if user.password is None:
-                errors.append(
-                    "Your account was registered with a 3rd party authentication provider. "
-                    "Please try logging in with a configured authentication provider."
-                )
-                return render_template("login.html", errors=errors)
+                return {"success": False, "errors": {"authentication": "Invalid username or password"}}, 401
 
             if user and verify_password(password, user.password):
                 session['id'] = current_user.id

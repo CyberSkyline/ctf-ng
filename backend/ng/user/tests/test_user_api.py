@@ -232,7 +232,7 @@ def test_delete_user(admin_client, user):
 
     response = admin_client.get(f"/ng/admin/users/{user_id}")
     assert response.status_code == 404
-    
+
 def test_user_login(logged_in_client, user):
     """
     Test user login endpoint
@@ -280,7 +280,7 @@ def test_multiple_incorrect_attempts(logged_in_client, user):
         data = response.get_json()
         assert data["success"] is False
         assert "authentication" in data["errors"]
-    
+
     response = logged_in_client.post(
         "/ng/users/login",
         json={"username": preset_username, "password": correct_password}
