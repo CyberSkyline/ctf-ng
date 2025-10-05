@@ -29,8 +29,8 @@ class TestCoreIntegration:
 
     def test_frontend_routes(self, client):
         """Test frontend application routes."""
-        # Test the hello route (frontend app)
-        response = client.get("/hello") # TODO update when daniel refactors
+        # Test the root route (frontend app)
+        response = client.get("/")
 
         if response.status_code == 200:
             content = response.get_data(as_text=True)

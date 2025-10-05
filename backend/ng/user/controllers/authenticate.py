@@ -134,7 +134,7 @@ def okta_callback():
 
         db.session.commit()
 
-        return redirect("/hello") # TODO: update this when the vite entrypoint is updated
+        return redirect("/")
 
 
     except Exception as e:
