@@ -5,7 +5,11 @@ All user-accessed URLs use the same view for the frontend application.
 from typing import Any
 from flask import Blueprint, render_template
 from flask import current_app as app, session, request
+from sqlalchemy.exc import IntegrityError
 from CTFd.utils import get_app_config
+from CTFd.models import Users, Admins, db
+from CTFd.utils.security.csrf import generate_nonce
+from CTFd.utils import validators
 
 plugin_views = Blueprint("plugin_views", __name__)
 
@@ -21,10 +25,10 @@ def view_template(subpath: str) -> Any:
 
 @plugin_views.route("/setup", methods=["GET", "POST"])
 def setup():
+    static_build_path = get_app_config("STATIC_BUILD_PATH")
     if not session.get("nonce"):
         session["nonce"] = generate_nonce()
     if request.method == "POST":
-
 
         # Administration
         name = request.form["name"]

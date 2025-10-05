@@ -135,6 +135,9 @@ def remove_registered_helpers(app):
         lambda f: f.__name__ in {"needs_setup", "needs_setup_safe"}
     )
 
+def remove_registered_errorhandlers(app):
+    app.error_handler_spec.clear()
+
 
 
     
