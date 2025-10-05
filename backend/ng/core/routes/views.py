@@ -7,7 +7,7 @@ from flask import Blueprint, render_template
 from flask import current_app as app, session, request
 from sqlalchemy.exc import IntegrityError
 from CTFd.utils import get_app_config
-from CTFd.models import Users, Admins, db
+from CTFd.models import Admins, db
 from CTFd.utils.security.csrf import generate_nonce
 
 plugin_views = Blueprint("plugin_views", __name__)
