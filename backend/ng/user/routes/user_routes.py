@@ -69,7 +69,7 @@ class UserTeams(Resource):
 #The POST request for login must have a nonce attached to it or it will be blocked by CSRF protection in many cases
 @users_user_namespace.route("/login")
 class UserLogin(Resource):
-    @user_endpoint(json_required=True)
+    @public_endpoint(json_required=True)
     @users_user_namespace.doc(
         description="User login endpoint",
         responses={
@@ -103,7 +103,7 @@ class UserLogin(Resource):
                 return {"success": False, "errors": {"authentication": "Invalid username or password"}}, 401
 
         else:
-            return {"success": False, "errors": {"authentication": "Fucked username or password"}}, 401
+            return {"success": False, "errors": {"authentication": "Invalid username or password"}}, 401
 
 
 

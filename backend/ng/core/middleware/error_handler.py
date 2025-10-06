@@ -120,11 +120,16 @@ def register_error_handlers(app):
             500,
         )
 
+    @app.errorhandler(404)
+    def handle_not_found_error(error):
+        db.session.remove()
+        logger.warning(f"Not Found Error: {str(error)}")
+        return error_response("Resource not found.", "not_found", 404)
+
     @app.errorhandler(Exception)
     def handle_generic_exception(error):
         db.session.remove()
         import traceback
-
         print(f"ERROR: {str(error)}")
         print(traceback.format_exc())
         logger.exception("Unexpected internal server error occurred")
