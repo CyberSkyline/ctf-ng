@@ -348,7 +348,7 @@ def user_factory(db_session):
     from .user.models.User import User
 
     def _factory(name="Test User", email="testuser@example.com", password="password", admin=False):
-        user = Users(name=name, email=email)
+        user = Users(name=name, email=email, password=password)
         db_session.add(user)
         db_session.commit()
 

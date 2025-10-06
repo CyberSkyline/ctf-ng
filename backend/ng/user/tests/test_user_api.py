@@ -233,3 +233,75 @@ def test_delete_user(admin_client, user):
     response = admin_client.get(f"/ng/admin/users/{user_id}")
     assert response.status_code == 404
 
+def test_user_login(logged_in_client, user):
+    """
+    Test user login endpoint
+    """
+    preset_username = "testuser"
+    preset_password = "password"
+
+
+    response = logged_in_client.post(
+        "/ng/users/login",
+        json={"username": preset_username, "password": preset_password}
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+
+    assert data["success"] is True
+    assert "session" in logged_in_client.cookie_jar._cookies['localhost.local']['/']
+
+def test_user_logout(logged_in_client):
+    """
+    Test user logout endpoint
+    """
+    response = logged_in_client.post("/ng/users/logout",json={})
+
+    assert response.status_code == 200
+    data = response.get_json()
+
+    assert data["success"] is True
+    assert "session" not in logged_in_client.cookie_jar._cookies['localhost.local']['/']
+
+def test_multiple_incorrect_attempts(logged_in_client, user):
+    """
+    Test multiple incorrect login attempts
+    """
+    preset_username = "testuser"
+    incorrect_password = "wrongpassword"
+    correct_password = "password"
+
+    for _ in range(5):
+        response = logged_in_client.post(
+            "/ng/users/login",
+            json={"username": preset_username, "password": incorrect_password}
+        )
+        assert response.status_code == 401
+        data = response.get_json()
+        assert data["success"] is False
+        assert "authentication" in data["errors"]
+
+    response = logged_in_client.post(
+        "/ng/users/login",
+        json={"username": preset_username, "password": correct_password}
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert "session" in logged_in_client.cookie_jar._cookies['localhost.local']['/']
+
+def test_login_with_email(logged_in_client, user):
+    """
+    Test user login using email instead of username
+    """
+    print("WORKS?")
+    preset_email = "test@example.com"
+    preset_password = "password"
+    response = logged_in_client.post(
+        "/ng/users/login",
+        json={"username": preset_email, "password": preset_password}
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert "session" in logged_in_client.cookie_jar._cookies['localhost.local']['/']

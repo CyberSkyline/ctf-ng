@@ -13,7 +13,7 @@ import {
 
 export type AccentColor = (typeof accentColors)[number];
 
-export const ROUTEPREFIX: string = '/hello';
+export const ROUTEPREFIX: string = '/';
 export const APIPREFIX: string = '/ng';
 
 // Semantic icons used throughout the UI, defined here for consistency

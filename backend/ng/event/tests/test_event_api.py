@@ -603,7 +603,7 @@ class Test_Event_Team_Management:
         """Test that the team promote endpoint fails when trying to promote in a closed event."""
         response = closed_event_client.post(
             f"/ng/events/{1}/me/team/promote",
-            json = {"user_id": 3}
+            json = {"user_id": 2}
         )
         print(response.get_json())
         assert response.status_code == 403
@@ -693,7 +693,7 @@ class Test_Event_Team_Management:
         """Test that the team kick endpoint fails when trying to kick a user from a closed event."""
         response = closed_event_client.post(
             f"/ng/events/{1}/me/team/kick",
-            json = {"user_id": 3}
+            json = {"user_id": 2}
         )
         assert response.status_code == 403
         data = response.get_json()
