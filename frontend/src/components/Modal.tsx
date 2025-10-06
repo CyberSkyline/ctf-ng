@@ -5,52 +5,63 @@ import {
   Dialog,
   Flex,
 } from '@radix-ui/themes';
-import { Form } from 'radix-ui';
 import { useEffect, useState, type ReactNode } from 'react';
+import {
+  useForm,
+  type DefaultValues,
+  type FieldValues,
+  type UseFormReturn,
+} from 'react-hook-form';
 import { TbX } from 'react-icons/tb';
 import { twMerge } from 'tailwind-merge';
 import { ErrorCallout } from './Callouts';
 
-interface ModalProps {
+interface ModalProps<T extends FieldValues> {
   title: string,
   description?: string,
-  children?: ReactNode,
+  children?: ReactNode | ((rhf: UseFormReturn<T>) => ReactNode),
   trigger: ReactNode,
   className?: string,
-  onSubmit?: (formData: FormData) => Promise<unknown>,
+  defaultValues?: DefaultValues<T>,
+  onSubmit?: (data: T) => Promise<unknown>,
   onOpenChange?: (open: boolean) => void,
   defaultOpen?: boolean,
   submitVerb?: string,
   submitColor?: AccentColor,
   submitDisabled?: boolean,
-  requireTouchingForm?: boolean,
 }
 
-export default function Modal({
+export default function Modal<T extends FieldValues>({
   title,
   description,
   children,
   trigger,
   className,
+  defaultValues,
   onSubmit,
   onOpenChange,
   defaultOpen = false,
   submitVerb = 'Submit',
   submitColor = COLOR_POSITIVE,
   submitDisabled = false,
-  requireTouchingForm = false,
-} : ModalProps) {
+} : ModalProps<T>) {
   const [ open, setOpen ] = useState<boolean>(defaultOpen);
   const [ error, setError ] = useState<string | null>(null);
   const [ loading, setLoading ] = useState<boolean>(false);
-  const [ formTouched, setFormTouched ] = useState<boolean>(false);
+
+  const rhf = useForm<T>({
+    mode : 'onBlur',
+    defaultValues,
+  });
 
   useEffect(() => {
-    if (!open) {
-      // reset state when modal closes
-      setFormTouched(false);
+    if (open) {
+      // reset state when modal opens
       setError(null);
+      setLoading(false);
+      rhf.reset(defaultValues);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ open ]);
 
   return (
@@ -63,7 +74,6 @@ export default function Modal({
         className={twMerge('flex flex-col gap-3', className)}
         // aria-describedby should be set to undefined if no description is provided, otherwise it should not be set at all.
         // as far as i know, prop spreading is the only way to accomplish this.
-        // eslint-disable-next-line react/jsx-props-no-spreading
         {
           ...(!description ? { 'aria-describedby' : undefined } : {})
         }
@@ -94,19 +104,16 @@ export default function Modal({
             {error}
           </ErrorCallout>
         )}
-        <Form.Root
-          className="flex flex-col gap-3"
-          onSubmitCapture={(e) => {
-            e.preventDefault();
 
+        <form
+          className="flex flex-col gap-3"
+          onSubmit={rhf.handleSubmit((data) => {
             if (onSubmit) {
-              const formData = new FormData(e.currentTarget);
               setLoading(true);
-              onSubmit(formData)
-                .then(() => {
-                  // if promise resolves, close the modal
-                  setOpen(false);
-                })
+              onSubmit(data).then(() => {
+                // if promise resolves, close the modal
+                setOpen(false);
+              })
                 .catch((err) => {
                   // if promise rejects, set the error message
                   setError(err.message);
@@ -117,24 +124,21 @@ export default function Modal({
               // if no submit handler is defined, just close the modal
               setOpen(false);
             }
-          }}
-          onChange={() => {
-            setFormTouched(true);
-          }}
+          })}
         >
-          {children}
+          {typeof children === 'function' ? children(rhf) : children}
           <Flex direction="row-reverse" justify="start" align="center" gap="2">
-            <Form.Submit asChild>
-              <Button
-                type="submit"
-                color={onSubmit ? submitColor : 'gray'}
-                variant={onSubmit ? 'solid' : 'soft'}
-                loading={loading}
-                disabled={loading || submitDisabled || (requireTouchingForm && !formTouched)}
-              >
-                {onSubmit ? submitVerb : 'Close'}
-              </Button>
-            </Form.Submit>
+            <Button
+              type="submit"
+              color={onSubmit ? submitColor : 'gray'}
+              variant={onSubmit ? 'solid' : 'soft'}
+              loading={loading}
+              disabled={
+                loading || submitDisabled
+              }
+            >
+              {onSubmit ? submitVerb : 'Close'}
+            </Button>
             {onSubmit && (
               <Dialog.Close>
                 <Button type="button" variant="soft" color="gray">
@@ -143,7 +147,7 @@ export default function Modal({
               </Dialog.Close>
             )}
           </Flex>
-        </Form.Root>
+        </form>
       </Dialog.Content>
     </Dialog.Root>
   );
