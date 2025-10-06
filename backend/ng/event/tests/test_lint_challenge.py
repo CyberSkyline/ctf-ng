@@ -1,9 +1,8 @@
 import base64
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from ..controllers.admin.lint_challenge import lint_challenge, serialize_warnings, format_validation_error
-from ...core.exceptions import ValidationError
 
 
 class TestLintChallenge:
