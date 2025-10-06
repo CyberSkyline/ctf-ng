@@ -10,6 +10,7 @@ from flask import session
 from ...core.utils import success_response
 from ...core.middleware import (
     user_endpoint,
+    public_endpoint,
 )
 
 users_user_namespace = Namespace("/users", description="user endpoints for users")
@@ -69,7 +70,7 @@ class UserTeams(Resource):
 #The POST request for login must have a nonce attached to it or it will be blocked by CSRF protection in many cases
 @users_user_namespace.route("/login")
 class UserLogin(Resource):
-    @user_endpoint(json_required=True)
+    @public_endpoint(json_required=True)
     @users_user_namespace.doc(
         description="User login endpoint",
         responses={
@@ -78,7 +79,7 @@ class UserLogin(Resource):
             500: "Internal server error",
         },
     )
-    def post(self, json_data, current_user, **kwargs):
+    def post(self, json_data, **kwargs):
         """User login endpoint"""
         username = json_data.get("username")
         password = json_data.get("password")
@@ -93,9 +94,9 @@ class UserLogin(Resource):
                 return {"success": False, "errors": {"authentication": "Invalid username or password"}}, 401
 
             if user and verify_password(password, user.password):
-                session['id'] = current_user.id
+                session['id'] = user.id
                 session['nonce'] = generate_nonce()
-                session['hash'] = hmac(current_user.ctfd_user.password)
+                session['hash'] = hmac(user.password)
                 session['permanent'] = True
 
                 return {"success": True}, 200
@@ -103,7 +104,7 @@ class UserLogin(Resource):
                 return {"success": False, "errors": {"authentication": "Invalid username or password"}}, 401
 
         else:
-            return {"success": False, "errors": {"authentication": "Fucked username or password"}}, 401
+            return {"success": False, "errors": {"authentication": "Invalid username or password"}}, 401
 
 
 
