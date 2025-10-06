@@ -22,6 +22,7 @@ from ..models import (
     AnnouncementType,
 )
 from ...team.models import TeamMember
+from ...permissions.controllers import get_support_role_users
 
 
 class WebSocketEvent(str, Enum):
@@ -133,11 +134,39 @@ class NotificationService:
         subject: str,
     ) -> None:
         """
-        Notify admins about a new support ticket
+        Notify all support staff about a new support ticket via refetch only
         """
         NotificationService._emit_refetch(
             path = "/ng/support/tickets",
-            user_ids = None  # Via _emit_refetch fallback
+        )
+
+    @staticmethod
+    def notify_unassigned_ticket_reply(
+        ticket_id: int,
+        author_id: int,
+    ) -> None:
+        """
+        Notify all support staff when user replies to unassigned ticket
+        """
+        support_users = get_support_role_users()
+
+        for support_user in support_users:
+            notification = Notification.create_notification(
+                notification_type = NotificationType.TICKET_MESSAGE,
+                title = "Support Ticket Update",
+                message = "User replied to unassigned ticket",
+                recipient_id = support_user.ctfd_user.id,
+                sender_id = author_id,
+                ticket_id = ticket_id,
+                commit = False,
+            )
+
+            NotificationService._emit_notification(notification)
+
+        db.session.commit()
+
+        NotificationService._emit_refetch(
+            path = f"/ng/support/tickets/{ticket_id}",
         )
 
     @staticmethod
