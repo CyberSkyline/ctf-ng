@@ -294,7 +294,6 @@ def test_login_with_email(logged_in_client, user):
     """
     Test user login using email instead of username
     """
-    print("WORKS?")
     preset_email = "test@example.com"
     preset_password = "password"
     response = logged_in_client.post(

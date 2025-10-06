@@ -117,6 +117,8 @@ def delete_unwanted_ctfd_routes(app: Any) -> None:
     remove_blueprint(app, "social")
     remove_blueprint(app, "theme")
     remove_blueprint(app, "views")
+    remove_blueprint(app, "admin")
+    remove_blueprint(app, "api")
 
 def _remove_appwide_handler(bucket: dict, predicate):
     lst = bucket.get(None, [])
