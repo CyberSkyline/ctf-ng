@@ -168,7 +168,7 @@ class ContainerBlueprint(db.Model):
         if isinstance(self.environment, list):
             return self.environment
 
-        return {k: (v(team_seed) if isinstance(v, Callable) else v) for k, v in self.environment.items()}
+        return {k: (v(team_seed=team_seed) if isinstance(v, Callable) else v) for k, v in self.environment.items()}
 
     def pull_image(self):
         client = get_client(config.DOCKER_HOST)
