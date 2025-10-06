@@ -131,7 +131,7 @@ def format_validation_error(error: Exception) -> list[SerializedLintMessage]:
             message=f"Error: {str(error)}"
         )]
 
-def import_challenge_from_yaml(json_data) -> SerializedLint | None:
+def lint_challenge(json_data) -> SerializedLint | None:
     """
     Import a challenge from a YAML definition.
 
