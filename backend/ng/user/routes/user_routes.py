@@ -79,7 +79,7 @@ class UserLogin(Resource):
             500: "Internal server error",
         },
     )
-    def post(self, json_data, current_user, **kwargs):
+    def post(self, json_data, **kwargs):
         """User login endpoint"""
         username = json_data.get("username")
         password = json_data.get("password")
@@ -94,9 +94,9 @@ class UserLogin(Resource):
                 return {"success": False, "errors": {"authentication": "Invalid username or password"}}, 401
 
             if user and verify_password(password, user.password):
-                session['id'] = current_user.id
+                session['id'] = user.id
                 session['nonce'] = generate_nonce()
-                session['hash'] = hmac(current_user.ctfd_user.password)
+                session['hash'] = hmac(user.password)
                 session['permanent'] = True
 
                 return {"success": True}, 200
