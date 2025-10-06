@@ -10,6 +10,7 @@ from flask import session
 from ...core.utils import success_response
 from ...core.middleware import (
     user_endpoint,
+    public_endpoint,
 )
 
 users_user_namespace = Namespace("/users", description="user endpoints for users")
