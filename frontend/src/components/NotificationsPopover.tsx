@@ -31,7 +31,7 @@ export default function NotificationsPopover({ triggerClassName, contentClassNam
     year : 'numeric',
   };
 
-  const { TICKETS, TEAM } = NOTIF_TYPE;
+  const { TICKETS } = NOTIF_TYPE;
 
   const markAllRead = () => {
     markAllNotificationsRead()
@@ -48,9 +48,7 @@ export default function NotificationsPopover({ triggerClassName, contentClassNam
     let link = '';
     if (includes(TICKETS, notif.type)) {
       link = `/support/${notif.ticket_id}`;
-    } else if (includes(TEAM, notif.type)) {
-      link = `/events/${notif.event_id}?tab=team`;
-    }
+    } // keep structure in place for future possible expansions of notif_types
 
     return (
       <Card

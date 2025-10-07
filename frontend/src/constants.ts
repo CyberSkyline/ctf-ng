@@ -74,7 +74,4 @@ export const NOTIF_TYPE = {
     'ticket_status_change',
     'ticket_assigned',
   ],
-  TEAM : [
-    'team_invitation',
-  ],
 };
