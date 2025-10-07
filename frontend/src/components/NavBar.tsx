@@ -6,6 +6,7 @@ import { NavigationMenu } from 'radix-ui';
 import { TbUserCircle } from 'react-icons/tb';
 import { NavLink, useLocation } from 'react-router';
 import { twMerge } from 'tailwind-merge';
+import NotificationsPopover from 'components/NotificationsPopover';
 
 export default function NavBar() {
   const logout = () => {
@@ -103,16 +104,26 @@ export default function NavBar() {
               Support
             </NavigationMenu.Item>
           </NavLink>
-          <NavigationMenu.Item className={location.pathname === '/notifications' ? activeLinkClass : defaultLinkClass}>
-            Notifications*
-          </NavigationMenu.Item>
+
+          <NotificationsPopover
+            triggerClassName={defaultLinkClass}
+            contentClassName={twMerge(contentBase, theme === 'dark' ? contentDark : contentLight)}
+          />
 
           <NavigationMenu.Item>
-            <NavigationMenu.Trigger className={defaultLinkClass}>
+            <NavigationMenu.Trigger
+              className={defaultLinkClass}
+              onPointerMove={(event) => event.preventDefault()}
+              onPointerLeave={(event) => event.preventDefault()}
+            >
               <TbUserCircle className="inline" />
               {data && ` ${data.name}`}
             </NavigationMenu.Trigger>
-            <NavigationMenu.Content className={twMerge(contentBase, theme === 'dark' ? contentDark : contentLight)}>
+            <NavigationMenu.Content
+              className={twMerge(contentBase, theme === 'dark' ? contentDark : contentLight)}
+              onPointerEnter={(event) => event.preventDefault()}
+              onPointerLeave={(event) => event.preventDefault()}
+            >
               <ul className="grid gap-2 p-3">
                 <li>
                   <NavLink

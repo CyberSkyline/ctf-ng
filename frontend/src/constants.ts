@@ -66,16 +66,15 @@ export const ROLES: Record<string, { color: AccentColor; icon: IconType }> = {
   },
 };
 
-
 /* Find these const defined in NotificationType.py */
 export const NOTIF_TYPE = {
   TICKETS : [
-    "ticket_create",
-    "ticket_message",
-    "ticket_status_change",
-    "ticket_assigned",
+    'ticket_create',
+    'ticket_message',
+    'ticket_status_change',
+    'ticket_assigned',
   ],
-  TEAM: [
-    "team_invitation",
-  ]
+  TEAM : [
+    'team_invitation',
+  ],
 };
