@@ -108,7 +108,7 @@ export default function NavBar() {
           </NavigationMenu.Item>
 
           <NavigationMenu.Item>
-            <NavigationMenu.Trigger className={twMerge(defaultLinkClass)}>
+            <NavigationMenu.Trigger className={defaultLinkClass}>
               <TbUserCircle className="inline" />
               {data && ` ${data.name}`}
             </NavigationMenu.Trigger>
