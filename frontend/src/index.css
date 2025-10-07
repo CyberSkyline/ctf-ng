@@ -34,6 +34,10 @@ form label[data-invalid="true"] {
   @apply text-(--red-11);
 }
 
+button:not(:disabled) {
+  cursor: pointer !important;
+}
+
 /* Give invalid form elements a red accent color */
 /* Effectively sets their color prop to red. */
 [aria-invalid="true"] {
