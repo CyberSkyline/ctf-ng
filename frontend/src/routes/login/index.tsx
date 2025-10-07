@@ -1,3 +1,4 @@
+import { SSOPATH } from '@/constants';
 import {
   Box,
   Button,
@@ -19,9 +20,12 @@ export default function Login() {
             To continue, please log in with your organization&apos;s Single Sign-On (SSO) provider.
           </Text>
 
-          <a href="/ng/authenticate/okta/login" className="w-full">
-            <Button size="4" className="!w-full">Log in with SSO</Button>
-          </a>
+          <Button asChild size="4" className="!w-full">
+            <a href={SSOPATH}>
+              Log in with SSO
+            </a>
+          </Button>
+
           <Text color="gray" size="2">
             Or,
             {' '}
