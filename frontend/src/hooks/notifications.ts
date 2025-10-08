@@ -1,6 +1,6 @@
 import useSWR, { mutate } from 'swr';
 import { apiMutation } from '@/fetchers';
-import type { Notification } from '@/types';
+import type { Announcement, Notification } from '@/types';
 
 /**
  * Retrieves a list of notifications for the logged in user
@@ -37,5 +37,36 @@ export function markAllNotificationsRead() {
   }).then(() => {
     mutate('/notifications/me');
     mutate('/notifications/me/unread-count');
+  });
+}
+
+/**
+ * Gets all announcements
+ */
+export function useMyAnnouncements() {
+  return useSWR<Announcement[], Error>('/notifications/announcements');
+}
+
+/* ADMIN ENDPOINTS */
+
+export function useAnnouncements() {
+  return useSWR<Announcement[]>('/admin/notifications/announcements');
+}
+
+export function addNewAnnouncement(data: {title: string, message: string}) {
+  return apiMutation('/admin/notifications/announce', data, {
+    method : 'POST',
+  }).then(() => {
+    mutate('/notifications/me');
+    mutate('/admin/notifications/announcements');
+  });
+}
+
+export function addNewEventAnnouncement(data: { eventId: number, }) {
+  return apiMutation(`/admin/notifications/events/${data.eventId}/announce`, data, {
+    method : 'POST',
+  }).then(() => {
+    mutate('/notifications/me');
+    mutate('/admin/notifications/announcements');
   });
 }
