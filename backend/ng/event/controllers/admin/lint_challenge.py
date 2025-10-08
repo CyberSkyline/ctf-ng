@@ -1,5 +1,3 @@
-
-import base64
 from typing import NotRequired, TypedDict
 from collections.abc import Iterable
 

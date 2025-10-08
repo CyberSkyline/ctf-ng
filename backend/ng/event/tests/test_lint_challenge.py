@@ -50,11 +50,8 @@ class TestLintChallenge:
     ])
     def test_lint_challenge_valid_yaml_no_warnings(self, valid_yaml, expected_warnings):
         """Test linting valid YAML that produces no warnings"""
-        encoded = base64.urlsafe_b64encode(valid_yaml.encode()).decode()
-        yaml_data = {"yaml": encoded}
-
         # Act
-        result = lint_challenge(yaml_data)
+        result = lint_challenge(valid_yaml)
 
         # Assert - the function might return warnings even for valid YAML
         if result is None:
@@ -113,11 +110,8 @@ class TestLintChallenge:
     ])
     def test_lint_challenge_valid_yaml_with_warnings(self, yaml_with_warnings, expected_warning_count):
         """Test linting valid YAML that produces warnings"""
-        encoded = base64.urlsafe_b64encode(yaml_with_warnings.encode()).decode()
-        yaml_data = {"yaml": encoded}
-
         # Act
-        result = lint_challenge(yaml_data)
+        result = lint_challenge(yaml_with_warnings)
 
         # Assert
         assert result is not None
@@ -145,11 +139,8 @@ class TestLintChallenge:
               answer: "4"
               max_attempts: 3
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
-
         # Act
-        result = lint_challenge(yaml_data)
+        result = lint_challenge(yaml_content)
 
         # Assert
         assert result is not None
@@ -188,11 +179,8 @@ class TestLintChallenge:
               answer: "4"
               max_attempts: 3
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
-
         # Act
-        result = lint_challenge(yaml_data)
+        result = lint_challenge(yaml_content)
 
         # Assert
         assert result is not None
@@ -231,11 +219,8 @@ class TestLintChallenge:
               answer: "4"
               max_attempts: 3
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
-
         # Act
-        result = lint_challenge(yaml_data)
+        result = lint_challenge(yaml_content)
 
         # Assert
         assert result is not None
@@ -292,11 +277,8 @@ class TestLintChallenge:
               answer: "4"
               max_attempts: 3
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
-
         # Act
-        result = lint_challenge(yaml_data)
+        result = lint_challenge(yaml_content)
 
         # Assert
         assert result is not None
@@ -330,11 +312,8 @@ class TestLintChallenge:
               answer: "4"
               max_attempts: 3
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
-
         # Act
-        result = lint_challenge(yaml_data)
+        result = lint_challenge(yaml_content)
 
         # Assert
         assert result is not None
@@ -378,11 +357,8 @@ class TestLintChallenge:
               answer: "4"
               max_attempts: 3
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
-
         # Act
-        result = lint_challenge(yaml_data)
+        result = lint_challenge(yaml_content)
 
         # Assert
         assert result is not None
@@ -426,11 +402,8 @@ class TestLintChallenge:
               answer: "4"
               max_attempts: 3
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
-
         # Act
-        result = lint_challenge(yaml_data)
+        result = lint_challenge(yaml_content)
 
         # Assert - should either be None or only have ComposeFile level warnings about deployment
         if result is not None and "warnings" in result:
@@ -483,11 +456,8 @@ class TestLintChallenge:
     ])
     def test_lint_challenge_invalid_yaml(self, invalid_yaml, expected_error_pattern):
         """Test linting invalid YAML that produces errors"""
-        encoded = base64.urlsafe_b64encode(invalid_yaml.encode()).decode()
-        yaml_data = {"yaml": encoded}
-
         # Act
-        result = lint_challenge(yaml_data)
+        result = lint_challenge(invalid_yaml)
 
         # Assert
         assert result is not None
@@ -511,19 +481,15 @@ class TestLintChallenge:
     ])
     def test_lint_challenge_invalid_base64(self, invalid_b64):
         """Test linting with invalid base64 encoding"""
-        yaml_data = {"yaml": invalid_b64}
-
         # Act & Assert - invalid base64 should raise an exception
         with pytest.raises((ValueError, Exception)):  # binascii.Error inherits from ValueError
-            lint_challenge(yaml_data)
+            lint_challenge(invalid_b64)
 
     def test_lint_challenge_missing_yaml_key(self):
         """Test linting when yaml key is missing from input"""
-        yaml_data = {"not_yaml": "some_value"}
-
         # Act & Assert
         with pytest.raises(KeyError):
-            lint_challenge(yaml_data)
+            lint_challenge("some_value")
 
     def test_lint_challenge_complex_validation_errors(self):
         """Test handling of complex validation errors from parser"""
@@ -540,11 +506,8 @@ class TestLintChallenge:
           summary: ""  # Empty summary
           questions: []  # Empty questions array
         """
-        encoded = base64.urlsafe_b64encode(invalid_yaml.encode()).decode()
-        yaml_data = {"yaml": encoded}
-
         # Act
-        result = lint_challenge(yaml_data)
+        result = lint_challenge(invalid_yaml)
 
         # Assert
         assert result is not None
@@ -577,11 +540,8 @@ class TestLintChallenge:
               max_attempts: 3
               answer: *flag_suffix
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
-
         # Act
-        result = lint_challenge(yaml_data)
+        result = lint_challenge(yaml_content)
 
         # Assert - template variables should be valid, so no errors expected
         if result is not None:
@@ -606,11 +566,8 @@ class TestLintChallenge:
               answer: "4"
               max_attempts: 3
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
-
         # Act
-        result = lint_challenge(yaml_data)
+        result = lint_challenge(yaml_content)
 
         # Assert
         assert result is not None
