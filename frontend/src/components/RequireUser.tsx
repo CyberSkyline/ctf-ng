@@ -1,15 +1,15 @@
-import { useCurrentUser } from '@/hooks/users';
+import { useAuth } from '@/hooks/users';
 import type { ReactNode } from 'react';
 import { Navigate } from 'react-router';
 
 export default function RequireUser({ children, replace }: { children: ReactNode, replace?: ReactNode }) {
-  const { data : user, error } = useCurrentUser();
+  const { isAuthenticated, isUnauthenticated } = useAuth();
 
-  if (user) {
+  if (isAuthenticated) {
     return children;
   }
 
-  if (error) {
+  if (isUnauthenticated) {
     if (replace) {
       return replace;
     }
