@@ -101,8 +101,9 @@ export function leaveMyTeam(eventId: number) {
     method : 'POST',
   }).then(() => {
     mutate(`/events/${eventId}/me/team`);
-    mutate('/users/me/team');
+    mutate('/users/me/teams');
     mutate('/users/me/events');
+    mutate(`/permissions/${eventId}/me`);
   });
 }
 
