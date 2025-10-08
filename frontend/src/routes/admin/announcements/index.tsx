@@ -35,7 +35,7 @@ export default function AdminNotifications() {
           <Text>Message</Text>
           <TextArea placeholder="Message to send..." className="h-64" mb="2" resize="vertical" />
 
-          <Button variant="soft" className="mb-2">
+          <Button variant="soft" className="mb-2" onClick={sendNotification}>
             <TbSend />
             Send
           </Button>
