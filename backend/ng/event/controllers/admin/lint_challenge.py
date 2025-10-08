@@ -131,16 +131,14 @@ def format_validation_error(error: Exception) -> list[SerializedLintMessage]:
             message=f"Error: {str(error)}"
         )]
 
-def lint_challenge(json_data) -> SerializedLint | None:
+def lint_challenge(yaml_content: str) -> SerializedLint | None:
     """
     Import a challenge from a YAML definition.
 
     :return: Any warnings or errors that were returned
     """
-    payload = base64.urlsafe_b64decode(json_data["yaml"])
-
     try:
-        compose_file = parse_compose_string(payload.decode("utf-8"))
+        compose_file = parse_compose_string(yaml_content)
         warnings = compose_file.warnings()
 
         if warnings.self_warnings or warnings.field_warnings:
