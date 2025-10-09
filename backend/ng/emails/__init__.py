@@ -1,0 +1,3 @@
+"""
+Email Notifications Module
+"""

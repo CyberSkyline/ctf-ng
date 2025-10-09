@@ -2,7 +2,7 @@
 Get notifications for users
 """
 
-from ...models import Notification
+from ..models import Notification
 
 
 def get_my_notifications(

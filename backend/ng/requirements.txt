@@ -13,7 +13,9 @@ gevent-websocket==0.10.1
 types-Flask-SocketIO==5.5.0.20250809
 types-Flask-SQLAlchemy==2.5.1
 redis==4.5.5
+types-redis==4.6.0.20241004
 docker==7.1.0
 types-docker==7.1.0.20250822
 requests-oauthlib==1.3.0
 sqlalchemy[mypy]==1.4.54
+types-boto3==1.40.40

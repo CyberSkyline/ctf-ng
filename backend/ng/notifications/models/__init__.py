@@ -1,20 +1,10 @@
 """
-Ctf-ng Notification Model Package
+Notification models
 """
 
-from .Notification import (
-    Notification,
-    NotificationType,
-)
-from .Announcement import (
-    Announcement,
-    AnnouncementType,
-)
-
+from .Notification import Notification, NotificationType
 
 __all__ = [
     "Notification",
     "NotificationType",
-    "Announcement",
-    "AnnouncementType",
 ]

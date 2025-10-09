@@ -2,13 +2,13 @@
 Admin announcement management
 """
 
-from ....core.exceptions import ValidationError
+from ...core.exceptions import ValidationError
 
-from ...models import (
+from ..models import (
     Announcement,
     AnnouncementType,
 )
-from ...services import NotificationService
+from ..services import AnnouncementService
 
 
 def send_announcement(
@@ -19,7 +19,7 @@ def send_announcement(
     """
     Send system wide announcement
     """
-    return NotificationService.send_system_announcement(
+    return AnnouncementService.send_system_announcement(
         title = title,
         message = message,
         sender_id = sender_id,
@@ -43,7 +43,7 @@ def send_event_announcement(
             f"Invalid announcement type: {announcement_type}"
         ) from e
 
-    return NotificationService.send_event_announcement(
+    return AnnouncementService.send_event_announcement(
         event_id = event_id,
         announcement_type = type_enum,
         title = title,
