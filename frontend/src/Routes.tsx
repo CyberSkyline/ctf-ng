@@ -45,12 +45,12 @@ function Routes() {
     {
       path : '/events',
       element : <AvailableEvents />,
-      children : [ { path : ':idEvent/invitecode/:inviteCode', element : <RequireUser><AvailableEvents /></RequireUser> } ],
     },
     {
       path : '/events/:idEvent',
       children : [
         { index : true, element : <Overview /> },
+        { path : 'invitecode/:inviteCode', element : <RequireUser><Overview /></RequireUser> },
         { path : 'challenge/:idChallenge', element : <RequireUser><Challenge /></RequireUser> },
       ],
     },

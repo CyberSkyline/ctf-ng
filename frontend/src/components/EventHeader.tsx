@@ -65,7 +65,7 @@ export default function EventHeader({
             {description || ''}
           </RadixMarkdown>
         </Box>
-        <Flex direction="row" gap="2" align="center">
+        <Flex direction="column" gap="1">
           {dateRange && (
             <Text color="gray">
               <TbCalendar className="inline me-1" title="Date range" />

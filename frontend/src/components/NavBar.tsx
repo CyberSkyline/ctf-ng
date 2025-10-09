@@ -1,5 +1,5 @@
 import { apiMutation } from '@/fetchers';
-import { useCurrentUser } from '@/hooks/users';
+import { useAuth } from '@/hooks/users';
 import { Flex } from '@radix-ui/themes';
 import NotificationsPopover from 'components/NotificationsPopover';
 import ThemeToggle from 'components/ThemeToggle';
@@ -17,7 +17,7 @@ export default function NavBar() {
     });
   };
 
-  const { data, error } = useCurrentUser();
+  const { isAuthenticated, isUnauthenticated, user } = useAuth();
 
   const location = useLocation();
   const { theme } = useTheme(); // Drop Content wouldn't obey otherwise
@@ -119,7 +119,7 @@ export default function NavBar() {
             >
               <Flex direction="row" align="center" gap="1">
                 <TbUserCircle className="inline" />
-                {data && ` ${data.name}`}
+                {user && ` ${user.name}`}
               </Flex>
             </NavigationMenu.Trigger>
             <NavigationMenu.Content
@@ -148,7 +148,7 @@ export default function NavBar() {
                   <ThemeToggle className="ml-3 py-2" />
                 </li>
 
-                {data && (
+                {isAuthenticated && (
                   <li>
                     <button
                       type="button"
@@ -159,7 +159,7 @@ export default function NavBar() {
                     </button>
                   </li>
                 )}
-                {error && (
+                {isUnauthenticated && (
                   <li>
                     <NavLink
                       to="/login"

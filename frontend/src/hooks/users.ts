@@ -5,12 +5,58 @@ import useSWR from 'swr';
  * Get the currently signed in user.
  */
 export function useCurrentUser() {
-  return useSWR<User>('/users/me', {
+  return useSWR<User, Error>('/users/me', {
     shouldRetryOnError(err) {
       // Don't retry if we get a 401 (not logged in)
       return !err.message.includes('Authentication is required');
     },
   });
+}
+
+/**
+ * Helper for checking auth state. Uses window.init to determine if authed on page load,
+ * then switches to useCurrentUser once it loads to allow for reactive updates.
+ *
+ * Once the current user is loaded, the user object (if authenticated) will also be returned for convenience.
+ */
+export function useAuth() {
+  const { data, error, isLoading } = useCurrentUser();
+
+  if (isLoading) {
+    // hook has not responded yet, fall back to window.init value
+    return {
+      user : undefined,
+      isAuthenticated : !!window.init.userId,
+      isUnauthenticated : window.init.userId === null,
+    };
+  }
+
+  return {
+    user : data,
+    isAuthenticated : !!data,
+    isUnauthenticated : !data && error?.message.includes('Authentication is required'),
+  };
+}
+
+/**
+ * Helper for checking if the user is registered for a specific event.
+ * @param eventId The ID of the event to check registration for.
+ */
+export function useRegistration(eventId: number | null) {
+  const { isUnauthenticated } = useAuth();
+  const { data, error, isLoading } = useSWR<Team[], Error>(
+    !isUnauthenticated && !!eventId && '/users/me/teams',
+  );
+
+  const myTeam = data?.find((team) => team.event_id === eventId);
+
+  return {
+    isRegistered : !!myTeam,
+    isUnregistered : !myTeam && !isLoading && !error,
+    team : myTeam,
+    error,
+    isLoading,
+  };
 }
 
 /**

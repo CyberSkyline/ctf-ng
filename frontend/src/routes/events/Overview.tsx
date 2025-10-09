@@ -1,23 +1,47 @@
-import { Container, Tabs } from '@radix-ui/themes';
+import { Container, Link as RadixLink, Tabs } from '@radix-ui/themes';
 
 import { TbStar } from 'react-icons/tb';
-import { useParams, useSearchParams } from 'react-router';
+import { Link, useParams, useSearchParams } from 'react-router';
 
 import { ChallengeIcon, TeamIcon } from '@/constants';
 import { useEvent } from '@/hooks/events';
+import { useAuth, useRegistration } from '@/hooks/users';
+import { ErrorCallout, InfoCallout } from 'components/Callouts';
 import EventHeader from 'components/EventHeader';
 import HeaderContainer from 'components/HeaderContainer';
 import ChallengesTab from './OverviewTabs/ChallengesTab';
 import LeaderboardTab from './OverviewTabs/LeaderboardTab';
 import TeamTab from './OverviewTabs/TeamTab';
+import RegistrationLine from './RegistrationLine';
 import StartModal from './StartModal';
 
 export default function Overview() {
   const [ searchParams, setSearchParams ] = useSearchParams();
   const { idEvent } = useParams();
-  const currentTab = searchParams.get('tab') ?? 'challenges';
 
-  const { data } = useEvent(Number(idEvent));
+  const { data, error } = useEvent(Number(idEvent));
+  const { isAuthenticated, isUnauthenticated } = useAuth();
+  const { isRegistered, isUnregistered } = useRegistration(Number(idEvent));
+
+  const challengesTabAvailable = isRegistered;
+  const teamTabAvailable = isRegistered && data && data.max_team_size > 1;
+
+  let currentTab = searchParams.get('tab') ?? undefined;
+  if (!currentTab) {
+    if (isRegistered) {
+      currentTab = 'challenges';
+    } else if (isUnregistered) {
+      currentTab = 'leaderboard';
+    } else {
+      // if we don't know registration state yet,
+      // don't show any tab to avoid flicker once it loads
+      currentTab = undefined;
+    }
+  }
+
+  if (error) {
+    return <ErrorCallout>{error.message}</ErrorCallout>;
+  }
 
   return (
     <>
@@ -26,7 +50,22 @@ export default function Overview() {
           <EventHeader
             event={data}
           >
-            {data && <StartModal eventId={data.id} />}
+            {isAuthenticated && data && (
+              <RegistrationLine event={data} />
+            )}
+
+            {isAuthenticated && <StartModal eventId={data.id} />}
+
+            {isUnauthenticated && (
+              <InfoCallout>
+                To participate in this event, please
+                {' '}
+                <RadixLink asChild>
+                  <Link to={`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`}>log in</Link>
+                </RadixLink>
+                .
+              </InfoCallout>
+            )}
           </EventHeader>
         )}
       </HeaderContainer>
@@ -46,15 +85,17 @@ export default function Overview() {
       >
         <Container size="2" mb="4">
           <Tabs.List className="*:!basis-0 *:!grow" loop={false}>
-            <Tabs.Trigger value="challenges">
-              <ChallengeIcon className="mr-1" />
-              Challenges
-            </Tabs.Trigger>
+            {challengesTabAvailable && (
+              <Tabs.Trigger value="challenges">
+                <ChallengeIcon className="mr-1" />
+                Challenges
+              </Tabs.Trigger>
+            )}
             <Tabs.Trigger value="leaderboard">
               <TbStar className="mr-1" />
               Leaderboard
             </Tabs.Trigger>
-            {data && data.max_team_size > 1 && (
+            {teamTabAvailable && (
               <Tabs.Trigger value="team">
                 <TeamIcon className="mr-1" />
                 Team
@@ -63,15 +104,17 @@ export default function Overview() {
           </Tabs.List>
         </Container>
 
-        <Tabs.Content value="challenges">
-          <ChallengesTab />
-        </Tabs.Content>
+        {challengesTabAvailable && (
+          <Tabs.Content value="challenges">
+            <ChallengesTab />
+          </Tabs.Content>
+        )}
 
         <Tabs.Content value="leaderboard">
           <LeaderboardTab />
         </Tabs.Content>
 
-        {data && data.max_team_size > 1 && (
+        {teamTabAvailable && (
           <Tabs.Content value="team">
             <TeamTab />
           </Tabs.Content>

@@ -30,6 +30,10 @@ export function useEvent(eventId: number | null) {
   return useSWR<Event, Error>(eventId ? `/events/${eventId}` : null);
 }
 
+export function useMyEligibility(eventId: number | null) {
+  return useSWR<boolean, Error>(eventId ? `/events/${eventId}/me/eligibility` : null);
+}
+
 /**
  * Retrieves a specific event by its ID for admin purposes.
  * This is an admin-only endpoint.
@@ -50,6 +54,8 @@ export function registerMyEvent(eventId: number, teamName: string) {
     method : 'POST',
   }).then(() => {
     mutate('/users/me/events');
+    mutate('/users/me/teams');
+    mutate(`/permissions/${eventId}/me`);
   });
 }
 export function registerMyEventTeamJoin(eventId: number, inviteCode: string) {
@@ -57,6 +63,8 @@ export function registerMyEventTeamJoin(eventId: number, inviteCode: string) {
     method : 'POST',
   }).then(() => {
     mutate('/users/me/events');
+    mutate('/users/me/teams');
+    mutate(`/permissions/${eventId}/me`);
   });
 }
 
@@ -92,7 +100,10 @@ export function leaveMyTeam(eventId: number) {
   return apiMutation(`/events/${eventId}/me/team/leave`, { }, {
     method : 'POST',
   }).then(() => {
+    mutate(`/events/${eventId}/me/team`);
+    mutate('/users/me/teams');
     mutate('/users/me/events');
+    mutate(`/permissions/${eventId}/me`);
   });
 }
 
@@ -105,6 +116,7 @@ export function promoteMyCaptain(eventId: number, userId: number) {
     method : 'POST',
   }).then(() => {
     mutate(`/events/${eventId}/me/team/members`);
+    mutate(`/permissions/${eventId}/me`);
   });
 }
 
@@ -129,6 +141,7 @@ export function startMyTeam(eventId: number) {
     mutate(`/events/${eventId}/me/team`);
     mutate(`/events/${eventId}/challenges`);
     mutate(`/events/${eventId}/me/challenges`);
+    mutate(`/permissions/${eventId}/me`);
   });
 }
 
