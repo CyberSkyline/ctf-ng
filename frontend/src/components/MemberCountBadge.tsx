@@ -5,7 +5,7 @@ import {
   COLOR_WARNING,
   type AccentColor,
 } from '@/constants';
-import { useEvent } from '@/hooks/events';
+import { useAdminEvent } from '@/hooks/events';
 import type { Team } from '@/types';
 import { Badge } from '@radix-ui/themes';
 
@@ -26,7 +26,7 @@ function getBadgeColor(memberCount: number, maxTeamSize: number): AccentColor {
 }
 
 export default function MemberCountBadge({ team }: { team: Team }) {
-  const { data : event, error } = useEvent(team.event_id);
+  const { data : event, error } = useAdminEvent(team.event_id);
 
   if (error) {
     return <Badge variant="soft" color={COLOR_NEGATIVE}>Error</Badge>;
