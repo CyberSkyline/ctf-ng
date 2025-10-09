@@ -1,65 +1,68 @@
-import {
-  Button,
-  Container,
-  Heading,
-  Select,
-  Table,
-  TextArea,
-  Text,
-  Flex,
-  Box,
-} from '@radix-ui/themes';
-import { TbSend } from 'react-icons/tb';
+import { Box, Flex, Heading } from '@radix-ui/themes';
+import { useAnnouncements } from '@/hooks/notifications';
+import { ErrorCallout } from 'components/Callouts';
+import Entity from 'components/Entity';
+import { UserIcon } from '@/constants';
+import type { ColDef } from 'ag-grid-community';
+import type { Announcement } from '@/types';
+import { AgGridReact } from 'ag-grid-react';
+import { radixTheme } from '@/grid';
+import CreateAnnoucementModal from './CreateAnnouncementModal';
 
-/**
- * Page for admins to send notifications to users.
- */
-export default function AdminNotifications() {
+const colDefs: ColDef<Announcement>[] = [
+  {
+    field : 'id',
+    headerName : 'ID',
+  }, {
+    field : 'title',
+    headerName : 'Title',
+  }, {
+    field : 'message',
+    headerName : 'Message',
+  }, {
+    field : 'sender_name',
+    headerName : 'Sender',
+    cellRenderer : Entity,
+    cellRendererParams : (params: {data: {sender_id?: number, sender_name?: string}}) => ({
+      icon : UserIcon,
+      label : params.data.sender_name ?? `UNKNOWN (${params.data.sender_id})`,
+      to : `/admin/users?id=${params.data.sender_id}`,
+    }),
+  }, {
+    field : 'created_at',
+    headerName : 'Created Date',
+    valueFormatter : (params) => params.value?.toLocaleString(),
+  }, {
+    field : 'expires_at',
+    headerName : 'Expiration Date',
+    valueFormatter : (params) => params.value?.toLocaleString(),
+  }, {
+    field : 'type',
+    headerName : 'type',
+  },
+];
+
+export default function AdminAnnouncements() {
+  const { data, error, isLoading } = useAnnouncements();
+  const rowData = data ?? [];
+
+  if (error) {
+    return <ErrorCallout>{error.message}</ErrorCallout>;
+  }
+
   return (
-    <Container size="4">
-      <Flex direction="column" gap="4">
-        <Box>
-          <Heading>Send Notification</Heading>
-          <Text>Recipient</Text>
-          <br />
-          <Select.Root defaultValue="all">
-            <Select.Trigger className="!mb-2 !w-64" />
-            <Select.Content>
-              <Select.Item value="all">All Users</Select.Item>
-              <Select.Item value="event-a">Event A</Select.Item>
-              <Select.Item value="event-b">Event B</Select.Item>
-              <Select.Item value="event-c">Event C</Select.Item>
-            </Select.Content>
-          </Select.Root>
-          <br />
-          <Text>Message</Text>
-          <TextArea placeholder="Message to send..." className="h-64" mb="2" resize="vertical" />
-
-          <Button variant="soft" className="mb-2" onClick={sendNotification}>
-            <TbSend />
-            Send
-          </Button>
-        </Box>
-        <Box>
-          <Heading>Past Notifications</Heading>
-          <Table.Root>
-            <Table.Header>
-              <Table.Row>
-                <Table.ColumnHeaderCell>Message</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Recipients</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Date</Table.ColumnHeaderCell>
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              <Table.Row>
-                <Table.Cell>Welcome to PC7!</Table.Cell>
-                <Table.Cell>All Users</Table.Cell>
-                <Table.Cell>yyyy-mm-dd 12:00</Table.Cell>
-              </Table.Row>
-            </Table.Body>
-          </Table.Root>
-        </Box>
-      </Flex>
-    </Container>
+    <Flex gap="3" direction="column">
+      <Heading size="7">Announcements</Heading>
+      <Box maxWidth="200px">
+        <CreateAnnoucementModal />
+      </Box>
+      <AgGridReact
+        theme={radixTheme}
+        rowData={rowData}
+        columnDefs={colDefs}
+        domLayout="autoHeight"
+        loading={isLoading}
+      />
+    </Flex>
   );
 }
