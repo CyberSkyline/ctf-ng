@@ -5,7 +5,12 @@ import useSWR from 'swr';
  * Get the currently signed in user.
  */
 export function useCurrentUser() {
-  return useSWR<User>('/users/me');
+  return useSWR<User>('/users/me', {
+    shouldRetryOnError(err) {
+      // Don't retry if we get a 401 (not logged in)
+      return !err.message.includes('Authentication is required');
+    },
+  });
 }
 
 /**

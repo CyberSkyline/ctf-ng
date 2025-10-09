@@ -57,13 +57,11 @@ export default function ChallengeUploadModal({ eventId }: { eventId: number }) {
       >
         {({ getRootProps, getInputProps, isDragActive }) => (
           <Callout.Root
-            // eslint-disable-next-line react/jsx-props-no-spreading
             {...getRootProps()}
             variant={(isDragActive) ? 'surface' : 'outline'}
             className="cursor-pointer !p-8 !flex flex-col !items-center"
           >
             <input
-              // eslint-disable-next-line react/jsx-props-no-spreading
               {...getInputProps()}
               name="file"
             />

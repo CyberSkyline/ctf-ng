@@ -1,10 +1,12 @@
 import { useRoutes } from 'react-router';
 
 import NotFound from 'components/NotFound';
-
 import Dashboard from 'routes/dashboard';
 import Notifications from 'routes/notifications';
 import Profile from 'routes/profile';
+
+import RequireUser from 'components/RequireUser';
+import Login from 'routes/login';
 
 // Support tickets
 import Support from 'routes/support';
@@ -38,32 +40,33 @@ function Routes() {
       path : '*',
       element : <NotFound />, // Catch-all route for 404 page
     },
-    { path : '/', element : <Dashboard /> },
+    { path : '/', element : <RequireUser replace={<AvailableEvents />}><Dashboard /></RequireUser> },
+    { path : '/login', element : <Login /> },
     {
       path : '/events',
       element : <AvailableEvents />,
-      children : [ { path : ':idEvent/invitecode/:inviteCode', element : <AvailableEvents /> } ],
+      children : [ { path : ':idEvent/invitecode/:inviteCode', element : <RequireUser><AvailableEvents /></RequireUser> } ],
     },
     {
       path : '/events/:idEvent',
       children : [
         { index : true, element : <Overview /> },
-        { path : 'challenge/:idChallenge', element : <Challenge /> },
+        { path : 'challenge/:idChallenge', element : <RequireUser><Challenge /></RequireUser> },
       ],
     },
-    { path : '/notifications/:idNotif', element : <Notifications /> },
-    { path : '/profile', element : <Profile /> },
+    { path : '/notifications/:idNotif', element : <RequireUser><Notifications /></RequireUser> },
+    { path : '/profile', element : <RequireUser><Profile /></RequireUser> },
     {
       path : '/support',
       children : [
-        { index : true, element : <Support /> },
-        { path : 'createTicket', element : <CreateTicket /> },
-        { path : ':idTicket', element : <TicketDetail /> },
+        { index : true, element : <RequireUser><Support /></RequireUser> },
+        { path : 'createTicket', element : <RequireUser><CreateTicket /></RequireUser> },
+        { path : ':idTicket', element : <RequireUser><TicketDetail /></RequireUser> },
       ],
     },
     {
       path : '/admin',
-      element : <AdminLayout />,
+      element : <RequireUser><AdminLayout /></RequireUser>,
       children : [
         { path : '*', element : <NotFound /> }, // Catch-all for admin routes
         { index : true, element : <AdminDashboard /> },

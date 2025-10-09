@@ -10,24 +10,26 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@milkdown/crepe": "^7.15.0",
-    "@milkdown/plugin-automd": "^7.15.0",
-    "@milkdown/plugin-listener": "^7.15.0",
-    "@milkdown/react": "^7.15.0",
-    "@milkdown/theme-nord": "^7.15.0",
+    "@milkdown/crepe": "^7.16.0",
+    "@milkdown/plugin-automd": "^7.16.0",
+    "@milkdown/plugin-listener": "^7.16.0",
+    "@milkdown/react": "^7.16.0",
+    "@milkdown/theme-nord": "^7.16.0",
     "@radix-ui/themes": "^3.2.1",
     "ag-grid-community": "^33.3.2",
     "ag-grid-react": "^33.3.2",
     "lodash": "^4.17.21",
     "radix-ui": "^1.4.2",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "react-dropzone": "^14.3.8",
+    "react-hook-form": "^7.63.0",
     "react-icons": "^5.5.0",
     "react-markdown": "^10.1.0",
     "react-router": "^7.6.3",
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
+    "socket.io-client": "^4.8.1",
     "swr": "^2.3.3",
     "tailwind-merge": "^3.3.1"
   },
@@ -55,7 +57,7 @@
     "tailwindcss": "^4.1.11",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.35.0",
-    "vite": "^7.0.0"
+    "vite": "^7.1.9"
   },
   "packageManager": "pnpm@10.17.1"
 }

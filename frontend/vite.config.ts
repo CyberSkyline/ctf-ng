@@ -1,7 +1,7 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
 import path from 'path';
+import { defineConfig } from 'vite';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -16,7 +16,22 @@ export default defineConfig({
     },
   },
   base : '/static/',
-  plugins : [ react(), tailwindcss() ],
+  plugins : [
+    react(),
+    tailwindcss(),
+    {
+      // Force full page reload when socket implementation changes.
+      // Ensures that old sockets and event listeners are cleaned up.
+      name : 'full-reload-socket',
+      handleHotUpdate({ file, server }) {
+        if (file.endsWith('socket.ts')) {
+          server.ws.send({ type : 'full-reload' });
+          return [];
+        }
+        return undefined;
+      },
+    },
+  ],
   resolve : {
     alias : {
       assets : path.resolve(__dirname, './src/assets'),
