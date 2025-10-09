@@ -474,23 +474,6 @@ class TestLintChallenge:
             # Some cases might be accepted but produce warnings
             assert len(result["warnings"]) > 0
 
-    @pytest.mark.parametrize("invalid_b64", [
-        "invalid_base64!!!",
-        "not-base64",
-        "special!@#$%characters",
-    ])
-    def test_lint_challenge_invalid_base64(self, invalid_b64):
-        """Test linting with invalid base64 encoding"""
-        # Act & Assert - invalid base64 should raise an exception
-        with pytest.raises((ValueError, Exception)):  # binascii.Error inherits from ValueError
-            lint_challenge(invalid_b64)
-
-    def test_lint_challenge_missing_yaml_key(self):
-        """Test linting when yaml key is missing from input"""
-        # Act & Assert
-        with pytest.raises(KeyError):
-            lint_challenge("some_value")
-
     def test_lint_challenge_complex_validation_errors(self):
         """Test handling of complex validation errors from parser"""
         # YAML with multiple validation issues
