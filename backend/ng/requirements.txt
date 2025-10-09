@@ -8,7 +8,7 @@ cyber-skyline-chall-parser>=0.4.2
 faker>=37.4.0
 pyyaml>=6.0.2
 Flask-SocketIO==5.5.1
-python-socketio==5.13.0
+python-socketio==5.14.1
 gevent-websocket==0.10.1
 types-Flask-SocketIO==5.5.0.20250809
 types-Flask-SQLAlchemy==2.5.1
