@@ -118,7 +118,7 @@ class TestSendEventAnnouncement:
             message = "The event will begin soon",
             sender_id = admin.id,
             expires_at = None,
-            send_notification = True
+            send_notification = False
         )
         assert result == mock_announcement
 
@@ -355,5 +355,5 @@ class TestControllerIntegration:
             message = "Get ready!",
             sender_id = admin.id,
             expires_at = None,
-            send_notification = True
+            send_notification = False
         )
