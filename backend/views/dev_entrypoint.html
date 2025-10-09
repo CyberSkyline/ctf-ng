@@ -1,25 +1,29 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script type="text/javascript">
-      window.init = {
-        csrfToken : '{{ Session.nonce }}',
-      };
-    </script>
-    <script type="module">
-      import("{{ static_build_path }}@react-refresh").then((RefreshRuntime) => {
-        RefreshRuntime.injectIntoGlobalHook(window);
-        window.$RefreshReg$ = () => {};
-        window.$RefreshSig$ = () => (type) => type;
-        window.__vite_plugin_react_preamble_installed__ = true;
-      });
-    </script>
-    <script type="module" src="{{ static_build_path }}@vite/client"></script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="{{ static_build_path }}src/main.tsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script type="text/javascript">
+    window.init = {
+      csrfToken: '{{ Session.nonce }}',
+      userId: '{{ user_id }}' || null,
+    };
+  </script>
+  <script type="module">
+    import("{{ static_build_path }}@react-refresh").then((RefreshRuntime) => {
+      RefreshRuntime.injectIntoGlobalHook(window);
+      window.$RefreshReg$ = () => { };
+      window.$RefreshSig$ = () => (type) => type;
+      window.__vite_plugin_react_preamble_installed__ = true;
+    });
+  </script>
+  <script type="module" src="{{ static_build_path }}@vite/client"></script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="{{ static_build_path }}src/main.tsx"></script>
+</body>
+
 </html>

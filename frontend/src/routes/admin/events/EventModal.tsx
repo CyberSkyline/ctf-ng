@@ -3,35 +3,42 @@ import { createEvent, updateEvent } from '@/hooks/events';
 import type { Event } from '@/types';
 import { Button } from '@radix-ui/themes';
 import Modal from 'components/Modal';
+import { omit } from 'lodash';
+import type { DefaultValues } from 'react-hook-form';
 import { TbPencil, TbPlus } from 'react-icons/tb';
 import EventDataForm from './EventDataForm';
+
+function adjustDateForInput(date: Date | null): string | undefined {
+  // Adjust the date to be in the format required by datetime-local input
+  if (date === null) return undefined;
+  const dateObj = new Date(date);
+  const offset = dateObj.getTimezoneOffset();
+  const localDate = new Date(dateObj.getTime() - (offset * 60 * 1000));
+  return localDate.toISOString().slice(0, 16);
+}
 
 export default function EventModal({
   eventToUpdate,
 }: {
   eventToUpdate?: Event;
 }) {
-  const handleSubmit = async (data: FormData) => {
-    const entries = Object.fromEntries(data.entries());
-    const event: Omit<Event, 'id'> = {
-      name : entries.name as string,
-      description : entries.description as string,
-      start_time : new Date(entries.start_time as string),
-      end_time : new Date(entries.end_time as string),
-      locked : entries.locked === 'on',
-      public : entries.public === 'on',
-      max_team_size : Number(entries.max_team_size),
-      registration_open : entries.registration_open === 'on',
-      registration_start_date : new Date(entries.registration_start_date as string),
-      registration_end_date : new Date(entries.registration_end_date as string),
-    };
-
+  const handleSubmit = async (data: Omit<Event, 'id'>) => {
     if (eventToUpdate) {
       // Update existing event
-      return updateEvent(eventToUpdate.id, event);
+      return updateEvent(eventToUpdate.id, data);
     }
 
-    return createEvent(event);
+    return createEvent(data);
+  };
+
+  // Default value Dates must be converted to datetime-local string format, even though the value is typed as Date.
+  // This is because valueAsDate only applies to entered values, not default values.
+  const defaultValues: DefaultValues<Omit<Event, 'id'>> = {
+    ...omit(eventToUpdate, 'id'),
+    registration_start_date : adjustDateForInput(eventToUpdate?.registration_start_date || null) as unknown as Date,
+    registration_end_date : adjustDateForInput(eventToUpdate?.registration_end_date || null) as unknown as Date,
+    start_time : adjustDateForInput(eventToUpdate?.start_time || null) as unknown as Date,
+    end_time : adjustDateForInput(eventToUpdate?.end_time || null) as unknown as Date,
   };
 
   return (
@@ -55,9 +62,9 @@ export default function EventModal({
       onSubmit={handleSubmit}
       submitVerb={eventToUpdate ? 'Update' : 'Create'}
       submitColor={eventToUpdate ? COLOR_WARNING : COLOR_POSITIVE}
-      requireTouchingForm={!!eventToUpdate}
+      defaultValues={defaultValues}
     >
-      <EventDataForm initial={eventToUpdate} />
+      {(rhf) => <EventDataForm rhf={rhf} />}
     </Modal>
   );
 }

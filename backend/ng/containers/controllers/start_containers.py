@@ -13,7 +13,7 @@ def start_containers(challenge_id: int, team_id: int, current_user: User) -> boo
     for blueprint in blueprints:
         ctrs.append(ContainerInstance.create_container_instance(blueprint.id, team))
         if blueprint.networks:
-            networks.append(*blueprint.networks)
+            networks.extend(blueprint.networks)
 
     indvidual_ctr = IndvidualContainer.create_indvidual_container(current_user.id)
     indvidual_ctr.disconnect_from_networks()

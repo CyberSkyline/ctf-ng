@@ -189,4 +189,3 @@ class AnnouncementDelete(Resource):
         """
         delete_announcement(announcement = announcement)
         return success_response()
-

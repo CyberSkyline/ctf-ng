@@ -1,151 +1,216 @@
 import type { Event } from '@/types';
 import {
-  Checkbox,
+  Box,
   Flex,
+  Switch,
   TextArea,
   TextField,
 } from '@radix-ui/themes';
-import { Form } from 'radix-ui';
-
-function adjustDateForInput(date: Date | null): string {
-  // Adjust the date to be in the format required by datetime-local input
-  if (date === null) return '';
-  const dateObj = new Date(date);
-  const offset = dateObj.getTimezoneOffset();
-  const localDate = new Date(dateObj.getTime() - (offset * 60 * 1000));
-  return localDate.toISOString().slice(0, 16);
-}
+import FormField from 'components/FormField';
+import { Controller, type UseFormReturn } from 'react-hook-form';
 
 export default function EventDataForm({
-  initial,
+  rhf,
 }: {
-  initial?: Omit<Event, 'id'>,
+  rhf: UseFormReturn<Omit<Event, 'id'>>,
 }) {
+  const { register, formState : { errors } } = rhf;
+
   return (
     <>
-      <Form.Field name="Name">
-        <Form.Label>Name</Form.Label>
-        <Form.Control asChild>
+      <FormField label="Name" error={errors.name}>
+        {(injected) => (
           <TextField.Root
-            name="name"
-            defaultValue={initial?.name || ''}
             placeholder="Event Name"
-            required
+            {...register('name', {
+              required : 'Event name is required',
+            })}
+            {...injected}
           />
-        </Form.Control>
-        <Form.Message match="valueMissing">
-          Event name is required.
-        </Form.Message>
-      </Form.Field>
+        )}
+      </FormField>
 
-      <Form.Field name="description">
-        <Form.Label>Description</Form.Label>
-        <Form.Control asChild>
+      <FormField label="Description" error={errors.description}>
+        {(injected) => (
           <TextArea
-            defaultValue={initial?.description || ''}
             placeholder="Event Description"
             rows={4}
             resize="vertical"
+            {...register('description')}
+            {...injected}
           />
-        </Form.Control>
-      </Form.Field>
+        )}
+      </FormField>
 
       <Flex direction="row" gap="2" className="*:grow *:basis-0">
-        <Form.Field name="registration_start_date">
-          <Form.Label>Registration Opens</Form.Label>
-          <Form.Control asChild>
-            <TextField.Root
-              type="datetime-local"
-              onChange={(e) => { e.target.form?.reportValidity(); }}
-              defaultValue={adjustDateForInput(initial?.registration_start_date || null)}
+
+        <FormField label="Public" error={errors.public}>
+          {(injected) => (
+            <Controller
+              control={rhf.control}
+              name="public"
+              defaultValue
+              rules={{}}
+              render={({ field }) => (
+                <Box>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={(checked) => {
+                      field.onChange(checked);
+                    }}
+                    name={field.name}
+                    ref={field.ref}
+                    size="3"
+                    {...injected}
+                  />
+                </Box>
+              )}
             />
-          </Form.Control>
-          <Form.Message match="badInput" />
-        </Form.Field>
-        <Form.Field name="registration_end_date">
-          <Form.Label>Registration Closes</Form.Label>
-          <Form.Control asChild>
-            <TextField.Root
-              type="datetime-local"
-              onChange={(e) => { e.target.form?.reportValidity(); }}
-              defaultValue={adjustDateForInput(initial?.registration_end_date || null)}
+          )}
+        </FormField>
+
+        <FormField label="Hints Enabled" error={errors.hints_enabled}>
+          {(injected) => (
+            <Controller
+              control={rhf.control}
+              name="hints_enabled"
+              defaultValue={false}
+              rules={{}}
+              render={({ field }) => (
+                <Box>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={(checked) => {
+                      field.onChange(checked);
+                    }}
+                    name={field.name}
+                    ref={field.ref}
+                    size="3"
+                    {...injected}
+                  />
+                </Box>
+              )}
             />
-          </Form.Control>
-          <Form.Message match="badInput" />
-        </Form.Field>
+          )}
+        </FormField>
+
+        <FormField label="Teams Locked" error={errors.locked}>
+          {(injected) => (
+            <Controller
+              control={rhf.control}
+              name="locked"
+              defaultValue={false}
+              rules={{}}
+              render={({ field }) => (
+                <Box>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={(checked) => {
+                      field.onChange(checked);
+                    }}
+                    name={field.name}
+                    ref={field.ref}
+                    size="3"
+                    {...injected}
+                  />
+                </Box>
+              )}
+            />
+          )}
+        </FormField>
+
       </Flex>
 
       <Flex direction="row" gap="2" className="*:grow *:basis-0">
-        <Form.Field name="start_time">
-          <Form.Label>Event Starts</Form.Label>
-          <Form.Control asChild>
+        <FormField label="Max Team Size" error={errors.max_team_size}>
+          {(injected) => (
             <TextField.Root
-              type="datetime-local"
-              defaultValue={adjustDateForInput(initial?.start_time || null)}
-              required
+              type="number"
+              {...register('max_team_size', {
+                required : 'Max team size is required',
+                valueAsNumber : true,
+                min : {
+                  value : 1,
+                  message : 'Max team size must be at least 1',
+                },
+                max : {
+                  value : 8,
+                  message : 'Max team size cannot exceed 8',
+                },
+              })}
+              {...injected}
             />
-          </Form.Control>
-          <Form.Message match="valueMissing" />
-          <Form.Message match="badInput" />
-        </Form.Field>
+          )}
+        </FormField>
 
-        <Form.Field name="end_time">
-          <Form.Label>Event Ends</Form.Label>
-          <Form.Control asChild>
+        <FormField label="Time Limit (minutes)" error={errors.time_limit_minutes}>
+          {(injected) => (
             <TextField.Root
-              type="datetime-local"
-              name="end_time"
-              defaultValue={adjustDateForInput(initial?.end_time || null)}
-              required
+              type="number"
+              placeholder="No time limit"
+              step={1}
+              {...register('time_limit_minutes', {
+                valueAsNumber : true,
+                min : {
+                  value : 1,
+                  message : 'Time limit must be at least 1 minute',
+                },
+              })}
+              {...injected}
             />
-          </Form.Control>
-          <Form.Message match="valueMissing" />
-          <Form.Message match="badInput" />
-        </Form.Field>
+          )}
+        </FormField>
       </Flex>
 
-      <Form.Field name="max_team_size">
-        <Form.Label>Max Team Size</Form.Label>
-        <Form.Control asChild>
-          <TextField.Root
-            type="number"
-            defaultValue={initial?.max_team_size.toString() || '1'}
-            min={1}
-            max={8}
-            required
-          />
-        </Form.Control>
-        <Form.Message match="valueMissing" />
-        <Form.Message match="rangeOverflow" />
-        <Form.Message match="rangeUnderflow" />
-      </Form.Field>
-
-      <Flex direction="row" gap="2" className="*:grow *:basis-0 my-1" wrap="wrap">
-        <Form.Field name="public" className="flex gap-1">
-          <Form.Control asChild>
-            <Checkbox
-              defaultChecked={initial?.public}
-              size="3"
+      <Flex direction="row" gap="2" className="*:grow *:basis-0">
+        <FormField label="Registration Opens" error={errors.registration_start_date}>
+          {(injected) => (
+            <TextField.Root
+              type="datetime-local"
+              {...register('registration_start_date', {
+                valueAsDate : true,
+              })}
+              {...injected}
             />
-          </Form.Control>
-          <Form.Label>Public</Form.Label>
-        </Form.Field>
-        <Form.Field name="locked" className="flex gap-1">
-          <Form.Control asChild>
-            <Checkbox defaultChecked={initial?.locked} size="3" />
-          </Form.Control>
-          <Form.Label>Disable Team Management</Form.Label>
 
-        </Form.Field>
-        <Form.Field name="registration_open" className="flex gap-1">
-          <Form.Control asChild>
-            <Checkbox
-              defaultChecked={initial?.registration_open}
-              size="3"
+          )}
+        </FormField>
+        <FormField label="Registration Closes" error={errors.registration_end_date}>
+          {(injected) => (
+            <TextField.Root
+              type="datetime-local"
+              {...register('registration_end_date', {
+                valueAsDate : true,
+              })}
+              {...injected}
             />
-          </Form.Control>
-          <Form.Label>Registration Open</Form.Label>
-        </Form.Field>
+          )}
+        </FormField>
+      </Flex>
+
+      <Flex direction="row" gap="2" className="*:grow *:basis-0">
+        <FormField label="Event Starts" error={errors.start_time}>
+          {(injected) => (
+            <TextField.Root
+              type="datetime-local"
+              {...register('start_time', {
+                valueAsDate : true,
+              })}
+              {...injected}
+            />
+          )}
+        </FormField>
+        <FormField label="Event Ends" error={errors.end_time}>
+          {(injected) => (
+            <TextField.Root
+              type="datetime-local"
+              {...register('end_time', {
+                valueAsDate : true,
+              })}
+              {...injected}
+            />
+          )}
+        </FormField>
       </Flex>
     </>
   );
