@@ -18,7 +18,7 @@ export default function RegistrationLine({ event }: {event: Event}) {
         <TbCheck className="inline me-1" />
         You are registered
         {' '}
-        {event.max_team_size > 1 ? 'on' : 'as'}
+        {event.max_team_size > 1 ? 'on team' : 'as'}
         {' '}
         {team!.name}
       </Text>
