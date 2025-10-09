@@ -40,9 +40,9 @@ class TestNotificationEndpoints:
             recipient_id = user.id
         )
         notification_factory(
-            type = NotificationType.TEAM_INVITATION,
+            type = NotificationType.TICKET_MESSAGE,
             title = "Test Notification 2",
-            message = "You were invited to a team",
+            message = "You received a ticket reply",
             recipient_id = user.id
         )
 
@@ -400,9 +400,9 @@ class TestNotificationEndpoints:
         """
         # Create a test notification
         notification_factory(
-            type = NotificationType.TEAM_INVITATION,
+            type = NotificationType.EVENT_ANNOUNCEMENT,
             title = "Test Notification",
-            message = "You have been invited",
+            message = "Event announcement",
             recipient_id = user.id
         )
 

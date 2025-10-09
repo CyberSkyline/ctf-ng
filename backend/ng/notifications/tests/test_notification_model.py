@@ -780,7 +780,6 @@ class TestNotification:
         assert NotificationType.TICKET_MESSAGE.value == "ticket_message"
         assert NotificationType.TICKET_STATUS_CHANGE.value == "ticket_status_change"
         assert NotificationType.TICKET_ASSIGNED.value == "ticket_assigned"
-        assert NotificationType.TEAM_INVITATION.value == "team_invitation"
         assert NotificationType.CHALLENGE_UPDATED.value == "challenge_updated"
         assert NotificationType.EVENT_ANNOUNCEMENT.value == "event_announcement"
 

@@ -262,27 +262,6 @@ class NotificationService:
         )
 
     @staticmethod
-    def notify_team_invitation(
-        team_id: int,
-        team_name: str,
-        invited_user_id: int,
-        invited_by_id: int,
-    ) -> None:
-        """
-        Notify user about team invitation
-        """
-        notification = Notification.create_notification(
-            notification_type=NotificationType.TEAM_INVITATION,
-            title="Team Invitation",
-            message=f"You've been invited to join team '{team_name}'",
-            recipient_id=invited_user_id,
-            sender_id=invited_by_id,
-            team_id=team_id,
-        )
-
-        NotificationService._emit_notification(notification)
-
-    @staticmethod
     def broadcast_team_update(
         team_id: int,
         update_type: str,
