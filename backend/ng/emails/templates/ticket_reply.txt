@@ -1,0 +1,16 @@
+{{ reply_type }} Reply to Support Ticket
+
+Ticket Details:
+- Subject: {{ ticket.subject }}
+- Ticket ID: #{{ ticket.id }}
+- Status: {{ ticket.status.title() }}
+
+New Message from {{ message.author_name or 'Unknown User' }}:
+{{ message.text }}
+
+Posted at: {{ message.created_at }}
+
+View full conversation: {{ ticket_url }}
+
+---
+This email was sent by the CTF Support System.

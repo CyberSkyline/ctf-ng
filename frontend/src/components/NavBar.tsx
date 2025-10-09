@@ -1,5 +1,7 @@
 import { apiMutation } from '@/fetchers';
 import { useAuth } from '@/hooks/users';
+import { Flex } from '@radix-ui/themes';
+import NotificationsPopover from 'components/NotificationsPopover';
 import ThemeToggle from 'components/ThemeToggle';
 import { useTheme } from 'next-themes';
 import { NavigationMenu } from 'radix-ui';
@@ -103,16 +105,28 @@ export default function NavBar() {
               Support
             </NavigationMenu.Item>
           </NavLink>
-          <NavigationMenu.Item className={location.pathname === '/notifications' ? activeLinkClass : defaultLinkClass}>
-            Notifications*
-          </NavigationMenu.Item>
+
+          <NotificationsPopover
+            triggerClassName={defaultLinkClass}
+            contentClassName={twMerge(contentBase, theme === 'dark' ? contentDark : contentLight)}
+          />
 
           <NavigationMenu.Item>
-            <NavigationMenu.Trigger className={defaultLinkClass}>
-              <TbUserCircle className="inline" />
-              {user && ` ${user.name}`}
+            <NavigationMenu.Trigger
+              className={defaultLinkClass}
+              onPointerMove={(event) => event.preventDefault()}
+              onPointerLeave={(event) => event.preventDefault()}
+            >
+              <Flex direction="row" align="center" gap="1">
+                <TbUserCircle className="inline" />
+                {user && ` ${user.name}`}
+              </Flex>
             </NavigationMenu.Trigger>
-            <NavigationMenu.Content className={twMerge(contentBase, theme === 'dark' ? contentDark : contentLight)}>
+            <NavigationMenu.Content
+              className={twMerge(contentBase, theme === 'dark' ? contentDark : contentLight)}
+              onPointerEnter={(event) => event.preventDefault()}
+              onPointerLeave={(event) => event.preventDefault()}
+            >
               <ul className="grid gap-2 p-3">
                 <li>
                   <NavLink

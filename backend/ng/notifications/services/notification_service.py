@@ -1,6 +1,5 @@
 """
-Notification service handling both stored
-notifications and WebSocket refetch events
+Notification service for DB notifications and WebSocket refetch events
 """
 
 from enum import Enum
@@ -12,17 +11,11 @@ from ...core.utils.emitters import (
     emit_to_team,
     emit_to_event,
     emit_to_admins,
-    emit_event
 )
-
-from ..models import (
-    Notification,
-    NotificationType,
-    Announcement,
-    AnnouncementType,
-)
-from ...team.models import TeamMember
 from ...permissions.controllers import get_support_role_users
+
+from ...team.models import TeamMember
+from ..models import Notification, NotificationType
 
 
 class WebSocketEvent(str, Enum):
@@ -31,19 +24,19 @@ class WebSocketEvent(str, Enum):
     """
     REFETCH = "refetch"
     NOTIFICATION = "notification"
-    SYSTEM_ANNOUNCEMENT = "system_announcement"
 
 
 class NotificationService:
     """
-    Stored notifications & WebSocket refetch events using Redis pub/sub
+    Service for DB notifications and WebSocket refetch events
     """
+
     @staticmethod
     def _emit_refetch(
         path: str,
-        user_ids = None,
-        team_id = None,
-        event_id = None
+        user_ids=None,
+        team_id=None,
+        event_id=None
     ):
         """
         Notify frontend to refetch data at path
@@ -70,7 +63,7 @@ class NotificationService:
         emit_to_user(
             WebSocketEvent.NOTIFICATION,
             notification.serialize(),
-            user_id = notification.recipient_id
+            user_id=notification.recipient_id
         )
 
     @staticmethod
@@ -81,24 +74,22 @@ class NotificationService:
         is_admin_reply: bool = False,
     ) -> None:
         """
-        Notify about support ticket reply
+        Notify about support ticket reply (DB notification + WebSocket)
         """
         notification = Notification.create_notification(
-            notification_type = NotificationType.TICKET_MESSAGE,
-            title = "Support Ticket Update",
-            message =
-            f"{'Admin' if is_admin_reply else 'User'} replied to your ticket",
-            recipient_id = recipient_id,
-            sender_id = author_id,
-            ticket_id = ticket_id,
+            notification_type=NotificationType.TICKET_MESSAGE,
+            title="Support Ticket Update",
+            message=f"{'Admin' if is_admin_reply else 'User'} replied to your ticket",
+            recipient_id=recipient_id,
+            sender_id=author_id,
+            ticket_id=ticket_id,
         )
 
         NotificationService._emit_notification(notification)
 
         NotificationService._emit_refetch(
-            path = f"/ng/support/tickets/{ticket_id}",
-            user_ids = [recipient_id,
-                        author_id]
+            path=f"/ng/support/tickets/{ticket_id}",
+            user_ids=[recipient_id, author_id]
         )
 
     @staticmethod
@@ -109,22 +100,22 @@ class NotificationService:
         changed_by_id: int,
     ) -> None:
         """
-        Notify about ticket status change
+        Notify about ticket status change (DB notification only, no email)
         """
         notification = Notification.create_notification(
-            notification_type = NotificationType.TICKET_STATUS_CHANGE,
-            title = "Ticket Status Changed",
-            message = f"Your ticket was {new_status}",
-            recipient_id = recipient_id,
-            sender_id = changed_by_id,
-            ticket_id = ticket_id,
+            notification_type=NotificationType.TICKET_STATUS_CHANGE,
+            title="Ticket Status Changed",
+            message=f"Your ticket was {new_status}",
+            recipient_id=recipient_id,
+            sender_id=changed_by_id,
+            ticket_id=ticket_id,
         )
 
         NotificationService._emit_notification(notification)
 
         NotificationService._emit_refetch(
-            path = f"/ng/support/tickets/{ticket_id}",
-            user_ids = [recipient_id]
+            path=f"/ng/support/tickets/{ticket_id}",
+            user_ids=[recipient_id]
         )
 
     @staticmethod
@@ -134,10 +125,10 @@ class NotificationService:
         subject: str,
     ) -> None:
         """
-        Notify all support staff about a new support ticket via refetch only
+        Notify admins about a new support ticket (WebSocket refetch only, no DB notifications)
         """
         NotificationService._emit_refetch(
-            path = "/ng/support/tickets",
+            path="/ng/support/tickets",
         )
 
     @staticmethod
@@ -152,13 +143,13 @@ class NotificationService:
 
         for support_user in support_users:
             notification = Notification.create_notification(
-                notification_type = NotificationType.TICKET_MESSAGE,
-                title = "Support Ticket Update",
-                message = "User replied to unassigned ticket",
-                recipient_id = support_user.ctfd_user.id,
-                sender_id = author_id,
-                ticket_id = ticket_id,
-                commit = False,
+                notification_type=NotificationType.TICKET_MESSAGE,
+                title="Support Ticket Update",
+                message="User replied to unassigned ticket",
+                recipient_id=support_user.ctfd_user.id,
+                sender_id=author_id,
+                ticket_id=ticket_id,
+                commit=False,
             )
 
             NotificationService._emit_notification(notification)
@@ -166,8 +157,55 @@ class NotificationService:
         db.session.commit()
 
         NotificationService._emit_refetch(
-            path = f"/ng/support/tickets/{ticket_id}",
+            path=f"/ng/support/tickets/{ticket_id}",
         )
+
+    @staticmethod
+    def handle_ticket_message_notifications(
+        ticket,
+        message,
+        author_id: int,
+        is_admin: bool,
+    ) -> None:
+        """
+        Handle all notifications for ticket messages (replies)
+        Centralizes branching logic for ticket reply notifications
+
+        Args:
+            ticket: Ticket object
+            message: TicketMessage object
+            author_id: ID of message author
+            is_admin: Whether author is admin
+        """
+        # Skip all notifications if ticket is muted
+        if ticket.muted:
+            return
+
+        if is_admin:
+            # Admin replying to user's ticket
+            if ticket.author_id != author_id:
+                NotificationService.notify_ticket_reply(
+                    ticket_id=ticket.id,
+                    author_id=author_id,
+                    recipient_id=ticket.author_id,
+                    is_admin_reply=True,
+                )
+        else:
+            # User replying to ticket
+            if ticket.assigned_to:
+                # Assigned ticket - notify only assigned admin
+                NotificationService.notify_ticket_reply(
+                    ticket_id=ticket.id,
+                    author_id=author_id,
+                    recipient_id=ticket.assigned_to,
+                    is_admin_reply=False,
+                )
+            else:
+                # Unassigned ticket - notify all support staff
+                NotificationService.notify_unassigned_ticket_reply(
+                    ticket_id=ticket.id,
+                    author_id=author_id,
+                )
 
     @staticmethod
     def notify_ticket_assigned(
@@ -176,15 +214,15 @@ class NotificationService:
         assigned_by_id: int,
     ) -> None:
         """
-        Notify admin when ticket is assigned to them
+        Notify admin when ticket is assigned to them (DB notification only, no email)
         """
         notification = Notification.create_notification(
-            notification_type = NotificationType.TICKET_ASSIGNED,
-            title = "Ticket Assigned",
-            message = "A support ticket has been assigned to you",
-            recipient_id = assigned_to_id,
-            sender_id = assigned_by_id,
-            ticket_id = ticket_id,
+            notification_type=NotificationType.TICKET_ASSIGNED,
+            title="Ticket Assigned",
+            message="A support ticket has been assigned to you",
+            recipient_id=assigned_to_id,
+            sender_id=assigned_by_id,
+            ticket_id=ticket_id,
         )
 
         NotificationService._emit_notification(notification)
@@ -200,12 +238,12 @@ class NotificationService:
         Broadcast attempt submission to team members and event leaderboard update
         """
         NotificationService._emit_refetch(
-            path = f"/ng/events/{event_id}/challenges/{challenge_id}",
-            team_id = team_id
+            path=f"/ng/events/{event_id}/challenges/{challenge_id}",
+            team_id=team_id
         )
 
         NotificationService._emit_refetch(
-            path = f"/ng/events/{event_id}/leaderboard",
+            path = f"/ng/scoring/events/{event_id}/leaderboard",
             event_id = event_id
         )
 
@@ -219,79 +257,9 @@ class NotificationService:
         Broadcast hint redemption to team members
         """
         NotificationService._emit_refetch(
-            path = f"/ng/events/{event_id}/challenges/{challenge_id}",
-            team_id = team_id
+            path=f"/ng/events/{event_id}/challenges/{challenge_id}",
+            team_id=team_id
         )
-
-    @staticmethod
-    def send_event_announcement(
-        event_id: int,
-        announcement_type: AnnouncementType,
-        title: str,
-        message: str,
-        sender_id: int | None = None,
-    ) -> Announcement:
-        """
-        Send announcement to all event participants
-        """
-        announcement = Announcement.create_announcement(
-            announcement_type = announcement_type,
-            title = title,
-            message = message,
-            event_id = event_id,
-            sender_id = sender_id,
-        )
-
-        participants = TeamMember.query.filter_by(event_id = event_id).all()
-        participant_user_ids = [member.user_id for member in participants]
-
-        for user_id in participant_user_ids:
-            notification = Notification.create_notification(
-                notification_type = NotificationType.EVENT_ANNOUNCEMENT,
-                title = title,
-                message = message,
-                recipient_id = user_id,
-                sender_id = sender_id,
-                event_id = event_id,
-                commit = False,
-            )
-            NotificationService._emit_notification(notification)
-
-        db.session.commit()
-
-        NotificationService._emit_refetch(
-            path = f"/ng/events/{event_id}/announcements",
-            event_id = event_id
-        )
-
-        return announcement
-
-    @staticmethod
-    def send_system_announcement(
-        title: str,
-        message: str,
-        sender_id: int | None = None,
-    ) -> Announcement:
-        """
-        Send system wide announcement to all connected users
-        """
-        announcement = Announcement.create_announcement(
-            announcement_type = AnnouncementType.GENERAL,
-            title = title,
-            message = message,
-            sender_id = sender_id,
-        )
-
-        emit_event(
-            event_name = WebSocketEvent.SYSTEM_ANNOUNCEMENT,
-            data = {
-                "title": title,
-                "message": message,
-            },
-            user_ids = None  # Broadcast
-        )
-
-        return announcement
 
     @staticmethod
     def notify_team_invitation(
@@ -304,12 +272,12 @@ class NotificationService:
         Notify user about team invitation
         """
         notification = Notification.create_notification(
-            notification_type = NotificationType.TEAM_INVITATION,
-            title = "Team Invitation",
-            message = f"You've been invited to join team '{team_name}'",
-            recipient_id = invited_user_id,
-            sender_id = invited_by_id,
-            team_id = team_id,
+            notification_type=NotificationType.TEAM_INVITATION,
+            title="Team Invitation",
+            message=f"You've been invited to join team '{team_name}'",
+            recipient_id=invited_user_id,
+            sender_id=invited_by_id,
+            team_id=team_id,
         )
 
         NotificationService._emit_notification(notification)
@@ -323,8 +291,8 @@ class NotificationService:
         Broadcast team changes to team members
         """
         NotificationService._emit_refetch(
-            path = f"/ng/teams/{team_id}",
-            team_id = team_id
+            path=f"/ng/teams/{team_id}",
+            team_id=team_id
         )
 
     @staticmethod
@@ -336,24 +304,24 @@ class NotificationService:
         """
         Notify participants about new challenge
         """
-        participants = TeamMember.query.filter_by(event_id = event_id).all()
+        participants = TeamMember.query.filter_by(event_id=event_id).all()
         participant_user_ids = [member.user_id for member in participants]
 
         for user_id in participant_user_ids:
             notification = Notification.create_notification(
-                notification_type = NotificationType.CHALLENGE_RELEASED,
-                title = "New Challenge Available",
-                message = f"Challenge '{challenge_name}' is now available",
-                recipient_id = user_id,
-                event_id = event_id,
-                challenge_id = challenge_id,
-                commit = False,
+                notification_type=NotificationType.CHALLENGE_RELEASED,
+                title="New Challenge Available",
+                message=f"Challenge '{challenge_name}' is now available",
+                recipient_id=user_id,
+                event_id=event_id,
+                challenge_id=challenge_id,
+                commit=False,
             )
             NotificationService._emit_notification(notification)
 
         db.session.commit()
 
         NotificationService._emit_refetch(
-            path = f"/ng/events/{event_id}/challenges",
-            event_id = event_id
+            path=f"/ng/events/{event_id}/challenges",
+            event_id=event_id
         )

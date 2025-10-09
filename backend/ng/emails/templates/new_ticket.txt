@@ -1,0 +1,16 @@
+New Support Ticket Created
+
+Ticket Details:
+- Subject: {{ ticket.subject }}
+- Author: {{ ticket.author_name or 'Unknown User' }}
+- Ticket ID: #{{ ticket.id }}
+- Created: {{ ticket.opened_timestamp }}
+{% if ticket.event_name %}- Event: {{ ticket.event_name }}
+{% endif %}{% if ticket.team_name %}- Team: {{ ticket.team_name }}
+{% endif %}{% if ticket.challenge_name %}- Challenge: {{ ticket.challenge_name }}
+{% endif %}
+
+View ticket: {{ ticket_url }}
+
+---
+This email was sent by the CTF Support System.

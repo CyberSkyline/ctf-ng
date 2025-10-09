@@ -17,20 +17,19 @@ from ..controllers import (
     mark_notification_read,
     mark_all_read,
     get_unread_count,
-    get_active_announcements,
 )
 
 
-notifications_user_namespace = Namespace(
+notifications_namespace = Namespace(
     "notifications",
     description = "Notification operations for users"
 )
 
 
-@notifications_user_namespace.route("/me")
+@notifications_namespace.route("/me")
 class MyNotifications(Resource):
     @user_endpoint()
-    @notifications_user_namespace.doc(
+    @notifications_namespace.doc(
         description="Get my notifications with optional read status filter",
         params={
             "is_read": {
@@ -61,10 +60,10 @@ class MyNotifications(Resource):
         return success_response(notifications)
 
 
-@notifications_user_namespace.route("/me/unread-count")
+@notifications_namespace.route("/me/unread-count")
 class UnreadCount(Resource):
     @user_endpoint()
-    @notifications_user_namespace.doc(
+    @notifications_namespace.doc(
         description="Get count of unread notifications for the current user",
         responses={
             200: "Success - Returns unread notification count",
@@ -80,12 +79,12 @@ class UnreadCount(Resource):
         return success_response({"count": count})
 
 
-@notifications_user_namespace.route("/me/<int:notification_id>/read")
+@notifications_namespace.route("/me/<int:notification_id>/read")
 class MarkRead(Resource):
     @user_endpoint()
     @load_notification(source=LoaderType.PARAM)
     @check_ownership(resource_key="notification", user_field="recipient_id")
-    @notifications_user_namespace.doc(
+    @notifications_namespace.doc(
         description="Mark a specific notification as read",
         responses={
             200: "Success - Notification marked as read",
@@ -103,10 +102,10 @@ class MarkRead(Resource):
         return success_response(notification)
 
 
-@notifications_user_namespace.route("/me/read-all")
+@notifications_namespace.route("/me/read-all")
 class MarkAllRead(Resource):
     @user_endpoint()
-    @notifications_user_namespace.doc(
+    @notifications_namespace.doc(
         description="Mark all notifications as read for the current user",
         responses={
             200: "Success - All notifications marked as read, returns count of updated notifications",
@@ -120,34 +119,3 @@ class MarkAllRead(Resource):
         """
         count = mark_all_read(user_id = current_user.id)
         return success_response({"count": count})
-
-
-@notifications_user_namespace.route("/announcements")
-class Announcements(Resource):
-    @user_endpoint()
-    @notifications_user_namespace.doc(
-        description="Get active announcements (system-wide or event-specific)",
-        params={
-            "event_id": {
-                "description": "Filter by event (optional)",
-                "required": False,
-                "type": "integer",
-                "example": 1
-            }
-        },
-        responses={
-            200: "Success - Returns list of active announcements",
-            401: "Unauthorized - Authentication required",
-            500: "Internal server error",
-        },
-    )
-    def get(self, **kwargs):
-        """
-        Get active announcements
-        """
-        event_id = request.args.get("event_id", type = int)
-
-        announcements = get_active_announcements(
-            event_id = event_id,
-        )
-        return success_response(announcements)

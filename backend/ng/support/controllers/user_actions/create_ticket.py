@@ -7,6 +7,7 @@ from ....user.models.User import User
 from ....team.models.Team import Team
 from ...models.Ticket import Ticket
 from ....notifications.services import NotificationService
+from ....emails.services import TicketEmailService
 
 
 def create_ticket(
@@ -42,10 +43,14 @@ def create_ticket(
         commit=True,
     )
 
+    # WebSocket refetch notification (no DB notifications)
     NotificationService.notify_new_ticket(
         ticket_id=ticket.id,
         author_id=current_user.id,
         subject=subject,
     )
+
+    # Send email to admin support inbox
+    TicketEmailService.send_new_ticket_email(ticket=ticket)
 
     return ticket

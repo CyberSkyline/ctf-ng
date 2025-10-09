@@ -21,7 +21,8 @@ def get_models():
     """Lazy import of models to avoid SQLAlchemy table creation during import."""
     from ...challenge.models import Challenge, ChallengeTag, ContainerBlueprint, Hint, Question
     from ...event.models import Demographic, Event
-    from ...notifications.models import Notification, Announcement
+    from ...notifications.models import Notification
+    from ...announcements.models import Announcement
     from ...permissions.models import Permission, Role, RolePermission, UserRole
     from ...scoring.models import Attempt, HintRedemption, ManualPointAward, Score, ScoreEvent
     from ...support.models import Ticket, TicketMessage, TicketTag

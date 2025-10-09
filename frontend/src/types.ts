@@ -242,3 +242,24 @@ export interface TicketMessage {
   text: string;
   ticket_id: number
 }
+
+export interface Notification {
+  id: number;
+  type: string;
+  title: string;
+  message: string;
+  recipient_id: number;
+  created_at: Date;
+  sender_id?: number;
+  read_at?: Date;
+  expires_at?: Date;
+  ticket_id?: number;
+  team_id?: number;
+  event_id?: number;
+  challenge_id?: number;
+  recipient_name?: string;
+  sender_name?: string;
+  ticket_subject?: string;
+  team_name?: string;
+  event_name?: string;
+}

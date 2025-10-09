@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .message { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0; white-space: pre-wrap; }
+        .button { background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; }
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>{{ reply_type }} Reply on Ticket #{{ ticket.id }}</h2>
+
+        <p><strong>Subject:</strong> {{ ticket.subject }}</p>
+        <p><strong>From:</strong> {{ message.author_name or 'Unknown User' }}</p>
+
+        <div class="message">{{ message.text }}</div>
+
+        <p>
+            <a href="{{ ticket_url }}" class="button">View Full Ticket</a>
+        </p>
+
+        <div class="footer">
+            <p>This email was sent by the CTF Support System.</p>
+        </div>
+    </div>
+</body>
+</html>

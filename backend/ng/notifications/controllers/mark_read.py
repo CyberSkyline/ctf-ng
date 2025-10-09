@@ -2,7 +2,7 @@
 Mark notifications as read
 """
 
-from ...models import Notification
+from ..models import Notification
 
 
 def mark_notification_read(notification: Notification) -> Notification:

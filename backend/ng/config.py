@@ -53,3 +53,6 @@ CTFD_BASE_URL = "http://localhost:8001"
 
 CONTAINER_REGISTRY_USER = ""
 CONTAINER_REGISTRY_PASSWORD = ""
+
+# Email notification URL paths - Frontend routes
+TICKET_URL_PATH = "/support"
