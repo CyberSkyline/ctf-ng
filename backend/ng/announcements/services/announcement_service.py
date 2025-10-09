@@ -1,5 +1,5 @@
 """
-Service for handling announcements (system-wide and event-specific)
+Service for handling announcement (system-wide and event-specific)
 """
 
 from enum import Enum
