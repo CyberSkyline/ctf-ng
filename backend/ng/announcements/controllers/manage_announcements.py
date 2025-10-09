@@ -37,6 +37,7 @@ def send_event_announcement(
     announcement_type: str,
     sender_id: int,
     expires_at: str | None = None,
+    send_notification: bool = True,
 ) -> Announcement:
     """
     Send announcement to event participants
@@ -49,12 +50,13 @@ def send_event_announcement(
         ) from e
 
     return AnnouncementService.send_event_announcement(
-        event_id = event_id,
-        announcement_type = type_enum,
-        title = title,
-        message = message,
-        sender_id = sender_id,
-        expires_at = expires_at,
+        event_id=event_id,
+        announcement_type=type_enum,
+        title=title,
+        message=message,
+        sender_id=sender_id,
+        expires_at=expires_at,
+        send_notification=send_notification,
     )
 
 

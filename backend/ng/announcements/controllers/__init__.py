@@ -11,6 +11,9 @@ from .manage_announcements import (
     get_all_announcements,
     delete_announcement,
 )
+from .notify_challenge_update import (
+    notify_challenge_update,
+)
 
 __all__ = [
     "get_active_announcements",
@@ -18,4 +21,5 @@ __all__ = [
     "send_event_announcement",
     "get_all_announcements",
     "delete_announcement",
+    "notify_challenge_update",
 ]
