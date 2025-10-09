@@ -108,8 +108,8 @@ class Team(db.Model):
             "member_count": self.member_count,
             "ranked": self.ranked,
             "invite_code": self.invite_code,
-            "start_timestamp": self.start_timestamp.isoformat() if self.start_timestamp else None,
-            "end_time": self.end_time.isoformat() if self.end_time else None,
+            "start_timestamp": self.start_timestamp.isoformat() + "Z" if self.start_timestamp else None,
+            "end_time": self.end_time.isoformat() + "Z" if self.end_time else None,
         }
 
         if self.event:
