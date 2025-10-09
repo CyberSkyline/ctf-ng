@@ -141,12 +141,12 @@ class EventAnnouncement(Resource):
                 "example": "2025-12-31T23:59:59Z"
             },
             "send_notification": {
-                "description": "Whether to send DB notifications to event participants (default: true)",
+                "description": "Whether to send DB notifications to event participants (default: false)",
                 "in": "body",
                 "required": False,
                 "type": "boolean",
                 "example": True,
-                "default": True
+                "default": False
             }
         },
         responses={
@@ -170,7 +170,7 @@ class EventAnnouncement(Resource):
                                               "event_update"),
             sender_id = current_user.id,
             expires_at = json_data.get("expires_at"),
-            send_notification=json_data.get("send_notification", True),
+            send_notification = json_data.get("send_notification", False),
         )
         return success_response(announcement)
 

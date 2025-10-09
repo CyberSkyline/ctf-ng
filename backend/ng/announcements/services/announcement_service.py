@@ -39,7 +39,7 @@ class AnnouncementService:
         message: str,
         sender_id: int | None = None,
         expires_at: str | None = None,
-        send_notification: bool = True,
+        send_notification: bool = False,
     ) -> Announcement:
         """
         Send announcement to all event participants

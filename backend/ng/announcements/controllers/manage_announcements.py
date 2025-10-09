@@ -37,7 +37,7 @@ def send_event_announcement(
     announcement_type: str,
     sender_id: int,
     expires_at: str | None = None,
-    send_notification: bool = True,
+    send_notification: bool = False,
 ) -> Announcement:
     """
     Send announcement to event participants
