@@ -41,7 +41,7 @@ from ...user.models.User import User
 from ...team.models.Team import Team
 from ...team.models.enums import TeamRole
 from ...team.models.TeamMember import TeamMember
-
+from ...scoring.models.Score import Score
 from ...event.models.Event import Event
 from ...event.models.Demographic import Demographic
 from ...challenge.models.Challenge import Challenge
@@ -416,14 +416,16 @@ class EventTeamLeave(Resource):
                 403,
             )
         try:
-            team_member.remove_team_member(commit = False)
+            team_member.remove_team_member(commit = True)
             demographic = Demographic.find_by_user_and_event(
                 current_user.id,
                 event_id
             )
             demographic.delete(commit = False)
             if len(team.members) == 0:
+                Score.query.filter(Score.team_id == team.id).delete()
                 team.disband_team(commit = False)
+
             db.session.commit()
         except Exception as e:
             db.session.rollback()
