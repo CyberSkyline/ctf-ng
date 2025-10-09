@@ -6,12 +6,13 @@ from flask_restx import Namespace, Resource
 
 from ...core.utils import success_response
 from ...core.middleware import admin_endpoint
-from ...core.middleware.loaders import LoaderType, load_event
+from ...core.middleware.loaders import LoaderType, load_event, load_announcement
 
 from ..controllers import (
     send_announcement,
     send_event_announcement,
     get_all_announcements,
+    delete_announcement,
 )
 
 
@@ -60,6 +61,20 @@ class SystemAnnouncement(Resource):
                 "required": True,
                 "type": "string",
                 "example": "The system will be under maintenance from 2-4 PM UTC"
+            },
+            "expires_at": {
+                "description": "Optional expiration datetime in ISO format (UTC)",
+                "in": "body",
+                "required": False,
+                "type": "string",
+                "example": "2025-12-31T23:59:59Z"
+            },
+            "send_notification": {
+                "description": "Optional flag to send notification to users (default: false)",
+                "in": "body",
+                "required": False,
+                "type": "boolean",
+                "example": True
             }
         },
         responses={
@@ -78,6 +93,8 @@ class SystemAnnouncement(Resource):
             title = json_data.get("title"),
             message = json_data.get("message"),
             sender_id = current_user.id,
+            expires_at = json_data.get("expires_at"),
+            send_notification = json_data.get("send_notification", False),
         )
         return success_response(result)
 
@@ -110,6 +127,13 @@ class EventAnnouncement(Resource):
                 "type": "string",
                 "example": "event_update",
                 "default": "event_update"
+            },
+            "expires_at": {
+                "description": "Optional expiration datetime in ISO format (UTC)",
+                "in": "body",
+                "required": False,
+                "type": "string",
+                "example": "2025-12-31T23:59:59Z"
             }
         },
         responses={
@@ -132,6 +156,37 @@ class EventAnnouncement(Resource):
             announcement_type = json_data.get("type",
                                               "event_update"),
             sender_id = current_user.id,
+            expires_at = json_data.get("expires_at"),
         )
         return success_response(announcement)
+
+
+@announcements_admin_namespace.route("/<int:announcement_id>")
+class AnnouncementDelete(Resource):
+    @admin_endpoint()
+    @load_announcement(source = LoaderType.PARAM)
+    @announcements_admin_namespace.doc(
+        description="Delete an announcement and cleanup related notifications (Admin only)",
+        params={
+            "announcement_id": {
+                "description": "Announcement ID to delete",
+                "required": True,
+                "type": "integer",
+                "example": 1
+            }
+        },
+        responses={
+            200: "Success - Announcement deleted with notification cleanup",
+            401: "Unauthorized - Authentication required",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Announcement does not exist",
+            500: "Internal server error",
+        },
+    )
+    def delete(self, announcement_id: int, announcement, current_user, **kwargs):
+        """
+        Delete announcement with notification cleanup
+        """
+        delete_announcement(announcement = announcement)
+        return success_response()
 

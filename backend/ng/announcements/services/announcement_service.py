@@ -3,7 +3,7 @@ Service for handling announcements (system-wide and event-specific)
 """
 
 from enum import Enum
-from CTFd.models import db
+from CTFd.models import db, Users
 
 from ...core.utils.emitters import emit_event
 
@@ -37,6 +37,7 @@ class AnnouncementService:
         title: str,
         message: str,
         sender_id: int | None = None,
+        expires_at: str | None = None,
     ) -> Announcement:
         """
         Send announcement to all event participants
@@ -47,6 +48,7 @@ class AnnouncementService:
             title: Announcement title
             message: Announcement message
             sender_id: ID of announcement sender
+            expires_at: Optional expiration datetime
 
         Returns:
             Created Announcement object
@@ -57,6 +59,7 @@ class AnnouncementService:
             message = message,
             event_id = event_id,
             sender_id = sender_id,
+            expires_at = expires_at,
         )
 
         participants = TeamMember.query.filter_by(event_id = event_id).all()
@@ -88,6 +91,8 @@ class AnnouncementService:
         title: str,
         message: str,
         sender_id: int | None = None,
+        expires_at: str | None = None,
+        send_notification: bool = False,
     ) -> Announcement:
         """
         Send system wide announcement to all connected users
@@ -96,6 +101,8 @@ class AnnouncementService:
             title: Announcement title
             message: Announcement message
             sender_id: ID of announcement sender
+            expires_at: Optional expiration datetime
+            send_notification: Whether to send notification to all users
 
         Returns:
             Created Announcement object
@@ -105,7 +112,24 @@ class AnnouncementService:
             title = title,
             message = message,
             sender_id = sender_id,
+            expires_at = expires_at,
         )
+
+        if send_notification:
+            all_users = Users.query.all()
+
+            for user in all_users:
+                notification = Notification.create_notification(
+                    notification_type = NotificationType.EVENT_ANNOUNCEMENT,
+                    title = title,
+                    message = message,
+                    recipient_id = user.id,
+                    sender_id = sender_id,
+                    commit = False,
+                )
+                NotificationService._emit_notification(notification)
+
+            db.session.commit()
 
         emit_event(
             event_name = AnnouncementWebSocketEvent.SYSTEM_ANNOUNCEMENT,

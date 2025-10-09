@@ -781,7 +781,8 @@ class TestNotification:
         assert NotificationType.TICKET_STATUS_CHANGE.value == "ticket_status_change"
         assert NotificationType.TICKET_ASSIGNED.value == "ticket_assigned"
         assert NotificationType.TEAM_INVITATION.value == "team_invitation"
-        assert NotificationType.CHALLENGE_RELEASED.value == "challenge_released"
+        assert NotificationType.CHALLENGE_UPDATED.value == "challenge_updated"
+        assert NotificationType.EVENT_ANNOUNCEMENT.value == "event_announcement"
 
     def test_is_read_property(self, notification_factory, user):
         """

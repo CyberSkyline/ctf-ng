@@ -296,22 +296,35 @@ class NotificationService:
         )
 
     @staticmethod
-    def notify_challenge_released(
+    def notify_challenge_updated(
         event_id: int,
         challenge_id: int,
         challenge_name: str,
+        update_reason: str | None = None,
     ) -> None:
         """
-        Notify participants about new challenge
+        Notify participants about challenge updates/fixes
+        Only sends notifications if update_reason is provided
+
+        Args:
+            event_id: Event ID
+            challenge_id: Challenge that was updated
+            challenge_name: Name of the challenge
+            update_reason: Optional description of what changed (required to send notification)
         """
+        if not update_reason:
+            return
+
         participants = TeamMember.query.filter_by(event_id=event_id).all()
         participant_user_ids = [member.user_id for member in participants]
 
+        message = f"Challenge '{challenge_name}' has been updated: {update_reason}"
+
         for user_id in participant_user_ids:
             notification = Notification.create_notification(
-                notification_type=NotificationType.CHALLENGE_RELEASED,
-                title="New Challenge Available",
-                message=f"Challenge '{challenge_name}' is now available",
+                notification_type=NotificationType.CHALLENGE_UPDATED,
+                title="Challenge Updated",
+                message=message,
                 recipient_id=user_id,
                 event_id=event_id,
                 challenge_id=challenge_id,
@@ -322,6 +335,6 @@ class NotificationService:
         db.session.commit()
 
         NotificationService._emit_refetch(
-            path=f"/ng/events/{event_id}/challenges",
+            path=f"/ng/events/{event_id}/challenges/{challenge_id}",
             event_id=event_id
         )
