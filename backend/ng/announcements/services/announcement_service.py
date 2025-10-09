@@ -45,35 +45,35 @@ class AnnouncementService:
         Send announcement to all event participants
         """
         announcement = Announcement.create_announcement(
-            announcement_type=announcement_type,
-            title=title,
-            message=message,
-            event_id=event_id,
-            sender_id=sender_id,
-            expires_at=expires_at,
+            announcement_type = announcement_type,
+            title = title,
+            message = message,
+            event_id = event_id,
+            sender_id = sender_id,
+            expires_at = expires_at,
         )
 
         if send_notification:
-            participants = TeamMember.query.filter_by(event_id=event_id).all()
+            participants = TeamMember.query.filter_by(event_id = event_id).all()
             participant_user_ids = [member.user_id for member in participants]
 
             for user_id in participant_user_ids:
                 notification = Notification.create_notification(
-                    notification_type=NotificationType.EVENT_ANNOUNCEMENT,
-                    title=title,
-                    message=message,
-                    recipient_id=user_id,
-                    sender_id=sender_id,
-                    event_id=event_id,
-                    commit=False,
+                    notification_type = NotificationType.EVENT_ANNOUNCEMENT,
+                    title = title,
+                    message = message,
+                    recipient_id = user_id,
+                    sender_id = sender_id,
+                    event_id = event_id,
+                    commit = False,
                 )
                 NotificationService._emit_notification(notification)
 
             db.session.commit()
 
         NotificationService._emit_refetch(
-            path=f"/ng/events/{event_id}/announcements",
-            event_id=event_id
+            path = f"/ng/events/{event_id}/announcements",
+            event_id = event_id
         )
 
         return announcement
@@ -100,11 +100,11 @@ class AnnouncementService:
             Created Announcement object
         """
         announcement = Announcement.create_announcement(
-            announcement_type=AnnouncementType.GENERAL,
-            title=title,
-            message=message,
-            sender_id=sender_id,
-            expires_at=expires_at,
+            announcement_type = AnnouncementType.GENERAL,
+            title = title,
+            message = message,
+            sender_id = sender_id,
+            expires_at = expires_at,
         )
 
         if send_notification:
@@ -112,12 +112,12 @@ class AnnouncementService:
 
             for user_id in connected_user_ids:
                 notification = Notification.create_notification(
-                    notification_type=NotificationType.EVENT_ANNOUNCEMENT,
-                    title=title,
-                    message=message,
-                    recipient_id=user_id,
-                    sender_id=sender_id,
-                    commit=False,
+                    notification_type = NotificationType.EVENT_ANNOUNCEMENT,
+                    title = title,
+                    message = message,
+                    recipient_id = user_id,
+                    sender_id = sender_id,
+                    commit = False,
                 )
                 NotificationService._emit_notification(notification)
 
@@ -125,12 +125,12 @@ class AnnouncementService:
                 db.session.commit()
 
         emit_event(
-            event_name=AnnouncementWebSocketEvent.SYSTEM_ANNOUNCEMENT,
-            data={
+            event_name = AnnouncementWebSocketEvent.SYSTEM_ANNOUNCEMENT,
+            data = {
                 "title": title,
                 "message": message,
             },
-            user_ids=None  # Broadcast
+            user_ids = None  # Broadcast
         )
 
         return announcement
