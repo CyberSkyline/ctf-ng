@@ -243,8 +243,8 @@ class NotificationService:
         )
 
         NotificationService._emit_refetch(
-            path=f"/ng/events/{event_id}/leaderboard",
-            event_id=event_id
+            path = f"/ng/scoring/events/{event_id}/leaderboard",
+            event_id = event_id
         )
 
     @staticmethod

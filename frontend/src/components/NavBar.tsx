@@ -1,14 +1,22 @@
-import { NavigationMenu } from 'radix-ui';
-import { NavLink, useLocation } from 'react-router';
-import { TbUserCircle } from 'react-icons/tb';
-import { twMerge } from 'tailwind-merge';
+import { apiMutation } from '@/fetchers';
+import { useCurrentUser } from '@/hooks/users';
 import ThemeToggle from 'components/ThemeToggle';
 import { useTheme } from 'next-themes';
+import { NavigationMenu } from 'radix-ui';
+import { TbUserCircle } from 'react-icons/tb';
+import { NavLink, useLocation } from 'react-router';
+import { twMerge } from 'tailwind-merge';
+import NotificationsPopover from 'components/NotificationsPopover';
 
 export default function NavBar() {
   const logout = () => {
-    // perform a logout
+    apiMutation('/users/logout', {}, { method : 'POST' }).then(() => {
+      // do a full reload to make sure window.init is updated
+      window.location.href = '/';
+    });
   };
+
+  const { data, error } = useCurrentUser();
 
   const location = useLocation();
   const { theme } = useTheme(); // Drop Content wouldn't obey otherwise
@@ -96,15 +104,26 @@ export default function NavBar() {
               Support
             </NavigationMenu.Item>
           </NavLink>
-          <NavigationMenu.Item className={location.pathname === '/notifications' ? activeLinkClass : defaultLinkClass}>
-            Notifications*
-          </NavigationMenu.Item>
+
+          <NotificationsPopover
+            triggerClassName={defaultLinkClass}
+            contentClassName={twMerge(contentBase, theme === 'dark' ? contentDark : contentLight)}
+          />
 
           <NavigationMenu.Item>
-            <NavigationMenu.Trigger className={twMerge(defaultLinkClass, 'pt-3')}>
-              <TbUserCircle />
+            <NavigationMenu.Trigger
+              className={defaultLinkClass}
+              onPointerMove={(event) => event.preventDefault()}
+              onPointerLeave={(event) => event.preventDefault()}
+            >
+              <TbUserCircle className="inline" />
+              {data && ` ${data.name}`}
             </NavigationMenu.Trigger>
-            <NavigationMenu.Content className={twMerge(contentBase, theme === 'dark' ? contentDark : contentLight)}>
+            <NavigationMenu.Content
+              className={twMerge(contentBase, theme === 'dark' ? contentDark : contentLight)}
+              onPointerEnter={(event) => event.preventDefault()}
+              onPointerLeave={(event) => event.preventDefault()}
+            >
               <ul className="grid gap-2 p-3">
                 <li>
                   <NavLink
@@ -125,15 +144,28 @@ export default function NavBar() {
                 <li>
                   <ThemeToggle className="ml-3 py-2" />
                 </li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={logout}
-                    className={contentItem}
-                  >
-                    Log Out*
-                  </button>
-                </li>
+
+                {data && (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={logout}
+                      className={contentItem}
+                    >
+                      Log Out
+                    </button>
+                  </li>
+                )}
+                {error && (
+                  <li>
+                    <NavLink
+                      to="/login"
+                      className={contentItem}
+                    >
+                      Log In
+                    </NavLink>
+                  </li>
+                )}
               </ul>
             </NavigationMenu.Content>
           </NavigationMenu.Item>

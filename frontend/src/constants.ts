@@ -13,8 +13,9 @@ import {
 
 export type AccentColor = (typeof accentColors)[number];
 
-export const ROUTEPREFIX: string = '/hello';
+export const ROUTEPREFIX: string = '/';
 export const APIPREFIX: string = '/ng';
+export const SSOPATH: string = '/ng/authenticate/okta/login';
 
 // Semantic icons used throughout the UI, defined here for consistency
 export const EventIcon = TbCalendarEvent;
@@ -63,4 +64,14 @@ export const ROLES: Record<string, { color: AccentColor; icon: IconType }> = {
     color : 'gray',
     icon : UserIcon,
   },
+};
+
+/* Find these const defined in NotificationType.py */
+export const NOTIF_TYPE = {
+  TICKETS : [
+    'ticket_create',
+    'ticket_message',
+    'ticket_status_change',
+    'ticket_assigned',
+  ],
 };
