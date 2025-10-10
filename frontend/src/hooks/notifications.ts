@@ -44,21 +44,20 @@ export function markAllNotificationsRead() {
  * Gets all announcements
  */
 export function useMyAnnouncements() {
-  return useSWR<Announcement[], Error>('/notifications/announcements');
+  return useSWR<Announcement[], Error>('/announcements');
 }
 
 /* ADMIN ENDPOINTS */
 
 export function useAnnouncements() {
-  return useSWR<Announcement[]>('/admin/notifications/announcements');
+  return useSWR<Announcement[]>('/admin/announcements');
 }
 
 export function addNewAnnouncement(data: {title: string, message: string}) {
-  return apiMutation('/admin/notifications/announce', data, {
+  return apiMutation('/admin/announcements/announce', data, {
     method : 'POST',
   }).then(() => {
-    mutate('/notifications/me');
-    mutate('/admin/notifications/announcements');
+    mutate('/admin/announcements');
   });
 }
 
@@ -70,10 +69,9 @@ export function addNewEventAnnouncement(data: {
   expires_at?: Date,
   type?: string
 }) {
-  return apiMutation(`/admin/notifications/events/${data.event_id}/announce`, data, {
+  return apiMutation(`/admin/announcements/events/${data.event_id}/announce`, data, {
     method : 'POST',
   }).then(() => {
-    mutate('/notifications/me');
-    mutate('/admin/notifications/announcements');
+    mutate('/admin/announcements');
   });
 }
