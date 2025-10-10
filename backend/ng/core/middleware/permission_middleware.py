@@ -5,8 +5,9 @@ from ..utils.logger import get_logger
 from ...permissions.controllers.get_team_management_permissions import get_team_management_permissions
 from ...permissions.controllers.get_user_permissions import get_user_permissions
 from ...permissions.controllers.get_challenge_permissions import get_challenge_permissions
+from ...permissions.controllers.get_user_roles import get_user_roles
 from ...event.models.Demographic import Demographic
-from ...permissions.models.enums import PermissionEnum, PermissionCheck, DenyReason
+from ...permissions.models.enums import PermissionEnum, PermissionCheck, DenyReason, RoleEnum
 
 logger = get_logger(__name__)
 
@@ -51,7 +52,9 @@ def event_only_public(f):
     @wraps(f)
     def wrapped(*args, **kwargs):
         event = kwargs.get('event')
-        current_user = kwargs.get('current_user')
+        current_user = kwargs.get('current_user') or get_current_user()
+        if current_user and RoleEnum.ADMIN in get_user_roles(current_user.id):
+            return f(*args, **kwargs)
         id = current_user.id if current_user else None
         if Demographic.find_by_user_and_event(id, event.id) is None:
             if not event.public:
