@@ -14,6 +14,9 @@ class Client(docker.DockerClient):
             ctr.start()
         return ctr
 
+    def get_network_by_name(self, network_name: str):
+        return self.networks.list(names=[f"^{network_name}$"])[0]
+
     def get_ecr_credentials(self):
         """Get AWS ECR login credentials using boto3"""
         # Get AWS credentials from app config
