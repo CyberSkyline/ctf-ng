@@ -51,7 +51,9 @@ class TestSendAnnouncement:
         mock_send_system.assert_called_once_with(
             title = "Test Announcement",
             message = "Test message",
-            sender_id = admin.id
+            sender_id = admin.id,
+            expires_at = None,
+            send_notification = False
         )
         assert result == mock_announcement
 
@@ -71,7 +73,9 @@ class TestSendAnnouncement:
         mock_send_system.assert_called_once_with(
             title = "System Announcement",
             message = "Automated message",
-            sender_id = None
+            sender_id = None,
+            expires_at = None,
+            send_notification = False
         )
         assert result is None
 
@@ -112,7 +116,9 @@ class TestSendEventAnnouncement:
             announcement_type = AnnouncementType.EVENT_START,
             title = "Event Starting",
             message = "The event will begin soon",
-            sender_id = admin.id
+            sender_id = admin.id,
+            expires_at = None,
+            send_notification = False
         )
         assert result == mock_announcement
 
@@ -338,12 +344,16 @@ class TestControllerIntegration:
         mock_send_system.assert_called_once_with(
             title = "System Maintenance",
             message = "Scheduled maintenance tonight",
-            sender_id = admin.id
+            sender_id = admin.id,
+            expires_at = None,
+            send_notification = False
         )
         mock_send_event.assert_called_once_with(
             event_id = event.id,
             announcement_type = AnnouncementType.EVENT_START,
             title = "Event Starting",
             message = "Get ready!",
-            sender_id = admin.id
+            sender_id = admin.id,
+            expires_at = None,
+            send_notification = False
         )

@@ -16,6 +16,7 @@ from CTFd.models import db
 from ... import config
 from ...core.utils import utc_now
 from ...core.utils.validator import BaseValidator
+from ...notifications.models import Notification
 
 
 class AnnouncementType(str, Enum):
@@ -280,3 +281,19 @@ class Announcement(db.Model):
 
         db.session.commit()
         return count
+
+    def delete(self, commit: bool = True) -> None:
+        """
+        Delete this announcement and cleanup associated notifications
+        """
+        Notification.query.filter_by(
+            event_id = self.event_id if self.event_id else None
+        ).filter(
+            Notification.created_at == self.created_at,
+            Notification.title == self.title,
+            Notification.message == self.message,
+        ).delete()
+
+        db.session.delete(self)
+        if commit:
+            db.session.commit()

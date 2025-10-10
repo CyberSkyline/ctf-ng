@@ -4,14 +4,20 @@ Admin API routes for announcements
 
 from flask_restx import Namespace, Resource
 
-from ...core.utils import success_response
+from ...core.utils import success_response, error_response
 from ...core.middleware import admin_endpoint
-from ...core.middleware.loaders import LoaderType, load_event
-
+from ...core.middleware.loaders import (
+    LoaderType,
+    load_event,
+    load_announcement,
+    load_challenge,
+)
 from ..controllers import (
     send_announcement,
     send_event_announcement,
     get_all_announcements,
+    delete_announcement,
+    notify_challenge_update,
 )
 
 
@@ -60,6 +66,20 @@ class SystemAnnouncement(Resource):
                 "required": True,
                 "type": "string",
                 "example": "The system will be under maintenance from 2-4 PM UTC"
+            },
+            "expires_at": {
+                "description": "Optional expiration datetime in ISO format (UTC)",
+                "in": "body",
+                "required": False,
+                "type": "string",
+                "example": "2025-12-31T23:59:59Z"
+            },
+            "send_notification": {
+                "description": "Optional flag to send notification to users (default: false)",
+                "in": "body",
+                "required": False,
+                "type": "boolean",
+                "example": True
             }
         },
         responses={
@@ -78,6 +98,8 @@ class SystemAnnouncement(Resource):
             title = json_data.get("title"),
             message = json_data.get("message"),
             sender_id = current_user.id,
+            expires_at = json_data.get("expires_at"),
+            send_notification = json_data.get("send_notification", False),
         )
         return success_response(result)
 
@@ -110,6 +132,21 @@ class EventAnnouncement(Resource):
                 "type": "string",
                 "example": "event_update",
                 "default": "event_update"
+            },
+            "expires_at": {
+                "description": "Optional expiration datetime in ISO format (UTC)",
+                "in": "body",
+                "required": False,
+                "type": "string",
+                "example": "2025-12-31T23:59:59Z"
+            },
+            "send_notification": {
+                "description": "Whether to send DB notifications to event participants (default: false)",
+                "in": "body",
+                "required": False,
+                "type": "boolean",
+                "example": True,
+                "default": False
             }
         },
         responses={
@@ -132,6 +169,99 @@ class EventAnnouncement(Resource):
             announcement_type = json_data.get("type",
                                               "event_update"),
             sender_id = current_user.id,
+            expires_at = json_data.get("expires_at"),
+            send_notification = json_data.get("send_notification", False),
         )
         return success_response(announcement)
+
+
+@announcements_admin_namespace.route("/<int:announcement_id>")
+class AnnouncementDelete(Resource):
+    @admin_endpoint()
+    @load_announcement(source = LoaderType.PARAM)
+    @announcements_admin_namespace.doc(
+        description="Delete an announcement and cleanup related notifications (Admin only)",
+        params={
+            "announcement_id": {
+                "description": "Announcement ID to delete",
+                "required": True,
+                "type": "integer",
+                "example": 1
+            }
+        },
+        responses={
+            200: "Success - Announcement deleted with notification cleanup",
+            401: "Unauthorized - Authentication required",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Announcement does not exist",
+            500: "Internal server error",
+        },
+    )
+    def delete(self, announcement_id: int, announcement, current_user, **kwargs):
+        """
+        Delete announcement with notification cleanup
+        """
+        delete_announcement(announcement = announcement)
+        return success_response()
+
+
+@announcements_admin_namespace.route("/challenge-update")
+class ChallengeUpdateAnnouncement(Resource):
+    @admin_endpoint(json_required = True)
+    @load_event(source = LoaderType.BODY, input_key = "event_id")
+    @load_challenge(source = LoaderType.BODY, input_key = "challenge_id")
+    @announcements_admin_namespace.doc(
+        description="Send a challenge update notification to all event participants",
+        params={
+            "event_id": {
+                "description": "Event ID",
+                "in": "body",
+                "required": True,
+                "type": "integer",
+                "example": 1
+            },
+            "challenge_id": {
+                "description": "Challenge ID that was updated",
+                "in": "body",
+                "required": True,
+                "type": "integer",
+                "example": 5
+            },
+            "update_reason": {
+                "description": "Description of what changed (shown in notification)",
+                "in": "body",
+                "required": True,
+                "type": "string",
+                "example": "Fixed typo in question 2"
+            }
+        },
+        responses={
+            200: "Success - Notification sent to all participants",
+            400: "Bad request - Missing required fields",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Event or challenge does not exist",
+            500: "Internal Server Error",
+        },
+    )
+    def post(self, current_user, event, challenge, json_data, **kwargs):
+        """
+        Send challenge update announcement (standalone)
+        """
+        update_reason = json_data.get("update_reason")
+
+        if not update_reason:
+            return error_response(
+                "update_reason is required",
+                "validation",
+                400
+            )
+
+        result = notify_challenge_update(
+            event_id = event.id,
+            challenge_id = challenge.id,
+            challenge_name = challenge.name,
+            update_reason = update_reason,
+        )
+
+        return success_response(result)
 
