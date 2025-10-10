@@ -53,6 +53,8 @@ export function useRegistration(eventId: number | null) {
   return {
     isRegistered : !!myTeam,
     isUnregistered : !myTeam && !isLoading && !error,
+    isStarted : !!myTeam?.start_timestamp,
+    isFinished : !!(myTeam?.end_time && myTeam.end_time < new Date()),
     team : myTeam,
     error,
     isLoading,

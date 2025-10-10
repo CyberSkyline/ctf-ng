@@ -30,6 +30,23 @@ export function useEvent(eventId: number | null) {
   return useSWR<Event, Error>(eventId ? `/events/${eventId}` : null);
 }
 
+export function useEventStatus(eventId: number | null) {
+  const { data, error, isLoading } = useEvent(eventId);
+
+  return {
+    isRegistrationOpen : !!(data && data.registration_open
+      && (!data.registration_start_date || data.registration_start_date <= new Date())
+      && (!data.registration_end_date || data.registration_end_date >= new Date())
+    ),
+    isOngoing : !!(data
+       && (!data.start_time || data.start_time <= new Date())
+       && (!data.end_time || data.end_time >= new Date())),
+    isConcluded : !!(data && data.end_time && data.end_time < new Date()),
+    isLoading,
+    error,
+  };
+}
+
 export function useMyEligibility(eventId: number | null) {
   return useSWR<boolean, Error>(eventId ? `/events/${eventId}/me/eligibility` : null);
 }
@@ -55,6 +72,8 @@ export function registerMyEvent(eventId: number, teamName: string) {
   }).then(() => {
     mutate('/users/me/events');
     mutate('/users/me/teams');
+    mutate(`/events/${eventId}/me/team`);
+    mutate(`/events/${eventId}/me/eligibility`);
     mutate(`/permissions/${eventId}/me`);
   });
 }
@@ -64,6 +83,8 @@ export function registerMyEventTeamJoin(eventId: number, inviteCode: string) {
   }).then(() => {
     mutate('/users/me/events');
     mutate('/users/me/teams');
+    mutate(`/events/${eventId}/me/team`);
+    mutate(`/events/${eventId}/me/eligibility`);
     mutate(`/permissions/${eventId}/me`);
   });
 }
@@ -142,6 +163,7 @@ export function startMyTeam(eventId: number) {
     mutate(`/events/${eventId}/challenges`);
     mutate(`/events/${eventId}/me/challenges`);
     mutate(`/permissions/${eventId}/me`);
+    mutate('/users/me/teams');
   });
 }
 

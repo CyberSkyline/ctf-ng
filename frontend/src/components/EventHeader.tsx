@@ -30,17 +30,6 @@ export default function EventHeader({
     max_team_size : maxTeamSize,
   } = event;
 
-  const now = new Date();
-
-  let state: 'upcoming' | 'live' | 'ended' | 'waiting' | null = null;
-  if (endTime && now > endTime) {
-    state = 'ended';
-  } else if (!startTime || now < startTime) {
-    state = 'upcoming';
-  } else if (startTime && endTime && now >= startTime && now <= endTime) {
-    state = 'live';
-  }
-
   const dateRange = (!isNull(startTime) && !isNull(endTime)) && `${startTime?.toLocaleString()} - ${endTime?.toLocaleString()}`;
 
   return (
@@ -52,9 +41,7 @@ export default function EventHeader({
         </AspectRatio>
       </Box>
       <Flex direction="column" flexGrow="1" align="start" gap="2">
-        {state && (
-          <EventBadge state={state} />
-        )}
+        <EventBadge eventId={id} size="3" />
         <Box>
           <Heading size="8">
             <LinkTheme asChild>
