@@ -62,8 +62,15 @@ export function addNewAnnouncement(data: {title: string, message: string}) {
   });
 }
 
-export function addNewEventAnnouncement(data: { eventId: number, }) {
-  return apiMutation(`/admin/notifications/events/${data.eventId}/announce`, data, {
+export function addNewEventAnnouncement(data: {
+  event_id: string,
+  title: string,
+  message: string,
+  send_notification: boolean,
+  expires_at?: Date,
+  type?: string
+}) {
+  return apiMutation(`/admin/notifications/events/${data.event_id}/announce`, data, {
     method : 'POST',
   }).then(() => {
     mutate('/notifications/me');

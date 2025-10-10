@@ -9,22 +9,28 @@ import {
   TextField,
   SegmentedControl,
 } from '@radix-ui/themes';
-import { addNewAnnouncement } from '@/hooks/notifications';
+import { addNewAnnouncement, addNewEventAnnouncement } from '@/hooks/notifications';
+import { useAllEvents } from '@/hooks/events';
 import { TbPlus } from 'react-icons/tb';
 import { Controller } from 'react-hook-form';
 import { useState } from 'react';
+import SelectDropdown from 'components/SelectDropdown';
+import { isNull, map } from 'lodash';
+import { ErrorCallout } from 'components/Callouts';
 
 export default function CreateAnnoucementModal() {
+  const { data : allEvents, error : allEventsError, isLoading } = useAllEvents();
+  const eventOptions: {value: string, name: string}[] = map(allEvents, ({ id, name }) => ({ value : id.toString(), name }));
+
   const [ selectedOption, setSelectedOption ] = useState<'general' | 'event'>('general');
-  
-  const handleSubmit = async (data: {event: string, title: string, message: string, send_notification: boolean, expires_at: Date, type: string}) => {
-    if(selectedOption === 'general'){
-      console.log('ann', data)
-      //addNewAnnouncement(data);
+
+  const handleSubmit = async (data: {event_id: string, title: string, message: string, send_notification: boolean, expires_at: Date, type: string}) => {
+    if (selectedOption === 'general') {
+      addNewAnnouncement(data);
     } else {
-      console.log('event ann', data)
+      addNewEventAnnouncement(data);
     }
-  }
+  };
 
   return (
     <Modal
@@ -39,9 +45,10 @@ export default function CreateAnnoucementModal() {
       submitVerb="Send"
       submitColor={COLOR_POSITIVE}
       defaultValues={{
-        event: 'None',
+        event_id : '',
         send_notification : false,
         expires_at : null as unknown as Date,
+        type : 'event_update',
       }}
     >
       {({ register, control, formState : { errors } }) => (
@@ -54,13 +61,42 @@ export default function CreateAnnoucementModal() {
             <SegmentedControl.Item value="general">
               General
             </SegmentedControl.Item>
-            <SegmentedControl.Item value="event">
-              Event
-            </SegmentedControl.Item>
+            {!isLoading && !isNull(allEvents) && (
+              <SegmentedControl.Item value="event">
+                Event
+              </SegmentedControl.Item>
+            )}
           </SegmentedControl.Root>
+          {allEventsError && <ErrorCallout>{allEventsError.message}</ErrorCallout>}
 
           {selectedOption === 'event' && (
-            <div>dropdown here</div>
+            <>
+              <SelectDropdown
+                control={control}
+                rules={{
+                  validate : (value) => value !== '' || 'Please select an event',
+                }}
+                error={errors?.event_id}
+                name="event_id"
+                label="Event"
+                options={eventOptions}
+                noneOption={false}
+              />
+              <SelectDropdown
+                control={control}
+                error={errors?.type}
+                name="type"
+                label="Type"
+                noneOption={false}
+                options={[
+                  { value : 'event_update', name : 'Event Update' },
+                  { value : 'general', name : 'General' },
+                  { value : 'event_start', name : 'Event Start' },
+                  { value : 'event_end', name : 'Event End' },
+                  { value : 'leaderboard_update', name : 'Leaderboard Update', icon : <TbPlus /> },
+                ]}
+              />
+            </>
           )}
 
           <FormField label="Title" error={errors?.title}>
