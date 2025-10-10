@@ -1,5 +1,6 @@
 import { useChallenge } from '@/hooks/challenge';
 import { useEvent } from '@/hooks/events';
+import { useEventPermission } from '@/hooks/permissions';
 import {
   Box,
   Button,
@@ -34,6 +35,8 @@ export default function ChallengeSidebar() {
   const {
     challenge, questions, hints, attempts,
   } = data || {};
+
+  const { granted } = useEventPermission('CAN_PLAY_CHALLENGE', Number(idEvent));
 
   const groupedAttempts = groupBy(attempts || [], 'question_id');
 
@@ -83,7 +86,7 @@ export default function ChallengeSidebar() {
               </Box>
             )}
 
-            {challenge && event && (
+            {challenge && event && granted && (
               <Flex direction="row" gap="2" mt="3" align="center">
                 <ConnectModal eventId={event.id} challengeId={challenge.id} />
                 <Button variant="ghost" className="!m-0 !p-2" color="gray">

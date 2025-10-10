@@ -17,7 +17,9 @@ import {
   type AccentColor,
 } from '@/constants';
 import { submitFlag } from '@/hooks/challenge';
+import { useEventPermission } from '@/hooks/permissions';
 import type { Attempt, Question } from '@/types';
+import RequireEventPermission from 'components/RequireEventPermission';
 import { startCase } from 'lodash';
 import { useCallback } from 'react';
 
@@ -33,6 +35,8 @@ export default function ChallengeQuestion({
   const {
     id, name, points, body, max_attempts : maxAttempts, placeholder, challenge_id : challengeId,
   } = question;
+
+  const { denied } = useEventPermission('CAN_PLAY_CHALLENGES', eventId);
 
   const handleSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -98,7 +102,7 @@ export default function ChallengeQuestion({
                 placeholder={placeholder}
                 required
                 autoComplete="off"
-                disabled={status === 'correct' || attemptsRemaining <= 0}
+                disabled={status === 'correct' || attemptsRemaining <= 0 || denied}
               >
                 <TextField.Slot>
                   <TbFlag2 className={twMerge(status !== 'unanswered' && 'text-(--accent-10)')} />
@@ -108,11 +112,13 @@ export default function ChallengeQuestion({
             <Form.Message match="valueMissing">Flag cannot be empty</Form.Message>
           </Form.Field>
 
-          {status !== 'correct' && attemptsRemaining > 0 && (
+          <RequireEventPermission eventId={eventId} permission="CAN_PLAY_CHALLENGES" permissionDeniedPlaceholder={null}>
+            {status !== 'correct' && attemptsRemaining > 0 && (
             <Button variant="soft" size="2" type="submit" color={color || COLOR_QUESTION}>
               Submit
             </Button>
-          )}
+            )}
+          </RequireEventPermission>
         </Flex>
       </Form.Root>
 

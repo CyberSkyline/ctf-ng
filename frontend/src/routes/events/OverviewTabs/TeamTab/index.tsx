@@ -1,14 +1,17 @@
-import { useMemo } from 'react';
+import { useMyTeam, useMyTeamMembers } from '@/hooks/events';
+import { useCurrentUser } from '@/hooks/users';
 import {
   Container,
   Flex,
   Table,
   Text,
 } from '@radix-ui/themes';
+import { ErrorCallout } from 'components/Callouts';
+import RequireEventPermission from 'components/RequireEventPermission';
+import RoleBadge from 'components/RoleBadge';
 import { find, isUndefined, map } from 'lodash';
+import { useMemo } from 'react';
 import { useParams } from 'react-router';
-import { useCurrentUser } from '@/hooks/users';
-import { useMyTeam, useMyTeamMembers } from '@/hooks/events';
 import AddMemberModal from './AddMemberModal';
 import AssignCaptainModal from './AssignCaptainModal';
 import EditTeamName from './EditTeamName';
@@ -30,29 +33,36 @@ export default function TeamManagement() {
     return false;
   }), [ fullMembersList, currentUser ]);
 
-  if (isUndefined(team) || teamError || isUndefined(fullMembersList) || fullMembersError) {
+  if (teamError || fullMembersError) {
     return (
-      <>
-        <Text as="p">Oops, something went wrong.</Text>
-        <Text as="p">{String(teamError)}</Text>
-        <Text as="p">{String(fullMembersError)}</Text>
-      </>
+      <Container size="4">
+        {teamError && <ErrorCallout>{teamError.message}</ErrorCallout>}
+        {fullMembersError && <ErrorCallout>{fullMembersError.message}</ErrorCallout>}
+      </Container>
     );
+  }
+
+  if (!team) {
+    // if team is still loading, show nothing
+    return null;
   }
 
   const { event_id : eventId, name : teamName } = team;
 
   return (
     <Container size="4">
-      <Flex gap="4" direction="column">
-        {
-          (userIsCaptain && !team.locked)
-            ? <EditTeamName eventId={eventId} defaultTeamName={teamName} />
-            : <Text className="pr-4">{`Team Name: ${teamName}`}</Text>
-        }
-        {!isUndefined(team.invite_code) && userIsCaptain && !team.locked
-          && <AddMemberModal inviteCode={team.invite_code} eventId={eventId} />}
-      </Flex>
+
+      <RequireEventPermission
+        permission="CAN_EDIT_TEAM"
+        eventId={eventId}
+        permissionDeniedPlaceholder={<Text>{`Team Name: ${teamName}`}</Text>}
+      >
+        <Flex gap="3" direction="row" justify="between">
+          <EditTeamName eventId={eventId} defaultTeamName={teamName} />
+          {!isUndefined(team.invite_code) && <AddMemberModal inviteCode={team.invite_code} eventId={eventId} />}
+        </Flex>
+      </RequireEventPermission>
+
       <Table.Root>
         <Table.Header>
           <Table.Row>
@@ -74,26 +84,29 @@ export default function TeamManagement() {
                   id === currentUser?.id ? `${name} (you)` : name
                 }
               </Table.RowHeaderCell>
-              <Table.Cell>{role}</Table.Cell>
+              <Table.Cell><RoleBadge value={role} /></Table.Cell>
               <Table.Cell>
                 <Flex as="span" align="center" gap="2">
-                  {
-                    !team.locked && (
-                      userIsCaptain && id !== currentUser?.id && (
-                        <>
-                          <RemovePlayerModal
-                            eventId={eventId}
-                            userId={id}
-                            name={name}
-                          />
-                          <AssignCaptainModal
-                            eventId={eventId}
-                            userId={id}
-                            name={name}
-                          />
-                        </>
-                      ))
-                  }
+                  <RequireEventPermission
+                    permission="CAN_EDIT_TEAM"
+                    eventId={eventId}
+                    permissionDeniedPlaceholder={null}
+                  >
+                    {id !== currentUser?.id && (
+                      <>
+                        <RemovePlayerModal
+                          eventId={eventId}
+                          userId={id}
+                          name={name}
+                        />
+                        <AssignCaptainModal
+                          eventId={eventId}
+                          userId={id}
+                          name={name}
+                        />
+                      </>
+                    )}
+                  </RequireEventPermission>
                   { !team.locked && id === currentUser?.id && (
                     <LeaveTeamModal
                       eventId={eventId}

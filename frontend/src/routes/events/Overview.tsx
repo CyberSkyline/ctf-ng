@@ -13,7 +13,6 @@ import ChallengesTab from './OverviewTabs/ChallengesTab';
 import LeaderboardTab from './OverviewTabs/LeaderboardTab';
 import TeamTab from './OverviewTabs/TeamTab';
 import RegistrationLine from './RegistrationLine';
-import StartModal from './StartModal';
 
 export default function Overview() {
   const [ searchParams, setSearchParams ] = useSearchParams();
@@ -53,8 +52,6 @@ export default function Overview() {
             {isAuthenticated && data && (
               <RegistrationLine event={data} />
             )}
-
-            {isAuthenticated && <StartModal eventId={data.id} />}
 
             {isUnauthenticated && (
               <InfoCallout>
