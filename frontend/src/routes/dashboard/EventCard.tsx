@@ -9,6 +9,7 @@ import {
   Inset,
   Text,
 } from '@radix-ui/themes';
+import EventBadge from 'components/EventBadge';
 import { TbCalendarEvent, TbClock } from 'react-icons/tb';
 import { Link } from 'react-router';
 
@@ -26,7 +27,10 @@ export default function EventCard({ event }: { event: Event }) {
             </AspectRatio>
           </Inset>
           <Flex direction="column" gap="2" className="flex-grow" justify="between">
-            <Heading size="4">{event.name}</Heading>
+            <Box>
+              <Heading size="4">{event.name}</Heading>
+              <EventBadge eventId={event.id} size="2" className="mt-2" />
+            </Box>
             <Flex direction="column">
               <Text size="2" color="gray">
                 {individual ? (
