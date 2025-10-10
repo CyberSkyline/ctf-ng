@@ -34,10 +34,6 @@ if [ ! -f ".env.prod" ]; then
   cp ./conf/ctfd/.env.default.prod .env.prod
 fi
 
-if [ ! -f ".env.staging" ]; then
-  cp ./conf/ctfd/.env.default.staging .env.staging
-fi
-
 # Docker
 if ! command -v docker &> /dev/null; then
   echo "Docker is not installed."
