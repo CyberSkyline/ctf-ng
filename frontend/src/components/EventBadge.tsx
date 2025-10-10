@@ -1,5 +1,6 @@
 import {
   COLOR_INFO,
+  COLOR_NEGATIVE,
   COLOR_POSITIVE,
   COLOR_WARNING,
   type AccentColor,
@@ -56,9 +57,9 @@ const EVENT_STATES: {
     icon : TbPlayerPlay,
   },
   participated : {
-    color : 'gray',
-    label : 'Participated',
-    icon : TbCheck,
+    color : COLOR_NEGATIVE,
+    label : 'Time Up',
+    icon : TbClock,
   },
   ended : {
     color : 'gray',

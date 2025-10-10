@@ -1,25 +1,20 @@
 import { radixTheme } from '@/grid';
 import { useLeaderboard } from '@/hooks/events';
-import { useMyTeamScore } from '@/hooks/scoring';
 import { Container, Flex } from '@radix-ui/themes';
 import { AgGridReact } from 'ag-grid-react';
 import { ErrorCallout } from 'components/Callouts';
-import Statistic from 'components/Statistic';
 import { useParams } from 'react-router';
+import TeamPerformance from './TeamPerformance';
 
 export default function LeaderboardTab() {
   const { idEvent } = useParams();
-  const { data : myTeamScore, error : myTeamScoreError } = useMyTeamScore(Number(idEvent));
   const { data : leaderboard, error : leaderboardError } = useLeaderboard(Number(idEvent));
 
   return (
     <Container size="4">
       <Flex direction="column" gap="3">
-        <Flex direction="row" gap="3">
-          <Statistic value={myTeamScore?.points ?? ''} label="Your Score" description={`Last updated ${myTeamScore?.last_update.toLocaleString()}`} />
-        </Flex>
+        <TeamPerformance eventId={Number(idEvent)} />
 
-        {myTeamScoreError && <ErrorCallout>{myTeamScoreError.message}</ErrorCallout>}
         {leaderboardError && <ErrorCallout>{leaderboardError.message}</ErrorCallout>}
 
         <AgGridReact
@@ -38,7 +33,6 @@ export default function LeaderboardTab() {
             {
               headerName : 'Score',
               field : 'points',
-              sort : 'desc',
               cellClass : 'tabular-nums',
             },
             {
@@ -48,6 +42,11 @@ export default function LeaderboardTab() {
             },
           ]}
           theme={radixTheme}
+          defaultColDef={{
+            sortable : false, // disable sorting for all columns - server side sort is the source of truth
+            lockPinned : true,
+            suppressMovable : true,
+          }}
           pagination
           paginationPageSize={20}
           domLayout="autoHeight"
