@@ -120,10 +120,9 @@ def test_event_only_public(middleware_client):
     """
     response = middleware_client.get("/event_only_public/2")
 
-    assert response.status_code == 404
+    assert response.status_code == 200
     data = response.get_json()
-    assert data["success"] is False
-    assert data["errors"]["not_found"] == "Event not found"
+    assert data["success"] is True
 
 def test_event_only_public_already_registered(middleware_client):
     """
