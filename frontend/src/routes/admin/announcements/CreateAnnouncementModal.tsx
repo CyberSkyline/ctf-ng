@@ -9,7 +9,7 @@ import {
   TextField,
   SegmentedControl,
 } from '@radix-ui/themes';
-import { addNewAnnouncement, addNewEventAnnouncement } from '@/hooks/notifications';
+import { addNewAnnouncement, addNewEventAnnouncement } from '@/hooks/announcements';
 import { useAllEvents } from '@/hooks/events';
 import { TbPlus } from 'react-icons/tb';
 import { Controller } from 'react-hook-form';

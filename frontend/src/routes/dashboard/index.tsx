@@ -1,5 +1,5 @@
 import { useMyEvents } from '@/hooks/events';
-import { useMyAnnouncements } from '@/hooks/notifications';
+import { useMyAnnouncements } from '@/hooks/announcements';
 
 import { TbSpeakerphone } from 'react-icons/tb';
 import { COLOR_WARNING } from '@/constants';

@@ -1,5 +1,5 @@
 import { Box, Flex, Heading } from '@radix-ui/themes';
-import { useAnnouncements } from '@/hooks/notifications';
+import { useAnnouncements } from '@/hooks/announcements';
 import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import { UserIcon } from '@/constants';
