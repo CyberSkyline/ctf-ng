@@ -13,7 +13,12 @@ import {
   useUnreadCount,
 } from '@/hooks/notifications';
 import { useNavigate } from 'react-router';
-import { isUndefined, map, includes } from 'lodash';
+import {
+  isEmpty,
+  isUndefined,
+  map,
+  includes,
+} from 'lodash';
 import { TbNotification, TbCircleDotFilled, TbBell } from 'react-icons/tb';
 import { useState } from 'react';
 import { twMerge } from 'tailwind-merge';
@@ -86,7 +91,7 @@ export default function NotificationsPopover({ triggerClassName, contentClassNam
         onPointerEnter={(event) => event.preventDefault()}
         onPointerLeave={(event) => event.preventDefault()}
       >
-        {isUndefined(data) ? (
+        {isUndefined(data) || isEmpty(data) ? (
           <Flex
             direction="column"
             align="center"
