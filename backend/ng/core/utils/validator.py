@@ -155,6 +155,7 @@ class BaseValidator:
             "TeamMember": "ng_team_members",
             "Ticket": "ng_tickets",
             "TicketTag": "ng_ticket_tags",
+            "TicketAttachment": "ng_ticket_attachments",
             "User": "ng_users",
             "Users": "users",  # CTFd's main users table
         }

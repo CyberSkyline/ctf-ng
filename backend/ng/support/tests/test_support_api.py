@@ -13,7 +13,7 @@ from ...user.models.User import User as NgUser
 from ...notifications.models import Notification
 from ...permissions.models.enums import RoleEnum
 from ...permissions.controllers import assign_role_to_user
-
+from ..models.TicketAttachment import TicketAttachment
 
 class TestUserSupportEndpoints:
     """Tests for user support API endpoints"""
@@ -995,5 +995,86 @@ class TestAdminSupportEndpoints:
 
         # Regular users should not see tags (admin-only field)
         assert "tags" not in ticket_data
+
+    def test_get_ticket_includes_empty_attachments_list(self, logged_in_client, ticket):
+        """
+        Test that get_ticket includes empty attachments array when no attachments exist
+        """
+        response = logged_in_client.get(f"/ng/support/me/tickets/{ticket.id}")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert "attachments" in data["data"]
+        assert isinstance(data["data"]["attachments"], list)
+        assert len(data["data"]["attachments"]) == 0
+
+    def test_get_ticket_includes_attachments(self, logged_in_client, ticket, user, db_session):
+        """
+        Test that get_ticket includes attachments when they exist
+        """
+        TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/first.webp",
+            bucket_name="test-bucket",
+            filename="first.webp",
+            file_size=1024,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+
+        TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/second.webp",
+            bucket_name="test-bucket",
+            filename="second.webp",
+            file_size=2048,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+
+        response = logged_in_client.get(f"/ng/support/me/tickets/{ticket.id}")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert "attachments" in data["data"]
+        assert len(data["data"]["attachments"]) == 2
+
+        for attachment_data in data["data"]["attachments"]:
+            assert "id" in attachment_data
+            assert "ticket_id" in attachment_data
+            assert "s3_key" in attachment_data
+            assert "bucket_name" in attachment_data
+            assert "filename" in attachment_data
+            assert "file_size" in attachment_data
+            assert "content_type" in attachment_data
+            assert "uploaded_by" in attachment_data
+            assert "uploaded_at" in attachment_data
+            assert "image_url" in attachment_data  # Should have presigned URL
+
+        # Verify order (oldest first)
+        assert data["data"]["attachments"][0]["filename"] == "first.webp"
+        assert data["data"]["attachments"][1]["filename"] == "second.webp"
+
+    def test_admin_get_ticket_includes_attachments(self, admin_client, ticket, user, db_session):
+        """
+        Test that admin can see attachments on any ticket
+        """
+        TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/admin-view.webp",
+            bucket_name="test-bucket",
+            filename="admin-view.webp",
+            file_size=512,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+
+        response = admin_client.get(f"/ng/admin/support/tickets/{ticket.id}")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert "attachments" in data["data"]
+        assert len(data["data"]["attachments"]) == 1
+        assert data["data"]["attachments"][0]["filename"] == "admin-view.webp"
 
 

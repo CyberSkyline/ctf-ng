@@ -7,7 +7,7 @@ from flask_restx import Namespace, Resource
 
 from ...core.middleware import user_endpoint, check_ownership
 from ...core.middleware.loaders import LoaderType, load_ticket
-from ...core.utils import success_response
+from ...core.utils import success_response, error_response
 from ...user.models import User
 
 from ..controllers import (
@@ -16,6 +16,7 @@ from ..controllers import (
     list_tickets,
     get_ticket,
     create_ticket_message,
+    upload_ticket_image,
 )
 
 
@@ -222,4 +223,52 @@ class CloseMyTicket(Resource):
         )
 
         return success_response(closed_ticket)
+
+
+@support_user_namespace.route("/me/tickets/<int:ticket_id>/upload_image")
+class TicketImageUpload(Resource):
+    @user_endpoint()
+    @load_ticket(LoaderType.PARAM)
+    @check_ownership(resource_key="ticket", user_field="author_id")
+    @support_user_namespace.doc(
+        description="Upload an image to a support ticket (WebP only, max 5MB)",
+        params={
+            "ticket_id": {
+                "description": "Ticket ID",
+                "required": True,
+                "type": "integer",
+                "example": 123
+            },
+            "file": {
+                "description": "Image file (WebP format, max 5MB)",
+                "in": "formData",
+                "required": True,
+                "type": "file"
+            }
+        },
+        responses={
+            200: "Success - Image uploaded, returns image_url",
+            400: "Bad request - Invalid file type or size",
+            401: "Unauthorized - Authentication required",
+            403: "Forbidden - You can only upload to your own tickets",
+            404: "Not found - Ticket does not exist",
+            500: "Internal Server Error",
+        },
+    )
+    def post(self, ticket_id: int, ticket, current_user: User, **kwargs):
+        """
+        Upload image to ticket
+        """
+        if 'file' not in request.files:
+            return error_response("No file provided", "file", 400)
+
+        file = request.files['file']
+
+        attachment = upload_ticket_image(
+            file=file,
+            ticket=ticket,
+            uploaded_by=current_user.id,
+        )
+
+        return success_response(attachment)
 

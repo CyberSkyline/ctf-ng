@@ -16,6 +16,9 @@ find-TODO:
 test-email-send:
 	$(PYTHON_EXEC) emails/_test_email_send.py
 
+test-img-upload:
+	$(PYTHON_EXEC) support/services/_test_awsS3_webp_upload.py
+
 # All tests
 test-all:
 	$(PYTHON_EXEC) -m pytest -m "not middleware" --ignore-glob="**/*e2e*" -v
@@ -76,4 +79,4 @@ test-utils:
 	$(PYTHON_EXEC) -m pytest ./core/tests/system/ -v
 
 
-.PHONY: check fix format test-all test-routes test-models test-validation test-controllers test-api test-team test-event test-admin test-user test-support test-utils test-fast test-middleware test-event-registration test-scoring find-TODO
+.PHONY: check fix format test-all test-routes test-models test-validation test-controllers test-api test-team test-event test-admin test-user test-support test-utils test-fast test-middleware test-event-registration test-scoring find-TODO, test-img-upload, test-email-send

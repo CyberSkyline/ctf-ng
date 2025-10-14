@@ -18,6 +18,7 @@ from .team.models.TeamMember import TeamMember  # noqa: F401
 from .support.models.Ticket import Ticket  # noqa: F401
 from .support.models.TicketMessage import TicketMessage  # noqa: F401
 from .support.models.TicketTag import TicketTag  # noqa: F401
+from .support.models.TicketAttachment import TicketAttachment  # noqa: F401
 from .event.models.Demographic import Demographic  # noqa: F401
 from .challenge.models.Challenge import Challenge  # noqa: F401
 from .challenge.models.ContainerBlueprint import ContainerBlueprint  # noqa: F401
