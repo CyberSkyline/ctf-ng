@@ -302,4 +302,3 @@ class MyAttachmentDownload(Resource):
         Download attachment via proxy
         """
         return download_attachment(attachment=attachment)
-
