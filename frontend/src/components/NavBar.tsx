@@ -23,6 +23,7 @@ export default function NavBar() {
   const { theme } = useTheme(); // Drop Content wouldn't obey otherwise
 
   const defaultLinkClass = `
+    h-full
     p-2
     hover:bg-(--gray-3)
     dark:hover:bg-(--gray-3)
@@ -31,6 +32,7 @@ export default function NavBar() {
     dark:text-(--gray-a11)`;
 
   const activeLinkClass = `
+    h-full
     p-2
     hover:bg-(--gray-3)
     dark:hover:bg-(--gray-3)
@@ -106,10 +108,12 @@ export default function NavBar() {
             </NavigationMenu.Item>
           </NavLink>
 
-          <NotificationsPopover
-            triggerClassName={defaultLinkClass}
-            contentClassName={twMerge(contentBase, theme === 'dark' ? contentDark : contentLight)}
-          />
+          {isAuthenticated && (
+            <NotificationsPopover
+              triggerClassName={defaultLinkClass}
+              contentClassName={twMerge(contentBase, theme === 'dark' ? contentDark : contentLight)}
+            />
+          )}
 
           <NavigationMenu.Item>
             <NavigationMenu.Trigger
