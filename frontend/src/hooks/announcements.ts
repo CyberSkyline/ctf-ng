@@ -36,3 +36,11 @@ export function addNewEventAnnouncement(data: {
     mutate('/admin/announcements');
   });
 }
+
+export function deleteAnnouncement(id: number) {
+  return apiMutation(`/admin/announcements/${id}`, {}, {
+    method : 'DELETE',
+  }).then(() => {
+    mutate('/admin/announcements');
+  });
+}

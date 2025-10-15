@@ -39,4 +39,3 @@ export function markAllNotificationsRead() {
     mutate('/notifications/me/unread-count');
   });
 }
-
