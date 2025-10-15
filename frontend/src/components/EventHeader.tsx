@@ -35,7 +35,11 @@ export default function EventHeader({
 
   return (
     <Flex direction="row" gap="6" align="start">
-      <img className="w-48 shrink-0 rounded-lg shadow-xl" src={event.max_team_size === 1 ? gameCardOffensive : gameCardTeam} alt="game card" />
+      <img
+        className="w-48 shrink-0 rounded-lg shadow-xl"
+        src={event.max_team_size === 1 ? gameCardOffensive : gameCardTeam}
+        alt={`Card for ${event.name}`}
+      />
       <Flex direction="column" flexGrow="1" align="start" gap="2">
         <EventBadge eventId={id} size="3" />
         <Box>

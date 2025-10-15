@@ -22,7 +22,10 @@ export default function EventCard({ event }: { event: Event }) {
       <Link to={`/events/${event.id}`}>
         <Flex direction="row" gap="4">
           <Inset side="left" className="w-32 shrink-0 shadow">
-            <img src={event.max_team_size === 1 ? gameCardOffensive : gameCardTeam} alt={`Card for ${event.name}`} />
+            <img
+              src={event.max_team_size === 1 ? gameCardOffensive : gameCardTeam}
+              alt={`Card for ${event.name}`}
+            />
           </Inset>
           <Flex direction="column" gap="2" className="flex-grow" justify="between">
             <Box>
