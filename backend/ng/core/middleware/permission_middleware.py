@@ -52,7 +52,7 @@ def event_only_public(f):
     @wraps(f)
     def wrapped(*args, **kwargs):
         event = kwargs.get('event')
-        current_user = kwargs.get('current_user') or get_current_user()
+        current_user = kwargs.get('current_user')
         if current_user and RoleEnum.ADMIN in get_user_roles(current_user.id):
             return f(*args, **kwargs)
         id = current_user.id if current_user else None
