@@ -13,6 +13,7 @@ import ExpoLoginForm from './ExpoLoginForm';
 export default function Login() {
   return (
     <Flex className="absolute inset-0 overflow-hidden bg-dots-1" align="center" justify="center" direction="column" gap="3" p="3">
+      <title>President&apos;s Cup - Login</title>
       <Card size="3">
         <Flex direction="column" className="max-w-96" gap="3" align="center">
           <Heading size="8">Log in</Heading>

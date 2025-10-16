@@ -44,6 +44,7 @@ export default function Overview() {
 
   return (
     <>
+      <title>{`${data?.name || 'Event Detail'}`}</title>
       <HeaderContainer>
         {data && (
           <EventHeader
