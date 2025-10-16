@@ -12,15 +12,15 @@ import type { ColDef, ICellRendererParams } from 'ag-grid-community';
 import type { Announcement } from '@/types';
 import { AgGridReact, type CustomCellRendererProps } from 'ag-grid-react';
 import { radixTheme } from '@/grid';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import CreateAnnoucementModal from './CreateAnnouncementModal';
 
-function ActionCell({ id, deleteAction }: {id: number, deleteAction: (id: number) => void}) {
+function ActionCell({ announcementId, deleteAction }: {announcementId: number, deleteAction: (id: number) => void}) {
   return (
     <Button
       size="1"
       color={COLOR_NEGATIVE}
-      onClick={() => deleteAction(id)}
+      onClick={() => deleteAction(announcementId)}
     >
       Delete
     </Button>
@@ -32,11 +32,12 @@ export default function AdminAnnouncements() {
   const { data, error, isLoading } = useAnnouncements();
   const rowData = data ?? [];
 
-  const deleteAction = (id : number) => {
+  const deleteAction = useCallback((id : number) => {
+    setDeleteError(null);
     deleteAnnouncement(id).catch((err) => {
       setDeleteError(err.message);
     });
-  };
+  }, [ setDeleteError ]);
 
   const colDefs: ColDef<Announcement>[] = useMemo(() => ([
     {
@@ -76,9 +77,9 @@ export default function AdminAnnouncements() {
       },
       cellRenderer : ActionCell,
       cellRendererParams : (params: CustomCellRendererProps<Announcement>) => ({
-        id: params.data?.id,
-        deleteAction
-      })
+        announcementId : params.data?.id,
+        deleteAction,
+      }),
     },
   ]), [ deleteAction ]);
 
