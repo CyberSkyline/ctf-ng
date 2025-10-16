@@ -9,7 +9,6 @@ from ...core.middleware import user_endpoint, public_endpoint
 from ...core.middleware.loaders import (
     LoaderType,
     load_event,
-    load_challenge,
     load_question,
     load_hint,
     load_team_by_user_and_event,

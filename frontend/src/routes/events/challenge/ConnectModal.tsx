@@ -6,8 +6,7 @@ import Modal from 'components/Modal';
 import { useState } from 'react';
 import { TbCheck, TbPlayerPlay } from 'react-icons/tb';
 
-export default function ConnectModal({ eventId, challengeId }: {
-  eventId: number;
+export default function ConnectModal({challengeId }: {
   challengeId: number;
 }) {
   const { data : currentChallenge, error } = useCurrentChallengeId();
@@ -15,7 +14,7 @@ export default function ConnectModal({ eventId, challengeId }: {
 
   const handleConnect = async () => {
     setLoading(true);
-    return connectWorkspace(eventId, challengeId).finally(() => {
+    return connectWorkspace(challengeId).finally(() => {
       setLoading(false);
     });
   };

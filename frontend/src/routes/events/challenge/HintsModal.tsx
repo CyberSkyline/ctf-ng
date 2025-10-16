@@ -6,12 +6,11 @@ import Modal from 'components/Modal';
 import { TbBulb } from 'react-icons/tb';
 
 export default function HintsModal({
-  eventId, challengeId,
+  challengeId,
 }: {
-    eventId: number;
     challengeId: number;
 }) {
-  const { data, error } = useChallenge(eventId, challengeId);
+  const { data, error } = useChallenge(challengeId);
 
   return (
     <Modal

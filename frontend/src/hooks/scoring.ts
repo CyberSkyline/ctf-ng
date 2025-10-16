@@ -15,27 +15,27 @@ export function useMyTeamScore(eventId: number | null) {
 }
 
 /* ADMIN ENDPOINTS */
-export function useTeamScoreHistory(eventId: number| null, teamId: number | null) {
+export function useTeamScoreHistory(teamId: number | null) {
   return useSWR<{score_events: ScoreEvent[]}, Error>(
-    (eventId && teamId) ? `/admin/scoring/teams/${teamId}/history` : null,
+    (teamId) ? `/admin/scoring/teams/${teamId}/history` : null,
   );
 }
 
-export function useTeamAttempts(eventId: number | null, teamId: number | null) {
+export function useTeamAttempts(teamId: number | null) {
   return useSWR<Attempt[], Error>(
-    (eventId && teamId) ? `/admin/scoring/teams/${teamId}/attempts` : null,
+    (teamId) ? `/admin/scoring/teams/${teamId}/attempts` : null,
   );
 }
 
-export function useTeamHintRedemptions(eventId: number | null, teamId: number | null) {
+export function useTeamHintRedemptions(teamId: number | null) {
   return useSWR<HintRedemption[], Error>(
-    (eventId && teamId) ? `/admin/scoring/teams/${teamId}/hint_redemptions` : null,
+    (teamId) ? `/admin/scoring/teams/${teamId}/hint_redemptions` : null,
   );
 }
 
-export function useTeamManualAwards(eventId: number | null, teamId: number | null) {
+export function useTeamManualAwards(teamId: number | null) {
   return useSWR<ManualPointAward[], Error>(
-    (eventId && teamId) ? `/admin/scoring/teams/${teamId}/manual_awards` : null,
+    (teamId) ? `/admin/scoring/teams/${teamId}/manual_awards` : null,
   );
 }
 

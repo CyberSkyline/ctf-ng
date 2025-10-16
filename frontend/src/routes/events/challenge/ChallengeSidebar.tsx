@@ -28,7 +28,6 @@ export default function ChallengeSidebar() {
 
   const { data : event, isLoading : isEventLoading } = useEvent(Number(idEvent));
   const { data, error } = useChallenge(
-    Number(idEvent),
     Number(idChallenge),
   );
 
@@ -60,7 +59,7 @@ export default function ChallengeSidebar() {
               </Button>
 
               <Box flexShrink="0">
-                {hints && hints.length > 0 && <HintsModal eventId={Number(idEvent)} challengeId={Number(idChallenge)} />}
+                {hints && hints.length > 0 && <HintsModal challengeId={Number(idChallenge)} />}
                 <FeedbackModal />
               </Box>
             </Flex>
@@ -89,7 +88,7 @@ export default function ChallengeSidebar() {
 
             {challenge && event && granted && (
               <Flex direction="row" gap="2" mt="3" align="center">
-                <ConnectModal eventId={event.id} challengeId={challenge.id} />
+                <ConnectModal challengeId={challenge.id} />
                 <Button variant="ghost" className="!m-0 !p-2" color="gray">
                   <TbDotsVertical />
                 </Button>

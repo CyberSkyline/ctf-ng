@@ -9,7 +9,6 @@ from ...core.middleware import admin_endpoint
 from ...core.exceptions import ValidationError
 from ...core.middleware.loaders import (
     LoaderType,
-    load_event,
     load_team,
     load_score_by_team,
 )

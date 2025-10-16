@@ -249,7 +249,7 @@ class TestUserScoringEndpoints:
     ):
         """Test submitting answer to nonexistent question"""
         response = logged_in_client.post(
-            f"/ng/scoring/questions/999999/submit",
+            "/ng/scoring/questions/999999/submit",
             json = {"submission": "test"}
         )
 
@@ -375,7 +375,7 @@ class TestUserScoringEndpoints:
             nonce = sess.get("nonce")
 
         response = logged_in_client.post(
-            f"/ng/scoring/hint/999999/redeem",
+            "/ng/scoring/hint/999999/redeem",
             data = {"nonce": nonce}
         )
 
@@ -615,7 +615,7 @@ class TestAdminScoringEndpoints:
     ):
         """Test awarding points to nonexistent team"""
         response = admin_client.post(
-            f"/ng/admin/scoring/teams/999999/award-points",
+            "/ng/admin/scoring/teams/999999/award-points",
             json = {
                 "points": 100,
                 "reason": "Test"
@@ -720,7 +720,7 @@ class TestAdminScoringEndpoints:
             nonce = sess.get("nonce")
 
         response = admin_client.post(
-            f"/ng/admin/scoring/teams/999999/recalculate",
+            "/ng/admin/scoring/teams/999999/recalculate",
             data = {"nonce": nonce}
         )
 
@@ -834,7 +834,7 @@ class TestAdminScoringEndpoints:
     ):
         """Test getting score history for nonexistent team"""
         response = admin_client.get(
-            f"/ng/admin/scoring/teams/999999/history"
+            "/ng/admin/scoring/teams/999999/history"
         )
 
         assert response.status_code == 404
@@ -1076,9 +1076,9 @@ class TestAdminScoringEndpoints:
     ):
         """Test that all new endpoints return 404 for nonexistent team"""
         endpoints = [
-            f"/ng/admin/scoring/teams/999999/attempts",
-            f"/ng/admin/scoring/teams/999999/hint_redemptions",
-            f"/ng/admin/scoring/teams/999999/manual_awards",
+            "/ng/admin/scoring/teams/999999/attempts",
+            "/ng/admin/scoring/teams/999999/hint_redemptions",
+            "/ng/admin/scoring/teams/999999/manual_awards",
         ]
 
         for endpoint in endpoints:
@@ -1147,13 +1147,13 @@ class TestScoringAPIIntegration:
 
         """Test handling of concurrent submissions"""
         # Submit multiple answers rapidly
-        challenge = challenge_factory(event_id=1)
+        challenge_factory(event_id=1)
 
         responses = []
         for i in range(3):
 
             response = started_player_client.post(
-                f"/ng/scoring/questions/1/submit",
+                "/ng/scoring/questions/1/submit",
                 json={"submission": f"answer{i}"},
 
             )

@@ -1,7 +1,6 @@
 from functools import wraps
 from collections.abc import Callable
 from ._util import check_output_exists, get_model_class
-from ....event.models.Event import Event
 
 
 def load_score_by_team(output_key="score") -> Callable:
@@ -18,7 +17,6 @@ def load_score_by_team(output_key="score") -> Callable:
                 raise ValueError("Team must be loaded first")
 
             score = Score.find_by_team(team_id=team.id)
-            event = Event.find_by_id(team.event_id)
 
             kwargs[output_key] = score
             return f(*args, **kwargs)

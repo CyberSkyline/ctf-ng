@@ -6,8 +6,8 @@ export function useCurrentChallengeId() {
   return useSWR<number | null>('/container/me/current_challenge');
 }
 
-export function connectWorkspace(eventId: number, challengeId: number) {
-  return apiMutation(`/events/${eventId}/challenge/${challengeId}/containers`, undefined, {
+export function connectWorkspace(challengeId: number) {
+  return apiMutation(`/challenge/${challengeId}/containers`, undefined, {
     method : 'POST',
   }).then(() => {
     // refresh the current challenge ID after connecting workspace

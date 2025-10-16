@@ -23,36 +23,18 @@ export function useMyChallenges(eventId: number | null) {
   );
 }
 
-export function useChallenge(eventId: number | null, challengeId: number | null) {
+export function useChallenge(challengeId: number | null) {
   return useSWR<{
     challenge: Challenge;
     questions: Question[];
     hints: Hint[];
     attempts: Attempt[];
   }, Error>(
-    eventId && challengeId ? `/events/${eventId}/challenges/${challengeId}` : null,
+    challengeId ? `/events/challenges/${challengeId}` : null,
   );
 }
 
-export function submitAnswer(
-  eventId: number,
-  challengeId: number,
-  questionId: number,
-  answer: string,
-) {
-  return apiMutation(`/events/${eventId}/challenges/${challengeId}/submit`, {
-    question_id : questionId,
-    submission : answer,
-  }, {
-    method : 'POST',
-  }).then(() => {
-    // refresh the attempts list when submission goes through
-    mutate(`/events/${eventId}/challenges/${challengeId}`);
-  });
-}
-
 export function redeemHint(
-  eventId: number,
   challengeId: number,
   hintId: number,
 ) {
@@ -60,23 +42,22 @@ export function redeemHint(
     method : 'POST',
   }).then(() => {
     // refresh the hints list when hint is redeemed
-    mutate(`/events/${eventId}/challenges/${challengeId}`);
+    mutate(`/events/challenges/${challengeId}`);
   });
 }
 
 export function submitFlag(
-  eventId: number,
   challengeId: number,
   questionId: number,
   flag: string,
 ) {
-  return apiMutation(`/questions/${questionId}/submit`, {
+  return apiMutation(`/scoring/questions/${questionId}/submit`, {
     submission : flag,
   }, {
     method : 'POST',
   }).then(() => {
     // refresh the challenge data after submitting a flag
-    mutate(`/events/${eventId}/challenges/${challengeId}`);
+    mutate(`/events/challenges/${challengeId}`);
   });
 }
 

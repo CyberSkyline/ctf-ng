@@ -43,7 +43,7 @@ export default function ChallengeQuestion({
     const target = event.currentTarget;
     const { flag } = Object.fromEntries(new FormData(event.currentTarget));
 
-    return submitFlag(eventId, challengeId, id, flag as string)
+    return submitFlag(challengeId, id, flag as string)
       .finally(() => {
         // clear the form after submission
         target.reset();
