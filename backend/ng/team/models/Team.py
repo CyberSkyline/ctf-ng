@@ -379,6 +379,7 @@ class Team(db.Model):
         from .TeamMember import TeamMember
 
         return cls.query.join(TeamMember).filter(TeamMember.user_id == user_id, cls.event_id == event_id).first()
+    
 
     @classmethod
     def find_all_by_event(cls, event_id: int) -> list[Team]:

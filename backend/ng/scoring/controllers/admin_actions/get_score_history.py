@@ -6,16 +6,12 @@ from .... import config
 from ...models import ScoreEvent
 
 
-def get_score_history(
-    event,
-    team,
-    limit: int = config.DEFAULT_SCORE_HISTORY_LIMIT,
-) -> list[ScoreEvent]:
+def get_score_history(team, limit: int = config.DEFAULT_SCORE_HISTORY_LIMIT,) -> list[ScoreEvent]:
     """
     Get scoring history for auditing
     """
     events = ScoreEvent.find_filtered_events(
-        event_id=event.id,
+        event_id=team.event_id,
         team_id=team.id,
         eager_load_source=True,
     )

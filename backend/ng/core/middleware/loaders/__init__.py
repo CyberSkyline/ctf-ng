@@ -3,7 +3,7 @@ from .load_challenge import load_challenge
 from .load_event import load_event
 from .load_hint import load_hint
 from .load_question import load_question
-from .load_score import load_score_by_team_and_event
+from .load_score import load_score_by_team
 from .load_team import load_team
 from .load_team_by_invite_code import load_team_by_invite_code
 from .load_team_by_user_and_event import load_team_by_user_and_event
@@ -14,6 +14,9 @@ from .load_container_instance import load_container_instance
 from .load_indvidual_container_by_user import load_indvidual_container_by_user
 from .load_notification import load_notification
 from .load_announcement import load_announcement
+from .load_team_by_user_and_challenge import load_team_by_user_and_challenge
+from .load_team_by_user_and_question import load_team_by_user_and_question
+from .load_team_by_user_and_hint import load_team_by_user_and_hint
 
 __all__ = [
     "LoaderType",
@@ -21,7 +24,7 @@ __all__ = [
     "load_event",
     "load_hint",
     "load_question",
-    "load_score_by_team_and_event",
+    "load_score_by_team",
     "load_team",
     "load_user",
     "load_ticket",
@@ -33,4 +36,7 @@ __all__ = [
     "load_indvidual_container_by_user",
     "load_notification",
     "load_announcement",
+    "load_team_by_user_and_challenge",
+    "load_team_by_user_and_question",
+    "load_team_by_user_and_hint",
 ]

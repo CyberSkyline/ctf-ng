@@ -216,5 +216,5 @@ export function updateEvent(eventId: number, updated: Omit<Event, 'id'>) {
 }
 
 export function useLeaderboard(eventId: number) {
-  return useSWR<Score[], Error>(eventId ? `/events/${eventId}/leaderboard` : null);
+  return useSWR<Score[], Error>(eventId ? `/scoring/${eventId}/leaderboard` : null);
 }

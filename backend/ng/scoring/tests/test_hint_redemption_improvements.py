@@ -106,7 +106,6 @@ class TestHintRedemptionFlow:
         assert before["is_redeemed"] is False
 
         result = redeem_hint(
-            event = event,
             challenge = challenge,
             hint = hint,
             team = team_with_member,
@@ -187,7 +186,6 @@ class TestHintRedemptionFlow:
         )
 
         first_result = redeem_hint(
-            event = event,
             challenge = challenge,
             hint = hint,
             team = team_with_member,
@@ -197,7 +195,6 @@ class TestHintRedemptionFlow:
 
         with pytest.raises(BusinessLogicError) as exc:
             redeem_hint(
-                event = event,
                 challenge = challenge,
                 hint = hint,
                 team = team_with_member,
@@ -357,7 +354,6 @@ class TestHintRedemptionWithScoring:
         )
 
         redeem_hint(
-            event = event,
             challenge = challenge,
             hint = hint1,
             team = team_with_member,
@@ -368,7 +364,6 @@ class TestHintRedemptionWithScoring:
         assert score.points == initial_points - 10
 
         redeem_hint(
-            event = event,
             challenge = challenge,
             hint = hint2,
             team = team_with_member,
@@ -404,7 +399,6 @@ class TestHintRedemptionWithScoring:
         db_session.commit()
 
         result = redeem_hint(
-            event = event,
             challenge = challenge,
             hint = free_hint,
             team = team_with_member,
@@ -603,7 +597,6 @@ class TestCompleteUserJourney:
             assert hint_data["preview"] is not None
 
         easy_result = redeem_hint(
-            event = event,
             challenge = challenge,
             hint = easy_hint,
             team = team_with_member,
@@ -615,7 +608,6 @@ class TestCompleteUserJourney:
         assert score.points == 195
 
         medium_result = redeem_hint(
-            event = event,
             challenge = challenge,
             hint = medium_hint,
             team = team_with_member,

@@ -17,7 +17,7 @@ class TestUserScoringEndpoints:
         multiple_teams_with_scores
     ):
         """Test getting basic leaderboard"""
-        response = logged_in_client.get(f"/ng/events/{event.id}/leaderboard")
+        response = logged_in_client.get(f"/ng/scoring/{event.id}/leaderboard")
 
         assert response.status_code == 200
         data = response.get_json()
@@ -36,7 +36,7 @@ class TestUserScoringEndpoints:
     ):
         """Test getting leaderboard with limit"""
         response = logged_in_client.get(
-            f"/ng/events/{event.id}/leaderboard?limit=3"
+            f"/ng/scoring/{event.id}/leaderboard?limit=3"
         )
 
         assert response.status_code == 200
@@ -47,7 +47,7 @@ class TestUserScoringEndpoints:
     def test_get_leaderboard_invalid_limit(self, logged_in_client, event):
         """Test getting leaderboard with invalid limit"""
         response = logged_in_client.get(
-            f"/ng/events/{event.id}/leaderboard?limit=0"
+            f"/ng/scoring/{event.id}/leaderboard?limit=0"
         )
 
         assert response.status_code == 400
@@ -57,7 +57,7 @@ class TestUserScoringEndpoints:
     def test_get_leaderboard_limit_too_high(self, logged_in_client, event):
         """Test getting leaderboard with limit too high"""
         response = logged_in_client.get(
-            f"/ng/events/{event.id}/leaderboard?limit=2000"
+            f"/ng/scoring/{event.id}/leaderboard?limit=2000"
         )
 
         assert response.status_code == 400
@@ -66,7 +66,7 @@ class TestUserScoringEndpoints:
 
     def test_get_leaderboard_nonexistent_event(self, logged_in_client):
         """Test getting leaderboard for nonexistent event"""
-        response = logged_in_client.get("/ng/events/999999/leaderboard")
+        response = logged_in_client.get("/ng/scoring/999999/leaderboard")
 
         assert response.status_code == 404
         data = response.get_json()
@@ -74,7 +74,7 @@ class TestUserScoringEndpoints:
 
     def test_public_access_leaderboard(self, public_client, event, multiple_teams_with_scores):
         """Test that public client can access leaderboard"""
-        response = public_client.get(f"/ng/events/{event.id}/leaderboard")
+        response = public_client.get(f"/ng/scoring/{event.id}/leaderboard")
 
         assert response.status_code == 200
         data = response.get_json()
@@ -91,7 +91,7 @@ class TestUserScoringEndpoints:
         score
     ):
         """Test getting my team's score"""
-        response = logged_in_client.get(f"/ng/events/{event.id}/me/team/score")
+        response = logged_in_client.get(f"/ng/scoring/{event.id}/me/team/score")
 
         assert response.status_code == 200
         data = response.get_json()
@@ -112,7 +112,7 @@ class TestUserScoringEndpoints:
     ):
         """Test getting my team's score with history"""
         response = logged_in_client.get(
-            f"/ng/events/{event.id}/me/team/score?include_history=true"
+            f"/ng/scoring/{event.id}/me/team/score?include_history=true"
         )
 
         assert response.status_code == 200
@@ -124,7 +124,7 @@ class TestUserScoringEndpoints:
 
     def test_get_my_team_score_no_team(self, logged_in_client, event):
         """Test getting my team's score when not in a team"""
-        response = logged_in_client.get(f"/ng/events/{event.id}/me/team/score")
+        response = logged_in_client.get(f"/ng/scoring/{event.id}/me/team/score")
 
         assert response.status_code == 404
         data = response.get_json()
@@ -132,7 +132,7 @@ class TestUserScoringEndpoints:
 
     def test_get_my_team_score_nonexistent_event(self, logged_in_client):
         """Test getting my team's score for nonexistent event"""
-        response = logged_in_client.get("/ng/events/999999/me/team/score")
+        response = logged_in_client.get("/ng/scoring/999999/me/team/score")
 
         assert response.status_code == 404
         data = response.get_json()
@@ -144,7 +144,7 @@ class TestUserScoringEndpoints:
         challenge = challenge_factory(event_id=1)
         question = question_factory(challenge_id=challenge.id)
         response = started_player_client.post(
-            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/questions/{question.id}/submit",
+            f"/ng/scoring/questions/{question.id}/submit",
             json={"submission": question.answer},
 
         )
@@ -164,7 +164,7 @@ class TestUserScoringEndpoints:
         challenge = challenge_factory(event_id=1)
         question = question_factory(challenge_id=challenge.id)
         response = started_player_client.post(
-            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/questions/{question.id}/submit",
+            f"/ng/scoring/questions/{question.id}/submit",
             json={"submission": "wrong answer"},
         )
 
@@ -183,7 +183,7 @@ class TestUserScoringEndpoints:
     ):
         """Test submitting answer when not in a team"""
         response = logged_in_client.post(
-            f"/ng/events/{event.id}/challenges/{challenge.id}/questions/{question.id}/submit",
+            f"/ng/scoring/questions/{question.id}/submit",
             json = {"submission": "test"},
         )
 
@@ -199,7 +199,7 @@ class TestUserScoringEndpoints:
 
         challenge = challenge_factory(event_id=1)
         response = started_player_client.post(
-            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/questions/{challenge.questions[0].id}/submit",
+            f"/ng/scoring/questions/{challenge.questions[0].id}/submit",
             json = {}
         )
 
@@ -213,7 +213,7 @@ class TestUserScoringEndpoints:
         challenge = challenge_factory(event_id=1)
 
         response = started_player_client.post(
-            f"/ng/events/1/challenges/{challenge.id}/questions/{challenge.questions[0].id}/submit",
+            f"/ng/scoring/questions/{challenge.questions[0].id}/submit",
             json = {"submission": "   "},
         )
         assert response.status_code == 400
@@ -231,7 +231,7 @@ class TestUserScoringEndpoints:
     ):
         """Test submitting answer with invalid JSON"""
         response = logged_in_client.post(
-            f"/ng/events/{event.id}/challenges/{challenge.id}/questions/{question.id}/submit",
+            f"/ng/scoring/questions/{question.id}/submit",
             data = "invalid json",
             content_type = "application/json",
         )
@@ -249,7 +249,7 @@ class TestUserScoringEndpoints:
     ):
         """Test submitting answer to nonexistent question"""
         response = logged_in_client.post(
-            f"/ng/events/{event.id}/challenges/{challenge.id}/questions/999999/submit",
+            f"/ng/scoring/questions/999999/submit",
             json = {"submission": "test"}
         )
 
@@ -266,7 +266,7 @@ class TestUserScoringEndpoints:
         # Submit max attempts
         for i in range(question.max_attempts):
             response = started_player_client.post(
-                f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/questions/{question.id}/submit",
+                f"/ng/scoring/questions/{question.id}/submit",
                 json={"submission": f"attempt{i}"},
 
             )
@@ -274,7 +274,7 @@ class TestUserScoringEndpoints:
 
         # Try one more - should fail
         response = started_player_client.post(
-            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/questions/{question.id}/submit",
+            f"/ng/scoring/questions/{question.id}/submit",
             json={"submission": "final attempt"},
         )
 
@@ -295,7 +295,7 @@ class TestUserScoringEndpoints:
         hint = hint_factory(challenge_id=challenge.id)
 
         response = started_player_client.post(
-            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/hint/{hint.id}/redeem", data={"nonce": nonce}
+            f"/ng/scoring/hint/{hint.id}/redeem", data={"nonce": nonce}
 
         )
 
@@ -322,7 +322,7 @@ class TestUserScoringEndpoints:
             nonce = sess.get("nonce")
 
         response = logged_in_client.post(
-            f"/ng/events/{event.id}/challenges/{challenge.id}/hint/{hint.id}/redeem",
+            f"/ng/scoring/hint/{hint.id}/redeem",
             data = {"nonce": nonce}
         )
 
@@ -343,7 +343,7 @@ class TestUserScoringEndpoints:
 
         # First redemption
         response = started_player_client.post(
-            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/hint/{hint.id}/redeem", data={"nonce": nonce}
+            f"/ng/scoring/hint/{hint.id}/redeem", data={"nonce": nonce}
 
         )
         assert response.status_code == 201
@@ -354,7 +354,7 @@ class TestUserScoringEndpoints:
 
         # Second redemption should fail
         response = started_player_client.post(
-            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/hint/{hint.id}/redeem", data={"nonce": fresh_nonce}
+            f"/ng/scoring/hint/{hint.id}/redeem", data={"nonce": fresh_nonce}
 
         )
 
@@ -375,7 +375,7 @@ class TestUserScoringEndpoints:
             nonce = sess.get("nonce")
 
         response = logged_in_client.post(
-            f"/ng/events/{event.id}/challenges/{challenge.id}/hint/999999/redeem",
+            f"/ng/scoring/hint/999999/redeem",
             data = {"nonce": nonce}
         )
 
@@ -407,7 +407,7 @@ class TestUserScoringEndpoints:
             nonce = sess.get("nonce")
 
         response = logged_in_client.post(
-            f"/ng/events/{locked_event.id}/challenges/{challenge.id}/hint/{hint.id}/redeem",
+            f"/ng/scoring/hint/{hint.id}/redeem",
             data = {"nonce": nonce}
         )
 
@@ -422,8 +422,8 @@ class TestUserScoringEndpoints:
         """
         challenge = challenge_factory(event_id=1)
         hint = hint_factory(challenge_id=challenge.id)
-        response = started_player_client.get(f"/ng/events/{challenge.event_id}/challenges/{challenge.id}")
-
+        response = started_player_client.get(f"/ng/events/challenges/{challenge.id}")
+        print(response.get_json())
         assert response.status_code == 200
         data = response.get_json()
 
@@ -440,12 +440,12 @@ class TestUserScoringEndpoints:
 
 
         redeem_response = started_player_client.post(
-            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/hint/{hint.id}/redeem",
+            f"/ng/scoring/hint/{hint.id}/redeem",
             data={"nonce": nonce}
         )
         assert redeem_response.status_code == 201
 
-        response = started_player_client.get(f"/ng/events/{challenge.event_id}/challenges/{challenge.id}")
+        response = started_player_client.get(f"/ng/events/challenges/{challenge.id}")
 
         assert response.status_code == 200
         data = response.get_json()
@@ -468,9 +468,9 @@ class TestUserScoringEndpoints:
     ):
         """Test that unauthenticated requests fail"""
         endpoints = [
-            f"/ng/events/{event.id}/me/team/score",
-            f"/ng/events/{event.id}/challenges/{challenge.id}/questions/{question.id}/submit",
-            f"/ng/events/{event.id}/challenges/{challenge.id}/hint/{hint.id}/redeem",
+            f"/ng/scoring/{event.id}/me/team/score",
+            f"/ng/scoring/questions/{question.id}/submit",
+            f"/ng/scoring/hint/{hint.id}/redeem",
         ]
 
         for endpoint in endpoints:
@@ -493,7 +493,7 @@ class TestAdminScoringEndpoints:
     ):
         """Test awarding positive manual points"""
         response = admin_client.post(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/award-points",
+            f"/ng/admin/scoring/teams/{team_with_member.id}/award-points",
             json = {
                 "points": 100,
                 "reason": "Excellent teamwork"
@@ -519,7 +519,7 @@ class TestAdminScoringEndpoints:
         score.points = 200
 
         response = admin_client.post(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/award-points",
+            f"/ng/admin/scoring/teams/{team_with_member.id}/award-points",
             json = {
                 "points": -50,
                 "reason": "Rule violation"
@@ -542,7 +542,7 @@ class TestAdminScoringEndpoints:
     ):
         """Test that awarding zero points fails"""
         response = admin_client.post(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/award-points",
+            f"/ng/admin/scoring/teams/{team_with_member.id}/award-points",
             json = {
                 "points": 0,
                 "reason": "Test"
@@ -562,7 +562,7 @@ class TestAdminScoringEndpoints:
     ):
         """Test awarding points without reason"""
         response = admin_client.post(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/award-points",
+            f"/ng/admin/scoring/teams/{team_with_member.id}/award-points",
             json = {"points": 100}
         )
 
@@ -579,7 +579,7 @@ class TestAdminScoringEndpoints:
     ):
         """Test awarding points with empty reason"""
         response = admin_client.post(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/award-points",
+            f"/ng/admin/scoring/teams/{team_with_member.id}/award-points",
             json = {
                 "points": 100,
                 "reason": "   "
@@ -599,7 +599,7 @@ class TestAdminScoringEndpoints:
     ):
         """Test awarding points with invalid JSON"""
         response = admin_client.post(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/award-points",
+            f"/ng/admin/scoring/teams/{team_with_member.id}/award-points",
             data = "invalid json",
             content_type = "application/json",
         )
@@ -615,30 +615,11 @@ class TestAdminScoringEndpoints:
     ):
         """Test awarding points to nonexistent team"""
         response = admin_client.post(
-            f"/ng/admin/scoring/events/{event.id}/teams/999999/award-points",
+            f"/ng/admin/scoring/teams/999999/award-points",
             json = {
                 "points": 100,
                 "reason": "Test"
             }
-        )
-
-        assert response.status_code == 404
-        data = response.get_json()
-        assert data["success"] is False
-
-    def test_award_manual_points_nonexistent_event(
-        self,
-        admin_client,
-        admin,
-        team_with_member
-    ):
-        """Test awarding points for nonexistent event"""
-        response = admin_client.post(
-            f"/ng/admin/scoring/events/999999/teams/{team_with_member.id}/award-points",
-            json = {
-                "points": 100,
-                "reason": "Test"
-            },
         )
 
         assert response.status_code == 404
@@ -654,7 +635,7 @@ class TestAdminScoringEndpoints:
     ):
         """Test that non-admin cannot award points"""
         response = logged_in_client.post(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/award-points",
+            f"/ng/admin/scoring/teams/{team_with_member.id}/award-points",
             json = {
                 "points": 100,
                 "reason": "Test"
@@ -680,7 +661,7 @@ class TestAdminScoringEndpoints:
             nonce = sess.get("nonce")
 
         response = admin_client.post(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/recalculate",
+            f"/ng/admin/scoring/teams/{team_with_member.id}/recalculate",
             data = {"nonce": nonce}
         )
 
@@ -718,7 +699,7 @@ class TestAdminScoringEndpoints:
             nonce = sess.get("nonce")
 
         response = admin_client.post(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/recalculate",
+            f"/ng/admin/scoring/teams/{team_with_member.id}/recalculate",
             data = {"nonce": nonce}
         )
 
@@ -739,7 +720,7 @@ class TestAdminScoringEndpoints:
             nonce = sess.get("nonce")
 
         response = admin_client.post(
-            f"/ng/admin/scoring/events/{event.id}/teams/999999/recalculate",
+            f"/ng/admin/scoring/teams/999999/recalculate",
             data = {"nonce": nonce}
         )
 
@@ -747,25 +728,6 @@ class TestAdminScoringEndpoints:
         data = response.get_json()
         assert data["success"] is False
 
-    def test_recalculate_score_nonexistent_event(
-        self,
-        admin_client,
-        admin,
-        team_with_member
-    ):
-        """Test recalculating score for nonexistent event"""
-
-        with admin_client.session_transaction() as sess:
-            nonce = sess.get("nonce")
-
-        response = admin_client.post(
-            f"/ng/admin/scoring/events/999999/teams/{team_with_member.id}/recalculate",
-            data = {"nonce": nonce}
-        )
-
-        assert response.status_code == 404
-        data = response.get_json()
-        assert data["success"] is False
 
     def test_recalculate_score_non_admin_fails(
         self,
@@ -780,7 +742,7 @@ class TestAdminScoringEndpoints:
             nonce = sess.get("nonce")
 
         response = logged_in_client.post(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/recalculate",
+            f"/ng/admin/scoring/teams/{team_with_member.id}/recalculate",
             data = {"nonce": nonce}
         )
 
@@ -796,7 +758,7 @@ class TestAdminScoringEndpoints:
     ):
         """Test getting basic score history"""
         response = admin_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/history"
+            f"/ng/admin/scoring/teams/{team_with_member.id}/history"
         )
 
         assert response.status_code == 200
@@ -824,7 +786,7 @@ class TestAdminScoringEndpoints:
             )
 
         response = admin_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/history?limit=5"
+            f"/ng/admin/scoring/teams/{team_with_member.id}/history?limit=5"
         )
 
         assert response.status_code == 200
@@ -841,7 +803,7 @@ class TestAdminScoringEndpoints:
     ):
         """Test getting score history with invalid limit"""
         response = admin_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/history?limit=0"
+            f"/ng/admin/scoring/teams/{team_with_member.id}/history?limit=0"
         )
 
         assert response.status_code == 400
@@ -857,7 +819,7 @@ class TestAdminScoringEndpoints:
     ):
         """Test getting score history with limit too high"""
         response = admin_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/history?limit=1000"
+            f"/ng/admin/scoring/teams/{team_with_member.id}/history?limit=1000"
         )
 
         assert response.status_code == 400
@@ -872,27 +834,13 @@ class TestAdminScoringEndpoints:
     ):
         """Test getting score history for nonexistent team"""
         response = admin_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/999999/history"
+            f"/ng/admin/scoring/teams/999999/history"
         )
 
         assert response.status_code == 404
         data = response.get_json()
         assert data["success"] is False
 
-    def test_get_score_history_nonexistent_event(
-        self,
-        admin_client,
-        admin,
-        team_with_member
-    ):
-        """Test getting score history for nonexistent event"""
-        response = admin_client.get(
-            f"/ng/admin/scoring/events/999999/teams/{team_with_member.id}/history"
-        )
-
-        assert response.status_code == 404
-        data = response.get_json()
-        assert data["success"] is False
 
     def test_get_score_history_non_admin_fails(
         self,
@@ -903,7 +851,7 @@ class TestAdminScoringEndpoints:
     ):
         """Test that non-admin cannot get score history"""
         response = logged_in_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/history"
+            f"/ng/admin/scoring/teams/{team_with_member.id}/history"
         )
 
         # CTFd returns 302 redirect for non admin access to admin endpoints in test environment
@@ -920,7 +868,7 @@ class TestAdminScoringEndpoints:
         ScoreEvent.query.filter_by(team_id = team_with_member.id).delete()
 
         response = admin_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/history"
+            f"/ng/admin/scoring/teams/{team_with_member.id}/history"
         )
 
         assert response.status_code == 200
@@ -940,7 +888,7 @@ class TestAdminScoringEndpoints:
         Test getting basic team attempts (including failed ones)
         """
         response = admin_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/attempts"
+            f"/ng/admin/scoring/teams/{team_with_member.id}/attempts"
         )
 
         assert response.status_code == 200
@@ -983,7 +931,7 @@ class TestAdminScoringEndpoints:
         )
 
         response = admin_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/attempts"
+            f"/ng/admin/scoring/teams/{team_with_member.id}/attempts"
         )
 
         assert response.status_code == 200
@@ -1048,7 +996,7 @@ class TestAdminScoringEndpoints:
         )
 
         response = admin_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/hint_redemptions"
+            f"/ng/admin/scoring/teams/{team_with_member.id}/hint_redemptions"
         )
 
         assert response.status_code == 200
@@ -1096,7 +1044,7 @@ class TestAdminScoringEndpoints:
         )
 
         response = admin_client.get(
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/manual_awards"
+            f"/ng/admin/scoring/teams/{team_with_member.id}/manual_awards"
         )
 
         assert response.status_code == 200
@@ -1128,9 +1076,9 @@ class TestAdminScoringEndpoints:
     ):
         """Test that all new endpoints return 404 for nonexistent team"""
         endpoints = [
-            f"/ng/admin/scoring/events/{event.id}/teams/999999/attempts",
-            f"/ng/admin/scoring/events/{event.id}/teams/999999/hint_redemptions",
-            f"/ng/admin/scoring/events/{event.id}/teams/999999/manual_awards",
+            f"/ng/admin/scoring/teams/999999/attempts",
+            f"/ng/admin/scoring/teams/999999/hint_redemptions",
+            f"/ng/admin/scoring/teams/999999/manual_awards",
         ]
 
         for endpoint in endpoints:
@@ -1139,24 +1087,6 @@ class TestAdminScoringEndpoints:
             data = response.get_json()
             assert data["success"] is False
 
-    def test_new_endpoints_nonexistent_event(
-        self,
-        admin_client,
-        admin,
-        team_with_member
-    ):
-        """Test that all new endpoints return 404 for nonexistent event"""
-        endpoints = [
-            f"/ng/admin/scoring/events/999999/teams/{team_with_member.id}/attempts",
-            f"/ng/admin/scoring/events/999999/teams/{team_with_member.id}/hint_redemptions",
-            f"/ng/admin/scoring/events/999999/teams/{team_with_member.id}/manual_awards",
-        ]
-
-        for endpoint in endpoints:
-            response = admin_client.get(endpoint)
-            assert response.status_code == 404
-            data = response.get_json()
-            assert data["success"] is False
 
     def test_new_endpoints_non_admin_fails(
         self,
@@ -1167,9 +1097,9 @@ class TestAdminScoringEndpoints:
     ):
         """Test that non-admin cannot access new endpoints"""
         endpoints = [
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/attempts",
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/hint_redemptions",
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/manual_awards",
+            f"/ng/admin/scoring/teams/{team_with_member.id}/attempts",
+            f"/ng/admin/scoring/teams/{team_with_member.id}/hint_redemptions",
+            f"/ng/admin/scoring/teams/{team_with_member.id}/manual_awards",
         ]
 
         for endpoint in endpoints:
@@ -1184,12 +1114,12 @@ class TestAdminScoringEndpoints:
     ):
         """Test that unauthenticated admin requests fail"""
         endpoints = [
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/award-points",
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/recalculate",
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/history",
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/attempts",
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/hint_redemptions",
-            f"/ng/admin/scoring/events/{event.id}/teams/{team_with_member.id}/manual_awards",
+            f"/ng/admin/scoring/teams/{team_with_member.id}/award-points",
+            f"/ng/admin/scoring/teams/{team_with_member.id}/recalculate",
+            f"/ng/admin/scoring/teams/{team_with_member.id}/history",
+            f"/ng/admin/scoring/teams/{team_with_member.id}/attempts",
+            f"/ng/admin/scoring/teams/{team_with_member.id}/hint_redemptions",
+            f"/ng/admin/scoring/teams/{team_with_member.id}/manual_awards",
         ]
 
         for endpoint in endpoints:
@@ -1223,7 +1153,7 @@ class TestScoringAPIIntegration:
         for i in range(3):
 
             response = started_player_client.post(
-                f"/ng/events/1/challenges/{challenge.id}/questions/1/submit",
+                f"/ng/scoring/questions/1/submit",
                 json={"submission": f"answer{i}"},
 
             )
@@ -1234,7 +1164,7 @@ class TestScoringAPIIntegration:
             assert response.status_code == 201
 
         # Check final score is consistent
-        response = started_player_client.get("/ng/events/1/me/team/score")
+        response = started_player_client.get("/ng/scoring/1/me/team/score")
         assert response.status_code == 200
         # Score should be 0 since all were wrong answers
         assert response.get_json()["data"]["points"] == 0

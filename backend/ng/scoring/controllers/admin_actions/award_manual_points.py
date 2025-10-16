@@ -7,7 +7,6 @@ from ....notifications.services import NotificationService
 
 
 def award_manual_points(
-    event,
     team,
     score,
     points: int,
@@ -26,8 +25,8 @@ def award_manual_points(
 
     # Notify all event participants to refetch leaderboard
     NotificationService._emit_refetch(
-        path=f"/ng/events/{event.id}/leaderboard",
-        event_id=event.id
+        path=f"/ng/scoring/{team.event_id}/leaderboard",
+        event_id=team.event_id,
     )
 
     return award

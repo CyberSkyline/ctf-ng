@@ -7,7 +7,6 @@ from ....notifications.services import NotificationService
 
 
 def submit_answer(
-    event,
     challenge,
     question,
     team,
@@ -26,7 +25,7 @@ def submit_answer(
     )
 
     NotificationService.broadcast_attempt_update(
-        event_id=event.id,
+        event_id=challenge.event_id,
         team_id=team.id,
         challenge_id=challenge.id,
         question_id=question.id,

@@ -11,7 +11,7 @@ from ...core.middleware.loaders import (
     LoaderType,
     load_event,
     load_team,
-    load_score_by_team_and_event,
+    load_score_by_team,
 )
 from ... import config
 from ...core.utils import success_response
@@ -32,13 +32,12 @@ scoring_admin_namespace = Namespace(
 
 
 @scoring_admin_namespace.route(
-    "/events/<int:event_id>/teams/<int:team_id>/award-points"
+    "/teams/<int:team_id>/award-points"
 )
 class AwardPoints(Resource):
     @admin_endpoint(json_required = True)
-    @load_event(LoaderType.PARAM)
     @load_team(LoaderType.PARAM)
-    @load_score_by_team_and_event()
+    @load_score_by_team()
     @scoring_admin_namespace.doc(
         description="Award or deduct points manually with reason for audit trail (Admin only)",
         params={
@@ -63,22 +62,11 @@ class AwardPoints(Resource):
         404: "Not found - Team has no score in the specified event",
         500: "Internal Server Error",
     },)
-    def post(
-        self,
-        event_id: int,
-        team_id: int,
-        event,
-        team,
-        score,
-        current_user,
-        json_data,
-        **kwargs
-    ):
+    def post(self, team_id: int, team, score, current_user, json_data, **kwargs):
         """
         Award manual points to a team
         """
         result = award_manual_points(
-            event = event,
             team = team,
             score = score,
             points = json_data.get("points"),
@@ -89,13 +77,12 @@ class AwardPoints(Resource):
 
 
 @scoring_admin_namespace.route(
-    "/events/<int:event_id>/teams/<int:team_id>/recalculate"
+    "/teams/<int:team_id>/recalculate"
 )
 class RecalculateScore(Resource):
     @admin_endpoint(json_required = False)
-    @load_event(LoaderType.PARAM)
     @load_team(LoaderType.PARAM)
-    @load_score_by_team_and_event()
+    @load_score_by_team()
     @scoring_admin_namespace.doc(
         description="Recalculate a team's score from all score events (Admin only)",
         responses={
@@ -105,7 +92,7 @@ class RecalculateScore(Resource):
             500: "Internal Server Error",
         },
     )
-    def post(self, event_id: int, team_id: int, event, team, score, **kwargs):
+    def post(self, team_id: int, team, score, **kwargs):
         """
         Recalculate a team's score (if needed)
         """
@@ -114,11 +101,10 @@ class RecalculateScore(Resource):
 
 
 @scoring_admin_namespace.route(
-    "/events/<int:event_id>/teams/<int:team_id>/history"
+    "/teams/<int:team_id>/history"
 )
 class ScoreHistory(Resource):
     @admin_endpoint()
-    @load_event(LoaderType.PARAM)
     @load_team(LoaderType.PARAM)
     @scoring_admin_namespace.doc(
         description="Get detailed scoring history for audit and debugging purposes (Admin only)",
@@ -138,7 +124,7 @@ class ScoreHistory(Resource):
             500: "Internal Server Error",
         },
     )
-    def get(self, event_id: int, team_id: int, event, team, **kwargs):
+    def get(self, team_id: int, team, **kwargs):
         """
         Get scoring history for a team
         """
@@ -152,17 +138,16 @@ class ScoreHistory(Resource):
                 f"Limit must be between 1 and {config.MAX_SCORE_HISTORY_LIMIT}"
             )
 
-        result = get_score_history(event = event, team = team, limit = limit)
+        result = get_score_history(team = team, limit = limit)
         return success_response(result)
 
 
 
 @scoring_admin_namespace.route(
-    "/events/<int:event_id>/teams/<int:team_id>/attempts"
+    "/teams/<int:team_id>/attempts"
 )
 class TeamAttempts(Resource):
     @admin_endpoint()
-    @load_event(LoaderType.PARAM)
     @load_team(LoaderType.PARAM)
     @scoring_admin_namespace.doc(
         description="Get all attempts (correct and incorrect) for a team in an event (Admin only)",
@@ -173,20 +158,19 @@ class TeamAttempts(Resource):
             500: "Internal Server Error",
         },
     )
-    def get(self, event_id: int, team_id: int, event, team, **kwargs):
+    def get(self, team_id: int, team, **kwargs):
         """
         Get all attempts (correct and incorrect) for a team in an event
         """
-        attempts = get_team_attempts(team_id, event_id)
+        attempts = get_team_attempts(team_id, team.event_id)
         return success_response(attempts)
 
 
 @scoring_admin_namespace.route(
-    "/events/<int:event_id>/teams/<int:team_id>/hint_redemptions"
+    "/teams/<int:team_id>/hint_redemptions"
 )
 class TeamHintRedemptions(Resource):
     @admin_endpoint()
-    @load_event(LoaderType.PARAM)
     @load_team(LoaderType.PARAM)
     @scoring_admin_namespace.doc(
         description="Get all hint redemptions for a team in an event (Admin only)",
@@ -197,20 +181,19 @@ class TeamHintRedemptions(Resource):
             500: "Internal Server Error",
         },
     )
-    def get(self, event_id: int, team_id: int, event, team, **kwargs):
+    def get(self, team_id: int, team, **kwargs):
         """
         Get all hint redemptions for a team in an event
         """
-        redemptions = get_team_hint_redemptions(team_id, event_id)
+        redemptions = get_team_hint_redemptions(team_id, team.event_id)
         return success_response(redemptions)
 
 
 @scoring_admin_namespace.route(
-    "/events/<int:event_id>/teams/<int:team_id>/manual_awards"
+    "/teams/<int:team_id>/manual_awards"
 )
 class TeamManualAwards(Resource):
     @admin_endpoint()
-    @load_event(LoaderType.PARAM)
     @load_team(LoaderType.PARAM)
     @scoring_admin_namespace.doc(
         description="Get all manual point awards for a team in an event (Admin only)",
@@ -221,9 +204,9 @@ class TeamManualAwards(Resource):
             500: "Internal Server Error",
         },
     )
-    def get(self, event_id: int, team_id: int, event, team, **kwargs):
+    def get(self, team_id: int, team, **kwargs):
         """
         Get all manual point awards for a team in an event
         """
-        awards = get_team_manual_awards(team_id, event_id)
+        awards = get_team_manual_awards(team_id, team.event_id)
         return success_response(awards)

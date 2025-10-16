@@ -56,7 +56,7 @@ export function redeemHint(
   challengeId: number,
   hintId: number,
 ) {
-  return apiMutation(`/events/${eventId}/challenges/${challengeId}/hint/${hintId}/redeem`, undefined, {
+  return apiMutation(`/hint/${hintId}/redeem`, undefined, {
     method : 'POST',
   }).then(() => {
     // refresh the hints list when hint is redeemed
@@ -70,7 +70,7 @@ export function submitFlag(
   questionId: number,
   flag: string,
 ) {
-  return apiMutation(`/events/${eventId}/challenges/${challengeId}/questions/${questionId}/submit`, {
+  return apiMutation(`/questions/${questionId}/submit`, {
     submission : flag,
   }, {
     method : 'POST',

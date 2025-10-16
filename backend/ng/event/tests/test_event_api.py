@@ -1242,7 +1242,7 @@ class Test_Event_Challenge_List:
 
 class Test_Event_Challenge_Render:
     def get_endpoint(self, event_id: int, challenge_id: int) -> str:
-        return f"/ng/events/{event_id}/challenges/{challenge_id}"
+        return f"/ng/events/challenges/{challenge_id}"
 
     def test_render_challenge_for_event(self, started_player_client, challenge_factory):
         challenge = challenge_factory(event_id=1, name="Challenge to Render")

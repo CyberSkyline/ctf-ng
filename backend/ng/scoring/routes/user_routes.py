@@ -13,7 +13,9 @@ from ...core.middleware.loaders import (
     load_question,
     load_hint,
     load_team_by_user_and_event,
-    load_score_by_team_and_event,
+    load_team_by_user_and_question,
+    load_score_by_team,
+    load_team_by_user_and_hint,
 )
 from ...core.middleware.permission_middleware import check_permissions
 from ...permissions.models.enums import PermissionEnum
@@ -81,8 +83,8 @@ class MyTeamScore(Resource):
     @user_endpoint()
     @load_event(LoaderType.PARAM)
     @load_team_by_user_and_event()
-    @load_score_by_team_and_event()
-    def get(self, event_id: int, event, team, score, current_user: User, **kwargs):
+    @load_score_by_team()
+    def get(self, team, score, current_user: User, **kwargs):
         """
         Get my team's score
         """
@@ -90,13 +92,11 @@ class MyTeamScore(Resource):
         return success_response(result)
 
 
-@scoring_user_namespace.route("/<int:event_id>/challenges/<int:challenge_id>/questions/<int:question_id>/submit")
+@scoring_user_namespace.route("/questions/<int:question_id>/submit")
 class SubmitAnswer(Resource):
     @user_endpoint(json_required=True)
-    @load_event(LoaderType.PARAM)
-    @load_challenge(LoaderType.PARAM)
     @load_question(LoaderType.PARAM)
-    @load_team_by_user_and_event()
+    @load_team_by_user_and_question()
     @check_permissions(PermissionEnum.CAN_PLAY_CHALLENGES, "You do not have permission to play challenges.")
     @scoring_user_namespace.doc(
         description="Submit an answer to a challenge question for scoring",
@@ -118,11 +118,7 @@ class SubmitAnswer(Resource):
     )
     def post(
         self,
-        event_id: int,
-        challenge_id: int,
         question_id: int,
-        event,
-        challenge,
         question,
         team,
         current_user: User,
@@ -135,8 +131,7 @@ class SubmitAnswer(Resource):
         """
 
         result = submit_answer(
-            event=event,
-            challenge=challenge,
+            challenge=question.challenge,
             question=question,
             team=team,
             current_user=current_user,
@@ -145,13 +140,11 @@ class SubmitAnswer(Resource):
         return success_response(result, status_code=201)
 
 
-@scoring_user_namespace.route("/<int:event_id>/challenges/<int:challenge_id>/hint/<int:hint_id>/redeem")
+@scoring_user_namespace.route("/hint/<int:hint_id>/redeem")
 class RedeemHint(Resource):
     @user_endpoint(json_required=False)
-    @load_event(LoaderType.PARAM)
-    @load_challenge(LoaderType.PARAM)
     @load_hint(LoaderType.PARAM)
-    @load_team_by_user_and_event()
+    @load_team_by_user_and_hint()
     @check_permissions(PermissionEnum.CAN_PLAY_CHALLENGES, "You do not have permission to play challenges.")
     @scoring_user_namespace.doc(
         description="Redeem a hint for a challenge, deducting points from the team's score",
@@ -164,11 +157,7 @@ class RedeemHint(Resource):
     )
     def post(
         self,
-        event_id: int,
-        challenge_id: int,
         hint_id: int,
-        event,
-        challenge,
         hint,
         team,
         permissions,
@@ -180,8 +169,7 @@ class RedeemHint(Resource):
         """
 
         result = redeem_hint(
-            event=event,
-            challenge=challenge,
+            challenge=hint.challenge,
             hint=hint,
             team=team,
             current_user=current_user,

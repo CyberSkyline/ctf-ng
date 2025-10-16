@@ -49,7 +49,6 @@ class TestSubmitAnswer:
     def test_submit_answer_correct(self, db_session, user, team_with_member, event, challenge, question, score):
         """Test submitting a correct answer"""
         result = submit_answer(
-            event=event,
             challenge=challenge,
             question=question,
             team=team_with_member,
@@ -70,7 +69,6 @@ class TestSubmitAnswer:
     def test_submit_answer_incorrect(self, db_session, user, team_with_member, event, challenge, question, score):
         """Test submitting an incorrect answer"""
         result = submit_answer(
-            event=event,
             challenge=challenge,
             question=question,
             team=team_with_member,
@@ -97,7 +95,6 @@ class TestSubmitAnswer:
         db_session.commit()
 
         result = submit_answer(
-            event=event,
             challenge=challenge,
             question=question,
             team=team_with_member,
@@ -122,7 +119,6 @@ class TestSubmitAnswer:
         db_session.commit()
 
         result = submit_answer(
-            event=event,
             challenge=challenge,
             question=question,
             team=team_with_member,
@@ -147,7 +143,6 @@ class TestRedeemHint:
     def test_redeem_hint_success(self, db_session, user, team_with_member, event, challenge, hint):
         """Test successfully redeeming a hint"""
         result = redeem_hint(
-            event=event,
             challenge=challenge,
             hint=hint,
             team=team_with_member,
@@ -179,7 +174,6 @@ class TestRedeemHint:
 
         with pytest.raises(BusinessLogicError) as exc_info:
             redeem_hint(
-                event=event,
                 challenge=challenge,
                 hint=hint,
                 team=team_with_member,
@@ -196,7 +190,6 @@ class TestRedeemHint:
         db_session.commit()
 
         result = redeem_hint(
-            event=event,
             challenge=challenge,
             hint=free_hint,
             team=team_with_member,
@@ -272,7 +265,6 @@ class TestAwardManualPoints:
         initial_points = score.points
 
         result = award_manual_points(
-            event=event,
             team=team_with_member,
             score=score,
             points=100,
@@ -297,7 +289,6 @@ class TestAwardManualPoints:
         db_session.commit()
 
         result = award_manual_points(
-            event=event,
             team=team_with_member,
             score=score,
             points=-50,
@@ -322,7 +313,6 @@ class TestAwardManualPoints:
         """Test that awarding zero points fails"""
         with pytest.raises(ValidationError) as exc_info:
             award_manual_points(
-                event=event,
                 team=team_with_member,
                 score=score,
                 points=0,
@@ -336,7 +326,6 @@ class TestAwardManualPoints:
         """Test that non-admin cannot award points"""
         with pytest.raises(ValidationError) as exc_info:
             award_manual_points(
-                event=event,
                 team=team_with_member,
                 score=score,
                 points=100,
@@ -352,7 +341,7 @@ class TestGetScoreHistory:
 
     def test_get_score_history_basic(self, db_session, event, team_with_member, score_event):
         """Test getting basic score history"""
-        result = get_score_history(event, team_with_member)
+        result = get_score_history(team_with_member)
 
         assert isinstance(result, list)
         assert len(result) >= 1
@@ -360,7 +349,7 @@ class TestGetScoreHistory:
 
     def test_get_score_history_with_team_filter(self, db_session, event, team_with_member, score_event):
         """Test getting score history filtered by team"""
-        result = get_score_history(event, team_with_member)
+        result = get_score_history(team_with_member)
 
         # All events should be for the specified team
         assert all(se.team_id == team_with_member.id for se in result)
@@ -371,7 +360,7 @@ class TestGetScoreHistory:
         for i in range(10):
             score_event_factory(score_id=score.id, team_id=score.team_id, points=10 * (i + 1))
 
-        result = get_score_history(event, team_with_member, limit=5)
+        result = get_score_history(team_with_member, limit=5)
 
         # Should return only 5 events
         assert len(result) == 5
@@ -381,7 +370,7 @@ class TestGetScoreHistory:
         with patch.object(ScoreEvent, "find_filtered_events") as mock_find:
             mock_find.return_value = [score_event]
 
-            get_score_history(event, team_with_member)
+            get_score_history(team_with_member)
 
             mock_find.assert_called_once()
             call_args = mock_find.call_args
@@ -389,7 +378,7 @@ class TestGetScoreHistory:
 
     def test_get_score_history_empty(self, db_session, event, team_with_member):
         """Test getting score history for event with no events"""
-        result = get_score_history(event, team_with_member)
+        result = get_score_history(team_with_member)
 
         # Should return empty list
         assert result == []
@@ -458,7 +447,6 @@ class TestControllerIntegration:
 
         # 1. Submit correct answer
         answer_result = submit_answer(
-            event=event,
             challenge=challenge,
             question=question,
             team=team_with_member,
@@ -469,7 +457,6 @@ class TestControllerIntegration:
 
         # 2. Redeem hint
         hint_result = redeem_hint(
-            event=event,
             challenge=challenge,
             hint=hint,
             team=team_with_member,
@@ -485,7 +472,6 @@ class TestControllerIntegration:
 
         # 3. Award manual points
         award_result = award_manual_points(
-            event=event,
             team=team_with_member,
             score=score,
             points=50,
@@ -510,7 +496,6 @@ class TestControllerIntegration:
         """Test that score history shows all scoring actions"""
         # Perform various actions
         submit_answer(
-            event=event,
             challenge=challenge,
             question=question,
             team=team_with_member,
@@ -519,7 +504,6 @@ class TestControllerIntegration:
         )
 
         redeem_hint(
-            event=event,
             challenge=challenge,
             hint=hint,
             team=team_with_member,
@@ -527,7 +511,6 @@ class TestControllerIntegration:
         )
 
         award_manual_points(
-            event=event,
             team=team_with_member,
             score=score,
             points=25,
@@ -536,7 +519,7 @@ class TestControllerIntegration:
         )
 
         # Check history
-        history = get_score_history(event, team_with_member)
+        history = get_score_history(team_with_member)
 
         # Should have 3 events (answer, hint, manual award)
         assert len(history) == 3
@@ -555,7 +538,6 @@ class TestControllerIntegration:
         """Test recalculation after complex scoring operations"""
         # Perform multiple scoring actions
         submit_answer(
-            event=event,
             challenge=challenge,
             question=question,
             team=team_with_member,
@@ -564,7 +546,6 @@ class TestControllerIntegration:
         )
 
         redeem_hint(
-            event=event,
             challenge=challenge,
             hint=hint,
             team=team_with_member,
@@ -572,7 +553,6 @@ class TestControllerIntegration:
         )
 
         award_manual_points(
-            event=event,
             team=team_with_member,
             score=score,
             points=30,

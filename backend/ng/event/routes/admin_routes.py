@@ -288,7 +288,7 @@ class EventChallenges(Resource):
         challenge = import_challenge_from_yaml(event, json_data)
         return success_response(challenge)
 
-@events_admin_namespace.route("/<int:event_id>/challenge/<int:challenge_id>/pull")
+@events_admin_namespace.route("/challenge/<int:challenge_id>/pull")
 class PullImages(Resource):
     @events_admin_namespace.doc(
         description="Pull all container images for a given challenge, Status of images returned via websockets",

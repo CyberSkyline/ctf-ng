@@ -7,7 +7,6 @@ from ....notifications.services import NotificationService
 
 
 def redeem_hint(
-    event,
     challenge,
     hint,
     team,
@@ -24,7 +23,7 @@ def redeem_hint(
     )
 
     NotificationService.broadcast_hint_redeemed(
-        event_id=event.id,
+        event_id=hint.challenge.event_id,
         team_id=team.id,
         challenge_id=challenge.id,
     )

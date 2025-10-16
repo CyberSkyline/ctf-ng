@@ -17,6 +17,7 @@ from ...core.middleware.loaders import (
     load_event,
     load_challenge,
     load_team_by_user_and_event,
+    load_team_by_user_and_challenge,
 )
 from ...core.exceptions import ValidationError
 from ...core.utils.validator import BaseValidator
@@ -477,12 +478,11 @@ class EventChallenges(Resource):
         return success_response(challenges)
 
 
-@events_user_namespace.route("/<int:event_id>/challenges/<int:challenge_id>")
+@events_user_namespace.route("/challenges/<int:challenge_id>")
 class EventChallengeRender(Resource):
     @user_endpoint()
-    @load_event(source = LoaderType.PARAM)
     @load_challenge(source = LoaderType.PARAM)
-    @load_team_by_user_and_event()
+    @load_team_by_user_and_challenge()
     @check_permissions(PermissionEnum.CAN_VIEW_CHALLENGES, "You do not have permission to view challenges.")
     @events_user_namespace.doc(
         description="Render a challenge for the user's team in the event.",
@@ -491,7 +491,7 @@ class EventChallengeRender(Resource):
             404: "Challenge or Event not found",
         },
     )
-    def get(self, event_id: int, challenge_id: int, event: Event, challenge: Challenge, team: Team, permissions, **kwargs):
+    def get(self, challenge_id: int, challenge: Challenge, team: Team, permissions, **kwargs):
 
         return success_response(challenge.render(team))
 
@@ -521,12 +521,12 @@ class EventChallengeStatuses(Resource):
 
 
 @events_user_namespace.route(
-    "/<int:event_id>/challenge/<int:challenge_id>/containers"
+    "/challenge/<int:challenge_id>/containers"
 )
 class EventChallengeStartContainers(Resource):
     @user_endpoint()
-    @load_event(source = LoaderType.PARAM)
-    @load_team_by_user_and_event()
+    @load_challenge(source=LoaderType.PARAM)
+    @load_team_by_user_and_challenge()
     @check_permissions(PermissionEnum.CAN_PLAY_CHALLENGES, "You do not have permission to play challenges.")
     @events_user_namespace.doc(
         description="Start a challenges containers",
@@ -539,11 +539,11 @@ class EventChallengeStartContainers(Resource):
             400: "Bad request",
         },
     )
-    def post(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event, permissions):
+    def post(self, team: Team, current_user: User, challenge_id: int, permissions):
         started = start_containers(challenge_id, team.id, current_user)
         return success_response(started)
 
-@events_user_namespace.route("/<int:event_id>/challenge/<int:challenge_id>/containers/restart")
+@events_user_namespace.route("/challenge/<int:challenge_id>/containers/restart")
 class EventChallengeRestartContainers(Resource):
     @events_user_namespace.doc(
         description="Reboot a challenges containers",
@@ -557,13 +557,13 @@ class EventChallengeRestartContainers(Resource):
         },
     )
     @user_endpoint()
-    @load_event(source=LoaderType.PARAM)
-    @load_team_by_user_and_event()
-    def post(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event):
+    @load_challenge(source=LoaderType.PARAM)
+    @load_team_by_user_and_challenge()
+    def post(self, team: Team, current_user: User, challenge_id: int, permissions):
         started = reboot_containers(challenge_id, team.id, current_user)
         return success_response(started)
 
-@events_user_namespace.route("/<int:event_id>/challenge/<int:challenge_id>/containers/recycle")
+@events_user_namespace.route("/challenge/<int:challenge_id>/containers/recycle")
 class EventChallengeRecycleContainers(Resource):
     @events_user_namespace.doc(
         description="Recycle a challenges containers",
@@ -577,9 +577,9 @@ class EventChallengeRecycleContainers(Resource):
         },
     )
     @user_endpoint()
-    @load_event(source=LoaderType.PARAM)
-    @load_team_by_user_and_event()
-    def post(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event):
+    @load_challenge(source=LoaderType.PARAM)
+    @load_team_by_user_and_challenge()
+    def post(self, team: Team, current_user: User, challenge_id: int, permissions):
         started = recycle_containers(challenge_id, team.id, current_user)
         return success_response(started)
 
