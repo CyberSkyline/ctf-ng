@@ -19,6 +19,7 @@ from ...core.utils.validator import BaseValidator
 
 
 class NotificationType(str, Enum):
+    UNKNOWN = "unknown"
     TICKET_CREATE = "ticket_create"
     TICKET_MESSAGE = "ticket_message"
     TICKET_STATUS_CHANGE = "ticket_status_change"
@@ -129,7 +130,11 @@ class Notification(db.Model):
     challenge = db.relationship("Challenge", backref="notifications")
 
     def __repr__(self):
-        return f"<Notification {self.id}: type={self.type.value} recipient={self.recipient_id}>"
+        try:
+            type_value = self.type.value
+        except (LookupError, ValueError):
+            type_value = "unknown"
+        return f"<Notification {self.id}: type={type_value} recipient={self.recipient_id}>"
 
     @property
     def is_read(self) -> bool:
@@ -151,11 +156,16 @@ class Notification(db.Model):
         Returns:
             dict: Serialized notification data
         """
+        try:
+            type_value = self.type.value
+        except (LookupError, ValueError):
+            type_value = "unknown"
+
         data = {
             "id":
             self.id,
             "type":
-            self.type.value,
+            type_value,
             "title":
             self.title,
             "message":
@@ -356,7 +366,14 @@ class Notification(db.Model):
         """
         Find a notification by ID
         """
-        return cls.query.get(notification_id)
+        notification = cls.query.get(notification_id)
+        if notification:
+            try:
+                _ = notification.type.value
+                return notification
+            except (LookupError, ValueError):
+                return None
+        return None
 
     @classmethod
     def find_filtered_notifications(
@@ -391,17 +408,43 @@ class Notification(db.Model):
                 (cls.expires_at.is_(None)) | (cls.expires_at > utc_now())
             )
 
-        return query.order_by(cls.created_at.desc()).all()
+        notifications = []
+        notification_ids = [n[0] for n in query.with_entities(cls.id).order_by(cls.created_at.desc()).all()]
+
+        for notification_id in notification_ids:
+            try:
+                notification = cls.query.get(notification_id)
+                if notification:
+                    _ = notification.type.value
+                    notifications.append(notification)
+            except (LookupError, ValueError):
+                continue
+
+        return notifications
 
     @classmethod
     def get_unread_count(cls, recipient_id: int) -> int:
         """
         Get count of unread notifications for a user
         """
-        return cls.query.filter_by(recipient_id = recipient_id).filter(
+        query = cls.query.filter_by(recipient_id = recipient_id).filter(
             cls.read_at.is_(None)
         ).filter((cls.expires_at.is_(None))
-                 | (cls.expires_at > utc_now())).count()
+                 | (cls.expires_at > utc_now()))
+
+        count = 0
+        notification_ids = [n[0] for n in query.with_entities(cls.id).all()]
+
+        for notification_id in notification_ids:
+            try:
+                notification = cls.query.get(notification_id)
+                if notification:
+                    _ = notification.type.value
+                    count += 1
+            except (LookupError, ValueError):
+                continue
+
+        return count
 
     @classmethod
     def mark_all_as_read(cls, recipient_id: int) -> int:

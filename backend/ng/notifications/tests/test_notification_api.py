@@ -9,7 +9,7 @@ from datetime import (
     datetime,
     timedelta,
 )
-
+from CTFd.models import db
 from CTFd.cache import cache
 from CTFd.utils.security.csrf import generate_nonce
 
@@ -456,3 +456,48 @@ class TestNotificationEndpoints:
             "/ng/notifications/me/unread-count"
         )
         assert final_count_response.get_json()["data"]["count"] == 0
+
+    def test_graceful_handling_of_removed_enum_values(
+        self,
+        logged_in_client,
+        user,
+        notification_factory,
+        db_session
+    ):
+        """
+        Test that notifications with removed/invalid enum values
+        are handled gracefully without causing 500 errors
+        """
+        valid_notification = notification_factory(
+            type = NotificationType.TICKET_CREATE,
+            title = "Valid Notification",
+            message = "This notification has a valid type",
+            recipient_id = user.id
+        )
+
+        notification_with_invalid_enum = notification_factory(
+            type = NotificationType.TICKET_MESSAGE,
+            title = "Invalid Enum Notification",
+            message = "This will have an invalid enum value",
+            recipient_id = user.id
+        )
+
+        db_session.execute(
+            db.text("UPDATE ng_notifications SET type = 'challenge_released' WHERE id = :id"),
+            {"id": notification_with_invalid_enum.id}
+        )
+        db_session.commit()
+
+        response = logged_in_client.get("/ng/notifications/me")
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert isinstance(data["data"], list)
+        assert len(data["data"]) == 1
+        assert data["data"][0]["id"] == valid_notification.id
+
+        count_response = logged_in_client.get("/ng/notifications/me/unread-count")
+        assert count_response.status_code == 200
+        count_data = count_response.get_json()
+        assert count_data["data"]["count"] == 1

@@ -20,6 +20,7 @@ from ...notifications.models import Notification
 
 
 class AnnouncementType(str, Enum):
+    UNKNOWN = "unknown"
     GENERAL = "general"
     EVENT_UPDATE = "event_update"
     EVENT_START = "event_start"
@@ -86,7 +87,11 @@ class Announcement(db.Model):
     event = db.relationship("Event", backref = "announcements")
 
     def __repr__(self):
-        return f"<Announcement {self.id}: type={self.type.value}>"
+        try:
+            type_value = self.type.value
+        except (LookupError, ValueError):
+            type_value = "unknown"
+        return f"<Announcement {self.id}: type={type_value}>"
 
     @property
     def is_active(self) -> bool:
@@ -110,11 +115,16 @@ class Announcement(db.Model):
         Returns:
             dict: Serialized announcement data
         """
+        try:
+            type_value = self.type.value
+        except (LookupError, ValueError):
+            type_value = "unknown"
+
         data = {
             "id":
             self.id,
             "type":
-            self.type.value,
+            type_value,
             "title":
             self.title,
             "message":
@@ -240,14 +250,33 @@ class Announcement(db.Model):
         """
         Find an announcement by ID
         """
-        return cls.query.get(announcement_id)
+        announcement = cls.query.get(announcement_id)
+        if announcement:
+            try:
+                _ = announcement.type.value
+                return announcement
+            except (LookupError, ValueError):
+                return None
+        return None
 
     @classmethod
     def get_all_announcements(cls) -> list[Announcement]:
         """
         Get all announcements ordered by newest first
         """
-        return cls.query.order_by(cls.created_at.desc()).all()
+        announcements = []
+        announcement_ids = [a[0] for a in cls.query.with_entities(cls.id).order_by(cls.created_at.desc()).all()]
+
+        for announcement_id in announcement_ids:
+            try:
+                announcement = cls.query.get(announcement_id)
+                if announcement:
+                    _ = announcement.type.value
+                    announcements.append(announcement)
+            except (LookupError, ValueError):
+                continue
+
+        return announcements
 
     @classmethod
     def get_active_announcements(
@@ -270,7 +299,19 @@ class Announcement(db.Model):
         else:
             query = query.filter(cls.event_id.is_(None))
 
-        return query.order_by(cls.created_at.desc()).all()
+        announcements = []
+        announcement_ids = [a[0] for a in query.with_entities(cls.id).order_by(cls.created_at.desc()).all()]
+
+        for announcement_id in announcement_ids:
+            try:
+                announcement = cls.query.get(announcement_id)
+                if announcement:
+                    _ = announcement.type.value
+                    announcements.append(announcement)
+            except (LookupError, ValueError):
+                continue
+
+        return announcements
 
     @classmethod
     def delete_expired(cls) -> int:
