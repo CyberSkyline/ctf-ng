@@ -59,6 +59,12 @@ jobs:
             exit 1
           fi
 
+      - name: Setup default CTFd admin
+        working-directory: backend/ng/notifications/tests/integration
+        run: |
+          echo "Running setup script to create admin user..."
+          docker compose -f docker-compose.test.yml exec -T test-ctfd bash -c "cd /opt/CTFd && SCRIPT=1 python /opt/CTFd/CTFd/plugins/ng/scripts/default_ctfd_setup.py"
+
       - name: Run notification E2E tests
         working-directory: backend/ng/notifications/tests/integration
         run: |
