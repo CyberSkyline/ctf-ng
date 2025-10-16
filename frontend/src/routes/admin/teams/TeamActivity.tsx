@@ -137,10 +137,10 @@ const colDefs: ColDef<Attempt | HintRedemption | ManualPointAward>[] = [
   },
 ];
 
-export default function TeamActivity({ eventId, teamId }: { eventId: number, teamId: number }) {
-  const { data : attempts, error : attemptsError, isLoading : attemptsLoading } = useTeamAttempts(eventId, teamId);
-  const { data : hintRedemptions, error : hintsError, isLoading : hintsLoading } = useTeamHintRedemptions(eventId, teamId);
-  const { data : manualAwards, error : manualAwardsError, isLoading : manualAwardsLoading } = useTeamManualAwards(eventId, teamId);
+export default function TeamActivity({ teamId }: { teamId: number }) {
+  const { data : attempts, error : attemptsError, isLoading : attemptsLoading } = useTeamAttempts(teamId);
+  const { data : hintRedemptions, error : hintsError, isLoading : hintsLoading } = useTeamHintRedemptions(teamId);
+  const { data : manualAwards, error : manualAwardsError, isLoading : manualAwardsLoading } = useTeamManualAwards(teamId);
 
   // memoize merging the arrays, sorting by timestamp (descending)
   const merged = useMemo(

@@ -6,7 +6,7 @@ import Modal from 'components/Modal';
 import { useState } from 'react';
 import { TbCheck, TbPlayerPlay } from 'react-icons/tb';
 
-export default function ConnectModal({challengeId }: {
+export default function ConnectModal({ challengeId }: {
   challengeId: number;
 }) {
   const { data : currentChallenge, error } = useCurrentChallengeId();

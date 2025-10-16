@@ -48,7 +48,7 @@ export default function ChallengeQuestion({
         // clear the form after submission
         target.reset();
       });
-  }, [ eventId, challengeId, id ]);
+  }, [ challengeId, id ]);
 
   const attemptsRemaining = maxAttempts - attempts.length;
 
