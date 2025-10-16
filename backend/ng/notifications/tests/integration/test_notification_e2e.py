@@ -33,18 +33,23 @@ class TestExternalIntegration:
         """
         Test user creation and login flow
         """
-        session = requests.Session()
+        from CTFd.models import Users, db
 
-        user_data = {
-            "name": "testuser",
-            "email": "test@example.com",
-            "password": "testpass123"
-        }
+        existing_user = Users.query.filter_by(name="testuser").first()
+        if existing_user:
+            db.session.delete(existing_user)
+            db.session.commit()
 
-        session.post(
-            f"{CTFD_BASE_URL}/api/v1/users",
-            json = user_data
+        test_user = Users(
+            name="testuser",
+            email="test@example.com",
+            password="testpass123",
+            verified=True
         )
+        db.session.add(test_user)
+        db.session.commit()
+
+        session = requests.Session()
 
         home_response = session.get(f"{CTFD_BASE_URL}/")
         nonce = None
