@@ -1,4 +1,5 @@
 import {
+  AnnouncementIcon,
   ChallengeIcon,
   DeploymentIcon,
   EventIcon,
@@ -14,7 +15,6 @@ import {
   TbLayoutDashboard,
   TbMessage,
   TbSettings,
-  TbSpeakerphone,
   TbTags,
 } from 'react-icons/tb';
 import { NavLink, Outlet } from 'react-router';
@@ -71,7 +71,7 @@ export default function AdminLayout() {
               <NavItem to="/admin/teams" label="Teams" icon={TeamIcon} />
               <NavItem to="/admin/challenges" label="Challenges" icon={ChallengeIcon} />
               <NavItem to="/admin/deployments" label="Deployments" icon={DeploymentIcon} />
-              <NavItem to="/admin/announcements" label="Announcements" icon={TbSpeakerphone} />
+              <NavItem to="/admin/announcements" label="Announcements" icon={AnnouncementIcon} />
               <NavItem to="/admin/tickets" label="Tickets" icon={TbMessage} />
               <NavItem to="/admin/tags" label="Tags" icon={TbTags} />
               <NavItem to="/admin/settings" label="Settings" icon={TbSettings} />

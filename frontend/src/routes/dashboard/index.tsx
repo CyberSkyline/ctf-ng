@@ -1,8 +1,7 @@
 import { useMyEvents } from '@/hooks/events';
 import { useMyAnnouncements } from '@/hooks/announcements';
 
-import { TbSpeakerphone } from 'react-icons/tb';
-import { COLOR_WARNING } from '@/constants';
+import { AnnouncementIcon, COLOR_WARNING } from '@/constants';
 import {
   Callout,
   Container,
@@ -52,7 +51,7 @@ export default function Dashboard() {
             map(announcements, ({ id, title, message }) => (
               <Callout.Root variant="surface" color={COLOR_WARNING} key={id}>
                 <Callout.Icon>
-                  <TbSpeakerphone aria-label="Warning" />
+                  <AnnouncementIcon aria-label="Warning" />
                 </Callout.Icon>
                 <Callout.Text className="whitespace-pre-wrap">
                   <Flex direction="column" className="-mt-[2px]">

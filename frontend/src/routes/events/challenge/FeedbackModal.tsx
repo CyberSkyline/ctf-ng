@@ -2,7 +2,7 @@ import { COLOR_INFO } from '@/constants';
 import { Button } from '@radix-ui/themes';
 import { WarningCallout } from 'components/Callouts';
 import Modal from 'components/Modal';
-import { TbSpeakerphone } from 'react-icons/tb';
+import { TbBubbleText } from 'react-icons/tb';
 
 export default function FeedbackModal() {
   return (
@@ -10,7 +10,7 @@ export default function FeedbackModal() {
       title="Feedback"
       trigger={(
         <Button variant="ghost" color={COLOR_INFO} className="!m-0">
-          <TbSpeakerphone />
+          <TbBubbleText />
           Feedback
         </Button>
     )}
