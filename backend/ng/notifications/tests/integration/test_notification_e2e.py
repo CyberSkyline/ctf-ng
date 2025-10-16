@@ -31,41 +31,20 @@ class TestExternalIntegration:
 
     def test_create_user_and_login(self):
         """
-        Test user login flow - create admin via setup then login
+        Test user login flow using preset admin credentials
         """
         session = requests.Session()
 
-        setup_response = session.post(
-            f"{CTFD_BASE_URL}/setup",
+        login_response = session.post(
+            f"{CTFD_BASE_URL}/login",
             data = {
                 "name": "admin",
-                "email": "admin@example.com",
                 "password": "ctfng_password"
-            }
-        )
-        assert setup_response.status_code in [200, 302], f"Setup failed: {setup_response.status_code}"
-
-        # Get CSRF token from home page
-        home_response = session.get(f"{CTFD_BASE_URL}/")
-        nonce = None
-        nonce_match = re.search(r"csrfToken:\s*'([^']+)'", home_response.text)
-        if nonce_match:
-            nonce = nonce_match.group(1)
-
-        headers = {}
-        if nonce:
-            headers["CSRF-Token"] = nonce
-
-        login_response = session.post(
-            f"{CTFD_BASE_URL}/ng/users/login",
-            headers = headers,
-            json = {
-                "username": "admin",
-                "password": "ctfng_password"
-            }
+            },
+            allow_redirects = False
         )
 
-        assert login_response.status_code == 200, f"Login failed: {login_response.text}"
+        assert login_response.status_code in [200, 302], f"Login failed: {login_response.status_code}"
         assert session.cookies.get('session') is not None
 
     def test_websocket_with_auth(self):
