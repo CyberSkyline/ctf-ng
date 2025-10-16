@@ -31,26 +31,11 @@ class TestExternalIntegration:
 
     def test_create_user_and_login(self):
         """
-        Test user creation and login flow
+        Test user login flow using preset admin credentials
         """
-        from CTFd.models import Users, db
-
-        existing_user = Users.query.filter_by(name="testuser").first()
-        if existing_user:
-            db.session.delete(existing_user)
-            db.session.commit()
-
-        test_user = Users(
-            name="testuser",
-            email="test@example.com",
-            password="testpass123",
-            verified=True
-        )
-        db.session.add(test_user)
-        db.session.commit()
-
         session = requests.Session()
 
+        # Get CSRF token from home page
         home_response = session.get(f"{CTFD_BASE_URL}/")
         nonce = None
         nonce_match = re.search(r"csrfToken:\s*'([^']+)'", home_response.text)
@@ -61,16 +46,17 @@ class TestExternalIntegration:
         if nonce:
             headers["CSRF-Token"] = nonce
 
+        # Login using preset admin credentials
         login_response = session.post(
             f"{CTFD_BASE_URL}/ng/users/login",
             headers = headers,
             json = {
-                "username": "testuser",
-                "password": "testpass123"
+                "username": "admin",
+                "password": "ctfng_password"
             }
         )
 
-        assert login_response.status_code == 200
+        assert login_response.status_code == 200, f"Login failed: {login_response.text}"
         assert session.cookies.get('session') is not None
 
     def test_websocket_with_auth(self):
