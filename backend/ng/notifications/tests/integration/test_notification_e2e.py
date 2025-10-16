@@ -46,14 +46,11 @@ class TestExternalIntegration:
             json = user_data
         )
 
-        session.get(f"{CTFD_BASE_URL}/")
-
+        home_response = session.get(f"{CTFD_BASE_URL}/")
         nonce = None
-        with session as s:
-            home_response = session.get(f"{CTFD_BASE_URL}/")
-            nonce_match = re.search(r"csrfToken:\s*'([^']+)'", home_response.text)
-            if nonce_match:
-                nonce = nonce_match.group(1)
+        nonce_match = re.search(r"csrfToken:\s*'([^']+)'", home_response.text)
+        if nonce_match:
+            nonce = nonce_match.group(1)
 
         headers = {}
         if nonce:
