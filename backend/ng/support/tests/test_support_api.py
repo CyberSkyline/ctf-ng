@@ -8,6 +8,7 @@ from datetime import datetime
 
 from CTFd.models import Users
 
+from ..models.Ticket import Ticket
 from ...permissions.models.Role import Role
 from ...user.models.User import User as NgUser
 from ...notifications.models import Notification
@@ -995,5 +996,26 @@ class TestAdminSupportEndpoints:
 
         # Regular users should not see tags (admin-only field)
         assert "tags" not in ticket_data
+
+    def test_create_ticket_with_empty_message_does_not_create_ticket(self, logged_in_client, db_session):
+        """
+        Test that when message validation fails, the ticket is NOT created in the database
+        """
+        initial_ticket_count = db_session.query(Ticket).count()
+
+        response = logged_in_client.post(
+            "/ng/support/tickets/create",
+            json={
+                "subject": "test shouldn't produce ticket",
+                "text": "   ",
+            },
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+
+        final_ticket_count = db_session.query(Ticket).count()
+        assert final_ticket_count == initial_ticket_count
 
 

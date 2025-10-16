@@ -27,30 +27,21 @@ def create_ticket(
             raise NotFoundError(f"User not found in any team for event {event_id}")
         team_id = team.id
 
-    ticket = Ticket.create_ticket(
+    ticket = Ticket.create_ticket_with_initial_message(
         subject=subject,
+        text=text,
         author_id=current_user.id,
         event_id=event_id,
         team_id=team_id,
         challenge_id=challenge_id,
-        commit=True,
     )
 
-    ticket.add_message(
-        text=text,
-        author_id=current_user.id,
-        is_admin=False,
-        commit=True,
-    )
-
-    # WebSocket refetch notification (no DB notifications)
     NotificationService.notify_new_ticket(
         ticket_id=ticket.id,
         author_id=current_user.id,
         subject=subject,
     )
 
-    # Send email to admin support inbox
     TicketEmailService.send_new_ticket_email(ticket=ticket)
 
     return ticket
