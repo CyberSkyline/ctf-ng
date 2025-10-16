@@ -46,14 +46,15 @@ class TestExternalIntegration:
             json = user_data
         )
 
-        session.post(
-            f"{CTFD_BASE_URL}/login",
-            data = {
-                "name": "testuser",
+        login_response = session.post(
+            f"{CTFD_BASE_URL}/ng/users/login",
+            json = {
+                "username": "testuser",
                 "password": "testpass123"
             }
         )
 
+        assert login_response.status_code == 200
         assert session.cookies.get('session') is not None
 
     def test_websocket_with_auth(self):
