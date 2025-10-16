@@ -59,6 +59,7 @@ export default function CreateTicket() {
 
   return (
     <Container size="4">
+      <title>Create Support Ticket</title>
       <Flex gap="3" direction="column">
         <Box maxWidth="200px">
           <Button

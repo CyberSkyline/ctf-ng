@@ -72,13 +72,16 @@ export default function AdminChallenges() {
   }
 
   return (
-    <AdminGrid
-      rowData={rowData}
-      columnDefs={colDefs}
-      loading={isLoading}
-      getRowId={(params) => params.data.id.toString()}
-      sidebarComponent={ChallengeSidebar}
-      stopCellSelection={[ 'event_name' ]}
-    />
+    <>
+      <title>Admin Challenges</title>
+      <AdminGrid
+        rowData={rowData}
+        columnDefs={colDefs}
+        loading={isLoading}
+        getRowId={(params) => params.data.id.toString()}
+        sidebarComponent={ChallengeSidebar}
+        stopCellSelection={[ 'event_name' ]}
+      />
+    </>
   );
 }

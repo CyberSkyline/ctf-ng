@@ -71,13 +71,16 @@ export default function AdminTeams() {
   const rowData = data ?? [];
 
   return (
-    <AdminGrid
-      rowData={rowData}
-      columnDefs={colDefs}
-      loading={isLoading}
-      getRowId={(params) => params.data.id.toString()}
-      sidebarComponent={TeamSidebar}
-      stopCellSelection={[ 'event_name' ]}
-    />
+    <>
+      <title>Admin Teams</title>
+      <AdminGrid
+        rowData={rowData}
+        columnDefs={colDefs}
+        loading={isLoading}
+        getRowId={(params) => params.data.id.toString()}
+        sidebarComponent={TeamSidebar}
+        stopCellSelection={[ 'event_name' ]}
+      />
+    </>
   );
 }

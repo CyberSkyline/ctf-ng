@@ -12,6 +12,7 @@ import { InfoCallout } from 'components/Callouts';
 export default function AdminSettings() {
   return (
     <Container size="4">
+      <title>Admin Settings</title>
       <Flex direction="column" gap="4">
         <Box>
           <Heading>Section</Heading>

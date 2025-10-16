@@ -89,6 +89,7 @@ export default function AdminAnnouncements() {
 
   return (
     <Flex gap="3" direction="column">
+      <title>Admin Announcements</title>
       <Heading size="7">Announcements</Heading>
       {deleteError && <ErrorCallout>{deleteError}</ErrorCallout>}
       <Box maxWidth="200px">

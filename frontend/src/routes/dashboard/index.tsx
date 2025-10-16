@@ -43,6 +43,7 @@ export default function Dashboard() {
 
   return (
     <>
+      <title>Dashboard</title>
       {announcementError && <ErrorCallout className="mb-4">{announcementError.message}</ErrorCallout>}
       <HeaderContainer>
         {!isEmpty(announcements) && (
