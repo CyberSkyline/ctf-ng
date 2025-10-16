@@ -31,9 +31,19 @@ class TestExternalIntegration:
 
     def test_create_user_and_login(self):
         """
-        Test user login flow using preset admin credentials
+        Test user login flow - create admin via setup then login
         """
         session = requests.Session()
+
+        setup_response = session.post(
+            f"{CTFD_BASE_URL}/setup",
+            data = {
+                "name": "admin",
+                "email": "admin@example.com",
+                "password": "ctfng_password"
+            }
+        )
+        assert setup_response.status_code in [200, 302], f"Setup failed: {setup_response.status_code}"
 
         # Get CSRF token from home page
         home_response = session.get(f"{CTFD_BASE_URL}/")
@@ -46,7 +56,6 @@ class TestExternalIntegration:
         if nonce:
             headers["CSRF-Token"] = nonce
 
-        # Login using preset admin credentials
         login_response = session.post(
             f"{CTFD_BASE_URL}/ng/users/login",
             headers = headers,
