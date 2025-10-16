@@ -214,14 +214,12 @@ class ChallengeUpdateAnnouncement(Resource):
         params={
             "challenge_id": {
                 "description": "Challenge ID that was updated",
-                "in": "body",
                 "required": True,
                 "type": "integer",
                 "example": 5
             },
             "update_reason": {
                 "description": "Description of what changed (shown in notification)",
-                "in": "body",
                 "required": True,
                 "type": "string",
                 "example": "Fixed typo in question 2"
