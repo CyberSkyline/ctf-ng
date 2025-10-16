@@ -8,9 +8,9 @@ from ...core.utils import success_response, error_response
 from ...core.middleware import admin_endpoint
 from ...core.middleware.loaders import (
     LoaderType,
-    load_event,
     load_announcement,
     load_challenge,
+    load_event,
 )
 from ..controllers import (
     send_announcement,
@@ -208,18 +208,10 @@ class AnnouncementDelete(Resource):
 @announcements_admin_namespace.route("/challenge-update")
 class ChallengeUpdateAnnouncement(Resource):
     @admin_endpoint(json_required = True)
-    @load_event(source = LoaderType.BODY, input_key = "event_id")
     @load_challenge(source = LoaderType.BODY, input_key = "challenge_id")
     @announcements_admin_namespace.doc(
         description="Send a challenge update notification to all event participants",
         params={
-            "event_id": {
-                "description": "Event ID",
-                "in": "body",
-                "required": True,
-                "type": "integer",
-                "example": 1
-            },
             "challenge_id": {
                 "description": "Challenge ID that was updated",
                 "in": "body",
@@ -239,11 +231,11 @@ class ChallengeUpdateAnnouncement(Resource):
             200: "Success - Notification sent to all participants",
             400: "Bad request - Missing required fields",
             403: "Forbidden - Admin access required",
-            404: "Not found - Event or challenge does not exist",
+            404: "Not found - Challenge does not exist",
             500: "Internal Server Error",
         },
     )
-    def post(self, current_user, event, challenge, json_data, **kwargs):
+    def post(self, current_user, challenge, json_data, **kwargs):
         """
         Send challenge update announcement (standalone)
         """
@@ -257,7 +249,7 @@ class ChallengeUpdateAnnouncement(Resource):
             )
 
         result = notify_challenge_update(
-            event_id = event.id,
+            event_id = challenge.event_id,
             challenge_id = challenge.id,
             challenge_name = challenge.name,
             update_reason = update_reason,
