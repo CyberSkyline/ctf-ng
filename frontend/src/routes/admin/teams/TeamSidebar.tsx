@@ -19,6 +19,7 @@ import KickUserModal from './KickUserModal';
 import PromoteUserModal from './PromoteUserModal';
 import ScoreAdjustModal from './ScoreAdjustModal';
 import TeamActivity from './TeamActivity';
+import EditTeamModal from './EditTeamModal';
 
 export default function TeamSidebar({ entity }: { entity: Team }) {
   const { data : members, error : membersError } = useTeamMembers(entity.id);
@@ -44,6 +45,7 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
             Event
           </Link>
         </Button>
+        <EditTeamModal teamToUpdate={entity} />
       </AdminSidebarHeader>
       <AdminDataList data={{ ...entity }} />
 

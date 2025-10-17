@@ -89,6 +89,24 @@ export function registerMyEventTeamJoin(eventId: number, inviteCode: string) {
   });
 }
 
+export function adminRegisterEvent(eventId: number, userId: number, teamName: string) {
+  return apiMutation(`/admin/events/${eventId}/${userId}/register`, { team_name : teamName }, {
+    method : 'POST',
+  }).then(() => {
+    mutate(`/admin/users/${userId}/events`);
+    mutate(`/admin/users/${userId}/teams`);
+  });
+}
+
+export function adminRegisterEventTeamJoin(eventId: number, userId: number, inviteCode: string) {
+  return apiMutation(`/admin/events/${eventId}/${userId}/register`, { invite_code : inviteCode }, {
+    method : 'POST',
+  }).then(() => {
+    mutate(`/admin/users/${userId}/events`);
+    mutate(`/admin/users/${userId}/teams`);
+  });
+}
+
 /**
  * Gets the current user's team for a specific event
  * @param eventId The id of the event, if undefined this should not fetch
