@@ -75,7 +75,7 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
                 <Table.Cell>{member.joined_at.toLocaleString()}</Table.Cell>
                 <Table.Cell>
                   <Flex direction="row" align="center" gap="4" justify="end">
-                    <KickUserModal member={member} />
+                    <KickUserModal member={member} solo={members.length === 1} />
                     <PromoteUserModal member={member} />
                   </Flex>
                 </Table.Cell>

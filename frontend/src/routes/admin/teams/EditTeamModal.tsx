@@ -1,6 +1,7 @@
 import { COLOR_WARNING } from '@/constants';
 import { adminUpdateTeam } from '@/hooks/team';
 import type { Team } from '@/types';
+import { adjustDateForInput } from '@/util';
 import {
   Button,
   TextField,
@@ -12,15 +13,6 @@ import Modal from 'components/Modal';
 import { pick } from 'lodash';
 import { Controller, type DefaultValues } from 'react-hook-form';
 import { TbPencil } from 'react-icons/tb';
-
-function adjustDateForInput(date: Date | null): string | null {
-  // Adjust the date to be in the format required by datetime-local input
-  if (date === null) return null;
-  const dateObj = new Date(date);
-  const offset = dateObj.getTimezoneOffset();
-  const localDate = new Date(dateObj.getTime() - (offset * 60 * 1000));
-  return localDate.toISOString().slice(0, 16);
-}
 
 export default function EditTeamModal({
   teamToUpdate,

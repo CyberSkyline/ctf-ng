@@ -1,11 +1,19 @@
 import { COLOR_NEGATIVE } from '@/constants';
 import { adminKickTeamMember } from '@/hooks/team';
 import type { TeamMember } from '@/types';
-import { Button } from '@radix-ui/themes';
+import { Button, Text } from '@radix-ui/themes';
 import Modal from 'components/Modal';
 import { TbDoorExit } from 'react-icons/tb';
 
-export default function KickUserModal({ member }: { member: TeamMember }) {
+export default function KickUserModal({ member, solo }: { member: TeamMember, solo: boolean }) {
+  if (member.role === 'captain' && !solo) {
+    return (
+      <Text color="gray">
+        Assign a new captain before removing this user.
+      </Text>
+    );
+  }
+
   return (
     <Modal
       title="Remove User?"
@@ -14,7 +22,7 @@ export default function KickUserModal({ member }: { member: TeamMember }) {
       submitColor={COLOR_NEGATIVE}
       submitVerb="Remove"
       trigger={(
-        <Button variant="ghost" color={COLOR_NEGATIVE} disabled={member.role === 'captain'}>
+        <Button variant="ghost" color={COLOR_NEGATIVE}>
           <TbDoorExit />
           Remove
         </Button>

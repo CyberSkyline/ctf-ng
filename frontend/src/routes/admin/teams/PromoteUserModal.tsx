@@ -6,6 +6,10 @@ import Modal from 'components/Modal';
 import { TbStar } from 'react-icons/tb';
 
 export default function PromoteUserModal({ member }: { member: TeamMember }) {
+  if (member.role === 'captain') {
+    return null;
+  }
+
   return (
     <Modal
       title="Assign new captain?"
@@ -14,7 +18,7 @@ export default function PromoteUserModal({ member }: { member: TeamMember }) {
       submitColor={COLOR_WARNING}
       submitVerb="Assign"
       trigger={(
-        <Button variant="ghost" color={COLOR_WARNING} disabled={member.role === 'captain'}>
+        <Button variant="ghost" color={COLOR_WARNING}>
           <TbStar />
           Assign Captain
         </Button>

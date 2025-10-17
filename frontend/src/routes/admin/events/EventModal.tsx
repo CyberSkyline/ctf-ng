@@ -6,16 +6,8 @@ import Modal from 'components/Modal';
 import { omit } from 'lodash';
 import type { DefaultValues } from 'react-hook-form';
 import { TbPencil, TbPlus } from 'react-icons/tb';
+import { adjustDateForInput } from '@/util';
 import EventDataForm from './EventDataForm';
-
-function adjustDateForInput(date: Date | null): string | undefined {
-  // Adjust the date to be in the format required by datetime-local input
-  if (date === null) return undefined;
-  const dateObj = new Date(date);
-  const offset = dateObj.getTimezoneOffset();
-  const localDate = new Date(dateObj.getTime() - (offset * 60 * 1000));
-  return localDate.toISOString().slice(0, 16);
-}
 
 export default function EventModal({
   eventToUpdate,
