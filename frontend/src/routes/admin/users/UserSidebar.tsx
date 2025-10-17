@@ -1,13 +1,8 @@
-import {
-  COLOR_POSITIVE,
-  EventIcon,
-  TeamIcon,
-  UserIcon,
-} from '@/constants';
+import { EventIcon, TeamIcon, UserIcon } from '@/constants';
 import { useTeamMembers } from '@/hooks/team';
 import { useUserEvents, useUserTeams } from '@/hooks/users';
 import type { Event, Team, User } from '@/types';
-import { Button, Table } from '@radix-ui/themes';
+import { Table } from '@radix-ui/themes';
 import AdminDataList from 'components/AdminDataList';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
