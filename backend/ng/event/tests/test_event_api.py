@@ -771,6 +771,7 @@ class Test_Event_Team_Management:
     def test_solo_captain_can_leave(
         self,
         logged_in_client,
+        user_factory,
         user,
         event_factory,
         team_factory,
@@ -780,12 +781,6 @@ class Test_Event_Team_Management:
         event = event_factory(name = "Solo Leave Test Event", public = True)
         _team = team_factory(event = event, members = [user])  # Only one member (the captain)
 
-        Demographic.create_demographic(
-            user_id = user.id,
-            event_id = event.id,
-            commit = False
-        )
-        db_session.commit()
 
         response = logged_in_client.post(
             f"/ng/events/{event.id}/me/team/leave",

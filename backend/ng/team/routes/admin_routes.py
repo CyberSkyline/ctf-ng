@@ -19,6 +19,7 @@ from ...core.middleware.loaders import (
 )
 from ..models.Team import Team
 from ...user.models.User import User
+from ...team.controllers.remove_member import remove_member
 
 
 teams_admin_namespace = Namespace(
@@ -148,7 +149,7 @@ class TeamKick(Resource):
         """
         Kick a user from a team
         """
-        team.remove_member_and_regenerate_code(user.id)
+        remove_member(team, user)
         return success_response()
 
 

@@ -61,8 +61,24 @@ def test_teammembers(admin_client, team_with_member):
     data = response.get_json()
     assert len(data['data']) == 1
 
-def test_team_kick(admin_client, team_with_member):
+def test_team_kick(admin_client, team_with_members):
     """Test that the team kick endpoint works correctly."""
+
+    team = team_with_members
+    user_id = team.members[0].user_id
+
+    response = admin_client.post(f"/ng/admin/teams/{team.id}/kick", json={"user_id": user_id})
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['success']
+
+    response = admin_client.get(f"/ng/admin/teams/{team.id}/members")
+    assert response.status_code == 200
+    members_data = response.get_json()['data']
+    assert all(member['user_id'] != user_id for member in members_data)
+
+def team_kick_deletes_team_when_last_member(admin_client, team_with_member):
+    """Test that kicking the last member disbands the team."""
     team = team_with_member
     user_id = team.members[0].user_id
 
@@ -71,11 +87,8 @@ def test_team_kick(admin_client, team_with_member):
     data = response.get_json()
     assert data['success']
 
-    # Verify that the user is no longer a member of the team
-    response = admin_client.get(f"/ng/admin/teams/{team.id}/members")
-    assert response.status_code == 200
-    members_data = response.get_json()['data']
-    assert len(members_data) == 0  # User should be kicked out
+    response = admin_client.get(f"/ng/admin/teams/{team.id}")
+    assert response.status_code == 404  # Team should no longer exist
 
 def test_team_promote(admin_client, team_with_members):
     """Test that the team promote endpoint works correctly."""

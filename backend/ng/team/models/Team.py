@@ -23,7 +23,6 @@ from ... import config
 from ...core.exceptions import (
     ConflictError,
     ValidationError,
-    BusinessLogicError,
 )
 from ...core.utils.validator import BaseValidator
 from .enums import TeamRole
@@ -248,9 +247,6 @@ class Team(db.Model):
 
     def disband_team(self, commit=True):
         """Delete this team and all its members from the database."""
-
-        if self.member_count > 0:
-            raise BusinessLogicError("Cannot disband team with members. Remove all members first.")
 
         db.session.delete(self)
         if commit:

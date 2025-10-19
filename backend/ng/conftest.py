@@ -333,10 +333,11 @@ def team_factory(db_session, event_factory):
         }
         defaults.update(kwargs)
         team = Team.create_team_with_captain(**defaults)
+        Demographic.create_demographic(user_id=captain.id, event_id=event.id)
 
         for member_user in members_to_add:
             TeamMember.create_team_member(user_id=member_user.id, team_id=team.id, event_id=event.id)
-            Demographic.create_demographic(user_id=member_user.id, event_id=event.id, commit=False)
+            Demographic.create_demographic(user_id=member_user.id, event_id=event.id)
         return team
 
     return _factory
@@ -363,10 +364,17 @@ def user_factory(db_session):
 
 
 @pytest.fixture
-def team_with_member(db_session, team_factory, user):
-    """Creates a team with members for testing."""
-    team = team_factory(members=[user])
+def team_with_member(db_session, event, user):
+    """Create a team with a member for scoring tests."""
+    from .team.models.Team import Team
+
+    event_id = event.id
+    team = Team.create_team_with_captain(
+        name="Test Scoring Team", event_id=event_id, captain_id=user.id, invite_code="test1234"
+    )
+    Demographic.create_demographic(user_id=user.id, event_id=event_id, commit=True)
     return team
+
 
 
 @pytest.fixture
@@ -838,18 +846,6 @@ def hint(db_session, challenge):
     db_session.add(hint)
     db_session.commit()
     return hint
-
-# TODO: Figure out why there are two versions of this with the same name
-@pytest.fixture
-def team_with_member(db_session, event, user):
-    """Create a team with a member for scoring tests."""
-    from .team.models.Team import Team
-
-    event_id = event.id
-    team = Team.create_team_with_captain(
-        name="Test Scoring Team", event_id=event_id, captain_id=user.id, invite_code="test123"
-    )
-    return team
 
 
 @pytest.fixture
