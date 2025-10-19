@@ -149,6 +149,8 @@ class TeamKick(Resource):
         """
         Kick a user from a team
         """
+        if Team.find_captain_by_team(team.id).user_id == user.id and len(team.members) > 1:
+            return error_response("Cannot kick the team leader. Promote another member before kicking the leader.", "validation",400)
         remove_member(team, user)
         return success_response()
 
