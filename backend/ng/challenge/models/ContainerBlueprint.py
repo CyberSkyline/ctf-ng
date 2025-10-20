@@ -4,6 +4,8 @@ from collections.abc import Callable
 from CTFd.models import db
 from sqlalchemy.orm import Mapped
 
+from ...event.utils.challenge_yaml import EnvVarRenderer
+
 from ...core.utils.validator import BaseValidator
 from ...containers.utils.get_client import get_client
 from ... import config
@@ -28,7 +30,7 @@ class ContainerBlueprint(db.Model):
     tty: Mapped[bool] = db.Column(db.Boolean, nullable=True)
     command: Mapped[str | list[str] | None] = db.Column(db.PickleType, nullable=True)
     entrypoint: Mapped[str | list[str] | None] = db.Column(db.PickleType, nullable=True)
-    environment: Mapped[dict[str, str | Callable[[str], str]] | list[str] | None] = db.Column(db.PickleType, nullable=True)
+    environment: Mapped[dict[str, str | EnvVarRenderer] | list[str] | None] = db.Column(db.PickleType, nullable=True)
     networks: Mapped[list[str] | dict[str, None] | None] = db.Column(db.PickleType, nullable=True)
     cap_add: Mapped[list[Literal['NET_ADMIN', 'SYS_PTRACE']] | None] = db.Column(db.PickleType, nullable=True)
     mem_limit: Mapped[int | str | None] = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_MEM_LIMIT_LENGTH), nullable=True)
@@ -168,7 +170,7 @@ class ContainerBlueprint(db.Model):
         if isinstance(self.environment, list):
             return self.environment
 
-        return {k: (v(team_seed=team_seed) if isinstance(v, Callable) else v) for k, v in self.environment.items()}
+        return {k: (v(team_seed=team_seed) if isinstance(v, EnvVarRenderer) else v) for k, v in self.environment.items()}
 
     def pull_image(self):
         client = get_client(config.DOCKER_HOST)
