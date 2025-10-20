@@ -121,8 +121,9 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
             if isinstance(question.answer, ParserTemplate):
                 db_variable_questions[question.answer.parent_variable] = db_question
 
-        for service_data in services.values():
+        for (service_name, service_data) in services.items():
             ContainerBlueprint.create_container_blueprint(
+                name=service_name,
                 challenge_id=challenge.id,
                 image=service_data.image,
                 hostname=service_data.hostname,
