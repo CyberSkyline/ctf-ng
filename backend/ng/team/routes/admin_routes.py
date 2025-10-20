@@ -18,6 +18,7 @@ from ...core.middleware.loaders import (
     load_user,
 )
 from ..models.Team import Team
+from ..models.TeamMember import TeamMember
 from ...user.models.User import User
 from ...team.controllers.remove_member import remove_member
 
@@ -149,8 +150,8 @@ class TeamKick(Resource):
         """
         Kick a user from a team
         """
-        if Team.find_captain_by_team(team.id).user_id == user.id and len(team.members) > 1:
-            return error_response("Cannot kick the team leader. Promote another member before kicking the leader.", "validation",400)
+        if TeamMember.find_captain_by_team(team.id).user_id == user.id and len(team.members) > 1:
+            return error_response("Cannot kick the team captain. Promote another member first", "validation",400)
         remove_member(team, user)
         return success_response()
 
