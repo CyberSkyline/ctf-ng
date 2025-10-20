@@ -140,7 +140,9 @@ export default function RegistrationModal({ eventId, eventName, isTeamGame }: {e
 
           <Box className="text-sm">
             <RadixMarkdown>
-              {`I acknowledge that I have read and understand the [eligibility criteria](/) and [contest rules](/)
+              {`I acknowledge that I have read and understand the
+          [eligibility criteria](https://presidentscup.cisa.gov/pc7/#eligibility)
+          and [contest rules](https://presidentscup.cisa.gov/pc7/#rules)
           for CISA's President's Cup Cybersecurity Competition. I agree to (1) comply with these criteria and rules and
           (2) accept all decisions made by CISA and the contest administrators regarding the competition.
           I will lodge all complaints or concerns I may have regarding the competition through my employer agency, which may submit them to CISA on my behalf.`}
