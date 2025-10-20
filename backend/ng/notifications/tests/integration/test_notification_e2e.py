@@ -35,8 +35,20 @@ class TestExternalIntegration:
         """
         session = requests.Session()
 
+        # First, get the CSRF token from the homepage
+        home_response = session.get(f"{CTFD_BASE_URL}/")
+        csrf_token = None
+        csrf_match = re.search(r"csrfToken:\s*'([^']+)'", home_response.text)
+        if csrf_match:
+            csrf_token = csrf_match.group(1)
+
+        headers = {}
+        if csrf_token:
+            headers["CSRF-Token"] = csrf_token
+
         login_response = session.post(
             f"{CTFD_BASE_URL}/ng/users/login",
+            headers = headers,
             json = {
                 "username": "admin@examplectf.com",
                 "password": "ctfng_password"
@@ -52,8 +64,20 @@ class TestExternalIntegration:
         """
         session = requests.Session()
 
+        # First, get the CSRF token from the homepage
+        home_response = session.get(f"{CTFD_BASE_URL}/")
+        csrf_token = None
+        csrf_match = re.search(r"csrfToken:\s*'([^']+)'", home_response.text)
+        if csrf_match:
+            csrf_token = csrf_match.group(1)
+
+        headers = {}
+        if csrf_token:
+            headers["CSRF-Token"] = csrf_token
+
         login_response = session.post(
             f"{CTFD_BASE_URL}/ng/users/login",
+            headers = headers,
             json = {
                 "username": "admin@examplectf.com",
                 "password": "ctfng_password"
