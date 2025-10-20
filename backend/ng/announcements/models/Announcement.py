@@ -16,6 +16,7 @@ from CTFd.models import db
 from ... import config
 from ...core.utils import utc_now
 from ...core.utils.validator import BaseValidator
+from ...core.utils.sqlalchemy_types import EnumWithUnknown
 from ...notifications.models import Notification
 
 
@@ -47,7 +48,14 @@ class Announcement(db.Model):
     __tablename__ = "ng_announcements"
 
     id = db.Column(db.Integer, primary_key = True)
-    type = db.Column(db.Enum(AnnouncementType), nullable = False)
+    type = db.Column(
+        EnumWithUnknown(
+            AnnouncementType,
+            values_callable=lambda t: [str(item.value) for item in t],
+            unknown_value=AnnouncementType.UNKNOWN
+        ),
+        nullable = False
+    )
     title = db.Column(
         db.String(config.NOTIFICATIONS_TITLE_MAX_LENGTH),
         nullable = False
@@ -87,11 +95,7 @@ class Announcement(db.Model):
     event = db.relationship("Event", backref = "announcements")
 
     def __repr__(self):
-        try:
-            type_value = self.type.value
-        except (LookupError, ValueError):
-            type_value = "unknown"
-        return f"<Announcement {self.id}: type={type_value}>"
+        return f"<Announcement {self.id}: type={self.type.value}>"
 
     @property
     def is_active(self) -> bool:
@@ -115,16 +119,11 @@ class Announcement(db.Model):
         Returns:
             dict: Serialized announcement data
         """
-        try:
-            type_value = self.type.value
-        except (LookupError, ValueError):
-            type_value = "unknown"
-
         data = {
             "id":
             self.id,
             "type":
-            type_value,
+            self.type.value,
             "title":
             self.title,
             "message":
@@ -250,33 +249,14 @@ class Announcement(db.Model):
         """
         Find an announcement by ID
         """
-        announcement = cls.query.get(announcement_id)
-        if announcement:
-            try:
-                _ = announcement.type.value
-                return announcement
-            except (LookupError, ValueError):
-                return None
-        return None
+        return cls.query.get(announcement_id)
 
     @classmethod
     def get_all_announcements(cls) -> list[Announcement]:
         """
         Get all announcements ordered by newest first
         """
-        announcements = []
-        announcement_ids = [a[0] for a in cls.query.with_entities(cls.id).order_by(cls.created_at.desc()).all()]
-
-        for announcement_id in announcement_ids:
-            try:
-                announcement = cls.query.get(announcement_id)
-                if announcement:
-                    _ = announcement.type.value
-                    announcements.append(announcement)
-            except (LookupError, ValueError):
-                continue
-
-        return announcements
+        return cls.query.order_by(cls.created_at.desc()).all()
 
     @classmethod
     def get_active_announcements(
@@ -299,19 +279,7 @@ class Announcement(db.Model):
         else:
             query = query.filter(cls.event_id.is_(None))
 
-        announcements = []
-        announcement_ids = [a[0] for a in query.with_entities(cls.id).order_by(cls.created_at.desc()).all()]
-
-        for announcement_id in announcement_ids:
-            try:
-                announcement = cls.query.get(announcement_id)
-                if announcement:
-                    _ = announcement.type.value
-                    announcements.append(announcement)
-            except (LookupError, ValueError):
-                continue
-
-        return announcements
+        return query.order_by(cls.created_at.desc()).all()
 
     @classmethod
     def delete_expired(cls) -> int:

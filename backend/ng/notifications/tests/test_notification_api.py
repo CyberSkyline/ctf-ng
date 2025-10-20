@@ -494,10 +494,13 @@ class TestNotificationEndpoints:
         data = response.get_json()
         assert data["success"] is True
         assert isinstance(data["data"], list)
-        assert len(data["data"]) == 1
-        assert data["data"][0]["id"] == valid_notification.id
+        assert len(data["data"]) == 2
+
+        notification_types = {n["id"]: n["type"] for n in data["data"]}
+        assert notification_types[valid_notification.id] == "ticket_create"
+        assert notification_types[notification_with_invalid_enum.id] == "unknown"
 
         count_response = logged_in_client.get("/ng/notifications/me/unread-count")
         assert count_response.status_code == 200
         count_data = count_response.get_json()
-        assert count_data["data"]["count"] == 1
+        assert count_data["data"]["count"] == 2

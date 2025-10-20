@@ -482,8 +482,11 @@ class TestAnnouncementEndpoints:
         data = response.get_json()
         assert data["success"] is True
         assert isinstance(data["data"], list)
-        assert len(data["data"]) == 1
-        assert data["data"][0]["id"] == valid_announcement.id
+        assert len(data["data"]) == 2
+
+        announcement_types = {a["id"]: a["type"] for a in data["data"]}
+        assert announcement_types[valid_announcement.id] == "general"
+        assert announcement_types[announcement_with_invalid_enum.id] == "unknown"
 
     def test_graceful_handling_of_removed_enum_values_admin(
         self,
@@ -519,5 +522,8 @@ class TestAnnouncementEndpoints:
         data = response.get_json()
         assert data["success"] is True
         assert isinstance(data["data"], list)
-        assert len(data["data"]) == 1
-        assert data["data"][0]["id"] == valid_announcement.id
+        assert len(data["data"]) == 2
+
+        announcement_types = {a["id"]: a["type"] for a in data["data"]}
+        assert announcement_types[valid_announcement.id] == "general"
+        assert announcement_types[announcement_with_invalid_enum.id] == "unknown"

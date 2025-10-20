@@ -16,6 +16,7 @@ from CTFd.models import db
 from ... import config
 from ...core.utils import utc_now
 from ...core.utils.validator import BaseValidator
+from ...core.utils.sqlalchemy_types import EnumWithUnknown
 
 
 class NotificationType(str, Enum):
@@ -56,7 +57,14 @@ class Notification(db.Model):
     __tablename__ = "ng_notifications"
 
     id = db.Column(db.Integer, primary_key = True)
-    type = db.Column(db.Enum(NotificationType), nullable = False)
+    type = db.Column(
+        EnumWithUnknown(
+            NotificationType,
+            values_callable=lambda t: [str(item.value) for item in t],
+            unknown_value=NotificationType.UNKNOWN
+        ),
+        nullable = False
+    )
     title = db.Column(
         db.String(config.NOTIFICATIONS_TITLE_MAX_LENGTH),
         nullable = False
@@ -130,11 +138,7 @@ class Notification(db.Model):
     challenge = db.relationship("Challenge", backref="notifications")
 
     def __repr__(self):
-        try:
-            type_value = self.type.value
-        except (LookupError, ValueError):
-            type_value = "unknown"
-        return f"<Notification {self.id}: type={type_value} recipient={self.recipient_id}>"
+        return f"<Notification {self.id}: type={self.type.value} recipient={self.recipient_id}>"
 
     @property
     def is_read(self) -> bool:
@@ -156,16 +160,11 @@ class Notification(db.Model):
         Returns:
             dict: Serialized notification data
         """
-        try:
-            type_value = self.type.value
-        except (LookupError, ValueError):
-            type_value = "unknown"
-
         data = {
             "id":
             self.id,
             "type":
-            type_value,
+            self.type.value,
             "title":
             self.title,
             "message":
@@ -366,14 +365,7 @@ class Notification(db.Model):
         """
         Find a notification by ID
         """
-        notification = cls.query.get(notification_id)
-        if notification:
-            try:
-                _ = notification.type.value
-                return notification
-            except (LookupError, ValueError):
-                return None
-        return None
+        return cls.query.get(notification_id)
 
     @classmethod
     def find_filtered_notifications(
@@ -408,43 +400,17 @@ class Notification(db.Model):
                 (cls.expires_at.is_(None)) | (cls.expires_at > utc_now())
             )
 
-        notifications = []
-        notification_ids = [n[0] for n in query.with_entities(cls.id).order_by(cls.created_at.desc()).all()]
-
-        for notification_id in notification_ids:
-            try:
-                notification = cls.query.get(notification_id)
-                if notification:
-                    _ = notification.type.value
-                    notifications.append(notification)
-            except (LookupError, ValueError):
-                continue
-
-        return notifications
+        return query.order_by(cls.created_at.desc()).all()
 
     @classmethod
     def get_unread_count(cls, recipient_id: int) -> int:
         """
         Get count of unread notifications for a user
         """
-        query = cls.query.filter_by(recipient_id = recipient_id).filter(
+        return cls.query.filter_by(recipient_id = recipient_id).filter(
             cls.read_at.is_(None)
         ).filter((cls.expires_at.is_(None))
-                 | (cls.expires_at > utc_now()))
-
-        count = 0
-        notification_ids = [n[0] for n in query.with_entities(cls.id).all()]
-
-        for notification_id in notification_ids:
-            try:
-                notification = cls.query.get(notification_id)
-                if notification:
-                    _ = notification.type.value
-                    count += 1
-            except (LookupError, ValueError):
-                continue
-
-        return count
+                 | (cls.expires_at > utc_now())).count()
 
     @classmethod
     def mark_all_as_read(cls, recipient_id: int) -> int:
