@@ -1241,13 +1241,13 @@ class Test_Event_Challenge_List:
 
 
 class Test_Event_Challenge_Render:
-    def get_endpoint(self, event_id: int, challenge_id: int) -> str:
-        return f"/ng/events/challenges/{challenge_id}"
+    def get_endpoint(self, challenge_id: int) -> str:
+        return f"/ng/challenges/{challenge_id}"
 
     def test_render_challenge_for_event(self, started_player_client, challenge_factory):
         challenge = challenge_factory(event_id=1, name="Challenge to Render")
 
-        response = started_player_client.get(self.get_endpoint(challenge.event_id, challenge.id))
+        response = started_player_client.get(self.get_endpoint(challenge.id))
 
         assert response.status_code == 200
         data = response.get_json()

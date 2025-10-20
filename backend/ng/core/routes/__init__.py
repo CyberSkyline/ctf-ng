@@ -7,7 +7,7 @@ from typing import Any
 from flask import Blueprint
 from flask_restx import Api
 from werkzeug.routing import Map
-from ...challenge.routes import challenge_admin_namespace
+from ...challenge.routes import challenge_admin_namespace, challenge_namespace
 from ...event.routes import events_admin_namespace, events_user_namespace
 from ...permissions.routes import permissions_admin_namespace
 from ...permissions.routes.user_routes import permissions_user_namespace
@@ -163,7 +163,7 @@ api_v1.add_namespace(events_user_namespace, path="/events")
 api_v1.add_namespace(users_user_namespace, path="/users")
 api_v1.add_namespace(oauth_namespace, path="/authenticate")
 api_v1.add_namespace(scoring_user_namespace, path="/scoring")
-# api_v1.add_namespace(challenge_namespace, path="/challenge")
+api_v1.add_namespace(challenge_namespace, path="/challenges")
 api_v1.add_namespace(support_user_namespace, path="/support")
 api_v1.add_namespace(container_namespace, path="/container")
 api_v1.add_namespace(notifications_namespace, path="/notifications")

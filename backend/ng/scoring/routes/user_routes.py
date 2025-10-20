@@ -26,7 +26,6 @@ from ...user.models import User
 
 from ..controllers import (
     get_leaderboard,
-    get_team_score,
     submit_answer,
     redeem_hint,
 )
@@ -87,8 +86,7 @@ class MyTeamScore(Resource):
         """
         Get my team's score
         """
-        result = get_team_score(score=score)
-        return success_response(result)
+        return success_response(score)
 
 
 @scoring_user_namespace.route("/questions/<int:question_id>/submit")

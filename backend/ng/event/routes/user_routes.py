@@ -15,9 +15,7 @@ from ...core.middleware.loaders import (
     load_user,
     LoaderType,
     load_event,
-    load_challenge,
     load_team_by_user_and_event,
-    load_team_by_user_and_challenge,
 )
 from ...core.exceptions import ValidationError
 from ...core.utils.validator import BaseValidator
@@ -34,9 +32,6 @@ from ..controllers import (
     join_event_controller,
 )
 
-from ...containers.controllers.start_containers import start_containers
-from ...containers.controllers.recycle_containers import recycle_containers
-from ...containers.controllers.reboot_containers import reboot_containers
 
 from ...user.models.User import User
 from ...team.models.Team import Team
@@ -45,7 +40,6 @@ from ...team.models.TeamMember import TeamMember
 
 from ...event.models.Event import Event
 from ...event.models.Demographic import Demographic
-from ...challenge.models.Challenge import Challenge
 from ...permissions.models.enums import PermissionEnum
 
 
@@ -478,22 +472,6 @@ class EventChallenges(Resource):
         return success_response(challenges)
 
 
-@events_user_namespace.route("/challenges/<int:challenge_id>")
-class EventChallengeRender(Resource):
-    @user_endpoint()
-    @load_challenge(source = LoaderType.PARAM)
-    @load_team_by_user_and_challenge()
-    @check_permissions(PermissionEnum.CAN_VIEW_CHALLENGES, "You do not have permission to view challenges.")
-    @events_user_namespace.doc(
-        description="Render a challenge for the user's team in the event.",
-        responses={
-            200: "Success",
-            404: "Challenge or Event not found",
-        },
-    )
-    def get(self, challenge_id: int, challenge: Challenge, team: Team, permissions, **kwargs):
-
-        return success_response(challenge.render(team))
 
 
 @events_user_namespace.route("/<int:event_id>/me/challenges")
@@ -520,66 +498,5 @@ class EventChallengeStatuses(Resource):
         return success_response(results)
 
 
-@events_user_namespace.route(
-    "/challenge/<int:challenge_id>/containers"
-)
-class EventChallengeStartContainers(Resource):
-    @user_endpoint()
-    @load_challenge(source=LoaderType.PARAM)
-    @load_team_by_user_and_challenge()
-    @check_permissions(PermissionEnum.CAN_PLAY_CHALLENGES, "You do not have permission to play challenges.")
-    @events_user_namespace.doc(
-        description="Start a challenges containers",
-        params={
-            "event_id": "Event id challenge is in",
-            "challenge_id": "Challenge id to start containers for",
-        },
-        responses={
-            200: "Sucess",
-            400: "Bad request",
-        },
-    )
-    def post(self, team: Team, current_user: User, challenge_id: int, permissions):
-        started = start_containers(challenge_id, team.id, current_user)
-        return success_response(started)
 
-@events_user_namespace.route("/challenge/<int:challenge_id>/containers/restart")
-class EventChallengeRestartContainers(Resource):
-    @events_user_namespace.doc(
-        description="Reboot a challenges containers",
-        params={
-            "event_id": "Event id challenge is in",
-            "challenge_id": "Challenge id to reboot containers for",
-        },
-        responses={
-            200: "Sucess",
-            400: "Bad request",
-        },
-    )
-    @user_endpoint()
-    @load_challenge(source=LoaderType.PARAM)
-    @load_team_by_user_and_challenge()
-    def post(self, team: Team, current_user: User, challenge_id: int, permissions):
-        started = reboot_containers(challenge_id, team.id, current_user)
-        return success_response(started)
-
-@events_user_namespace.route("/challenge/<int:challenge_id>/containers/recycle")
-class EventChallengeRecycleContainers(Resource):
-    @events_user_namespace.doc(
-        description="Recycle a challenges containers",
-        params={
-            "event_id": "Event id challenge is in",
-            "challenge_id": "Challenge id to recycle containers for",
-        },
-        responses={
-            200: "Sucess",
-            400: "Bad request",
-        },
-    )
-    @user_endpoint()
-    @load_challenge(source=LoaderType.PARAM)
-    @load_team_by_user_and_challenge()
-    def post(self, team: Team, current_user: User, challenge_id: int, permissions):
-        started = recycle_containers(challenge_id, team.id, current_user)
-        return success_response(started)
 

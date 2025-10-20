@@ -30,7 +30,7 @@ export function useChallenge(challengeId: number | null) {
     hints: Hint[];
     attempts: Attempt[];
   }, Error>(
-    challengeId ? `/events/challenges/${challengeId}` : null,
+    challengeId ? `/challenges/${challengeId}` : null,
   );
 }
 
@@ -38,11 +38,11 @@ export function redeemHint(
   challengeId: number,
   hintId: number,
 ) {
-  return apiMutation(`/hint/${hintId}/redeem`, undefined, {
+  return apiMutation(`/scoring/hint/${hintId}/redeem`, undefined, {
     method : 'POST',
   }).then(() => {
     // refresh the hints list when hint is redeemed
-    mutate(`/events/challenges/${challengeId}`);
+    mutate(`/challenges/${challengeId}`);
   });
 }
 
@@ -57,7 +57,7 @@ export function submitFlag(
     method : 'POST',
   }).then(() => {
     // refresh the challenge data after submitting a flag
-    mutate(`/events/challenges/${challengeId}`);
+    mutate(`/challenges/${challengeId}`);
   });
 }
 

@@ -422,8 +422,7 @@ class TestUserScoringEndpoints:
         """
         challenge = challenge_factory(event_id=1)
         hint = hint_factory(challenge_id=challenge.id)
-        response = started_player_client.get(f"/ng/events/challenges/{challenge.id}")
-        print(response.get_json())
+        response = started_player_client.get(f"/ng/challenges/{challenge.id}")
         assert response.status_code == 200
         data = response.get_json()
 
@@ -445,7 +444,7 @@ class TestUserScoringEndpoints:
         )
         assert redeem_response.status_code == 201
 
-        response = started_player_client.get(f"/ng/events/challenges/{challenge.id}")
+        response = started_player_client.get(f"/ng/challenges/{challenge.id}")
 
         assert response.status_code == 200
         data = response.get_json()
