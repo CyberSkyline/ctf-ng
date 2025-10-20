@@ -64,7 +64,10 @@ export default function FormDropdown<T extends FieldValues>({
               name={field.name}
               {...injected}
             >
-              <Select.Trigger placeholder={placeholder} />
+              <Select.Trigger
+                placeholder={placeholder}
+                ref={field.ref}
+              />
               <Select.Content position="popper">
                 {getOptions()}
               </Select.Content>
