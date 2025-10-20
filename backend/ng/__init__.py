@@ -5,7 +5,7 @@ from flask_socketio import SocketIO
 
 from CTFd.models import db
 from .core.utils.logger import get_logger
-from .core.routes import delete_unwanted_ctfd_routes, api_blueprint
+from .core.routes import delete_unwanted_ctfd_routes, api_blueprint, remove_registered_helpers, remove_registered_errorhandlers
 from .core.routes.views import plugin_views
 from .core.middleware.error_handler import register_error_handlers
 from .core.utils.redis_notifications import initialize_redis_notifications
@@ -30,6 +30,8 @@ from .scoring.models.Attempt import Attempt  # noqa: F401
 from .scoring.models.HintRedemption import HintRedemption  # noqa: F401
 from .scoring.models.ManualPointAward import ManualPointAward  # noqa: F401
 from .notifications.models.Notification import Notification  # noqa: F401
+from .announcements.models.Announcement import Announcement  # noqa: F401
+
 
 logger = get_logger(__name__)
 
@@ -37,6 +39,9 @@ logger = get_logger(__name__)
 def load(app: Any) -> None:
     try:
         delete_unwanted_ctfd_routes(app)
+        remove_registered_helpers(app)
+        remove_registered_errorhandlers(app)
+
 
         logger.info("Loading plugin", extra={"context": {"stage": "initialization"}})
 

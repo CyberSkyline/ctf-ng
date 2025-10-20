@@ -76,6 +76,7 @@ export default function Detail() {
 
   return (
     <Container size="4">
+      <title>Support Ticket Detail</title>
       <Flex direction="row" gap="4">
         <Flex gap="3" direction="column" className="w-5/7">
           <Box maxWidth="200px">

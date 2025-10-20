@@ -2,6 +2,9 @@ import SupportTags from './SupportTags';
 
 export default function AdminTags() {
   return (
-    <SupportTags />
+    <>
+      <title>Admin Tags</title>
+      <SupportTags />
+    </>
   );
 }

@@ -12,6 +12,10 @@ endif
 find-TODO:
 	pylint --disable=all --enable=W0511 .
 
+# Script Tests
+test-email-send:
+	$(PYTHON_EXEC) emails/_test_email_send.py
+
 # All tests
 test-all:
 	$(PYTHON_EXEC) -m pytest -m "not middleware" --ignore-glob="**/*e2e*" -v
@@ -30,7 +34,6 @@ test-routes:
 
 test-api:
 	$(PYTHON_EXEC) -m pytest -v $(shell find . -name "test_*_api.py")
-
 
 # Domain
 test-team:
@@ -58,8 +61,14 @@ test-permissions:
 	$(PYTHON_EXEC) -m pytest permissions/tests/ -v
 	
 test-notifications:
-	$(PYTHON_EXEC) -m pytest notifications -v
-	
+	$(PYTHON_EXEC) -m pytest notifications --ignore-glob="**/*e2e*" -v
+
+test-announcements:
+	$(PYTHON_EXEC) -m pytest announcements -v
+
+test-emails:
+	$(PYTHON_EXEC) -m pytest emails/tests -v
+		
 test-middleware:
 	$(PYTHON_EXEC) -m pytest -m middleware . -v
 

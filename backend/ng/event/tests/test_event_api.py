@@ -7,7 +7,6 @@ import base64
 import pytest
 from datetime import datetime, timedelta
 from ...core.utils import utc_now
-
 from ...core.utils import utc_now
 from ...user.models.User import User
 from ...team.models.Team import Team
@@ -108,6 +107,69 @@ class Test_Public_Event_Detail:
         assert data["success"] is True
         assert data["data"] == event.serialize()
 
+class Test_Private_Event_Detail:
+    def get_endpoint(self, event_id: int) -> str:
+        return f"/ng/events/{event_id}"
+
+    def test_get_private_event_details_as_admin(
+        self,
+        admin_client,
+        event_factory
+    ):
+        event = event_factory(
+            name = "Private Event for Admin Detail Test",
+            public = False
+        )
+
+        response = admin_client.get(self.get_endpoint(event.id))
+
+        assert response.status_code == 200
+        data = response.get_json()
+
+        assert data["success"] is True
+        assert data["data"] == event.serialize()
+
+    def test_get_private_event_details_as_non_admin(
+        self,
+        logged_in_client,
+        event_factory
+    ):
+        event = event_factory(
+            name = "Private Event for Non-Admin Detail Test",
+            public = False
+        )
+
+        response = logged_in_client.get(self.get_endpoint(event.id))
+
+        assert response.status_code == 404
+        data = response.get_json()
+        assert data["success"] is False
+
+    def test_registered_user_can_get_private_event_details(
+        self,
+        logged_in_client,
+        user,
+        event_factory,
+        team_factory
+    ):
+        event = event_factory(
+            name = "Private Event for Registered User Detail Test",
+            public = False
+        )
+        # To simulate registration
+        Demographic.create_demographic(
+            user_id = user.id,
+            event_id = event.id,
+            commit = True
+        )
+
+        response = logged_in_client.get(self.get_endpoint(event.id))
+
+        assert response.status_code == 200
+        data = response.get_json()
+
+        assert data["success"] is True
+        assert data["data"] == event.serialize()
 
 class Test_Event_Eligibility:
     def get_endpoint(self, event_id: int) -> str:
@@ -603,7 +665,7 @@ class Test_Event_Team_Management:
         """Test that the team promote endpoint fails when trying to promote in a closed event."""
         response = closed_event_client.post(
             f"/ng/events/{1}/me/team/promote",
-            json = {"user_id": 3}
+            json = {"user_id": 2}
         )
         print(response.get_json())
         assert response.status_code == 403
@@ -693,7 +755,7 @@ class Test_Event_Team_Management:
         """Test that the team kick endpoint fails when trying to kick a user from a closed event."""
         response = closed_event_client.post(
             f"/ng/events/{1}/me/team/kick",
-            json = {"user_id": 3}
+            json = {"user_id": 2}
         )
         assert response.status_code == 403
         data = response.get_json()

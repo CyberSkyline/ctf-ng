@@ -62,12 +62,15 @@ export default function AdminUsers() {
   }
 
   return (
-    <AdminGrid
-      rowData={rowData}
-      columnDefs={colDefs}
-      loading={isLoading}
-      getRowId={(params) => params.data.id.toString()}
-      sidebarComponent={UserSidebar}
-    />
+    <>
+      <title>Admin Users</title>
+      <AdminGrid
+        rowData={rowData}
+        columnDefs={colDefs}
+        loading={isLoading}
+        getRowId={(params) => params.data.id.toString()}
+        sidebarComponent={UserSidebar}
+      />
+    </>
   );
 }

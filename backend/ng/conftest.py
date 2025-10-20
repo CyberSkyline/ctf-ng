@@ -348,7 +348,7 @@ def user_factory(db_session):
     from .user.models.User import User
 
     def _factory(name="Test User", email="testuser@example.com", password="password", admin=False):
-        user = Users(name=name, email=email)
+        user = Users(name=name, email=email, password=password)
         db_session.add(user)
         db_session.commit()
 
@@ -1179,7 +1179,7 @@ def announcement_factory(db_session):
     """
     Factory to create announcements
     """
-    from .notifications.models.Announcement import Announcement, AnnouncementType
+    from .announcements.models.Announcement import Announcement, AnnouncementType
 
     def _factory(**kwargs):
         announcement_type = kwargs.pop("type", AnnouncementType.GENERAL)

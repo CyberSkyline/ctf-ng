@@ -30,6 +30,27 @@ export function useEvent(eventId: number | null) {
   return useSWR<Event, Error>(eventId ? `/events/${eventId}` : null);
 }
 
+export function useEventStatus(eventId: number | null) {
+  const { data, error, isLoading } = useEvent(eventId);
+
+  return {
+    isRegistrationOpen : !!(data && data.registration_open
+      && (!data.registration_start_date || data.registration_start_date <= new Date())
+      && (!data.registration_end_date || data.registration_end_date >= new Date())
+    ),
+    isOngoing : !!(data
+       && (!data.start_time || data.start_time <= new Date())
+       && (!data.end_time || data.end_time >= new Date())),
+    isConcluded : !!(data && data.end_time && data.end_time < new Date()),
+    isLoading,
+    error,
+  };
+}
+
+export function useMyEligibility(eventId: number | null) {
+  return useSWR<boolean, Error>(eventId ? `/events/${eventId}/me/eligibility` : null);
+}
+
 /**
  * Retrieves a specific event by its ID for admin purposes.
  * This is an admin-only endpoint.
@@ -50,6 +71,10 @@ export function registerMyEvent(eventId: number, teamName: string) {
     method : 'POST',
   }).then(() => {
     mutate('/users/me/events');
+    mutate('/users/me/teams');
+    mutate(`/events/${eventId}/me/team`);
+    mutate(`/events/${eventId}/me/eligibility`);
+    mutate(`/permissions/${eventId}/me`);
   });
 }
 export function registerMyEventTeamJoin(eventId: number, inviteCode: string) {
@@ -57,6 +82,28 @@ export function registerMyEventTeamJoin(eventId: number, inviteCode: string) {
     method : 'POST',
   }).then(() => {
     mutate('/users/me/events');
+    mutate('/users/me/teams');
+    mutate(`/events/${eventId}/me/team`);
+    mutate(`/events/${eventId}/me/eligibility`);
+    mutate(`/permissions/${eventId}/me`);
+  });
+}
+
+export function adminRegisterEvent(eventId: number, userId: number, teamName: string) {
+  return apiMutation(`/admin/events/${eventId}/${userId}/register`, { team_name : teamName }, {
+    method : 'POST',
+  }).then(() => {
+    mutate(`/admin/users/${userId}/events`);
+    mutate(`/admin/users/${userId}/teams`);
+  });
+}
+
+export function adminRegisterEventTeamJoin(eventId: number, userId: number, inviteCode: string) {
+  return apiMutation(`/admin/events/${eventId}/${userId}/register`, { invite_code : inviteCode }, {
+    method : 'POST',
+  }).then(() => {
+    mutate(`/admin/users/${userId}/events`);
+    mutate(`/admin/users/${userId}/teams`);
   });
 }
 
@@ -92,7 +139,10 @@ export function leaveMyTeam(eventId: number) {
   return apiMutation(`/events/${eventId}/me/team/leave`, { }, {
     method : 'POST',
   }).then(() => {
+    mutate(`/events/${eventId}/me/team`);
+    mutate('/users/me/teams');
     mutate('/users/me/events');
+    mutate(`/permissions/${eventId}/me`);
   });
 }
 
@@ -105,6 +155,7 @@ export function promoteMyCaptain(eventId: number, userId: number) {
     method : 'POST',
   }).then(() => {
     mutate(`/events/${eventId}/me/team/members`);
+    mutate(`/permissions/${eventId}/me`);
   });
 }
 
@@ -129,6 +180,8 @@ export function startMyTeam(eventId: number) {
     mutate(`/events/${eventId}/me/team`);
     mutate(`/events/${eventId}/challenges`);
     mutate(`/events/${eventId}/me/challenges`);
+    mutate(`/permissions/${eventId}/me`);
+    mutate('/users/me/teams');
   });
 }
 

@@ -10,6 +10,8 @@ export interface Event {
   registration_open: boolean;
   registration_start_date?: Date;
   registration_end_date?: Date;
+  hints_enabled: boolean;
+  time_limit_minutes: number | null;
 }
 
 export interface User {
@@ -165,6 +167,7 @@ export interface Deployment {
 
 export interface ContainerBlueprint {
   id: number;
+  name: string;
   image: string;
   hostname: string;
   stdin_open: boolean;
@@ -238,4 +241,36 @@ export interface TicketMessage {
   id: number;
   text: string;
   ticket_id: number
+}
+
+export interface Notification {
+  id: number;
+  type: string;
+  title: string;
+  message: string;
+  recipient_id: number;
+  created_at: Date;
+  sender_id?: number;
+  read_at?: Date;
+  expires_at?: Date;
+  ticket_id?: number;
+  team_id?: number;
+  event_id?: number;
+  challenge_id?: number;
+  recipient_name?: string;
+  sender_name?: string;
+  ticket_subject?: string;
+  team_name?: string;
+  event_name?: string;
+}
+
+export interface Announcement {
+  id: number;
+  title: string;
+  message: string;
+  created_at: Date;
+  expires_at: Date;
+  sender_id: number;
+  sender_name: string;
+  type: string;
 }

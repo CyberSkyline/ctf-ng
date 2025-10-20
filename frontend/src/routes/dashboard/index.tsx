@@ -1,22 +1,40 @@
 import { useMyEvents } from '@/hooks/events';
+import { useMyAnnouncements } from '@/hooks/announcements';
+
+import { AnnouncementIcon, COLOR_WARNING } from '@/constants';
 import {
+  Callout,
   Container,
   Flex,
   Heading,
   Skeleton,
+  Text,
 } from '@radix-ui/themes';
 import { ErrorCallout, InfoCallout } from 'components/Callouts';
-import EventHeader from 'components/EventHeader';
 import HeaderContainer from 'components/HeaderContainer';
-import { isEmpty } from 'lodash';
+import { isEmpty, map } from 'lodash';
 import PastEvents from 'routes/dashboard/PastEvents';
 import UpcomingEvents from 'routes/dashboard/UpcomingEvents';
+import EventCard from './EventCard';
 
 export default function Dashboard() {
   const { data, error, isLoading } = useMyEvents();
+  const { data : announcements, error : announcementError } = useMyAnnouncements();
 
   const liveEvents = data?.filter(
-    (event) => event.start_time && event.end_time && new Date() >= event.start_time && new Date() <= event.end_time,
+    (event) => {
+      if (event.start_time && new Date() < event.start_time) {
+        // events that haven't started yet shouldn't be shown
+        return false;
+      }
+
+      if (event.end_time && new Date() > event.end_time) {
+        // events that have ended shouldn't be shown
+        return false;
+      }
+
+      return true;
+    },
   );
 
   if (error) {
@@ -25,7 +43,28 @@ export default function Dashboard() {
 
   return (
     <>
+      <title>Dashboard</title>
+      {announcementError && <ErrorCallout className="mb-4">{announcementError.message}</ErrorCallout>}
       <HeaderContainer>
+        {!isEmpty(announcements) && (
+          <Flex direction="column" gap="1" className="mb-1">
+            {
+            map(announcements, ({ id, title, message }) => (
+              <Callout.Root variant="surface" color={COLOR_WARNING} key={id}>
+                <Callout.Icon>
+                  <AnnouncementIcon aria-label="Warning" />
+                </Callout.Icon>
+                <Callout.Text className="whitespace-pre-wrap">
+                  <Flex direction="column" className="-mt-[2px]">
+                    <Text weight="bold" size="3">{title}</Text>
+                    <Text>{message}</Text>
+                  </Flex>
+                </Callout.Text>
+              </Callout.Root>
+            ))
+          }
+          </Flex>
+        )}
         {isEmpty(liveEvents) && (
           <Skeleton loading={isLoading}>
             <InfoCallout>
@@ -33,12 +72,11 @@ export default function Dashboard() {
             </InfoCallout>
           </Skeleton>
         )}
-        {liveEvents?.map((event) => (
-          <EventHeader
-            key={event.id}
-            event={event}
-          />
-        ))}
+        <Flex direction="column" gap="3">
+          {liveEvents?.map((event) => (
+            <EventCard key={event.id} event={event} />
+          ))}
+        </Flex>
       </HeaderContainer>
 
       <Container size="4">

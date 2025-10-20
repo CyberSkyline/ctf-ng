@@ -1,7 +1,7 @@
 import { useMyEvents } from '@/hooks/events';
-import { Grid, Heading } from '@radix-ui/themes';
+import { Heading } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
-import EventCard from './EventCard';
+import EventGrid from 'components/EventGrid';
 
 export default function PastEvents() {
   const { data, error } = useMyEvents();
@@ -24,19 +24,7 @@ export default function PastEvents() {
   return (
     <>
       <Heading size="6">Your Past Events</Heading>
-      <Grid
-        columns={{
-          initial : '1', xs : '1', sm : '2', lg : '3',
-        }}
-        gap="4"
-      >
-        {pastEvents.map((event) => (
-          <EventCard
-            key={event.id}
-            event={event}
-          />
-        ))}
-      </Grid>
+      <EventGrid events={pastEvents || []} />
     </>
   );
 }

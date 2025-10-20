@@ -1,8 +1,8 @@
 import { useMyEvents } from '@/hooks/events';
-import { Grid, Link as RadixLink, Skeleton } from '@radix-ui/themes';
+import { Link as RadixLink } from '@radix-ui/themes';
 import { ErrorCallout, InfoCallout } from 'components/Callouts';
+import EventGrid from 'components/EventGrid';
 import { Link } from 'react-router';
-import EventCard from './EventCard';
 
 export default function UpcomingEvents() {
   const { data, error, isLoading } = useMyEvents();
@@ -31,26 +31,6 @@ export default function UpcomingEvents() {
   }
 
   return (
-    <Grid
-      columns={{
-        initial : '1', xs : '1', sm : '2', lg : '3',
-      }}
-      gap="4"
-    >
-      {isLoading && (
-        <>
-          <Skeleton className="min-h-48" />
-          <Skeleton className="min-h-48" />
-          <Skeleton className="min-h-48" />
-        </>
-      )}
-
-      {upcomingEvents?.map((event) => (
-        <EventCard
-          key={event.id}
-          event={event}
-        />
-      ))}
-    </Grid>
+    <EventGrid loading={isLoading} events={upcomingEvents || []} />
   );
 }

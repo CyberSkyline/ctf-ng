@@ -23,8 +23,7 @@ class NotificationType(str, Enum):
     TICKET_MESSAGE = "ticket_message"
     TICKET_STATUS_CHANGE = "ticket_status_change"
     TICKET_ASSIGNED = "ticket_assigned"
-    TEAM_INVITATION = "team_invitation"
-    CHALLENGE_RELEASED = "challenge_released"
+    CHALLENGE_UPDATED = "challenge_updated"
     EVENT_ANNOUNCEMENT = "event_announcement"
 
 

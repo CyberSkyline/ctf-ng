@@ -31,17 +31,12 @@ form label {
 }
 
 form label[data-invalid="true"] {
-  @apply text-(--accent-11);
-}
-
-/* Validation messages should be block so they stack vertically */
-form div span[id^=radix-] {
-  @apply text-(--accent-11) block;
+  @apply text-(--red-11);
 }
 
 /* Give invalid form elements a red accent color */
 /* Effectively sets their color prop to red. */
-[data-invalid="true"] {
+[aria-invalid="true"] {
   --accent-1: var(--red-1);
   --accent-2: var(--red-2);
   --accent-3: var(--red-3);
@@ -96,7 +91,7 @@ form div span[id^=radix-] {
   --focus-a12: var(--accent-a12);
 }
 
-[data-invalid="true"] .rt-TextFieldRoot {
+[aria-invalid="true"] {
   @apply !ring !ring-(--accent-7);
 }
 

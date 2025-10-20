@@ -9,14 +9,13 @@ import {
   Text,
 } from '@radix-ui/themes';
 import ReactMarkdown, { type Components } from 'react-markdown';
-import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
 
 /**
  * Mapping of html elements to their themed Radix UI counterparts to use when rendering markdown.
  */
 const Components: Components = {
-  p : ({ children }) => <Text as="p" color="gray" className="mb-2 last:mb-0">{children}</Text>,
+  p : ({ children }) => <Text as="p" color="gray" className="!mb-2 last:!mb-0">{children}</Text>,
   em : ({ children }) => <Em>{children}</Em>,
   strong : ({ children }) => <Strong>{children}</Strong>,
   code : ({ children }) => <Code color="gray">{children}</Code>,
@@ -31,7 +30,7 @@ const Components: Components = {
   h6 : ({ children }) => <Heading size="3" as="h6">{children}</Heading>,
   ul : ({ children }) => <ul className="list-disc list-inside mb-2 ms-2">{children}</ul>,
   ol : ({ children }) => <ol className="list-decimal list-inside mb-2 ms-2">{children}</ol>,
-  li : ({ children }) => <Text asChild color="gray" mb="1"><li>{children}</li></Text>,
+  li : ({ children }) => <Text asChild color="gray" mb="1"><li className="*:inline">{children}</li></Text>,
   table : ({ children }) => <Table.Root className="w-fit max-w-full mb-2">{children}</Table.Root>,
   thead : ({ children }) => <Table.Header>{children}</Table.Header>,
   tbody : ({ children }) => <Table.Body>{children}</Table.Body>,
@@ -47,7 +46,7 @@ export default function RadixMarkdown({ children }: {
   children: string;
 }) {
   return (
-    <ReactMarkdown components={Components} remarkPlugins={[ remarkGfm, remarkBreaks ]}>
+    <ReactMarkdown components={Components} remarkPlugins={[ remarkGfm ]}>
       {children}
     </ReactMarkdown>
   );

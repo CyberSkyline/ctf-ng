@@ -10,7 +10,6 @@ from cyber_skyline.chall_parser.template import Template as ParserTemplate
 from cyber_skyline.chall_parser.yaml_parser import parse_compose_string
 
 from ...utils.challenge_yaml import partial_environment
-from ....notifications.services import NotificationService
 from ....challenge.models import Challenge, ChallengeTag, ContainerBlueprint, Hint, Question, ChallengeVariable, ChallengeYaml
 from ....core.exceptions import ValidationError
 
@@ -142,12 +141,6 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
             )
 
         db.session.commit()
-
-        NotificationService.notify_challenge_released(
-            event_id=event.id,
-            challenge_id=challenge.id,
-            challenge_name=challenge.name,
-        )
 
         return challenge
     except Exception as e:

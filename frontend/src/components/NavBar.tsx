@@ -1,19 +1,29 @@
-import { NavigationMenu } from 'radix-ui';
-import { NavLink, useLocation } from 'react-router';
-import { TbUserCircle } from 'react-icons/tb';
-import { twMerge } from 'tailwind-merge';
+import { apiMutation } from '@/fetchers';
+import { useAuth } from '@/hooks/users';
+import { Flex } from '@radix-ui/themes';
+import NotificationsPopover from 'components/NotificationsPopover';
 import ThemeToggle from 'components/ThemeToggle';
 import { useTheme } from 'next-themes';
+import { NavigationMenu } from 'radix-ui';
+import { TbUserCircle } from 'react-icons/tb';
+import { NavLink, useLocation } from 'react-router';
+import { twMerge } from 'tailwind-merge';
 
 export default function NavBar() {
   const logout = () => {
-    // perform a logout
+    apiMutation('/users/logout', {}, { method : 'POST' }).then(() => {
+      // do a full reload to make sure window.init is updated
+      window.location.href = '/';
+    });
   };
+
+  const { isAuthenticated, isUnauthenticated, user } = useAuth();
 
   const location = useLocation();
   const { theme } = useTheme(); // Drop Content wouldn't obey otherwise
 
   const defaultLinkClass = `
+    h-full
     p-2
     hover:bg-(--gray-3)
     dark:hover:bg-(--gray-3)
@@ -22,6 +32,7 @@ export default function NavBar() {
     dark:text-(--gray-a11)`;
 
   const activeLinkClass = `
+    h-full
     p-2
     hover:bg-(--gray-3)
     dark:hover:bg-(--gray-3)
@@ -96,15 +107,30 @@ export default function NavBar() {
               Support
             </NavigationMenu.Item>
           </NavLink>
-          <NavigationMenu.Item className={location.pathname === '/notifications' ? activeLinkClass : defaultLinkClass}>
-            Notifications*
-          </NavigationMenu.Item>
+
+          {isAuthenticated && (
+            <NotificationsPopover
+              triggerClassName={defaultLinkClass}
+              contentClassName={twMerge(contentBase, theme === 'dark' ? contentDark : contentLight)}
+            />
+          )}
 
           <NavigationMenu.Item>
-            <NavigationMenu.Trigger className={twMerge(defaultLinkClass, 'pt-3')}>
-              <TbUserCircle />
+            <NavigationMenu.Trigger
+              className={defaultLinkClass}
+              onPointerMove={(event) => event.preventDefault()}
+              onPointerLeave={(event) => event.preventDefault()}
+            >
+              <Flex direction="row" align="center" gap="1">
+                <TbUserCircle className="inline" />
+                {user && ` ${user.name}`}
+              </Flex>
             </NavigationMenu.Trigger>
-            <NavigationMenu.Content className={twMerge(contentBase, theme === 'dark' ? contentDark : contentLight)}>
+            <NavigationMenu.Content
+              className={twMerge(contentBase, theme === 'dark' ? contentDark : contentLight)}
+              onPointerEnter={(event) => event.preventDefault()}
+              onPointerLeave={(event) => event.preventDefault()}
+            >
               <ul className="grid gap-2 p-3">
                 <li>
                   <NavLink
@@ -125,15 +151,28 @@ export default function NavBar() {
                 <li>
                   <ThemeToggle className="ml-3 py-2" />
                 </li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={logout}
-                    className={contentItem}
-                  >
-                    Log Out*
-                  </button>
-                </li>
+
+                {isAuthenticated && (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={logout}
+                      className={contentItem}
+                    >
+                      Log Out
+                    </button>
+                  </li>
+                )}
+                {isUnauthenticated && (
+                  <li>
+                    <NavLink
+                      to="/login"
+                      className={contentItem}
+                    >
+                      Log In
+                    </NavLink>
+                  </li>
+                )}
               </ul>
             </NavigationMenu.Content>
           </NavigationMenu.Item>

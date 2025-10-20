@@ -30,6 +30,7 @@ export default function Support() {
 
   return (
     <Container size="4">
+      <title>Support Tickets</title>
       {!isUndefined(error)
         ? <ErrorCallout>{error?.message}</ErrorCallout>
         : (

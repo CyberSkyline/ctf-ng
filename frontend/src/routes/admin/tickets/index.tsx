@@ -126,6 +126,7 @@ export default function AdminTickets() {
 
   return (
     <>
+      <title>Admin Tickets</title>
       {error && <ErrorCallout>{error.message}</ErrorCallout>}
       <AdminGrid
         rowData={data || []}
