@@ -4,12 +4,11 @@ Admin API routes for announcements
 
 from flask_restx import Namespace, Resource
 
-from ...core.utils import success_response, error_response
+from ...core.utils import success_response
 from ...core.middleware import admin_endpoint
 from ...core.middleware.loaders import (
     LoaderType,
     load_announcement,
-    load_challenge,
     load_event,
 )
 from ..controllers import (
@@ -17,7 +16,6 @@ from ..controllers import (
     send_event_announcement,
     get_all_announcements,
     delete_announcement,
-    notify_challenge_update,
 )
 
 
@@ -203,55 +201,4 @@ class AnnouncementDelete(Resource):
         """
         delete_announcement(announcement = announcement)
         return success_response()
-
-
-@announcements_admin_namespace.route("/challenge-update")
-class ChallengeUpdateAnnouncement(Resource):
-    @admin_endpoint(json_required = True)
-    @load_challenge(source = LoaderType.BODY, input_key = "challenge_id")
-    @announcements_admin_namespace.doc(
-        description="Send a challenge update notification to all event participants",
-        params={
-            "challenge_id": {
-                "description": "Challenge ID that was updated",
-                "required": True,
-                "type": "integer",
-                "example": 5
-            },
-            "update_reason": {
-                "description": "Description of what changed (shown in notification)",
-                "required": True,
-                "type": "string",
-                "example": "Fixed typo in question 2"
-            }
-        },
-        responses={
-            200: "Success - Notification sent to all participants",
-            400: "Bad request - Missing required fields",
-            403: "Forbidden - Admin access required",
-            404: "Not found - Challenge does not exist",
-            500: "Internal Server Error",
-        },
-    )
-    def post(self, current_user, challenge, json_data, **kwargs):
-        """
-        Send challenge update announcement (standalone)
-        """
-        update_reason = json_data.get("update_reason")
-
-        if not update_reason:
-            return error_response(
-                "update_reason is required",
-                "validation",
-                400
-            )
-
-        result = notify_challenge_update(
-            event_id = challenge.event_id,
-            challenge_id = challenge.id,
-            challenge_name = challenge.name,
-            update_reason = update_reason,
-        )
-
-        return success_response(result)
 
