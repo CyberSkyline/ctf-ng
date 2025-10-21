@@ -1,6 +1,5 @@
 from ...team.models import TeamMember
 from ...event.models import Demographic
-from ...scoring.models import Score
 from CTFd.models import db
 
 
@@ -15,7 +14,6 @@ def remove_member(team, user):
     demographic = Demographic.find_by_user_and_event(user.id, team.event_id)
     demographic.delete(commit = False)
     if len(team.members) == 1:
-        Score.query.filter(Score.team_id == team.id).delete()
         team.disband_team(commit = False)
 
     db.session.commit()

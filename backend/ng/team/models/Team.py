@@ -27,6 +27,7 @@ from ...core.exceptions import (
 from ...core.utils.validator import BaseValidator
 from .enums import TeamRole
 from .TeamMember import TeamMember
+from ...scoring.models.Score import Score
 from ...event.models.Event import Event
 
 HEX_CHARS = string.hexdigits.lower()[:16]  # '0123456789abcdef'
@@ -249,6 +250,7 @@ class Team(db.Model):
         """Delete this team and all its members from the database."""
 
         db.session.delete(self)
+        Score.query.filter(Score.team_id == self.id).delete(commit=False)
         if commit:
             db.session.commit()
 
