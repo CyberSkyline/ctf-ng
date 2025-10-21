@@ -279,7 +279,7 @@ class Score(db.Model):
         else:
             clear_cache_for_function_with_prefix("get_leaderboard", f"({event_id},")
 
-    
+
     def delete(self, commit: bool = True) -> None:
         """Delete this score from the database."""
         db.session.delete(self)
