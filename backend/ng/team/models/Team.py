@@ -248,7 +248,7 @@ class Team(db.Model):
 
     def disband_team(self, commit=True):
         """Delete this team and all its members from the database."""
-  
+
         score = Score.find_by_team(self.id)
         if score:
             score.delete(commit=False)
