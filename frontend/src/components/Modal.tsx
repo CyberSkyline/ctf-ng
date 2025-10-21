@@ -72,6 +72,8 @@ export default function Modal<T extends FieldValues>({
 
       <Dialog.Content
         className={twMerge('flex flex-col gap-3', className)}
+        // clear tabIndex to ensure compatibility with CodeMirror's focus management
+        tabIndex={undefined}
         // aria-describedby should be set to undefined if no description is provided, otherwise it should not be set at all.
         // as far as i know, prop spreading is the only way to accomplish this.
         {

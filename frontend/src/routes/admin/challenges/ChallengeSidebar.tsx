@@ -1,19 +1,15 @@
-import {
-  COLOR_INFO,
-  COLOR_POSITIVE,
-  COLOR_WARNING,
-  EventIcon,
-} from '@/constants';
+import { COLOR_INFO, EventIcon } from '@/constants';
 import type { Challenge } from '@/types';
 import { Button, Tabs } from '@radix-ui/themes';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import ChallengeIcon from 'components/ChallengeIcon';
-import { TbDownload, TbPencil } from 'react-icons/tb';
 import { Link, useSearchParams } from 'react-router';
 import ChallengeAttemptsTab from './SidebarTabs/ChallengeAttemptsTab';
 import ChallengeBlueprintTab from './SidebarTabs/ChallengeBlueprintTab';
 import ChallengeDetailsTab from './SidebarTabs/ChallengeDetailsTab';
+import ChallengeUpdateModal from './ChallengeUpdateModal';
+import ChallengeDownloadButton from './ChallengeDownloadButton';
 
 export default function ChallengeSidebar({ entity }: {entity: Challenge}) {
   const [ searchParams, setSearchParams ] = useSearchParams();
@@ -27,14 +23,8 @@ export default function ChallengeSidebar({ entity }: {entity: Challenge}) {
             Event
           </Link>
         </Button>
-        <Button variant="soft" color={COLOR_WARNING}>
-          <TbPencil />
-          Update
-        </Button>
-        <Button variant="soft" color={COLOR_POSITIVE}>
-          <TbDownload />
-          Download
-        </Button>
+        <ChallengeUpdateModal challengeId={entity.id} />
+        <ChallengeDownloadButton challenge={entity} />
       </AdminSidebarHeader>
 
       <Tabs.Root

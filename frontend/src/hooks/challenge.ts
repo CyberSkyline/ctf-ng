@@ -140,6 +140,5 @@ export function updateChallenge(challengeId: number, yaml: string) {
     mutate(`/admin/challenges/${challengeId}/questions`);
     mutate(`/admin/challenges/${challengeId}/hints`);
     mutate(`/admin/challenges/${challengeId}/blueprints`);
-    if (reason) mutate('/notifications/me');
   });
 }
