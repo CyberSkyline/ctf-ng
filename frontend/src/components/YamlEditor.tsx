@@ -9,7 +9,9 @@ import { twMerge } from 'tailwind-merge';
 
 export default function YamlEditor({
   value, onChange, ref, ...rest
-}: {value: string, onChange: (v: string) => void, ref?: Ref<ReactCodeMirrorRef>}) {
+} : {
+  value: string, onChange: (v: string) => void, ref?: Ref<ReactCodeMirrorRef>
+}) {
   const theme = useTheme();
 
   return (
@@ -32,7 +34,6 @@ export default function YamlEditor({
         getRootProps, getInputProps, isDragActive, open,
       }) => (
         <>
-          {/* {JSON.stringify(watch())} */}
           <div
             {...getRootProps()}
             tabIndex={-1}
@@ -41,7 +42,6 @@ export default function YamlEditor({
               isDragActive && '!ring-2 !ring-(--accent-8) relative after:absolute after:inset-0 after:bg-(--accent-a4)',
             )}
           >
-
             <CodeMirror
               value={value}
               height="546px"
