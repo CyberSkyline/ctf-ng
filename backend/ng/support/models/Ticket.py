@@ -185,6 +185,7 @@ class Ticket(db.Model):
         team_id: int | None = None,
         challenge_id: int | None = None,
         commit: bool = True,
+        flush: bool = False,
     ) -> Ticket:
         """
         Create and persist a new ticket with validation.
@@ -220,6 +221,10 @@ class Ticket(db.Model):
         )
 
         db.session.add(ticket)
+
+        if flush:
+            db.session.flush()
+
         if commit:
             try:
                 db.session.commit()
