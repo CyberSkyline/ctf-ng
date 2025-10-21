@@ -21,7 +21,7 @@ sudo apt-get update
 git submodule update --init --recursive # Initialize submodules
 git config --local submodule.recurse true # Configures git to automatically update submodules when pulling or switching branches
 
-# Set up default .env, .env.dev, .env.prod, .env.staging files if they do not exist
+# Set up default .env, .env.dev, .env.prod files if they do not exist
 if [ ! -f ".env" ]; then
   cp ./conf/.env.default .env
 fi
