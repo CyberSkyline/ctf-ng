@@ -39,10 +39,8 @@ def create_ticket(
             team_id=team_id,
             challenge_id=challenge_id,
             commit=False,
+            flush=True,
         )
-
-        # Flush to assign ticket ID
-        db.session.flush()
 
         # Create initial message without committing
         TicketMessage.create_message(
