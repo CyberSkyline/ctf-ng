@@ -122,67 +122,69 @@ export default function CreateTicket() {
         <form
           onSubmit={handleSubmit(create)}
         >
-          <FormField label="Subject" error={errors?.subject}>
-            {(injected) => (
-              <TextField.Root
-                placeholder="Subject"
-                {...register('subject', { required : 'Subject is required' })}
-                {...injected}
-              />
-            )}
-          </FormField>
-          <FormField label="Message" error={errors?.text}>
-            {() => (
-              <Controller
-                name="text"
-                control={control}
-                rules={{ required : 'Message is required' }}
-                render={({ field }) => (
-                  <RichTextEditor
-                    initialValue={field.value}
-                    onChange={field.onChange}
-                  />
-                )}
-              />
-            )}
-          </FormField>
-
-          <SelectDropdown
-            control={control}
-            rules={{
-              validate : (value) => value !== '' || 'Please select an event or None',
-            }}
-            error={errors?.event_id}
-            name="event_id"
-            label="Event"
-            options={eventOptions}
-            noneOption
-          />
-
-          {watchedEvent !== 'None'
-            && (
-              <RequireEventPermission
-                eventId={Number(watchedEvent)}
-                permission="CAN_VIEW_CHALLENGES"
-                permissionDeniedPlaceholder={null}
-              >
-                <ChallengesDropdown
-                  control={control}
-                  error={errors?.challenge_id}
-                  eventId={Number(watchedEvent)}
+          <Flex direction="column" gap="2">
+            <FormField label="Subject" error={errors?.subject}>
+              {(injected) => (
+                <TextField.Root
+                  placeholder="Subject"
+                  {...register('subject', { required : 'Subject is required' })}
+                  {...injected}
                 />
-              </RequireEventPermission>
-            )}
+              )}
+            </FormField>
+            <FormField label="Message" error={errors?.text}>
+              {() => (
+                <Controller
+                  name="text"
+                  control={control}
+                  rules={{ required : 'Message is required' }}
+                  render={({ field }) => (
+                    <RichTextEditor
+                      initialValue={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+              )}
+            </FormField>
 
-          {error && <ErrorCallout className="mt-2">{error}</ErrorCallout>}
-          <Button
-            type="submit"
-            className="!mt-2"
-            loading={loading}
-            disabled={loading}
-          >
-            Submit Ticket
-          </Button>
+            <SelectDropdown
+              control={control}
+              rules={{
+                validate : (value) => value !== '' || 'Please select an event or None',
+              }}
+              error={errors?.event_id}
+              name="event_id"
+              label="Event"
+              options={eventOptions}
+              noneOption
+            />
+
+            {watchedEvent !== 'None'
+              && (
+                <RequireEventPermission
+                  eventId={Number(watchedEvent)}
+                  permission="CAN_VIEW_CHALLENGES"
+                  permissionDeniedPlaceholder={null}
+                >
+                  <ChallengesDropdown
+                    control={control}
+                    error={errors?.challenge_id}
+                    eventId={Number(watchedEvent)}
+                  />
+                </RequireEventPermission>
+              )}
+
+            {error && <ErrorCallout>{error}</ErrorCallout>}
+
+            <Button
+              type="submit"
+              loading={loading}
+              disabled={loading}
+            >
+              Submit Ticket
+            </Button>
+          </Flex>
         </form>
 
       </Flex>
