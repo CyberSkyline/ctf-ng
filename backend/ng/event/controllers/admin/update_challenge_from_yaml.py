@@ -143,7 +143,7 @@ def update_challenge_from_yaml(challenge_id: int, json_data: dict[str, Any]) -> 
                 if isinstance(question.answer, ParserTemplate):
                     db_variable_questions[question.answer.parent_variable] = db_question
 
-        blueprints = {blueprint.hostname: blueprint for blueprint in challenge.blueprints}
+        blueprints = {blueprint.name: blueprint for blueprint in challenge.blueprints}
         if compose_file.services:
             for (service_name, service_data) in compose_file.services.items():
                 if service_name in blueprints:
@@ -164,6 +164,7 @@ def update_challenge_from_yaml(challenge_id: int, json_data: dict[str, Any]) -> 
                 else:
                     ContainerBlueprint.create_container_blueprint(
                         challenge_id=challenge.id,
+                        name=service_name,
                         image=service_data.image,
                         hostname=service_data.hostname,
                         stdin_open=service_data.stdin_open,
