@@ -10,12 +10,10 @@ source $DIR/utils.sh
 ENV_PATH=$(realpath "$DIR/../.env")
 DEV_ENV_PATH=$(realpath "$DIR/../.env.dev")
 PROD_ENV_PATH=$(realpath "$DIR/../.env.prod")
-STAGING_ENV_PATH=$(realpath "$DIR/../.env.staging")
 
 DEFAULT_ENV_PATH=$(realpath "$DIR/../conf/.env.default")
 DEFAULT_DEV_ENV_PATH=$(realpath "$DIR/../conf/ctfd/.env.default.dev")
 DEFAULT_PROD_ENV_PATH=$(realpath "$DIR/../conf/ctfd/.env.default.prod")
-DEFAULT_STAGING_ENV_PATH=$(realpath "$DIR/../conf/ctfd/.env.default.staging")
 
 sync_values () {
   local_env_file="$1"
@@ -44,4 +42,3 @@ sync_values () {
 sync_values $ENV_PATH $DEFAULT_ENV_PATH
 sync_values $DEV_ENV_PATH $DEFAULT_DEV_ENV_PATH
 sync_values $PROD_ENV_PATH $DEFAULT_PROD_ENV_PATH
-sync_values $STAGING_ENV_PATH $DEFAULT_STAGING_ENV_PATH

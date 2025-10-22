@@ -12,7 +12,6 @@ from cyber_skyline.chall_parser.yaml_parser import parse_compose_string
 from ...utils.challenge_yaml import partial_environment
 from ....challenge.models import Challenge, ChallengeTag, ContainerBlueprint, Hint, Question, ChallengeVariable
 from ....core.exceptions import ValidationError
-from ....notifications.services import NotificationService
 
 def update_challenge_from_yaml(challenge_id: int, json_data: dict[str, Any]) -> Challenge:
     payload = base64.urlsafe_b64decode(json_data["yaml"])
@@ -144,7 +143,7 @@ def update_challenge_from_yaml(challenge_id: int, json_data: dict[str, Any]) -> 
                 if isinstance(question.answer, ParserTemplate):
                     db_variable_questions[question.answer.parent_variable] = db_question
 
-        blueprints = {blueprint.hostname: blueprint for blueprint in challenge.blueprints}
+        blueprints = {blueprint.name: blueprint for blueprint in challenge.blueprints}
         if compose_file.services:
             for (service_name, service_data) in compose_file.services.items():
                 if service_name in blueprints:
@@ -165,6 +164,7 @@ def update_challenge_from_yaml(challenge_id: int, json_data: dict[str, Any]) -> 
                 else:
                     ContainerBlueprint.create_container_blueprint(
                         challenge_id=challenge.id,
+                        name=service_name,
                         image=service_data.image,
                         hostname=service_data.hostname,
                         stdin_open=service_data.stdin_open,
@@ -182,14 +182,6 @@ def update_challenge_from_yaml(challenge_id: int, json_data: dict[str, Any]) -> 
                     )
 
         db.session.commit()
-
-        # Only notify if update_reason is provided (optional field)
-        NotificationService.notify_challenge_updated(
-            event_id=challenge.event_id,
-            challenge_id=challenge.id,
-            challenge_name=challenge.name,
-            update_reason=json_data.get("update_reason"),
-        )
 
         return (challenge)
     except Exception as e:

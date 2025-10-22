@@ -1,6 +1,8 @@
 from flask_restx import Namespace, Resource
 import multiprocessing
 
+from ...event.controllers.admin.update_challenge_from_yaml import update_challenge_from_yaml
+
 from ...core.middleware.loaders.load_challenge import load_challenge
 from ...core.middleware.loaders._util import LoaderType
 from ...core.middleware.auth import admin_endpoint
@@ -33,6 +35,26 @@ class ChallengeDetail(Resource):
         Get detailed information about a specific challenge
         """
         return success_response(challenge)
+
+    @admin_endpoint(json_required=True)
+    @load_challenge(source = LoaderType.PARAM)
+    def put(self, challenge, json_data, **kwargs):
+        """
+        Update a specific challenge from YAML.
+        """
+        updated_challenge = update_challenge_from_yaml(challenge.id, json_data)
+        return success_response(updated_challenge)
+
+@challenge_admin_namespace.route("/<int:challenge_id>/yaml")
+class ChallengeYAML(Resource):
+    @admin_endpoint()
+    @load_challenge(source = LoaderType.PARAM)
+    def get(self, challenge: Challenge, **kwargs):
+        """
+        Get the YAML representation of a specific challenge
+        """
+        yaml_data = challenge.yaml.body
+        return success_response({"yaml": yaml_data})
 
 @challenge_admin_namespace.route("/<int:challenge_id>/questions")
 class ChallengeQuestions(Resource):
