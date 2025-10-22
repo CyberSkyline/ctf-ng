@@ -23,7 +23,7 @@ import { useCurrentUser } from '@/hooks/users';
 export default function Detail() {
   const navigate = useNavigate();
   const { idTicket } = useParams();
-  const { data, error : errorMessages } = useMyTicketMessages(Number(idTicket));
+  const { data, error : errorMessages, isLoading } = useMyTicketMessages(Number(idTicket));
   const { data : currentUser } = useCurrentUser();
   const [ version, setVersion ] = useState<number>(0); // To reinit the RichTextEditor
   const [ newText, setNewText ] = useState<string>('');
@@ -31,6 +31,8 @@ export default function Detail() {
   const [ resolveError, setResolveError ] = useState<boolean>(false);
   const [ resolveLoading, setResolveLoading ] = useState<boolean>(false);
   const [ replyLoading, setReplyLoading ] = useState<boolean>(false);
+
+  if (isLoading) { return null; }
 
   if (isNil(data) || errorMessages) {
     return (
