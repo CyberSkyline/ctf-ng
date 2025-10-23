@@ -290,6 +290,30 @@ def admin_client(app, db_session, admin):
         sess.permanent = False
     return client
 
+@pytest.fixture
+def client_factory(app, db_session):
+    """A factory to create test clients logged in as different users."""
+
+    def _factory(user: Users):
+        # Clear any cached user data to prevent cross-test contamination
+        from CTFd.cache import cache
+
+        cache.clear()
+        user = user.ctfd_user
+
+        client = app.test_client()
+        with client.session_transaction() as sess:
+            # Completely clear the session and set only what we need
+            sess.clear()
+            sess["id"] = user.id
+            sess["name"] = user.name
+            sess["type"] = user.type
+            sess["nonce"] = generate_nonce()
+            sess.permanent = False
+        return client
+
+    return _factory
+
 
 @pytest.fixture
 def event_factory(db_session):
@@ -305,6 +329,7 @@ def event_factory(db_session):
             "start_time": utc_now() - timedelta(days=1),
             "end_time": utc_now() + timedelta(days=1),
             "time_limit_minutes": 120,
+            "allowed_domains": [],
         }
         defaults.update(kwargs)
         event = Event.create_event(**defaults)

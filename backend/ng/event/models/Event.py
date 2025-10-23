@@ -8,7 +8,8 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from CTFd.models import db
-from sqlalchemy import CheckConstraint, func
+from sqlalchemy import CheckConstraint, func, JSON
+from sqlalchemy.orm import Mapped
 
 from ... import config
 from ...core.utils.validator import BaseValidator
@@ -32,6 +33,7 @@ class Event(db.Model):
     registration_end_date = db.Column(db.DateTime, nullable=True)
     hints_enabled = db.Column(db.Boolean, default=False, nullable=False)
     time_limit_minutes = db.Column(db.Integer, nullable=True)
+    allowed_domains: Mapped[list[str]] = db.Column(JSON, nullable=False, default=[])
 
     __table_args__ = (
         CheckConstraint(
@@ -88,6 +90,7 @@ class Event(db.Model):
             "registration_end_date": self.registration_end_date.isoformat() + "Z" if self.registration_end_date else None,
             "hints_enabled": self.hints_enabled,
             "time_limit_minutes": self.time_limit_minutes,
+            "allowed_domains": self.allowed_domains,
         }
 
         return data
@@ -157,6 +160,12 @@ class Event(db.Model):
             required=False,
             friendly_name="Hints enabled",
         )
+        validator.validate_string_list(
+            data,
+            "allowed_domains",
+            required=False,
+            friendly_name="Allowed email domains",
+        )
 
         return validator.validate()
 
@@ -175,6 +184,7 @@ class Event(db.Model):
         registration_end_date: datetime | None = None,
         hints_enabled: bool = False,
         time_limit_minutes: int | None = None,
+        allowed_domains: list[str] | None = [],
         commit: bool = True,
     ):
         """Create and persist a new event to the database.
@@ -208,6 +218,7 @@ class Event(db.Model):
             registration_end_date=registration_end_date,
             hints_enabled=hints_enabled,
             time_limit_minutes=time_limit_minutes,
+            allowed_domains=allowed_domains,
         )
 
         db.session.add(event)
@@ -383,5 +394,14 @@ class Event(db.Model):
 
         if Demographic.find_by_user_and_event(user.id, self.id):
             raise BusinessLogicError("User is already registered for this event.")
+
+        if self.allowed_domains:
+            user_email_domain = user.ctfd_user.email.split("@")[-1].lower()
+            allowed_domains_lower = [domain.lower() for domain in self.allowed_domains]
+            for domain in allowed_domains_lower:
+                if domain in user_email_domain:
+                    break
+            else:
+                raise BusinessLogicError("User's email domain is not allowed for this event.")
 
         return True

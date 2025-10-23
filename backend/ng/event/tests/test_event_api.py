@@ -57,6 +57,30 @@ class Test_Public_Event_Listing:
         assert data["data"][0] == event1.serialize()
         assert data["data"][1] == event2.serialize()
 
+    def test_listing_domains(self, logged_in_client, event_factory):
+        event1 = event_factory(
+            name = "Public Event with Domains",
+            public = True,
+            allowed_domains = ["com", "org"]
+        )
+        event2 = event_factory(name = "Public Event without Domains", public = True)
+
+        response = logged_in_client.get(self.endpoint)
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert len(data["data"]) == 2
+
+        event1_data = next((e for e in data["data"] if e["id"] == event1.id), None)
+        event2_data = next((e for e in data["data"] if e["id"] == event2.id), None)
+
+        assert event1_data is not None
+        assert event1_data.get("allowed_domains") == ["com", "org"]
+
+        assert event2_data is not None
+        assert event2_data.get("allowed_domains") == []
+
 
 class Test_Public_Event_Detail:
     def get_endpoint(self, event_id: int) -> str:
@@ -529,6 +553,100 @@ class Test_Event_Registration:
         assert "User is already registered for this event." in data["errors"][
             "business_logic"]
 
+    def test_register_event_with_allowed_domains(
+        self,
+        client_factory,
+        user_factory,
+        event_factory
+    ):
+
+        user = user_factory(name = "domainuser", email = "domainuser@example.com")
+        logged_in_client = client_factory(user = user)
+        event = event_factory(
+            name = "Event with Allowed Domains",
+            public = True,
+            allowed_domains = ["example.com"]
+        )
+
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json = {
+                "team_name": "Test Team",
+            },
+        )
+
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data["success"] is True
+
+    def test_register_event_with_disallowed_domain(
+        self,
+        client_factory,
+        user_factory,
+        event_factory
+    ):
+        user = user_factory(name = "domainuser", email = "domainuser@example.com")
+        logged_in_client = client_factory(user = user)
+        event = event_factory(
+            name = "Event with Disallowed Domain",
+            public = True,
+            allowed_domains = ["disallowed.com"]
+        )
+
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json = {
+                "team_name": "Test Team"            },
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        assert "errors" in data
+        assert "User's email domain is not allowed for this event." in data["errors"][
+            "business_logic"]
+
+    def test_register_to_event_with_multiple_allowed_domains(
+        self,
+        client_factory,
+        user_factory,
+        event_factory
+    ):
+        user = user_factory(name = "multiuser", email = "multiuser@valid.mil")
+        logged_in_client = client_factory(user = user)
+        event = event_factory(name = "Event for Multiple Allowed Domains", public = True, allowed_domains = ["valid.mil", "secure.gov","trusted.org"])
+
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json = {
+                "team_name": "Multi Domain Test Team",
+            },
+        )
+
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data["success"] is True
+
+    def test_subdomain_email_registration(
+        self,
+        client_factory,
+        user_factory,
+        event_factory
+    ):
+        user = user_factory(name = "subdomainuser", email = "subdomainuser@us.valid.mil")
+        logged_in_client = client_factory(user = user)
+        event = event_factory(name = "Event for Subdomain Email Registration", public = True, allowed_domains = ["valid.mil"])
+
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json = {
+                "team_name": "Subdomain Test Team",
+            },
+        )
+
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data["success"] is True
 
 class Test_Event_Team_Lookup:
     def get_endpoint(self, event_id: int) -> str:
@@ -1166,6 +1284,27 @@ class Test_Event_Admin_Create:
         assert data["success"] is False
         assert "errors" in data
         assert "validation" in data["errors"]
+
+    def test_admin_create_event_with_domain_restrictions(self, admin_client):
+        new_event_data = {
+            "name": "Domain Restricted Event",
+            "description": "Event with email domain restrictions.",
+            "public": True,
+            "registration_open": True,
+            "max_team_size": 5,
+            "allowed_domains": ["com", "org"]
+        }
+
+        response = admin_client.post(
+            self.post_endpoint(),
+            json = new_event_data
+        )
+
+        assert response.status_code == 201
+        data = response.get_json()
+        print(data)
+        assert data["success"] is True
+        assert data["data"]["allowed_domains"] == new_event_data["allowed_domains"]
 
 
 class Test_Event_Challenge_Import:

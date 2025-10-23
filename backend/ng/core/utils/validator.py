@@ -119,6 +119,41 @@ class BaseValidator:
         self._add_parsed_data(field, stripped_value)
 
     @validation_field
+    def validate_string_list(
+        self,
+        data: dict[str, Any],
+        field: str,
+        max_length: int | None = None,
+        required: bool = False,
+        friendly_name: str | None = None,
+        value: Any = None,  # Injected by decorator
+    ) -> None:
+        if not isinstance(value, list):
+            self.errors[field] = f"{friendly_name} must be a list of strings"
+            return
+
+        validated_list = []
+        for item in value:
+            if not isinstance(item, str):
+                self.errors[field] = f"All items in {friendly_name} must be strings"
+                return
+
+            stripped_item = item.strip()
+            if len(stripped_item) == 0:
+                self.errors[field] = f"Items in {friendly_name} cannot be empty strings"
+                return
+
+            if max_length and len(stripped_item) > max_length:
+                self.errors[field] = ValidationErrorMessages.FIELD_TOO_LONG.format(
+                    field=friendly_name, max_length=max_length
+                )
+                return
+
+            validated_list.append(stripped_item)
+
+        self._add_parsed_data(field, validated_list)
+
+    @validation_field
     def validate_model_id(
         self,
         data: dict[str, Any],
