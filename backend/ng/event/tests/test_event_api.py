@@ -13,6 +13,7 @@ from ...team.models.Team import Team
 from ...team.models.TeamMember import TeamMember
 from ...event.models.Demographic import Demographic
 from ...challenge.models.Challenge import Challenge
+from ...scoring.models.Score import Score
 
 
 pytestmark = pytest.mark.db
@@ -774,6 +775,33 @@ class Test_Event_Team_Management:
         reponse = team_member_client.get(f"/ng/events/{1}/me/team")
         assert reponse.status_code == 404
 
+    def test_leave_and_empty_team_deletes(self, logged_in_client, event_factory):
+        """Test that leaving a team as the last member deletes the team."""
+
+        event = event_factory(name = "Solo Leave Test Event", public = True)
+        logged_in_client.post(
+            f"/ng/events/{event.id}/me/register",
+            json = {"team_name": "Solo Team"},
+        )
+        response = logged_in_client.post(
+            f"/ng/events/{event.id}/me/team/leave",
+            json = {}
+        )
+        assert response.status_code == 200
+
+        response = logged_in_client.get(f"/ng/events/{event.id}/me/team")
+        assert response.status_code == 404
+
+        response = logged_in_client.get(f"/ng/events/{event.id}/me/team/score")
+        assert response.status_code == 404
+
+        teams = Team.query.all()
+        assert len(teams) == 0
+
+        scores = Score.query.all()
+        assert len(scores) == 0
+
+
     def test_captain_cant_leave(self, team_captain_client):
         """Test that the team leave endpoint fails for a captain."""
         response = team_captain_client.post(
@@ -805,6 +833,7 @@ class Test_Event_Team_Management:
     def test_solo_captain_can_leave(
         self,
         logged_in_client,
+        user_factory,
         user,
         event_factory,
         team_factory,
@@ -814,18 +843,11 @@ class Test_Event_Team_Management:
         event = event_factory(name = "Solo Leave Test Event", public = True)
         _team = team_factory(event = event, members = [user])  # Only one member (the captain)
 
-        Demographic.create_demographic(
-            user_id = user.id,
-            event_id = event.id,
-            commit = False
-        )
-        db_session.commit()
 
         response = logged_in_client.post(
             f"/ng/events/{event.id}/me/team/leave",
             json = {}
         )
-
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True

@@ -26,7 +26,7 @@ function CrepeEditor({
 }: {
   initialValue?: string,
   onChange: (value: string) => void,
-  version: number
+  version: number,
 }) {
   const features = {
     'image-block' : false,

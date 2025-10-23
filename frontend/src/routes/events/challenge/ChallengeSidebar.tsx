@@ -36,7 +36,7 @@ export default function ChallengeSidebar() {
     challenge, questions, hints, attempts,
   } = data || {};
 
-  const { granted } = useEventPermission('CAN_PLAY_CHALLENGE', Number(idEvent));
+  const { granted } = useEventPermission('CAN_PLAY_CHALLENGES', Number(idEvent));
 
   const groupedAttempts = groupBy(attempts || [], 'question_id');
 
