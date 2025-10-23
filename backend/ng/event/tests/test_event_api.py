@@ -648,6 +648,25 @@ class Test_Event_Registration:
         data = response.get_json()
         assert data["success"] is True
 
+    def test_register_event_with_empty_allowed_domains(
+        self,
+        client_factory,
+        user_factory,
+        event_factory
+    ):
+        user = user_factory(name = "emptydomainuser", email = "emptydomainuser@invalid.com")
+        logged_in_client = client_factory(user = user)
+        event = event_factory(name = "Event with Empty Allowed Domains", public = True, allowed_domains = [])
+
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json = {
+                "team_name": "Empty Domain Test Team",
+            },
+        )
+
+        assert response.status_code == 201
+
 class Test_Event_Team_Lookup:
     def get_endpoint(self, event_id: int) -> str:
         return f"/ng/events/{event_id}/me/team"
@@ -1292,7 +1311,7 @@ class Test_Event_Admin_Create:
             "public": True,
             "registration_open": True,
             "max_team_size": 5,
-            "allowed_domains": ["com", "org"]
+            "allowed_domains": ["example.com", "registered.org"]
         }
 
         response = admin_client.post(
@@ -1302,7 +1321,6 @@ class Test_Event_Admin_Create:
 
         assert response.status_code == 201
         data = response.get_json()
-        print(data)
         assert data["success"] is True
         assert data["data"]["allowed_domains"] == new_event_data["allowed_domains"]
 

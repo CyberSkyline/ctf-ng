@@ -184,7 +184,7 @@ class Event(db.Model):
         registration_end_date: datetime | None = None,
         hints_enabled: bool = False,
         time_limit_minutes: int | None = None,
-        allowed_domains: list[str] | None = [],
+        allowed_domains: list[str] | None = None,
         commit: bool = True,
     ):
         """Create and persist a new event to the database.
