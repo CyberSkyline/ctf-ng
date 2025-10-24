@@ -34,6 +34,7 @@ from .support.models.Ticket import Ticket
 from .support.models.TicketTag import TicketTag
 from .team.models.Team import Team
 from .user.models.User import User as NgUser
+from .sponsors.models.Sponsor import Sponsor
 from .core.utils import utc_now
 
 
@@ -290,6 +291,29 @@ def admin_client(app, db_session, admin):
         sess.permanent = False
     return client
 
+@pytest.fixture
+def client_factory(app, db_session):
+    """A factory to create test clients logged in as different users."""
+
+    def _factory(user: Users):
+        # Clear any cached user data to prevent cross-test contamination
+        from CTFd.cache import cache
+
+        cache.clear()
+        user = user.ctfd_user
+
+        client = app.test_client()
+        with client.session_transaction() as sess:
+            # Completely clear the session and set only what we need
+            sess.clear()
+            sess["id"] = user.id
+            sess["name"] = user.name
+            sess["type"] = user.type
+            sess["nonce"] = generate_nonce()
+            sess.permanent = False
+        return client
+
+    return _factory
 
 @pytest.fixture
 def event_factory(db_session):
@@ -348,12 +372,14 @@ def user_factory(db_session):
     """A factory function to create User objects for tests."""
     from .user.models.User import User
 
-    def _factory(name="Test User", email="testuser@example.com", password="password", admin=False):
+    def _factory(name="Test User", email="testuser@example.com", password="password", admin=False, sponsor=None):
         user = Users(name=name, email=email, password=password)
         db_session.add(user)
         db_session.commit()
 
         ng_user = User(id=user.id)
+        if sponsor:
+            ng_user.set_sponsor(sponsor, commit=False)
         db_session.add(ng_user)
         if admin:
             assign_role_to_user(ng_user.id, RoleEnum.ADMIN)
@@ -361,6 +387,24 @@ def user_factory(db_session):
         return ng_user
 
     return _factory
+
+@pytest.fixture
+def sponsor_factory(db_session):
+    """A factory function to create Sponsor objects for tests."""
+
+
+    def _factory(**kwargs):
+        defaults = {
+            "name": "Test Sponsor",
+            "logo": "logo.png",
+        }
+        defaults.update(kwargs)
+        sponsor = Sponsor.create_sponsor(**defaults)
+        return sponsor
+
+    return _factory
+
+
 
 
 @pytest.fixture
