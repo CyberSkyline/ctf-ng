@@ -84,6 +84,28 @@ services:
       - ./frontend:/app/frontend
       - ./node_modules:/app/node_modules
 
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: ng-minio
+    restart: always
+    ports:
+      - "9000:9000"   # MinIO API
+      - "9001:9001"   # MinIO Console (Web UI)
+    environment:
+      MINIO_ROOT_USER: ctfd-dev
+      MINIO_ROOT_PASSWORD: ctfd-dev-secret-key-12345
+    volumes:
+      - .data/minio:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - default
+      - internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
 networks:
     default:
     internal:
