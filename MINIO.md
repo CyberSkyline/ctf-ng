@@ -1,6 +1,6 @@
 # MinIO Setup for Development
 
-MinIO provides S3-compatible storage for local development without requiring AWS credentials or incurring costs.
+MinIO provides S3 compatible storage for local development without requiring AWS credentials or incurring costs.
 
 ## Quick Setup
 
@@ -15,7 +15,7 @@ This command will:
 2. Create the `ctfd-uploads` bucket
 3. Configure public access for presigned URLs
 
-✅ Done! Your MinIO storage is ready.
+Done! Your MinIO storage is ready.
 
 ### Option 2: Manual Setup
 
@@ -34,7 +34,7 @@ If the automated setup fails:
 
 4. **Create bucket:**
    - Click "Create Bucket"
-   - Name it `ctfd-uploads`
+   - Name it `whatever-yah-want`
    - Keep default settings
 
 5. **Set bucket policy:**
@@ -44,20 +44,18 @@ If the automated setup fails:
 
 ## Configuration
 
-### For Team Members
-
 Add these fields to your `.env.dev` file:
 
 ```bash
 # MinIO Configuration
-MINIO_ACCESS_KEY=ctfd-dev
-MINIO_SECRET_KEY=ctfd-dev-secret-key-12345
+MINIO_ACCESS_KEY=make-a-key
+MINIO_SECRET_KEY=make-a-secret-key
 MINIO_ENDPOINT=http://minio:9000
-MINIO_BUCKET=ctfd-uploads
+MINIO_BUCKET=make-a-bucket-name
 
-# AWS S3 Configuration (if you want to test with real AWS)
-AWS_S3_ACCESS_KEY_ID=your-aws-key-here
-AWS_S3_SECRET_ACCESS_KEY=your-aws-secret-here
+# AWS S3 Configuration (if you want to use real AWS in dev)
+AWS_S3_ACCESS_KEY_ID=your-aws-access-key
+AWS_S3_SECRET_ACCESS_KEY=your-super-secret-aws-key
 AWS_S3_BUCKET_NAME=your-bucket-name
 ```
 
@@ -67,7 +65,8 @@ The docker-compose.yaml file sets up MinIO with these default credentials:
 - **Username:** ctfd-dev
 - **Password:** ctfd-dev-secret-key-12345
 
-These are shared development credentials - everyone uses the same ones, but data is isolated per developer's machine.
+These are shared development credentials - everyone uses the same ones, 
+but data is isolated per developer's machine.
 
 ## Usage
 
@@ -83,8 +82,6 @@ npm run start-aws
 # Production (always uses AWS)
 npm run start-prod
 ```
-
-The `npm start` command now defaults to using MinIO. To test with real AWS S3, use `npm run start-aws`.
 
 ## How It Works
 
@@ -104,16 +101,6 @@ The backend service (`s3_upload_service.py`) checks the `USE_MINIO` environment 
 2. If `USE_MINIO=false` or not set:
    - Use AWS S3
    - Disable uploads if not configured
-
-## Verifying Setup
-
-### Test Upload
-
-After setup, test by uploading an image to a support ticket:
-
-1. Create a support ticket
-2. Upload a WebP image
-3. Check the console logs for: `"File uploaded successfully to minio"`
 
 ### MinIO Web Console
 
@@ -182,28 +169,6 @@ rm -rf .data/minio
 docker compose up -d minio
 npm run minio  # Re-run setup
 ```
-
-## Production Deployment
-
-In production, you'll typically use real AWS S3. The plugin supports both:
-
-1. **Self-hosted with MinIO:**
-   - Deploy MinIO in production
-   - Use same configuration approach
-   - Consider MinIO clusters for high availability
-
-2. **Cloud with AWS S3:**
-   - Set `USE_MINIO=false` or remove it
-   - Configure real AWS credentials
-   - Ensure S3 bucket exists with proper permissions
-
-## Security Notes
-
-⚠️ **Development Only:** The default credentials are for development only. In production:
-- Use strong, unique credentials
-- Store credentials securely (environment variables, secrets manager)
-- Enable MinIO TLS/HTTPS
-- Configure proper access policies
 
 ## Additional Resources
 
