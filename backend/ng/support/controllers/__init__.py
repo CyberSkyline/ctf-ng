@@ -26,6 +26,7 @@ from .admin_actions import (
     remove_ticket_event,
     set_ticket_challenge,
     remove_ticket_challenge,
+    search_ticket_attachments,
 )
 
 __all__ = [
@@ -51,4 +52,5 @@ __all__ = [
     "remove_ticket_event",
     "set_ticket_challenge",
     "remove_ticket_challenge",
+    "search_ticket_attachments",
 ]
