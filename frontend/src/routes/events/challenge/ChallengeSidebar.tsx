@@ -15,7 +15,7 @@ import { ErrorCallout } from 'components/Callouts';
 import ChallengeIcon from 'components/ChallengeIcon';
 import RadixMarkdown from 'components/RadixMarkdown';
 import { groupBy } from 'lodash';
-import { TbArrowLeft, TbDotsVertical } from 'react-icons/tb';
+import { TbArrowLeft } from 'react-icons/tb';
 import { Link, useParams } from 'react-router';
 import ChallengeHeader from './ChallengeHeader';
 import ChallengeQuestion from './ChallengeQuestion';
@@ -90,9 +90,6 @@ export default function ChallengeSidebar() {
             {challenge && event && granted && (
               <Flex direction="row" gap="2" mt="3" align="center">
                 <ConnectModal eventId={event.id} challengeId={challenge.id} />
-                <Button variant="ghost" className="!m-0 !p-2" color="gray">
-                  <TbDotsVertical />
-                </Button>
               </Flex>
             )}
           </ChallengeHeader>
