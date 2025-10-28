@@ -117,8 +117,9 @@ class ContainerInstance(db.Model):
 
         # Get bridge network and remove to isolate challenge containers
         # From reaching out
-        net = client.networks.list(names=[DOCKER_BRIDGE])
-        net[0].disconnect(ctr)
+        net = client.networks.list(names=[f"^{DOCKER_BRIDGE}$"])
+        if net[0]:
+            net[0].disconnect(ctr)
 
         return ctr
 
@@ -126,16 +127,34 @@ class ContainerInstance(db.Model):
     def connect_networks(client: Client, team: Team, blueprint_obj: ContainerBlueprint, ctr):
         if blueprint_obj.networks:
             for network in blueprint_obj.networks:
+                netconf = blueprint_obj.netconfs[network] or None
+                is_static_net = not isinstance(blueprint_obj.networks, list)
+
                 networkname = ContainerInstance.render_network_name(team.id, network, blueprint_obj.challenge_id)
-                net_exists = client.networks.list(names=[f"^{networkname}$"])
-                if len(net_exists) == 0:
-                    net = client.networks.create(name=networkname, internal=True, attachable=True)
-                    net.connect(ctr, aliases=[blueprint_obj.hostname])
+                net_exists = client.get_network_by_name(networkname)
+                if not net_exists:
+                    ipam = None
+                    if netconf.ipam:
+                        ipam_pools = [
+                            docker.types.IPAMPool(subnet=pool.subnet) for pool in netconf.ipam.config
+                        ]
+                        ipam = docker.types.IPAMConfig(pool_configs=ipam_pools)
+
+                    net = client.networks.create(name=networkname, driver="overlay", internal=True, attachable=True, ipam=ipam)
+
+                    ipaddr = None
+                    if is_static_net and blueprint_obj.networks[network]:
+                        ipaddr = blueprint_obj.networks[network].ipv4_address or None
+
+                    net.connect(ctr, aliases=[blueprint_obj.hostname], ipv4_address=ipaddr)
 
                 else:
                     ## Network was created for another container apart of the challenge
                     try:
-                        net_exists[0].connect(ctr, aliases=[blueprint_obj.hostname])
+                        ipaddr = None
+                        if is_static_net and blueprint_obj.networks[network]:
+                            ipaddr = blueprint_obj.networks[network].ipv4_address
+                        net_exists.connect(ctr, aliases=[blueprint_obj.hostname], ipv4_address=ipaddr)
                     except docker.errors.APIError as err:
                         # Check if container is already connected to the network
                         if not re.search("endpoint.*already exists in", str(err)):

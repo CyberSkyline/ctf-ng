@@ -16,7 +16,13 @@ class Client(docker.DockerClient):
         return ctr
 
     def get_network_by_name(self, network_name: str):
-        return self.networks.list(names=[f"^{network_name}$"])[0]
+        # swarm networks and local networks get filtered differently
+        # Have to patch the util function to properly get a network by name
+        matches = self.networks.list(names=[f"{network_name}"])
+        for match in matches:
+            if match.name == network_name:
+                return match
+
 
     def get_ecr_credentials(self):
         """Get AWS ECR login credentials using boto3"""
