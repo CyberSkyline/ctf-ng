@@ -20,8 +20,8 @@ import { Link, useParams } from 'react-router';
 import ChallengeHeader from './ChallengeHeader';
 import ChallengeQuestion from './ChallengeQuestion';
 import ConnectModal from './ConnectModal';
-import FeedbackModal from './FeedbackModal';
 import HintsModal from './HintsModal';
+import HistoryModal from './HistoryModal';
 
 export default function ChallengeSidebar() {
   const { idEvent, idChallenge } = useParams();
@@ -61,7 +61,7 @@ export default function ChallengeSidebar() {
 
               <Box flexShrink="0">
                 {hints && hints.length > 0 && <HintsModal eventId={Number(idEvent)} challengeId={Number(idChallenge)} />}
-                <FeedbackModal />
+                {event && attempts && <HistoryModal isTeam={event.max_team_size > 1} attempts={attempts} />}
               </Box>
             </Flex>
 
