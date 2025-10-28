@@ -6,9 +6,10 @@ import Modal from 'components/Modal';
 import { useState } from 'react';
 import { TbCheck, TbPlayerPlay, TbRotateClockwise } from 'react-icons/tb';
 
-export default function ConnectModal({ eventId, challengeId }: {
+export default function ConnectModal({ eventId, challengeId, isTeam }: {
   eventId: number;
   challengeId: number;
+  isTeam: boolean;
 }) {
   const {
     data : currentChallenge, isValidating, error,
@@ -38,8 +39,7 @@ export default function ConnectModal({ eventId, challengeId }: {
         </Button>
         <Modal
           title="Reset challenge?"
-          description="The current challenge instance will be destroyed and a new one
-          will be created. Progress outside of your own workspace machine may be lost."
+          description={`The challenge will be reset to its initial state${isTeam ? ' for all players on your team' : ''}.`}
           trigger={(
             <Button variant="ghost" className="!m-0" color={COLOR_NEGATIVE}>
               <TbRotateClockwise />
