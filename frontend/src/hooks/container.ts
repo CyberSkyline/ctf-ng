@@ -15,6 +15,14 @@ export function connectWorkspace(eventId: number, challengeId: number) {
   });
 }
 
+export function recycleChallengeContainers(eventId: number, challengeId: number) {
+  return apiMutation(`/events/${eventId}/challenge/${challengeId}/containers/recycle`, undefined, {
+    method : 'POST',
+  }).then(() => {
+    mutate('/container/me/current_challenge');
+  });
+}
+
 /* ADMIN ENDPOINTS */
 
 export function useAllDeployments() {
