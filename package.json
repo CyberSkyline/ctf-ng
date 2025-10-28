@@ -17,7 +17,7 @@
   "workspaces": [
     "backend",
     "frontend",
-    "services/exec-service"
+    "exec-service"
   ],
   "scripts": {
     "aws-login": ".bin/aws_login.sh $1",
