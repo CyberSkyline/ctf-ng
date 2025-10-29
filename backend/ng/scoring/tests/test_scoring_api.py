@@ -415,6 +415,45 @@ class TestUserScoringEndpoints:
         data = response.get_json()
         assert data["success"] is False
 
+    def test_redeem_hint_hints_disabled(
+        self,
+        started_player_client,
+        challenge_factory,
+        hint_factory,
+        event
+    ):
+        """Test that hints can't be redeemed when hints are disabled"""
+        # Get the CSRF token (nonce) from the session
+        with started_player_client.session_transaction() as sess:
+            nonce = sess.get("nonce")
+
+        challenge = challenge_factory(event_id=1)
+        challenge.event.hints_enabled = False
+        hint = hint_factory(challenge_id=challenge.id)
+
+        response = started_player_client.post(
+            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/hint/{hint.id}/redeem", data={"nonce": nonce}
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+
+    def test_challenge_endpoint_hints_disabled(self, started_player_client, challenge_factory, hint_factory):
+        """
+        Test that no hints are returned through challenge endpoint when hints are disabled
+        """
+        challenge = challenge_factory(event_id=1)
+        challenge.event.hints_enabled = False
+
+        hint = hint_factory(challenge_id=challenge.id)
+        response = started_player_client.get(f"/ng/events/{challenge.event_id}/challenges/{challenge.id}")
+
+        assert response.status_code == 200
+        data = response.get_json()
+
+        hints = data["data"]["hints"]
+        assert len(hints) == 0
 
     def test_hint_visibility_through_challenge_endpoint(self, started_player_client, challenge_factory, hint_factory):
         """

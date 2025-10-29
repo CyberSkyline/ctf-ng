@@ -305,6 +305,7 @@ def event_factory(db_session):
             "start_time": utc_now() - timedelta(days=1),
             "end_time": utc_now() + timedelta(days=1),
             "time_limit_minutes": 120,
+            "hints_enabled": True,
         }
         defaults.update(kwargs)
         event = Event.create_event(**defaults)
@@ -504,6 +505,7 @@ def event(db_session):
         description="A test event.",
         max_team_size=4,
         locked=False,
+        hints_enabled=True,
     )
     db_session.add(event)
     db_session.flush()
@@ -519,6 +521,7 @@ def locked_event(db_session):
         name="Locked Event",
         description="This event is locked",
         locked=True,
+        hints_enabled=True,
         start_time=utc_now() - timedelta(days=10),
         end_time=utc_now() - timedelta(days=5),
     )
