@@ -68,12 +68,16 @@ test-announcements:
 
 test-emails:
 	$(PYTHON_EXEC) -m pytest emails/tests -v
+
+test-sponsors:
+	$(PYTHON_EXEC) -m pytest sponsors/tests -v
 		
 test-middleware:
 	$(PYTHON_EXEC) -m pytest -m middleware . -v
 
 test-utils:
 	$(PYTHON_EXEC) -m pytest ./core/tests/system/ -v
+
 
 
 .PHONY: check fix format test-all test-routes test-models test-validation test-controllers test-api test-team test-event test-admin test-user test-support test-utils test-fast test-middleware test-event-registration test-scoring find-TODO
