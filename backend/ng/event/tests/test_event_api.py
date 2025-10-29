@@ -852,6 +852,32 @@ class Test_Event_Team_Management:
         data = response.get_json()
         assert data["success"] is True
 
+    def test_leaving_user_can_reregister(
+        self,
+        logged_in_client,
+        user,
+        event_factory,
+        team_factory
+    ):
+        """Test that a user who leaves a team can re-register for the event."""
+        event = event_factory(name = "Reregister Test Event", public = True)
+        team = team_factory(event = event, members = [user])
+
+        response = logged_in_client.post(
+            f"/ng/events/{event.id}/me/team/leave",
+            json = {}
+        )
+        assert response.status_code == 200
+
+        response = logged_in_client.post(
+            f"/ng/events/{event.id}/me/register",
+            json = {"team_name": "New Team Name"},
+        )
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["name"] == "New Team Name"
+
     def test_update_name(self, team_captain_client):
         """Test that the team name can be updated."""
         new_name = "Updated Team Name"

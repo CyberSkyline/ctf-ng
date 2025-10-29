@@ -43,6 +43,24 @@ def test_teamdetail_update_invalid_name(admin_client, event, team_factory, user)
     data = response.get_json()
     assert data['errors']['validation'] == "Team name cannot include a member's name."
 
+def test_teamdetail_update_event_timestamps(admin_client, event, team_factory, user):
+    """Test that the team detail endpoint can update event timestamps of a team."""
+    team = team_factory(event=event, members=[user])
+    new_start_timestamp = "2024-01-01T12:00:00Z"
+    new_end_time = "2024-12-31T12:00:00Z"
+    response = admin_client.put(
+        f"/ng/admin/teams/{team.id}",
+        json={
+            "start_timestamp": new_start_timestamp,
+            "end_time": new_end_time
+        }
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['data']["start_timestamp"] == new_start_timestamp
+    assert data['data']["end_time"] == new_end_time
+    assert data['success']
+
 def test_update_team_ranked_status(admin_client, event, team_factory, user):
     """Test that the team detail endpoint can update the ranked status of a team."""
     team = team_factory(event=event, members=[user], ranked=False)
