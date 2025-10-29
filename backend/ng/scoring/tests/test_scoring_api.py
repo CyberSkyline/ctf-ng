@@ -441,19 +441,28 @@ class TestUserScoringEndpoints:
 
     def test_challenge_endpoint_hints_disabled(self, started_player_client, challenge_factory, hint_factory):
         """
-        Test that no hints are returned through challenge endpoint when hints are disabled
+        Test that no hints are returned through challenge endpoint when hints are disabled,
+        and that they are returned again when enabled
         """
         challenge = challenge_factory(event_id=1)
         challenge.event.hints_enabled = False
+        hint_factory(challenge_id=challenge.id)
 
-        hint = hint_factory(challenge_id=challenge.id)
         response = started_player_client.get(f"/ng/events/{challenge.event_id}/challenges/{challenge.id}")
 
         assert response.status_code == 200
         data = response.get_json()
-
         hints = data["data"]["hints"]
         assert len(hints) == 0
+
+        challenge.event.hints_enabled = True
+        response = started_player_client.get(f"/ng/events/{challenge.event_id}/challenges/{challenge.id}")
+
+        assert response.status_code == 200
+        data = response.get_json()
+        hints = data["data"]["hints"]
+        assert len(hints) == 1
+
 
     def test_hint_visibility_through_challenge_endpoint(self, started_player_client, challenge_factory, hint_factory):
         """
