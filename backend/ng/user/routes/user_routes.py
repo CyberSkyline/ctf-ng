@@ -109,11 +109,11 @@ class UserSponsor(Resource):
     def put(self, current_user, json_data, **kwargs):
         """Update my sponsor information"""
 
-        sponsor = json_data.get("sponsor")
-        if not sponsor:
+        sponsor_id = json_data.get("sponsor_id")
+        if not sponsor_id:
             return {"success": False, "errors": {"sponsor": "Sponsor data is required"}}, 400
 
-        sponsor = Sponsor.find_by_name(sponsor)
+        sponsor = Sponsor.find_by_id(sponsor_id)
         if not sponsor:
             return {"success": False, "errors": {"sponsor": "Sponsor not found"}}, 404
 

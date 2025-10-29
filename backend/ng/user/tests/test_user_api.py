@@ -342,7 +342,7 @@ def test_update_user_sponsor(client_factory,user_factory, sponsor_factory):
     sponsor = sponsor_factory(name="New Sponsor", logo="https://www.ndow.org/wp-content/uploads/2021/10/branta_canadensis-scaled.jpeg")
     client = client_factory(user=user)
 
-    response = client.put("/ng/users/me/sponsor", json={"sponsor": "New Sponsor"})
+    response = client.put("/ng/users/me/sponsor", json={"sponsor_id": sponsor.id})
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"] is True
@@ -355,7 +355,7 @@ def test_update_user_sponsor_not_found(client_factory,user_factory):
     user = user_factory(name="updatesponsoruser", email="updatesponsoruser@example.com")
     client = client_factory(user=user)
 
-    response = client.put("/ng/users/me/sponsor", json={"sponsor": "Nonexistent Sponsor"})
+    response = client.put("/ng/users/me/sponsor", json={"sponsor_id": 9999})
     assert response.status_code == 404
     data = response.get_json()
     assert data["success"] is False

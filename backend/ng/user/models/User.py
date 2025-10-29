@@ -60,7 +60,7 @@ class User(db.Model):
                 "email": "",
                 "role": "unknown",
                 "registered_at": "",
-                "affiliation": self.affiliation.name if self.affiliation else "",
+                "affiliation": self.affiliation.serialize() if self.affiliation else None,
             }
 
         if include_admin_fields:
@@ -70,14 +70,15 @@ class User(db.Model):
                 "email": self.ctfd_user.email,
                 "roles": [role.name for role in self.roles],
                 "registered_at": self.ctfd_user.created.isoformat() + "Z",
+                "affiliation": self.affiliation.serialize(include_admin_fields=True) if self.affiliation else None,
             }
         return {
             "id": self.id,
             "name": self.ctfd_user.name,
             "email": self.ctfd_user.email,
             "registered_at": self.ctfd_user.created.isoformat() + "Z",
-            "affiliation": self.affiliation.name if self.affiliation else "",
-            }
+            "affiliation": self.affiliation.serialize() if self.affiliation else None,
+        }
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:

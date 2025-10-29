@@ -20,9 +20,8 @@ class Sponsor(db.Model):
         data =  {
             "id": self.id,
             "name": self.name,
+            "logo": self.logo,
         }
-        if include_admin_fields:
-            data["logo"] = self.logo
         return data
 
     @classmethod
