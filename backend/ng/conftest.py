@@ -315,6 +315,7 @@ def client_factory(app, db_session):
 
     return _factory
 
+
 @pytest.fixture
 def event_factory(db_session):
     """A factory function to create Event objects for tests."""
@@ -329,6 +330,7 @@ def event_factory(db_session):
             "start_time": utc_now() - timedelta(days=1),
             "end_time": utc_now() + timedelta(days=1),
             "time_limit_minutes": 120,
+            "allowed_domains": [],
             "hints_enabled": True,
         }
         defaults.update(kwargs)
