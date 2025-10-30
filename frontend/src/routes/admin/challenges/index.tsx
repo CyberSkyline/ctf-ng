@@ -23,7 +23,7 @@ const colDefs: ColDef<Challenge>[] = [
         <span className="min-w-0 overflow-hidden text-ellipsis">{params.value}</span>
       </>
     ),
-    cellClass : '!flex flex-row items-center gap-1 ',
+    cellClass : '!flex flex-row items-center gap-1',
     filter : true,
     floatingFilter : true,
   },

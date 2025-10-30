@@ -175,7 +175,7 @@ class Challenge(db.Model):
         data = {
             "challenge": self.serialize(),
             "questions": Question.query.filter_by(challenge_id=self.id).all(),
-            "hints": [hint.serialize(team=team) for hint in hints],
+            "hints": [hint.serialize(team=team) for hint in hints] if self.event.hints_enabled else [],
             "attempts": Attempt.query.filter_by(
                 team_id=team.id,
                 challenge_id=self.id

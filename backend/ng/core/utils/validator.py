@@ -445,5 +445,30 @@ class BaseValidator:
             )
             return
 
+    @validation_field
+    def validate_url(
+        self,
+        data: dict[str, Any],
+        field: str,
+        required: bool = False,
+        friendly_name: str | None = None,
+        value: Any = None,  # Injected by decorator
+    ) -> None:
+        """
+        Validate a URL string.
+        """
+        from urllib.parse import urlparse
+
+        if not isinstance(value, str):
+            self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_STRING.format(field=friendly_name)
+            return
+
+        parsed = urlparse(value)
+        if not all([parsed.scheme, parsed.netloc]):
+            self.errors[field] = f"{friendly_name} must be a valid URL"
+            return
+
+        self._add_parsed_data(field, value)
+
 
 

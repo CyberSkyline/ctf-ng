@@ -26,8 +26,6 @@
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
     "build": "cd ./frontend && vite build",
-    "start-prod": "pnpm build && ENV_FILE=.env.prod docker compose -f docker-compose.prod.yaml up --build",
-    "start-staging": "pnpm build && ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up --build",
     "start": "ENV_FILE=.env.dev docker compose -f docker-compose.yaml up --build",
     "stop": "docker compose down",
     "reload": "docker exec -it ng-ctfd supervisorctl restart ctfd",
@@ -41,7 +39,19 @@
     "support-test": "docker compose -f websockets/docker-compose.yml.support up --build",
     "support-down": "docker compose -f websockets/docker-compose.yml.support down",
     "sql": "docker exec -i -t ng-db mariadb --user=ctfd --password=ctfd ctfd",
-    "postinstall": ".bin/sync_env.sh"
+    "postinstall": ".bin/sync_env.sh",
+    "swarm-build:ctfd": "docker build -t ctfd-ng:latest -f ./dockerfiles/ctfd.Dockerfile .",
+    "swarm-build:vite": "docker build -t vite-ng:latest -f ./dockerfiles/vite.Dockerfile .",
+    "swarm-build:all": "pnpm swarm-build:ctfd && pnpm swarm-build:vite",
+    "swarm-start": "pnpm swarm-deploy",
+    "swarm-deploy": "pnpm build && pnpm swarm-build:all && ENV_FILE=.env.prod docker stack deploy -c docker-compose.prod.yaml ctf-ng",
+    "swarm-remove": "docker stack rm ctf-ng",
+    "swarm-services": "docker stack services ctf-ng",
+    "swarm-ps": "docker stack ps ctf-ng",
+    "swarm-logs": "docker service logs --tail=100 -f ctf-ng_ctfd",
+    "swarm-logs-nginx": "docker service logs --tail=100 -f ctf-ng_nginx",
+    "swarm-logs-vite": "docker service logs --tail=100 -f ctf-ng_vite",
+    "swarm-update": "pnpm build && pnpm swarm-build:all && docker service update --force ctf-ng_ctfd"
   },
   "packageManager": "pnpm@10.17.1"
 }

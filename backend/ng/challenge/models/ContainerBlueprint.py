@@ -44,6 +44,7 @@ class ContainerBlueprint(db.Model):
         """
         return {
             "id": self.id,
+            "name": self.name,
             "image": self.image,
             "hostname": self.hostname,
             "stdin_open": self.stdin_open,
@@ -117,6 +118,7 @@ class ContainerBlueprint(db.Model):
     @classmethod
     def create_container_blueprint(
         cls,
+        name: str,
         image: str,
         hostname: str,
         challenge_id: int,
@@ -136,6 +138,7 @@ class ContainerBlueprint(db.Model):
         try:
             ## Removed the validator as it currently does not support lists
             validated_data = {
+                    "name": name,
                     "image": image,
                     "hostname": hostname,
                     "challenge_id": challenge_id,

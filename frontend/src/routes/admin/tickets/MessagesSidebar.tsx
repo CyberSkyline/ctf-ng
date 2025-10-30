@@ -38,6 +38,7 @@ import RichTextEditor from 'components/RichTextEditor';
 import { StatusBadge } from 'components/StatusBadge';
 import TicketMessagesCard from 'components/TicketMessagesCard';
 import {
+  chain,
   includes,
   isNil,
   isUndefined,
@@ -309,18 +310,23 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
               >
                 <Select.Trigger />
                 <Select.Content position="popper">
-                  {map(allTags, ({ id, name, color }) => (
-                    <Select.Item key={id} value={String(id)}>
-                      <Flex gap="1" className="items-center">
-                        <Box
-                          width="12px"
-                          height="12px"
-                          style={{ backgroundColor : color }}
-                        />
-                        {name}
-                      </Flex>
-                    </Select.Item>
-                  ))}
+                  {
+                    chain(allTags)
+                      .pickBy(({ id }) => !tags.some((t) => t.id === id))
+                      .map(({ id, name, color }) => (
+                        <Select.Item key={id} value={String(id)}>
+                          <Flex gap="1" className="items-center">
+                            <Box
+                              width="12px"
+                              height="12px"
+                              style={{ backgroundColor : color }}
+                            />
+                            {name}
+                          </Flex>
+                        </Select.Item>
+                      ))
+                      .value()
+                  }
                 </Select.Content>
               </Select.Root>
               <Button

@@ -2,10 +2,13 @@
 Creates a new support ticket with initial message.
 """
 
+from CTFd.models import db
+
 from ....core.exceptions import NotFoundError
 from ....user.models.User import User
 from ....team.models.Team import Team
 from ...models.Ticket import Ticket
+from ...models.TicketMessage import TicketMessage
 from ....notifications.services import NotificationService
 from ....emails.services import TicketEmailService
 
@@ -27,30 +30,38 @@ def create_ticket(
             raise NotFoundError(f"User not found in any team for event {event_id}")
         team_id = team.id
 
-    ticket = Ticket.create_ticket(
-        subject=subject,
-        author_id=current_user.id,
-        event_id=event_id,
-        team_id=team_id,
-        challenge_id=challenge_id,
-        commit=True,
-    )
+    try:
+        # Create ticket without committing
+        ticket = Ticket.create_ticket(
+            subject=subject,
+            author_id=current_user.id,
+            event_id=event_id,
+            team_id=team_id,
+            challenge_id=challenge_id,
+            commit=False,
+            flush=True,
+        )
 
-    ticket.add_message(
-        text=text,
-        author_id=current_user.id,
-        is_admin=False,
-        commit=True,
-    )
+        # Create initial message without committing
+        TicketMessage.create_message(
+            text=text,
+            ticket_id=ticket.id,
+            author_id=current_user.id,
+            commit=False,
+        )
 
-    # WebSocket refetch notification (no DB notifications)
+        # Commit both together
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
     NotificationService.notify_new_ticket(
         ticket_id=ticket.id,
         author_id=current_user.id,
         subject=subject,
     )
 
-    # Send email to admin support inbox
     TicketEmailService.send_new_ticket_email(ticket=ticket)
 
     return ticket
