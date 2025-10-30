@@ -790,6 +790,7 @@ def challenge_factory(db_session, event_factory):
                 points=100 * (i + 1),
                 placeholder=f"placeholder_{i + 1}",
                 max_attempts=3,
+                index=i,
             )
             db_session.add(question)
         db_session.commit()
@@ -828,7 +829,7 @@ def question(db_session, challenge):
     from .challenge.models.Question import Question
 
     question = Question(
-        challenge_id=challenge.id, name="Test Question", body="What is 2+2?", answer="4", points=100, max_attempts=5
+        index=0, challenge_id=challenge.id, name="Test Question", body="What is 2+2?", answer="4", points=100, max_attempts=5
     )
     db_session.add(question)
     db_session.commit()
@@ -841,7 +842,7 @@ def hint(db_session, challenge):
     from .challenge.models.Hint import Hint
 
     hint = Hint(
-        challenge_id=challenge.id, preview="Single digit hint", body="The answer is a single digit", deduction=20
+        challenge_id=challenge.id, preview="Single digit hint", body="The answer is a single digit", deduction=20, index=0
     )
     db_session.add(hint)
     db_session.commit()
@@ -882,6 +883,7 @@ def hint_factory(db_session):
             "preview": kwargs.get("preview", "Test preview"),
             "body": kwargs.get("body", "Test body"),
             "deduction": kwargs.get("deduction", 10),
+            "index": kwargs.get("index", 0),
         }
         defaults.update(kwargs)
 
@@ -1103,6 +1105,7 @@ def question_factory(db_session, challenge_factory: Callable[[], Challenge]):
 
         defaults = {
             "challenge_id": challenge.id,
+            "index": count - 1,
             "name": f"Test Question {count} for Challenge {challenge.id}",
             "body": f"test question body_{count}",
             "points": 100 * count,
@@ -1114,6 +1117,7 @@ def question_factory(db_session, challenge_factory: Callable[[], Challenge]):
         else:
             defaults['answer_variable_id'] = answer_variable.id
         defaults.update(kwargs)
+        print(defaults)
         question = Question(**defaults)
         db_session.add(question)
         db_session.commit()

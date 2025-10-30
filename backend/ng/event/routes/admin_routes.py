@@ -1,16 +1,13 @@
 """
 User Routes for Event Operations
 """
-import multiprocessing
 from flask_restx import Namespace, Resource
 
 from ...core.utils import success_response
-from ...core.utils.emitters import emit_to_user
 
 from ...core.middleware.loaders import (
     LoaderType,
     load_event,
-    load_challenge,
     load_user,
 )
 from ...core.middleware import (
@@ -18,11 +15,8 @@ from ...core.middleware import (
 )
 from ..controllers import (
     join_event_controller,
-    import_challenge_from_yaml,
 )
 from ...event.models.Event import Event
-from ...challenge.models.Challenge import Challenge
-from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 
 
 
@@ -238,87 +232,3 @@ class EventChallenges(Resource):
         """
         challenges = event.get_all_challenges()
         return success_response(challenges)
-
-    @events_admin_namespace.doc(
-        description="Create a challenge for an event using YAML configuration",
-        params={
-            "name": {
-                "description": "Challenge name",
-                "in": "body",
-                "required": True,
-            "type": "string",
-            "example": "Web Security Challenge"
-        },
-        "description": {
-            "description": "Challenge description and instructions",
-            "in": "body",
-            "required": True,
-            "type": "string",
-            "example": "Find the vulnerability in this web application"
-        },
-        "value": {
-            "description": "Point value for the challenge",
-            "in": "body",
-            "required": True,
-            "type": "integer",
-            "example": 100
-        },
-        "category": {
-            "description": "Challenge category",
-            "in": "body",
-            "required": True,
-            "type": "string",
-            "example": "Web"
-        }
-    },
-    responses={
-        200: "Success - Challenge created successfully",
-        400: "Bad request - Invalid challenge data",
-        404: "Not found - Event does not exist",
-        403: "Forbidden - Admin access required",
-        500: "Internal Server Error",
-    },
-)
-    @admin_endpoint(json_required = True)
-    @load_event(source = LoaderType.PARAM)
-    def post(self, event_id, event, json_data, **kwargs):
-        """
-        Create a challenge for an event
-        """
-        challenge = import_challenge_from_yaml(event, json_data)
-        return success_response(challenge)
-
-@events_admin_namespace.route("/<int:event_id>/challenge/<int:challenge_id>/pull")
-class PullImages(Resource):
-    @events_admin_namespace.doc(
-        description="Pull all container images for a given challenge, Status of images returned via websockets",
-        responses={
-            200: "Success - Returns true",
-            404: "Not found - Event does not exist",
-            403: "Forbidden - Admin access required",
-            500: "Internal Server Error",
-        },
-    )
-    @admin_endpoint()
-    @load_challenge(source=LoaderType.PARAM)
-    def get(self, challenge: Challenge, current_user, **kwargs):
-        blueprints = ContainerBlueprint.get_for_challenge(challenge.id)
-        for blueprint in blueprints:
-            # Will emit a websocket event to the user
-            # On pull or fail
-            def background_task(blueprint, current_user):
-                try:
-                    blueprint.pull_image()
-                    emit_to_user(
-                        "pull-success",
-                        { "id" : blueprint.id, "image": blueprint.image },
-                        current_user
-                    )
-                except Exception as err:
-                    emit_to_user("pull-fail", {"error": str(err)}, current_user)
-
-
-            proc = multiprocessing.Process(target=background_task, args=(blueprint, current_user))
-            proc.start()
-
-        return success_response(True)

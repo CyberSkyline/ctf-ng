@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, NotRequired, TypedDict
 
 from CTFd.models import db
 from sqlalchemy.orm import Mapped
@@ -19,9 +19,21 @@ MAX_QUESTION_NAME_LENGTH = 256
 MAX_QUESTION_BODY_LENGTH = 1024
 MAX_QUESTION_ANSWER_LENGTH = 512
 
+class SerializedQuestion(TypedDict):
+    id: int
+    index: int
+    name: str
+    body: str
+    points: int
+    answer: NotRequired[str | None]
+    placeholder: str
+    max_attempts: int
+    challenge_id: int
+
 class Question(db.Model):
     __tablename__ = "ng_challenge_questions"
     id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    index: Mapped[int] = db.Column(db.Integer, nullable=False)
     name: Mapped[str] = db.Column(db.String(MAX_QUESTION_NAME_LENGTH), nullable=False)
     body: Mapped[str] = db.Column(db.String(MAX_QUESTION_BODY_LENGTH), nullable=False)
     points: Mapped[int] = db.Column(db.Integer, nullable=False)
@@ -32,28 +44,32 @@ class Question(db.Model):
     max_attempts: Mapped[int] = db.Column(db.Integer, nullable=False)
     challenge_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
 
-    challenge: Challenge = db.relationship("Challenge", back_populates="questions")
-    answer_variable: ChallengeVariable | None = db.relationship("ChallengeVariable", back_populates="question")
+    challenge: Mapped[Challenge] = db.relationship("Challenge", back_populates="questions")
+    answer_variable: Mapped[ChallengeVariable | None] = db.relationship("ChallengeVariable", back_populates="question")
 
     def __repr__(self):
         return f"<NgChallengeQuestion {self.id}, name={self.name}, points={self.points}>"
 
 
-    def serialize(self, include_admin_fields=False) -> dict[str, Any]:
+    def serialize(self, include_admin_fields=False) -> SerializedQuestion:
         """
         Serialize the question to a dictionary.
         :return: A dictionary representation of the question.
         """
-        return {
+        data: SerializedQuestion = {
             "id": self.id,
+            "index": self.index,
             "name": self.name,
             "body": self.body,
             "points": self.points,
-            "answer": self.answer,
             "placeholder": self.placeholder or "",
             "max_attempts": self.max_attempts,
             "challenge_id": self.challenge_id,
         }
+        if include_admin_fields:
+            data["answer"] = self.answer_variable.template if self.answer_variable else self.answer
+
+        return data
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
@@ -93,7 +109,13 @@ class Question(db.Model):
                 required=templated,
                 friendly_name="Answer Variable ID",
             )
-
+        validator.validate_integer(
+            data,
+            "index",
+            min_value=0,
+            required=True,
+            friendly_name="Index",
+        )
         validator.validate_string(
             data,
             "name",
@@ -141,6 +163,7 @@ class Question(db.Model):
     @classmethod
     def create_question(
         cls,
+        index: int,
         name: str,
         body: str,
         points: int,
@@ -154,6 +177,7 @@ class Question(db.Model):
         try:
             validated_data = cls.validate(
                 {
+                    "index": index,
                     "name": name,
                     "body": body,
                     "points": points,

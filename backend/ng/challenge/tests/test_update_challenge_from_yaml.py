@@ -1,9 +1,9 @@
 import base64
 import pytest
 
-from ..controllers.admin.update_challenge_from_yaml import update_challenge_from_yaml
+from ..controllers.admin import update_challenge_from_yaml
+from ..models import Challenge, ChallengeYaml, ChallengeTag, Question, ChallengeVariable, Hint
 from ...core.exceptions import ValidationError
-from ...challenge.models import Challenge, ChallengeYaml, ChallengeTag, Question, ChallengeVariable, Hint
 from ...event.models.Event import Event
 
 
@@ -24,7 +24,7 @@ class TestUpdateChallengeFromYaml:
         return event
 
     @pytest.fixture()
-    def existing_challenge(self, db_session, test_event):
+    def existing_challenge(self, db_session, test_event) -> Challenge:
         """Create an existing challenge with YAML in the database"""
         challenge = Challenge(
             event_id=test_event.id,
@@ -51,19 +51,6 @@ class TestUpdateChallengeFromYaml:
         db_session.commit()
         return challenge
 
-    @pytest.mark.parametrize("challenge_id", [999, 0, -1])
-    def test_update_nonexistent_challenge(self, db_session, challenge_id):
-        """Test updating a challenge that doesn't exist"""
-        yaml_content = """
-        x-challenge:
-          name: Test
-        """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
-
-        with pytest.raises(ValidationError, match=f"Challenge with ID {challenge_id} does not exist"):
-            update_challenge_from_yaml(challenge_id, yaml_data)
-
     @pytest.mark.parametrize("invalid_yaml", [
         # Property testing candidate: Could generate random invalid YAML strings
         # to test parser robustness during updates
@@ -72,15 +59,12 @@ class TestUpdateChallengeFromYaml:
         "not: yaml: at: all",
         "version: invalid\nchallenge:\n  name: [unclosed",
     ])
-    def test_update_challenge_invalid_yaml(self, db_session, existing_challenge, invalid_yaml):
+    def test_update_challenge_invalid_yaml(self, db_session, existing_challenge: Challenge, invalid_yaml):
         """Test updating with invalid YAML formats"""
-        encoded = base64.urlsafe_b64encode(invalid_yaml.encode()).decode()
-        yaml_data = {"yaml": encoded}
-
         with pytest.raises(ValidationError, match="Invalid YAML format"):
-            update_challenge_from_yaml(existing_challenge.id, yaml_data)
+            update_challenge_from_yaml(existing_challenge, invalid_yaml)
 
-    def test_update_challenge_basic_fields(self, db_session, existing_challenge):
+    def test_update_challenge_basic_fields(self, db_session, existing_challenge: Challenge):
         """Test updating basic challenge fields"""
         yaml_content = """
         x-challenge:
@@ -95,11 +79,8 @@ class TestUpdateChallengeFromYaml:
               answer: "4"
               max_attempts: 3
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
-
         # Act
-        result = update_challenge_from_yaml(existing_challenge.id, yaml_data)
+        result = update_challenge_from_yaml(existing_challenge, yaml_content)
 
         # Assert - verify fields were updated
         assert result.name == "Updated Challenge Name"
@@ -111,7 +92,7 @@ class TestUpdateChallengeFromYaml:
         db_session.refresh(result)
         assert result.yaml.body == yaml_content
 
-    def test_update_challenge_cannot_remove_existing_hints(self, db_session, existing_challenge):
+    def test_update_challenge_cannot_remove_existing_hints(self, db_session, existing_challenge: Challenge):
         """Test that existing hints cannot be removed during update"""
         # Add a hint to existing challenge
         hint = Hint(
@@ -119,7 +100,8 @@ class TestUpdateChallengeFromYaml:
             name="existing_hint",
             body="Existing hint text",
             preview="Preview",
-            deduction=10
+            deduction=10,
+            index=0
         )
         db_session.add(hint)
         db_session.commit()
@@ -139,13 +121,11 @@ class TestUpdateChallengeFromYaml:
               max_attempts: 3
           hints: []
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
 
         with pytest.raises(ValidationError, match="Cannot remove existing hints"):
-            update_challenge_from_yaml(existing_challenge.id, yaml_data)
+            update_challenge_from_yaml(existing_challenge, yaml_content)
 
-    def test_update_challenge_cannot_remove_existing_questions(self, db_session, existing_challenge):
+    def test_update_challenge_cannot_remove_existing_questions(self, db_session, existing_challenge: Challenge):
         """Test that existing questions cannot be removed during update"""
         # Add a question to existing challenge
         question = Question(
@@ -154,7 +134,8 @@ class TestUpdateChallengeFromYaml:
             body="What is the flag?",
             points=100,
             max_attempts=3,
-            answer="flag{test}"
+            answer="flag{test}",
+            index=0
         )
         db_session.add(question)
         db_session.commit()
@@ -173,11 +154,9 @@ class TestUpdateChallengeFromYaml:
               answer: "4"
               max_attempts: 3
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
 
         with pytest.raises(ValidationError, match="Cannot remove existing questions"):
-            update_challenge_from_yaml(existing_challenge.id, yaml_data)
+            update_challenge_from_yaml(existing_challenge, yaml_content)
 
     @pytest.mark.parametrize("existing_tags,new_tags,expected_final_tags", [
         # Property testing candidate: Could generate random tag combinations
@@ -188,7 +167,7 @@ class TestUpdateChallengeFromYaml:
         ([], ["new"], ["new"]),  # Add to empty
         (["existing"], [], []),  # Remove all
     ])
-    def test_update_challenge_tag_management(self, db_session, existing_challenge,
+    def test_update_challenge_tag_management(self, db_session, existing_challenge: Challenge,
                                            existing_tags, new_tags, expected_final_tags):
         """Test tag addition and removal during updates"""
         # Add existing tags
@@ -213,18 +192,16 @@ class TestUpdateChallengeFromYaml:
               max_attempts: 3
           tags: {tags_yaml}
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
 
         # Act
-        result = update_challenge_from_yaml(existing_challenge.id, yaml_data)
+        result = update_challenge_from_yaml(existing_challenge, yaml_content)
 
         # Assert - verify final tag state
         db_session.refresh(result)
         actual_tags = [tag.name for tag in result.tags]
         assert sorted(actual_tags) == sorted(expected_final_tags)
 
-    def test_update_challenge_add_new_service(self, db_session, existing_challenge):
+    def test_update_challenge_add_new_service(self, db_session, existing_challenge: Challenge):
         """Test adding a new container service during update"""
         yaml_content = """
         services:
@@ -247,11 +224,9 @@ class TestUpdateChallengeFromYaml:
               answer: "4"
               max_attempts: 3
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
 
         # Act
-        result = update_challenge_from_yaml(existing_challenge.id, yaml_data)
+        result = update_challenge_from_yaml(existing_challenge, yaml_content)
 
         # Assert - verify service was added
         db_session.refresh(result)
@@ -262,7 +237,7 @@ class TestUpdateChallengeFromYaml:
         assert blueprint.mem_limit == "512m"
         assert blueprint.cpus == 1.0
 
-    def test_update_challenge_with_variables_and_template_answers(self, db_session, existing_challenge):
+    def test_update_challenge_with_variables_and_template_answers(self, db_session, existing_challenge: Challenge):
         """Test updating challenge with variables and template-based answers"""
         yaml_content = """
         x-challenge:
@@ -289,11 +264,9 @@ class TestUpdateChallengeFromYaml:
               max_attempts: 5
               answer: *flag_value
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
 
         # Act
-        result = update_challenge_from_yaml(existing_challenge.id, yaml_data)
+        result = update_challenge_from_yaml(existing_challenge, yaml_content)
 
         # Assert - verify variables and questions were created correctly
         db_session.refresh(result)
@@ -310,19 +283,17 @@ class TestUpdateChallengeFromYaml:
             assert question.answer is None  # Template answers don't have direct answers
             assert question.answer_variable_id is not None  # But they reference variables
 
-    def test_update_challenge_database_rollback_on_parser_error(self, db_session, existing_challenge):
+    def test_update_challenge_database_rollback_on_parser_error(self, db_session, existing_challenge: Challenge):
         """Test that database changes are rolled back when parser fails"""
         # Get initial state
         initial_name = existing_challenge.name
 
         # Invalid YAML that will cause parser to fail
         invalid_yaml = "invalid: yaml: structure: ["
-        encoded = base64.urlsafe_b64encode(invalid_yaml.encode()).decode()
-        yaml_data = {"yaml": encoded}
 
         # Act & Assert
         with pytest.raises(ValidationError):
-            update_challenge_from_yaml(existing_challenge.id, yaml_data)
+            update_challenge_from_yaml(existing_challenge, invalid_yaml)
 
         # Verify challenge was not modified
         db_session.refresh(existing_challenge)

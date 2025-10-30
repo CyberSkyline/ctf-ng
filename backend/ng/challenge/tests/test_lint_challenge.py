@@ -531,7 +531,7 @@ class TestLintChallenge:
             assert "errors" not in result
             # Warnings might be present but that's OK
 
-    @patch('ng.event.controllers.admin.lint_challenge.parse_compose_string')
+    @patch('ng.challenge.controllers.admin.lint_challenge.parse_compose_string')
     def test_lint_challenge_parser_exception(self, mock_parse):
         """Test handling when parser raises unexpected exception"""
         # Setup mock to raise exception

@@ -22,6 +22,7 @@ def valid_question_data(challenge):
         "answer": "test_answer",
         "max_attempts": 3,
         "challenge_id": challenge.id,
+        "index": 0,
     }
 
 
@@ -242,6 +243,7 @@ class Test_Create_Question:
             "answer": "test_answer",
             "max_attempts": 3,
             "challenge_id": challenge.id,
+            "index": 0,
         }
 
         with pytest.raises(ValidationError):
@@ -258,6 +260,7 @@ class Test_Create_Question:
             "answer": "test_answer",
             "max_attempts": 3,
             "challenge_id": challenge.id,
+            "index": 0,
         }
 
         with pytest.raises(ValidationError):
@@ -300,6 +303,7 @@ class Test_Create_Question:
             "answer": "answer1",
             "max_attempts": 3,
             "challenge_id": challenge.id,
+            "index": 0,
         }
 
         question2_data = {
@@ -309,6 +313,7 @@ class Test_Create_Question:
             "answer": "answer2",
             "max_attempts": 5,
             "challenge_id": challenge.id,
+            "index": 1,
         }
 
         question1 = Question.create_question(**question1_data)

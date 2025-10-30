@@ -1,14 +1,15 @@
 from typing import Any, Literal
-from collections.abc import Callable
 
 from CTFd.models import db
 from sqlalchemy.orm import Mapped
 
-from ...event.utils.challenge_yaml import EnvVarRenderer
+from ..utils.challenge_yaml import EnvVarRenderer
 
 from ...core.utils.validator import BaseValidator
 from ...containers.utils.get_client import get_client
 from ... import config
+
+from cyber_skyline.chall_parser.compose.service import ServiceNetwork
 
 MAX_CONTAINER_BLUEPRINT_NAME_LENGTH = 128
 MAX_CONTAINER_BLUEPRINT_IMAGE_LENGTH = 1024
@@ -128,8 +129,8 @@ class ContainerBlueprint(db.Model):
         tty: bool | None = None,
         command: str | list[str] | None = None,
         entrypoint: str | list[str] | None = None,
-        environment: dict[str, str | Callable[[str], str]] | list[str] | None = None,
-        networks: list[str] | dict[str, None] | None = None,
+        environment: dict[str, str | EnvVarRenderer] | list[str] | None = None,
+        networks: list[str] | dict[str, ServiceNetwork | None] | None = None,
         cap_add: list[Literal['NET_ADMIN', 'SYS_PTRACE']] | None = None,
         mem_limit: int | str | None = None,
         memswap_limit: int | str | None = None,

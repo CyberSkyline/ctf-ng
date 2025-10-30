@@ -1,10 +1,12 @@
 from __future__ import annotations
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from cyber_skyline.chall_parser.template import Template as ParserTemplate
 
-from ...challenge.models import Challenge, Question
-from ...challenge.utils import generate_seed
+if TYPE_CHECKING:
+    from ..models import Challenge, Question
+
+from . import generate_seed
 
 class EnvVarRenderer:
     def __init__(self, event_id: int, challenge_id: int, question_id: int, template: ParserTemplate):

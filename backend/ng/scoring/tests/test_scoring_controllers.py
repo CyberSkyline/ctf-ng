@@ -191,7 +191,7 @@ class TestRedeemHint:
     def test_redeem_hint_zero_deduction(self, db_session, user, team_with_member, event, challenge):
         """Test redeeming hint with zero deduction"""
         # Create hint with zero deduction
-        free_hint = Hint(challenge_id=challenge.id, preview="Free hint", body="This is a free hint", deduction=0)
+        free_hint = Hint(challenge_id=challenge.id, preview="Free hint", body="This is a free hint", deduction=0, index=0)
         db_session.add(free_hint)
         db_session.commit()
 
