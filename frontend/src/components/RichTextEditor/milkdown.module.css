@@ -5,6 +5,7 @@
   --crepe-color-on-background : var(--gray-12);
   /* Background color */
   --crepe-color-background: var(--gray-1);
+  --crepe-color-selected: var(--accent-8);
 }
 
 .milkdownEditor :global(.milkdown .editor) {
