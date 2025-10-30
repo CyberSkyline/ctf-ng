@@ -1,5 +1,4 @@
 import base64
-from typing import Any
 from flask_restx import Namespace, Resource
 import multiprocessing
 
