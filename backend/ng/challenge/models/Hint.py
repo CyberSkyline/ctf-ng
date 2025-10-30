@@ -16,7 +16,6 @@ from ...core.utils.validator import BaseValidator
 
 class SerializedHint(TypedDict):
     id: int
-    index: int
     name: str | None
     challenge_id: int
     challenge_name: NotRequired[str]
@@ -60,7 +59,6 @@ class Hint(db.Model):
             "body": None,
             "deduction": self.deduction,
             "is_redeemed": False,
-            "index": self.index,
         }
 
         if team:

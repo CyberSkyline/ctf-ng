@@ -21,7 +21,6 @@ MAX_QUESTION_ANSWER_LENGTH = 512
 
 class SerializedQuestion(TypedDict):
     id: int
-    index: int
     name: str
     body: str
     points: int
@@ -58,7 +57,6 @@ class Question(db.Model):
         """
         data: SerializedQuestion = {
             "id": self.id,
-            "index": self.index,
             "name": self.name,
             "body": self.body,
             "points": self.points,
