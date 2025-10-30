@@ -33,6 +33,20 @@ class SponsorsAdmin(Resource):
             403: "Forbidden - Admin access required",
             500: "Internal server error",
         },
+        params={
+            "name": {
+                "description": "Name of the sponsor",
+                "required": True,
+                "type": "string",
+                "example": "Acme Corp"
+            },
+            "logo": {
+                "description": "URL of the sponsor's logo",
+                "required": False,
+                "type": "string",
+                "example": "https://example.com/logo.png"
+            }
+        },
     )
     def post(self, validated_data, **kwargs):
         """Create a new sponsor (admin only)"""
