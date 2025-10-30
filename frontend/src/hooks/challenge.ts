@@ -122,7 +122,7 @@ export function useAdminChallengeBlueprints(challengeId: number | null) {
 }
 
 export function createChallenge(eventId: number, yaml: string) {
-  return apiMutation(`/admin/challenges`, { yaml : btoa(yaml), event_id : eventId }, {
+  return apiMutation('/admin/challenges', { yaml : btoa(yaml), event_id : eventId }, {
     method : 'POST',
   }).then(() => {
     // refresh the challenges list when a new challenge is created
