@@ -53,8 +53,7 @@ services:
   nginx:
     image: nginx:1.28
     deploy:
-      replicas: 2  # Run on both nodes
-      # REMOVED: node.role == manager constraint
+      replicas: 2
       restart_policy:
         condition: any
     volumes:
