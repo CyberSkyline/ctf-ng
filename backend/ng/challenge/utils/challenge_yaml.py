@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 from . import generate_seed
 
 class EnvVarRenderer:
-    def __init__(self, event_id: int, challenge_id: int, question_id: int, template: ParserTemplate):
+    def __init__(self, event_id: int, challenge_id: int, question_id: int | None, template: ParserTemplate):
         self.event_id = event_id
         self.challenge_id = challenge_id
         self.question_id = question_id
@@ -29,7 +29,8 @@ class EnvVarRenderer:
 
 def resolve_environment_value(value: str | ParserTemplate, challenge: Challenge, variable_questions: dict[str, Question]):
     if isinstance(value, ParserTemplate):
-        return EnvVarRenderer(event_id=challenge.event_id, challenge_id=challenge.id, question_id=variable_questions[value.parent_variable].id, template=value)
+        question_id = variable_questions[value.parent_variable].id if value.parent_variable in variable_questions else None
+        return EnvVarRenderer(event_id=challenge.event_id, challenge_id=challenge.id, question_id=question_id, template=value)
     return value
 
 def partial_environment(environment: dict[str, str | ParserTemplate] | list[str] | None, challenge: Challenge, variable_questions: dict[str, Question]) -> dict[str, str | EnvVarRenderer] | list[str] | None:
