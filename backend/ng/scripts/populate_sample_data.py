@@ -106,7 +106,7 @@ with app.app_context():
     try:
         # This script is designed to run in production via 'pnpm populate-data'
         # where the plugin is properly located at /opt/CTFd/CTFd/plugins/ng
-        from CTFd.plugins.ng.event.controllers.admin.import_challenge_from_yaml import (  # type: ignore
+        from CTFd.plugins.ng.challenge.controllers.admin.import_challenge_from_yaml import (  # type: ignore
             import_challenge_from_yaml,  # type: ignore
         )
         from CTFd.plugins.ng.event.controllers.user.join_event_controller import join_event_controller  # type: ignore
@@ -197,11 +197,11 @@ with app.app_context():
 
     # Import sample challenge from default yaml
     with open(os.path.join(os.path.dirname(__file__), "../challenge/tests/yamls/default.yaml"), "rb") as f:
-        yaml = base64.urlsafe_b64encode(f.read())
+        yaml = f.read()
 
     for event in events:
         # Import the challenge for each event
-        import_challenge_from_yaml(event=event, json_data={"yaml": yaml.decode("utf-8")})
+        import_challenge_from_yaml(event=event, payload=yaml)
 
     print("Database reset and sample data creation completed!")
     print(f"Admin user created: {DEFAULT_ADMIN_EMAIL} ({DEFAULT_ADMIN_PASSWORD})")
