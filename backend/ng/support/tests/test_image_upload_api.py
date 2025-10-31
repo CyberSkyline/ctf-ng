@@ -1,5 +1,5 @@
 """
-Tests for support ticket image upload API endpoints
+Tests for support ticket attachment upload API endpoints
 """
 
 import io
@@ -14,9 +14,9 @@ from ..services.s3_upload_service import (
 )
 
 
-class TestUserImageUpload:
+class TestUserAttachmentUpload:
     """
-    Tests for user image upload API endpoints
+    Tests for user attachment upload API endpoints
     """
     def test_upload_valid_webp_image(self, logged_in_client, ticket):
         """
@@ -29,7 +29,7 @@ class TestUserImageUpload:
         file_data = io.BytesIO(webp_data)
 
         with patch(
-                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_image'
+                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
         ) as mock_upload:
             mock_upload.return_value = {
                 's3_key': f'support-tickets/{ticket.id}/test-uuid.webp',
@@ -49,9 +49,10 @@ class TestUserImageUpload:
             assert response.status_code == 200
             data = response.get_json()
             assert data["success"] is True
-            assert "image_url" in data["data"]
+            assert "download_url" in data["data"]
             assert data["data"]["ticket_id"] == ticket.id
-            assert data["data"]["s3_key"] == f'support-tickets/{ticket.id}/test-uuid.webp'
+            assert data["data"]["filename"] == 'test-image.webp'
+            assert data["data"]["download_url"].startswith("/ng/support/me/attachments/")
 
     def test_upload_image_no_file_provided(
         self,
@@ -94,7 +95,9 @@ class TestUserImageUpload:
         assert response.status_code == 400
         data = response.get_json()
         assert data["success"] is False
-        assert "webp" in str(data).lower()
+        # Check that error message mentions allowed format or invalid image
+        error_text = str(data).lower()
+        assert "webp" in error_text or "valid image" in error_text or "allowed" in error_text
 
     def test_upload_invalid_file_type_png(self, logged_in_client, ticket):
         """
@@ -173,17 +176,19 @@ class TestUserImageUpload:
         with logged_in_client.session_transaction() as sess:
             nonce = sess.get("nonce")
 
-        # 5MB
-        exact_size_data = b'x' * config.TICKET_IMAGE_MAX_SIZE
+        # 5MB file with valid WebP header
+        webp_header = b'RIFF\x00\x00\x00\x00WEBPVP8 '
+        padding_size = config.TICKET_ATTACHMENT_MAX_SIZE - len(webp_header)
+        exact_size_data = webp_header + (b'x' * padding_size)
         file_data = io.BytesIO(exact_size_data)
 
         with patch(
-                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_image'
+                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
         ) as mock_upload:
             mock_upload.return_value = {
                 's3_key': f'support-tickets/{ticket.id}/exact-size.webp',
                 'bucket_name': 'test-bucket',
-                'file_size': config.TICKET_IMAGE_MAX_SIZE
+                'file_size': config.TICKET_ATTACHMENT_MAX_SIZE
             }
 
             response = logged_in_client.post(
@@ -229,7 +234,7 @@ class TestUserImageUpload:
         webp_data = io.BytesIO(b'RIFF\x00\x00\x00\x00WEBPVP8 ')
 
         with patch(
-                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_image'
+                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
         ) as mock_upload:
             mock_upload.return_value = {
                 's3_key': f'support-tickets/{ticket.id}/test.webp',
@@ -303,7 +308,7 @@ class TestUserImageUpload:
         webp_data = io.BytesIO(b'RIFF\x00\x00\x00\x00WEBPVP8 ')
 
         with patch(
-                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_image'
+                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
         ) as mock_upload:
             # Simulate S3 failure by returning None
             mock_upload.return_value = None
@@ -356,7 +361,7 @@ class TestUserImageUpload:
         webp_data = io.BytesIO(b'RIFF\x00\x00\x00\x00WEBPVP8 ')
 
         with patch(
-                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_image'
+                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
         ) as mock_upload:
             mock_upload.return_value = {
                 's3_key': f'support-tickets/{other_ticket.id}/admin-upload.webp',
@@ -376,7 +381,9 @@ class TestUserImageUpload:
             assert response.status_code == 200
             data = response.get_json()
             assert data["success"] is True
-            assert "image_url" in data["data"]
+            assert "download_url" in data["data"]
+            # Admin should get admin proxy URL
+            assert data["data"]["download_url"].startswith("/ng/admin/support/attachments/")
 
     def test_admin_upload_invalid_file_type(self, admin_client, ticket):
         """
@@ -486,7 +493,7 @@ class TestUserImageUpload:
             webp_data = io.BytesIO(b'RIFF\x00\x00\x00\x00WEBPVP8 ')
             file = FileStorage(stream = webp_data, filename = 'test.webp')
 
-            service.upload_ticket_image(
+            service.upload_ticket_attachment(
                 file=file,
                 ticket_id=ticket.id,
                 file_extension='webp'

@@ -50,13 +50,13 @@ class TestTicketAttachment:
         refreshed_attachment = TicketAttachment.find_by_id(attachment.id)
         assert refreshed_attachment is not None
         assert refreshed_attachment.ticket_id == ticket.id
-        assert refreshed_attachment.s3_key == "support-tickets/1/abc123.webp"
-        assert refreshed_attachment.bucket_name == "my-bucket"
-        assert refreshed_attachment.filename == "screenshot.webp"
-        assert refreshed_attachment.file_size == 2048
-        assert refreshed_attachment.content_type == "image/webp"
-        assert refreshed_attachment.uploaded_by == user.id
-        assert refreshed_attachment.uploaded_at is not None
+        assert refreshed_attachment.file_upload.s3_key == "support-tickets/1/abc123.webp"
+        assert refreshed_attachment.file_upload.bucket_name == "my-bucket"
+        assert refreshed_attachment.file_upload.filename == "screenshot.webp"
+        assert refreshed_attachment.file_upload.file_size == 2048
+        assert refreshed_attachment.file_upload.content_type == "image/webp"
+        assert refreshed_attachment.file_upload.uploaded_by == user.id
+        assert refreshed_attachment.attached_at is not None
 
     def test_create_attachment_respects_commit_flag(
         self,
@@ -79,7 +79,7 @@ class TestTicketAttachment:
                 commit = False,
             )
             mock_commit.assert_not_called()
-            assert attachment.filename == "no-commit.webp"
+            assert attachment.file_upload.filename == "no-commit.webp"
 
         with patch.object(db_session, "commit") as mock_commit:
             attachment = TicketAttachment.create_attachment(
@@ -109,7 +109,7 @@ class TestTicketAttachment:
                 s3_key = "support-tickets/1/huge.webp",
                 bucket_name = "test-bucket",
                 filename = "huge.webp",
-                file_size = config.TICKET_IMAGE_MAX_SIZE + 1,
+                file_size = config.TICKET_ATTACHMENT_MAX_SIZE + 1,
                 content_type = "image/webp",
                 uploaded_by = user.id,
             )
@@ -191,7 +191,7 @@ class TestTicketAttachment:
         attachments = TicketAttachment.find_by_ticket(ticket.id)
 
         assert len(attachments) == 2
-        assert attachments[0].uploaded_at <= attachments[1].uploaded_at
+        assert attachments[0].attached_at <= attachments[1].attached_at
 
     def test_find_by_ticket_empty(self, db_session, ticket):
         """
@@ -200,14 +200,14 @@ class TestTicketAttachment:
         attachments = TicketAttachment.find_by_ticket(ticket.id)
         assert len(attachments) == 0
 
-    def test_serialize_without_presigned_url(
+    def test_serialize_attachment(
         self,
         db_session,
         ticket,
         user
     ):
         """
-        Test serialization without presigned URL
+        Test serialization of attachment with proxy URL
         """
         attachment = TicketAttachment.create_attachment(
             ticket_id = ticket.id,
@@ -219,65 +219,49 @@ class TestTicketAttachment:
             uploaded_by = user.id,
         )
 
-        data = attachment.serialize(include_presigned_url = False)
+        data = attachment.serialize()
 
         assert data["id"] == attachment.id
         assert data["ticket_id"] == ticket.id
-        assert data["s3_key"] == "support-tickets/1/test.webp"
-        assert data["bucket_name"] == "test-bucket"
+        assert data["file_upload_id"] == attachment.file_upload_id
         assert data["filename"] == "test.webp"
         assert data["file_size"] == 1024
         assert data["content_type"] == "image/webp"
         assert data["uploaded_by"] == user.id
         assert data["uploaded_at"] is not None
-        assert data["image_url"] is None
+        assert data["download_url"] == f"/ng/support/me/attachments/{attachment.id}"
 
-    def test_serialize_with_presigned_url(
+    def test_serialize_attachment_admin(
         self,
         db_session,
         ticket,
-        user,
-        app
+        user
     ):
         """
-        Test serialization generates presigned URL
+        Test serialization of attachment with admin proxy URL
         """
-        with app.app_context():
-            mock_s3_client = MagicMock()
-            mock_s3_client.generate_presigned_url.return_value = "https://test-bucket.s3.amazonaws.com/presigned-url"
+        attachment = TicketAttachment.create_attachment(
+            ticket_id = ticket.id,
+            s3_key = "support-tickets/1/admin-test.webp",
+            bucket_name = "test-bucket",
+            filename = "admin-test.webp",
+            file_size = 2048,
+            content_type = "image/webp",
+            uploaded_by = user.id,
+        )
 
-            with patch(
-                    'ng.support.services.s3_upload_service.boto3.client'
-            ) as mock_boto:
-                mock_boto.return_value = mock_s3_client
+        data = attachment.serialize(include_admin_fields=True)
 
-                app.config['AWS_S3_ACCESS_KEY_ID'] = 'test-key'
-                app.config['AWS_S3_SECRET_ACCESS_KEY'] = 'test-secret'
-                app.config['AWS_S3_BUCKET_NAME'] = 'test-bucket'
+        assert data["id"] == attachment.id
+        assert data["ticket_id"] == ticket.id
+        assert data["file_upload_id"] == attachment.file_upload_id
+        assert data["filename"] == "admin-test.webp"
+        assert data["file_size"] == 2048
+        assert data["content_type"] == "image/webp"
+        assert data["uploaded_by"] == user.id
+        assert data["uploaded_at"] is not None
+        assert data["download_url"] == f"/ng/admin/support/attachments/{attachment.id}"
 
-                attachment = TicketAttachment.create_attachment(
-                    ticket_id = ticket.id,
-                    s3_key = "support-tickets/1/test.webp",
-                    bucket_name = "test-bucket",
-                    filename = "test.webp",
-                    file_size = 1024,
-                    content_type = "image/webp",
-                    uploaded_by = user.id,
-                )
-                from ..services.s3_upload_service import AWSS3UploadService
-                s3_service = AWSS3UploadService()
-                s3_service.s3_client = mock_s3_client
-
-                with patch(
-                        'ng.support.models.TicketAttachment.get_s3_upload_service'
-                ) as mock_get_service:
-                    mock_get_service.return_value = s3_service
-                    data = attachment.serialize(
-                        include_presigned_url = True
-                    )
-
-                assert data["image_url"] is not None
-                assert "presigned-url" in data["image_url"]
 
     def test_validation_requires_all_fields(self, db_session):
         """

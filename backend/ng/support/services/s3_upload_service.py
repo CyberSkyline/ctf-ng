@@ -15,6 +15,7 @@ from werkzeug.datastructures import FileStorage
 
 from ... import config
 from ...core.utils.logger import get_logger
+from ...core.utils.file_helpers import get_file_size
 
 
 logger = get_logger(__name__)
@@ -76,7 +77,7 @@ class AWSS3UploadService:
         """
         return self.s3_client is not None
 
-    def upload_ticket_image(
+    def upload_ticket_attachment(
         self,
         file: FileStorage,
         ticket_id: int,
@@ -84,7 +85,7 @@ class AWSS3UploadService:
     ) -> dict[str,
               Any] | None:
         """
-        Upload ticket image to S3
+        Upload ticket attachment to S3
         (validation in controller)
 
         Args:
@@ -105,8 +106,7 @@ class AWSS3UploadService:
             return None
 
         try:
-            file.seek(0, 2)
-            file_size = file.tell()
+            file_size = get_file_size(file)
             file.seek(0)
 
             content_type = f"image/{file_extension}"
@@ -143,56 +143,6 @@ class AWSS3UploadService:
             return None
         except Exception as e:
             logger.error("Unexpected error uploading file: %s", e)
-            return None
-
-    def generate_presigned_url(
-        self,
-        bucket_name: str,
-        s3_key: str,
-        expiration: int | None = None,
-    ) -> str | None:
-        """
-        Generate a presigned URL for viewing an S3 object
-
-        Args:
-            bucket_name: S3 bucket name
-            s3_key: S3 object key
-            expiration: URL expiration time in seconds (defaults to config constant)
-
-        Returns:
-            Presigned URL string or None on failure
-        """
-        if expiration is None:
-            expiration = config.PRESIGNED_URL_EXPIRATION_SECONDS
-        if not self.is_configured():
-            logger.debug(
-                "AWS S3 not configured - cannot generate presigned URL"
-            )
-            return None
-
-        if self.s3_client is None:
-            logger.error("S3 client is None")
-            return None
-
-        try:
-            presigned_url = self.s3_client.generate_presigned_url(
-                'get_object',
-                Params = {
-                    'Bucket': bucket_name,
-                    'Key': s3_key,
-                },
-                ExpiresIn = expiration
-            )
-            return presigned_url
-
-        except ClientError as e:
-            logger.error("Error generating presigned URL: %s", e)
-            return None
-        except Exception as e:
-            logger.error(
-                "Unexpected error generating presigned URL: %s",
-                e
-            )
             return None
 
 

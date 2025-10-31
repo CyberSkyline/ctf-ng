@@ -142,6 +142,7 @@ class BaseValidator:
             "ContainerBlueprint": "ng_container_blueprints",
             "Demographic": "ng_demographics",
             "Event": "ng_events",
+            "FileUpload": "ng_file_uploads",
             "Hint": "ng_challenge_hints",
             "HintRedemption": "ng_hint_redemptions",
             "ManualPointAward": "ng_manual_point_awards",

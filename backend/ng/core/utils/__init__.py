@@ -25,11 +25,12 @@ def get_models():
     from ...announcements.models import Announcement
     from ...permissions.models import Permission, Role, RolePermission, UserRole
     from ...scoring.models import Attempt, HintRedemption, ManualPointAward, Score, ScoreEvent
-    from ...support.models import Ticket, TicketMessage, TicketTag
+    from ...support.models import Ticket, TicketMessage, TicketTag, TicketAttachment
     from ...team.models import Team, TeamMember
     from ...user.models import User
     from ...containers.models.IndvidualContainer import IndvidualContainer
     from ...containers.models.ContainerInstance import ContainerInstance
+    from ..models.FileUpload import FileUpload
 
     return {
         "Announcement": Announcement,
@@ -39,6 +40,7 @@ def get_models():
         "ContainerBlueprint": ContainerBlueprint,
         "Demographic": Demographic,
         "Event": Event,
+        "FileUpload": FileUpload,
         "Hint": Hint,
         "HintRedemption": HintRedemption,
         "ManualPointAward": ManualPointAward,
@@ -52,6 +54,7 @@ def get_models():
         "Team": Team,
         "TeamMember": TeamMember,
         "Ticket": Ticket,
+        "TicketAttachment": TicketAttachment,
         "TicketMessage": TicketMessage,
         "TicketTag": TicketTag,
         "User": User,

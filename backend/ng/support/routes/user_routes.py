@@ -5,8 +5,8 @@ User API routes for support tickets
 from flask import request
 from flask_restx import Namespace, Resource
 
-from ...core.middleware import user_endpoint, check_ownership
-from ...core.middleware.loaders import LoaderType, load_ticket
+from ...core.middleware import user_endpoint, check_ownership, check_attachment_ownership
+from ...core.middleware.loaders import LoaderType, load_ticket, load_attachment
 from ...core.utils import success_response, error_response
 from ...user.models import User
 
@@ -16,7 +16,8 @@ from ..controllers import (
     list_tickets,
     get_ticket,
     create_ticket_message,
-    upload_ticket_image,
+    upload_ticket_attachment,
+    download_attachment,
 )
 
 
@@ -264,11 +265,41 @@ class TicketImageUpload(Resource):
 
         file = request.files['file']
 
-        attachment = upload_ticket_image(
+        attachment = upload_ticket_attachment(
             file=file,
             ticket=ticket,
             uploaded_by=current_user.id,
         )
 
         return success_response(attachment)
+
+
+@support_user_namespace.route("/me/attachments/<int:attachment_id>")
+class MyAttachmentDownload(Resource):
+    @user_endpoint()
+    @load_attachment(LoaderType.PARAM)
+    @check_attachment_ownership()
+    @support_user_namespace.doc(
+        description="Download an attachment from your own support ticket",
+        params={
+            "attachment_id": {
+                "description": "Attachment ID",
+                "required": True,
+                "type": "integer",
+                "example": 123
+            }
+        },
+        responses={
+            200: "Success - File streamed from S3",
+            401: "Unauthorized - Authentication required",
+            403: "Forbidden - You can only download attachments from your own tickets",
+            404: "Not found - Attachment does not exist or file missing in storage",
+            500: "Internal Server Error",
+        },
+    )
+    def get(self, attachment_id: int, attachment, current_user: User, **kwargs):
+        """
+        Download attachment via proxy
+        """
+        return download_attachment(attachment=attachment)
 

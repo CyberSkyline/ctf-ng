@@ -11,6 +11,7 @@ from ...core.middleware.loaders import (
     load_ticket,
     load_ticket_tag,
     load_user,
+    load_attachment,
 )
 from ...core.utils import success_response, error_response
 from ...user.models import User
@@ -31,7 +32,8 @@ from ..controllers import (
     list_tickets,
     get_ticket,
     create_ticket_message,
-    upload_ticket_image,
+    upload_ticket_attachment,
+    download_attachment,
 )
 
 
@@ -666,10 +668,38 @@ class AdminTicketImageUpload(Resource):
 
         file = request.files['file']
 
-        attachment = upload_ticket_image(
+        attachment = upload_ticket_attachment(
             file=file,
             ticket=ticket,
             uploaded_by=current_user.id,
         )
 
         return success_response(attachment)
+
+
+@support_admin_namespace.route("/attachments/<int:attachment_id>")
+class AdminAttachmentDownload(Resource):
+    @admin_endpoint()
+    @load_attachment(LoaderType.PARAM)
+    @support_admin_namespace.doc(
+        description="Download any support ticket attachment",
+        params={
+            "attachment_id": {
+                "description": "Attachment ID",
+                "required": True,
+                "type": "integer",
+                "example": 123
+            }
+        },
+        responses={
+            200: "Success - File streamed from S3",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Attachment does not exist or file missing in storage",
+            500: "Internal Server Error",
+        },
+    )
+    def get(self, attachment_id: int, attachment, current_user: User, **kwargs):
+        """
+        Download any attachment (admin access)
+        """
+        return download_attachment(attachment=attachment)

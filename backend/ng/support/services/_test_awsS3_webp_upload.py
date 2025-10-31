@@ -152,35 +152,17 @@ def test_s3_upload():
                 f"\nAttempting upload to S3 (ticket_id={test_ticket_id})..."
             )
 
-            upload_result = s3_service.upload_ticket_image(
+            upload_result = s3_service.upload_ticket_attachment(
                 file=file_storage,
                 ticket_id=test_ticket_id,
                 file_extension='webp'
             )
 
             if upload_result:
-                print("Image uploaded to S3!")
+                print("Image uploaded!")
                 print(f"S3 Key: {upload_result['s3_key']}")
                 print(f"Bucket: {upload_result['bucket_name']}")
                 print(f"File Size: {upload_result['file_size']} bytes")
-
-                from ng import config
-                presigned_url = s3_service.generate_presigned_url(
-                    bucket_name = upload_result['bucket_name'],
-                    s3_key = upload_result['s3_key'],
-                    expiration = config.PRESIGNED_URL_EXPIRATION_SECONDS
-                )
-
-                if presigned_url:
-                    print(
-                        f"\nPresigned URL (valid for 1 hour): {presigned_url}"
-                    )
-                    print("\nVerify the upload by:")
-                    print("1. Opening the presigned URL in your browser")
-                    print("2. Checking your S3 bucket in AWS Console")
-                    print(f"3. Looking for: {upload_result['s3_key']}")
-                else:
-                    print("\nWarning: Could not generate presigned URL")
 
                 return True
             else:

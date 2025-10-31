@@ -11,6 +11,7 @@ from .core.middleware.error_handler import register_error_handlers
 from .core.utils.redis_notifications import initialize_redis_notifications
 from .notifications import sockets as notification_sockets
 
+from .core.models.FileUpload import FileUpload  # noqa: F401
 from .event.models.Event import Event  # noqa: F401
 from .team.models.Team import Team  # noqa: F401
 from .user.models.User import User  # noqa: F401

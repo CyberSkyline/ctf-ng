@@ -5,6 +5,8 @@ Tests for support API endpoints
 import json
 import pytest
 from datetime import datetime
+from botocore.exceptions import ClientError
+from unittest.mock import patch, MagicMock
 
 from CTFd.models import Users
 
@@ -1042,14 +1044,14 @@ class TestAdminSupportEndpoints:
         for attachment_data in data["data"]["attachments"]:
             assert "id" in attachment_data
             assert "ticket_id" in attachment_data
-            assert "s3_key" in attachment_data
-            assert "bucket_name" in attachment_data
+            assert "file_upload_id" in attachment_data
             assert "filename" in attachment_data
             assert "file_size" in attachment_data
             assert "content_type" in attachment_data
             assert "uploaded_by" in attachment_data
             assert "uploaded_at" in attachment_data
-            assert "image_url" in attachment_data  # Should have presigned URL
+            assert "download_url" in attachment_data
+            assert attachment_data["download_url"].startswith("/ng/support/me/attachments/")
 
         # Verify order (oldest first)
         assert data["data"]["attachments"][0]["filename"] == "first.webp"
@@ -1076,5 +1078,174 @@ class TestAdminSupportEndpoints:
         assert "attachments" in data["data"]
         assert len(data["data"]["attachments"]) == 1
         assert data["data"]["attachments"][0]["filename"] == "admin-view.webp"
+        # Admin should get admin proxy URL
+        assert data["data"]["attachments"][0]["download_url"].startswith("/ng/admin/support/attachments/")
+
+    def test_user_download_attachment_proxy(self, logged_in_client, ticket, user, db_session, app):
+        """
+        Test user downloading attachment via proxy endpoint
+        """
+        from unittest.mock import patch, MagicMock
+
+        attachment = TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/test.webp",
+            bucket_name="test-bucket",
+            filename="test.webp",
+            file_size=1024,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+
+        with app.app_context():
+            mock_s3_response = {
+                'Body': MagicMock()
+            }
+            mock_s3_response['Body'].iter_chunks = MagicMock(return_value=[b'test-data'])
+            mock_s3_response['Body'].close = MagicMock()
+
+            with patch('boto3.client') as mock_boto_client:
+                mock_s3_client = MagicMock()
+                mock_s3_client.get_object.return_value = mock_s3_response
+                mock_boto_client.return_value = mock_s3_client
+
+                app.config['AWS_S3_ACCESS_KEY_ID'] = 'test-key'
+                app.config['AWS_S3_SECRET_ACCESS_KEY'] = 'test-secret'
+
+                response = logged_in_client.get(f"/ng/support/me/attachments/{attachment.id}")
+
+                assert response.status_code == 200
+                assert response.content_type == "image/webp"
+                assert response.headers.get('Content-Disposition') == 'inline; filename="test.webp"'
+                assert response.headers.get('Content-Length') == '1024'
+
+                mock_s3_client.get_object.assert_called_once_with(
+                    Bucket="test-bucket",
+                    Key=f"support-tickets/{ticket.id}/test.webp"
+                )
+
+    def test_user_cannot_download_other_user_attachment(self, logged_in_client, other_user_ticket, user, db_session):
+        """
+        Test that users cannot download attachments from other users' tickets
+        """
+        attachment = TicketAttachment.create_attachment(
+            ticket_id=other_user_ticket.id,
+            s3_key=f"support-tickets/{other_user_ticket.id}/private.webp",
+            bucket_name="test-bucket",
+            filename="private.webp",
+            file_size=512,
+            content_type="image/webp",
+            uploaded_by=other_user_ticket.author_id,
+        )
+
+        response = logged_in_client.get(f"/ng/support/me/attachments/{attachment.id}")
+
+        assert response.status_code == 403
+        data = response.get_json()
+        assert data["success"] is False
+        assert "errors" in data
+        error_text = str(data["errors"]).lower()
+        assert "your own tickets" in error_text or "forbidden" in error_text or "access" in error_text
+
+    def test_admin_download_any_attachment_proxy(self, admin_client, ticket, user, db_session, app):
+        """
+        Test admin downloading any attachment via proxy endpoint
+        """
+        attachment = TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/admin-test.webp",
+            bucket_name="test-bucket",
+            filename="admin-test.webp",
+            file_size=2048,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+
+        with app.app_context():
+            mock_s3_response = {
+                'Body': MagicMock()
+            }
+            mock_s3_response['Body'].iter_chunks = MagicMock(return_value=[b'admin-test-data'])
+            mock_s3_response['Body'].close = MagicMock()
+
+            with patch('boto3.client') as mock_boto_client:
+                mock_s3_client = MagicMock()
+                mock_s3_client.get_object.return_value = mock_s3_response
+                mock_boto_client.return_value = mock_s3_client
+
+                app.config['AWS_S3_ACCESS_KEY_ID'] = 'test-key'
+                app.config['AWS_S3_SECRET_ACCESS_KEY'] = 'test-secret'
+
+                response = admin_client.get(f"/ng/admin/support/attachments/{attachment.id}")
+
+                assert response.status_code == 200
+                assert response.content_type == "image/webp"
+
+    def test_download_nonexistent_attachment(self, logged_in_client):
+        """
+        Test downloading a nonexistent attachment returns 404
+        """
+        response = logged_in_client.get("/ng/support/me/attachments/999999")
+        assert response.status_code == 404
+
+    def test_download_attachment_s3_not_configured(self, logged_in_client, ticket, user, db_session, app):
+        """
+        Test download fails gracefully when S3 is not configured
+        """
+        attachment = TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/test.webp",
+            bucket_name="test-bucket",
+            filename="test.webp",
+            file_size=1024,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+
+        with app.app_context():
+            app.config['AWS_S3_ACCESS_KEY_ID'] = None
+            app.config['AWS_S3_SECRET_ACCESS_KEY'] = None
+
+            response = logged_in_client.get(f"/ng/support/me/attachments/{attachment.id}")
+
+            assert response.status_code == 400
+            data = response.get_json()
+            assert data["success"] is False
+            assert "errors" in data
+            error_text = str(data["errors"]).lower()
+            assert "storage is not configured" in error_text or "not configured" in error_text
+
+    def test_download_attachment_file_missing_in_s3(self, logged_in_client, ticket, user, db_session, app):
+        """
+        Test download handles missing file in S3
+        """
+        attachment = TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/missing.webp",
+            bucket_name="test-bucket",
+            filename="missing.webp",
+            file_size=1024,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+
+        with app.app_context():
+            with patch('boto3.client') as mock_boto_client:
+                mock_s3_client = MagicMock()
+                error_response = {'Error': {'Code': 'NoSuchKey'}}
+                mock_s3_client.get_object.side_effect = ClientError(error_response, 'GetObject')
+                mock_boto_client.return_value = mock_s3_client
+
+                app.config['AWS_S3_ACCESS_KEY_ID'] = 'test-key'
+                app.config['AWS_S3_SECRET_ACCESS_KEY'] = 'test-secret'
+
+                response = logged_in_client.get(f"/ng/support/me/attachments/{attachment.id}")
+
+                assert response.status_code == 404
+                data = response.get_json()
+                assert data["success"] is False
+                assert "errors" in data
+                error_text = str(data["errors"]).lower()
+                assert "not found in storage" in error_text or "not found" in error_text
 
 
