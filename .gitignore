@@ -38,6 +38,7 @@ node_modules/
 .yarn/*
 */.yarn/*
 .pnp.*
+.pnpm-store/
 
 # SSL certs
 privatesslkey.pem

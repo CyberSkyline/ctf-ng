@@ -1,7 +1,6 @@
 import { TeamIcon, UserIcon } from '@/constants';
 import type { Event } from '@/types';
 import {
-  AspectRatio,
   Box,
   Card,
   Flex,
@@ -9,6 +8,8 @@ import {
   Inset,
   Text,
 } from '@radix-ui/themes';
+import gameCardOffensive from 'assets/offensive.png';
+import gameCardTeam from 'assets/teams.png';
 import EventBadge from 'components/EventBadge';
 import { TbCalendarEvent, TbClock } from 'react-icons/tb';
 import { Link } from 'react-router';
@@ -20,11 +21,11 @@ export default function EventCard({ event }: { event: Event }) {
     <Card asChild>
       <Link to={`/events/${event.id}`}>
         <Flex direction="row" gap="4">
-          <Inset side="left" className="w-32 shrink-0">
-            <AspectRatio ratio={2 / 3}>
-              {/* Placeholder for event card graphic */}
-              <Box className="h-full w-full bg-(--accent-8)" />
-            </AspectRatio>
+          <Inset side="left" className="w-32 shrink-0 shadow">
+            <img
+              src={event.max_team_size === 1 ? gameCardOffensive : gameCardTeam}
+              alt={`Card for ${event.name}`}
+            />
           </Inset>
           <Flex direction="column" gap="2" className="flex-grow" justify="between">
             <Box>

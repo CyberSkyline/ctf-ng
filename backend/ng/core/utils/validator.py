@@ -119,6 +119,41 @@ class BaseValidator:
         self._add_parsed_data(field, stripped_value)
 
     @validation_field
+    def validate_string_list(
+        self,
+        data: dict[str, Any],
+        field: str,
+        max_length: int | None = None,
+        required: bool = False,
+        friendly_name: str | None = None,
+        value: Any = None,  # Injected by decorator
+    ) -> None:
+        if not isinstance(value, list):
+            self.errors[field] = f"{friendly_name} must be a list of strings"
+            return
+
+        validated_list = []
+        for item in value:
+            if not isinstance(item, str):
+                self.errors[field] = f"All items in {friendly_name} must be strings"
+                return
+
+            stripped_item = item.strip()
+            if len(stripped_item) == 0:
+                self.errors[field] = f"Items in {friendly_name} cannot be empty strings"
+                return
+
+            if max_length and len(stripped_item) > max_length:
+                self.errors[field] = ValidationErrorMessages.FIELD_TOO_LONG.format(
+                    field=friendly_name, max_length=max_length
+                )
+                return
+
+            validated_list.append(stripped_item)
+
+        self._add_parsed_data(field, validated_list)
+
+    @validation_field
     def validate_model_id(
         self,
         data: dict[str, Any],
@@ -411,6 +446,31 @@ class BaseValidator:
                 f"{end_field.replace('_', ' ').title()} must be after {start_field.replace('_', ' ')}."
             )
             return
+
+    @validation_field
+    def validate_url(
+        self,
+        data: dict[str, Any],
+        field: str,
+        required: bool = False,
+        friendly_name: str | None = None,
+        value: Any = None,  # Injected by decorator
+    ) -> None:
+        """
+        Validate a URL string.
+        """
+        from urllib.parse import urlparse
+
+        if not isinstance(value, str):
+            self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_STRING.format(field=friendly_name)
+            return
+
+        parsed = urlparse(value)
+        if not all([parsed.scheme, parsed.netloc]):
+            self.errors[field] = f"{friendly_name} must be a valid URL"
+            return
+
+        self._add_parsed_data(field, value)
 
 
 

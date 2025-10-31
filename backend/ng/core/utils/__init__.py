@@ -28,6 +28,7 @@ def get_models():
     from ...support.models import Ticket, TicketMessage, TicketTag, TicketAttachment
     from ...team.models import Team, TeamMember
     from ...user.models import User
+    from ...sponsors.models.Sponsor import Sponsor
     from ...containers.models.IndvidualContainer import IndvidualContainer
     from ...containers.models.ContainerInstance import ContainerInstance
     from ..models.FileUpload import FileUpload
@@ -58,6 +59,7 @@ def get_models():
         "TicketMessage": TicketMessage,
         "TicketTag": TicketTag,
         "User": User,
+        "Sponsor": Sponsor,
         "UserRole": UserRole,
         "ContainerInstance": ContainerInstance,
         "IndvidualContainer": IndvidualContainer,

@@ -8,6 +8,7 @@ export default function AvailableEvents() {
 
   return (
     <>
+      <title>Events</title>
       <HeaderContainer>
         <Heading size="9">Events</Heading>
       </HeaderContainer>

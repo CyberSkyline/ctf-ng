@@ -5,6 +5,7 @@ import {
   TbCube,
   TbLifebuoy,
   TbPackages,
+  TbSpeakerphone,
   TbStarFilled,
   TbTools,
   TbUser,
@@ -13,7 +14,7 @@ import {
 
 export type AccentColor = (typeof accentColors)[number];
 
-export const ROUTEPREFIX: string = '/';
+export const ROUTEPREFIX: string = '';
 export const APIPREFIX: string = '/ng';
 export const SSOPATH: string = '/ng/authenticate/okta/login';
 
@@ -23,6 +24,7 @@ export const UserIcon = TbUser;
 export const TeamIcon = TbUsersGroup;
 export const ChallengeIcon = TbCube;
 export const DeploymentIcon = TbPackages;
+export const AnnouncementIcon = TbSpeakerphone;
 
 // Semantic colors for UI.
 // Use instead of default accent for things that carry semantic meaning.

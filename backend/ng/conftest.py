@@ -34,6 +34,7 @@ from .support.models.Ticket import Ticket
 from .support.models.TicketTag import TicketTag
 from .team.models.Team import Team
 from .user.models.User import User as NgUser
+from .sponsors.models.Sponsor import Sponsor
 from .core.utils import utc_now
 
 
@@ -290,6 +291,30 @@ def admin_client(app, db_session, admin):
         sess.permanent = False
     return client
 
+@pytest.fixture
+def client_factory(app, db_session):
+    """A factory to create test clients logged in as different users."""
+
+    def _factory(user: Users):
+        # Clear any cached user data to prevent cross-test contamination
+        from CTFd.cache import cache
+
+        cache.clear()
+        user = user.ctfd_user
+
+        client = app.test_client()
+        with client.session_transaction() as sess:
+            # Completely clear the session and set only what we need
+            sess.clear()
+            sess["id"] = user.id
+            sess["name"] = user.name
+            sess["type"] = user.type
+            sess["nonce"] = generate_nonce()
+            sess.permanent = False
+        return client
+
+    return _factory
+
 
 @pytest.fixture
 def event_factory(db_session):
@@ -305,6 +330,8 @@ def event_factory(db_session):
             "start_time": utc_now() - timedelta(days=1),
             "end_time": utc_now() + timedelta(days=1),
             "time_limit_minutes": 120,
+            "allowed_domains": [],
+            "hints_enabled": True,
         }
         defaults.update(kwargs)
         event = Event.create_event(**defaults)
@@ -333,10 +360,11 @@ def team_factory(db_session, event_factory):
         }
         defaults.update(kwargs)
         team = Team.create_team_with_captain(**defaults)
+        Demographic.create_demographic(user_id=captain.id, event_id=event.id)
 
         for member_user in members_to_add:
             TeamMember.create_team_member(user_id=member_user.id, team_id=team.id, event_id=event.id)
-            Demographic.create_demographic(user_id=member_user.id, event_id=event.id, commit=False)
+            Demographic.create_demographic(user_id=member_user.id, event_id=event.id)
         return team
 
     return _factory
@@ -347,12 +375,14 @@ def user_factory(db_session):
     """A factory function to create User objects for tests."""
     from .user.models.User import User
 
-    def _factory(name="Test User", email="testuser@example.com", password="password", admin=False):
+    def _factory(name="Test User", email="testuser@example.com", password="password", admin=False, sponsor=None):
         user = Users(name=name, email=email, password=password)
         db_session.add(user)
         db_session.commit()
 
         ng_user = User(id=user.id)
+        if sponsor:
+            ng_user.set_sponsor(sponsor, commit=False)
         db_session.add(ng_user)
         if admin:
             assign_role_to_user(ng_user.id, RoleEnum.ADMIN)
@@ -361,12 +391,37 @@ def user_factory(db_session):
 
     return _factory
 
+@pytest.fixture
+def sponsor_factory(db_session):
+    """A factory function to create Sponsor objects for tests."""
+
+
+    def _factory(**kwargs):
+        defaults = {
+            "name": "Test Sponsor",
+            "logo": "logo.png",
+        }
+        defaults.update(kwargs)
+        sponsor = Sponsor.create_sponsor(**defaults)
+        return sponsor
+
+    return _factory
+
+
+
 
 @pytest.fixture
-def team_with_member(db_session, team_factory, user):
-    """Creates a team with members for testing."""
-    team = team_factory(members=[user])
+def team_with_member(db_session, event, user):
+    """Create a team with a member for scoring tests."""
+    from .team.models.Team import Team
+
+    event_id = event.id
+    team = Team.create_team_with_captain(
+        name="Test Scoring Team", event_id=event_id, captain_id=user.id, invite_code="test1234"
+    )
+    Demographic.create_demographic(user_id=user.id, event_id=event_id, commit=True)
     return team
+
 
 
 @pytest.fixture
@@ -496,6 +551,7 @@ def event(db_session):
         description="A test event.",
         max_team_size=4,
         locked=False,
+        hints_enabled=True,
     )
     db_session.add(event)
     db_session.flush()
@@ -511,6 +567,7 @@ def locked_event(db_session):
         name="Locked Event",
         description="This event is locked",
         locked=True,
+        hints_enabled=True,
         start_time=utc_now() - timedelta(days=10),
         end_time=utc_now() - timedelta(days=5),
     )
@@ -838,18 +895,6 @@ def hint(db_session, challenge):
     db_session.add(hint)
     db_session.commit()
     return hint
-
-# TODO: Figure out why there are two versions of this with the same name
-@pytest.fixture
-def team_with_member(db_session, event, user):
-    """Create a team with a member for scoring tests."""
-    from .team.models.Team import Team
-
-    event_id = event.id
-    team = Team.create_team_with_captain(
-        name="Test Scoring Team", event_id=event_id, captain_id=user.id, invite_code="test123"
-    )
-    return team
 
 
 @pytest.fixture

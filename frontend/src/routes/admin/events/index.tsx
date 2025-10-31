@@ -95,17 +95,20 @@ export default function AdminEvents() {
   }
 
   return (
-    <AdminGrid
-      rowData={rowData}
-      columnDefs={colDefs}
-      loading={isLoading}
-      getRowId={(params) => params.data.id.toString()}
-      sidebarComponent={EventSidebar}
-      toolbar={(
-        <Flex direction="row" justify="start">
-          <EventModal />
-        </Flex>
-      )}
-    />
+    <>
+      <title>Admin Events</title>
+      <AdminGrid
+        rowData={rowData}
+        columnDefs={colDefs}
+        loading={isLoading}
+        getRowId={(params) => params.data.id.toString()}
+        sidebarComponent={EventSidebar}
+        toolbar={(
+          <Flex direction="row" justify="start">
+            <EventModal />
+          </Flex>
+        )}
+      />
+    </>
   );
 }

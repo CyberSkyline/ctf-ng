@@ -71,6 +71,9 @@ test-announcements:
 
 test-emails:
 	$(PYTHON_EXEC) -m pytest emails/tests -v
+
+test-sponsors:
+	$(PYTHON_EXEC) -m pytest sponsors/tests -v
 		
 test-middleware:
 	$(PYTHON_EXEC) -m pytest -m middleware . -v

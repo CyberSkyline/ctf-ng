@@ -65,6 +65,7 @@ export default function AdminDeployments() {
 
   return (
     <Flex direction="row" gap="4" className="h-full w-full">
+      <title>Admin Deployments</title>
       <AdminGrid
         rowData={rowData}
         columnDefs={colDefs}

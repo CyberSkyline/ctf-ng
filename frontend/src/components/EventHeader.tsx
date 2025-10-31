@@ -1,12 +1,13 @@
 import type { Event } from '@/types';
 import {
-  AspectRatio,
   Box,
   Flex,
   Heading,
   Link as LinkTheme,
   Text,
 } from '@radix-ui/themes';
+import gameCardOffensive from 'assets/offensive.png';
+import gameCardTeam from 'assets/teams.png';
 import { isNull } from 'lodash';
 import type { ReactNode } from 'react';
 import { TbCalendar, TbUser } from 'react-icons/tb';
@@ -34,12 +35,11 @@ export default function EventHeader({
 
   return (
     <Flex direction="row" gap="6" align="start">
-      <Box className="w-32" flexShrink="0">
-        <AspectRatio ratio={2 / 3}>
-          {/* Placeholder for event card image */}
-          <Box className="h-full w-full bg-[var(--accent-8)] rounded-lg shadow-xl" />
-        </AspectRatio>
-      </Box>
+      <img
+        className="w-48 shrink-0 rounded-lg shadow-xl"
+        src={event.max_team_size === 1 ? gameCardOffensive : gameCardTeam}
+        alt={`Card for ${event.name}`}
+      />
       <Flex direction="column" flexGrow="1" align="start" gap="2">
         <EventBadge eventId={id} size="3" />
         <Box>

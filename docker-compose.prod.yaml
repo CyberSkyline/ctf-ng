@@ -1,54 +1,97 @@
+version: '3.8'
+
 services:
   ctfd:
+    image: ctfd-ng:latest
     build:
       context: ./
       dockerfile: ./dockerfiles/ctfd.Dockerfile
-    container_name: ng-ctfd
     user: root
-    restart: always
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s
     ports:
-      - "8000:8000"
-      - "4000:4000"
+      - mode: host
+        target: 8000
+        published: 8000
+      - mode: host
+        target: 4000
+        published: 4000
     env_file:
       - ${ENV_FILE:-.env.prod}
     environment:
       - WORKER_CLASS=geventwebsocket.gunicorn.workers.GeventWebSocketWorker
-      - THREADS=100   
+      - THREADS=100
     volumes:
-      - .data/CTFd/logs:/var/log/CTFd
-      - .data/CTFd/uploads:/var/uploads
-      - ./backend/ng:/opt/CTFd/CTFd/plugins/ng/:ro
-      - /var/lib/certs/ssl/:/var/lib/certs/ssl/
-    depends_on:
-      - db
-      - cache
-      - vite
-      - nginx
+      - type: bind
+        source: ./.data/CTFd/logs
+        target: /var/log/CTFd
+      - type: bind
+        source: ./.data/CTFd/uploads
+        target: /var/uploads
+      - type: bind
+        source: ./backend/ng
+        target: /opt/CTFd/CTFd/plugins/ng/
+        read_only: true
+      - type: bind
+        source: /var/lib/certs/ssl/
+        target: /var/lib/certs/ssl/
     networks:
-      default:
-      internal:
+      - ctf-network
+      - ctf-internal
     tty: true
-    entrypoint : /bin/bash
-    # command : -c "exec bash"                                                    
-    command : -c "/usr/bin/supervisord -c /etc/supervisor/supervisord.conf && supervisorctl tail -f ctfd"
+    entrypoint: /bin/bash
+    command: -c "/usr/bin/supervisord -c /etc/supervisor/supervisord.conf && supervisorctl tail -f ctfd"
 
   nginx:
     image: nginx:1.28
-    container_name: ng-nginx
-    restart: always
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
     volumes:
-      - ./conf/nginx/http.prod.conf:/etc/nginx/nginx.conf:ro
-      - ./sslpublickey.pem:/certificates/sslpublickey.pem:ro
-      - ./privatesslkey.pem:/certificates/privatesslkey.pem:ro
-      - ./frontend/dist:/var/www/vite-build:ro
+      - type: bind
+        source: ./conf/nginx/http.prod.conf
+        target: /etc/nginx/nginx.conf
+        read_only: true
+      - type: bind
+        source: ./sslpublickey.pem
+        target: /certificates/sslpublickey.pem
+        read_only: true
+      - type: bind
+        source: ./privatesslkey.pem
+        target: /certificates/privatesslkey.pem
+        read_only: true
+      - type: bind
+        source: ./frontend/dist
+        target: /var/www/vite-build
+        read_only: true
     ports:
-      - 80:80
-      - 443:443
+      - mode: host
+        target: 80
+        published: 80
+      - mode: host
+        target: 443
+        published: 443
+    networks:
+      - ctf-network
 
   db:
     image: mariadb:10.11
-    container_name: ng-db
-    restart: always
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: any
     environment:
       - MARIADB_ROOT_PASSWORD=ctfd
       - MARIADB_USER=ctfd
@@ -56,39 +99,61 @@ services:
       - MARIADB_DATABASE=ctfd
       - MARIADB_AUTO_UPGRADE=1
     volumes:
-      - .data/mysql:/var/lib/mysql
+      - type: bind
+        source: ./.data/mysql
+        target: /var/lib/mysql
     networks:
-        internal:
-        default:
-    # This command is required to set important mariadb defaults
+      - ctf-network
+      - ctf-internal
     command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --wait_timeout=28800, --log-warnings=0]
 
   cache:
     image: redis:7-alpine
-    container_name: ng-redis
-    restart: always
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: any
     volumes:
-      - .data/redis:/data
+      - type: bind
+        source: ./.data/redis
+        target: /data
     networks:
-      internal:
-      default:
-    ports:
-      - "6379:6379"
+      - ctf-network
+      - ctf-internal
 
   vite:
+    image: vite-ng:latest
     build:
       context: ./
       dockerfile: ./dockerfiles/vite.Dockerfile
-    container_name: ng-vite
-    restart: always
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: any
     tty: true
     ports:
-      - 5173:5173
+      - mode: host
+        target: 5173
+        published: 5173
     volumes:
-      - ./frontend:/app/frontend
-      - ./node_modules:/app/node_modules
+      - type: bind
+        source: ./frontend
+        target: /app/frontend
+      - type: bind
+        source: ./node_modules
+        target: /app/node_modules
+    networks:
+      - ctf-network
 
 networks:
-    default:
-    internal:
-      internal: true
+  ctf-network:
+    driver: overlay
+  ctf-internal:
+    driver: overlay
+    internal: true

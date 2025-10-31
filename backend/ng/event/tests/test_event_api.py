@@ -7,13 +7,13 @@ import base64
 import pytest
 from datetime import datetime, timedelta
 from ...core.utils import utc_now
-
 from ...core.utils import utc_now
 from ...user.models.User import User
 from ...team.models.Team import Team
 from ...team.models.TeamMember import TeamMember
 from ...event.models.Demographic import Demographic
 from ...challenge.models.Challenge import Challenge
+from ...scoring.models.Score import Score
 
 
 pytestmark = pytest.mark.db
@@ -57,6 +57,30 @@ class Test_Public_Event_Listing:
         assert len(data["data"]) == 2
         assert data["data"][0] == event1.serialize()
         assert data["data"][1] == event2.serialize()
+
+    def test_listing_domains(self, logged_in_client, event_factory):
+        event1 = event_factory(
+            name = "Public Event with Domains",
+            public = True,
+            allowed_domains = ["com", "org"]
+        )
+        event2 = event_factory(name = "Public Event without Domains", public = True)
+
+        response = logged_in_client.get(self.endpoint)
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert len(data["data"]) == 2
+
+        event1_data = next((e for e in data["data"] if e["id"] == event1.id), None)
+        event2_data = next((e for e in data["data"] if e["id"] == event2.id), None)
+
+        assert event1_data is not None
+        assert event1_data.get("allowed_domains") == ["com", "org"]
+
+        assert event2_data is not None
+        assert event2_data.get("allowed_domains") == []
 
 
 class Test_Public_Event_Detail:
@@ -108,6 +132,69 @@ class Test_Public_Event_Detail:
         assert data["success"] is True
         assert data["data"] == event.serialize()
 
+class Test_Private_Event_Detail:
+    def get_endpoint(self, event_id: int) -> str:
+        return f"/ng/events/{event_id}"
+
+    def test_get_private_event_details_as_admin(
+        self,
+        admin_client,
+        event_factory
+    ):
+        event = event_factory(
+            name = "Private Event for Admin Detail Test",
+            public = False
+        )
+
+        response = admin_client.get(self.get_endpoint(event.id))
+
+        assert response.status_code == 200
+        data = response.get_json()
+
+        assert data["success"] is True
+        assert data["data"] == event.serialize()
+
+    def test_get_private_event_details_as_non_admin(
+        self,
+        logged_in_client,
+        event_factory
+    ):
+        event = event_factory(
+            name = "Private Event for Non-Admin Detail Test",
+            public = False
+        )
+
+        response = logged_in_client.get(self.get_endpoint(event.id))
+
+        assert response.status_code == 404
+        data = response.get_json()
+        assert data["success"] is False
+
+    def test_registered_user_can_get_private_event_details(
+        self,
+        logged_in_client,
+        user,
+        event_factory,
+        team_factory
+    ):
+        event = event_factory(
+            name = "Private Event for Registered User Detail Test",
+            public = False
+        )
+        # To simulate registration
+        Demographic.create_demographic(
+            user_id = user.id,
+            event_id = event.id,
+            commit = True
+        )
+
+        response = logged_in_client.get(self.get_endpoint(event.id))
+
+        assert response.status_code == 200
+        data = response.get_json()
+
+        assert data["success"] is True
+        assert data["data"] == event.serialize()
 
 class Test_Event_Eligibility:
     def get_endpoint(self, event_id: int) -> str:
@@ -467,6 +554,119 @@ class Test_Event_Registration:
         assert "User is already registered for this event." in data["errors"][
             "business_logic"]
 
+    def test_register_event_with_allowed_domains(
+        self,
+        client_factory,
+        user_factory,
+        event_factory
+    ):
+
+        user = user_factory(name = "domainuser", email = "domainuser@example.com")
+        logged_in_client = client_factory(user = user)
+        event = event_factory(
+            name = "Event with Allowed Domains",
+            public = True,
+            allowed_domains = ["example.com"]
+        )
+
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json = {
+                "team_name": "Test Team",
+            },
+        )
+
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data["success"] is True
+
+    def test_register_event_with_disallowed_domain(
+        self,
+        client_factory,
+        user_factory,
+        event_factory
+    ):
+        user = user_factory(name = "domainuser", email = "domainuser@example.com")
+        logged_in_client = client_factory(user = user)
+        event = event_factory(
+            name = "Event with Disallowed Domain",
+            public = True,
+            allowed_domains = ["disallowed.com"]
+        )
+
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json = {
+                "team_name": "Test Team"            },
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        assert "errors" in data
+        assert "User's email domain is not allowed for this event." in data["errors"][
+            "business_logic"]
+
+    def test_register_to_event_with_multiple_allowed_domains(
+        self,
+        client_factory,
+        user_factory,
+        event_factory
+    ):
+        user = user_factory(name = "multiuser", email = "multiuser@valid.mil")
+        logged_in_client = client_factory(user = user)
+        event = event_factory(name = "Event for Multiple Allowed Domains", public = True, allowed_domains = ["valid.mil", "secure.gov","trusted.org"])
+
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json = {
+                "team_name": "Multi Domain Test Team",
+            },
+        )
+
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data["success"] is True
+
+    def test_subdomain_email_registration(
+        self,
+        client_factory,
+        user_factory,
+        event_factory
+    ):
+        user = user_factory(name = "subdomainuser", email = "subdomainuser@us.valid.mil")
+        logged_in_client = client_factory(user = user)
+        event = event_factory(name = "Event for Subdomain Email Registration", public = True, allowed_domains = ["valid.mil"])
+
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json = {
+                "team_name": "Subdomain Test Team",
+            },
+        )
+
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data["success"] is True
+
+    def test_register_event_with_empty_allowed_domains(
+        self,
+        client_factory,
+        user_factory,
+        event_factory
+    ):
+        user = user_factory(name = "emptydomainuser", email = "emptydomainuser@invalid.com")
+        logged_in_client = client_factory(user = user)
+        event = event_factory(name = "Event with Empty Allowed Domains", public = True, allowed_domains = [])
+
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json = {
+                "team_name": "Empty Domain Test Team",
+            },
+        )
+
+        assert response.status_code == 201
 
 class Test_Event_Team_Lookup:
     def get_endpoint(self, event_id: int) -> str:
@@ -712,6 +912,33 @@ class Test_Event_Team_Management:
         reponse = team_member_client.get(f"/ng/events/{1}/me/team")
         assert reponse.status_code == 404
 
+    def test_leave_and_empty_team_deletes(self, logged_in_client, event_factory):
+        """Test that leaving a team as the last member deletes the team."""
+
+        event = event_factory(name = "Solo Leave Test Event", public = True)
+        logged_in_client.post(
+            f"/ng/events/{event.id}/me/register",
+            json = {"team_name": "Solo Team"},
+        )
+        response = logged_in_client.post(
+            f"/ng/events/{event.id}/me/team/leave",
+            json = {}
+        )
+        assert response.status_code == 200
+
+        response = logged_in_client.get(f"/ng/events/{event.id}/me/team")
+        assert response.status_code == 404
+
+        response = logged_in_client.get(f"/ng/events/{event.id}/me/team/score")
+        assert response.status_code == 404
+
+        teams = Team.query.all()
+        assert len(teams) == 0
+
+        scores = Score.query.all()
+        assert len(scores) == 0
+
+
     def test_captain_cant_leave(self, team_captain_client):
         """Test that the team leave endpoint fails for a captain."""
         response = team_captain_client.post(
@@ -743,6 +970,7 @@ class Test_Event_Team_Management:
     def test_solo_captain_can_leave(
         self,
         logged_in_client,
+        user_factory,
         user,
         event_factory,
         team_factory,
@@ -752,18 +980,11 @@ class Test_Event_Team_Management:
         event = event_factory(name = "Solo Leave Test Event", public = True)
         _team = team_factory(event = event, members = [user])  # Only one member (the captain)
 
-        Demographic.create_demographic(
-            user_id = user.id,
-            event_id = event.id,
-            commit = False
-        )
-        db_session.commit()
 
         response = logged_in_client.post(
             f"/ng/events/{event.id}/me/team/leave",
             json = {}
         )
-
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -1104,6 +1325,26 @@ class Test_Event_Admin_Create:
         assert data["success"] is False
         assert "errors" in data
         assert "validation" in data["errors"]
+
+    def test_admin_create_event_with_domain_restrictions(self, admin_client):
+        new_event_data = {
+            "name": "Domain Restricted Event",
+            "description": "Event with email domain restrictions.",
+            "public": True,
+            "registration_open": True,
+            "max_team_size": 5,
+            "allowed_domains": ["example.com", "registered.org"]
+        }
+
+        response = admin_client.post(
+            self.post_endpoint(),
+            json = new_event_data
+        )
+
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["allowed_domains"] == new_event_data["allowed_domains"]
 
 
 class Test_Event_Challenge_Import:

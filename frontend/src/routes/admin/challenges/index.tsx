@@ -23,7 +23,7 @@ const colDefs: ColDef<Challenge>[] = [
         <span className="min-w-0 overflow-hidden text-ellipsis">{params.value}</span>
       </>
     ),
-    cellClass : '!flex flex-row items-center gap-1 ',
+    cellClass : '!flex flex-row items-center gap-1',
     filter : true,
     floatingFilter : true,
   },
@@ -72,13 +72,16 @@ export default function AdminChallenges() {
   }
 
   return (
-    <AdminGrid
-      rowData={rowData}
-      columnDefs={colDefs}
-      loading={isLoading}
-      getRowId={(params) => params.data.id.toString()}
-      sidebarComponent={ChallengeSidebar}
-      stopCellSelection={[ 'event_name' ]}
-    />
+    <>
+      <title>Admin Challenges</title>
+      <AdminGrid
+        rowData={rowData}
+        columnDefs={colDefs}
+        loading={isLoading}
+        getRowId={(params) => params.data.id.toString()}
+        sidebarComponent={ChallengeSidebar}
+        stopCellSelection={[ 'event_name' ]}
+      />
+    </>
   );
 }
