@@ -1,4 +1,4 @@
-import { COLOR_POSITIVE, COLOR_WARNING } from '@/constants';
+import { COLOR_NEGATIVE, COLOR_POSITIVE, COLOR_WARNING } from '@/constants';
 import { apiMutation } from '@/fetchers';
 import { useAdminChallengeBlueprints } from '@/hooks/challenge';
 import socket from '@/socket';
@@ -15,12 +15,17 @@ import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { ErrorCallout, WarningCallout } from 'components/Callouts';
 import Modal from 'components/Modal';
 import { useEffect, useState } from 'react';
-import { TbCheck, TbDownload, TbPackage } from 'react-icons/tb';
+import {
+  TbCancel,
+  TbCheck,
+  TbDownload,
+  TbPackage,
+} from 'react-icons/tb';
 
 export default function ChallengeBlueprintTab({ challengeId }: {challengeId: number}) {
   const { data : blueprints, error } = useAdminChallengeBlueprints(challengeId);
 
-  const [ pullStates, setPullStates ] = useState<{[key: number]:'pulling' | 'success'}>({});
+  const [ pullStates, setPullStates ] = useState<{[key: number]:'pulling' | 'success' | 'fail'}>({});
   const [ pullErrors, setPullErrors ] = useState<string[]>([]);
 
   const handlePull = async () => {
@@ -46,15 +51,19 @@ export default function ChallengeBlueprintTab({ challengeId }: {challengeId: num
       }));
     });
 
-    socket.on('pull-fail', ({ error : pullError }: {error: string}) => {
+    socket.on('pull-fail', ({ error : pullError, id }: {error: string, id: number}) => {
       setPullErrors((prev) => ([ ...prev, pullError ]));
+      setPullStates((prev) => ({
+        ...prev,
+        [id] : 'fail',
+      }));
     });
 
     return () => {
       socket.off('pull-success');
-      socket.off('pull-failure');
+      socket.off('pull-fail');
     };
-  });
+  }, []);
 
   if (error) {
     return <ErrorCallout>{error.message}</ErrorCallout>;
@@ -96,6 +105,12 @@ export default function ChallengeBlueprintTab({ challengeId }: {challengeId: num
                 <Text color={COLOR_POSITIVE}>
                   <TbCheck className="inline me-1" />
                   Pulled
+                </Text>
+              )}
+              {pullStates[blueprint.id] === 'fail' && (
+                <Text color={COLOR_NEGATIVE}>
+                  <TbCancel className="inline me-1" />
+                  Error
                 </Text>
               )}
             </AdminSidebarHeader>
