@@ -34,8 +34,9 @@ load_env() {
 
 check_ctfd_running() {
   local container_name=$(docker ps --format '{{.Names}}' | grep -E '^ng-ctfd$|ng_ctfd')
+  
   if [ -z "$container_name" ]; then
-    highlight "The CTFd container is not running. Please run 'pnpm start' to start the container\n"
+    highlight "The CTFd container is not running. Please run 'pnpm start' to start the container\n" >&2
     exit 1
   fi
   echo "$container_name"
