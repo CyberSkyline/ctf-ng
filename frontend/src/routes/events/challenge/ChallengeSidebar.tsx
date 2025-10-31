@@ -87,7 +87,7 @@ export default function ChallengeSidebar() {
               </Box>
             )}
 
-            {challenge && event && (
+            {challenge && event && granted && (
               <Flex direction="row" gap="2" mt="3" align="center">
                 <ConnectModal eventId={event.id} challengeId={challenge.id} isTeam={event.max_team_size > 1} />
               </Flex>
