@@ -210,7 +210,10 @@ class Question(db.Model):
         :return: True if the answer matches, False otherwise.
         """
         templated = self.answer is None
-        if templated and isinstance(self.answer_variable, ChallengeVariable):
+        if not templated:
+            return re.search(self.answer, answer) is not None
+
+        if isinstance(self.answer_variable, ChallengeVariable):
             variable = self.answer_variable.as_attr()
             evaluated_answer = variable.template.eval(generate_seed(
                 event_id=team.event_id,
@@ -219,8 +222,6 @@ class Question(db.Model):
                 team_seed=team.seed
             ))
             return evaluated_answer == answer
-        elif self.answer is not None:
-            return re.search(self.answer, answer) is not None
 
         return False
 
