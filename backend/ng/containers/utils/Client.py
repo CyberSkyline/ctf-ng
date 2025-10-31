@@ -59,4 +59,9 @@ class Client(docker.DockerClient):
                 "password": get_app_config("CONTAINER_REGISTRY_PASSWORD"),
             }
 
-        self.images.pull(image, auth_config=auth)
+        try:
+            self.images.pull(image, auth_config=auth)
+
+        except docker.errors.APIError:
+            # Try and pull registry without creds
+            self.images.pull(f"{image}")
