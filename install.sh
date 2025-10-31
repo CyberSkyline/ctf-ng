@@ -171,6 +171,42 @@ fi
 cd $PROJECT_DIR
 pnpm install
 
+# MinIO setup for local development
+echo ""
+echo "MinIO Setup for Local Development"
+echo ""
+prompt_user "Would you like to set up MinIO for local S3-compatible storage?" && {
+  echo "Starting MinIO container..."
+
+  # Check if docker compose is available
+  if ! docker compose version &> /dev/null; then
+    echo "Docker Compose is required for MinIO. Please install Docker Compose first."
+  else
+    # Start MinIO container
+    USE_MINIO=true docker compose up -d minio
+
+    # Wait for MinIO to be ready
+    echo "Waiting for MinIO to start..."
+    sleep 5
+
+    # Run the MinIO setup script
+    if [ -f "./setup-minio.sh" ]; then
+      echo "Running MinIO setup script..."
+      bash ./setup-minio.sh
+    else
+      echo "MinIO setup script not found. You can run it manually later with: ./setup-minio.sh"
+    fi
+
+    echo ""
+    echo "MinIO setup complete! You can now use MinIO for local file storage."
+    echo "To start the development environment with MinIO, use: npm start"
+    echo "To start with AWS S3, use: npm run start-aws"
+    echo ""
+  fi
+} || {
+  echo "MinIO setup skipped. You can set it up later by running: npm run minio"
+}
+
 if ! compgen -G "$HOME/.docker/*.pem" > /dev/null; then
   prompt_user "Would you like to generate tls certs for docker? You will be prompted" && {
     mkdir ssl

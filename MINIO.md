@@ -1,10 +1,28 @@
 # MinIO Setup for Development
 
-MinIO provides S3 compatible storage for local development without requiring AWS credentials or incurring costs.
+MinIO provides S3-compatible storage for local development without requiring AWS credentials or incurring costs.
 
 ## Quick Setup
 
-### Option 1: Automated Setup (Recommended)
+### Option 1: Initial Project Setup (Recommended)
+
+If you're setting up the project for the first time:
+
+```bash
+./install.sh
+```
+
+The install script will prompt you to set up MinIO automatically. Choose "yes" when asked:
+- "Would you like to set up MinIO for local S3-compatible storage?"
+
+This will:
+1. Start the MinIO container
+2. Create the `ctfd-attachments` bucket
+3. Configure public access for downloads
+
+### Option 2: Standalone Setup
+
+If you skipped MinIO during install or need to set it up later:
 
 ```bash
 npm run minio
@@ -12,12 +30,10 @@ npm run minio
 
 This command will:
 1. Start the MinIO container
-2. Create the `ctfd-uploads` bucket
-3. Configure public access for presigned URLs
+2. Create the bucket
+3. Configure public access
 
-Done! Your MinIO storage is ready.
-
-### Option 2: Manual Setup
+### Option 3: Manual Setup
 
 If the automated setup fails:
 
@@ -29,12 +45,12 @@ If the automated setup fails:
 2. **Open MinIO Console:** http://localhost:9001
 
 3. **Login with default credentials:**
-   - Username: `ctfd-dev`
-   - Password: `ctfd-dev-secret-key-12345`
+   - Username: `minioadmin`
+   - Password: `minioadmin`
 
 4. **Create bucket:**
    - Click "Create Bucket"
-   - Name it `whatever-yah-want`
+   - Name it `ctfd-attachments`
    - Keep default settings
 
 5. **Set bucket policy:**
@@ -44,29 +60,38 @@ If the automated setup fails:
 
 ## Configuration
 
-Add these fields to your `.env.dev` file:
+Configuration is automatically set in `conf/ctfd/.env.default.dev`:
 
 ```bash
-# MinIO Configuration
-MINIO_ACCESS_KEY=make-a-key
-MINIO_SECRET_KEY=make-a-secret-key
-MINIO_ENDPOINT=http://minio:9000
-MINIO_BUCKET=make-a-bucket-name
+# AWS S3 Configuration (for production)
+AWS_S3_ACCESS_KEY_ID=-
+AWS_S3_SECRET_ACCESS_KEY=-
+AWS_S3_BUCKET_NAME=-
 
-# AWS S3 Configuration (if you want to use real AWS in dev)
-AWS_S3_ACCESS_KEY_ID=your-aws-access-key
-AWS_S3_SECRET_ACCESS_KEY=your-super-secret-aws-key
-AWS_S3_BUCKET_NAME=your-bucket-name
+# MinIO Configuration (for development)
+USE_MINIO=true
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin
+MINIO_ENDPOINT=http://minio:9000
+MINIO_BUCKET=ctfd-attachments
 ```
+
+To customize for your environment, copy `.env.default.dev` to `.env.dev`:
+
+```bash
+cp conf/ctfd/.env.default.dev .env.dev
+```
+
+Then edit `.env.dev` with your preferred values.
 
 ### Default Credentials
 
-The docker-compose.yaml file sets up MinIO with these default credentials:
-- **Username:** ctfd-dev
-- **Password:** ctfd-dev-secret-key-12345
+The default MinIO credentials are:
+- **Username:** minioadmin
+- **Password:** minioadmin
+- **Bucket:** ctfd-attachments
 
-These are shared development credentials - everyone uses the same ones, 
-but data is isolated per developer's machine.
+These are development credentials - safe for local use only.
 
 ## Usage
 
@@ -136,12 +161,12 @@ npm run minio
 # Or create manually via web console
 ```
 
-### "Access denied" on Presigned URLs
+### "Access denied" on Downloads
 
-The bucket needs public read access for presigned URLs to work:
+The bucket needs public read access for downloads to work:
 
 ```bash
-docker exec ng-minio mc anonymous set download local/ctfd-uploads
+docker exec ng-minio mc anonymous set download local/ctfd-attachments
 ```
 
 ### MinIO Container Won't Start
