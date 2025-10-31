@@ -7,11 +7,31 @@ echo ""
 echo "MinIO Setup for CTFd Development"
 echo ""
 
+# Load configuration from environment file
+ENV_FILE="${ENV_FILE:-.env.dev}"
+CTFD_ENV_FILE="conf/ctfd/${ENV_FILE}"
+
+# Source environment variables if file exists
+if [ -f "$CTFD_ENV_FILE" ]; then
+    echo "Loading configuration from $CTFD_ENV_FILE"
+    set -a
+    source "$CTFD_ENV_FILE"
+    set +a
+elif [ -f "conf/ctfd/.env.default.dev" ]; then
+    echo "Loading configuration from conf/ctfd/.env.default.dev"
+    set -a
+    source "conf/ctfd/.env.default.dev"
+    set +a
+else
+    echo "Warning: No environment file found, using defaults"
+fi
+
 MINIO_CONTAINER="ng-minio"
-BUCKET_NAME="ctfd-uploads"
-MINIO_ENDPOINT="http://localhost:9000"
-MINIO_USER="ctfd-dev"
-MINIO_PASSWORD="ctfd-dev-secret-key-12345"
+# Use environment variables with defaults
+BUCKET_NAME="${MINIO_BUCKET:-ctfd-attachments}"
+MINIO_ENDPOINT="${MINIO_ENDPOINT:-http://localhost:9000}"
+MINIO_USER="${MINIO_ACCESS_KEY:-minioadmin}"
+MINIO_PASSWORD="${MINIO_SECRET_KEY:-minioadmin}"
 
 echo "Checking MinIO container status..."
 if ! docker ps | grep -q "$MINIO_CONTAINER"; then

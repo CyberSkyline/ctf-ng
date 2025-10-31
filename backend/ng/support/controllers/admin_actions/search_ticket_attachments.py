@@ -53,8 +53,7 @@ def search_ticket_attachments(
 
     serialized_attachments = [
         attachment.serialize(
-            include_admin_fields = True,
-            include_presigned_url = True
+            include_admin_fields = True
         ) for attachment in attachments
     ]
 

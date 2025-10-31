@@ -195,15 +195,17 @@ class TicketAttachment(db.Model):
         """
         search_pattern = f"%{filename_query}%"
 
-        attachments = cls.query.filter(
-            cls.filename.ilike(search_pattern)
-        ).order_by(
-            cls.uploaded_at.desc()
+        query = cls.query.join(
+            FileUpload, cls.file_upload_id == FileUpload.id
+        ).filter(
+            FileUpload.filename.ilike(search_pattern)
+        )
+
+        attachments = query.order_by(
+            FileUpload.uploaded_at.desc()
         ).limit(limit).offset(offset).all()
 
-        total_count = cls.query.filter(
-            cls.filename.ilike(search_pattern)
-        ).count()
+        total_count = query.count()
 
         return attachments, total_count
 
