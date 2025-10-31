@@ -11,8 +11,9 @@ from ...core.middleware.loaders import (
     load_ticket,
     load_ticket_tag,
     load_user,
+    load_attachment,
 )
-from ...core.utils import success_response
+from ...core.utils import success_response, error_response
 from ...user.models import User
 
 from ..controllers import (
@@ -31,6 +32,8 @@ from ..controllers import (
     list_tickets,
     get_ticket,
     create_ticket_message,
+    upload_ticket_attachment,
+    download_attachment,
 )
 
 
@@ -626,3 +629,77 @@ class AdminTag(Resource):
             description=json_data.get("description"),
         )
         return success_response(updated_tag)
+
+
+@support_admin_namespace.route("/tickets/<int:ticket_id>/upload_image")
+class AdminTicketImageUpload(Resource):
+    @admin_endpoint()
+    @load_ticket(LoaderType.PARAM)
+    @support_admin_namespace.doc(
+        description="Upload an image to any support ticket (Admin only, WebP only, max 5MB)",
+        params={
+            "ticket_id": {
+                "description": "Ticket ID",
+                "required": True,
+                "type": "integer",
+                "example": 123
+            },
+            "file": {
+                "description": "Image file (WebP format, max 5MB)",
+                "in": "formData",
+                "required": True,
+                "type": "file"
+            }
+        },
+        responses={
+            200: "Success - Image uploaded, returns image_url",
+            400: "Bad request - Invalid file type or size",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Ticket does not exist",
+            500: "Internal Server Error",
+        },
+    )
+    def post(self, ticket_id: int, ticket, current_user: User, **kwargs):
+        """
+        Upload image to any ticket (admin)
+        """
+        if 'file' not in request.files:
+            return error_response("No file provided", "file", 400)
+
+        file = request.files['file']
+
+        attachment = upload_ticket_attachment(
+            file=file,
+            ticket=ticket,
+            uploaded_by=current_user.id,
+        )
+
+        return success_response(attachment)
+
+
+@support_admin_namespace.route("/attachments/<int:attachment_id>")
+class AdminAttachmentDownload(Resource):
+    @admin_endpoint()
+    @load_attachment(LoaderType.PARAM)
+    @support_admin_namespace.doc(
+        description="Download any support ticket attachment",
+        params={
+            "attachment_id": {
+                "description": "Attachment ID",
+                "required": True,
+                "type": "integer",
+                "example": 123
+            }
+        },
+        responses={
+            200: "Success - File streamed from S3",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Attachment does not exist or file missing in storage",
+            500: "Internal Server Error",
+        },
+    )
+    def get(self, attachment_id: int, attachment, current_user: User, **kwargs):
+        """
+        Download any attachment (admin access)
+        """
+        return download_attachment(attachment=attachment)

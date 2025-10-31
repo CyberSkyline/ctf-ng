@@ -177,6 +177,7 @@ class BaseValidator:
             "ContainerBlueprint": "ng_container_blueprints",
             "Demographic": "ng_demographics",
             "Event": "ng_events",
+            "FileUpload": "ng_file_uploads",
             "Hint": "ng_challenge_hints",
             "HintRedemption": "ng_hint_redemptions",
             "ManualPointAward": "ng_manual_point_awards",
@@ -190,6 +191,7 @@ class BaseValidator:
             "TeamMember": "ng_team_members",
             "Ticket": "ng_tickets",
             "TicketTag": "ng_ticket_tags",
+            "TicketAttachment": "ng_ticket_attachments",
             "User": "ng_users",
             "Users": "users",  # CTFd's main users table
         }

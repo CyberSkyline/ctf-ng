@@ -1246,3 +1246,21 @@ def announcement_factory(db_session):
         return announcement
 
     return _factory
+
+
+@pytest.fixture
+def other_user_ticket(db_session, user_factory, event):
+    """Creates a ticket by a different user for testing access control."""
+    from .support.models.Ticket import Ticket
+
+    other_user = user_factory(name="Other User", email="otheruser@example.com")
+
+    ticket = Ticket.create_ticket(
+        subject="Other User's Ticket",
+        author_id=other_user.ctfd_user.id,
+        event_id=event.id,
+        commit=False,
+    )
+    db_session.add(ticket)
+    db_session.commit()
+    return ticket

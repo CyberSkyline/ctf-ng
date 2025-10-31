@@ -13,6 +13,7 @@ from .auth import (
     public_endpoint,
 )
 from .ownership_middleware import check_ownership
+from .attachment_permission import check_attachment_ownership
 
 __all__ = [
     # Core Decorators
@@ -22,4 +23,5 @@ __all__ = [
     "admin_endpoint",
     "public_endpoint",
     "check_ownership",
+    "check_attachment_ownership",
 ]
