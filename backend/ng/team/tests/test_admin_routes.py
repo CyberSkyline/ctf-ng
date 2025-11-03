@@ -107,7 +107,7 @@ def test_teamdetail_update_just_start_continuity(admin_client, event, team_facto
         }
     )
     assert response.status_code == 400
-    
+
 def test_teamdetail_update_just_end(admin_client, event, team_factory, user):
     """Test that the team detail endpoint allows updating just end time."""
     team = team_factory(event=event, members=[user])
