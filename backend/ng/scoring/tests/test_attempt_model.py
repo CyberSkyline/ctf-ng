@@ -422,7 +422,7 @@ class TestFindFilteredAttempts:
         """Test filtering attempts by question_id"""
         # Create another question
         other_question = Question(
-            challenge_id=challenge.id, name="Other Question", body="What is 3+3?", answer="6", points=50, max_attempts=5
+            challenge_id=challenge.id, name="Other Question", body="What is 3+3?", answer="6", points=50, max_attempts=5, index=1
         )
         db_session.add(other_question)
         db_session.commit()

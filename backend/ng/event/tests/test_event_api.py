@@ -1348,8 +1348,8 @@ class Test_Event_Admin_Create:
 
 
 class Test_Event_Challenge_Import:
-    def get_endpoint(self, event) -> str:
-        return f"/ng/admin/events/{event.id}/challenges"
+    def get_endpoint(self) -> str:
+        return "/ng/admin/challenges"
 
     def test_challenge_import_endpoint(self, admin_client, event):
         with open(os.path.join(os.path.dirname(__file__),
@@ -1358,8 +1358,8 @@ class Test_Event_Challenge_Import:
             yaml = base64.urlsafe_b64encode(f.read())
 
         response = admin_client.post(
-            self.get_endpoint(event),
-            json = {"yaml": yaml.decode("utf-8")}
+            self.get_endpoint(),
+            json = {"yaml": yaml.decode("utf-8"), "event_id": event.id}
         )
 
         challenge = Challenge.query.filter_by(name = "Basic Challenge").first()
@@ -1375,8 +1375,8 @@ class Test_Event_Challenge_Import:
             yaml = base64.urlsafe_b64encode(f.read())
 
         response = admin_client.post(
-            self.get_endpoint(event),
-            json = {"yaml": yaml.decode("utf-8")}
+            self.get_endpoint(),
+            json = {"yaml": yaml.decode("utf-8"), "event_id": event.id}
         )
         assert response.status_code == 400
 

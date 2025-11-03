@@ -43,3 +43,4 @@ node_modules/
 # SSL certs
 privatesslkey.pem
 sslpublickey.pem
+ssl/

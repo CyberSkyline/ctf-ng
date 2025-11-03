@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import base64
 from typing import TYPE_CHECKING
 
 from CTFd.models import db
@@ -10,22 +9,20 @@ from cyber_skyline.chall_parser.template import Template as ParserTemplate
 from cyber_skyline.chall_parser.yaml_parser import parse_compose_string
 
 from ...utils.challenge_yaml import partial_environment
-from ....challenge.models import Challenge, ChallengeTag, ContainerBlueprint, Hint, Question, ChallengeVariable, ChallengeYaml
+from ...models import Challenge, ChallengeTag, ContainerBlueprint, Hint, Question, ChallengeVariable, ChallengeYaml
 from ....core.exceptions import ValidationError
 
 if TYPE_CHECKING:
     from ....event.models.Event import Event
 
 
-def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
+def import_challenge_from_yaml(event: Event, payload: str) -> Challenge:
     """
     Import a challenge from a YAML definition.
     :return: The imported challenge.
     """
-    payload = base64.urlsafe_b64decode(json_data["yaml"])
-
     try:
-        compose_file = parse_compose_string(payload.decode("utf-8"))
+        compose_file = parse_compose_string(payload)
     except Exception as e:
         print(e)
         raise ValidationError(f"Invalid YAML format: {e}") from e
@@ -44,7 +41,7 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
 
         ChallengeYaml.create_yaml(
             challenge_id=challenge.id,
-            body=payload.decode("utf-8"),
+            body=payload,
             commit=False,
         )
 
@@ -56,12 +53,13 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
         db_variables: dict[str, ChallengeVariable] = {}
         db_variable_questions: dict[str, Question] = {}
 
-        for hint in hints:
+        for index, hint in enumerate(hints):
             Hint.create_hint(
                 name=hint.name,
                 challenge_id=challenge.id,
                 body=hint.body.content if isinstance(hint.body, TextBody) else hint.body,
                 preview=hint.preview,
+                index=index,
                 deduction=hint.deduction,
                 commit=False,
             )
@@ -73,7 +71,7 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
                 commit=False,
             )
 
-        for (key, variable) in variables.items():
+        for key, variable in variables.items():
             db_variables[key] = ChallengeVariable.create_variable(
                 challenge_id=challenge.id,
                 name=key,
@@ -82,7 +80,7 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
                 commit=False,
             )
 
-        for question in questions:
+        for index, question in enumerate(questions):
             answer = None
             answer_variable_id = None
 
@@ -108,6 +106,7 @@ def import_challenge_from_yaml(event: Event, json_data) -> Challenge:
 
             db_question = Question.create_question(
                 challenge_id=challenge.id,
+                index=index,
                 name=question.name,
                 body=question.body,
                 points=question.points,
