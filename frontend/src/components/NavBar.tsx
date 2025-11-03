@@ -3,11 +3,9 @@ import { useAuth } from '@/hooks/users';
 import { Flex } from '@radix-ui/themes';
 import NotificationsPopover from 'components/NotificationsPopover';
 import ThemeToggle from 'components/ThemeToggle';
-import { useTheme } from 'next-themes';
 import { NavigationMenu } from 'radix-ui';
 import { TbUserCircle } from 'react-icons/tb';
 import { NavLink, useLocation } from 'react-router';
-import { twMerge } from 'tailwind-merge';
 
 export default function NavBar() {
   const logout = () => {
@@ -20,7 +18,6 @@ export default function NavBar() {
   const { isAuthenticated, isUnauthenticated, user } = useAuth();
 
   const location = useLocation();
-  const { theme } = useTheme(); // Drop Content wouldn't obey otherwise
 
   const defaultLinkClass = `
     h-full
@@ -54,14 +51,8 @@ export default function NavBar() {
     shadow-lg
     border-(--gray-a6)
     border-1
-  `;
-
-  const contentLight = `
     bg-white
     text-(--gray-a11)
-  `;
-
-  const contentDark = `
     dark:bg-black
     dark:text-(--gray-12)
   `;
@@ -111,7 +102,7 @@ export default function NavBar() {
           {isAuthenticated && (
             <NotificationsPopover
               triggerClassName={defaultLinkClass}
-              contentClassName={twMerge(contentBase, theme === 'dark' ? contentDark : contentLight)}
+              contentClassName={contentBase}
             />
           )}
 
@@ -127,7 +118,7 @@ export default function NavBar() {
               </Flex>
             </NavigationMenu.Trigger>
             <NavigationMenu.Content
-              className={twMerge(contentBase, theme === 'dark' ? contentDark : contentLight)}
+              className={contentBase}
               onPointerEnter={(event) => event.preventDefault()}
               onPointerLeave={(event) => event.preventDefault()}
             >
