@@ -1117,7 +1117,6 @@ def question_factory(db_session, challenge_factory: Callable[[], Challenge]):
         else:
             defaults['answer_variable_id'] = answer_variable.id
         defaults.update(kwargs)
-        print(defaults)
         question = Question(**defaults)
         db_session.add(question)
         db_session.commit()
