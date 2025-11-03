@@ -1248,3 +1248,194 @@ class TestAdminSupportEndpoints:
                 error_text = str(data["errors"]).lower()
                 assert "not found in storage" in error_text or "not found" in error_text
 
+    # Search functionality tests
+    def test_search_ticket_attachments_by_filename(self, admin_client, ticket, user, db_session, ticket_factory):
+        """
+        Test searching for ticket attachments by filename
+        """
+        # Create another ticket for testing cross-ticket search
+        ticket2 = ticket_factory(author_id=user.id, subject="Second ticket")
+
+        # Create multiple attachments with different names
+        TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/screenshot-1.webp",
+            bucket_name="test-bucket",
+            filename="screenshot-error.webp",
+            file_size=1024,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+        TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/image-2.webp",
+            bucket_name="test-bucket",
+            filename="profile-image.webp",
+            file_size=2048,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+        TicketAttachment.create_attachment(
+            ticket_id=ticket2.id,
+            s3_key=f"support-tickets/{ticket2.id}/screenshot-3.webp",
+            bucket_name="test-bucket",
+            filename="screenshot-success.webp",
+            file_size=3072,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+
+        # Search for "screenshot" - should find 2 results
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=screenshot")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert data["success"] is True
+        assert "attachments" in data["data"]
+        assert "total" in data["data"]
+        assert "query" in data["data"]
+        assert data["data"]["total"] == 2
+        assert data["data"]["query"] == "screenshot"
+        assert len(data["data"]["attachments"]) == 2
+
+        # Verify the results contain "screenshot" in filename
+        for attachment in data["data"]["attachments"]:
+            assert "screenshot" in attachment["filename"].lower()
+            assert "download_url" in attachment  # Should have proxy URL
+            assert "file_upload_id" in attachment
+            assert "uploaded_by" in attachment
+            assert "uploaded_at" in attachment
+
+    def test_search_attachments_with_pagination(self, admin_client, ticket, user, db_session):
+        """
+        Test searching attachments with limit and offset
+        """
+        # Create 5 attachments with similar names
+        for i in range(5):
+            TicketAttachment.create_attachment(
+                ticket_id=ticket.id,
+                s3_key=f"support-tickets/{ticket.id}/test-image-{i}.webp",
+                bucket_name="test-bucket",
+                filename=f"test-image-{i}.webp",
+                file_size=1024 * (i + 1),
+                content_type="image/webp",
+                uploaded_by=user.id,
+            )
+
+        # Get first 2 results
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=test&limit=2&offset=0")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["total"] == 5
+        assert data["data"]["limit"] == 2
+        assert data["data"]["offset"] == 0
+        assert len(data["data"]["attachments"]) == 2
+
+        # Get next 2 results
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=test&limit=2&offset=2")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert len(data["data"]["attachments"]) == 2
+        assert data["data"]["offset"] == 2
+
+        # Get last result
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=test&limit=2&offset=4")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert len(data["data"]["attachments"]) == 1
+
+    def test_search_attachments_case_insensitive(self, admin_client, ticket, user, db_session):
+        """
+        Test that search is case insensitive
+        """
+        TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/uppercase.webp",
+            bucket_name="test-bucket",
+            filename="UPPERCASE-IMAGE.webp",
+            file_size=1024,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+
+        # Search with lowercase
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=uppercase")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert data["data"]["total"] == 1
+        assert data["data"]["attachments"][0]["filename"] == "UPPERCASE-IMAGE.webp"
+
+        # Search with mixed case
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=UpPeRcAsE")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert data["data"]["total"] == 1
+
+    def test_search_attachments_empty_query(self, admin_client):
+        """
+        Test searching with empty query returns error
+        """
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=")
+        assert response.status_code == 400
+
+        data = response.get_json()
+        assert data["success"] is False
+        assert "validation" in data["errors"]
+        assert "filename" in str(data["errors"]["validation"]).lower()
+
+    def test_search_attachments_short_query(self, admin_client):
+        """
+        Test searching with query less than 3 characters returns error
+        """
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=ab")
+        assert response.status_code == 400
+
+        data = response.get_json()
+        assert data["success"] is False
+        assert "validation" in data["errors"]
+        assert "at least 3 characters" in str(data["errors"]["validation"]).lower()
+
+    def test_search_attachments_no_results(self, admin_client):
+        """
+        Test searching returns empty list when no matches
+        """
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=nonexistent")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["total"] == 0
+        assert data["data"]["attachments"] == []
+        assert data["data"]["query"] == "nonexistent"
+
+    def test_search_attachments_invalid_pagination(self, admin_client):
+        """
+        Test invalid pagination parameters
+        """
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=test&limit=invalid")
+        assert response.status_code == 400
+
+        data = response.get_json()
+        assert data["success"] is False
+        assert "pagination" in data["errors"]
+
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=test&offset=invalid")
+        assert response.status_code == 400
+
+        data = response.get_json()
+        assert data["success"] is False
+        assert "pagination" in data["errors"]
+
+    def test_search_attachments_requires_admin(self, logged_in_client):
+        """
+        Test that regular users cannot access search endpoint
+        """
+        response = logged_in_client.get("/ng/admin/support/attachments/search?filename=test")
+        assert response.status_code == 403
+
