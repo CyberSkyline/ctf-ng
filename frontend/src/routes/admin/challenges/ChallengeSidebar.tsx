@@ -1,15 +1,15 @@
-import { COLOR_INFO, EventIcon } from '@/constants';
+import { COLOR_INFO, DeploymentIcon, EventIcon } from '@/constants';
 import type { Challenge } from '@/types';
 import { Button, Tabs } from '@radix-ui/themes';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import ChallengeIcon from 'components/ChallengeIcon';
 import { Link, useSearchParams } from 'react-router';
+import ChallengeDownloadButton from './ChallengeDownloadButton';
+import ChallengeUpdateModal from './ChallengeUpdateModal';
 import ChallengeAttemptsTab from './SidebarTabs/ChallengeAttemptsTab';
 import ChallengeBlueprintTab from './SidebarTabs/ChallengeBlueprintTab';
 import ChallengeDetailsTab from './SidebarTabs/ChallengeDetailsTab';
-import ChallengeUpdateModal from './ChallengeUpdateModal';
-import ChallengeDownloadButton from './ChallengeDownloadButton';
 
 export default function ChallengeSidebar({ entity }: {entity: Challenge}) {
   const [ searchParams, setSearchParams ] = useSearchParams();
@@ -21,6 +21,19 @@ export default function ChallengeSidebar({ entity }: {entity: Challenge}) {
           <Link to={`/admin/events?id=${entity.event_id}`}>
             <EventIcon />
             Event
+          </Link>
+        </Button>
+        <Button variant="soft" color={COLOR_INFO} asChild>
+          <Link
+            to={`/admin/deployments/?filter=${btoa(JSON.stringify(
+              {
+                challenge_name : { filterType : 'text', type : 'equals', filter : entity.name },
+                event_name : { filterType : 'text', type : 'equals', filter : entity.event_name },
+              },
+            ))}`}
+          >
+            <DeploymentIcon />
+            Deployments
           </Link>
         </Button>
         <ChallengeUpdateModal challengeId={entity.id} />

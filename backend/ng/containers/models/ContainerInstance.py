@@ -211,10 +211,18 @@ class ContainerInstance(db.Model):
         client = get_client(config.DOCKER_HOST)
         ctr = client.containers.get(self.dockerid)
 
+        image = "unknown"
+        if ctr.image.attrs["RepoTags"]:
+            # if the image is tagged, show the tag
+            image = ctr.image.attrs["RepoTags"][0]
+        elif ctr.image.attrs["RepoDigests"]:
+            # if this image is no longer tagged, show the digest instead
+            image = ctr.image.attrs["RepoDigests"][0]
+
         data = {
             "id": self.id,
             "name": ctr.name,
-            "image": ctr.image.tags[0] if ctr.image.tags else "unknown",
+            "image": image,
             "docker_id": self.dockerid,
             "status": ctr.status,
         }
