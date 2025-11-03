@@ -1,5 +1,5 @@
 import pytest
-
+from datetime import datetime
 
 pytestmark = pytest.mark.db
 
@@ -60,6 +60,84 @@ def test_teamdetail_update_event_timestamps(admin_client, event, team_factory, u
     assert data['data']["start_timestamp"] == new_start_timestamp
     assert data['data']["end_time"] == new_end_time
     assert data['success']
+
+def test_teamdetail_update_timestamps_must_have_continuity(admin_client, event, team_factory, user):
+    """Test that the team detail endpoint enforces continuity when updating timestamps."""
+    team = team_factory(event=event, members=[user])
+    new_start_timestamp = "2024-12-31T12:00:00Z"
+    new_end_time = "2024-01-01T12:00:00Z"
+    response = admin_client.put(
+        f"/ng/admin/teams/{team.id}",
+        json={
+            "start_timestamp": new_start_timestamp,
+            "end_time": new_end_time
+        }
+    )
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data['errors']['validation'] ==  "Validation failed: {'end_time': 'End Time must be after start timestamp.'}"
+
+def test_teamdetail_update_just_start(admin_client, event, team_factory, user):
+    """Test that the team detail endpoint allows updating just start timestamp."""
+    team = team_factory(event=event, members=[user])
+    team.set_start_timestamp(datetime(2024, 1, 1, 12, 0, 0))
+    team.set_end_time(datetime(2024, 12, 31, 12, 0, 0))
+    new_start_timestamp = "2024-01-01T12:00:00Z"
+    response = admin_client.put(
+        f"/ng/admin/teams/{team.id}",
+        json={
+            "start_timestamp": new_start_timestamp
+        }
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['data']["start_timestamp"] == new_start_timestamp
+    assert data['success']
+
+def test_teamdetail_update_just_start_continuity(admin_client, event, team_factory, user):
+    """Test that the team detail endpoint enforces continuity when updating just start timestamp."""
+    team = team_factory(event=event, members=[user])
+    team.set_start_timestamp(datetime(2024, 1, 1, 12, 0, 0))
+    team.set_end_time(datetime(2024, 12, 31, 12, 0, 0))
+    new_start_timestamp = "2025-01-01T12:00:00Z"
+    response = admin_client.put(
+        f"/ng/admin/teams/{team.id}",
+        json={
+            "start_timestamp": new_start_timestamp
+        }
+    )
+    assert response.status_code == 400
+    
+def test_teamdetail_update_just_end(admin_client, event, team_factory, user):
+    """Test that the team detail endpoint allows updating just end time."""
+    team = team_factory(event=event, members=[user])
+    team.set_start_timestamp(datetime(2024, 1, 1, 12, 0, 0))
+    team.set_end_time(datetime(2024, 12, 31, 12, 0, 0))
+    new_end_time = "2024-12-31T12:00:00Z"
+    response = admin_client.put(
+        f"/ng/admin/teams/{team.id}",
+        json={
+            "end_time": new_end_time
+        }
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['data']["end_time"] == new_end_time
+    assert data['success']
+
+def test_teamdetail_update_just_end_continuity(admin_client, event, team_factory, user):
+    """Test that the team detail endpoint enforces continuity when updating just end time."""
+    team = team_factory(event=event, members=[user])
+    team.set_start_timestamp(datetime(2024, 1, 1, 12, 0, 0))
+    team.set_end_time(datetime(2024, 12, 31, 12, 0, 0))
+    new_end_time = "2023-12-31T12:00:00Z"
+    response = admin_client.put(
+        f"/ng/admin/teams/{team.id}",
+        json={
+            "end_time": new_end_time
+        }
+    )
+    assert response.status_code == 400
 
 def test_update_team_ranked_status(admin_client, event, team_factory, user):
     """Test that the team detail endpoint can update the ranked status of a team."""
