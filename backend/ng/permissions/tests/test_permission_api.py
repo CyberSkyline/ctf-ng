@@ -99,6 +99,18 @@ def test_get_user_permissions(team_captain_client, user_with_roles):
     assert isinstance(data["data"]["permissions"], list)
     assert len(data["data"]["permissions"]) > 0
 
+def test_admin_panel_access_permission(admin_client, user_with_roles):
+    """Check that a user with admin panel access permission can access admin panel endpoints."""
+    response = admin_client.get("/ng/permissions/me")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"]
+    assert "data" in data
+    assert isinstance(data["data"]["permissions"], list)
+    assert len(data["data"]["permissions"]) > 0
+    assert "CAN_ACCESS_ADMIN_PANEL" in [perm for perm in data["data"]["permissions"]]
+
+
 def test_get_user_global_permissions(admin_client, user_with_roles):
     """Check that a user can get their own global permissions."""
     response = admin_client.get("/ng/permissions/me")

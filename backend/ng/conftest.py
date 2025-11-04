@@ -29,7 +29,7 @@ from .permissions.models.enums import PermissionEnum, RoleEnum
 from .permissions.models.Permission import Permission
 from .permissions.models.Role import Role
 from .permissions.models.RolePermission import RolePermission
-from .permissions.controllers.assign_role_to_user import assign_role_to_user
+from .permissions.controllers.initial_admin_setup import initial_admin_setup
 from .support.models.Ticket import Ticket
 from .support.models.TicketTag import TicketTag
 from .team.models.Team import Team
@@ -71,21 +71,7 @@ def db_session(app):
         transaction = connection.begin()
         db.session.close()
         db.session = db.create_scoped_session(options={"bind": connection, "binds": {}})
-        Role.create_role(RoleEnum.ADMIN)
-        Permission.create_permission(PermissionEnum.CAN_IMPERSONATE_USERS, "Impersonate users")
-        Permission.create_permission(PermissionEnum.CAN_EDIT_TEAM, "Edit team details")
-        Permission.create_permission(PermissionEnum.CAN_EDIT_USER, "Edit user details")
-        Permission.create_permission(PermissionEnum.CAN_VIEW_CHALLENGES, "View challenges")
-        Permission.create_permission(PermissionEnum.CAN_PLAY_CHALLENGES, "Play challenges")
-        Permission.create_permission(PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS, "Manage support tickets")
-        Permission.create_permission(PermissionEnum.CAN_START_TEAM_TIMER, "Start team timer")
-        RolePermission.create_role_permission(1, 1)
-        RolePermission.create_role_permission(1, 2)
-        RolePermission.create_role_permission(1, 3)
-        RolePermission.create_role_permission(1, 4)
-        RolePermission.create_role_permission(1, 5)
-        RolePermission.create_role_permission(1, 6)
-        RolePermission.create_role_permission(1, 7)
+        initial_admin_setup()
         yield db.session
         transaction.rollback()
         connection.close()

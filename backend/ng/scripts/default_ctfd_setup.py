@@ -8,6 +8,7 @@ from CTFd.config import Config
 from CTFd.models import db
 from sqlalchemy_utils import create_database, database_exists, drop_database
 from tests.helpers import setup_ctfd
+from ..permissions.controllers.initial_admin_setup import initial_admin_setup
 
 if "SCRIPT" not in os.environ:
     raise OSError("This should only be run from a script. DO NOT run this manually.")
@@ -69,55 +70,7 @@ with app.app_context():
     if not admin_user:
         admin_user = User.create_user(1, commit=True)
 
-    create_permission(
-        name=PermissionEnum.CAN_EDIT_TEAM,
-        description="Can edit teams",
-    )
-    create_permission(
-        name=PermissionEnum.CAN_EDIT_USER,
-        description="Can edit users",
-    )
-    create_permission(
-        name=PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
-        description="Can manage support tickets",
-    )
-    create_permission(
-        name=PermissionEnum.CAN_IMPERSONATE_USERS,
-        description="Can impersonate other users",
-    )
-    create_permission(
-        name=PermissionEnum.CAN_VIEW_CHALLENGES,
-        description="Can view challenges",
-    )
-    create_permission(
-        name=PermissionEnum.CAN_PLAY_CHALLENGES,
-        description="Can play challenges",
-    )
-    create_permission(
-        name=PermissionEnum.CAN_START_TEAM_TIMER,
-        description="Can start the team timer",
-    )
-
-    create_role(
-        name=RoleEnum.ADMIN,
-        permissions=[
-            PermissionEnum.CAN_EDIT_TEAM,
-            PermissionEnum.CAN_EDIT_USER,
-            PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
-            PermissionEnum.CAN_IMPERSONATE_USERS,
-            PermissionEnum.CAN_VIEW_CHALLENGES,
-            PermissionEnum.CAN_PLAY_CHALLENGES,
-            PermissionEnum.CAN_START_TEAM_TIMER,
-        ],
-    )
-    create_role(
-        name=RoleEnum.SUPPORT,
-        permissions=[
-            PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
-            PermissionEnum.CAN_VIEW_CHALLENGES,
-        ],
-    )
-    assign_role_to_user(admin_user.id, RoleEnum.ADMIN)
+    initial_admin_setup(admin_user=admin_user)
 
     print("\n")
     # ANSI escape code for yellow background: \033[43m, reset: \033[0m

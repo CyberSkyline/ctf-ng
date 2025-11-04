@@ -9,6 +9,7 @@ from CTFd.config import Config
 from CTFd.models import Users, db
 from sqlalchemy_utils import create_database, database_exists, drop_database
 from tests.helpers import setup_ctfd
+from ..permissions.controllers.initial_admin_setup import initial_admin_setup
 
 if "SCRIPT" not in os.environ:
     raise OSError("This should only be run from a script. DO NOT run this manually.")
@@ -72,34 +73,7 @@ with app.app_context():
     if not ng_admin_user:
         ng_admin_user = NgUser.create_user(user_id=ctfd_admin_user.id, commit=True)
 
-    create_permission(
-        name=PermissionEnum.CAN_EDIT_TEAM,
-        description="Can edit teams",
-    )
-    create_permission(
-        name=PermissionEnum.CAN_EDIT_USER,
-        description="Can edit users",
-    )
-    create_permission(
-        name=PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
-        description="Can manage support tickets",
-    )
-
-    create_role(
-        name=RoleEnum.ADMIN,
-        permissions=[
-            PermissionEnum.CAN_EDIT_TEAM,
-            PermissionEnum.CAN_EDIT_USER,
-            PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
-        ],
-    )
-    create_role(
-        name=RoleEnum.SUPPORT,
-        permissions=[
-            PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
-        ],
-    )
-    assign_role_to_user(ng_admin_user.id, RoleEnum.ADMIN)
+    initial_admin_setup(admin_user=ng_admin_user)
 
 # Insert sample data
 with app.app_context():
