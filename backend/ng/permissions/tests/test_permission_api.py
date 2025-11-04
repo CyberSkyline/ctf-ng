@@ -108,7 +108,7 @@ def test_admin_panel_access_permission(admin_client, user_with_roles):
     assert "data" in data
     assert isinstance(data["data"]["permissions"], list)
     assert len(data["data"]["permissions"]) > 0
-    assert "CAN_ACCESS_ADMIN_PANEL" in [perm for perm in data["data"]["permissions"]]
+    assert "CAN_ACCESS_ADMIN_PANEL" in data["data"]["permissions"]
 
 
 def test_get_user_global_permissions(admin_client, user_with_roles):

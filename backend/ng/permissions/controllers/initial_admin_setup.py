@@ -1,13 +1,10 @@
 from .create_permission import create_permission
 from .create_role import create_role
 from ..models.enums import PermissionEnum, RoleEnum
-from ..models.Permission import Permission
-from ..models.Role import Role
-from ..models.RolePermission import RolePermission
 from ..controllers.assign_role_to_user import assign_role_to_user
 
 
-def initial_admin_setup(admin_user: "User" = None) -> None:
+def initial_admin_setup(admin_user = None) -> None:
     """Perform the initial setup for the admin user, including creating permissions and roles."""
     create_permission(
         name=PermissionEnum.CAN_EDIT_TEAM,

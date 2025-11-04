@@ -8,7 +8,7 @@ from CTFd.config import Config
 from CTFd.models import db
 from sqlalchemy_utils import create_database, database_exists, drop_database
 from tests.helpers import setup_ctfd
-from ..permissions.controllers.initial_admin_setup import initial_admin_setup
+
 
 if "SCRIPT" not in os.environ:
     raise OSError("This should only be run from a script. DO NOT run this manually.")
@@ -56,11 +56,8 @@ with app.app_context():
     # This script is designed to run in production via 'pnpm populate-data'
     # where the plugin is properly located at /opt/CTFd/CTFd/plugins/ng
     try:
-        from CTFd.plugins.ng.permissions.controllers.assign_role_to_user import assign_role_to_user  # type: ignore
-        from CTFd.plugins.ng.permissions.controllers.create_permission import create_permission  # type: ignore
-        from CTFd.plugins.ng.permissions.controllers.create_role import create_role  # type: ignore
-        from CTFd.plugins.ng.permissions.models.enums import PermissionEnum, RoleEnum  # type: ignore
-        from CTFd.plugins.ng.user.models.User import User  # type: ignore
+        from CTFd.plugins.ng.permissions.controllers.initial_admin_setup import initial_admin_setup  # type: ignore
+        from CTFd.plugins.ng.users.models.User import User  # type: ignore
     except ImportError as e:
         print(f"Failed to import plugin modules: {e}")
         print("This script should be run via 'pnpm populate-data' from the project root.")
