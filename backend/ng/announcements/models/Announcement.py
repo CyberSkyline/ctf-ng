@@ -52,7 +52,8 @@ class Announcement(db.Model):
         EnumWithUnknown(
             AnnouncementType,
             values_callable=lambda t: [str(item.value) for item in t],
-            unknown_value=AnnouncementType.UNKNOWN
+            unknown_value=AnnouncementType.UNKNOWN,
+            native_enum=False
         ),
         nullable = False
     )

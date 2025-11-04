@@ -60,7 +60,8 @@ class Notification(db.Model):
         EnumWithUnknown(
             NotificationType,
             values_callable=lambda t: [str(item.value) for item in t],
-            unknown_value=NotificationType.UNKNOWN
+            unknown_value=NotificationType.UNKNOWN,
+            native_enum=False
         ),
         nullable = False
     )
