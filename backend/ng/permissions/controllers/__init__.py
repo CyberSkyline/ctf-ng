@@ -16,4 +16,5 @@ __all__ = [
     "create_role",
     "get_users_with_roles",
     "get_support_role_users",
+    "initial_admin_setup",
 ]

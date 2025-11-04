@@ -55,11 +55,8 @@ with app.app_context():
     try:
         # This script is designed to run in production via 'pnpm populate-data'
         # where the plugin is properly located at /opt/CTFd/CTFd/plugins/ng
-        from CTFd.plugins.ng.permissions.controllers.assign_role_to_user import assign_role_to_user  # type: ignore
-        from CTFd.plugins.ng.permissions.controllers.create_permission import create_permission  # type: ignore
-        from CTFd.plugins.ng.permissions.controllers.create_role import create_role  # type: ignore
-        from CTFd.plugins.ng.permissions.models.enums import PermissionEnum, RoleEnum  # type: ignore
         from CTFd.plugins.ng.user.models.User import User as NgUser  # type: ignore
+        from CTFd.plugins.ng.permissions.controllers.initial_admin_setup import initial_admin_setup  # type: ignore
     except ImportError as e:
         print(f"Failed to import plugin modules: {e}")
         print("This script should be run via 'pnpm populate-data' from the project root.")
@@ -71,34 +68,7 @@ with app.app_context():
     if not ng_admin_user:
         ng_admin_user = NgUser.create_user(user_id=ctfd_admin_user.id, commit=True)
 
-    create_permission(
-        name=PermissionEnum.CAN_EDIT_TEAM,
-        description="Can edit teams",
-    )
-    create_permission(
-        name=PermissionEnum.CAN_EDIT_USER,
-        description="Can edit users",
-    )
-    create_permission(
-        name=PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
-        description="Can manage support tickets",
-    )
-
-    create_role(
-        name=RoleEnum.ADMIN,
-        permissions=[
-            PermissionEnum.CAN_EDIT_TEAM,
-            PermissionEnum.CAN_EDIT_USER,
-            PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
-        ],
-    )
-    create_role(
-        name=RoleEnum.SUPPORT,
-        permissions=[
-            PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
-        ],
-    )
-    assign_role_to_user(ng_admin_user.id, RoleEnum.ADMIN)
+    initial_admin_setup(admin_user=ng_admin_user)
 
 # Insert sample data
 with app.app_context():
