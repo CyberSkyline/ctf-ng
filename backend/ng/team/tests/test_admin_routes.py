@@ -139,4 +139,3 @@ def test_admin_teams_list_include_name_enrichment(admin_client, event_factory, t
     # Verify IDs are still present
     assert team_data["event_id"] == event.id
     assert team_data["name"] == "Red Team Alpha"
-
