@@ -101,9 +101,9 @@ class ContainerInstance(db.Model):
     def parse_network_name(network: str):
         parts = network.split('-')
         return {
-            "network_name": parts[0],
-            "team_id": int(parts[1]),
-            "challenge_id": int(parts[2]),
+            "network_name": '-'.join(parts[0:-2]),
+            "team_id": int(parts[-2]),
+            "challenge_id": int(parts[-1]),
         }
 
     @staticmethod
