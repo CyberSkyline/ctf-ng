@@ -36,7 +36,6 @@ from ...team.controllers.remove_member import remove_member
 
 from ...containers.controllers.start_containers import start_containers
 from ...containers.controllers.recycle_containers import recycle_containers
-from ...containers.controllers.reboot_containers import reboot_containers
 
 from ...user.models.User import User
 from ...team.models.Team import Team
@@ -526,26 +525,6 @@ class EventChallengeStartContainers(Resource):
     )
     def post(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event, permissions):
         started = start_containers(challenge_id, team.id, current_user)
-        return success_response(started)
-
-@events_user_namespace.route("/<int:event_id>/challenge/<int:challenge_id>/containers/restart")
-class EventChallengeRestartContainers(Resource):
-    @events_user_namespace.doc(
-        description="Reboot a challenges containers",
-        params={
-            "event_id": "Event id challenge is in",
-            "challenge_id": "Challenge id to reboot containers for",
-        },
-        responses={
-            200: "Sucess",
-            400: "Bad request",
-        },
-    )
-    @user_endpoint()
-    @load_event(source=LoaderType.PARAM)
-    @load_team_by_user_and_event()
-    def post(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event):
-        started = reboot_containers(challenge_id, team.id, current_user)
         return success_response(started)
 
 @events_user_namespace.route("/<int:event_id>/challenge/<int:challenge_id>/containers/recycle")
