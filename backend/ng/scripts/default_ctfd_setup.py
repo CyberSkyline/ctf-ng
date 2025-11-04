@@ -57,7 +57,7 @@ with app.app_context():
     # where the plugin is properly located at /opt/CTFd/CTFd/plugins/ng
     try:
         from CTFd.plugins.ng.permissions.controllers.initial_admin_setup import initial_admin_setup  # type: ignore
-        from CTFd.plugins.ng.users.models.User import User  # type: ignore
+        from CTFd.plugins.ng.user.models.User import User  # type: ignore
     except ImportError as e:
         print(f"Failed to import plugin modules: {e}")
         print("This script should be run via 'pnpm populate-data' from the project root.")
