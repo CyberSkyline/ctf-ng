@@ -33,6 +33,7 @@ class ContainerBlueprint(db.Model):
     entrypoint: Mapped[str | list[str] | None] = db.Column(db.PickleType, nullable=True)
     environment: Mapped[dict[str, str | EnvVarRenderer] | list[str] | None] = db.Column(db.PickleType, nullable=True)
     networks: Mapped[list[str] | dict[str, None] | None] = db.Column(db.PickleType, nullable=True)
+    netconfs: Mapped[list[str] | dict[str, None] | None ] = db.Column(db.PickleType, nullable=True)
     cap_add: Mapped[list[Literal['NET_ADMIN', 'SYS_PTRACE']] | None] = db.Column(db.PickleType, nullable=True)
     mem_limit: Mapped[int | str | None] = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_MEM_LIMIT_LENGTH), nullable=True)
     memswap_limit: Mapped[int | str | None] = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_MEMSWAP_LIMIT_LENGTH), nullable=True)
@@ -131,6 +132,7 @@ class ContainerBlueprint(db.Model):
         entrypoint: str | list[str] | None = None,
         environment: dict[str, str | EnvVarRenderer] | list[str] | None = None,
         networks: list[str] | dict[str, ServiceNetwork | None] | None = None,
+        netconfs: list[str] | dict[str, None] | None = None,
         cap_add: list[Literal['NET_ADMIN', 'SYS_PTRACE']] | None = None,
         mem_limit: int | str | None = None,
         memswap_limit: int | str | None = None,
@@ -151,6 +153,7 @@ class ContainerBlueprint(db.Model):
                     "entrypoint": entrypoint,
                     "environment": environment,
                     "networks": networks,
+                    "netconfs": netconfs,
                     "cap_add": cap_add,
                     "mem_limit": mem_limit,
                     "memswap_limit": memswap_limit,

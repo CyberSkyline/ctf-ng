@@ -78,6 +78,8 @@ if ! id -nG "$USER" | grep -qw "docker"; then
   }
 fi
 
+docker swarm init
+
 # Install npm / node
 if ! command -v npm &> /dev/null; then
   prompt_user "Would you like to install node and npm?" && {
