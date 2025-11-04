@@ -2,3 +2,4 @@ minimumReleaseAge: 2880
 packages:
   - "backend"
   - "frontend"
+  - "services/exec-service"

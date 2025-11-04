@@ -16,7 +16,8 @@
   "private": true,
   "workspaces": [
     "backend",
-    "frontend"
+    "frontend",
+    "exec-service"
   ],
   "scripts": {
     "aws-login": ".bin/aws_login.sh $1",

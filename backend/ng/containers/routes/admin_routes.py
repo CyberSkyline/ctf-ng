@@ -1,5 +1,7 @@
 from flask_restx import Namespace, Resource
+from flask import request
 from ..controllers.get_stats import get_stats
+from ..controllers.admin_exec import admin_exec
 from ..models.ContainerInstance import ContainerInstance
 
 from ...core.middleware import (
@@ -138,3 +140,19 @@ class InstanceLogs(Resource):
     def get(self, container_instance, **kwargs):
         res = container_instance.logs()
         return success_response(res)
+
+@admin_container_namespace.route("/execforward")
+class InstanceExec(Resource):
+    @admin_container_namespace.doc(
+        description="Forward exec service info to nginx. This should only be called by nginx. Pass container-id as a header",
+        responses={
+            200: "Success",
+            400: "Bad request"
+        },
+    )
+    def get(self):
+        # Container id has to be a header because nginx was not rendering
+        # the int variable in the url
+        container_instance_id = int(request.headers.get('container-id'))
+        return admin_exec(container_instance_id)
+
