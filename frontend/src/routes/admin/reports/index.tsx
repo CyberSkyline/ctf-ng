@@ -7,6 +7,7 @@ import { InfoCallout } from 'components/Callouts';
 export default function AdminReports() {
   return (
     <Grid columns={{ initial : '1', md : '2', xl : '3' }} gap="4">
+      <title>Admin Reports</title>
       <Card>
         <Heading>Report 1</Heading>
         <InfoCallout>Graph or table showing at-a-glance data, with option to download.</InfoCallout>

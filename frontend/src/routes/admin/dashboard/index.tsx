@@ -11,6 +11,7 @@ import AdminOverviewCard from './AdminOverviewCard';
 export default function AdminDashboard() {
   return (
     <>
+      <title>Admin Dashboard</title>
       <WarningCallout>Something bad happened!</WarningCallout>
 
       <Flex direction={{ initial : 'column', lg : 'row' }} gap="4" mt="4">

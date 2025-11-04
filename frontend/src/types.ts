@@ -263,3 +263,14 @@ export interface Notification {
   team_name?: string;
   event_name?: string;
 }
+
+export interface Announcement {
+  id: number;
+  title: string;
+  message: string;
+  created_at: Date;
+  expires_at: Date;
+  sender_id: number;
+  sender_name: string;
+  type: string;
+}

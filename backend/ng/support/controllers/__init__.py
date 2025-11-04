@@ -10,6 +10,8 @@ from .all_actions import (
     create_ticket_message,
     get_ticket,
     list_tickets,
+    upload_ticket_attachment,
+    download_attachment,
 )
 from .admin_actions import (
     create_tag,
@@ -24,6 +26,7 @@ from .admin_actions import (
     remove_ticket_event,
     set_ticket_challenge,
     remove_ticket_challenge,
+    search_ticket_attachments,
 )
 
 __all__ = [
@@ -34,6 +37,8 @@ __all__ = [
     "create_ticket_message",
     "get_ticket",
     "list_tickets",
+    "upload_ticket_attachment",
+    "download_attachment",
     # Admin actions
     "create_tag",
     "update_tag",
@@ -47,4 +52,5 @@ __all__ = [
     "remove_ticket_event",
     "set_ticket_challenge",
     "remove_ticket_challenge",
+    "search_ticket_attachments",
 ]

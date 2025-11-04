@@ -1,5 +1,6 @@
+import { apiMutation } from '@/fetchers';
 import type { Team, TeamMember } from '@/types';
-import useSWR from 'swr';
+import useSWR, { mutate } from 'swr';
 
 /* ADMIN ENDPOINTS */
 
@@ -33,4 +34,41 @@ export function useTeamMembers(teamId: number | null) {
   return useSWR<TeamMember[], Error>(
     teamId ? `/admin/teams/${teamId}/members` : null,
   );
+}
+
+export function adminUpdateTeam(teamId: number, updatedTeam: Pick<Team, 'name' | 'ranked' | 'start_timestamp' | 'end_time'>) {
+  return apiMutation(`/admin/teams/${teamId}`, updatedTeam, {
+    method : 'PUT',
+  }).then(() => {
+    mutate(`/admin/teams/${teamId}`);
+    mutate('/admin/teams');
+  });
+}
+
+/**
+ * Promote a user to captain
+ * @param teamId The ID of the team
+ * @param userId The ID of the user to promote
+ */
+export function adminPromoteTeamMember(teamId: number, userId: number) {
+  return apiMutation(`/admin/teams/${teamId}/promote`, { user_id : userId }, {
+    method : 'POST',
+  }).then(() => {
+    mutate(`/admin/teams/${teamId}/members`);
+  });
+}
+
+/**
+ * Kick a user from a team
+ */
+export function adminKickTeamMember(teamId: number, userId: number) {
+  return apiMutation(`/admin/teams/${teamId}/kick`, { user_id : userId }, {
+    method : 'POST',
+  }).then(() => {
+    // member count value has changed, so refresh team as well as members list
+    mutate('/admin/teams');
+    mutate(`/admin/teams/${teamId}`);
+
+    mutate(`/admin/teams/${teamId}/members`);
+  });
 }

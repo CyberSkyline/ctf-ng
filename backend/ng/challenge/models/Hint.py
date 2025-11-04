@@ -16,6 +16,7 @@ from ...core.utils.validator import BaseValidator
 
 class SerializedHint(TypedDict):
     id: int
+    name: str | None
     challenge_id: int
     challenge_name: NotRequired[str]
     preview: str
@@ -27,6 +28,7 @@ class SerializedHint(TypedDict):
 class Hint(db.Model):
     __tablename__ = "ng_challenge_hints"
     id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    index: Mapped[int] = db.Column(db.Integer, nullable=False)
     challenge_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
     name: Mapped[str] = db.Column(db.String(config.MAX_HINT_NAME_LENGTH), nullable=True)
     preview: Mapped[str] = db.Column(db.String(config.MAX_HINT_PREVIEW_LENGTH), nullable=False)
@@ -49,7 +51,7 @@ class Hint(db.Model):
         # LAZY-IMPORT
         from ...scoring.models import HintRedemption
 
-        data = {
+        data: SerializedHint = {
             "id": self.id,
             "name": self.name,
             "challenge_id": self.challenge_id,
@@ -71,7 +73,7 @@ class Hint(db.Model):
         if self.challenge:
             data["challenge_name"] = self.challenge.name
 
-        return SerializedHint(**data)
+        return data
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
@@ -82,6 +84,13 @@ class Hint(db.Model):
         """
         validator = BaseValidator()
 
+        validator.validate_integer(
+            data,
+            "index",
+            min_value=0,
+            required=True,
+            friendly_name="Hint Index",
+        )
         validator.validate_string(
             data,
             "name",
@@ -120,10 +129,10 @@ class Hint(db.Model):
         return validator.validate()
 
     @classmethod
-    def create_hint(cls, challenge_id: int, name: str, body: str, preview: str = "", deduction: int = 0, commit=True):
+    def create_hint(cls, challenge_id: int, index: int, name: str, body: str, preview: str = "", deduction: int = 0, commit=True):
         try:
             validated_data = cls.validate(
-                {"name": name, "preview": preview, "body": body, "deduction": deduction, "challenge_id": challenge_id}
+                {"name": name, "preview": preview, "body": body, "deduction": deduction, "challenge_id": challenge_id, "index": index}
             )
             hint = cls(**validated_data)
             db.session.add(hint)

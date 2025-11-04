@@ -15,7 +15,7 @@ export default function AdminSidebarHeader({
         {icon && <Heading>{icon}</Heading>}
         <Heading>{title}</Heading>
       </Flex>
-      <Flex direction="row" align="center" gap="2">
+      <Flex direction="row" align="center" gap="2" wrap="wrap" justify="end">
         {children}
       </Flex>
     </Flex>

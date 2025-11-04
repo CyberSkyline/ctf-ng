@@ -1,16 +1,12 @@
-import {
-  COLOR_INFO,
-  COLOR_POSITIVE,
-  COLOR_WARNING,
-  EventIcon,
-} from '@/constants';
+import { COLOR_INFO, DeploymentIcon, EventIcon } from '@/constants';
 import type { Challenge } from '@/types';
 import { Button, Tabs } from '@radix-ui/themes';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import ChallengeIcon from 'components/ChallengeIcon';
-import { TbDownload, TbPencil } from 'react-icons/tb';
 import { Link, useSearchParams } from 'react-router';
+import ChallengeDownloadButton from './ChallengeDownloadButton';
+import ChallengeUpdateModal from './ChallengeUpdateModal';
 import ChallengeAttemptsTab from './SidebarTabs/ChallengeAttemptsTab';
 import ChallengeBlueprintTab from './SidebarTabs/ChallengeBlueprintTab';
 import ChallengeDetailsTab from './SidebarTabs/ChallengeDetailsTab';
@@ -27,14 +23,21 @@ export default function ChallengeSidebar({ entity }: {entity: Challenge}) {
             Event
           </Link>
         </Button>
-        <Button variant="soft" color={COLOR_WARNING}>
-          <TbPencil />
-          Update
+        <Button variant="soft" color={COLOR_INFO} asChild>
+          <Link
+            to={`/admin/deployments/?filter=${btoa(JSON.stringify(
+              {
+                challenge_name : { filterType : 'text', type : 'equals', filter : entity.name },
+                event_name : { filterType : 'text', type : 'equals', filter : entity.event_name },
+              },
+            ))}`}
+          >
+            <DeploymentIcon />
+            Deployments
+          </Link>
         </Button>
-        <Button variant="soft" color={COLOR_POSITIVE}>
-          <TbDownload />
-          Download
-        </Button>
+        <ChallengeUpdateModal challengeId={entity.id} />
+        <ChallengeDownloadButton challenge={entity} />
       </AdminSidebarHeader>
 
       <Tabs.Root

@@ -79,7 +79,8 @@ class TestCreateRedemption:
         """Test creating a redemption for a hint with zero deduction"""
 
         # Create hint with zero deduction
-        free_hint = Hint(challenge_id=challenge.id, preview="Free hint", body="This is a free hint", deduction=0)
+        free_hint = Hint(challenge_id=challenge.id, preview="Free hint", body="This is a free hint", deduction=0,
+                         index=0)
         db_session.add(free_hint)
         db_session.commit()
 
@@ -223,7 +224,8 @@ class TestDeleteRedemption:
     def test_delete_redemption_without_score_event(self, db_session, user, team_with_member, event, challenge):
         """Test deleting a redemption with no score event (zero deduction)"""
         # Create hint with zero deduction
-        free_hint = Hint(challenge_id=challenge.id, preview="Free hint", body="This is a free hint", deduction=0)
+        free_hint = Hint(challenge_id=challenge.id, preview="Free hint", body="This is a free hint", deduction=0,
+                         index=0)
         db_session.add(free_hint)
         db_session.commit()
 
@@ -304,7 +306,7 @@ class TestFindFilteredRedemptions:
         from ...challenge.models.Hint import Hint
 
         # Create another hint
-        other_hint = Hint(challenge_id=challenge.id, preview="Another hint", body="This is another hint", deduction=10)
+        other_hint = Hint(challenge_id=challenge.id, preview="Another hint", body="This is another hint", deduction=10, index=1)
         db_session.add(other_hint)
         db_session.commit()
 
@@ -336,6 +338,7 @@ class TestFindFilteredRedemptions:
             preview="Other challenge hint",
             body="This is another challenge hint",
             deduction=15,
+            index=0,
         )
         db_session.add(other_hint)
         db_session.commit()
@@ -353,7 +356,7 @@ class TestFindFilteredRedemptions:
     def test_find_by_user_id(self, db_session, hint_redemption_factory, user, admin, team_with_member, hint, challenge):
         """Test filtering redemptions by user_id"""
         # Create another hint to avoid unique constraint
-        other_hint = Hint(challenge_id=challenge.id, preview="Second hint", body="This is a second hint", deduction=10)
+        other_hint = Hint(challenge_id=challenge.id, preview="Second hint", body="This is a second hint", deduction=10, index=1)
         db_session.add(other_hint)
         db_session.commit()
 
@@ -374,7 +377,7 @@ class TestFindFilteredRedemptions:
         # Create multiple hints to avoid unique constraint
         hints = []
         for i in range(3):
-            h = Hint(challenge_id=challenge.id, preview=f"Hint {i}", body=f"This is hint {i}", deduction=10 * (i + 1))
+            h = Hint(challenge_id=challenge.id, preview=f"Hint {i}", body=f"This is hint {i}", deduction=10 * (i + 1), index=i)
             db_session.add(h)
             hints.append(h)
         db_session.commit()

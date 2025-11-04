@@ -5,6 +5,8 @@ Tests for support API endpoints
 import json
 import pytest
 from datetime import datetime
+from botocore.exceptions import ClientError
+from unittest.mock import patch, MagicMock
 
 from CTFd.models import Users
 
@@ -13,7 +15,7 @@ from ...user.models.User import User as NgUser
 from ...notifications.models import Notification
 from ...permissions.models.enums import RoleEnum
 from ...permissions.controllers import assign_role_to_user
-
+from ..models.TicketAttachment import TicketAttachment
 
 class TestUserSupportEndpoints:
     """Tests for user support API endpoints"""
@@ -996,4 +998,444 @@ class TestAdminSupportEndpoints:
         # Regular users should not see tags (admin-only field)
         assert "tags" not in ticket_data
 
+    def test_get_ticket_includes_empty_attachments_list(self, logged_in_client, ticket):
+        """
+        Test that get_ticket includes empty attachments array when no attachments exist
+        """
+        response = logged_in_client.get(f"/ng/support/me/tickets/{ticket.id}")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert "attachments" in data["data"]
+        assert isinstance(data["data"]["attachments"], list)
+        assert len(data["data"]["attachments"]) == 0
+
+    def test_get_ticket_includes_attachments(self, logged_in_client, ticket, user, db_session):
+        """
+        Test that get_ticket includes attachments when they exist
+        """
+        TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/first.webp",
+            bucket_name="test-bucket",
+            filename="first.webp",
+            file_size=1024,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+
+        TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/second.webp",
+            bucket_name="test-bucket",
+            filename="second.webp",
+            file_size=2048,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+
+        response = logged_in_client.get(f"/ng/support/me/tickets/{ticket.id}")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert "attachments" in data["data"]
+        assert len(data["data"]["attachments"]) == 2
+
+        for attachment_data in data["data"]["attachments"]:
+            assert "id" in attachment_data
+            assert "ticket_id" in attachment_data
+            assert "file_upload_id" in attachment_data
+            assert "filename" in attachment_data
+            assert "file_size" in attachment_data
+            assert "content_type" in attachment_data
+            assert "uploaded_by" in attachment_data
+            assert "uploaded_at" in attachment_data
+            assert "download_url" in attachment_data
+            assert attachment_data["download_url"].startswith("/ng/support/me/attachments/")
+
+        # Verify order (oldest first)
+        assert data["data"]["attachments"][0]["filename"] == "first.webp"
+        assert data["data"]["attachments"][1]["filename"] == "second.webp"
+
+    def test_admin_get_ticket_includes_attachments(self, admin_client, ticket, user, db_session):
+        """
+        Test that admin can see attachments on any ticket
+        """
+        TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/admin-view.webp",
+            bucket_name="test-bucket",
+            filename="admin-view.webp",
+            file_size=512,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+
+        response = admin_client.get(f"/ng/admin/support/tickets/{ticket.id}")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert "attachments" in data["data"]
+        assert len(data["data"]["attachments"]) == 1
+        assert data["data"]["attachments"][0]["filename"] == "admin-view.webp"
+        # Admin should get admin proxy URL
+        assert data["data"]["attachments"][0]["download_url"].startswith("/ng/admin/support/attachments/")
+
+    def test_user_download_attachment_proxy(self, logged_in_client, ticket, user, db_session, app):
+        """
+        Test user downloading attachment via proxy endpoint
+        """
+        from unittest.mock import patch, MagicMock
+
+        attachment = TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/test.webp",
+            bucket_name="test-bucket",
+            filename="test.webp",
+            file_size=1024,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+
+        with app.app_context():
+            mock_s3_response = {
+                'Body': MagicMock()
+            }
+            mock_s3_response['Body'].iter_chunks = MagicMock(return_value=[b'test-data'])
+            mock_s3_response['Body'].close = MagicMock()
+
+            with patch('boto3.client') as mock_boto_client:
+                mock_s3_client = MagicMock()
+                mock_s3_client.get_object.return_value = mock_s3_response
+                mock_boto_client.return_value = mock_s3_client
+
+                app.config['AWS_S3_ACCESS_KEY_ID'] = 'test-key'
+                app.config['AWS_S3_SECRET_ACCESS_KEY'] = 'test-secret'
+
+                response = logged_in_client.get(f"/ng/support/me/attachments/{attachment.id}")
+
+                assert response.status_code == 200
+                assert response.content_type == "image/webp"
+                assert response.headers.get('Content-Disposition') == 'inline; filename="test.webp"'
+                assert response.headers.get('Content-Length') == '1024'
+
+                mock_s3_client.get_object.assert_called_once_with(
+                    Bucket="test-bucket",
+                    Key=f"support-tickets/{ticket.id}/test.webp"
+                )
+
+    def test_user_cannot_download_other_user_attachment(self, logged_in_client, other_user_ticket, user, db_session):
+        """
+        Test that users cannot download attachments from other users' tickets
+        """
+        attachment = TicketAttachment.create_attachment(
+            ticket_id=other_user_ticket.id,
+            s3_key=f"support-tickets/{other_user_ticket.id}/private.webp",
+            bucket_name="test-bucket",
+            filename="private.webp",
+            file_size=512,
+            content_type="image/webp",
+            uploaded_by=other_user_ticket.author_id,
+        )
+
+        response = logged_in_client.get(f"/ng/support/me/attachments/{attachment.id}")
+
+        assert response.status_code == 403
+        data = response.get_json()
+        assert data["success"] is False
+        assert "errors" in data
+        error_text = str(data["errors"]).lower()
+        assert "your own tickets" in error_text or "forbidden" in error_text or "access" in error_text
+
+    def test_admin_download_any_attachment_proxy(self, admin_client, ticket, user, db_session, app):
+        """
+        Test admin downloading any attachment via proxy endpoint
+        """
+        attachment = TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/admin-test.webp",
+            bucket_name="test-bucket",
+            filename="admin-test.webp",
+            file_size=2048,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+
+        with app.app_context():
+            mock_s3_response = {
+                'Body': MagicMock()
+            }
+            mock_s3_response['Body'].iter_chunks = MagicMock(return_value=[b'admin-test-data'])
+            mock_s3_response['Body'].close = MagicMock()
+
+            with patch('boto3.client') as mock_boto_client:
+                mock_s3_client = MagicMock()
+                mock_s3_client.get_object.return_value = mock_s3_response
+                mock_boto_client.return_value = mock_s3_client
+
+                app.config['AWS_S3_ACCESS_KEY_ID'] = 'test-key'
+                app.config['AWS_S3_SECRET_ACCESS_KEY'] = 'test-secret'
+
+                response = admin_client.get(f"/ng/admin/support/attachments/{attachment.id}")
+
+                assert response.status_code == 200
+                assert response.content_type == "image/webp"
+
+    def test_download_nonexistent_attachment(self, logged_in_client):
+        """
+        Test downloading a nonexistent attachment returns 404
+        """
+        response = logged_in_client.get("/ng/support/me/attachments/999999")
+        assert response.status_code == 404
+
+    def test_download_attachment_s3_not_configured(self, logged_in_client, ticket, user, db_session, app):
+        """
+        Test download fails gracefully when S3 is not configured
+        """
+        attachment = TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/test.webp",
+            bucket_name="test-bucket",
+            filename="test.webp",
+            file_size=1024,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+
+        with app.app_context():
+            app.config['AWS_S3_ACCESS_KEY_ID'] = None
+            app.config['AWS_S3_SECRET_ACCESS_KEY'] = None
+
+            response = logged_in_client.get(f"/ng/support/me/attachments/{attachment.id}")
+
+            assert response.status_code == 400
+            data = response.get_json()
+            assert data["success"] is False
+            assert "errors" in data
+            error_text = str(data["errors"]).lower()
+            assert "storage is not configured" in error_text or "not configured" in error_text
+
+    def test_download_attachment_file_missing_in_s3(self, logged_in_client, ticket, user, db_session, app):
+        """
+        Test download handles missing file in S3
+        """
+        attachment = TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/missing.webp",
+            bucket_name="test-bucket",
+            filename="missing.webp",
+            file_size=1024,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+
+        with app.app_context():
+            with patch('boto3.client') as mock_boto_client:
+                mock_s3_client = MagicMock()
+                error_response = {'Error': {'Code': 'NoSuchKey'}}
+                mock_s3_client.get_object.side_effect = ClientError(error_response, 'GetObject')
+                mock_boto_client.return_value = mock_s3_client
+
+                app.config['AWS_S3_ACCESS_KEY_ID'] = 'test-key'
+                app.config['AWS_S3_SECRET_ACCESS_KEY'] = 'test-secret'
+
+                response = logged_in_client.get(f"/ng/support/me/attachments/{attachment.id}")
+
+                assert response.status_code == 404
+                data = response.get_json()
+                assert data["success"] is False
+                assert "errors" in data
+                error_text = str(data["errors"]).lower()
+                assert "not found in storage" in error_text or "not found" in error_text
+
+    # Search functionality tests
+    def test_search_ticket_attachments_by_filename(self, admin_client, ticket, user, db_session, ticket_factory):
+        """
+        Test searching for ticket attachments by filename
+        """
+        # Create another ticket for testing cross-ticket search
+        ticket2 = ticket_factory(author_id=user.id, subject="Second ticket")
+
+        # Create multiple attachments with different names
+        TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/screenshot-1.webp",
+            bucket_name="test-bucket",
+            filename="screenshot-error.webp",
+            file_size=1024,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+        TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/image-2.webp",
+            bucket_name="test-bucket",
+            filename="profile-image.webp",
+            file_size=2048,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+        TicketAttachment.create_attachment(
+            ticket_id=ticket2.id,
+            s3_key=f"support-tickets/{ticket2.id}/screenshot-3.webp",
+            bucket_name="test-bucket",
+            filename="screenshot-success.webp",
+            file_size=3072,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+
+        # Search for "screenshot" - should find 2 results
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=screenshot")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert data["success"] is True
+        assert "attachments" in data["data"]
+        assert "total" in data["data"]
+        assert "query" in data["data"]
+        assert data["data"]["total"] == 2
+        assert data["data"]["query"] == "screenshot"
+        assert len(data["data"]["attachments"]) == 2
+
+        # Verify the results contain "screenshot" in filename
+        for attachment in data["data"]["attachments"]:
+            assert "screenshot" in attachment["filename"].lower()
+            assert "download_url" in attachment  # Should have proxy URL
+            assert "file_upload_id" in attachment
+            assert "uploaded_by" in attachment
+            assert "uploaded_at" in attachment
+
+    def test_search_attachments_with_pagination(self, admin_client, ticket, user, db_session):
+        """
+        Test searching attachments with limit and offset
+        """
+        # Create 5 attachments with similar names
+        for i in range(5):
+            TicketAttachment.create_attachment(
+                ticket_id=ticket.id,
+                s3_key=f"support-tickets/{ticket.id}/test-image-{i}.webp",
+                bucket_name="test-bucket",
+                filename=f"test-image-{i}.webp",
+                file_size=1024 * (i + 1),
+                content_type="image/webp",
+                uploaded_by=user.id,
+            )
+
+        # Get first 2 results
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=test&limit=2&offset=0")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["total"] == 5
+        assert data["data"]["limit"] == 2
+        assert data["data"]["offset"] == 0
+        assert len(data["data"]["attachments"]) == 2
+
+        # Get next 2 results
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=test&limit=2&offset=2")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert len(data["data"]["attachments"]) == 2
+        assert data["data"]["offset"] == 2
+
+        # Get last result
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=test&limit=2&offset=4")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert len(data["data"]["attachments"]) == 1
+
+    def test_search_attachments_case_insensitive(self, admin_client, ticket, user, db_session):
+        """
+        Test that search is case insensitive
+        """
+        TicketAttachment.create_attachment(
+            ticket_id=ticket.id,
+            s3_key=f"support-tickets/{ticket.id}/uppercase.webp",
+            bucket_name="test-bucket",
+            filename="UPPERCASE-IMAGE.webp",
+            file_size=1024,
+            content_type="image/webp",
+            uploaded_by=user.id,
+        )
+
+        # Search with lowercase
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=uppercase")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert data["data"]["total"] == 1
+        assert data["data"]["attachments"][0]["filename"] == "UPPERCASE-IMAGE.webp"
+
+        # Search with mixed case
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=UpPeRcAsE")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert data["data"]["total"] == 1
+
+    def test_search_attachments_empty_query(self, admin_client):
+        """
+        Test searching with empty query returns error
+        """
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=")
+        assert response.status_code == 400
+
+        data = response.get_json()
+        assert data["success"] is False
+        assert "validation" in data["errors"]
+        assert "filename" in str(data["errors"]["validation"]).lower()
+
+    def test_search_attachments_short_query(self, admin_client):
+        """
+        Test searching with query less than 3 characters returns error
+        """
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=ab")
+        assert response.status_code == 400
+
+        data = response.get_json()
+        assert data["success"] is False
+        assert "validation" in data["errors"]
+        assert "at least 3 characters" in str(data["errors"]["validation"]).lower()
+
+    def test_search_attachments_no_results(self, admin_client):
+        """
+        Test searching returns empty list when no matches
+        """
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=nonexistent")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["total"] == 0
+        assert data["data"]["attachments"] == []
+        assert data["data"]["query"] == "nonexistent"
+
+    def test_search_attachments_invalid_pagination(self, admin_client):
+        """
+        Test invalid pagination parameters
+        """
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=test&limit=invalid")
+        assert response.status_code == 400
+
+        data = response.get_json()
+        assert data["success"] is False
+        assert "pagination" in data["errors"]
+
+        response = admin_client.get("/ng/admin/support/attachments/search?filename=test&offset=invalid")
+        assert response.status_code == 400
+
+        data = response.get_json()
+        assert data["success"] is False
+        assert "pagination" in data["errors"]
+
+    def test_search_attachments_requires_admin(self, logged_in_client):
+        """
+        Test that regular users cannot access search endpoint
+        """
+        response = logged_in_client.get("/ng/admin/support/attachments/search?filename=test")
+        assert response.status_code == 403
 

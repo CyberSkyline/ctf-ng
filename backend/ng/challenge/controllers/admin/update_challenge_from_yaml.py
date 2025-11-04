@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import base64
-from typing import Any
-
 from CTFd.models import db
 from cyber_skyline.chall_parser.compose.answer import Answer as ParserAnswer
 from cyber_skyline.chall_parser.compose.challenge_info import TextBody
@@ -10,19 +7,12 @@ from cyber_skyline.chall_parser.template import Template as ParserTemplate
 from cyber_skyline.chall_parser.yaml_parser import parse_compose_string
 
 from ...utils.challenge_yaml import partial_environment
-from ....challenge.models import Challenge, ChallengeTag, ContainerBlueprint, Hint, Question, ChallengeVariable
+from ...models import Challenge, ChallengeTag, ContainerBlueprint, Hint, Question, ChallengeVariable
 from ....core.exceptions import ValidationError
-from ....notifications.services import NotificationService
 
-def update_challenge_from_yaml(challenge_id: int, json_data: dict[str, Any]) -> Challenge:
-    payload = base64.urlsafe_b64decode(json_data["yaml"])
-    challenge: Challenge | None = Challenge.query.get(challenge_id)
-
-    if not challenge:
-        raise ValidationError(f"Challenge with ID {challenge_id} does not exist.")
-
+def update_challenge_from_yaml(challenge: Challenge, payload: str) -> Challenge:
     try:
-        compose_file = parse_compose_string(payload.decode("utf-8"))
+        compose_file = parse_compose_string(payload)
     except Exception as e:
         print(e)
         raise ValidationError(f"Invalid YAML format: {e}") from e
@@ -37,19 +27,20 @@ def update_challenge_from_yaml(challenge_id: int, json_data: dict[str, Any]) -> 
 
         if not challenge.yaml:
             raise ValidationError(f"Challenge YAML for challenge ID {challenge.id} does not exist.")
-        challenge.yaml.body = payload.decode("utf-8")
+        challenge.yaml.body = payload
 
         hints = {hint.name: hint for hint in challenge.hints}
         uploaded_hints = {h.name: h for h in uploaded_challenge.hints or []}
         if len(set(hints.keys()) - set(uploaded_hints.keys())) > 0:
             raise ValidationError("Cannot remove existing hints when updating a challenge.")
 
-        for hint in uploaded_challenge.hints or []:
+        for index, hint in enumerate(uploaded_challenge.hints or []):
             if hint.name in hints:
                 existing_hint = hints[hint.name]
                 existing_hint.body = hint.body.content if isinstance(hint.body, TextBody) else hint.body
                 existing_hint.preview = hint.preview
                 existing_hint.deduction = hint.deduction
+                existing_hint.index = index
             else:
                 Hint.create_hint(
                     name=hint.name,
@@ -57,6 +48,7 @@ def update_challenge_from_yaml(challenge_id: int, json_data: dict[str, Any]) -> 
                     body=hint.body.content if isinstance(hint.body, TextBody) else hint.body,
                     preview=hint.preview,
                     deduction=hint.deduction,
+                    index=index,
                     commit=False,
                 )
 
@@ -98,7 +90,7 @@ def update_challenge_from_yaml(challenge_id: int, json_data: dict[str, Any]) -> 
         if len(set(questions.keys()) - set(uploaded_questions.keys())) > 0:
             raise ValidationError("Cannot remove existing questions when updating a challenge.")
         db_variable_questions: dict[str, Question] = {}
-        for question in uploaded_challenge.questions or []:
+        for index, question in enumerate(uploaded_challenge.questions or []):
             if question.name in questions:
                 existing_question = questions[question.name]
                 existing_question.body = question.body
@@ -115,6 +107,8 @@ def update_challenge_from_yaml(challenge_id: int, json_data: dict[str, Any]) -> 
                     db_variable_questions[question.answer.parent_variable] = existing_question
                 existing_question.max_attempts = question.max_attempts
                 existing_question.points = question.points
+                existing_question.placeholder = question.placeholder
+                existing_question.index = index
             else:
                 new_answer = None
                 new_answer_variable_id = None
@@ -138,13 +132,14 @@ def update_challenge_from_yaml(challenge_id: int, json_data: dict[str, Any]) -> 
                     max_attempts=question.max_attempts,
                     answer=new_answer,
                     answer_variable_id=new_answer_variable_id,
+                    index=index,
                     commit=False,
                 )
 
                 if isinstance(question.answer, ParserTemplate):
                     db_variable_questions[question.answer.parent_variable] = db_question
 
-        blueprints = {blueprint.hostname: blueprint for blueprint in challenge.blueprints}
+        blueprints = {blueprint.name: blueprint for blueprint in challenge.blueprints}
         if compose_file.services:
             for (service_name, service_data) in compose_file.services.items():
                 if service_name in blueprints:
@@ -165,6 +160,7 @@ def update_challenge_from_yaml(challenge_id: int, json_data: dict[str, Any]) -> 
                 else:
                     ContainerBlueprint.create_container_blueprint(
                         challenge_id=challenge.id,
+                        name=service_name,
                         image=service_data.image,
                         hostname=service_data.hostname,
                         stdin_open=service_data.stdin_open,
@@ -182,14 +178,6 @@ def update_challenge_from_yaml(challenge_id: int, json_data: dict[str, Any]) -> 
                     )
 
         db.session.commit()
-
-        # Only notify if update_reason is provided (optional field)
-        NotificationService.notify_challenge_updated(
-            event_id=challenge.event_id,
-            challenge_id=challenge.id,
-            challenge_name=challenge.name,
-            update_reason=json_data.get("update_reason"),
-        )
 
         return (challenge)
     except Exception as e:

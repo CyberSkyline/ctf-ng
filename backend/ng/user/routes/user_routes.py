@@ -12,6 +12,7 @@ from ...core.middleware import (
     user_endpoint,
     public_endpoint,
 )
+from ...sponsors.models.Sponsor import Sponsor
 
 users_user_namespace = Namespace("/users", description="user endpoints for users")
 
@@ -66,6 +67,60 @@ class UserTeams(Resource):
         teams = current_user.get_teams()
         return success_response(teams)
 
+@users_user_namespace.route("/me/sponsor")
+class UserSponsor(Resource):
+    @user_endpoint()
+    @users_user_namespace.doc(
+        description="Get my sponsor information",
+        responses={
+            200: "Success",
+            404: "Sponsor not found",
+            401: "Unauthorized - Authentication required",
+            500: "Internal server error",
+        },
+    )
+    def get(self, current_user, **kwargs):
+        """Get my sponsor information"""
+
+
+        return success_response(current_user.get_sponsor())
+
+    @user_endpoint(json_required=True)
+    @users_user_namespace.doc(
+        description="Update my sponsor information",
+        responses={
+            200: "Sponsor updated successfully",
+            400: "Bad Request - Invalid input",
+            404: "Sponsor not found",
+            401: "Unauthorized - Authentication required",
+            500: "Internal server error",
+        },
+        params={
+            "sponsor": {
+                "description": "Sponsor name to associate with user",
+                "in": "body",
+                "required": True,
+                "type": "string",
+                "example": "Acme Corp"
+            }
+        },
+
+    )
+    def put(self, current_user, json_data, **kwargs):
+        """Update my sponsor information"""
+
+        sponsor_id = json_data.get("sponsor_id")
+        if not sponsor_id:
+            return {"success": False, "errors": {"sponsor": "Sponsor data is required"}}, 400
+
+        sponsor = Sponsor.find_by_id(sponsor_id)
+        if not sponsor:
+            return {"success": False, "errors": {"sponsor": "Sponsor not found"}}, 404
+
+        current_user.set_sponsor(sponsor)
+
+        return success_response(sponsor)
+
 
 #The POST request for login must have a nonce attached to it or it will be blocked by CSRF protection in many cases
 @users_user_namespace.route("/login")
@@ -105,9 +160,6 @@ class UserLogin(Resource):
 
         else:
             return {"success": False, "errors": {"authentication": "Invalid username or password"}}, 401
-
-
-
 
 
 

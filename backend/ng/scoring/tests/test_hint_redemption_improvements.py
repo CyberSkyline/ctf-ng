@@ -33,6 +33,7 @@ class TestHintVisibilityBeforeRedemption:
             body="The secret is in the cookies",
             preview="Check the HTTP headers",
             deduction=20,
+            index=0,
         )
 
         serialized = hint.serialize(team = team_with_member)
@@ -65,6 +66,7 @@ class TestHintVisibilityBeforeRedemption:
             body = "Use SQL injection on the login form",
             preview = "Database vulnerability",
             deduction = 30,
+            index=0,
         )
 
         team1_view = hint.serialize(team = team1)
@@ -99,6 +101,7 @@ class TestHintRedemptionFlow:
             body="The flag format is FLAG{...}",
             preview="Flag format hint",
             deduction=15,
+            index=0,
         )
 
         before = hint.serialize(team = team_with_member)
@@ -149,6 +152,7 @@ class TestHintRedemptionFlow:
             body = "Check port 8080 for the admin panel",
             preview = "Hidden service",
             deduction = 25,
+            index=0,
         )
 
         HintRedemption.create_redemption(
@@ -184,6 +188,7 @@ class TestHintRedemptionFlow:
             body="Duplicate redemption test",
             preview="Test hint",
             deduction=10,
+            index=0,
         )
 
         first_result = redeem_hint(
@@ -229,6 +234,7 @@ class TestChallengeRenderWithHintRedemption:
                 body=f"Full body of hint {i+1}",
                 preview=f"Preview of hint {i+1}",
                 deduction=10 * (i + 1),
+                index=i,
             )
             hints.append(hint)
 
@@ -280,6 +286,7 @@ class TestChallengeRenderWithHintRedemption:
             body="Team-specific body 1",
             preview="Hint 1",
             deduction=10,
+            index=0,
         )
         hint2 = Hint.create_hint(
             name="Hint 2",
@@ -287,6 +294,7 @@ class TestChallengeRenderWithHintRedemption:
             body="Team-specific body 2",
             preview="Hint 2",
             deduction=20,
+            index=1,
         )
 
         HintRedemption.create_redemption(
@@ -347,6 +355,7 @@ class TestHintRedemptionWithScoring:
             body="First hint",
             preview="Hint 1",
             deduction=10,
+            index=0,
         )
         hint2 = Hint.create_hint(
             name="Hint 2",
@@ -354,6 +363,7 @@ class TestHintRedemptionWithScoring:
             body="Second hint",
             preview="Hint 2",
             deduction=25,
+            index=1,
         )
 
         redeem_hint(
@@ -399,6 +409,7 @@ class TestHintRedemptionWithScoring:
             body = "Free hint body",
             preview = "Free hint",
             deduction = 0,
+            index = 0,
         )
         db_session.add(free_hint)
         db_session.commit()
@@ -438,6 +449,7 @@ class TestAdminHintVisibility:
             body="Admin should see this",
             preview="Admin test",
             deduction=15,
+            index=0,
         )
 
         admin_view = hint.serialize(include_admin_fields = True)
@@ -462,6 +474,7 @@ class TestAdminHintVisibility:
             body="Admin with team context",
             preview="Test",
             deduction=20,
+            index=0,
         )
 
         HintRedemption.create_redemption(
@@ -507,6 +520,7 @@ class TestHintRedemptionEdgeCases:
             body="Wrong challenge hint",
             preview="Test",
             deduction=10,
+            index=0,
         )
 
         with pytest.raises(BusinessLogicError) as exc:
@@ -535,6 +549,7 @@ class TestHintRedemptionEdgeCases:
             body="Historical hint",
             preview="Old hint",
             deduction=15,
+            index=0,
         )
 
         HintRedemption.create_redemption(
@@ -580,6 +595,7 @@ class TestCompleteUserJourney:
             body="Start by looking at the network traffic",
             preview="Where to begin?",
             deduction=5,
+            index=0,
         )
         medium_hint = Hint.create_hint(
             name="Hint 2",
@@ -587,6 +603,7 @@ class TestCompleteUserJourney:
             body="The vulnerability is in the authentication header",
             preview="Authentication issue",
             deduction=15,
+            index=1,
         )
         hard_hint = Hint.create_hint(
             name="Hint 3",
@@ -594,6 +611,7 @@ class TestCompleteUserJourney:
             body="Use base64 decode on the JWT token",
             preview="Decoding required",
             deduction=30,
+            index=2,
         )
 
         initial_render = challenge.render(team_with_member)

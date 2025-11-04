@@ -1,4 +1,5 @@
 import base64
+import re
 
 import boto3
 import docker
@@ -47,16 +48,21 @@ class Client(docker.DockerClient):
         }
 
     def pull_image(self, image):
-        try:
-            # First try to get ECR credentials
-            auth = self.get_ecr_credentials()
-            print("Using ECR authentication")
-        except Exception:
-            # Fall back to regular registry auth if ECR auth fails
-            print("Using standard registry authentication")
-            auth = {
-                "username": get_app_config("CONTAINER_REGISTRY_USER"),
-                "password": get_app_config("CONTAINER_REGISTRY_PASSWORD"),
-            }
+        auth_repo = get_app_config("CONTAINER_REGISTRY")
 
-        self.images.pull(image, auth_config=auth)
+        #  Auth repo will default to blank str not none
+        if auth_repo != "" and re.search(auth_repo, image):
+            try:
+                # First try to get ECR credentials
+                auth = self.get_ecr_credentials()
+                print("Using ECR authentication")
+            except Exception:
+                # Fall back to regular registry auth if ECR auth fails
+                print("Using standard registry authentication")
+                auth = {
+                    "username": get_app_config("CONTAINER_REGISTRY_USER"),
+                    "password": get_app_config("CONTAINER_REGISTRY_PASSWORD"),
+                }
+                self.images.pull(image, auth_config=auth)
+        else:
+            self.images.pull(image)

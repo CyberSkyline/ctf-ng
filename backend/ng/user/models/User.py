@@ -19,12 +19,14 @@ class SerializedUser(TypedDict):
     role: str
     registered_at: str
     oauth_id: str
+    affiliation: str
 
 
 class User(db.Model):
     __tablename__ = "ng_users"
 
     id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)  # links to ctfd's main users table
+    sponsor_id = db.Column(db.Integer, db.ForeignKey("ng_sponsors.id"), nullable=True)
 
     ctfd_user = db.relationship(
         "Users",
@@ -40,6 +42,11 @@ class User(db.Model):
         cascade="all, delete-orphan",
     )
 
+    affiliation = db.relationship(
+        "Sponsor",
+        back_populates="users",
+    )
+
     roles = association_proxy("user_roles", "role", creator=lambda role: UserRole(role=role))
 
     def __repr__(self):
@@ -53,6 +60,7 @@ class User(db.Model):
                 "email": "",
                 "role": "unknown",
                 "registered_at": "",
+                "affiliation": self.affiliation.serialize() if self.affiliation else None,
             }
 
         if include_admin_fields:
@@ -62,13 +70,15 @@ class User(db.Model):
                 "email": self.ctfd_user.email,
                 "roles": [role.name for role in self.roles],
                 "registered_at": self.ctfd_user.created.isoformat() + "Z",
+                "affiliation": self.affiliation.serialize(include_admin_fields=True) if self.affiliation else None,
             }
         return {
             "id": self.id,
             "name": self.ctfd_user.name,
             "email": self.ctfd_user.email,
             "registered_at": self.ctfd_user.created.isoformat() + "Z",
-            }
+            "affiliation": self.affiliation.serialize() if self.affiliation else None,
+        }
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
@@ -204,6 +214,25 @@ class User(db.Model):
             int: Total number of users
         """
         return cls.query.count()
+
+    def set_sponsor(self, sponsor, commit = True) -> None:
+        """Set the user's sponsor affiliation.
+
+        Args:
+            sponsor (Sponsor): The sponsor to affiliate with
+            commit (bool, optional): Whether to commit immediately
+        """
+        self.affiliation = sponsor
+        if commit:
+            db.session.commit()
+
+    def get_sponsor(self):
+        """Get the user's sponsor affiliation.
+
+        Returns:
+            Sponsor or None: The affiliated sponsor if exists, None otherwise
+        """
+        return self.affiliation
 
 
     def update(self, **kwargs) -> None:
