@@ -12,16 +12,16 @@ class EnumWithUnknown(sqlalchemy.Enum):
     by mapping them to a designated UNKNOWN enum member.
     """
     def __init__(self, *enums, **kw: t.Any):
-        super().__init__(*enums, **kw)
-
         if "_adapted_from" in kw:
-            self._unknown_value = kw["_adapted_from"]._unknown_value
+            self._unknown_value = kw.pop("_adapted_from")._unknown_value
         else:
-            self._unknown_value = kw.get("unknown_value", None)
+            self._unknown_value = kw.pop("unknown_value", None)
             if self._unknown_value is None:
                 raise ValueError(
                     "unknown_value must be specified for EnumWithUnknown"
                 )
+
+        super().__init__(*enums, **kw)
 
     def adapt(self, impltype, **kw):
         """
