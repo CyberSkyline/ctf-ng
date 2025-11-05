@@ -2,7 +2,7 @@
 File handling utility functions
 """
 
-import imghdr
+import filetype
 from werkzeug.datastructures import FileStorage
 
 
@@ -50,26 +50,19 @@ def validate_image_content(file: FileStorage) -> tuple[str, str]:
 
     Returns:
         Tuple[str, str]: (image_format, content_type)
-            - image_format: 'webp', 'png', 'jpeg', etc.
+            - image_format: 'webp', 'png', 'jpg', etc.
             - content_type: 'image/webp', 'image/png', etc.
 
     Raises:
         ValueError: If the file is not a valid image
     """
-    image_type = imghdr.what(file)
+    kind = filetype.guess(file)
     file.seek(0)
 
-    if image_type is None:
+    if kind is None or not kind.mime.startswith('image/'):
         raise ValueError("File is not a valid image")
 
-    content_type_map = {
-        'webp': 'image/webp',
-        'png': 'image/png',
-        'jpeg': 'image/jpeg',
-        'gif': 'image/gif',
-        'bmp': 'image/bmp',
-    }
+    image_format = kind.extension
+    content_type = kind.mime
 
-    content_type = content_type_map.get(image_type, f'image/{image_type}')
-
-    return image_type, content_type
+    return image_format, content_type
