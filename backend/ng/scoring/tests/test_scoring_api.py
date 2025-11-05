@@ -1012,15 +1012,6 @@ class TestAdminScoringEndpoints:
         """
         from ..models import Attempt
 
-        # Create a correct attempt
-        correct_attempt = Attempt.create_attempt(
-            user_id=user.id,
-            team_id=team_with_member.id,
-            challenge_id=challenge.id,
-            question_id=question.id,
-            submission=question.answer,  # Correct answer
-        )
-
         # Create a failed attempt (this is the key - failed attempts are now included!)
         failed_attempt = Attempt.create_attempt(
             user_id=user.id,
@@ -1028,6 +1019,15 @@ class TestAdminScoringEndpoints:
             challenge_id=challenge.id,
             question_id=question.id,
             submission="wrong answer",  # Wrong answer
+        )
+
+        # Create a correct attempt
+        correct_attempt = Attempt.create_attempt(
+            user_id=user.id,
+            team_id=team_with_member.id,
+            challenge_id=challenge.id,
+            question_id=question.id,
+            submission=question.answer,  # Correct answer
         )
 
         response = admin_client.get(

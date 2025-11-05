@@ -601,15 +601,6 @@ class TestGetTeamAttempts:
 
     def test_get_team_attempts_with_data(self, db_session, event, team_with_member, user, challenge, question):
         """Test getting attempts for team with attempts (including failed ones)"""
-        # Create a correct attempt
-        correct_attempt = Attempt.create_attempt(
-            user_id=user.id,
-            team_id=team_with_member.id,
-            challenge_id=challenge.id,
-            question_id=question.id,
-            submission=question.answer,
-        )
-
         # Create a failed attempt
         failed_attempt = Attempt.create_attempt(
             user_id=user.id,
@@ -617,6 +608,15 @@ class TestGetTeamAttempts:
             challenge_id=challenge.id,
             question_id=question.id,
             submission="wrong answer",
+        )
+
+        # Create a correct attempt
+        correct_attempt = Attempt.create_attempt(
+            user_id=user.id,
+            team_id=team_with_member.id,
+            challenge_id=challenge.id,
+            question_id=question.id,
+            submission=question.answer,
         )
 
         result = get_team_attempts(team_id=team_with_member.id, event_id=event.id)
