@@ -108,11 +108,18 @@ class ContainerInstance(db.Model):
 
     @staticmethod
     def run_container(client: Client, team: Team, blueprint_obj: ContainerBlueprint):
+        ulimit = docker.types.Ulimit(name="nofile", soft=10000, hard=20000)
+        mem_limit = blueprint_obj.mem_limit or "128m"
         ctr = client.containers.run(
             blueprint_obj.image,
             environment=blueprint_obj.render_environment(team.seed),
             name=ContainerInstance.render_container_name(team.id, blueprint_obj.hostname, blueprint_obj.challenge_id),
             detach=True,
+            cpu_period=100000,
+            cpu_quota=10000,
+            pids_limit=100,
+            mem_limit=mem_limit,
+            ulimits=[ulimit],
         )
 
         # Get bridge network and remove to isolate challenge containers
