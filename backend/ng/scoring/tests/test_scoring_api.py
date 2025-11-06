@@ -174,6 +174,25 @@ class TestUserScoringEndpoints:
         assert data["data"]["is_correct"] is False
         assert data["data"]["points"] == 0
 
+    def tests_submit_answer_already_correct(self, started_player_client, challenge_factory, question_factory):
+        challenge = challenge_factory(event_id=1)
+        question = question_factory(challenge_id=challenge.id)
+
+        started_player_client.post(
+            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/questions/{question.id}/submit",
+            json={"submission": question.answer},
+        )
+
+        response = started_player_client.post(
+            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/questions/{question.id}/submit",
+            json={"submission": question.answer},
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        print(data)
+        assert data["success"] is False
+
     def test_submit_answer_no_team(
         self,
         logged_in_client,

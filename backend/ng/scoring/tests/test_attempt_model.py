@@ -817,7 +817,7 @@ class TestValidateAttemptAllowed:
     ):
         """Test validation fails when max attempts reached"""
         # Create max attempts
-        for i in range(question.max_attempts):
+        for _i in range(question.max_attempts):
             attempt_factory(
                 user_id=user.id,
                 team_id=team_with_member.id,
@@ -859,7 +859,6 @@ class TestValidateAttemptAllowed:
         assert "This question has already been answered correctly" in str(exc_info.value)
 
 
- 
 
 class TestAttemptRelationships:
     """Test the relationships"""
