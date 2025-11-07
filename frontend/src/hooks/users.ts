@@ -1,5 +1,6 @@
+import { apiMutation } from '@/fetchers';
 import type { Event, Team, User } from '@/types';
-import useSWR from 'swr';
+import useSWR, { mutate } from 'swr';
 
 /**
  * Get the currently signed in user.
@@ -68,6 +69,20 @@ export function useMyTeams() {
   return useSWR<Team[], Error>(
     '/users/me/teams',
   );
+}
+
+/* Get the user's sponsor/affiliation */
+export function useMySponsor() {
+  return useSWR('/users/me/sponsor');
+}
+
+/* Set the user's sponsor/affiliation */
+export function setMySponsor(id: number) {
+  return apiMutation('/users/me/sponsor', {sponsor_id: id}, {
+    method : 'PUT',
+  }).then(() => {
+    mutate('/users/me/sponsor');
+  });
 }
 
 /* ADMIN ENDPOINTS */
