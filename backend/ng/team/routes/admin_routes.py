@@ -21,6 +21,8 @@ from ..models.Team import Team
 from ..models.TeamMember import TeamMember
 from ...user.models.User import User
 from ...team.controllers.remove_member import remove_member
+from ...notifications.services.notification_service import NotificationService
+from ...event.models.Event import Event
 
 
 teams_admin_namespace = Namespace(
@@ -146,13 +148,26 @@ class TeamKick(Resource):
             500: "Internal Server Error",
         },
     )
-    def post(self, team_id, user, team, **kwargs):
+    def post(self, team_id, user, team, current_user, **kwargs):
         """
         Kick a user from a team
         """
         if TeamMember.find_captain_by_team(team.id).user_id == user.id and len(team.members) > 1:
             return error_response("Cannot kick the team captain. Promote another member first", "validation",400)
+
+        event = Event.find_by_id(team.event_id)
+
         remove_member(team, user)
+
+        NotificationService.notify_player_kicked_from_team(
+            kicked_user_id=user.ctfd_user.id,
+            team_id=team.id,
+            team_name=team.name,
+            event_id=team.event_id,
+            event_name=event.name if event else "Unknown Event",
+            kicked_by_id=current_user.ctfd_user.id if current_user else None,
+        )
+
         return success_response()
 
 

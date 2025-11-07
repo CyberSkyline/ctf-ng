@@ -14,7 +14,7 @@ from ...team.models import TeamMember
 from ...support.models.Ticket import Ticket
 
 from .email_sender import get_email_service
-from .email_templates import TicketEmailTemplates
+from .email_templates import TicketEmailTemplates, TeamKickedData
 
 
 logger = get_logger(__name__)
@@ -245,3 +245,65 @@ class TicketEmailService:
             logger.error("Database error sending ticket reply email: %s", e)
         except Exception as e:
             logger.error("Failed to send ticket reply email: %s", e)
+
+    @staticmethod
+    def send_player_kicked_email(
+        kicked_user_id: int,
+        team_name: str,
+        event_name: str,
+        event_id: int,
+        kicked_by_id: int | None = None,
+    ) -> None:
+        """
+        Send email notification when a player is kicked from a team
+
+        Args:
+            kicked_user_id: ID of the user who was kicked
+            team_name: Name of the team they were kicked from
+            event_name: Name of the event
+            event_id: ID of the event
+            kicked_by_id: ID of the user who kicked them
+        """
+        email_service = get_email_service()
+
+        kicked_user_email = TicketEmailService._get_user_email(kicked_user_id)
+
+        if not kicked_user_email:
+            logger.warning(
+                "No email found for kicked user %s",
+                kicked_user_id
+            )
+            return
+
+        try:
+            kicked_by_name = None
+            if kicked_by_id:
+                kicked_by_user = Users.query.get(kicked_by_id)
+                if kicked_by_user:
+                    kicked_by_name = kicked_by_user.name
+
+            base_url = current_app.config.get('SERVER_DOMAIN')
+            event_url = f"{base_url}/events/{event_id}" if base_url else None
+
+            team_kicked_data: TeamKickedData = {
+                'team_name': team_name,
+                'event_name': event_name,
+                'kicked_by_name': kicked_by_name,
+                'event_url': event_url,
+            }
+
+            subject, html_body, text_body = TicketEmailTemplates.team_member_kicked(
+                team_kicked_data
+            )
+
+            email_service.send_email(
+                to_emails=[kicked_user_email],
+                subject=subject,
+                html_body=html_body,
+                text_body=text_body
+            )
+
+        except SQLAlchemyError as e:
+            logger.error("Database error sending player kicked email: %s", e)
+        except Exception as e:
+            logger.error("Failed to send player kicked email: %s", e)

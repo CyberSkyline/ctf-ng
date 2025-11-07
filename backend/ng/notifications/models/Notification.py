@@ -24,6 +24,7 @@ class NotificationType(str, Enum):
     TICKET_STATUS_CHANGE = "ticket_status_change"
     TICKET_ASSIGNED = "ticket_assigned"
     EVENT_ANNOUNCEMENT = "event_announcement"
+    TEAM_MEMBER_KICKED = "team_member_kicked"
 
 
 class SerializedNotification(TypedDict):
