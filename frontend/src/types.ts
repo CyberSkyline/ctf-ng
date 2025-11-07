@@ -14,12 +14,19 @@ export interface Event {
   time_limit_minutes: number | null;
 }
 
+export interface Sponsor {
+  id: number;
+  name: string;
+  logo?: string;
+}
+
 export interface User {
   id: number;
   name: string;
   email: string;
   roles: string[];
   registered_at: Date;
+  affiliation: Sponsor | null;
 }
 
 export interface Team {
