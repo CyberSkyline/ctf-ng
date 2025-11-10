@@ -82,8 +82,15 @@ class User(db.Model):
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
-        # TODO - implement
-        return data
+        """Validate user data before creating or updating a user."""
+        validator = BaseValidator()
+        if "name" in data:
+            validator.validate_string(data, "name", 30, required=True, friendly_name="Username")
+        if "email" in data:
+            validator.validate_email(data, "email", 254, required=True, friendly_name="Email")
+        
+
+        return validator.validate()
 
     @classmethod
     def create_user(cls, user_id, commit=True):
