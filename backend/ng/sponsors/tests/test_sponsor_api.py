@@ -17,7 +17,7 @@ pytestmark = pytest.mark.db_session
 
 
 class Test_Sponsor_Listing:
-    endpoint = "/ng/sponsors/"
+    endpoint = "/ng/sponsors"
     def test_get_all_sponsors_empty(self, logged_in_client):
         response = logged_in_client.get(self.endpoint)
         assert response.status_code == 200
@@ -27,7 +27,7 @@ class Test_Sponsor_Listing:
         sponsor_factory(name="Sponsor One", logo="logo1.png")
         sponsor_factory(name="Sponsor Two", logo="logo2.png")
 
-        response = logged_in_client.get("/ng/sponsors/")
+        response = logged_in_client.get("/ng/sponsors")
         assert response.status_code == 200
         data = response.json["data"]
         assert len(data) == 2
@@ -51,11 +51,11 @@ class Test_Sponsor_ByID:
         assert data["name"] == "Test Sponsor"
 
 class Test_Sponsor_Admin_Listing:
-    endpoint = "/ng/admin/sponsors/"
+    endpoint = "/ng/admin/sponsors"
     def test_get_all_sponsors_empty_admin(self, admin_client):
         response = admin_client.get(self.endpoint)
         assert response.status_code == 200
-        assert response.json["sponsors"] == []
+        assert response.json["data"] == []
 
     def test_get_all_sponsors_admin(self, admin_client, sponsor_factory):
         sponsor_factory(name="Sponsor One", logo="logo1.png")
@@ -63,7 +63,7 @@ class Test_Sponsor_Admin_Listing:
 
         response = admin_client.get(self.endpoint)
         assert response.status_code == 200
-        data = response.json["sponsors"]
+        data = response.json["data"]
         assert len(data) == 2
         assert any(sponsor["name"] == "Sponsor One" for sponsor in data)
         assert any(sponsor["name"] == "Sponsor Two" for sponsor in data)
@@ -94,7 +94,7 @@ class Test_Sponsor_Admin_ByID:
         assert response.status_code == 403
 
 class Test_Sponsor_Admin_Creation:
-    endpoint = "/ng/admin/sponsors/"
+    endpoint = "/ng/admin/sponsors"
     def test_create_sponsor_admin(self, admin_client):
         sponsor_data = {
             "name": "New Sponsor",

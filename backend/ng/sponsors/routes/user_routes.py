@@ -8,7 +8,7 @@ from ..models.Sponsor import Sponsor
 sponsors_user_namespace = Namespace("/sponsors", description="user endpoints for sponsors")
 
 
-@sponsors_user_namespace.route("/")
+@sponsors_user_namespace.route("")
 class SponsorsUser(Resource):
     @public_endpoint()
     @sponsors_user_namespace.doc(
