@@ -18,7 +18,7 @@ import {
   TbMessage,
   TbSettings,
   TbTags,
-  TbHeartHandshake
+  TbHeartHandshake,
 } from 'react-icons/tb';
 import { NavLink, Outlet } from 'react-router';
 

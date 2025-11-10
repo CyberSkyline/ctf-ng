@@ -1,5 +1,5 @@
-import Dropzone from "react-dropzone";
-import { twMerge } from "tailwind-merge";
+import Dropzone from 'react-dropzone';
+import { twMerge } from 'tailwind-merge';
 
 /*
 TODO:
@@ -12,12 +12,14 @@ export default function NewLogoDropzone() {
   return (
     <Dropzone
       accept={{
-        'image/png': ['.png'],
-        'image/jpeg': ['.jpeg'],
+        'image/png' : [ '.png' ],
+        'image/jpeg' : [ '.jpeg' ],
       }}
       multiple={false}
     >
-      {({ getRootProps, getInputProps, isFocused, isDragAccept, isDragReject, acceptedFiles }) => (
+      {({
+        getRootProps, getInputProps, isFocused, isDragAccept, isDragReject, acceptedFiles,
+      }) => (
         <section>
           <div
             {...getRootProps()}
@@ -30,14 +32,14 @@ export default function NewLogoDropzone() {
             )}
           >
             <input {...getInputProps()} />
-            <p>Drag 'n drop a file here, or click to select a file</p>
+            <p>Drag and drop a file here, or click to select a file</p>
           </div>
-          
+
           {/* This dropdown only accepts one file at a time. */}
-          <p className='pt-2'>File:</p>
+          <p className="pt-2">File:</p>
           <p>{acceptedFiles[0]?.path}</p>
         </section>
       )}
     </Dropzone>
-  )
+  );
 }
