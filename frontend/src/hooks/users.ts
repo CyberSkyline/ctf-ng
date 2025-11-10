@@ -78,7 +78,7 @@ export function useMySponsor() {
 
 /* Set the user's sponsor/affiliation */
 export function setMySponsor(id: number) {
-  return apiMutation('/users/me/sponsor', {sponsor_id: id}, {
+  return apiMutation('/users/me/sponsor', { sponsor_id : id }, {
     method : 'PUT',
   }).then(() => {
     mutate('/users/me/sponsor');

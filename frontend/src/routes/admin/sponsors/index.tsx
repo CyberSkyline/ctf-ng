@@ -3,29 +3,29 @@ import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
 import type { ColDef } from 'ag-grid-community';
 import type { Sponsor } from '@/types';
+import { Flex } from '@radix-ui/themes';
 import SponsorSidebar from './SponsorSidebar';
 import SponsorModal from './SponsorModal';
-import { Flex } from '@radix-ui/themes';
 
-const colDefs: ColDef<Sponsor>[] =[
+const colDefs: ColDef<Sponsor>[] = [
   {
-    field: 'id',
-    headerName: 'ID',
+    field : 'id',
+    headerName : 'ID',
   },
   {
-    field: 'name',
-    headerName: 'Name',
+    field : 'name',
+    headerName : 'Name',
     filter : true,
   },
   {
-    field: 'logo',
-    headerName: 'Logo URL',
-    width: 500,
-  }
-]
+    field : 'logo',
+    headerName : 'Logo URL',
+    width : 500,
+  },
+];
 
 export default function AdminSponsors() {
-  const {data, error, isLoading} = useAdminSponsors();
+  const { data, error, isLoading } = useAdminSponsors();
 
   if (error) {
     return <ErrorCallout>{error.message}</ErrorCallout>;
