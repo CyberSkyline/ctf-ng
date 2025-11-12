@@ -149,33 +149,34 @@ export default function RegistrationModal({ eventId, eventName, isTeamGame }: {e
             </RadixMarkdown>
           </Box>
 
-          <Controller
-            control={control}
-            name="termsConditions"
-            rules={{
-              required : {
-                value : true, message : 'You must accept the terms and conditions to register',
-              },
-            }}
-            defaultValue={false}
-            render={({ field }) => (
-              <Text as="label" size="2">
-                <Flex gap="2">
-                  <Checkbox
-                    id="termsConditions"
-                    checked={field.value}
-                    onCheckedChange={(checked) => field.onChange(checked)}
-                    onBlur={field.onBlur}
-                    ref={field.ref}
-                  />
-                  I agree to the Terms and Conditions
-                </Flex>
-              </Text>
-
+          <FormField label={null} error={errors?.termsConditions}>
+            {(injected) => (
+              <Controller
+                control={control}
+                name="termsConditions"
+                rules={{
+                  required : {
+                    value : true, message : 'You must accept the terms and conditions to register',
+                  },
+                }}
+                defaultValue={false}
+                render={({ field }) => (
+                  <Text as="label" size="2">
+                    <Flex gap="2">
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={(checked) => field.onChange(checked)}
+                        onBlur={field.onBlur}
+                        ref={field.ref}
+                        {...injected}
+                      />
+                      I agree to the Terms and Conditions
+                    </Flex>
+                  </Text>
+                )}
+              />
             )}
-          />
-
-          {errors.termsConditions?.message && <WarningCallout>{errors.termsConditions.message.toString()}</WarningCallout>}
+          </FormField>
         </>
       )}
 
