@@ -114,7 +114,7 @@ export default function NavBar() {
             >
               <Flex direction="row" align="center" gap="1">
                 <TbUserCircle className="inline" />
-                {user && ` ${user.name}`}
+                {user ? ` ${user.name}` : ' Log In'}
               </Flex>
             </NavigationMenu.Trigger>
             <NavigationMenu.Content
