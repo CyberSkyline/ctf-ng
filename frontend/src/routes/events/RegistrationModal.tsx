@@ -29,7 +29,11 @@ export default function RegistrationModal({ eventId, eventName, isTeamGame }: {e
 
   const handleRegister = async (data: { leaderboardName: string; joinCode: string; termsConditions: boolean }) => {
     if (selectedOption === 'join-team') {
-      return registerMyEventTeamJoin(eventId, data.joinCode).then(() => {
+      // Allow user to input invite code or invite url
+      let { joinCode } = data;
+      joinCode = joinCode.indexOf('/') > -1 ? joinCode.substring(joinCode.lastIndexOf('/') + 1) : joinCode;
+
+      return registerMyEventTeamJoin(eventId, joinCode).then(() => {
         navigate(`/events/${eventId}`);
       });
     }
@@ -123,12 +127,6 @@ export default function RegistrationModal({ eventId, eventName, isTeamGame }: {e
                     {...register('joinCode', {
                       required : {
                         value : true, message : 'An invite code is required to join an existing team',
-                      },
-                      minLength : {
-                        value : 32, message : 'Invite code should be 32 characters',
-                      },
-                      maxLength : {
-                        value : 32, message : 'Invite code should be 32 characters',
                       },
                     })}
                     {...injected}
