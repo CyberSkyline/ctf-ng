@@ -1,6 +1,5 @@
 """
 Public file operations for sponsor-logos, event-cards, favicons
-Dropzone-compatible backend for direct file uploads
 """
 import uuid
 import logging
