@@ -17,7 +17,7 @@ export default function NavBar() {
   };
 
   const { isAuthenticated, isUnauthenticated, user } = useAuth();
-  const { granted: canAccessAdminPanel } = useGlobalPermission("CAN_ACCESS_ADMIN_PANEL");
+  const { granted : canAccessAdminPanel } = useGlobalPermission('CAN_ACCESS_ADMIN_PANEL');
 
   const location = useLocation();
 
@@ -133,14 +133,16 @@ export default function NavBar() {
                     Profile*
                   </NavLink>
                 </li>
-                {canAccessAdminPanel && <li>
-                  <NavLink
-                    to="/admin"
-                    className={contentItem}
-                  >
-                    Admin Portal
-                  </NavLink>
-                </li>}
+                {canAccessAdminPanel && (
+                  <li>
+                    <NavLink
+                      to="/admin"
+                      className={contentItem}
+                    >
+                      Admin Portal
+                    </NavLink>
+                  </li>
+                )}
                 <li>
                   <ThemeToggle className="ml-3 py-2" />
                 </li>
