@@ -8,6 +8,7 @@ from typing import Any, TypedDict
 
 from CTFd.models import db
 from sqlalchemy.ext.associationproxy import association_proxy
+from ...core.utils.validator import BaseValidator
 
 from ...permissions.models.UserRole import UserRole
 
@@ -87,7 +88,7 @@ class User(db.Model):
         if "name" in data:
             validator.validate_string(data, "name", 30, required=True, friendly_name="Username")
         if "email" in data:
-            validator.validate_email(data, "email", 254, required=True, friendly_name="Email")
+            validator.validate_string(data, "email", 254, required=True, friendly_name="Email")
         
 
         return validator.validate()

@@ -214,6 +214,20 @@ def test_user_put(admin_client, user, db_session):
     assert verify_data["data"]["name"] == "Updated User"
     assert verify_data["data"]["email"] == "updated@example.com"
 
+def test_user_put_input_validation(admin_client, user):
+    """
+    Test updating a user with invalid data as an admin
+    """
+    invalid_data = {"notvalid": "data", "name": "test", "email": "test@test.com"}
+    response = admin_client.put(f"/ng/admin/users/{user.id}", json = invalid_data)
+
+    assert response.status_code == 200
+    data = response.get_json()
+
+    assert data["success"] is True
+    assert data["data"]["name"] == "test"
+    assert data["data"]["email"] == "test@test.com"
+    assert "notvalid" not in data["data"]
 
 def test_delete_user(admin_client, user):
     """
