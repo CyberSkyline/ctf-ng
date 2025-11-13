@@ -1,7 +1,8 @@
+import { COLOR_HINT, ImpersonateIcon } from '@/constants';
 import { apiMutation } from '@/fetchers';
 import { useGlobalPermission } from '@/hooks/permissions';
-import { useAuth } from '@/hooks/users';
-import { Flex } from '@radix-ui/themes';
+import { stopImpersonation, useAuth } from '@/hooks/users';
+import { Flex, Skeleton, Text } from '@radix-ui/themes';
 import NotificationsPopover from 'components/NotificationsPopover';
 import ThemeToggle from 'components/ThemeToggle';
 import { NavigationMenu } from 'radix-ui';
@@ -16,7 +17,9 @@ export default function NavBar() {
     });
   };
 
-  const { isAuthenticated, isUnauthenticated, user } = useAuth();
+  const {
+    isAuthenticated, isUnauthenticated, isImpersonated, user, isLoading,
+  } = useAuth();
   const { granted : canAccessAdminPanel } = useGlobalPermission('CAN_ACCESS_ADMIN_PANEL');
 
   const location = useLocation();
@@ -24,6 +27,8 @@ export default function NavBar() {
   const defaultLinkClass = `
     h-full
     p-2
+    px-3
+    rounded
     hover:bg-(--gray-3)
     dark:hover:bg-(--gray-3)
     dark:hover:text-(--gray-12)
@@ -33,6 +38,8 @@ export default function NavBar() {
   const activeLinkClass = `
     h-full
     p-2
+    px-3
+    rounded
     hover:bg-(--gray-3)
     dark:hover:bg-(--gray-3)
     text-(--gray-a11)
@@ -43,13 +50,13 @@ export default function NavBar() {
     decoration-2`;
 
   const contentBase = `
-    absolute 
-    top-full 
+    absolute
+    top-full
     mt-1
-    z-50 
-    max-w-[90vw] 
-    right-4 
-    rounded-md 
+    z-50
+    max-w-[90vw]
+    right-4
+    rounded-md
     shadow-lg
     border-(--gray-a6)
     border-1
@@ -76,7 +83,7 @@ export default function NavBar() {
 
   return (
     <NavigationMenu.Root className="h-[var(--NavBarHeight)]">
-      <NavigationMenu.List className="flex p-1 pr-4 dark:border-b-(--gray-a6) dark:border-b-1">
+      <NavigationMenu.List className="flex p-1 pr-4 dark:border-b-(--gray-a6) dark:border-b-1 shadow dark:shadow-none">
         <div className="flex">
           <NavLink to="/" className={location.pathname === '/' ? activeLinkClass : defaultLinkClass}>
             <NavigationMenu.Item>
@@ -114,10 +121,21 @@ export default function NavBar() {
               onPointerMove={(event) => event.preventDefault()}
               onPointerLeave={(event) => event.preventDefault()}
             >
-              <Flex direction="row" align="center" gap="1">
-                <TbUserCircle className="inline" />
-                {user ? ` ${user.name}` : ' Log In'}
-              </Flex>
+              <Text
+                color={isImpersonated ? COLOR_HINT : undefined}
+                className={isImpersonated ? 'animate-pulse' : undefined}
+              >
+                <Flex direction="row" align="center" gap="1">
+                  {isImpersonated ? <ImpersonateIcon className="inline" /> : <TbUserCircle className="inline" />}
+                  {/* Show skeleton until we have auth state */}
+                  <Skeleton loading={isLoading}>
+                    <Text>
+                      {isImpersonated ? 'Impersonating ' : ''}
+                      {user ? user.name : 'Log In'}
+                    </Text>
+                  </Skeleton>
+                </Flex>
+              </Text>
             </NavigationMenu.Trigger>
             <NavigationMenu.Content
               className={contentBase}
@@ -148,15 +166,28 @@ export default function NavBar() {
                 </li>
 
                 {isAuthenticated && (
-                  <li>
-                    <button
-                      type="button"
-                      onClick={logout}
-                      className={contentItem}
-                    >
-                      Log Out
-                    </button>
-                  </li>
+                  <>
+                    {isImpersonated && (
+                      <li>
+                        <button
+                          type="button"
+                          onClick={stopImpersonation}
+                          className={contentItem}
+                        >
+                          Stop Impersonating
+                        </button>
+                      </li>
+                    )}
+                    <li>
+                      <button
+                        type="button"
+                        onClick={logout}
+                        className={contentItem}
+                      >
+                        Log Out
+                      </button>
+                    </li>
+                  </>
                 )}
                 {isUnauthenticated && (
                   <li>

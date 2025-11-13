@@ -8,6 +8,7 @@
     window.init = {
       csrfToken: '{{ Session.nonce }}',
       userId: '{{ user_id }}' || null,
+      impersonated: {{ (session.impersonated or false) | tojson }}
     };
   </script>
   <script type="module">

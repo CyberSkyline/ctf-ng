@@ -11,6 +11,7 @@ import Entity from 'components/Entity';
 import RoleBadge from 'components/RoleBadge';
 import { keyBy } from 'lodash';
 import AdminRegisterUserModal from './AdminRegisterUserModal';
+import ImpersonateUserButton from './ImpersonateUserButton';
 
 function RegistrationRow({ userId, team, event }: { userId: number, team: Team, event: Event }) {
   const { data : teamMembers } = useTeamMembers(team.id);
@@ -53,7 +54,9 @@ export default function UserSidebar({ entity }: { entity: User }) {
 
   return (
     <AdminSidebar>
-      <AdminSidebarHeader title={entity.name} icon={<UserIcon />} />
+      <AdminSidebarHeader title={entity.name} icon={<UserIcon />}>
+        <ImpersonateUserButton user={entity} />
+      </AdminSidebarHeader>
 
       <AdminDataList data={{ ...entity }} />
 

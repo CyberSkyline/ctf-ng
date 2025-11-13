@@ -4,8 +4,11 @@ Administrative operations and system management API routes.
 
 from flask_restx import Namespace, Resource
 from flask import session
+from ...user.models import User
 from ...core.utils import utc_now
 from CTFd.utils.security.csrf import generate_nonce
+from CTFd.utils.security.signing import hmac
+
 from ..controllers import (
     get_data_counts,
     get_detailed_stats,
@@ -122,7 +125,7 @@ class AdminImpersonate(Resource):
             404: "User not found"
         }
     )
-    def post(self, json_data,current_user, permissions, **kwargs):
+    def post(self, json_data, current_user: User, user: User, permissions, **kwargs):
         """Impersonate a user by ID"""
         user_id = json_data.get("user_id")
 
@@ -141,6 +144,7 @@ class AdminImpersonate(Resource):
         session["admin_id"] = current_user.id
         session["impersonated"] = True
         session["id"] = user_id
+        session["hash"] = hmac(user.ctfd_user.password)
         session["nonce"] = generate_nonce()
 
         return success_response()
@@ -156,26 +160,22 @@ class AdminStopImpersonating(Resource):
             403: "Forbidden - User is not impersonating"
         }
     )
-    def post(self,json_data, **kwargs):
+    def post(self, json_data, **kwargs):
         """Stop impersonating a user"""
         if not session.get("impersonated"):
             return error_response("You are not currently impersonating any user.", "impersonation", 403)
 
         logger.info(f"Admin {session['admin_id']} stopped impersonating user {session['id']}")
 
-        session["id"] = session["admin_id"]
+        impersonated_id = session["id"]
+        admin = User.find_by_id(session["admin_id"])
+        if not admin:
+            return error_response("Original admin user not found.", "impersonation", 400)
+
+        session["id"] = admin.id
+        session["hash"] = hmac(admin.ctfd_user.password)
         session.pop("admin_id", None)
         session.pop("impersonated", None)
         session["nonce"] = generate_nonce()
 
-
-        return success_response()
-
-
-
-
-
-
-
-
-
+        return success_response(impersonated_id)
