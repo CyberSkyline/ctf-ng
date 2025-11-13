@@ -19,3 +19,4 @@ types-docker==7.1.0.20250822
 requests-oauthlib==1.3.0
 sqlalchemy[mypy]==1.4.54
 types-boto3==1.40.40
+filetype==1.2.0

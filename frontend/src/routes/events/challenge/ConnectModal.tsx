@@ -1,15 +1,19 @@
-import { COLOR_POSITIVE, COLOR_WARNING } from '@/constants';
-import { connectWorkspace, useCurrentChallengeId } from '@/hooks/container';
+import { COLOR_NEGATIVE, COLOR_POSITIVE, COLOR_WARNING } from '@/constants';
+import { connectWorkspace, recycleChallengeContainers, useCurrentChallengeId } from '@/hooks/container';
 import { Button } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
 import Modal from 'components/Modal';
 import { useState } from 'react';
-import { TbCheck, TbPlayerPlay } from 'react-icons/tb';
+import { TbCheck, TbPlayerPlay, TbRotateClockwise } from 'react-icons/tb';
 
-export default function ConnectModal({ challengeId }: {
+export default function ConnectModal({ eventId, challengeId, isTeam }: {
+  eventId: number;
   challengeId: number;
+  isTeam: boolean;
 }) {
-  const { data : currentChallenge, error } = useCurrentChallengeId();
+  const {
+    data : currentChallenge, isValidating, error,
+  } = useCurrentChallengeId();
   const [ loading, setLoading ] = useState(false);
 
   const handleConnect = async () => {
@@ -19,6 +23,8 @@ export default function ConnectModal({ challengeId }: {
     });
   };
 
+  const handleReset = async () => recycleChallengeContainers(eventId, challengeId);
+
   if (error) {
     // if we can't get the current challenge, show an error where the button would otherwise go
     return <ErrorCallout>{error.message}</ErrorCallout>;
@@ -26,17 +32,32 @@ export default function ConnectModal({ challengeId }: {
 
   if (currentChallenge === challengeId) {
     return (
-      <Button variant="soft" disabled m="0">
-        <TbCheck />
-        Connected
-      </Button>
+      <>
+        <Button variant="soft" disabled m="0">
+          <TbCheck />
+          Connected
+        </Button>
+        <Modal
+          title="Reset challenge?"
+          description={`The challenge will be reset to its initial state${isTeam ? ' for all players on your team' : ''}.`}
+          trigger={(
+            <Button variant="ghost" className="!m-0" color={COLOR_NEGATIVE}>
+              <TbRotateClockwise />
+              Reset
+            </Button>
+          )}
+          submitVerb="Reset"
+          submitColor={COLOR_NEGATIVE}
+          onSubmit={handleReset}
+        />
+      </>
     );
   }
 
   if (currentChallenge === null) {
     // If the workspace isn't connected to anything, don't require confirmation
     return (
-      <Button onClick={handleConnect} loading={loading} color={COLOR_POSITIVE} className="pulsate">
+      <Button onClick={handleConnect} loading={loading || isValidating} color={COLOR_POSITIVE} className="pulsate">
         <TbPlayerPlay />
         Start Challenge
       </Button>
@@ -48,7 +69,7 @@ export default function ConnectModal({ challengeId }: {
       title="Switch challenge?"
       description="Your workspace will be disconnected from your previous challenge and connected to this one."
       trigger={(
-        <Button loading={loading} color={COLOR_POSITIVE} className="pulsate">
+        <Button loading={loading || isValidating} color={COLOR_POSITIVE} className="pulsate">
           <TbPlayerPlay />
           Start Challenge
         </Button>

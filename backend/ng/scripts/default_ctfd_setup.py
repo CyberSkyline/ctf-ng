@@ -9,6 +9,7 @@ from CTFd.models import db
 from sqlalchemy_utils import create_database, database_exists, drop_database
 from tests.helpers import setup_ctfd
 
+
 if "SCRIPT" not in os.environ:
     raise OSError("This should only be run from a script. DO NOT run this manually.")
 
@@ -55,10 +56,7 @@ with app.app_context():
     # This script is designed to run in production via 'pnpm populate-data'
     # where the plugin is properly located at /opt/CTFd/CTFd/plugins/ng
     try:
-        from CTFd.plugins.ng.permissions.controllers.assign_role_to_user import assign_role_to_user  # type: ignore
-        from CTFd.plugins.ng.permissions.controllers.create_permission import create_permission  # type: ignore
-        from CTFd.plugins.ng.permissions.controllers.create_role import create_role  # type: ignore
-        from CTFd.plugins.ng.permissions.models.enums import PermissionEnum, RoleEnum  # type: ignore
+        from CTFd.plugins.ng.permissions.controllers.initial_admin_setup import initial_admin_setup  # type: ignore
         from CTFd.plugins.ng.user.models.User import User  # type: ignore
     except ImportError as e:
         print(f"Failed to import plugin modules: {e}")
@@ -69,55 +67,7 @@ with app.app_context():
     if not admin_user:
         admin_user = User.create_user(1, commit=True)
 
-    create_permission(
-        name=PermissionEnum.CAN_EDIT_TEAM,
-        description="Can edit teams",
-    )
-    create_permission(
-        name=PermissionEnum.CAN_EDIT_USER,
-        description="Can edit users",
-    )
-    create_permission(
-        name=PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
-        description="Can manage support tickets",
-    )
-    create_permission(
-        name=PermissionEnum.CAN_IMPERSONATE_USERS,
-        description="Can impersonate other users",
-    )
-    create_permission(
-        name=PermissionEnum.CAN_VIEW_CHALLENGES,
-        description="Can view challenges",
-    )
-    create_permission(
-        name=PermissionEnum.CAN_PLAY_CHALLENGES,
-        description="Can play challenges",
-    )
-    create_permission(
-        name=PermissionEnum.CAN_START_TEAM_TIMER,
-        description="Can start the team timer",
-    )
-
-    create_role(
-        name=RoleEnum.ADMIN,
-        permissions=[
-            PermissionEnum.CAN_EDIT_TEAM,
-            PermissionEnum.CAN_EDIT_USER,
-            PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
-            PermissionEnum.CAN_IMPERSONATE_USERS,
-            PermissionEnum.CAN_VIEW_CHALLENGES,
-            PermissionEnum.CAN_PLAY_CHALLENGES,
-            PermissionEnum.CAN_START_TEAM_TIMER,
-        ],
-    )
-    create_role(
-        name=RoleEnum.SUPPORT,
-        permissions=[
-            PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
-            PermissionEnum.CAN_VIEW_CHALLENGES,
-        ],
-    )
-    assign_role_to_user(admin_user.id, RoleEnum.ADMIN)
+    initial_admin_setup(admin_user=admin_user)
 
     print("\n")
     # ANSI escape code for yellow background: \033[43m, reset: \033[0m

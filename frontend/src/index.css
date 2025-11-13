@@ -1,5 +1,6 @@
 @import "@radix-ui/themes/styles.css";
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 @import "assets/fonts/inter/inter.css";
 
 :root {

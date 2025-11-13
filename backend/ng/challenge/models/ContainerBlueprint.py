@@ -1,12 +1,15 @@
 from typing import Any, Literal
-from collections.abc import Callable
 
 from CTFd.models import db
 from sqlalchemy.orm import Mapped
 
+from ..utils.challenge_yaml import EnvVarRenderer
+
 from ...core.utils.validator import BaseValidator
 from ...containers.utils.get_client import get_client
 from ... import config
+
+from cyber_skyline.chall_parser.compose.service import ServiceNetwork
 
 MAX_CONTAINER_BLUEPRINT_NAME_LENGTH = 128
 MAX_CONTAINER_BLUEPRINT_IMAGE_LENGTH = 1024
@@ -28,8 +31,9 @@ class ContainerBlueprint(db.Model):
     tty: Mapped[bool] = db.Column(db.Boolean, nullable=True)
     command: Mapped[str | list[str] | None] = db.Column(db.PickleType, nullable=True)
     entrypoint: Mapped[str | list[str] | None] = db.Column(db.PickleType, nullable=True)
-    environment: Mapped[dict[str, str | Callable[[str], str]] | list[str] | None] = db.Column(db.PickleType, nullable=True)
+    environment: Mapped[dict[str, str | EnvVarRenderer] | list[str] | None] = db.Column(db.PickleType, nullable=True)
     networks: Mapped[list[str] | dict[str, None] | None] = db.Column(db.PickleType, nullable=True)
+    netconfs: Mapped[list[str] | dict[str, None] | None ] = db.Column(db.PickleType, nullable=True)
     cap_add: Mapped[list[Literal['NET_ADMIN', 'SYS_PTRACE']] | None] = db.Column(db.PickleType, nullable=True)
     mem_limit: Mapped[int | str | None] = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_MEM_LIMIT_LENGTH), nullable=True)
     memswap_limit: Mapped[int | str | None] = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_MEMSWAP_LIMIT_LENGTH), nullable=True)
@@ -44,6 +48,7 @@ class ContainerBlueprint(db.Model):
         """
         return {
             "id": self.id,
+            "name": self.name,
             "image": self.image,
             "hostname": self.hostname,
             "stdin_open": self.stdin_open,
@@ -117,6 +122,7 @@ class ContainerBlueprint(db.Model):
     @classmethod
     def create_container_blueprint(
         cls,
+        name: str,
         image: str,
         hostname: str,
         challenge_id: int,
@@ -124,8 +130,9 @@ class ContainerBlueprint(db.Model):
         tty: bool | None = None,
         command: str | list[str] | None = None,
         entrypoint: str | list[str] | None = None,
-        environment: dict[str, str | Callable[[str], str]] | list[str] | None = None,
-        networks: list[str] | dict[str, None] | None = None,
+        environment: dict[str, str | EnvVarRenderer] | list[str] | None = None,
+        networks: list[str] | dict[str, ServiceNetwork | None] | None = None,
+        netconfs: list[str] | dict[str, None] | None = None,
         cap_add: list[Literal['NET_ADMIN', 'SYS_PTRACE']] | None = None,
         mem_limit: int | str | None = None,
         memswap_limit: int | str | None = None,
@@ -136,6 +143,7 @@ class ContainerBlueprint(db.Model):
         try:
             ## Removed the validator as it currently does not support lists
             validated_data = {
+                    "name": name,
                     "image": image,
                     "hostname": hostname,
                     "challenge_id": challenge_id,
@@ -145,6 +153,7 @@ class ContainerBlueprint(db.Model):
                     "entrypoint": entrypoint,
                     "environment": environment,
                     "networks": networks,
+                    "netconfs": netconfs,
                     "cap_add": cap_add,
                     "mem_limit": mem_limit,
                     "memswap_limit": memswap_limit,
@@ -168,7 +177,7 @@ class ContainerBlueprint(db.Model):
         if isinstance(self.environment, list):
             return self.environment
 
-        return {k: (v(team_seed=team_seed) if isinstance(v, Callable) else v) for k, v in self.environment.items()}
+        return {k: (v(team_seed=team_seed) if isinstance(v, EnvVarRenderer) else v) for k, v in self.environment.items()}
 
     def pull_image(self):
         client = get_client(config.DOCKER_HOST)

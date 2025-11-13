@@ -21,7 +21,7 @@ import { useEventPermission } from '@/hooks/permissions';
 import type { Attempt, Question } from '@/types';
 import RequireEventPermission from 'components/RequireEventPermission';
 import { startCase } from 'lodash';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 export default function ChallengeQuestion({
   eventId,
@@ -37,14 +37,17 @@ export default function ChallengeQuestion({
   } = question;
 
   const { denied } = useEventPermission('CAN_PLAY_CHALLENGES', eventId);
+  const [ loading, setLoading ] = useState(false);
 
   const handleSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setLoading(true);
     const target = event.currentTarget;
     const { flag } = Object.fromEntries(new FormData(event.currentTarget));
 
     return submitFlag(challengeId, id, flag as string)
       .finally(() => {
+        setLoading(false);
         // clear the form after submission
         target.reset();
       });
@@ -109,14 +112,18 @@ export default function ChallengeQuestion({
                 </TextField.Slot>
               </TextField.Root>
             </Form.Control>
-            <Form.Message match="valueMissing">Flag cannot be empty</Form.Message>
+            <Form.Message match="valueMissing">
+              <Text color={COLOR_NEGATIVE}>
+                Flag cannot be empty
+              </Text>
+            </Form.Message>
           </Form.Field>
 
           <RequireEventPermission eventId={eventId} permission="CAN_PLAY_CHALLENGES" permissionDeniedPlaceholder={null}>
             {status !== 'correct' && attemptsRemaining > 0 && (
-            <Button variant="soft" size="2" type="submit" color={color || COLOR_QUESTION}>
-              Submit
-            </Button>
+              <Button variant="soft" size="2" type="submit" color={color || COLOR_QUESTION} loading={loading} disabled={loading}>
+                Submit
+              </Button>
             )}
           </RequireEventPermission>
         </Flex>

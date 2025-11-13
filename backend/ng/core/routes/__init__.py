@@ -16,6 +16,8 @@ from ...user.routes import users_admin_namespace, users_user_namespace
 from ...user.routes.authenticate import oauth_namespace
 from ...scoring.routes import scoring_admin_namespace, scoring_user_namespace
 from ...support.routes import support_user_namespace, support_admin_namespace
+from ...sponsors.routes import sponsors_user_namespace, sponsors_admin_namespace
+
 
 from ...admin.routes.admin import admin_namespace
 # from ...event_registration.routes.event_registration import event_reg_namespace
@@ -90,18 +92,11 @@ def delete_unwanted_ctfd_routes(app: Any) -> None:
     remove_blueprint(app, "tags")
     remove_blueprint(app, "topics")
     remove_blueprint(app, "submissions")
-    remove_blueprint(app, "notifications")
     remove_blueprint(app, "awards")
     remove_blueprint(app, "hints")
     remove_blueprint(app, "flags")
     remove_blueprint(app, "scoreboard")
-    remove_blueprint(app, "teams")
-    remove_blueprint(app, "users")
-    remove_blueprint(app, "statistics")
-    remove_blueprint(app, "files")
-    remove_blueprint(app, "pages")
-    remove_blueprint(app, "unlocks")
-    remove_blueprint(app, "scoreboard")
+
     remove_blueprint(app, "teams")
     remove_blueprint(app, "users")
     remove_blueprint(app, "statistics")
@@ -169,6 +164,7 @@ api_v1.add_namespace(container_namespace, path="/container")
 api_v1.add_namespace(notifications_namespace, path="/notifications")
 api_v1.add_namespace(announcements_user_namespace, path="/announcements")
 api_v1.add_namespace(permissions_user_namespace, path="/permissions")
+api_v1.add_namespace(sponsors_user_namespace, path="/sponsors")
 
 # Admin namespaces
 api_v1.add_namespace(admin_namespace, path="/admin")
@@ -181,3 +177,4 @@ api_v1.add_namespace(challenge_admin_namespace, path="/admin/challenges")
 api_v1.add_namespace(scoring_admin_namespace, path="/admin/scoring")
 api_v1.add_namespace(admin_container_namespace, path="/admin/container")
 api_v1.add_namespace(announcements_admin_namespace, path="/admin/announcements")
+api_v1.add_namespace(sponsors_admin_namespace, path="/admin/sponsors")

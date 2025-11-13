@@ -3,6 +3,7 @@ import type { IconType } from 'react-icons';
 import {
   TbCalendarEvent,
   TbCube,
+  TbGhost,
   TbLifebuoy,
   TbPackages,
   TbSpeakerphone,
@@ -25,6 +26,7 @@ export const TeamIcon = TbUsersGroup;
 export const ChallengeIcon = TbCube;
 export const DeploymentIcon = TbPackages;
 export const AnnouncementIcon = TbSpeakerphone;
+export const ImpersonateIcon = TbGhost;
 
 // Semantic colors for UI.
 // Use instead of default accent for things that carry semantic meaning.

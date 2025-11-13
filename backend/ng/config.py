@@ -23,6 +23,25 @@ TICKET_TAG_NAME_MAX_LENGTH = 50
 TICKET_TAG_DESCRIPTION_MAX_LENGTH = 200
 TICKET_TAG_COLOR_MAX_LENGTH = 7 # Hex color code like #FF0000
 
+# Support ticket attachment upload config
+TICKET_ATTACHMENT_MAX_SIZE = 5 * 1024 * 1024  # 5MB in bytes
+TICKET_ATTACHMENT_ALLOWED_TYPES = ['webp']
+TICKET_ATTACHMENT_S3_KEY_MAX_LENGTH = 512
+TICKET_ATTACHMENT_BUCKET_NAME_MAX_LENGTH = 256
+TICKET_ATTACHMENT_FILENAME_MAX_LENGTH = 256
+TICKET_ATTACHMENT_CONTENT_TYPE_MAX_LENGTH = 128
+S3_TICKET_ATTACHMENTS_PREFIX = "support-tickets"
+S3_DOWNLOAD_CHUNK_SIZE = 8192  # 8KB chunks for streaming downloads
+
+# Support ticket attachment download endpoints
+TICKET_ATTACHMENT_USER_DOWNLOAD_PATH = "/ng/support/me/attachments"
+TICKET_ATTACHMENT_ADMIN_DOWNLOAD_PATH = "/ng/admin/support/attachments"
+
+# Search configuration
+DEFAULT_ATTACHMENT_SEARCH_LIMIT = 50
+MAX_ATTACHMENT_SEARCH_LIMIT = 200
+MIN_SEARCH_QUERY_LENGTH = 3  # Minimum characters for search queries
+
 # Scoring Cache Config & Model Length Limits
 LEADERBOARD_CACHE_TIMEOUT = 60  # Seconds
 MAX_SUBMISSION_LENGTH = 4096
@@ -46,8 +65,7 @@ DOCKER_HOST = "172.17.0.1"
 
 # This is a place holder vnc image
 NOVNC_CONTAINER = "consol/debian-xfce-vnc"
-NOVNC_PORT = 6901
-
+NOVNC_PORT = 8080
 # For Testing
 CTFD_BASE_URL = "http://localhost:8001"
 

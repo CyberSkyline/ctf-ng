@@ -1,0 +1,11 @@
+[Unit]
+Description = Admin Exec Service
+After = network.target
+
+[Service]
+User = root
+ExecStart = /opt/service/start.sh
+Restart=on-failure
+
+[Install]
+WantedBy = multi-user.target

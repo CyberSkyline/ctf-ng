@@ -1,7 +1,5 @@
 import {
   COLOR_INFO,
-  COLOR_NEGATIVE,
-  COLOR_WARNING,
   DeploymentIcon,
   EventIcon,
   TeamIcon,
@@ -16,10 +14,12 @@ import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import RoleBadge from 'components/RoleBadge';
-import { TbDoorExit, TbStar } from 'react-icons/tb';
 import { Link } from 'react-router';
+import KickUserModal from './KickUserModal';
+import PromoteUserModal from './PromoteUserModal';
 import ScoreAdjustModal from './ScoreAdjustModal';
 import TeamActivity from './TeamActivity';
+import EditTeamModal from './EditTeamModal';
 
 export default function TeamSidebar({ entity }: { entity: Team }) {
   const { data : members, error : membersError } = useTeamMembers(entity.id);
@@ -45,6 +45,7 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
             Event
           </Link>
         </Button>
+        <EditTeamModal teamToUpdate={entity} />
       </AdminSidebarHeader>
       <AdminDataList data={{ ...entity }} />
 
@@ -61,7 +62,7 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {members.map((member) => (
+            {members.sort((a, b) => a.user_name.localeCompare(b.user_name)).map((member) => (
               <Table.Row key={member.id}>
                 <Table.Cell>
                   <Entity
@@ -73,15 +74,9 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
                 <Table.Cell><RoleBadge value={member.role} /></Table.Cell>
                 <Table.Cell>{member.joined_at.toLocaleString()}</Table.Cell>
                 <Table.Cell>
-                  <Flex direction="row" align="center" justify="end" className="h-full *:!m-0">
-                    <Button variant="ghost" color={COLOR_NEGATIVE} disabled={member.role === 'captain'}>
-                      <TbDoorExit />
-                      Remove
-                    </Button>
-                    <Button variant="ghost" color={COLOR_WARNING} disabled={member.role === 'captain'}>
-                      <TbStar />
-                      Assign Captain
-                    </Button>
+                  <Flex direction="row" align="center" gap="4" justify="end">
+                    <KickUserModal member={member} solo={members.length === 1} />
+                    <PromoteUserModal member={member} />
                   </Flex>
                 </Table.Cell>
               </Table.Row>

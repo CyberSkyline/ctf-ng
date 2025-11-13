@@ -214,6 +214,20 @@ def test_user_put(admin_client, user, db_session):
     assert verify_data["data"]["name"] == "Updated User"
     assert verify_data["data"]["email"] == "updated@example.com"
 
+def test_user_put_input_validation(admin_client, user):
+    """
+    Test updating a user with invalid data as an admin
+    """
+    invalid_data = {"notvalid": "data", "name": "test", "email": "test@test.com"}
+    response = admin_client.put(f"/ng/admin/users/{user.id}", json = invalid_data)
+
+    assert response.status_code == 200
+    data = response.get_json()
+
+    assert data["success"] is True
+    assert data["data"]["name"] == "test"
+    assert data["data"]["email"] == "test@test.com"
+    assert "notvalid" not in data["data"]
 
 def test_delete_user(admin_client, user):
     """
@@ -304,3 +318,73 @@ def test_login_with_email(logged_in_client, user):
     data = response.get_json()
     assert data["success"] is True
     assert "session" in logged_in_client.cookie_jar._cookies['localhost.local']['/']
+
+
+def test_user_get_sponsor(client_factory, user_factory, sponsor_factory):
+    """
+    Test getting the current user's sponsor affiliation
+    """
+    sponsor = sponsor_factory(name="Test Sponsor", logo="https://www.ndow.org/wp-content/uploads/2021/10/branta_canadensis-scaled.jpeg")
+    user = user_factory(name="sponsoruser", email="sponsoruser@example.com", sponsor=sponsor)
+    client = client_factory(user=user)
+
+    response = client.get("/ng/users/me/sponsor")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["data"]["name"] == "Test Sponsor"
+
+def test_user_get_no_sponsor(client_factory, user_factory):
+    """
+    Test getting the current user's sponsor affiliation when none exists
+    """
+    user = user_factory(name="nosponsoruser", email="nosponsoruser@example.com")
+    client = client_factory(user=user)
+
+    response = client.get("/ng/users/me/sponsor")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["data"] is None
+
+def test_update_user_sponsor(client_factory,user_factory, sponsor_factory):
+    """
+    Test updating a user's sponsor affiliation as an admin
+    """
+    sponsor = sponsor_factory(name="Test Sponsor", logo="https://www.ndow.org/wp-content/uploads/2021/10/branta_canadensis-scaled.jpeg")
+    user = user_factory(name="updatesponsoruser", email="updatesponsoruser@example.com", sponsor=sponsor)
+    sponsor = sponsor_factory(name="New Sponsor", logo="https://www.ndow.org/wp-content/uploads/2021/10/branta_canadensis-scaled.jpeg")
+    client = client_factory(user=user)
+
+    response = client.put("/ng/users/me/sponsor", json={"sponsor_id": sponsor.id})
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["data"]["name"] == "New Sponsor"
+
+def test_update_user_sponsor_not_found(client_factory,user_factory):
+    """
+    Test updating a user's sponsor affiliation when the sponsor is not found
+    """
+    user = user_factory(name="updatesponsoruser", email="updatesponsoruser@example.com")
+    client = client_factory(user=user)
+
+    response = client.put("/ng/users/me/sponsor", json={"sponsor_id": 9999})
+    assert response.status_code == 404
+    data = response.get_json()
+    assert data["success"] is False
+    assert "sponsor" in data["errors"]
+
+def test_update_user_sponsor_no_data(client_factory,user_factory):
+    """
+    Test updating a user's sponsor affiliation with no data provided
+    """
+    user = user_factory(name="updatesponsoruser", email="updatesponsoruser@example.com")
+    client = client_factory(user=user)
+
+    response = client.put("/ng/users/me/sponsor", json={})
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data["success"] is False
+    assert "sponsor" in data["errors"]
+

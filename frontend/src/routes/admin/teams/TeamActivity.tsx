@@ -1,61 +1,38 @@
-import {
-  ChallengeIcon,
-  COLOR_HINT,
-  COLOR_NEGATIVE,
-  COLOR_POSITIVE,
-  COLOR_WARNING,
-  UserIcon,
-} from '@/constants';
+import { ChallengeIcon, UserIcon } from '@/constants';
 import { radixTheme } from '@/grid';
 import { useTeamAttempts, useTeamHintRedemptions, useTeamManualAwards } from '@/hooks/scoring';
 import type { Attempt, HintRedemption, ManualPointAward } from '@/types';
-import { Badge } from '@radix-ui/themes';
+import { Spinner } from '@radix-ui/themes';
 import type { ColDef } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
+import TeamActivityTypeBadge from 'components/TeamActivityTypeBadge';
 import { useMemo } from 'react';
 
 const colDefs: ColDef<Attempt | HintRedemption | ManualPointAward>[] = [
   {
     headerName : 'Type',
-    valueGetter : ({ data }) => {
-      if (!data) return undefined;
-      if ('submission' in data) return 'Attempt';
-      if ('hint_preview' in data) return 'Hint';
-      if ('reason' in data) return 'Manual';
-      return 'Unknown';
-    },
-    cellRenderer : Badge,
-    cellRendererParams : (
-      { value, data } : {
-        value: 'Attempt' | 'Hint' | 'Manual' | 'Unknown',
-        data: Attempt | HintRedemption | ManualPointAward | undefined
-      },
-    ) => {
-      let color;
-      switch (value) {
-        case 'Attempt':
-          color = (data as Attempt).is_correct ? COLOR_POSITIVE : COLOR_NEGATIVE;
-          break;
-        case 'Hint':
-          color = COLOR_HINT;
-          break;
-        case 'Manual':
-          color = COLOR_WARNING;
-          break;
-        default:
-          color = 'gray';
-      }
-
-      return {
-        children : value.toUpperCase(),
-        color,
-      };
-    },
-    width : 100,
+    cellRenderer : TeamActivityTypeBadge,
+    width : 120,
     filter : true,
     floatingFilter : true,
+    filterParams : {
+      defaultOption : 'startsWith',
+    },
+    filterValueGetter : ({ data }) => {
+      if (!data) return null;
+      if ('submission' in data) {
+        return ((data as Attempt).is_correct ? 'Correct' : 'Incorrect');
+      }
+      if ('hint_preview' in data) {
+        return 'Hint';
+      }
+      if ('reason' in data) {
+        return 'Manual';
+      }
+      return null;
+    },
     pinned : true,
   },
   {
@@ -159,7 +136,8 @@ export default function TeamActivity({ teamId }: { teamId: number }) {
         rowData={merged}
         theme={radixTheme}
         loading={attemptsLoading || hintsLoading || manualAwardsLoading}
-        className="min-h-160"
+        loadingOverlayComponent={Spinner}
+        className="min-h-120"
       />
     </>
   );

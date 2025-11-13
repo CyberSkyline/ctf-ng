@@ -14,6 +14,7 @@ def valid_hint_data(challenge):
     """Valid hint data for testing."""
     return {
         "name": "HintName",
+        "index": 0,
         "challenge_id": challenge.id,
         "body": "This is a helpful hint for solving the challenge",
         "preview": "Need a hint?",
@@ -40,6 +41,7 @@ class Test_Validate:
             "challenge_id": challenge.id,
             "body": "Hint body",
             "deduction": 5,
+            "index": 0,
         }
 
         validated_data = Hint.validate(minimal_data)
@@ -182,7 +184,7 @@ class Test_Create_Hint:
 
     def test_create_hint_with_minimal_data_should_succeed(self, db_session, challenge):
         """Test that creating a hint with minimal data succeeds."""
-        hint = Hint.create_hint(name="Hint Name", challenge_id=challenge.id, body="Simple hint", deduction=5)
+        hint = Hint.create_hint(name="Hint Name", challenge_id=challenge.id, body="Simple hint", deduction=5, index=0)
 
         assert hint.id is not None
         assert hint.challenge_id == challenge.id
@@ -198,6 +200,7 @@ class Test_Create_Hint:
                 challenge_id=challenge.id,
                 body="",  # Invalid: empty body
                 deduction=10,
+                index=0,
             )
 
     def test_create_hint_should_rollback_on_validation_error(self, db_session, challenge):
@@ -210,6 +213,7 @@ class Test_Create_Hint:
                 challenge_id=challenge.id,
                 body="",  # Invalid: empty body
                 deduction=10,
+                index=0,
             )
 
         # Verify no hint was created
@@ -249,6 +253,7 @@ class Test_Create_Hint:
             "body": "First hint body",
             "preview": "Hint 1",
             "deduction": 5,
+            "index": 0,
         }
 
         hint2_data = {
@@ -257,6 +262,7 @@ class Test_Create_Hint:
             "body": "Second hint body",
             "preview": "Hint 2",
             "deduction": 10,
+            "index": 1,
         }
 
         hint1 = Hint.create_hint(**hint1_data)
@@ -276,7 +282,7 @@ class Test_Create_Hint:
 
         for i, deduction in enumerate(deduction_values):
             hint = Hint.create_hint(
-                name="Name", challenge_id=challenge.id, body=f"Hint {i + 1} body", preview=f"Hint {i + 1}", deduction=deduction
+                name="Name", challenge_id=challenge.id, body=f"Hint {i + 1} body", preview=f"Hint {i + 1}", deduction=deduction, index=i
             )
             created_hints.append(hint)
 
@@ -290,7 +296,7 @@ class Test_Create_Hint:
         max_body = "a" * config.MAX_HINT_BODY_LENGTH
         max_preview = "b" * config.MAX_HINT_PREVIEW_LENGTH
 
-        hint = Hint.create_hint(name="Name", challenge_id=challenge.id, body=max_body, preview=max_preview, deduction=15)
+        hint = Hint.create_hint(name="Name", challenge_id=challenge.id, body=max_body, preview=max_preview, deduction=15, index=0)
 
         assert hint.body == max_body
         assert hint.preview == max_preview
@@ -302,7 +308,7 @@ class Test_Create_Hint:
         special_body = "This hint contains special chars: !@#$%^&*()_+-=[]{}|;':\",./<>?"
         special_preview = "Special preview: ñáéíóú çüö"
 
-        hint = Hint.create_hint(name="Hint Name", challenge_id=challenge.id, body=special_body, preview=special_preview, deduction=20)
+        hint = Hint.create_hint(name="Hint Name", challenge_id=challenge.id, body=special_body, preview=special_preview, deduction=20, index=0)
 
         assert hint.body == special_body
         assert hint.preview == special_preview
@@ -317,7 +323,7 @@ class Test_Create_Hint:
         unicode_body = "Hint with emoji: 🔍 and accents: café naïve résumé"
         unicode_preview = "Unicode: 中文 русский 日本語"
 
-        hint = Hint.create_hint(name="Hint Name", challenge_id=challenge.id, body=unicode_body, preview=unicode_preview, deduction=8)
+        hint = Hint.create_hint(name="Hint Name", challenge_id=challenge.id, body=unicode_body, preview=unicode_preview, deduction=8, index=0)
 
         assert hint.body == unicode_body
         assert hint.preview == unicode_preview
@@ -328,7 +334,7 @@ class Test_Create_Hint:
         preview_with_spaces = "  Spaced  preview  "
 
         hint = Hint.create_hint(
-            name="Hint Name", challenge_id=challenge.id, body=body_with_newlines, preview=preview_with_spaces, deduction=12
+            name="Hint Name", challenge_id=challenge.id, body=body_with_newlines, preview=preview_with_spaces, deduction=12, index=0
         )
 
         # Validator strips leading and trailing whitespace
@@ -342,6 +348,7 @@ class Test_Create_Hint:
             challenge_id=challenge.id,
             body="Minimal deduction hint",
             deduction=1,  # Minimum positive value
+            index=0,
         )
 
         assert hint.deduction == 1
@@ -350,6 +357,6 @@ class Test_Create_Hint:
         """Test creating hint with large deduction value."""
         large_deduction = 999999
 
-        hint = Hint.create_hint(name="Hint Name", challenge_id=challenge.id, body="Expensive hint", deduction=large_deduction)
+        hint = Hint.create_hint(name="Hint Name", challenge_id=challenge.id, body="Expensive hint", deduction=large_deduction, index=0)
 
         assert hint.deduction == large_deduction

@@ -31,13 +31,15 @@ from ..controllers import (
     get_challenge_progress,
     join_event_controller,
 )
+from ...team.controllers.remove_member import remove_member
 
+from ...containers.controllers.start_containers import start_containers
+from ...containers.controllers.recycle_containers import recycle_containers
 
 from ...user.models.User import User
 from ...team.models.Team import Team
 from ...team.models.enums import TeamRole
 from ...team.models.TeamMember import TeamMember
-
 from ...event.models.Event import Event
 from ...event.models.Demographic import Demographic
 from ...permissions.models.enums import PermissionEnum
@@ -410,23 +412,8 @@ class EventTeamLeave(Resource):
                 "forbidden",
                 403,
             )
-        try:
-            team_member.remove_team_member(commit = False)
-            demographic = Demographic.find_by_user_and_event(
-                current_user.id,
-                event_id
-            )
-            demographic.delete(commit = False)
-            if len(team.members) == 0:
-                team.disband_team(commit = False)
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            return error_response(
-                f"Failed to leave team: {str(e)}",
-                "internal_error",
-                500
-            )
+
+        remove_member(team, current_user)
         return success_response()
 
 @events_user_namespace.route("/<int:event_id>/me/team/start")
@@ -499,4 +486,23 @@ class EventChallengeStatuses(Resource):
 
 
 
+@events_user_namespace.route("/<int:event_id>/challenge/<int:challenge_id>/containers/recycle")
+class EventChallengeRecycleContainers(Resource):
+    @events_user_namespace.doc(
+        description="Recycle a challenges containers",
+        params={
+            "event_id": "Event id challenge is in",
+            "challenge_id": "Challenge id to recycle containers for",
+        },
+        responses={
+            200: "Sucess",
+            400: "Bad request",
+        },
+    )
+    @user_endpoint()
+    @load_event(source=LoaderType.PARAM)
+    @load_team_by_user_and_event()
+    def post(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event):
+        started = recycle_containers(challenge_id, team.id, current_user)
+        return success_response(started)
 

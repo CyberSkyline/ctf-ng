@@ -1,4 +1,5 @@
 import base64
+import re
 
 import boto3
 import docker
@@ -15,7 +16,13 @@ class Client(docker.DockerClient):
         return ctr
 
     def get_network_by_name(self, network_name: str):
-        return self.networks.list(names=[f"^{network_name}$"])[0]
+        # swarm networks and local networks get filtered differently
+        # Have to patch the util function to properly get a network by name
+        matches = self.networks.list(names=[f"{network_name}"])
+        for match in matches:
+            if match.name == network_name:
+                return match
+
 
     def get_ecr_credentials(self):
         """Get AWS ECR login credentials using boto3"""
@@ -47,16 +54,21 @@ class Client(docker.DockerClient):
         }
 
     def pull_image(self, image):
-        try:
-            # First try to get ECR credentials
-            auth = self.get_ecr_credentials()
-            print("Using ECR authentication")
-        except Exception:
-            # Fall back to regular registry auth if ECR auth fails
-            print("Using standard registry authentication")
-            auth = {
-                "username": get_app_config("CONTAINER_REGISTRY_USER"),
-                "password": get_app_config("CONTAINER_REGISTRY_PASSWORD"),
-            }
+        auth_repo = get_app_config("CONTAINER_REGISTRY")
 
-        self.images.pull(image, auth_config=auth)
+        #  Auth repo will default to blank str not none
+        if auth_repo != "" and re.search(auth_repo, image):
+            try:
+                # First try to get ECR credentials
+                auth = self.get_ecr_credentials()
+                print("Using ECR authentication")
+            except Exception:
+                # Fall back to regular registry auth if ECR auth fails
+                print("Using standard registry authentication")
+                auth = {
+                    "username": get_app_config("CONTAINER_REGISTRY_USER"),
+                    "password": get_app_config("CONTAINER_REGISTRY_PASSWORD"),
+                }
+                self.images.pull(image, auth_config=auth)
+        else:
+            self.images.pull(image)

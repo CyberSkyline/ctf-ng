@@ -1,13 +1,8 @@
-import {
-  COLOR_POSITIVE,
-  EventIcon,
-  TeamIcon,
-  UserIcon,
-} from '@/constants';
+import { EventIcon, TeamIcon, UserIcon } from '@/constants';
 import { useTeamMembers } from '@/hooks/team';
 import { useUserEvents, useUserTeams } from '@/hooks/users';
 import type { Event, Team, User } from '@/types';
-import { Button, Table } from '@radix-ui/themes';
+import { Table } from '@radix-ui/themes';
 import AdminDataList from 'components/AdminDataList';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
@@ -15,7 +10,8 @@ import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import RoleBadge from 'components/RoleBadge';
 import { keyBy } from 'lodash';
-import { TbPlus } from 'react-icons/tb';
+import AdminRegisterUserModal from './AdminRegisterUserModal';
+import ImpersonateUserButton from './ImpersonateUserButton';
 
 function RegistrationRow({ userId, team, event }: { userId: number, team: Team, event: Event }) {
   const { data : teamMembers } = useTeamMembers(team.id);
@@ -58,15 +54,14 @@ export default function UserSidebar({ entity }: { entity: User }) {
 
   return (
     <AdminSidebar>
-      <AdminSidebarHeader title={entity.name} icon={<UserIcon />} />
+      <AdminSidebarHeader title={entity.name} icon={<UserIcon />}>
+        <ImpersonateUserButton user={entity} />
+      </AdminSidebarHeader>
 
       <AdminDataList data={{ ...entity }} />
 
       <AdminSidebarHeader title="Registrations">
-        <Button variant="soft" color={COLOR_POSITIVE}>
-          <TbPlus />
-          Register
-        </Button>
+        <AdminRegisterUserModal userId={entity.id} />
       </AdminSidebarHeader>
       {teamsError && <ErrorCallout>{teamsError.message}</ErrorCallout> }
       {eventsError && <ErrorCallout>{eventsError.message}</ErrorCallout> }

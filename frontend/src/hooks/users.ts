@@ -28,6 +28,8 @@ export function useAuth() {
       user : undefined,
       isAuthenticated : !!window.init.userId,
       isUnauthenticated : window.init.userId === null,
+      isLoading,
+      isImpersonated : window.init.impersonated,
     };
   }
 
@@ -35,6 +37,8 @@ export function useAuth() {
     user : data,
     isAuthenticated : !!data,
     isUnauthenticated : !data && error?.message.includes('Authentication is required'),
+    isLoading,
+    isImpersonated : window.init.impersonated,
   };
 }
 
@@ -112,4 +116,22 @@ export function useUserEvents(userId: number | undefined) {
   return useSWR<Event[], Error>(
     userId ? `/admin/users/${userId}/events` : null,
   );
+}
+
+export function impersonateUser(userId: number) {
+  return apiMutation('/admin/impersonate', { user_id : userId }, {
+    method : 'POST',
+  }).then(() => {
+    // On success, redirect to the home page to refresh the session
+    window.location.href = '/';
+  });
+}
+
+export function stopImpersonation() {
+  return apiMutation('/admin/stop_impersonating', {}, {
+    method : 'POST',
+  }).then((data: unknown) => {
+    // On success, redirect to the admin user page
+    window.location.href = `/admin/users?id=${data}`;
+  });
 }

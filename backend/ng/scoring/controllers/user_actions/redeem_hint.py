@@ -2,6 +2,7 @@
 Handles hint redemption for challenges.
 """
 
+from ....core import BusinessLogicError
 from ...models import HintRedemption
 from ....notifications.services import NotificationService
 
@@ -15,6 +16,10 @@ def redeem_hint(
     """
     Redeem a hint for a challenge
     """
+
+    if not event.hints_enabled:
+        raise BusinessLogicError("Hints are disabled for this event.")
+
     HintRedemption.create_redemption(
         hint_id=hint.id,
         user_id=current_user.id,

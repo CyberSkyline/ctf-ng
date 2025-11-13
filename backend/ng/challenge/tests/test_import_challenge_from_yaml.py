@@ -2,9 +2,9 @@ import base64
 import binascii
 import pytest
 
-from ..controllers.admin.import_challenge_from_yaml import import_challenge_from_yaml
+from ..controllers.admin import import_challenge_from_yaml
 from ...core.exceptions import ValidationError
-from ...challenge.models import Challenge
+from ..models import Challenge
 from ...event.models.Event import Event
 
 
@@ -35,22 +35,9 @@ class TestImportChallengeFromYaml:
     ])
     def test_import_challenge_invalid_yaml_formats(self, test_event, invalid_yaml, expected_error):
         """Test that invalid YAML formats raise appropriate errors using real parser"""
-        encoded = base64.urlsafe_b64encode(invalid_yaml.encode()).decode()
-        json_data = {"yaml": encoded}
 
         with pytest.raises(ValidationError, match=expected_error):
-            import_challenge_from_yaml(test_event, json_data)
-
-    @pytest.mark.parametrize("invalid_b64", [
-        "invalid_base64!!!",
-        "not-base64",
-    ])
-    def test_import_challenge_invalid_base64(self, test_event, invalid_b64):
-        """Test that invalid base64 raises appropriate errors"""
-        json_data = {"yaml": invalid_b64}
-
-        with pytest.raises(binascii.Error):
-            import_challenge_from_yaml(test_event, json_data)
+            import_challenge_from_yaml(test_event, invalid_yaml)
 
     def test_import_minimal_challenge_success(self, test_event):
         """Test successful import of a minimal challenge using real components"""
@@ -66,11 +53,9 @@ class TestImportChallengeFromYaml:
               answer: "4"
               max_attempts: 3
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
 
         # Act
-        result = import_challenge_from_yaml(test_event, yaml_data)
+        result = import_challenge_from_yaml(test_event, yaml_content)
 
         # Assert - verify challenge was created in database
         assert result.name == "Minimal Challenge"
@@ -111,11 +96,9 @@ class TestImportChallengeFromYaml:
               preview: Second hint preview
               deduction: 15
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
 
         # Act
-        result = import_challenge_from_yaml(test_event, yaml_data)
+        result = import_challenge_from_yaml(test_event, yaml_content)
 
         # Assert - verify hints were created
         assert len(result.hints) == 2
@@ -144,11 +127,9 @@ class TestImportChallengeFromYaml:
               max_attempts: 3
           tags: ["web", "beginner", "sql"]
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
 
         # Act
-        result = import_challenge_from_yaml(test_event, yaml_data)
+        result = import_challenge_from_yaml(test_event, yaml_content)
 
         # Assert - verify tags were created
         assert len(result.tags) == 3
@@ -178,11 +159,9 @@ class TestImportChallengeFromYaml:
               max_attempts: 3
               answer: "{answer_data}"
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
 
         # Act
-        result = import_challenge_from_yaml(test_event, yaml_data)
+        result = import_challenge_from_yaml(test_event, yaml_content)
 
         # Assert
         assert len(result.questions) == 1
@@ -218,11 +197,9 @@ class TestImportChallengeFromYaml:
               max_attempts: 3
               answer: *flag_suffix
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
 
         # Act
-        result = import_challenge_from_yaml(test_event, yaml_data)
+        result = import_challenge_from_yaml(test_event, yaml_content)
 
         # Assert - verify variables were created
         assert len(result.variables) == 2
@@ -250,12 +227,10 @@ class TestImportChallengeFromYaml:
               points: 50
               answer: *nonexistent_variable
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
 
         # Act & Assert
         with pytest.raises(ValidationError, match="Invalid YAML format"):
-            import_challenge_from_yaml(test_event, yaml_data)
+            import_challenge_from_yaml(test_event, yaml_content)
 
     @pytest.mark.parametrize("service_config", [
         # Property testing candidate: Could generate random valid service configurations
@@ -309,11 +284,9 @@ x-challenge:
       max_attempts: 3
         """
         print(yaml_content)
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
 
         # Act
-        result = import_challenge_from_yaml(test_event, yaml_data)
+        result = import_challenge_from_yaml(test_event, yaml_content)
 
         # Assert - verify container blueprint was created
         assert len(result.blueprints) == 1
@@ -382,11 +355,9 @@ x-challenge:
               max_attempts: 5
               answer: *secret_flag
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
 
         # Act
-        result = import_challenge_from_yaml(test_event, yaml_data)
+        result = import_challenge_from_yaml(test_event, yaml_content)
 
         # Assert all components were created correctly
         assert result.name == "Complete Challenge"
@@ -445,12 +416,9 @@ x-challenge:
                 template:
                   variable: missing_variable
         """
-        encoded = base64.urlsafe_b64encode(yaml_content.encode()).decode()
-        yaml_data = {"yaml": encoded}
-
         # Act & Assert
         with pytest.raises(ValidationError):
-            import_challenge_from_yaml(test_event, yaml_data)
+            import_challenge_from_yaml(test_event, yaml_content)
 
         # Verify no challenge was created (rollback worked)
         final_count = Challenge.query.filter_by(event_id=test_event.id).count()

@@ -31,29 +31,31 @@ class TestExternalIntegration:
 
     def test_create_user_and_login(self):
         """
-        Test user creation and login flow
+        Test user login flow with admin created by setup script
         """
         session = requests.Session()
 
-        user_data = {
-            "name": "testuser",
-            "email": "test@example.com",
-            "password": "testpass123"
-        }
+        # First, get the CSRF token from the homepage
+        home_response = session.get(f"{CTFD_BASE_URL}/")
+        csrf_token = None
+        csrf_match = re.search(r"csrfToken:\s*'([^']+)'", home_response.text)
+        if csrf_match:
+            csrf_token = csrf_match.group(1)
 
-        session.post(
-            f"{CTFD_BASE_URL}/api/v1/users",
-            json = user_data
-        )
+        headers = {}
+        if csrf_token:
+            headers["CSRF-Token"] = csrf_token
 
-        session.post(
-            f"{CTFD_BASE_URL}/login",
-            data = {
-                "name": "testuser",
-                "password": "testpass123"
+        login_response = session.post(
+            f"{CTFD_BASE_URL}/ng/users/login",
+            headers = headers,
+            json = {
+                "username": "admin@examplectf.com",
+                "password": "ctfng_password"
             }
         )
 
+        assert login_response.status_code == 200, f"Login failed: {login_response.status_code} - {login_response.text}"
         assert session.cookies.get('session') is not None
 
     def test_websocket_with_auth(self):
@@ -62,65 +64,29 @@ class TestExternalIntegration:
         """
         session = requests.Session()
 
-        try:
-            session.post(f"{CTFD_BASE_URL}/reset", timeout = 5)
-        except Exception:
-            pass
-
-        credentials_to_try = [
-            ("admin",
-             "ctfng_password"),
-            ("admin",
-             "admin123"),
-            ("admin",
-             "password")
-        ]
-
-        login_page = session.get(f"{CTFD_BASE_URL}/login")
-
+        # First, get the CSRF token from the homepage
+        home_response = session.get(f"{CTFD_BASE_URL}/")
         csrf_token = None
-        if "csrf_token" in login_page.text or "nonce" in login_page.text:
-            csrf_match = re.search(
-                r'name="nonce" value="([^"]+)"',
-                login_page.text
-            )
-            if not csrf_match:
-                alt_patterns = [
-                    r'name=["\']nonce["\'] value=["\']([^"\']+)["\']',
-                    r'<input[^>]*name=["\']nonce["\'][^>]*value=["\']([^"\']+)["\']',
-                    r'"nonce":\s*"([^"]+)"'
-                ]
-                for pattern in alt_patterns:
-                    csrf_match = re.search(pattern, login_page.text)
-                    if csrf_match:
-                        break
+        csrf_match = re.search(r"csrfToken:\s*'([^']+)'", home_response.text)
+        if csrf_match:
+            csrf_token = csrf_match.group(1)
 
-            if csrf_match:
-                csrf_token = csrf_match.group(1)
-            else:
-                pass
+        headers = {}
+        if csrf_token:
+            headers["CSRF-Token"] = csrf_token
 
-        successful_login = False
-        for attempt_user, attempt_pass in credentials_to_try:
+        login_response = session.post(
+            f"{CTFD_BASE_URL}/ng/users/login",
+            headers = headers,
+            json = {
+                "username": "admin@examplectf.com",
+                "password": "ctfng_password"
+            }
+        )
 
-            login_data = {"name": attempt_user, "password": attempt_pass}
-            if csrf_token:
-                login_data["nonce"] = csrf_token
-
-            login_resp = session.post(
-                f"{CTFD_BASE_URL}/login",
-                data = login_data
-            )
-
-            if "login" not in login_resp.url and "setup" not in login_resp.url:
-                successful_login = True
-                break
-            else:
-                pass
-
-        if not successful_login:
+        if login_response.status_code != 200:
             pytest.skip(
-                "Cannot authenticate with test CTFd instance - check credentials"
+                f"Cannot authenticate with test CTFd instance - login failed with {login_response.status_code}"
             )
 
         profile_resp = session.get(f"{CTFD_BASE_URL}/profile")

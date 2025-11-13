@@ -1,28 +1,29 @@
-import {
-  Button,
-  Card,
-  Flex,
-  Text,
-} from '@radix-ui/themes';
-import { NavigationMenu } from 'radix-ui';
-import { ErrorCallout } from 'components/Callouts';
+import { NOTIF_TYPE } from '@/constants';
 import {
   markAllNotificationsRead,
   markNotificationRead,
   useMyNotifications,
   useUnreadCount,
 } from '@/hooks/notifications';
-import { useNavigate } from 'react-router';
+import type { Notification } from '@/types';
 import {
+  Button,
+  Card,
+  Flex,
+  Text,
+} from '@radix-ui/themes';
+import { ErrorCallout } from 'components/Callouts';
+import {
+  includes,
   isEmpty,
   isUndefined,
   map,
-  includes,
 } from 'lodash';
-import { TbNotification, TbCircleDotFilled, TbBell } from 'react-icons/tb';
+import { NavigationMenu } from 'radix-ui';
 import { useState } from 'react';
+import { TbBell, TbCircleDotFilled, TbNotification } from 'react-icons/tb';
+import { useNavigate } from 'react-router';
 import { twMerge } from 'tailwind-merge';
-import { NOTIF_TYPE } from '@/constants';
 
 export default function NotificationsPopover({ triggerClassName, contentClassName }: { triggerClassName?: string, contentClassName?: string }) {
   const { data, error } = useMyNotifications();
@@ -57,7 +58,7 @@ export default function NotificationsPopover({ triggerClassName, contentClassNam
 
     return (
       <Card
-        tabIndex="0"
+        tabIndex={0}
         key={notif.id}
         onKeyDown={(event) => {
           if (event.key === 'Enter') {
@@ -79,12 +80,12 @@ export default function NotificationsPopover({ triggerClassName, contentClassNam
   return (
     <NavigationMenu.Item value="temp">
       <NavigationMenu.Trigger
-        className={twMerge(triggerClassName, 'h-full', unreadCount?.count !== 0 && 'pb-4')}
+        className={twMerge(triggerClassName, 'h-full')}
         onPointerMove={(event) => event.preventDefault()}
         onPointerLeave={(event) => event.preventDefault()}
       >
         <TbBell />
-        {unreadCount?.count !== 0 && <TbCircleDotFilled color="var(--accent-indicator)" className="-mt-6 ml-3" />}
+        {unreadCount && unreadCount.count > 0 && <TbCircleDotFilled color="var(--accent-indicator)" className="absolute -mt-6 ml-2" />}
       </NavigationMenu.Trigger>
       <NavigationMenu.Content
         className={twMerge(contentClassName, 'p-4')}
@@ -100,7 +101,7 @@ export default function NotificationsPopover({ triggerClassName, contentClassNam
             height="300px"
           >
             <TbNotification size={32} />
-            {error ? <ErrorCallout>{error}</ErrorCallout> : <Text weight="bold">No Notifications</Text>}
+            {error ? <ErrorCallout>{error.message}</ErrorCallout> : <Text weight="bold">No Notifications</Text>}
           </Flex>
         ) : (
           <Flex direction="column" className="gap-y-1">

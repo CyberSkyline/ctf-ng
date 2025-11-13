@@ -29,11 +29,12 @@ from .permissions.models.enums import PermissionEnum, RoleEnum
 from .permissions.models.Permission import Permission
 from .permissions.models.Role import Role
 from .permissions.models.RolePermission import RolePermission
-from .permissions.controllers.assign_role_to_user import assign_role_to_user
+from .permissions.controllers.initial_admin_setup import initial_admin_setup
 from .support.models.Ticket import Ticket
 from .support.models.TicketTag import TicketTag
 from .team.models.Team import Team
 from .user.models.User import User as NgUser
+from .sponsors.models.Sponsor import Sponsor
 from .core.utils import utc_now
 
 
@@ -70,21 +71,7 @@ def db_session(app):
         transaction = connection.begin()
         db.session.close()
         db.session = db.create_scoped_session(options={"bind": connection, "binds": {}})
-        Role.create_role(RoleEnum.ADMIN)
-        Permission.create_permission(PermissionEnum.CAN_IMPERSONATE_USERS, "Impersonate users")
-        Permission.create_permission(PermissionEnum.CAN_EDIT_TEAM, "Edit team details")
-        Permission.create_permission(PermissionEnum.CAN_EDIT_USER, "Edit user details")
-        Permission.create_permission(PermissionEnum.CAN_VIEW_CHALLENGES, "View challenges")
-        Permission.create_permission(PermissionEnum.CAN_PLAY_CHALLENGES, "Play challenges")
-        Permission.create_permission(PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS, "Manage support tickets")
-        Permission.create_permission(PermissionEnum.CAN_START_TEAM_TIMER, "Start team timer")
-        RolePermission.create_role_permission(1, 1)
-        RolePermission.create_role_permission(1, 2)
-        RolePermission.create_role_permission(1, 3)
-        RolePermission.create_role_permission(1, 4)
-        RolePermission.create_role_permission(1, 5)
-        RolePermission.create_role_permission(1, 6)
-        RolePermission.create_role_permission(1, 7)
+        initial_admin_setup()
         yield db.session
         transaction.rollback()
         connection.close()
@@ -290,6 +277,30 @@ def admin_client(app, db_session, admin):
         sess.permanent = False
     return client
 
+@pytest.fixture
+def client_factory(app, db_session):
+    """A factory to create test clients logged in as different users."""
+
+    def _factory(user: Users):
+        # Clear any cached user data to prevent cross-test contamination
+        from CTFd.cache import cache
+
+        cache.clear()
+        user = user.ctfd_user
+
+        client = app.test_client()
+        with client.session_transaction() as sess:
+            # Completely clear the session and set only what we need
+            sess.clear()
+            sess["id"] = user.id
+            sess["name"] = user.name
+            sess["type"] = user.type
+            sess["nonce"] = generate_nonce()
+            sess.permanent = False
+        return client
+
+    return _factory
+
 
 @pytest.fixture
 def event_factory(db_session):
@@ -305,6 +316,8 @@ def event_factory(db_session):
             "start_time": utc_now() - timedelta(days=1),
             "end_time": utc_now() + timedelta(days=1),
             "time_limit_minutes": 120,
+            "allowed_domains": [],
+            "hints_enabled": True,
         }
         defaults.update(kwargs)
         event = Event.create_event(**defaults)
@@ -333,10 +346,11 @@ def team_factory(db_session, event_factory):
         }
         defaults.update(kwargs)
         team = Team.create_team_with_captain(**defaults)
+        Demographic.create_demographic(user_id=captain.id, event_id=event.id)
 
         for member_user in members_to_add:
             TeamMember.create_team_member(user_id=member_user.id, team_id=team.id, event_id=event.id)
-            Demographic.create_demographic(user_id=member_user.id, event_id=event.id, commit=False)
+            Demographic.create_demographic(user_id=member_user.id, event_id=event.id)
         return team
 
     return _factory
@@ -347,12 +361,14 @@ def user_factory(db_session):
     """A factory function to create User objects for tests."""
     from .user.models.User import User
 
-    def _factory(name="Test User", email="testuser@example.com", password="password", admin=False):
+    def _factory(name="Test User", email="testuser@example.com", password="password", admin=False, sponsor=None):
         user = Users(name=name, email=email, password=password)
         db_session.add(user)
         db_session.commit()
 
         ng_user = User(id=user.id)
+        if sponsor:
+            ng_user.set_sponsor(sponsor, commit=False)
         db_session.add(ng_user)
         if admin:
             assign_role_to_user(ng_user.id, RoleEnum.ADMIN)
@@ -361,12 +377,37 @@ def user_factory(db_session):
 
     return _factory
 
+@pytest.fixture
+def sponsor_factory(db_session):
+    """A factory function to create Sponsor objects for tests."""
+
+
+    def _factory(**kwargs):
+        defaults = {
+            "name": "Test Sponsor",
+            "logo": "logo.png",
+        }
+        defaults.update(kwargs)
+        sponsor = Sponsor.create_sponsor(**defaults)
+        return sponsor
+
+    return _factory
+
+
+
 
 @pytest.fixture
-def team_with_member(db_session, team_factory, user):
-    """Creates a team with members for testing."""
-    team = team_factory(members=[user])
+def team_with_member(db_session, event, user):
+    """Create a team with a member for scoring tests."""
+    from .team.models.Team import Team
+
+    event_id = event.id
+    team = Team.create_team_with_captain(
+        name="Test Scoring Team", event_id=event_id, captain_id=user.id, invite_code="test1234"
+    )
+    Demographic.create_demographic(user_id=user.id, event_id=event_id, commit=True)
     return team
+
 
 
 @pytest.fixture
@@ -496,6 +537,7 @@ def event(db_session):
         description="A test event.",
         max_team_size=4,
         locked=False,
+        hints_enabled=True,
     )
     db_session.add(event)
     db_session.flush()
@@ -511,6 +553,7 @@ def locked_event(db_session):
         name="Locked Event",
         description="This event is locked",
         locked=True,
+        hints_enabled=True,
         start_time=utc_now() - timedelta(days=10),
         end_time=utc_now() - timedelta(days=5),
     )
@@ -782,6 +825,7 @@ def challenge_factory(db_session, event_factory):
                 points=100 * (i + 1),
                 placeholder=f"placeholder_{i + 1}",
                 max_attempts=3,
+                index=i,
             )
             db_session.add(question)
         db_session.commit()
@@ -820,7 +864,7 @@ def question(db_session, challenge):
     from .challenge.models.Question import Question
 
     question = Question(
-        challenge_id=challenge.id, name="Test Question", body="What is 2+2?", answer="4", points=100, max_attempts=5
+        index=0, challenge_id=challenge.id, name="Test Question", body="What is 2+2?", answer="4", points=100, max_attempts=5
     )
     db_session.add(question)
     db_session.commit()
@@ -833,23 +877,11 @@ def hint(db_session, challenge):
     from .challenge.models.Hint import Hint
 
     hint = Hint(
-        challenge_id=challenge.id, preview="Single digit hint", body="The answer is a single digit", deduction=20
+        challenge_id=challenge.id, preview="Single digit hint", body="The answer is a single digit", deduction=20, index=0
     )
     db_session.add(hint)
     db_session.commit()
     return hint
-
-# TODO: Figure out why there are two versions of this with the same name
-@pytest.fixture
-def team_with_member(db_session, event, user):
-    """Create a team with a member for scoring tests."""
-    from .team.models.Team import Team
-
-    event_id = event.id
-    team = Team.create_team_with_captain(
-        name="Test Scoring Team", event_id=event_id, captain_id=user.id, invite_code="test123"
-    )
-    return team
 
 
 @pytest.fixture
@@ -886,6 +918,7 @@ def hint_factory(db_session):
             "preview": kwargs.get("preview", "Test preview"),
             "body": kwargs.get("body", "Test body"),
             "deduction": kwargs.get("deduction", 10),
+            "index": kwargs.get("index", 0),
         }
         defaults.update(kwargs)
 
@@ -1107,6 +1140,7 @@ def question_factory(db_session, challenge_factory: Callable[[], Challenge]):
 
         defaults = {
             "challenge_id": challenge.id,
+            "index": count - 1,
             "name": f"Test Question {count} for Challenge {challenge.id}",
             "body": f"test question body_{count}",
             "points": 100 * count,
@@ -1201,3 +1235,21 @@ def announcement_factory(db_session):
         return announcement
 
     return _factory
+
+
+@pytest.fixture
+def other_user_ticket(db_session, user_factory, event):
+    """Creates a ticket by a different user for testing access control."""
+    from .support.models.Ticket import Ticket
+
+    other_user = user_factory(name="Other User", email="otheruser@example.com")
+
+    ticket = Ticket.create_ticket(
+        subject="Other User's Ticket",
+        author_id=other_user.ctfd_user.id,
+        event_id=event.id,
+        commit=False,
+    )
+    db_session.add(ticket)
+    db_session.commit()
+    return ticket

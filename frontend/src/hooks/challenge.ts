@@ -72,6 +72,12 @@ export function useAdminEventChallenges(eventId: number | null) {
   );
 }
 
+export function useAdminChallengeYaml(challengeId: number | null) {
+  return useSWR<{ yaml: string }, Error>(
+    challengeId ? `/admin/challenges/${challengeId}/yaml` : null,
+  );
+}
+
 export function useAdminChallengeAttempts(challengeId: number | null) {
   return useSWR<Attempt[], Error>(
     challengeId ? `/admin/challenges/${challengeId}/attempts` : null,
@@ -97,10 +103,23 @@ export function useAdminChallengeBlueprints(challengeId: number | null) {
 }
 
 export function createChallenge(eventId: number, yaml: string) {
-  return apiMutation(`/admin/events/${eventId}/challenges`, { yaml : btoa(yaml) }, {
+  return apiMutation('/admin/challenges', { yaml : btoa(yaml), event_id : eventId }, {
     method : 'POST',
   }).then(() => {
     // refresh the challenges list when a new challenge is created
     mutate(`/admin/events/${eventId}/challenges`);
+  });
+}
+
+export function updateChallenge(challengeId: number, yaml: string) {
+  return apiMutation(`/admin/challenges/${challengeId}`, { yaml : btoa(yaml) }, {
+    method : 'PUT',
+  }).then(() => {
+    // refresh the challenges list when a challenge is updated
+    mutate('/admin/challenges');
+    mutate(`/admin/challenges/${challengeId}/yaml`);
+    mutate(`/admin/challenges/${challengeId}/questions`);
+    mutate(`/admin/challenges/${challengeId}/hints`);
+    mutate(`/admin/challenges/${challengeId}/blueprints`);
   });
 }

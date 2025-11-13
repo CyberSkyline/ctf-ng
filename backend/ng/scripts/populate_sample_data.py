@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import base64
 import os
 
 from CTFd import create_app
@@ -56,10 +55,7 @@ with app.app_context():
     try:
         # This script is designed to run in production via 'pnpm populate-data'
         # where the plugin is properly located at /opt/CTFd/CTFd/plugins/ng
-        from CTFd.plugins.ng.permissions.controllers.assign_role_to_user import assign_role_to_user  # type: ignore
-        from CTFd.plugins.ng.permissions.controllers.create_permission import create_permission  # type: ignore
-        from CTFd.plugins.ng.permissions.controllers.create_role import create_role  # type: ignore
-        from CTFd.plugins.ng.permissions.models.enums import PermissionEnum, RoleEnum  # type: ignore
+        from CTFd.plugins.ng.permissions.controllers.initial_admin_setup import initial_admin_setup  # type: ignore
         from CTFd.plugins.ng.user.models.User import User as NgUser  # type: ignore
     except ImportError as e:
         print(f"Failed to import plugin modules: {e}")
@@ -72,41 +68,14 @@ with app.app_context():
     if not ng_admin_user:
         ng_admin_user = NgUser.create_user(user_id=ctfd_admin_user.id, commit=True)
 
-    create_permission(
-        name=PermissionEnum.CAN_EDIT_TEAM,
-        description="Can edit teams",
-    )
-    create_permission(
-        name=PermissionEnum.CAN_EDIT_USER,
-        description="Can edit users",
-    )
-    create_permission(
-        name=PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
-        description="Can manage support tickets",
-    )
-
-    create_role(
-        name=RoleEnum.ADMIN,
-        permissions=[
-            PermissionEnum.CAN_EDIT_TEAM,
-            PermissionEnum.CAN_EDIT_USER,
-            PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
-        ],
-    )
-    create_role(
-        name=RoleEnum.SUPPORT,
-        permissions=[
-            PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS,
-        ],
-    )
-    assign_role_to_user(ng_admin_user.id, RoleEnum.ADMIN)
+    initial_admin_setup(admin_user=ng_admin_user)
 
 # Insert sample data
 with app.app_context():
     try:
         # This script is designed to run in production via 'pnpm populate-data'
         # where the plugin is properly located at /opt/CTFd/CTFd/plugins/ng
-        from CTFd.plugins.ng.event.controllers.admin.import_challenge_from_yaml import (  # type: ignore
+        from CTFd.plugins.ng.challenge.controllers.admin.import_challenge_from_yaml import (  # type: ignore
             import_challenge_from_yaml,  # type: ignore
         )
         from CTFd.plugins.ng.event.controllers.user.join_event_controller import join_event_controller  # type: ignore
@@ -120,9 +89,9 @@ with app.app_context():
     # Create sample events with different settings
     events = [
         Event.create_event(
-            name="Public CTF Championship",
-            description="A public competitive CTF open to all teams",
-            max_team_size=4,
+            name="PC7 Teams Round 1",
+            description="A CTF open to all teams",
+            max_team_size=5,
             public=True,
             registration_open=True,
             commit=False,
@@ -136,7 +105,7 @@ with app.app_context():
             commit=False,
         ),
         Event.create_event(
-            name="Solo Challenge Series",
+            name="PC7 Offensive Round 1",
             description="Individual challenges with no team collaboration",
             max_team_size=1,
             public=True,
@@ -147,7 +116,7 @@ with app.app_context():
             name="Large Team Competition",
             description="Competition designed for large teams and organizations",
             max_team_size=8,
-            public=True,
+            public=False,
             registration_open=True,
             commit=False,
         ),
@@ -197,11 +166,11 @@ with app.app_context():
 
     # Import sample challenge from default yaml
     with open(os.path.join(os.path.dirname(__file__), "../challenge/tests/yamls/default.yaml"), "rb") as f:
-        yaml = base64.urlsafe_b64encode(f.read())
+        yaml = f.read()
 
     for event in events:
         # Import the challenge for each event
-        import_challenge_from_yaml(event=event, json_data={"yaml": yaml.decode("utf-8")})
+        import_challenge_from_yaml(event=event, payload=yaml)
 
     print("Database reset and sample data creation completed!")
     print(f"Admin user created: {DEFAULT_ADMIN_EMAIL} ({DEFAULT_ADMIN_PASSWORD})")

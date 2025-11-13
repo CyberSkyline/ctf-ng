@@ -23,11 +23,11 @@ from ... import config
 from ...core.exceptions import (
     ConflictError,
     ValidationError,
-    BusinessLogicError,
 )
 from ...core.utils.validator import BaseValidator
 from .enums import TeamRole
 from .TeamMember import TeamMember
+from ...scoring.models.Score import Score
 from ...event.models.Event import Event
 
 HEX_CHARS = string.hexdigits.lower()[:16]  # '0123456789abcdef'
@@ -249,9 +249,9 @@ class Team(db.Model):
     def disband_team(self, commit=True):
         """Delete this team and all its members from the database."""
 
-        if self.member_count > 0:
-            raise BusinessLogicError("Cannot disband team with members. Remove all members first.")
-
+        score = Score.find_by_team(self.id)
+        if score:
+            score.delete(commit=False)
         db.session.delete(self)
         if commit:
             db.session.commit()

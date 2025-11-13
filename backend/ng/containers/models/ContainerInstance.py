@@ -101,24 +101,32 @@ class ContainerInstance(db.Model):
     def parse_network_name(network: str):
         parts = network.split('-')
         return {
-            "network_name": parts[0],
-            "team_id": int(parts[1]),
-            "challenge_id": int(parts[2]),
+            "network_name": '-'.join(parts[0:-2]),
+            "team_id": int(parts[-2]),
+            "challenge_id": int(parts[-1]),
         }
 
     @staticmethod
     def run_container(client: Client, team: Team, blueprint_obj: ContainerBlueprint):
+        ulimit = docker.types.Ulimit(name="nofile", soft=10000, hard=20000)
+        mem_limit = blueprint_obj.mem_limit or "128m"
         ctr = client.containers.run(
             blueprint_obj.image,
             environment=blueprint_obj.render_environment(team.seed),
             name=ContainerInstance.render_container_name(team.id, blueprint_obj.hostname, blueprint_obj.challenge_id),
             detach=True,
+            cpu_period=100000,
+            cpu_quota=10000,
+            pids_limit=100,
+            mem_limit=mem_limit,
+            ulimits=[ulimit],
         )
 
         # Get bridge network and remove to isolate challenge containers
         # From reaching out
-        net = client.networks.list(names=[DOCKER_BRIDGE])
-        net[0].disconnect(ctr)
+        net = client.networks.list(names=[f"^{DOCKER_BRIDGE}$"])
+        if net[0]:
+            net[0].disconnect(ctr)
 
         return ctr
 
@@ -126,16 +134,34 @@ class ContainerInstance(db.Model):
     def connect_networks(client: Client, team: Team, blueprint_obj: ContainerBlueprint, ctr):
         if blueprint_obj.networks:
             for network in blueprint_obj.networks:
+                netconf = blueprint_obj.netconfs[network] or None
+                is_static_net = not isinstance(blueprint_obj.networks, list)
+
                 networkname = ContainerInstance.render_network_name(team.id, network, blueprint_obj.challenge_id)
-                net_exists = client.networks.list(names=[f"^{networkname}$"])
-                if len(net_exists) == 0:
-                    net = client.networks.create(name=networkname, internal=True, attachable=True)
-                    net.connect(ctr, aliases=[blueprint_obj.hostname])
+                net_exists = client.get_network_by_name(networkname)
+                if not net_exists:
+                    ipam = None
+                    if netconf.ipam:
+                        ipam_pools = [
+                            docker.types.IPAMPool(subnet=pool.subnet) for pool in netconf.ipam.config
+                        ]
+                        ipam = docker.types.IPAMConfig(pool_configs=ipam_pools)
+
+                    net = client.networks.create(name=networkname, driver="overlay", internal=True, attachable=True, ipam=ipam)
+
+                    ipaddr = None
+                    if is_static_net and blueprint_obj.networks[network]:
+                        ipaddr = blueprint_obj.networks[network].ipv4_address or None
+
+                    net.connect(ctr, aliases=[blueprint_obj.hostname], ipv4_address=ipaddr)
 
                 else:
                     ## Network was created for another container apart of the challenge
                     try:
-                        net_exists[0].connect(ctr, aliases=[blueprint_obj.hostname])
+                        ipaddr = None
+                        if is_static_net and blueprint_obj.networks[network]:
+                            ipaddr = blueprint_obj.networks[network].ipv4_address
+                        net_exists.connect(ctr, aliases=[blueprint_obj.hostname], ipv4_address=ipaddr)
                     except docker.errors.APIError as err:
                         # Check if container is already connected to the network
                         if not re.search("endpoint.*already exists in", str(err)):
@@ -211,10 +237,18 @@ class ContainerInstance(db.Model):
         client = get_client(config.DOCKER_HOST)
         ctr = client.containers.get(self.dockerid)
 
+        image = "unknown"
+        if ctr.image.attrs["RepoTags"]:
+            # if the image is tagged, show the tag
+            image = ctr.image.attrs["RepoTags"][0]
+        elif ctr.image.attrs["RepoDigests"]:
+            # if this image is no longer tagged, show the digest instead
+            image = ctr.image.attrs["RepoDigests"][0]
+
         data = {
             "id": self.id,
             "name": ctr.name,
-            "image": ctr.image.tags[0] if ctr.image.tags else "unknown",
+            "image": image,
             "docker_id": self.dockerid,
             "status": ctr.status,
         }
