@@ -52,7 +52,7 @@
     "swarm-logs": "docker service logs --tail=100 -f ctf-ng_ctfd",
     "swarm-logs-nginx": "docker service logs --tail=100 -f ctf-ng_nginx",
     "swarm-logs-vite": "docker service logs --tail=100 -f ctf-ng_vite",
-    "swarm-update": "pnpm build && pnpm swarm-build:all && docker service update --force ctf-ng_ctfd",
+    "swarm-update": "pnpm build && pnpm swarm-build:all && docker service update --force ctf-ng_ctfd"
   },
   "packageManager": "pnpm@10.17.1"
 }
