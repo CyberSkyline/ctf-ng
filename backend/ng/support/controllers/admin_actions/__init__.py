@@ -11,7 +11,6 @@ from .update_ticket_status import update_ticket_status
 from .update_ticket_mute import update_ticket_mute
 from .update_ticket_event import set_ticket_event, remove_ticket_event
 from .update_ticket_challenge import set_ticket_challenge, remove_ticket_challenge
-from .search_ticket_attachments import search_ticket_attachments
 
 
 __all__ = [
@@ -27,5 +26,4 @@ __all__ = [
     "remove_ticket_event",
     "set_ticket_challenge",
     "remove_ticket_challenge",
-    "search_ticket_attachments",
 ]

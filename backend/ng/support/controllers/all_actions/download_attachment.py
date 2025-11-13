@@ -1,5 +1,5 @@
 """
-Download attachment from S3 via proxy endpoint - Updated to use shared service
+Download attachment from S3 via proxy endpoint
 """
 
 from flask import Response

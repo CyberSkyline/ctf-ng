@@ -35,7 +35,6 @@ from ..controllers import (
     create_ticket_message,
     upload_ticket_attachment,
     download_attachment,
-    search_ticket_attachments,
 )
 
 
@@ -705,61 +704,3 @@ class AdminAttachmentDownload(Resource):
         """
         return download_attachment(attachment=attachment)
 
-
-@support_admin_namespace.route("/attachments/search")
-class SearchTicketAttachments(Resource):
-    @admin_endpoint()
-    @support_admin_namespace.doc(
-        description="Search ticket attachments by filename with case insensitive partial matching",
-        params={
-            "filename": {
-                "description": "Search term for filename",
-                "required": True,
-                "type": "string",
-                "example": "screenshot"
-            },
-            "limit": {
-                "description": "Maximum number of results to return",
-                "required": False,
-                "type": "integer",
-                "example": 100,
-                "default": 50
-            },
-            "offset": {
-                "description": "Number of results to skip for pagination",
-                "required": False,
-                "type": "integer",
-                "example": 0,
-                "default": 0
-            }
-        },
-        responses={
-            200: "Success - Returns matching attachments with presigned URLs and pagination metadata",
-            400: "Bad request - Missing or invalid search parameters",
-            403: "Forbidden - Admin access required",
-            500: "Internal Server Error",
-        },
-    )
-    def get(self, current_user: User, **kwargs):
-        """
-        Search ticket attachments by filename
-        """
-        filename_query = request.args.get('filename', '').strip()
-
-        try:
-            limit = int(request.args.get('limit', config.DEFAULT_ATTACHMENT_SEARCH_LIMIT))
-            offset = int(request.args.get('offset', 0))
-        except ValueError:
-            return error_response(
-                "Limit and offset must be valid integers",
-                "pagination",
-                400
-            )
-
-        result = search_ticket_attachments(
-            filename_query=filename_query,
-            limit=limit,
-            offset=offset
-        )
-
-        return success_response(result)

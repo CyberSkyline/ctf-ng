@@ -6,6 +6,7 @@ import uuid
 from typing import Optional, Dict, Any
 from werkzeug.datastructures import FileStorage
 from flask import current_app
+from ...core.utils.file_helpers import get_file_size
 
 
 class SupportS3Service:
@@ -39,7 +40,7 @@ class SupportS3Service:
         
         try:
             # Get file info
-            file_size = file.content_length or 0
+            file_size = get_file_size(file)
             content_type = file.content_type or 'application/octet-stream'
             
             # Use provided extension or detect from content type
@@ -51,7 +52,7 @@ class SupportS3Service:
             # Generate unique filename
             unique_id = str(uuid.uuid4())
             filename = f"{unique_id}.{actual_extension}"
-            object_key = f"ticket-attachments/{ticket_id}/{filename}"
+            object_key = f"support-tickets/{ticket_id}/{filename}"
             
             # Upload using shared service
             success = s3_service.upload_file_direct(file, object_key, content_type)
