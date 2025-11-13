@@ -1,4 +1,4 @@
-import { COLOR_HINT } from '@/constants';
+import { COLOR_HINT, ImpersonateIcon } from '@/constants';
 import { apiMutation } from '@/fetchers';
 import { useGlobalPermission } from '@/hooks/permissions';
 import { stopImpersonation, useAuth } from '@/hooks/users';
@@ -6,7 +6,7 @@ import { Flex, Skeleton, Text } from '@radix-ui/themes';
 import NotificationsPopover from 'components/NotificationsPopover';
 import ThemeToggle from 'components/ThemeToggle';
 import { NavigationMenu } from 'radix-ui';
-import { TbGhost, TbUserCircle } from 'react-icons/tb';
+import { TbUserCircle } from 'react-icons/tb';
 import { NavLink, useLocation } from 'react-router';
 
 export default function NavBar() {
@@ -122,7 +122,7 @@ export default function NavBar() {
                 className={isImpersonated ? 'animate-pulse' : undefined}
               >
                 <Flex direction="row" align="center" gap="1">
-                  {isImpersonated ? <TbGhost className="inline" /> : <TbUserCircle className="inline" />}
+                  {isImpersonated ? <ImpersonateIcon className="inline" /> : <TbUserCircle className="inline" />}
                   {/* Show skeleton until we have auth state */}
                   <Skeleton loading={isLoading}>
                     <Text>
