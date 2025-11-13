@@ -86,9 +86,9 @@ class User(db.Model):
         """Validate user data before creating or updating a user."""
         validator = BaseValidator()
         if "name" in data:
-            validator.validate_string(data, "name", 30, required=True, friendly_name="Username")
+            validator.validate_string(data, "name", 128, required=True, friendly_name="Username")
         if "email" in data:
-            validator.validate_string(data, "email", 254, required=True, friendly_name="Email")
+            validator.validate_string(data, "email", 128, required=True, friendly_name="Email")
 
 
         return validator.validate()
