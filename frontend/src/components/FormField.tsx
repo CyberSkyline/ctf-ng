@@ -9,7 +9,7 @@ export default function FormField({
   error,
 }: {
   children: (injected: { id: string; 'aria-describedby'?: string; 'aria-invalid': 'true' | 'false' }) => React.ReactNode,
-  label: string,
+  label: string | null,
   error?: FieldError,
 }) {
   const id = useId(); // Unique ID for accessibility linking
@@ -22,7 +22,7 @@ export default function FormField({
 
   return (
     <Flex direction="column" gap="1">
-      <label htmlFor={id} data-invalid={error ? 'true' : 'false'}>{label}</label>
+      {label && <label htmlFor={id} data-invalid={error ? 'true' : 'false'}>{label}</label>}
       {children(injected)}
       {error && <Text as="span" color={COLOR_NEGATIVE} id={`${id}-error`} aria-live="polite" aria-atomic>{error.message || 'Invalid input'}</Text>}
     </Flex>

@@ -29,7 +29,11 @@ export default function RegistrationModal({ eventId, eventName, isTeamGame }: {e
 
   const handleRegister = async (data: { leaderboardName: string; joinCode: string; termsConditions: boolean }) => {
     if (selectedOption === 'join-team') {
-      return registerMyEventTeamJoin(eventId, data.joinCode).then(() => {
+      // Allow user to input invite code or invite url
+      let { joinCode } = data;
+      joinCode = joinCode.indexOf('/') > -1 ? joinCode.substring(joinCode.lastIndexOf('/') + 1) : joinCode;
+
+      return registerMyEventTeamJoin(eventId, joinCode).then(() => {
         navigate(`/events/${eventId}`);
       });
     }
@@ -124,12 +128,6 @@ export default function RegistrationModal({ eventId, eventName, isTeamGame }: {e
                       required : {
                         value : true, message : 'An invite code is required to join an existing team',
                       },
-                      minLength : {
-                        value : 32, message : 'Invite code should be 32 characters',
-                      },
-                      maxLength : {
-                        value : 32, message : 'Invite code should be 32 characters',
-                      },
                     })}
                     {...injected}
                   />
@@ -149,33 +147,34 @@ export default function RegistrationModal({ eventId, eventName, isTeamGame }: {e
             </RadixMarkdown>
           </Box>
 
-          <Controller
-            control={control}
-            name="termsConditions"
-            rules={{
-              required : {
-                value : true, message : 'You must accept the terms and conditions to register',
-              },
-            }}
-            defaultValue={false}
-            render={({ field }) => (
-              <Text as="label" size="2">
-                <Flex gap="2">
-                  <Checkbox
-                    id="termsConditions"
-                    checked={field.value}
-                    onCheckedChange={(checked) => field.onChange(checked)}
-                    onBlur={field.onBlur}
-                    ref={field.ref}
-                  />
-                  I agree to the Terms and Conditions
-                </Flex>
-              </Text>
-
+          <FormField label={null} error={errors?.termsConditions}>
+            {(injected) => (
+              <Controller
+                control={control}
+                name="termsConditions"
+                rules={{
+                  required : {
+                    value : true, message : 'You must accept the terms and conditions to register',
+                  },
+                }}
+                defaultValue={false}
+                render={({ field }) => (
+                  <Text as="label" size="2">
+                    <Flex gap="2">
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={(checked) => field.onChange(checked)}
+                        onBlur={field.onBlur}
+                        ref={field.ref}
+                        {...injected}
+                      />
+                      I agree to the Terms and Conditions
+                    </Flex>
+                  </Text>
+                )}
+              />
             )}
-          />
-
-          {errors.termsConditions?.message && <WarningCallout>{errors.termsConditions.message.toString()}</WarningCallout>}
+          </FormField>
         </>
       )}
 

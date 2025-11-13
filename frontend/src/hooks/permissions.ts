@@ -22,6 +22,17 @@ export function useMyEventPermissions(eventId: number | null) {
   );
 }
 
+export function useGlobalPermission(permission: string) {
+  const { data, error, isLoading } = useMyGlobalPermissions();
+
+  return {
+    granted : data ? data.permissions.includes(permission) : false,
+    denied : data ? !data.permissions.includes(permission) : false,
+    isLoading,
+    error,
+  };
+}
+
 /**
  * Helper for performing an event-level permission check.
  */
