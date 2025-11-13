@@ -8,6 +8,7 @@ from typing import Any, TypedDict
 
 from CTFd.models import db
 from sqlalchemy.ext.associationproxy import association_proxy
+from ...core.utils.validator import BaseValidator
 
 from ...permissions.models.UserRole import UserRole
 
@@ -82,8 +83,15 @@ class User(db.Model):
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
-        # TODO - implement
-        return data
+        """Validate user data before creating or updating a user."""
+        validator = BaseValidator()
+        if "name" in data:
+            validator.validate_string(data, "name", 128, required=True, friendly_name="Username")
+        if "email" in data:
+            validator.validate_string(data, "email", 128, required=True, friendly_name="Email")
+
+
+        return validator.validate()
 
     @classmethod
     def create_user(cls, user_id, commit=True):
