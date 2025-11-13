@@ -4,7 +4,8 @@ from ..controllers.public_files import (
     generate_upload_url,
     get_public_file,
     list_public_files,
-    search_public_files
+    search_public_files,
+    direct_upload_file
 )
 
 from . import fileuploads_namespace
@@ -70,3 +71,16 @@ class FileSearch(Resource):
         filename = request.args.get('filename')
         
         return search_public_files()
+
+
+@fileuploads_namespace.route('/upload/direct')
+class DirectFileUpload(Resource):
+    def post(self):
+        """Upload a file directly to S3 using presigned URLs"""
+        folder = request.form.get('folder')
+        file = request.files.get('file')
+        
+        return direct_upload_file({
+            'folder': folder,
+            'file': file
+        })

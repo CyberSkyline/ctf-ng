@@ -3,6 +3,7 @@ Public file operations for sponsor-logos, event-cards, favicons
 """
 import uuid
 import logging
+import requests
 from flask import jsonify, request, current_app
 from werkzeug.datastructures import FileStorage
 
@@ -207,3 +208,80 @@ def get_file_extension(content_type: str) -> str:
         'application/octet-stream': 'bin'
     }
     return extension_map.get(content_type, 'bin')
+
+def direct_upload_file(args):
+    """
+    Upload a file directly to S3 using presigned URLs
+    
+    Takes the file, generates the upload URL, uploads to S3, and returns file info
+    """
+    try:
+        folder = args.get('folder')
+        file = args.get('file')
+        
+        if not folder or folder not in ALLOWED_FOLDERS:
+            return {
+                "error": f"Invalid folder. Must be one of: {', '.join(ALLOWED_FOLDERS.keys())}"
+            }, 400
+        
+        if not file or not isinstance(file, FileStorage) or not file.filename:
+            return {"error": "Valid file is required"}, 400
+        
+        # Get content type
+        content_type = file.content_type or 'application/octet-stream'
+        if content_type not in ALLOWED_FOLDERS[folder]:
+            return {
+                "error": f"Invalid content type for {folder}. Allowed: {', '.join(ALLOWED_FOLDERS[folder])}"
+            }, 400
+        
+        # Generate presigned URL
+        presigned_response = generate_upload_url({
+            'folder': folder,
+            'content_type': content_type
+        })
+        
+        if isinstance(presigned_response, tuple):
+            return presigned_response
+        
+        presigned_url = presigned_response.get('presigned_url')
+        object_key = presigned_response.get('object_key')
+        
+        if not presigned_url:
+            return {"error": "Failed to generate presigned URL"}, 500
+        
+        # Get file data
+        file.stream.seek(0, 2)
+        file_size = file.stream.tell()
+        file.stream.seek(0)
+        file_data = file.stream.read()
+        file.stream.seek(0)
+        
+        # Upload to S3
+        upload_response = requests.put(
+            presigned_url,
+            data=file_data,
+            headers={'Content-Type': content_type},
+            timeout=60
+        )
+        
+        if upload_response.status_code not in [200, 204]:
+            logger.error(f"S3 upload failed: HTTP {upload_response.status_code}")
+            return {"error": "Failed to upload file to S3"}, 500
+        
+        logger.info(f"Successfully uploaded file to S3: {object_key}")
+        
+        return {
+            "success": True,
+            "file_info": {
+                "object_key": object_key,
+                "filename": presigned_response.get('filename'),
+                "original_filename": file.filename,
+                "folder": folder,
+                "content_type": content_type,
+                "file_size": file_size
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Upload error: {e}")
+        return {"error": "Upload failed"}, 500
