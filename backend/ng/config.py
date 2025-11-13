@@ -65,7 +65,7 @@ DOCKER_HOST = "172.17.0.1"
 
 # This is a place holder vnc image
 NOVNC_CONTAINER = "consol/debian-xfce-vnc"
-NOVNC_PORT = 8080
+NOVNC_PORT = 6901
 # For Testing
 CTFD_BASE_URL = "http://localhost:8001"
 
