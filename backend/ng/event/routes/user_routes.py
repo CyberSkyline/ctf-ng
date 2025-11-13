@@ -386,6 +386,7 @@ class EventTeamLeave(Resource):
     @user_endpoint()
     @load_event(source = LoaderType.PARAM)
     @load_team_by_user_and_event()
+    @check_permissions(PermissionEnum.CAN_LEAVE_TEAM, "You do not have permission to leave your team.")
     @events_user_namespace.doc(
         description="Leave the user's team in the event.",
         responses={
@@ -394,26 +395,10 @@ class EventTeamLeave(Resource):
             404: "Not Found if user is not part of a team",
         },
     )
-    def post(self, event_id, event, team, current_user, **kwargs):
+    def post(self, event_id, event, team, current_user, permissions, **kwargs):
         """
         Leave the user's team in the event
         """
-        team_member = TeamMember.find_by_user_and_team(
-            current_user.id,
-            team.id
-        )
-        if event.end_time and event.end_time < datetime.utcnow():
-            return error_response(
-                "You cannot leave the team after the event has ended.",
-                "forbidden",
-                403
-            )
-        if len(team.members) > 1 and team_member.role == TeamRole.CAPTAIN:
-            return error_response(
-                "You cannot leave the team as a captain. Please promote another member first.",
-                "forbidden",
-                403,
-            )
 
         remove_member(team, current_user)
         return success_response()

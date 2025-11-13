@@ -950,7 +950,7 @@ class Test_Event_Team_Management:
         assert not data["success"]
         assert "errors" in data
         assert (
-            "You cannot leave the team as a captain. Please promote another member first."
+            "You do not have permission to leave your team.: CAPTAIN_CANNOT_LEAVE"
             in data["errors"]["forbidden"]
         )
 
@@ -964,8 +964,36 @@ class Test_Event_Team_Management:
         data = response.get_json()
         assert not data["success"]
         assert "errors" in data
-        assert "You cannot leave the team after the event has ended." in data[
+        assert "You do not have permission to leave your team.: EVENT_LOCKED" in data[
             "errors"]["forbidden"]
+
+
+    def test_user_cannot_start_event_then_leave(self,client_factory, event_factory, user_factory):
+        """Test that a user who starts an event, leaves their team, and then re-registers cannot start the event again."""
+        event = event_factory(name = "Re-Register Start Event", public = True)
+        user = user_factory(name = "Test User", email = "reregister@example.com")
+        client = client_factory(user = user)
+        # User registers and starts the event
+        client.post(
+            f"/ng/events/{event.id}/me/register",
+            json = {"team_name": "ReRegister Team"},
+        )
+        client.post(
+            f"/ng/events/{event.id}/me/team/start",
+            json = {}
+        )
+        # User attempts to leaves the team
+        response = client.post(
+            f"/ng/events/{event.id}/me/team/leave",
+            json = {}
+        )
+
+        assert response.status_code == 403
+        data = response.get_json()
+        assert not data["success"]
+        assert "errors" in data
+        assert "You do not have permission to leave your team.: TEAM_HAS_STARTED" in data["errors"]["forbidden"]
+
 
     def test_solo_captain_can_leave(
         self,
@@ -985,6 +1013,7 @@ class Test_Event_Team_Management:
             f"/ng/events/{event.id}/me/team/leave",
             json = {}
         )
+        print(response.get_json())
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -1737,3 +1766,5 @@ class Test_Event_Challenge_Statuses:
         assert progress["num_attempts_made"] == 0
         assert progress["num_unique_questions_attempted"] == 0
         assert progress["is_completed"] is False
+
+
