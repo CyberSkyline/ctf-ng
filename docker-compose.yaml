@@ -13,7 +13,7 @@ services:
       - ${ENV_FILE:-.env.dev}
     environment:
       - WORKER_CLASS=geventwebsocket.gunicorn.workers.GeventWebSocketWorker
-      - THREADS=100   
+      - THREADS=100
     volumes:
       - .data/CTFd/logs:/var/log/CTFd
       - .data/CTFd/uploads:/var/uploads
@@ -28,12 +28,12 @@ services:
       default:
       internal:
     tty: true
-    entrypoint : /bin/bash
+    entrypoint: /bin/bash
     # command : -c "exec bash"                                                    
-    command : -c "/usr/bin/supervisord -c /etc/supervisor/supervisord.conf && supervisorctl tail -f ctfd"
+    command: -c "/usr/bin/supervisord -c /etc/supervisor/supervisord.conf && supervisorctl tail -f ctfd"
 
   nginx:
-    image: nginx:1.28
+    image: nginx:1.29.3
     container_name: ng-nginx
     restart: always
     volumes:
@@ -56,13 +56,12 @@ services:
     volumes:
       - .data/mysql:/var/lib/mysql
     networks:
-        internal:
-        default:
-    # This command is required to set important mariadb defaults
-    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --wait_timeout=28800, --log-warnings=0]
+      internal:
+      default: # This command is required to set important mariadb defaults
+    command: [ mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --wait_timeout=28800, --log-warnings=0 ]
 
   cache:
-    image: redis:7-alpine
+    image: redis:7.4.7-alpine
     container_name: ng-redis
     restart: always
     volumes:
@@ -89,8 +88,8 @@ services:
     container_name: ng-minio
     restart: always
     ports:
-      - "9000:9000"   # MinIO API
-      - "9001:9001"   # MinIO Console (Web UI)
+      - "9000:9000" # MinIO API
+      - "9001:9001" # MinIO Console (Web UI)
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
@@ -101,12 +100,12 @@ services:
       - default
       - internal
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 30s
       timeout: 20s
       retries: 3
 
 networks:
-    default:
-    internal:
-      internal: true
+  default:
+  internal:
+    internal: true
