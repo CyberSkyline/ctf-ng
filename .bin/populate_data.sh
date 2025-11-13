@@ -3,6 +3,7 @@
 set -euo pipefail
 
 DIR=$(dirname $BASH_SOURCE)
+LOAD_TEST="${1:-false}"
 source $DIR/utils.sh
 
 CTFD_CONTAINER=$(check_ctfd_running)
@@ -11,5 +12,5 @@ echo "Found CTFd container '$CTFD_CONTAINER'"
 highlight "THIS WILL DELETE THE EXISTING DATABASE AND INSERT SAMPLE DATA\n"
 
 prompt_user "Are you sure you want to continue?" && {
-  docker exec $CTFD_CONTAINER /bin/bash -c "PYTHONPATH=/opt/CTFd/ SCRIPT=true /opt/CTFd/CTFd/plugins/ng/scripts/populate_sample_data.py"
+  docker exec $CTFD_CONTAINER /bin/bash -c "PYTHONPATH=/opt/CTFd/ SCRIPT=true LOAD_TEST=${LOAD_TEST} /opt/CTFd/CTFd/plugins/ng/scripts/populate_sample_data.py"
 }

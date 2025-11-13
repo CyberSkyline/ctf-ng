@@ -1,0 +1,7 @@
+services: 
+  load-test:
+    network_mode: "host"
+    build:
+      context: .
+    security_opt:
+      - seccomp=chrome.json

@@ -2,15 +2,19 @@
 
 import os
 
-from CTFd import create_app
+from CTFd import create_app, CTFdFlask
 from CTFd.cache import cache
 from CTFd.config import Config
 from CTFd.models import Users, db
 from sqlalchemy_utils import create_database, database_exists, drop_database
 from tests.helpers import setup_ctfd
+from .populate_load_testing_data import populate_load_testing_data
 
 if "SCRIPT" not in os.environ:
     raise OSError("This should only be run from a script. DO NOT run this manually.")
+
+if "LOAD_TEST" not in os.environ:
+    raise OSError("LOAD_TEST environment variable not set. Absorting...")
 
 DEFAULT_ADMIN_EMAIL = "admin@examplectf.com"
 DEFAULT_ADMIN_PASSWORD = "ctfng_password"
@@ -26,7 +30,7 @@ if database_exists(database_url):
 create_database(database_url)
 
 # Now create the app - it won't try to create tables in an existing database
-app = create_app()
+app: CTFdFlask = create_app()
 
 with app.app_context():
     # Clear cache
@@ -185,3 +189,7 @@ with app.app_context():
     # ANSI escape code for yellow background: \033[43m, reset: \033[0m
     print(f"Admin email: \033[43m{DEFAULT_ADMIN_EMAIL}\033[0m")
     print(f"Admin password: \033[43m{DEFAULT_ADMIN_PASSWORD}\033[0m")
+
+if os.environ["LOAD_TEST"].lower() == "true":
+    # Populate load testing data if LOAD_TEST environment variable is true
+    populate_load_testing_data(app)
