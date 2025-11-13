@@ -2,7 +2,6 @@
 User Routes for Event Operations
 """
 
-from datetime import datetime
 from flask_restx import Namespace, Resource
 
 from CTFd.models import db
@@ -39,8 +38,6 @@ from ...containers.controllers.recycle_containers import recycle_containers
 
 from ...user.models.User import User
 from ...team.models.Team import Team
-from ...team.models.enums import TeamRole
-from ...team.models.TeamMember import TeamMember
 from ...event.models.Event import Event
 from ...event.models.Demographic import Demographic
 from ...challenge.models.Challenge import Challenge
