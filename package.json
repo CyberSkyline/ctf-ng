@@ -24,6 +24,7 @@
     "sync-env": ".bin/sync_env.sh",
     "setup-ctfd": ".bin/default_ctfd_setup.sh",
     "populate-data": ".bin/populate_data.sh",
+    "populate-load-test": ".bin/populate_data.sh true",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
     "build": "cd ./frontend && vite build",
