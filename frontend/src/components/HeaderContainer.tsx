@@ -13,7 +13,7 @@ export default function HeaderContainer({ children = undefined }: {
         mx="-3"
         mt="-3"
         mb="3"
-        className="bg-dots-2"
+        className="bg-dots-2 shadow dark:shadow-none"
       >
         {children}
       </Container>

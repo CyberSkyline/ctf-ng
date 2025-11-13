@@ -27,6 +27,8 @@ export default function NavBar() {
   const defaultLinkClass = `
     h-full
     p-2
+    px-3
+    rounded
     hover:bg-(--gray-3)
     dark:hover:bg-(--gray-3)
     dark:hover:text-(--gray-12)
@@ -36,6 +38,8 @@ export default function NavBar() {
   const activeLinkClass = `
     h-full
     p-2
+    px-3
+    rounded
     hover:bg-(--gray-3)
     dark:hover:bg-(--gray-3)
     text-(--gray-a11)
@@ -46,13 +50,13 @@ export default function NavBar() {
     decoration-2`;
 
   const contentBase = `
-    absolute 
-    top-full 
+    absolute
+    top-full
     mt-1
-    z-50 
-    max-w-[90vw] 
-    right-4 
-    rounded-md 
+    z-50
+    max-w-[90vw]
+    right-4
+    rounded-md
     shadow-lg
     border-(--gray-a6)
     border-1
@@ -79,7 +83,7 @@ export default function NavBar() {
 
   return (
     <NavigationMenu.Root className="h-[var(--NavBarHeight)]">
-      <NavigationMenu.List className="flex p-1 pr-4 dark:border-b-(--gray-a6) dark:border-b-1">
+      <NavigationMenu.List className="flex p-1 pr-4 dark:border-b-(--gray-a6) dark:border-b-1 shadow dark:shadow-none">
         <div className="flex">
           <NavLink to="/" className={location.pathname === '/' ? activeLinkClass : defaultLinkClass}>
             <NavigationMenu.Item>
