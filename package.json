@@ -53,7 +53,6 @@
     "swarm-logs-nginx": "docker service logs --tail=100 -f ctf-ng_nginx",
     "swarm-logs-vite": "docker service logs --tail=100 -f ctf-ng_vite",
     "swarm-update": "pnpm build && pnpm swarm-build:all && docker service update --force ctf-ng_ctfd",
-    "minio": "docker compose up -d minio && bash ./setup-minio.sh"
   },
   "packageManager": "pnpm@10.17.1"
 }

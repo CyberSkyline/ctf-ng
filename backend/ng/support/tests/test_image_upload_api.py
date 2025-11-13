@@ -450,7 +450,6 @@ class TestUserAttachmentUpload:
         mock_s3_client = MagicMock()
         mock_boto_client.return_value = mock_s3_client
 
-        app.config['USE_MINIO'] = 'false'  # Explicitly use AWS, not MinIO
         app.config['AWS_S3_ACCESS_KEY_ID'] = 'test-key'
         app.config['AWS_S3_SECRET_ACCESS_KEY'] = 'test-secret'
         app.config['AWS_DEFAULT_REGION'] = 'us-east-1'

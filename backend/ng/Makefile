@@ -18,9 +18,6 @@ test-email-send:
 
 test-aws-upload:
 	$(PYTHON_EXEC) support/services/_test_awsS3_webp_upload.py
-	
-test-minio-upload:
-	$(PYTHON_EXEC) support/services/_test_minio_webp_upload.py	
 
 # All tests
 test-all:
@@ -85,4 +82,4 @@ test-utils:
 	$(PYTHON_EXEC) -m pytest ./core/tests/system/ -v
 
 
-.PHONY: check fix format test-all test-routes test-models test-validation test-controllers test-api test-team test-event test-admin test-user test-support test-utils test-fast test-middleware test-event-registration test-scoring find-TODO, test-img-upload test-email-send test-minio-upload
+.PHONY: check fix format test-all test-routes test-models test-validation test-controllers test-api test-team test-event test-admin test-user test-support test-utils test-fast test-middleware test-event-registration test-scoring find-TODO, test-img-upload test-email-send
