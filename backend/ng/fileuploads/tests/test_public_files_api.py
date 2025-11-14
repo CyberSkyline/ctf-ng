@@ -19,6 +19,7 @@ from ..controllers.public_files import (
 )
 
 
+@pytest.mark.s3
 class TestPublicFilesAPI:
     """
     Tests for public files S3 integration
@@ -370,9 +371,10 @@ class TestPublicFilesAPI:
         assert 'image/svg+xml' in favicon_types
 
 
+@pytest.mark.s3
 class TestPublicFilesRoutesIntegration:
     """
-    Integration tests for public files routes
+    Integration tests for public files routes with S3
     """
 
     def test_generate_upload_url_route(self, client):

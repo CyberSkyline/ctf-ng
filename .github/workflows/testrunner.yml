@@ -30,15 +30,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest -r backend/ng/requirements.txt -r external/CTFd/requirements.txt
 
-      - name: Run S3 Test Suite
-        working-directory: backend/ng
-        run: make test-s3-all
-
-      - name: Run Main Test Suite
+      - name: Run Main Test Suite (excluding S3)
         working-directory: backend/ng
         run: make test-all
-
+        
       - name: Run Middleware Test Suite (even if main fails)
         if: always()
         working-directory: backend/ng
         run: make test-middleware
+        
+      - name: S3 Tests Info
+        if: always()
+        run: |
+          echo "ℹ️  S3 integration tests are run separately in the 'S3 Integration Tests' workflow"
+          echo "   This keeps the main test suite fast and doesn't require AWS credentials"

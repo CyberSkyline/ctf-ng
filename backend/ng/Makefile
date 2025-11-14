@@ -32,9 +32,9 @@ test-s3-search:
 test-s3-all: test-s3-public-files test-s3-ticket-attachments test-s3-search
 
 
-# All tests
+# All tests (excluding S3 and middleware)
 test-all:
-	$(PYTHON_EXEC) -m pytest -m "not middleware" --ignore-glob="**/*e2e*" -v
+	$(PYTHON_EXEC) -m pytest -m "not middleware and not s3" --ignore-glob="**/*e2e*" -v
 
 test-validation:
 	$(PYTHON_EXEC) -m pytest -v $(shell find . -name "test_*_validation.py")
@@ -89,10 +89,13 @@ test-sponsors:
 	$(PYTHON_EXEC) -m pytest sponsors/tests -v
 
 test-fileuploads:
-	$(PYTHON_EXEC) -m pytest fileuploads/tests -v
+	$(PYTHON_EXEC) -m pytest fileuploads/tests -m "not s3" -v
 
-test-s3-integration:
-	$(PYTHON_EXEC) -m pytest support/tests/test_s3_ticket_attachments.py fileuploads/tests/test_public_files_api.py -v
+# S3 Integration Tests (separate from main suite)
+test-s3-pytest:
+	$(PYTHON_EXEC) -m pytest -m s3 -v
+
+test-s3-integration: test-s3-pytest
 		
 test-middleware:
 	$(PYTHON_EXEC) -m pytest -m middleware . -v

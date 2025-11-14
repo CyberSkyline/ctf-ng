@@ -14,6 +14,7 @@ from ..services.s3_upload_service import (
 )
 
 
+@pytest.mark.s3
 class TestTicketAttachmentS3Integration:
     """
     Tests for ticket attachment S3 upload/download functionality with multiple file types
@@ -342,6 +343,7 @@ class TestTicketAttachmentS3Integration:
             assert result['file_size'] == 8
 
 
+@pytest.mark.s3
 class TestTicketAttachmentAdminAccess:
     """
     Tests for admin access to ticket attachments
@@ -380,6 +382,7 @@ class TestTicketAttachmentAdminAccess:
         assert response.status_code in [403, 404]
 
 
+@pytest.mark.s3
 class TestS3ServiceIntegration:
     """
     Tests for S3 service integration with ticket attachments

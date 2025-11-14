@@ -14,6 +14,7 @@ from ..services.s3_upload_service import (
 )
 
 
+@pytest.mark.s3
 class TestUserAttachmentUpload:
     """
     Tests for user attachment upload API endpoints
