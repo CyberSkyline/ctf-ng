@@ -28,7 +28,7 @@ class TestPublicFilesAPI:
         """
         Test generating presigned URL for sponsor logo upload
         """
-        with patch('ng.fileuploads.controllers.public_files.get_s3_service') as mock_get_service:
+        with patch('ng.core.services.s3_service.get_s3_service') as mock_get_service:
             mock_s3_service = Mock()
             mock_s3_service.is_configured.return_value = True
             mock_s3_service.generate_upload_url.return_value = {
@@ -85,7 +85,7 @@ class TestPublicFilesAPI:
         """
         Test generating presigned URL when S3 is not configured
         """
-        with patch('ng.fileuploads.controllers.public_files.get_s3_service') as mock_get_service:
+        with patch('ng.core.services.s3_service.get_s3_service') as mock_get_service:
             mock_s3_service = Mock()
             mock_s3_service.is_configured.return_value = False
             mock_get_service.return_value = mock_s3_service
@@ -105,7 +105,7 @@ class TestPublicFilesAPI:
         """
         Test getting presigned download URL for existing file
         """
-        with patch('ng.fileuploads.controllers.public_files.get_s3_service') as mock_get_service:
+        with patch('ng.core.services.s3_service.get_s3_service') as mock_get_service:
             mock_s3_service = Mock()
             mock_s3_service.is_configured.return_value = True
             mock_s3_service.object_exists.return_value = True
@@ -128,7 +128,7 @@ class TestPublicFilesAPI:
         """
         Test getting presigned download URL for non-existent file
         """
-        with patch('ng.fileuploads.controllers.public_files.get_s3_service') as mock_get_service:
+        with patch('ng.core.services.s3_service.get_s3_service') as mock_get_service:
             mock_s3_service = Mock()
             mock_s3_service.is_configured.return_value = True
             mock_s3_service.object_exists.return_value = False
@@ -162,7 +162,7 @@ class TestPublicFilesAPI:
         """
         Test successful direct file upload to S3
         """
-        with patch('ng.fileuploads.controllers.public_files.get_s3_service') as mock_get_service:
+        with patch('ng.core.services.s3_service.get_s3_service') as mock_get_service:
             # Mock S3 service
             mock_s3_service = Mock()
             mock_s3_service.is_configured.return_value = True
@@ -270,7 +270,7 @@ class TestPublicFilesAPI:
         """
         Test direct upload when S3 upload fails
         """
-        with patch('ng.fileuploads.controllers.public_files.get_s3_service') as mock_get_service:
+        with patch('ng.core.services.s3_service.get_s3_service') as mock_get_service:
             # Mock S3 service
             mock_s3_service = Mock()
             mock_s3_service.is_configured.return_value = True
@@ -307,7 +307,7 @@ class TestPublicFilesAPI:
         """
         Test listing files in a valid folder
         """
-        with patch('ng.fileuploads.controllers.public_files.get_s3_service') as mock_get_service:
+        with patch('ng.core.services.s3_service.get_s3_service') as mock_get_service:
             mock_s3_service = Mock()
             mock_s3_service.is_configured.return_value = True
             mock_s3_service.list_objects.return_value = [
@@ -379,7 +379,7 @@ class TestPublicFilesRoutesIntegration:
         """
         Test the generate upload URL route
         """
-        with patch('ng.fileuploads.controllers.public_files.get_s3_service') as mock_get_service:
+        with patch('ng.core.services.s3_service.get_s3_service') as mock_get_service:
             mock_s3_service = Mock()
             mock_s3_service.is_configured.return_value = True
             mock_s3_service.generate_upload_url.return_value = {
@@ -403,7 +403,7 @@ class TestPublicFilesRoutesIntegration:
         """
         Test the direct upload route
         """
-        with patch('ng.fileuploads.controllers.public_files.get_s3_service') as mock_get_service:
+        with patch('ng.core.services.s3_service.get_s3_service') as mock_get_service:
             # Mock S3 service
             mock_s3_service = Mock()
             mock_s3_service.is_configured.return_value = True

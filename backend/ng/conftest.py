@@ -1253,3 +1253,23 @@ def other_user_ticket(db_session, user_factory, event):
     db_session.add(ticket)
     db_session.commit()
     return ticket
+
+
+@pytest.fixture
+def ticket_attachment(db_session, ticket, user):
+    """Creates a ticket attachment for testing."""
+    from .support.models.TicketAttachment import TicketAttachment
+    
+    attachment = TicketAttachment.create_attachment(
+        ticket_id=ticket.id,
+        s3_key=f"support-tickets/{ticket.id}/test-attachment.png",
+        bucket_name="test-bucket",
+        filename="test-attachment.png",
+        file_size=1024,
+        content_type="image/png",
+        uploaded_by=user.id,
+        commit=False,
+    )
+    db_session.add(attachment)
+    db_session.commit()
+    return attachment

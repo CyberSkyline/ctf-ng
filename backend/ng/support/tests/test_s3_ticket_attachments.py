@@ -283,7 +283,7 @@ class TestTicketAttachmentS3Integration:
         # Test max size is 5MB
         assert config.TICKET_ATTACHMENT_MAX_SIZE == 5 * 1024 * 1024
 
-    def test_content_type_validation_in_service(self):
+    def test_content_type_validation_in_service(self, app):
         """
         Test content type validation in S3 upload service
         """
@@ -295,44 +295,46 @@ class TestTicketAttachmentS3Integration:
         png_file.stream.seek = Mock()
         png_file.stream.tell.return_value = 8
 
-        with patch('ng.core.services.s3_service.get_s3_service') as mock_get_service:
-            mock_s3_service = Mock()
-            mock_s3_service.is_configured.return_value = True
-            mock_s3_service.upload_file_to_s3.return_value = 'support-tickets/123/test-uuid.png'
-            mock_get_service.return_value = mock_s3_service
+        with app.app_context():
+            with patch('ng.core.services.s3_service.get_s3_service') as mock_get_service:
+                mock_s3_service = Mock()
+                mock_s3_service.is_configured.return_value = True
+                mock_s3_service.upload_file_to_s3.return_value = 'support-tickets/123/test-uuid.png'
+                mock_get_service.return_value = mock_s3_service
 
-            service = SupportS3Service()
-            result = service.upload_ticket_attachment(123, png_file)
+                service = SupportS3Service()
+                result = service.upload_ticket_attachment(png_file, 123)
 
-            assert result is not None
-            assert 'support-tickets/123/' in result['s3_key']
+                assert result is not None
+                assert 'support-tickets/123/' in result['s3_key']
 
-    def test_s3_key_structure(self):
+    def test_s3_key_structure(self, app):
         """
         Test that S3 keys follow the correct structure: support-tickets/{ticket_id}/{uuid}.{ext}
         """
         ticket_id = 123
 
-        with patch('ng.core.services.s3_service.get_s3_service') as mock_get_service:
-            mock_s3_service = Mock()
-            mock_s3_service.is_configured.return_value = True
-            mock_s3_service.upload_file_to_s3.return_value = f'support-tickets/{ticket_id}/abcd1234.png'
-            mock_get_service.return_value = mock_s3_service
+        with app.app_context():
+            with patch('ng.core.services.s3_service.get_s3_service') as mock_get_service:
+                mock_s3_service = Mock()
+                mock_s3_service.is_configured.return_value = True
+                mock_s3_service.upload_file_to_s3.return_value = f'support-tickets/{ticket_id}/abcd1234.png'
+                mock_get_service.return_value = mock_s3_service
 
-            # Mock file
-            test_file = Mock()
-            test_file.content_type = 'image/png'
-            test_file.filename = 'test.png'
-            test_file.stream.read.return_value = b'\x89PNG\r\n\x1a\n'
-            test_file.stream.seek = Mock()
-            test_file.stream.tell.return_value = 8
+                # Mock file
+                test_file = Mock()
+                test_file.content_type = 'image/png'
+                test_file.filename = 'test.png'
+                test_file.stream.read.return_value = b'\x89PNG\r\n\x1a\n'
+                test_file.stream.seek = Mock()
+                test_file.stream.tell.return_value = 8
 
-            service = SupportS3Service()
-            result = service.upload_ticket_attachment(ticket_id, test_file)
+                service = SupportS3Service()
+                result = service.upload_ticket_attachment(test_file, ticket_id)
 
-            # Verify key structure
-            assert result['s3_key'].startswith(f'support-tickets/{ticket_id}/')
-            assert result['s3_key'].endswith('.png')
+                # Verify key structure
+                assert result['s3_key'].startswith(f'support-tickets/{ticket_id}/')
+                assert result['s3_key'].endswith('.png')
 
             # Verify other result fields
             assert 'bucket_name' in result
@@ -383,34 +385,35 @@ class TestS3ServiceIntegration:
     Tests for S3 service integration with ticket attachments
     """
 
-    def test_upload_generates_uuid_filename(self):
+    def test_upload_generates_uuid_filename(self, app):
         """
         Test that upload generates UUID-based filenames
         """
-        with patch('ng.core.services.s3_service.get_s3_service') as mock_get_service, \
-             patch('uuid.uuid4') as mock_uuid:
+        with app.app_context():
+            with patch('ng.core.services.s3_service.get_s3_service') as mock_get_service, \
+                 patch('uuid.uuid4') as mock_uuid:
 
-            mock_uuid.return_value.hex = 'test123456789abcdef'
-            mock_s3_service = Mock()
-            mock_s3_service.is_configured.return_value = True
-            mock_s3_service.upload_file_to_s3.return_value = 'support-tickets/123/test123456789abcdef.png'
-            mock_get_service.return_value = mock_s3_service
+                mock_uuid.return_value.hex = 'test123456789abcdef'
+                mock_s3_service = Mock()
+                mock_s3_service.is_configured.return_value = True
+                mock_s3_service.upload_file_to_s3.return_value = 'support-tickets/123/test123456789abcdef.png'
+                mock_get_service.return_value = mock_s3_service
 
-            # Mock file
-            test_file = Mock()
-            test_file.content_type = 'image/png'
-            test_file.filename = 'original.png'
-            test_file.stream.read.return_value = b'\x89PNG\r\n\x1a\n'
-            test_file.stream.seek = Mock()
-            test_file.stream.tell.return_value = 8
+                # Mock file
+                test_file = Mock()
+                test_file.content_type = 'image/png'
+                test_file.filename = 'original.png'
+                test_file.stream.read.return_value = b'\x89PNG\r\n\x1a\n'
+                test_file.stream.seek = Mock()
+                test_file.stream.tell.return_value = 8
 
-            service = SupportS3Service()
-            result = service.upload_ticket_attachment(123, test_file)
+                service = SupportS3Service()
+                result = service.upload_ticket_attachment(test_file, 123)
 
-            # Verify UUID was used in filename
-            assert 'test123456789abcdef' in result['s3_key']
+                # Verify UUID was used in filename
+                assert 'test123456789abcdef' in result['s3_key']
 
-    def test_file_size_calculation(self):
+    def test_file_size_calculation(self, app):
         """
         Test that file size is correctly calculated using get_file_size helper
         """
@@ -433,13 +436,13 @@ class TestS3ServiceIntegration:
             test_file.stream.seek = Mock()
 
             service = SupportS3Service()
-            result = service.upload_ticket_attachment(123, test_file)
+            result = service.upload_ticket_attachment(test_file, 123)
 
             # Verify file size was calculated correctly
             assert result['file_size'] == expected_size
             mock_get_size.assert_called_once_with(test_file)
 
-    def test_error_handling_s3_unavailable(self):
+    def test_error_handling_s3_unavailable(self, app):
         """
         Test error handling when S3 service is unavailable
         """
@@ -449,7 +452,7 @@ class TestS3ServiceIntegration:
             service = SupportS3Service()
 
             test_file = Mock()
-            result = service.upload_ticket_attachment(123, test_file)
+            result = service.upload_ticket_attachment(test_file, 123)
 
             # Should return None or raise exception when S3 unavailable
             assert result is None

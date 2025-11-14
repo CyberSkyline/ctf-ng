@@ -25,6 +25,11 @@ class SupportS3Service:
             self.s3_service = get_s3_service()
         return self.s3_service
 
+    def is_configured(self) -> bool:
+        """Check if S3 service is properly configured"""
+        s3_service = self._get_s3_service()
+        return s3_service is not None and s3_service.is_configured()
+
     def upload_ticket_attachment(self, file: FileStorage, ticket_id: int,
                                file_extension: str = None) -> dict[str, Any] | None:
         """
