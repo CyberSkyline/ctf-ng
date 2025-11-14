@@ -9,7 +9,7 @@ from werkzeug.datastructures import FileStorage
 
 from ... import config
 from ..services.s3_upload_service import (
-    AWSS3UploadService,
+    SupportS3Service,
     get_s3_upload_service,
 )
 
@@ -29,7 +29,7 @@ class TestUserAttachmentUpload:
         file_data = io.BytesIO(webp_data)
 
         with patch(
-                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
+                'ng.support.services.s3_upload_service.SupportS3Service.upload_ticket_attachment'
         ) as mock_upload:
             mock_upload.return_value = {
                 's3_key': f'support-tickets/{ticket.id}/test-uuid.webp',
@@ -85,7 +85,7 @@ class TestUserAttachmentUpload:
         jpg_data = io.BytesIO(b'\xFF\xD8\xFF\xE0')  # JPEG header
 
         with patch(
-                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
+                'ng.support.services.s3_upload_service.SupportS3Service.upload_ticket_attachment'
         ) as mock_upload:
             mock_upload.return_value = {
                 's3_key': f'support-tickets/{ticket.id}/test-uuid.jpg',
@@ -118,7 +118,7 @@ class TestUserAttachmentUpload:
         png_data = io.BytesIO(b'\x89PNG\r\n\x1a\n')  # PNG header
 
         with patch(
-                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
+                'ng.support.services.s3_upload_service.SupportS3Service.upload_ticket_attachment'
         ) as mock_upload:
             mock_upload.return_value = {
                 's3_key': f'support-tickets/{ticket.id}/test-uuid.png',
@@ -204,7 +204,7 @@ class TestUserAttachmentUpload:
         file_data = io.BytesIO(exact_size_data)
 
         with patch(
-                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
+                'ng.support.services.s3_upload_service.SupportS3Service.upload_ticket_attachment'
         ) as mock_upload:
             mock_upload.return_value = {
                 's3_key': f'support-tickets/{ticket.id}/exact-size.webp',
@@ -255,7 +255,7 @@ class TestUserAttachmentUpload:
         webp_data = io.BytesIO(b'RIFF\x00\x00\x00\x00WEBPVP8 ')
 
         with patch(
-                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
+                'ng.support.services.s3_upload_service.SupportS3Service.upload_ticket_attachment'
         ) as mock_upload:
             mock_upload.return_value = {
                 's3_key': f'support-tickets/{ticket.id}/test.webp',
@@ -329,7 +329,7 @@ class TestUserAttachmentUpload:
         webp_data = io.BytesIO(b'RIFF\x00\x00\x00\x00WEBPVP8 ')
 
         with patch(
-                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
+                'ng.support.services.s3_upload_service.SupportS3Service.upload_ticket_attachment'
         ) as mock_upload:
             # Simulate S3 failure by returning None
             mock_upload.return_value = None
@@ -382,7 +382,7 @@ class TestUserAttachmentUpload:
         webp_data = io.BytesIO(b'RIFF\x00\x00\x00\x00WEBPVP8 ')
 
         with patch(
-                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
+                'ng.support.services.s3_upload_service.SupportS3Service.upload_ticket_attachment'
         ) as mock_upload:
             mock_upload.return_value = {
                 's3_key': f'support-tickets/{other_ticket.id}/admin-upload.webp',
@@ -477,7 +477,7 @@ class TestUserAttachmentUpload:
         app.config['AWS_S3_BUCKET_NAME'] = 'test-bucket'  # Required for is_configured()
 
         with app.app_context():
-            service = AWSS3UploadService()
+            service = SupportS3Service()
             assert service is not None
             assert service.is_configured()
 
@@ -489,7 +489,7 @@ class TestUserAttachmentUpload:
         app.config['AWS_S3_SECRET_ACCESS_KEY'] = None
 
         with app.app_context():
-            service = AWSS3UploadService()
+            service = SupportS3Service()
             assert not service.is_configured()
 
     @patch('ng.support.services.s3_upload_service.boto3.client')
@@ -510,7 +510,7 @@ class TestUserAttachmentUpload:
         mock_boto_client.return_value = mock_s3_client
 
         with app.app_context():
-            service = AWSS3UploadService()
+            service = SupportS3Service()
 
             webp_data = io.BytesIO(b'RIFF\x00\x00\x00\x00WEBPVP8 ')
             file = FileStorage(stream = webp_data, filename = 'test.webp')

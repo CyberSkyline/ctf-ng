@@ -9,7 +9,7 @@ from werkzeug.datastructures import FileStorage
 
 from ... import config
 from ..services.s3_upload_service import (
-    AWSS3UploadService,
+    SupportS3Service,
     get_s3_upload_service,
 )
 
@@ -30,7 +30,7 @@ class TestTicketAttachmentS3Integration:
         file_data = io.BytesIO(png_data)
 
         with patch(
-                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
+                'ng.support.services.s3_upload_service.SupportS3Service.upload_ticket_attachment'
         ) as mock_upload:
             mock_upload.return_value = {
                 's3_key': f'support-tickets/{ticket.id}/test-uuid.png',
@@ -65,7 +65,7 @@ class TestTicketAttachmentS3Integration:
         file_data = io.BytesIO(jpeg_data)
 
         with patch(
-                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
+                'ng.support.services.s3_upload_service.SupportS3Service.upload_ticket_attachment'
         ) as mock_upload:
             mock_upload.return_value = {
                 's3_key': f'support-tickets/{ticket.id}/test-uuid.jpeg',
@@ -99,7 +99,7 @@ class TestTicketAttachmentS3Integration:
         file_data = io.BytesIO(jpg_data)
 
         with patch(
-                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
+                'ng.support.services.s3_upload_service.SupportS3Service.upload_ticket_attachment'
         ) as mock_upload:
             mock_upload.return_value = {
                 's3_key': f'support-tickets/{ticket.id}/test-uuid.jpg',
@@ -133,7 +133,7 @@ class TestTicketAttachmentS3Integration:
         file_data = io.BytesIO(webp_data)
 
         with patch(
-                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
+                'ng.support.services.s3_upload_service.SupportS3Service.upload_ticket_attachment'
         ) as mock_upload:
             mock_upload.return_value = {
                 's3_key': f'support-tickets/{ticket.id}/test-uuid.webp',
@@ -229,7 +229,7 @@ class TestTicketAttachmentS3Integration:
         Test downloading ticket attachment as user
         """
         with patch(
-            'ng.support.services.s3_upload_service.AWSS3UploadService.download_ticket_attachment'
+            'ng.support.services.s3_upload_service.SupportS3Service.download_ticket_attachment'
         ) as mock_download:
             mock_download.return_value = {
                 'file_stream': io.BytesIO(b'test file content'),
@@ -301,7 +301,7 @@ class TestTicketAttachmentS3Integration:
             mock_s3_service.upload_file_to_s3.return_value = 'support-tickets/123/test-uuid.png'
             mock_get_service.return_value = mock_s3_service
 
-            service = AWSS3UploadService()
+            service = SupportS3Service()
             result = service.upload_ticket_attachment(123, png_file)
 
             assert result is not None
@@ -327,7 +327,7 @@ class TestTicketAttachmentS3Integration:
             test_file.stream.seek = Mock()
             test_file.stream.tell.return_value = 8
 
-            service = AWSS3UploadService()
+            service = SupportS3Service()
             result = service.upload_ticket_attachment(ticket_id, test_file)
 
             # Verify key structure
@@ -350,7 +350,7 @@ class TestTicketAttachmentAdminAccess:
         Test that admin can download any attachment
         """
         with patch(
-            'ng.support.services.s3_upload_service.AWSS3UploadService.download_ticket_attachment'
+            'ng.support.services.s3_upload_service.SupportS3Service.download_ticket_attachment'
         ) as mock_download:
             mock_download.return_value = {
                 'file_stream': io.BytesIO(b'admin access test content'),
@@ -404,7 +404,7 @@ class TestS3ServiceIntegration:
             test_file.stream.seek = Mock()
             test_file.stream.tell.return_value = 8
 
-            service = AWSS3UploadService()
+            service = SupportS3Service()
             result = service.upload_ticket_attachment(123, test_file)
 
             # Verify UUID was used in filename
@@ -432,7 +432,7 @@ class TestS3ServiceIntegration:
             test_file.stream.read.return_value = b'x' * expected_size
             test_file.stream.seek = Mock()
 
-            service = AWSS3UploadService()
+            service = SupportS3Service()
             result = service.upload_ticket_attachment(123, test_file)
 
             # Verify file size was calculated correctly
@@ -446,7 +446,7 @@ class TestS3ServiceIntegration:
         with patch('ng.core.services.s3_service.get_s3_service') as mock_get_service:
             mock_get_service.return_value = None
 
-            service = AWSS3UploadService()
+            service = SupportS3Service()
 
             test_file = Mock()
             result = service.upload_ticket_attachment(123, test_file)
