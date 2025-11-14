@@ -156,6 +156,10 @@ class Attempt(db.Model):
         if question.challenge_id != challenge_id:
             raise BusinessLogicError("This question does not belong to the specified challenge")
 
+        already_correct = cls.query.filter_by(team_id=team_id, question_id=question_id, is_correct=True).first()
+        if already_correct:
+            raise BusinessLogicError("This question has already been answered correctly")
+
         existing_attempts = cls.query.filter_by(team_id=team_id, question_id=question_id).count()
 
         if existing_attempts >= question.max_attempts:
