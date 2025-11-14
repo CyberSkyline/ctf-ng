@@ -1259,7 +1259,7 @@ def other_user_ticket(db_session, user_factory, event):
 def ticket_attachment(db_session, ticket, user):
     """Creates a ticket attachment for testing."""
     from .support.models.TicketAttachment import TicketAttachment
-    
+
     attachment = TicketAttachment.create_attachment(
         ticket_id=ticket.id,
         s3_key=f"support-tickets/{ticket.id}/test-attachment.png",
