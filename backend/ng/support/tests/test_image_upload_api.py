@@ -83,7 +83,7 @@ class TestUserAttachmentUpload:
             nonce = sess.get("nonce")
 
         jpg_data = io.BytesIO(b'\xFF\xD8\xFF\xE0')  # JPEG header
-        
+
         with patch(
                 'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
         ) as mock_upload:
@@ -116,7 +116,7 @@ class TestUserAttachmentUpload:
             nonce = sess.get("nonce")
 
         png_data = io.BytesIO(b'\x89PNG\r\n\x1a\n')  # PNG header
-        
+
         with patch(
                 'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
         ) as mock_upload:

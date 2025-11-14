@@ -5,7 +5,6 @@ Admin API routes for support tickets
 from flask import request
 from flask_restx import Namespace, Resource
 
-from ... import config
 from ...core.middleware import admin_endpoint
 from ...core.middleware.loaders import (
     LoaderType,

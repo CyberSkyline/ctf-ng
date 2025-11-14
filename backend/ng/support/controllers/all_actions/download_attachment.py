@@ -30,7 +30,7 @@ def download_attachment(attachment: TicketAttachment) -> Response:
     """
     try:
         s3_service = get_support_s3_service()
-        
+
         logger.info(
             "Fetching attachment from S3 via shared service",
             extra={
@@ -85,7 +85,7 @@ def download_attachment(attachment: TicketAttachment) -> Response:
             f"Error downloading attachment via shared service: {e}",
             extra={"attachment_id": attachment.id}
         )
-        
+
         if "NoSuchKey" in str(e) or "not found" in str(e).lower():
             raise NotFoundError("File not found in storage") from None
         else:

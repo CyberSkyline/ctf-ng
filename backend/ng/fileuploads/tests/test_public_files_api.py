@@ -40,9 +40,9 @@ class TestPublicFilesAPI:
                 'folder': 'sponsor-logos',
                 'content_type': 'image/png'
             }
-            
+
             result = generate_upload_url(args)
-            
+
             assert 'presigned_url' in result
             assert 'filename' in result
             assert 'object_key' in result
@@ -59,9 +59,9 @@ class TestPublicFilesAPI:
             'folder': 'invalid-folder',
             'content_type': 'image/png'
         }
-        
+
         result, status_code = generate_upload_url(args)
-        
+
         assert status_code == 400
         assert 'error' in result
         assert 'Invalid folder' in result['error']
@@ -74,9 +74,9 @@ class TestPublicFilesAPI:
             'folder': 'sponsor-logos',
             'content_type': 'text/plain'
         }
-        
+
         result, status_code = generate_upload_url(args)
-        
+
         assert status_code == 400
         assert 'error' in result
         assert 'Invalid content type' in result['error']
@@ -94,9 +94,9 @@ class TestPublicFilesAPI:
                 'folder': 'sponsor-logos',
                 'content_type': 'image/png'
             }
-            
+
             result, status_code = generate_upload_url(args)
-            
+
             assert status_code == 503
             assert 'error' in result
             assert 'File storage not configured' in result['error']
@@ -116,9 +116,9 @@ class TestPublicFilesAPI:
                 'folder': 'sponsor-logos',
                 'filename': 'test.png'
             }
-            
+
             result = get_public_file(args)
-            
+
             assert 'url' in result
             assert result['filename'] == 'test.png'
             assert result['folder'] == 'sponsor-logos'
@@ -138,9 +138,9 @@ class TestPublicFilesAPI:
                 'folder': 'sponsor-logos',
                 'filename': 'nonexistent.png'
             }
-            
+
             result, status_code = get_public_file(args)
-            
+
             assert status_code == 404
             assert 'error' in result
             assert 'File not found' in result['error']
@@ -188,9 +188,9 @@ class TestPublicFilesAPI:
                 'folder': 'sponsor-logos',
                 'file': file_obj
             }
-            
+
             result = direct_upload_file(args)
-            
+
             assert result['success'] is True
             assert 'file_info' in result
             file_info = result['file_info']
@@ -222,9 +222,9 @@ class TestPublicFilesAPI:
             'folder': 'invalid-folder',
             'file': file_obj
         }
-        
+
         result, status_code = direct_upload_file(args)
-        
+
         assert status_code == 400
         assert 'error' in result
         assert 'Invalid folder' in result['error']
@@ -237,9 +237,9 @@ class TestPublicFilesAPI:
             'folder': 'sponsor-logos',
             'file': None
         }
-        
+
         result, status_code = direct_upload_file(args)
-        
+
         assert status_code == 400
         assert 'error' in result
         assert 'Valid file is required' in result['error']
@@ -258,9 +258,9 @@ class TestPublicFilesAPI:
             'folder': 'sponsor-logos',
             'file': file_obj
         }
-        
+
         result, status_code = direct_upload_file(args)
-        
+
         assert status_code == 400
         assert 'error' in result
         assert 'Invalid content type' in result['error']
@@ -296,9 +296,9 @@ class TestPublicFilesAPI:
                 'folder': 'sponsor-logos',
                 'file': file_obj
             }
-            
+
             result, status_code = direct_upload_file(args)
-            
+
             assert status_code == 500
             assert 'error' in result
             assert 'Failed to upload file to S3' in result['error']
@@ -325,18 +325,18 @@ class TestPublicFilesAPI:
             mock_get_service.return_value = mock_s3_service
 
             args = {'folder': 'sponsor-logos'}
-            
+
             result = list_public_files(args)
-            
+
             assert result['folder'] == 'sponsor-logos'
             assert result['count'] == 2
             assert len(result['files']) == 2
-            
+
             file1 = result['files'][0]
             assert file1['filename'] == 'file1.png'
             assert file1['folder'] == 'sponsor-logos'
             assert file1['size'] == 12345
-            
+
             file2 = result['files'][1]
             assert file2['filename'] == 'file2.jpg'
             assert file2['folder'] == 'sponsor-logos'
@@ -347,22 +347,22 @@ class TestPublicFilesAPI:
         Test that allowed folders are properly configured
         """
         expected_folders = ['sponsor-logos', 'event-cards', 'favicons']
-        
+
         assert set(ALLOWED_FOLDERS.keys()) == set(expected_folders)
-        
+
         # Test sponsor-logos content types
         sponsor_types = ALLOWED_FOLDERS['sponsor-logos']
         assert 'image/png' in sponsor_types
         assert 'image/jpeg' in sponsor_types
         assert 'image/webp' in sponsor_types
         assert 'image/svg+xml' in sponsor_types
-        
+
         # Test event-cards content types
         event_types = ALLOWED_FOLDERS['event-cards']
         assert 'image/png' in event_types
         assert 'image/jpeg' in event_types
         assert 'image/webp' in event_types
-        
+
         # Test favicons content types
         favicon_types = ALLOWED_FOLDERS['favicons']
         assert 'image/x-icon' in favicon_types
@@ -374,7 +374,7 @@ class TestPublicFilesRoutesIntegration:
     """
     Integration tests for public files routes
     """
-    
+
     def test_generate_upload_url_route(self, client):
         """
         Test the generate upload URL route
@@ -391,7 +391,7 @@ class TestPublicFilesRoutesIntegration:
                 'folder': 'sponsor-logos',
                 'content_type': 'image/png'
             })
-            
+
             assert response.status_code == 200
             data = response.get_json()
             assert 'presigned_url' in data
@@ -419,12 +419,12 @@ class TestPublicFilesRoutesIntegration:
 
             # Create test file data
             png_data = b'\x89PNG\r\n\x1a\n'
-            
+
             response = client.post('/ng/fileuploads/upload/direct', data={
                 'folder': 'sponsor-logos',
                 'file': (io.BytesIO(png_data), 'test.png', 'image/png')
             })
-            
+
             assert response.status_code == 200
             data = response.get_json()
             assert data['success'] is True

@@ -21,29 +21,29 @@ def test_allowed_folders_configuration():
     # Import directly without going through ng module
     import importlib.util
     spec = importlib.util.spec_from_file_location(
-        "public_files", 
+        "public_files",
         os.path.join(os.path.dirname(__file__), "..", "controllers", "public_files.py")
     )
     public_files = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(public_files)
     ALLOWED_FOLDERS = public_files.ALLOWED_FOLDERS
-    
+
     expected_folders = ['sponsor-logos', 'event-cards', 'favicons']
     assert set(ALLOWED_FOLDERS.keys()) == set(expected_folders), f"Expected {expected_folders}, got {list(ALLOWED_FOLDERS.keys())}"
-    
+
     # Test sponsor-logos content types
     sponsor_types = ALLOWED_FOLDERS['sponsor-logos']
     assert 'image/png' in sponsor_types
     assert 'image/jpeg' in sponsor_types
     assert 'image/webp' in sponsor_types
     assert 'image/svg+xml' in sponsor_types
-    
+
     print("✓ ALLOWED_FOLDERS configuration test passed")
 
 def test_file_extension_mapping():
     """Test file extension mapping from content types"""
     from ng.fileuploads.controllers.public_files import get_file_extension
-    
+
     assert get_file_extension('image/png') == 'png'
     assert get_file_extension('image/jpeg') == 'jpg'
     assert get_file_extension('image/jpg') == 'jpg'
@@ -51,47 +51,47 @@ def test_file_extension_mapping():
     assert get_file_extension('image/svg+xml') == 'svg'
     assert get_file_extension('image/x-icon') == 'ico'
     assert get_file_extension('unknown/type') == 'bin'
-    
+
     print("✓ File extension mapping test passed")
 
 def test_generate_upload_url_invalid_folder():
     """Test generating presigned URL with invalid folder"""
     from ng.fileuploads.controllers.public_files import generate_upload_url
-    
+
     args = {
         'folder': 'invalid-folder',
         'content_type': 'image/png'
     }
-    
+
     result, status_code = generate_upload_url(args)
-    
+
     assert status_code == 400
     assert 'error' in result
     assert 'Invalid folder' in result['error']
-    
+
     print("✓ Invalid folder validation test passed")
 
 def test_generate_upload_url_invalid_content_type():
     """Test generating presigned URL with invalid content type"""
     from ng.fileuploads.controllers.public_files import generate_upload_url
-    
+
     args = {
         'folder': 'sponsor-logos',
         'content_type': 'text/plain'
     }
-    
+
     result, status_code = generate_upload_url(args)
-    
+
     assert status_code == 400
     assert 'error' in result
     assert 'Invalid content type' in result['error']
-    
+
     print("✓ Invalid content type validation test passed")
 
 def test_generate_upload_url_valid():
     """Test generating presigned URL with valid parameters"""
     from ng.fileuploads.controllers.public_files import generate_upload_url
-    
+
     with patch('ng.fileuploads.controllers.public_files.get_s3_service') as mock_get_service:
         mock_s3_service = Mock()
         mock_s3_service.is_configured.return_value = True
@@ -104,9 +104,9 @@ def test_generate_upload_url_valid():
             'folder': 'sponsor-logos',
             'content_type': 'image/png'
         }
-        
+
         result = generate_upload_url(args)
-        
+
         assert 'presigned_url' in result
         assert 'filename' in result
         assert 'object_key' in result
@@ -114,30 +114,30 @@ def test_generate_upload_url_valid():
         assert result['upload_method'] == 'PUT'
         assert result['object_key'].startswith('sponsor-logos/')
         assert result['object_key'].endswith('.png')
-    
+
     print("✓ Valid presigned URL generation test passed")
 
 def test_direct_upload_file_no_file():
     """Test direct upload without providing file"""
     from ng.fileuploads.controllers.public_files import direct_upload_file
-    
+
     args = {
         'folder': 'sponsor-logos',
         'file': None
     }
-    
+
     result, status_code = direct_upload_file(args)
-    
+
     assert status_code == 400
     assert 'error' in result
     assert 'Valid file is required' in result['error']
-    
+
     print("✓ No file validation test passed")
 
 def test_direct_upload_file_invalid_folder():
     """Test direct upload with invalid folder"""
     from ng.fileuploads.controllers.public_files import direct_upload_file
-    
+
     file_obj = FileStorage(
         stream=io.BytesIO(b'test'),
         filename='test.png',
@@ -148,20 +148,20 @@ def test_direct_upload_file_invalid_folder():
         'folder': 'invalid-folder',
         'file': file_obj
     }
-    
+
     result, status_code = direct_upload_file(args)
-    
+
     assert status_code == 400
     assert 'error' in result
     assert 'Invalid folder' in result['error']
-    
+
     print("✓ Invalid folder in direct upload test passed")
 
 @patch('ng.fileuploads.controllers.public_files.requests.put')
 def test_direct_upload_file_success(mock_requests_put):
     """Test successful direct file upload to S3"""
     from ng.fileuploads.controllers.public_files import direct_upload_file
-    
+
     with patch('ng.fileuploads.controllers.public_files.get_s3_service') as mock_get_service:
         # Mock S3 service
         mock_s3_service = Mock()
@@ -188,9 +188,9 @@ def test_direct_upload_file_success(mock_requests_put):
             'folder': 'sponsor-logos',
             'file': file_obj
         }
-        
+
         result = direct_upload_file(args)
-        
+
         assert result['success'] is True
         assert 'file_info' in result
         file_info = result['file_info']
@@ -207,13 +207,13 @@ def test_direct_upload_file_success(mock_requests_put):
         assert call_args[1]['data'] == png_data
         assert call_args[1]['headers']['Content-Type'] == 'image/png'
         assert call_args[1]['timeout'] == 60
-    
+
     print("✓ Direct upload success test passed")
 
 def run_all_tests():
     """Run all S3 public files tests"""
     print("=== Running S3 Public Files Tests ===")
-    
+
     try:
         test_allowed_folders_configuration()
         test_file_extension_mapping()
@@ -223,10 +223,10 @@ def run_all_tests():
         test_direct_upload_file_no_file()
         test_direct_upload_file_invalid_folder()
         test_direct_upload_file_success()
-        
+
         print("\n🎉 All S3 public files tests passed!")
         return True
-        
+
     except Exception as e:
         print(f"\n❌ Test failed: {e}")
         import traceback

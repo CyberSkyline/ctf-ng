@@ -39,7 +39,7 @@ class FileList(Resource):
         folder = request.args.get('folder')
         if not folder:
             return {"error": "Folder parameter is required"}, 400
-            
+
         return list_public_files({
             'folder': folder
         })
@@ -51,12 +51,12 @@ class FileAccess(Resource):
         """Get presigned URL for file access"""
         folder = request.args.get('folder')
         filename = request.args.get('filename')
-        
+
         if not folder:
             return {"error": "Folder parameter is required"}, 400
         if not filename:
             return {"error": "Filename parameter is required"}, 400
-            
+
         return get_public_file({
             'folder': folder,
             'filename': filename
@@ -67,9 +67,6 @@ class FileAccess(Resource):
 class FileSearch(Resource):
     def get(self):
         """Search files across folders or within specific folder"""
-        folder = request.args.get('folder')
-        filename = request.args.get('filename')
-        
         return search_public_files()
 
 
@@ -79,7 +76,7 @@ class DirectFileUpload(Resource):
         """Upload a file directly to S3 using presigned URLs"""
         folder = request.form.get('folder')
         file = request.files.get('file')
-        
+
         return direct_upload_file({
             'folder': folder,
             'file': file

@@ -270,10 +270,6 @@ class TestTicketAttachmentS3Integration:
             service = get_s3_upload_service()
             assert service is not None
 
-            # Test the correct folder structure is used
-            from ..services.s3_upload_service import AWSS3UploadService
-            service_instance = AWSS3UploadService()
-            
             # Verify folder prefix from config
             assert config.S3_TICKET_ATTACHMENTS_PREFIX == "support-tickets"
 
@@ -283,7 +279,7 @@ class TestTicketAttachmentS3Integration:
         """
         expected_types = ['png', 'jpeg', 'jpg', 'webp']
         assert config.TICKET_ATTACHMENT_ALLOWED_TYPES == expected_types
-        
+
         # Test max size is 5MB
         assert config.TICKET_ATTACHMENT_MAX_SIZE == 5 * 1024 * 1024
 
@@ -307,7 +303,7 @@ class TestTicketAttachmentS3Integration:
 
             service = AWSS3UploadService()
             result = service.upload_ticket_attachment(123, png_file)
-            
+
             assert result is not None
             assert 'support-tickets/123/' in result['s3_key']
 
@@ -316,7 +312,7 @@ class TestTicketAttachmentS3Integration:
         Test that S3 keys follow the correct structure: support-tickets/{ticket_id}/{uuid}.{ext}
         """
         ticket_id = 123
-        
+
         with patch('ng.core.services.s3_service.get_s3_service') as mock_get_service:
             mock_s3_service = Mock()
             mock_s3_service.is_configured.return_value = True
@@ -333,11 +329,11 @@ class TestTicketAttachmentS3Integration:
 
             service = AWSS3UploadService()
             result = service.upload_ticket_attachment(ticket_id, test_file)
-            
+
             # Verify key structure
             assert result['s3_key'].startswith(f'support-tickets/{ticket_id}/')
             assert result['s3_key'].endswith('.png')
-            
+
             # Verify other result fields
             assert 'bucket_name' in result
             assert 'file_size' in result
@@ -393,7 +389,7 @@ class TestS3ServiceIntegration:
         """
         with patch('ng.core.services.s3_service.get_s3_service') as mock_get_service, \
              patch('uuid.uuid4') as mock_uuid:
-            
+
             mock_uuid.return_value.hex = 'test123456789abcdef'
             mock_s3_service = Mock()
             mock_s3_service.is_configured.return_value = True
@@ -410,7 +406,7 @@ class TestS3ServiceIntegration:
 
             service = AWSS3UploadService()
             result = service.upload_ticket_attachment(123, test_file)
-            
+
             # Verify UUID was used in filename
             assert 'test123456789abcdef' in result['s3_key']
 
@@ -420,10 +416,10 @@ class TestS3ServiceIntegration:
         """
         with patch('ng.core.services.s3_service.get_s3_service') as mock_get_service, \
              patch('ng.support.services.s3_upload_service.get_file_size') as mock_get_size:
-            
+
             expected_size = 1024
             mock_get_size.return_value = expected_size
-            
+
             mock_s3_service = Mock()
             mock_s3_service.is_configured.return_value = True
             mock_s3_service.upload_file_to_s3.return_value = 'support-tickets/123/test.png'
@@ -438,7 +434,7 @@ class TestS3ServiceIntegration:
 
             service = AWSS3UploadService()
             result = service.upload_ticket_attachment(123, test_file)
-            
+
             # Verify file size was calculated correctly
             assert result['file_size'] == expected_size
             mock_get_size.assert_called_once_with(test_file)
@@ -451,9 +447,9 @@ class TestS3ServiceIntegration:
             mock_get_service.return_value = None
 
             service = AWSS3UploadService()
-            
+
             test_file = Mock()
             result = service.upload_ticket_attachment(123, test_file)
-            
+
             # Should return None or raise exception when S3 unavailable
             assert result is None

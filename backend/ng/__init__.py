@@ -70,33 +70,31 @@ def load(app: Any) -> None:
 
         app.register_blueprint(plugin_views)
         app.register_blueprint(api_blueprint, url_prefix="/ng")
-        
+
         # Load AWS configuration from environment
         import os
-        aws_config_loaded = False
         if os.getenv('AWS_ACCESS_KEY_ID') and os.getenv('AWS_SECRET_ACCESS_KEY') and os.getenv('AWS_S3_BUCKET_NAME'):
             app.config['AWS_ACCESS_KEY_ID'] = os.getenv('AWS_ACCESS_KEY_ID')
             app.config['AWS_SECRET_ACCESS_KEY'] = os.getenv('AWS_SECRET_ACCESS_KEY')
             app.config['AWS_S3_BUCKET_NAME'] = os.getenv('AWS_S3_BUCKET_NAME')
             app.config['AWS_REGION'] = os.getenv('AWS_REGION', 'us-east-1')
-            aws_config_loaded = True
             logger.info("AWS S3 configuration loaded from environment")
         else:
             logger.warning("AWS S3 environment variables not found - file operations will be disabled")
-        
+
         # Initialize S3 service
         from .core.services.s3_service import get_s3_service
         s3_service = get_s3_service()
         s3_service.init_app(app)
-        
+
         if s3_service.is_configured():
             logger.info("S3 service initialized successfully")
         else:
             logger.warning("S3 service not configured - file operations disabled")
-        
+
         # Load fileuploads module
         load_fileuploads(app)
-        
+
         logger.info(
             "Plugin loaded successfully",
             extra={
