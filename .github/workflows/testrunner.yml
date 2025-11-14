@@ -38,9 +38,3 @@ jobs:
         if: always()
         working-directory: backend/ng
         run: make test-middleware
-        
-      - name: S3 Tests Info
-        if: always()
-        run: |
-          echo "ℹ️  S3 integration tests are run separately in the 'S3 Integration Tests' workflow"
-          echo "   This keeps the main test suite fast and doesn't require AWS credentials"
