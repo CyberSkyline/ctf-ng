@@ -26,7 +26,10 @@ test-s3-public-files:
 test-s3-ticket-attachments:
 	$(PYTHON_EXEC) support/services/_test_s3_ticket_attachments_standalone.py
 
-test-s3-all: test-s3-public-files test-s3-ticket-attachments
+test-s3-search:
+	$(PYTHON_EXEC) fileuploads/tests/_test_s3_search_standalone.py
+
+test-s3-all: test-s3-public-files test-s3-ticket-attachments test-s3-search
 
 
 # All tests

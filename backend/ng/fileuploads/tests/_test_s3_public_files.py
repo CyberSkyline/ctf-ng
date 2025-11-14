@@ -11,8 +11,8 @@ from werkzeug.datastructures import FileStorage
 
 # Add paths for imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
-ng_dir = os.path.join(current_dir, '..', '..')  # backend/ng directory
-backend_dir = os.path.join(ng_dir, '..')        # backend directory
+ng_dir = os.path.join(current_dir, '..', '..')  # backend/ng
+backend_dir = os.path.join(ng_dir, '..')        # backend
 sys.path.insert(0, backend_dir)
 sys.path.insert(0, os.path.join(backend_dir, '..', 'external', 'CTFd'))
 

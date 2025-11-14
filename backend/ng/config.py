@@ -37,6 +37,13 @@ S3_DOWNLOAD_CHUNK_SIZE = 8192  # 8KB chunks for streaming downloads
 TICKET_ATTACHMENT_USER_DOWNLOAD_PATH = "/ng/support/me/attachments"
 TICKET_ATTACHMENT_ADMIN_DOWNLOAD_PATH = "/ng/admin/support/attachments"
 
+# Public file upload configuration
+PUBLIC_FILE_ALLOWED_FOLDERS = {
+    'sponsor-logos': ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'],
+    'event-cards': ['image/png', 'image/jpeg', 'image/webp'],
+    'favicons': ['image/x-icon', 'image/png', 'image/svg+xml']
+}
+
 # Scoring Cache Config & Model Length Limits
 LEADERBOARD_CACHE_TIMEOUT = 60  # Seconds
 MAX_SUBMISSION_LENGTH = 4096

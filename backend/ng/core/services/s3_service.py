@@ -41,7 +41,7 @@ class S3Service:
             # Test connection
             self.s3_client.list_buckets()
             self._is_configured = True
-            logger.info(f"✅ S3 Service configured for bucket: {self.bucket_name}")
+            logger.info(f"S3 Service configured for bucket: {self.bucket_name}")
             
         except Exception as e:
             logger.error(f"❌ S3 Service configuration failed: {e}")
@@ -50,8 +50,6 @@ class S3Service:
     def is_configured(self) -> bool:
         """Check if S3 service is properly configured"""
         return self._is_configured and self.s3_client is not None
-    
-    # ========== PRESIGNED URL METHODS (Public Files) ==========
     
     def generate_upload_url(self, folder: str, filename: str, 
                           content_type: str = 'application/octet-stream') -> Dict[str, Any]:
@@ -112,14 +110,11 @@ class S3Service:
             return []
         
         try:
-            # List objects with the given prefix
             objects = self.list_objects(prefix=prefix)
             
-            # Filter by filename pattern if provided
             if filename_pattern:
                 filtered_objects = []
                 for obj in objects:
-                    # Extract filename from key
                     key_parts = obj['key'].split('/')
                     if len(key_parts) > 1:
                         filename = key_parts[1]
@@ -127,12 +122,10 @@ class S3Service:
                         if filename_pattern.lower() in filename.lower():
                             filtered_objects.append(obj)
                 objects = filtered_objects
-            
-            # Apply limit
+
             if limit > 0:
                 objects = objects[:limit]
             
-            # Format response with additional metadata
             formatted_files = []
             for obj in objects:
                 key_parts = obj['key'].split('/')
@@ -151,8 +144,6 @@ class S3Service:
         except Exception as e:
             logger.error(f"Error searching files: {e}")
             return []
-    
-    # ========== DIRECT UPLOAD METHODS (Private Ticket Attachments) ==========
     
     def upload_file_direct(self, file: FileStorage, object_key: str, 
                           content_type: str = 'application/octet-stream') -> bool:
@@ -196,8 +187,6 @@ class S3Service:
         except ClientError as e:
             logger.error(f"Error downloading file from S3: {e}")
             raise
-    
-    # ========== COMMON METHODS ==========
     
     def list_objects(self, prefix: str = '') -> List[Dict[str, Any]]:
         """List objects in S3 bucket with prefix"""

@@ -15,7 +15,7 @@ def test_s3_public_files_standalone():
     # Test 1: Basic configuration validation
     print("[PASS] Testing basic configuration...")
     
-    # Expected configuration from your public_files.py
+    # Expected configuration from config.py
     expected_folders = {
         'sponsor-logos': ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'],
         'event-cards': ['image/png', 'image/jpeg', 'image/webp'],

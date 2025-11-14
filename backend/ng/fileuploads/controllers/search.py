@@ -3,13 +3,10 @@ Cross-folder search with permission awareness
 """
 from flask import jsonify, request, current_app
 from ...core.services.s3_service import get_s3_service
+from ... import config
 
-# Add the ALLOWED_FOLDERS constant (copy from public_files.py)
-ALLOWED_FOLDERS = {
-    'sponsor-logos': ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'],
-    'event-cards': ['image/png', 'image/jpeg', 'image/webp'],
-    'favicons': ['image/x-icon', 'image/png', 'image/svg+xml']
-}
+# Import allowed folders from config
+ALLOWED_FOLDERS = config.PUBLIC_FILE_ALLOWED_FOLDERS
 
 def search_public_files():
     """
@@ -28,8 +25,7 @@ def search_public_files():
         s3_service = get_s3_service()
         if not s3_service or not s3_service.is_configured():
             return jsonify({"success": False, "error": "File storage not configured"}), 503
-        
-        # Case 1: List all files in a specific folder (no filename pattern)
+
         if folder and not filename_pattern:
             if folder not in ALLOWED_FOLDERS:
                 return jsonify({"success": False, "error": f"Invalid folder. Must be one of: {', '.join(ALLOWED_FOLDERS.keys())}"}), 400
@@ -46,8 +42,7 @@ def search_public_files():
                     "search_type": "folder_listing"
                 }
             })
-        
-        # Case 2: Search by filename pattern across all folders
+
         elif filename_pattern and not folder:
             all_files = []
             for public_folder in ALLOWED_FOLDERS.keys():
@@ -59,7 +54,7 @@ def search_public_files():
                 )
                 all_files.extend(folder_files)
             
-            # Sort by filename and apply overall limit
+            # Sort by filename
             all_files.sort(key=lambda x: x['filename'])
             if limit > 0:
                 all_files = all_files[:limit]
@@ -75,7 +70,6 @@ def search_public_files():
                 }
             })
         
-        # Case 3: Search by filename pattern within specific folder
         elif folder and filename_pattern:
             if folder not in ALLOWED_FOLDERS:
                 return jsonify({"success": False, "error": f"Invalid folder. Must be one of: {', '.join(ALLOWED_FOLDERS.keys())}"}), 400
@@ -98,7 +92,6 @@ def search_public_files():
                 }
             })
         
-        # Case 4: No parameters provided - return error
         else:
             return jsonify({
                 "success": False, 

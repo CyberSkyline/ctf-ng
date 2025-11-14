@@ -7,14 +7,11 @@ import requests
 from flask import jsonify, request, current_app
 from werkzeug.datastructures import FileStorage
 
+from ... import config
+
 logger = logging.getLogger(__name__)
 
-# Allowed public folders and their content types
-ALLOWED_FOLDERS = {
-    'sponsor-logos': ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'],
-    'event-cards': ['image/png', 'image/jpeg', 'image/webp'],
-    'favicons': ['image/x-icon', 'image/png', 'image/svg+xml']
-}
+ALLOWED_FOLDERS = config.PUBLIC_FILE_ALLOWED_FOLDERS
 
 def generate_upload_url(args):
     """
@@ -38,13 +35,11 @@ def generate_upload_url(args):
         s3_service = get_s3_service()
         if not s3_service or not s3_service.is_configured():
             return {"error": "File storage not configured"}, 503
-        
-        # Generate unique filename
+
         file_extension = get_file_extension(content_type)
         filename = f"{uuid.uuid4().hex}.{file_extension}"
         object_key = f"{folder}/{filename}"
         
-        # Generate presigned URL
         result = s3_service.generate_upload_url(folder, filename, content_type)
         
         return {
@@ -77,8 +72,7 @@ def get_public_file(args):
             return {"error": "File storage not configured"}, 503
         
         object_key = f"{folder}/{filename}"
-        
-        # Verify file exists
+
         if not s3_service.object_exists(object_key):
             return {"error": "File not found"}, 404
         
@@ -114,7 +108,6 @@ def list_public_files(args):
         files = []
         
         for obj in objects:
-            # Extract filename from key
             key_parts = obj['key'].split('/')
             if len(key_parts) > 1 and key_parts[0] == folder:
                 files.append({
@@ -148,7 +141,6 @@ def search_public_files():
         if folder and folder not in ALLOWED_FOLDERS:
             return {"error": "Invalid folder"}, 400
         
-        # If specific folder and filename provided
         if folder and filename:
             object_key = f"{folder}/{filename}"
             if s3_service.object_exists(object_key):
@@ -165,8 +157,7 @@ def search_public_files():
                     "files": [],
                     "count": 0
                 }
-        
-        # List files in specific folder or all folders
+
         if folder:
             prefix = folder
         else:
@@ -249,14 +240,12 @@ def direct_upload_file(args):
         if not presigned_url:
             return {"error": "Failed to generate presigned URL"}, 500
         
-        # Get file data
         file.stream.seek(0, 2)
         file_size = file.stream.tell()
         file.stream.seek(0)
         file_data = file.stream.read()
         file.stream.seek(0)
         
-        # Upload to S3
         upload_response = requests.put(
             presigned_url,
             data=file_data,
