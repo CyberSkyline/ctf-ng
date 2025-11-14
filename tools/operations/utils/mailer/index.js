@@ -1,0 +1,66 @@
+import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
+import bluebird from 'bluebird';
+import nodemailer from 'nodemailer';
+
+import { AWS_ACCESS_KEY_ID, AWS_DEFAULT_REGION, AWS_SECRET_ACCESS_KEY, AWS_SES_EMAIL_ADDRESS } from '../../config.js';
+import Template from './Template.js';
+
+const MAX_RETRIES = 3;
+const DELAY_FACTOR = 100; // Milliseconds between attempts
+
+const mailTransportConfig = {
+  SES : {
+    sesClient : new SESv2Client({
+      region : AWS_DEFAULT_REGION,
+      accessKeyId : AWS_ACCESS_KEY_ID,
+      secretAccessKey : AWS_SECRET_ACCESS_KEY,
+    }),
+    SendEmailCommand,
+  },
+};
+
+const mailer = nodemailer.createTransport(mailTransportConfig);
+
+export const templates = {
+  'pc7-registration-announcement': new Template({
+    name: 'pc7-registration-announcement',
+    subject: `President's Cup 7 Registration is Coming! Will You Return?`,
+    file: '2025.11.17.pc7-registration-announcement.mjml',
+  }),
+};
+
+export async function sendEmail(template, recipient, opts, progressBar) {
+  let retries = 0;
+  let success = false;
+
+  // Short delay to avoid rate limiting
+  await bluebird.delay(DELAY_FACTOR);
+
+  while (retries < MAX_RETRIES && !success) {
+    try {
+      progressBar.interrupt(`Attempting to send email to ${recipient}`);
+
+      const { html, text } = template.render({ });
+      const mailOpts = { to : recipient, from : AWS_SES_EMAIL_ADDRESS, subject : template.subject, html, text };
+      await mailer.sendMail(mailOpts);
+      success = true;
+    } catch (e) {
+      progressBar.interrupt(`[WARN] Failed to send email to ${recipient}`);
+      progressBar.interrupt(e.toString());
+      retries++;
+      if (retries >= MAX_RETRIES) {
+        throw new Error(`Failed to send email to ${recipient} after ${MAX_RETRIES} attempts`);
+      } else {
+        progressBar.interrupt(`[WARN] Retrying...`);
+      }
+
+      // Increasing backoff
+      await bluebird.delay(DELAY_FACTOR * retries);
+    }
+  }
+}
+
+export default {
+  templates,
+  sendEmail,
+};
