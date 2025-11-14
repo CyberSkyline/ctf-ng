@@ -19,6 +19,16 @@ test-email-send:
 test-aws-upload:
 	$(PYTHON_EXEC) support/services/_test_awsS3_webp_upload.py
 
+# S3 Standalone Tests
+test-s3-public-files:
+	$(PYTHON_EXEC) fileuploads/tests/_test_s3_public_files_standalone.py
+
+test-s3-ticket-attachments:
+	$(PYTHON_EXEC) support/services/_test_s3_ticket_attachments_standalone.py
+
+test-s3-all: test-s3-public-files test-s3-ticket-attachments
+
+
 # All tests
 test-all:
 	$(PYTHON_EXEC) -m pytest -m "not middleware" --ignore-glob="**/*e2e*" -v
@@ -74,6 +84,12 @@ test-emails:
 
 test-sponsors:
 	$(PYTHON_EXEC) -m pytest sponsors/tests -v
+
+test-fileuploads:
+	$(PYTHON_EXEC) -m pytest fileuploads/tests -v
+
+test-s3-integration:
+	$(PYTHON_EXEC) -m pytest support/tests/test_s3_ticket_attachments.py fileuploads/tests/test_public_files_api.py -v
 		
 test-middleware:
 	$(PYTHON_EXEC) -m pytest -m middleware . -v
@@ -82,4 +98,4 @@ test-utils:
 	$(PYTHON_EXEC) -m pytest ./core/tests/system/ -v
 
 
-.PHONY: check fix format test-all test-routes test-models test-validation test-controllers test-api test-team test-event test-admin test-user test-support test-utils test-fast test-middleware test-event-registration test-scoring find-TODO, test-img-upload test-email-send
+.PHONY: check fix format test-all test-routes test-models test-validation test-controllers test-api test-team test-event test-admin test-user test-support test-utils test-fast test-middleware test-event-registration test-scoring find-TODO test-img-upload test-email-send test-fileuploads test-s3-integration

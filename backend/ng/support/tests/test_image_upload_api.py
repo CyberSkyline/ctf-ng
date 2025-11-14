@@ -75,50 +75,71 @@ class TestUserAttachmentUpload:
         assert data["success"] is False
         assert "file" in str(data).lower()
 
-    def test_upload_invalid_file_type_jpg(self, logged_in_client, ticket):
+    def test_upload_valid_jpg_image(self, logged_in_client, ticket):
         """
-        Test uploading a JPG file (should fail)
+        Test uploading a JPG file (now allowed)
         """
         with logged_in_client.session_transaction() as sess:
             nonce = sess.get("nonce")
 
         jpg_data = io.BytesIO(b'\xFF\xD8\xFF\xE0')  # JPEG header
-        response = logged_in_client.post(
-            f"/ng/support/me/tickets/{ticket.id}/upload_image",
-            data = {
-                'file': (jpg_data,
-                         'test-image.jpg'),
-                'nonce': nonce
+        
+        with patch(
+                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
+        ) as mock_upload:
+            mock_upload.return_value = {
+                's3_key': f'support-tickets/{ticket.id}/test-uuid.jpg',
+                'bucket_name': 'test-bucket',
+                'file_size': len(b'\xFF\xD8\xFF\xE0')
             }
-        )
 
-        assert response.status_code == 400
-        data = response.get_json()
-        assert data["success"] is False
-        # Check that error message mentions allowed format or invalid image
-        error_text = str(data).lower()
-        assert "webp" in error_text or "valid image" in error_text or "allowed" in error_text
+            response = logged_in_client.post(
+                f"/ng/support/me/tickets/{ticket.id}/upload_image",
+                data = {
+                    'file': (jpg_data, 'test-image.jpg'),
+                    'nonce': nonce
+                }
+            )
 
-    def test_upload_invalid_file_type_png(self, logged_in_client, ticket):
+            assert response.status_code == 200
+            data = response.get_json()
+            assert data["success"] is True
+            assert "download_url" in data["data"]
+            assert data["data"]["ticket_id"] == ticket.id
+            assert data["data"]["filename"] == 'test-image.jpg'
+
+    def test_upload_valid_png_image(self, logged_in_client, ticket):
         """
-        Test uploading a PNG file (should fail)
+        Test uploading a PNG file (now allowed)
         """
         with logged_in_client.session_transaction() as sess:
             nonce = sess.get("nonce")
 
         png_data = io.BytesIO(b'\x89PNG\r\n\x1a\n')  # PNG header
-        response = logged_in_client.post(
-            f"/ng/support/me/tickets/{ticket.id}/upload_image",
-            data = {
-                'file': (png_data,
-                         'test-image.png'),
-                'nonce': nonce
+        
+        with patch(
+                'ng.support.services.s3_upload_service.AWSS3UploadService.upload_ticket_attachment'
+        ) as mock_upload:
+            mock_upload.return_value = {
+                's3_key': f'support-tickets/{ticket.id}/test-uuid.png',
+                'bucket_name': 'test-bucket',
+                'file_size': len(b'\x89PNG\r\n\x1a\n')
             }
-        )
 
-        assert response.status_code == 400
-        data = response.get_json()
-        assert data["success"] is False
+            response = logged_in_client.post(
+                f"/ng/support/me/tickets/{ticket.id}/upload_image",
+                data = {
+                    'file': (png_data, 'test-image.png'),
+                    'nonce': nonce
+                }
+            )
+
+            assert response.status_code == 200
+            data = response.get_json()
+            assert data["success"] is True
+            assert "download_url" in data["data"]
+            assert data["data"]["ticket_id"] == ticket.id
+            assert data["data"]["filename"] == 'test-image.png'
 
     def test_upload_invalid_file_type_gif(self, logged_in_client, ticket):
         """
