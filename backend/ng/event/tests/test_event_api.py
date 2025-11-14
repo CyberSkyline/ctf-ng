@@ -929,7 +929,7 @@ class Test_Event_Team_Management:
         response = logged_in_client.get(f"/ng/events/{event.id}/me/team")
         assert response.status_code == 404
 
-        response = logged_in_client.get(f"/ng/events/{event.id}/me/team/score")
+        response = logged_in_client.get(f"/ng/scoring/{event.id}/me/team/score")
         assert response.status_code == 404
 
         teams = Team.query.all()

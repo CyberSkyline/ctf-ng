@@ -13,7 +13,6 @@ from ..models import Challenge
 
 
 from ...containers.controllers.start_containers import start_containers
-from ...containers.controllers.reboot_containers import reboot_containers
 from ...containers.controllers.recycle_containers import recycle_containers
 
 challenge_namespace = Namespace("challenges", description="challenge management")
@@ -58,26 +57,6 @@ class EventChallengeStartContainers(Resource):
     )
     def post(self, team: Team, current_user: User, challenge_id: int, permissions):
         started = start_containers(challenge_id, team.id, current_user)
-        return success_response(started)
-
-@challenge_namespace.route("/<int:challenge_id>/containers/restart")
-class EventChallengeRestartContainers(Resource):
-    @challenge_namespace.doc(
-        description="Reboot a challenges containers",
-        params={
-            "event_id": "Event id challenge is in",
-            "challenge_id": "Challenge id to reboot containers for",
-        },
-        responses={
-            200: "Sucess",
-            400: "Bad request",
-        },
-    )
-    @user_endpoint()
-    @load_challenge(source=LoaderType.PARAM)
-    @load_team_by_user_and_challenge()
-    def post(self, team: Team, current_user: User, challenge_id: int, permissions):
-        started = reboot_containers(challenge_id, team.id, current_user)
         return success_response(started)
 
 @challenge_namespace.route("/<int:challenge_id>/containers/recycle")

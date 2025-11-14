@@ -432,7 +432,7 @@ class TestUserScoringEndpoints:
         hint = hint_factory(challenge_id=challenge.id)
 
         response = started_player_client.post(
-            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/hint/{hint.id}/redeem", data={"nonce": nonce}
+            f"/ng/scoring/hint/{hint.id}/redeem", data={"nonce": nonce}
         )
 
         assert response.status_code == 400
@@ -448,7 +448,7 @@ class TestUserScoringEndpoints:
         challenge.event.hints_enabled = False
         hint_factory(challenge_id=challenge.id)
 
-        response = started_player_client.get(f"/ng/events/{challenge.event_id}/challenges/{challenge.id}")
+        response = started_player_client.get(f"/ng/challenges/{challenge.id}")
 
         assert response.status_code == 200
         data = response.get_json()
@@ -456,7 +456,7 @@ class TestUserScoringEndpoints:
         assert len(hints) == 0
 
         challenge.event.hints_enabled = True
-        response = started_player_client.get(f"/ng/events/{challenge.event_id}/challenges/{challenge.id}")
+        response = started_player_client.get(f"/ng/challenges/{challenge.id}")
 
         assert response.status_code == 200
         data = response.get_json()
