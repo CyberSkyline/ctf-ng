@@ -1,13 +1,7 @@
 name: S3 Integration Tests
 
 on:
-  workflow_dispatch:  # Allow manual triggering
-  push:
-    paths:
-      - 'backend/ng/fileuploads/**'
-      - 'backend/ng/support/services/s3_upload_service.py'
-      - 'backend/ng/core/services/s3_service.py'
-      - 'backend/ng/**/*s3*'
+  workflow_dispatch: 
   pull_request:
     paths:
       - 'backend/ng/fileuploads/**'
