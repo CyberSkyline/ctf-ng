@@ -30,6 +30,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest -r backend/ng/requirements.txt -r external/CTFd/requirements.txt
 
+      - name: Run S3 Test Suite
+        working-directory: backend/ng
+        run: make test-s3-all
+
       - name: Run Main Test Suite
         working-directory: backend/ng
         run: make test-all

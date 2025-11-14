@@ -1,4 +1,4 @@
-from flask_restx import Resource
+from flask_restx import Namespace, Resource
 from flask import request
 from ..controllers.public_files import (
     generate_upload_url,
@@ -8,7 +8,7 @@ from ..controllers.public_files import (
     direct_upload_file
 )
 
-from . import fileuploads_namespace
+fileuploads_namespace = Namespace('fileuploads', description='File upload operations')
 
 @fileuploads_namespace.route('/upload/url')
 class FileUploadURL(Resource):
