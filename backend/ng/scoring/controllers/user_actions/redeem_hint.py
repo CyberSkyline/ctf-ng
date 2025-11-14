@@ -17,7 +17,7 @@ def redeem_hint(
     Redeem a hint for a challenge
     """
 
-    if not event.hints_enabled:
+    if not team.event.hints_enabled:
         raise BusinessLogicError("Hints are disabled for this event.")
 
     HintRedemption.create_redemption(
