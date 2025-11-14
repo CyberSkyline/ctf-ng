@@ -3,3 +3,4 @@ packages:
   - "backend"
   - "frontend"
   - "services/exec-service"
+  - "tools/operations"
