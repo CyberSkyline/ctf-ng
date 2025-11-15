@@ -45,6 +45,7 @@ from ...event.models.Event import Event
 from ...event.models.Demographic import Demographic
 from ...challenge.models.Challenge import Challenge
 from ...permissions.models.enums import PermissionEnum
+from ...notifications.services.notification_service import NotificationService
 
 
 events_user_namespace = Namespace(
@@ -309,6 +310,7 @@ class EventTeamKick(Resource):
         team: Team,
         permissions,
         current_user: User,
+        event: Event,
         **kwargs
     ):
         """
@@ -328,6 +330,16 @@ class EventTeamKick(Resource):
             demographic = Demographic.find_by_user_and_event(user_id, event_id)
             demographic.delete(commit = False)
             db.session.commit()
+
+            NotificationService.notify_player_kicked_from_team(
+                kicked_user_id=user_id,
+                team_id=team.id,
+                team_name=team.name,
+                event_id=event_id,
+                event_name=event.name,
+                kicked_by_id=current_user.ctfd_user.id,
+            )
+
         except Exception as e:
             db.session.rollback()
             raise e
