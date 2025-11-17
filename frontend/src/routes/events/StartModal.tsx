@@ -12,18 +12,14 @@ export default function StartModal({ event }: {event: Event}) {
 
   const handleStart = async () => startMyTeam(event.id);
 
-  let denyText = null;
-  if (isOngoing) denyText = 'Waiting for your team captain to start the event.';
-  if (isConcluded) denyText = 'This event has already concluded.';
-
   return (
     <RequireEventPermission
       eventId={event.id}
       permission="CAN_START_TEAM_TIMER"
-      permissionDeniedPlaceholder={denyText
+      permissionDeniedPlaceholder={isOngoing
         ? (
           <Text size="3" color="gray">
-            {denyText}
+            Waiting for your team captain to start the event.
           </Text>
         )
         : null}
