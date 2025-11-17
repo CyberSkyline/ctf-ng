@@ -7,7 +7,7 @@ import RequireEventPermission from 'components/RequireEventPermission';
 import { TbPlayerPlay } from 'react-icons/tb';
 
 export default function StartModal({ event }: {event: Event}) {
-  const { isOngoing, isConcluded } = useEventStatus(event.id);
+  const { isOngoing } = useEventStatus(event.id);
   const isIndividual = event.max_team_size === 1;
 
   const handleStart = async () => startMyTeam(event.id);
