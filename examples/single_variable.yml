@@ -1,0 +1,47 @@
+x-challenge:
+  name: "Single Variable Challenge"
+  description: |
+    A simple challenge that tests basic knowledge using a single variable.
+  icon: "TbPuzzle"
+  summary: |
+    This challenge focuses on retrieving a single flag using a straightforward approach.
+  templates:
+    flag-template: &flag_template "fake.bothify('CTF{simple_??_####}', letters='XYZ')"
+  variables:
+    flag1:
+      template: *flag_template
+      default: &flag1 "CTF{simple_XY_1234}"
+    flag2:
+      template: "fake.bothify('CTF{simple_??_####}', letters='XYZ')"
+      default: &flag2 "CTF{simple_ZX_5678}"
+  questions:
+    - name: "Retrieve the Flag"
+      body: "What is the 1st flag for this challenge?"
+      placeholder: "Enter the flag"
+      points: 100
+      answer: *flag1
+      max_attempts: 3
+    - name: "Retrieve the 2nd Flag"
+      body: "What is the 2nd flag for this challenge?"
+      placeholder: "Enter the flag"
+      points: 150
+      answer: *flag2
+      max_attempts: 3
+services:
+  challenge-service:
+    image: ealen/echo-server
+    hostname: echo
+    environment:
+      flag1: *flag1
+      flag2: *flag2
+      
+    # Resource limits
+    mem_limit: "256m"
+    cpus: "0.5"
+    networks:
+      - "challenge-net"
+
+networks:
+  challenge-net:
+    # Required: Internal-only network
+    internal: true

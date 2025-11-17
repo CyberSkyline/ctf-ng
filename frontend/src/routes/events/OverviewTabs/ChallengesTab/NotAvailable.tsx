@@ -1,5 +1,6 @@
 import { useEvent, useEventStatus } from '@/hooks/events';
 import {
+  Box,
   Container,
   Flex,
   Heading,
@@ -7,7 +8,6 @@ import {
 } from '@radix-ui/themes';
 import { TbCancel } from 'react-icons/tb';
 import { useParams } from 'react-router';
-import StartModal from 'routes/events/StartModal';
 
 export default function NotAvailable() {
   const { idEvent } = useParams();
@@ -18,22 +18,26 @@ export default function NotAvailable() {
     <Container size="2" className="text-center">
       <Flex direction="column" gap="2" align="center">
         <TbCancel className="inline text-9xl my-8" />
-        <Heading size="5">
-          Challenges are not available at this time.
-        </Heading>
-        {!isOngoing && !isConcluded && event?.start_time && (
-          <Text size="3" color="gray">
-            The event will start on
-            {' '}
-            {event.start_time.toLocaleDateString()}
-            {' at '}
-            {event.start_time.toLocaleTimeString()}
-            .
-          </Text>
-        )}
-        {isOngoing && (
-          <StartModal eventId={Number(idEvent)} />
-        )}
+        <Box>
+          <Heading size="5">
+            Challenges are not available at this time.
+          </Heading>
+          {!isOngoing && !isConcluded && event?.start_time && (
+            <Text size="3" color="gray">
+              The event will start on
+              {' '}
+              {event.start_time.toLocaleDateString()}
+              {' at '}
+              {event.start_time.toLocaleTimeString()}
+              .
+            </Text>
+          )}
+          {isConcluded && (
+            <Text size="3" color="gray">
+              This event has concluded.
+            </Text>
+          )}
+        </Box>
       </Flex>
     </Container>
   );

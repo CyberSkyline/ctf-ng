@@ -10,7 +10,7 @@ export default function RequireEventPermission(
     permissionDeniedPlaceholder,
     loadingPlaceholder,
   } : {
-    children: ReactNode,
+    children?: ReactNode,
     permission: string,
     eventId: number,
     permissionDeniedPlaceholder?: ReactNode

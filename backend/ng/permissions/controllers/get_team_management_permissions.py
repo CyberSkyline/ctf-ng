@@ -32,11 +32,14 @@ def get_team_management_permissions(team, user):
         return trace
     if team_member.role == TeamRole.CAPTAIN:
         trace.add_grant(PermissionEnum.CAN_EDIT_TEAM)
-        trace.add_grant(PermissionEnum.CAN_START_TEAM_TIMER)
         if len(team.members) > 1:
             trace.add_denial(PermissionEnum.CAN_LEAVE_TEAM, DenyReason.CAPTAIN_CANNOT_LEAVE)
         else:
             trace.add_grant(PermissionEnum.CAN_LEAVE_TEAM)
+        if team.event.start_time is None or team.event.start_time <= datetime.utcnow():
+            trace.add_grant(PermissionEnum.CAN_START_TEAM_TIMER)
+        else:
+            trace.add_denial(PermissionEnum.CAN_START_TEAM_TIMER, DenyReason.EVENT_NOT_STARTED)
     else:
         trace.add_denial(PermissionEnum.CAN_EDIT_TEAM, DenyReason.MISSING_ROLE)
         trace.add_denial(PermissionEnum.CAN_START_TEAM_TIMER, DenyReason.MISSING_ROLE)

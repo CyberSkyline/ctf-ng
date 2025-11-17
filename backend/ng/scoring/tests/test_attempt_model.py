@@ -455,14 +455,15 @@ class TestFindFilteredAttempts:
             team_id=team_with_member.id,
             challenge_id=challenge.id,
             question_id=question.id,
-            submission=question.answer,
+            submission="wrong",
         )
+
         Attempt.create_attempt(
             user_id=user.id,
             team_id=team_with_member.id,
             challenge_id=challenge.id,
             question_id=question.id,
-            submission="wrong",
+            submission=question.answer,
         )
 
         # Find only correct attempts
@@ -812,17 +813,16 @@ class TestValidateAttemptAllowed:
         assert "User is not a member of this team" in str(exc_info.value)
 
     def test_validate_attempt_max_attempts_reached(
-        self, db_session, user, team_with_member, event, challenge, question
+        self, db_session, attempt_factory, user, team_with_member, event, challenge, question
     ):
         """Test validation fails when max attempts reached"""
         # Create max attempts
-        for i in range(question.max_attempts):
-            Attempt.create_attempt(
+        for _i in range(question.max_attempts):
+            attempt_factory(
                 user_id=user.id,
                 team_id=team_with_member.id,
                 challenge_id=challenge.id,
                 question_id=question.id,
-                submission=f"attempt{i}",
             )
 
         with pytest.raises(BusinessLogicError) as exc_info:
@@ -835,6 +835,29 @@ class TestValidateAttemptAllowed:
             )
 
         assert "Maximum attempts" in str(exc_info.value) and "exceeded" in str(exc_info.value)
+
+    def test_validate_attempt_correct_attempt_already_made(
+        self, db_session, user, team_with_member, event, challenge, question
+    ):
+        Attempt.create_attempt(
+           user_id=user.id,
+            team_id=team_with_member.id,
+            challenge_id=challenge.id,
+            question_id=question.id,
+            submission=question.answer,
+        )
+
+        with pytest.raises(BusinessLogicError) as exc_info:
+            Attempt.validate_attempt_allowed(
+                user_id=user.id,
+                team_id=team_with_member.id,
+                event_id=event.id,
+                challenge_id=challenge.id,
+                question_id=question.id,
+            )
+
+        assert "This question has already been answered correctly" in str(exc_info.value)
+
 
 
 class TestAttemptRelationships:

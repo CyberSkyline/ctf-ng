@@ -20,11 +20,13 @@ export default function Statistic({
   value,
   description = undefined,
   delta = undefined,
+  size = '8',
 }: {
-    label: string;
-    value: string | number;
-    description?: string;
-    delta?: string;
+  label: string;
+  value: string | number;
+  description?: string;
+  delta?: string;
+  size?: React.ComponentProps<typeof Heading>['size'],
 }) {
   const deltaColor = delta && delta.startsWith('-') ? COLOR_NEGATIVE : COLOR_POSITIVE;
 
@@ -39,7 +41,7 @@ export default function Statistic({
         )}
         {delta && <Badge color={deltaColor} variant="soft" radius="full">{delta}</Badge> }
       </Flex>
-      <Heading size="8" className="tabular-nums">{value}</Heading>
+      <Heading size={size} className="tabular-nums">{value}</Heading>
     </Box>
   );
 }
