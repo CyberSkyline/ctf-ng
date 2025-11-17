@@ -1,5 +1,11 @@
 import { useEventChallenges, useMyChallenges } from '@/hooks/challenge';
-import { Container, Grid, TextField } from '@radix-ui/themes';
+import {
+  Card,
+  Container,
+  Grid,
+  Skeleton,
+  TextField,
+} from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
 import { keyBy } from 'lodash';
 import { useMemo, useState } from 'react';
@@ -7,7 +13,7 @@ import { TbSearch } from 'react-icons/tb';
 import ChallengeCard from './ChallengeCard';
 
 export default function EventChallenges({ eventId }: {eventId: number}) {
-  const { data, error } = useEventChallenges(eventId);
+  const { data, error, isLoading } = useEventChallenges(eventId);
   const { data : myChallenges, error : myError } = useMyChallenges(eventId);
 
   const challengeProgressMap = useMemo(() => keyBy(myChallenges, (progress) => progress.challenge_id), [ myChallenges ]);
@@ -40,6 +46,13 @@ export default function EventChallenges({ eventId }: {eventId: number}) {
       <Container size="4">
         {myError && (<ErrorCallout className="mb-3">Failed to load your progress.</ErrorCallout>)}
         <Grid columns={{ xs : '1', sm : '2', md : '3' }} gap="3">
+          {isLoading && (
+            <>
+              <Skeleton><Card className="!h-18" /></Skeleton>
+              <Skeleton><Card className="!h-18" /></Skeleton>
+              <Skeleton><Card className="!h-18" /></Skeleton>
+            </>
+          )}
           {filteredChallenges.map((challenge) => (
             <ChallengeCard
               challenge={challenge}
