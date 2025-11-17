@@ -19,22 +19,11 @@ test-email-send:
 test-aws-upload:
 	$(PYTHON_EXEC) support/services/_test_awsS3_webp_upload.py
 
-# S3 Standalone Tests
-test-s3-public-files:
-	$(PYTHON_EXEC) fileuploads/tests/_test_s3_public_files_standalone.py
-
-test-s3-ticket-attachments:
-	$(PYTHON_EXEC) support/services/_test_s3_ticket_attachments_standalone.py
-
-test-s3-search:
-	$(PYTHON_EXEC) fileuploads/tests/_test_s3_search_standalone.py
-
-test-s3-all: test-s3-public-files test-s3-ticket-attachments test-s3-search
 
 
-# All tests (excluding S3 and middleware)
+# All tests
 test-all:
-	$(PYTHON_EXEC) -m pytest -m "not middleware and not s3" --ignore-glob="**/*e2e*" -v
+	$(PYTHON_EXEC) -m pytest -m "not middleware" --ignore-glob="**/*e2e*" -v
 
 test-validation:
 	$(PYTHON_EXEC) -m pytest -v $(shell find . -name "test_*_validation.py")
@@ -89,13 +78,11 @@ test-sponsors:
 	$(PYTHON_EXEC) -m pytest sponsors/tests -v
 
 test-fileuploads:
-	$(PYTHON_EXEC) -m pytest fileuploads/tests -m "not s3" -v
+	$(PYTHON_EXEC) -m pytest fileuploads/tests -v
 
 # S3 Integration Tests (separate from main suite)
-test-s3-pytest:
 	$(PYTHON_EXEC) -m pytest -m s3 -v
 
-test-s3-integration: test-s3-pytest
 		
 test-middleware:
 	$(PYTHON_EXEC) -m pytest -m middleware . -v

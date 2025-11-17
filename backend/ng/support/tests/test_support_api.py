@@ -1081,7 +1081,6 @@ class TestAdminSupportEndpoints:
         # Admin should get admin proxy URL
         assert data["data"]["attachments"][0]["download_url"].startswith("/ng/admin/support/attachments/")
 
-    @pytest.mark.s3
     def test_user_download_attachment_proxy(self, logged_in_client, ticket, user, db_session, app):
         """
         Test user downloading attachment via proxy endpoint
@@ -1148,7 +1147,6 @@ class TestAdminSupportEndpoints:
         error_text = str(data["errors"]).lower()
         assert "your own tickets" in error_text or "forbidden" in error_text or "access" in error_text
 
-    @pytest.mark.s3
     def test_admin_download_any_attachment_proxy(self, admin_client, ticket, user, db_session, app):
         """
         Test admin downloading any attachment via proxy endpoint
@@ -1190,7 +1188,6 @@ class TestAdminSupportEndpoints:
         response = logged_in_client.get("/ng/support/me/attachments/999999")
         assert response.status_code == 404
 
-    @pytest.mark.s3
     def test_download_attachment_s3_not_configured(self, logged_in_client, ticket, user, db_session, app):
         """
         Test download fails gracefully when S3 is not configured
@@ -1218,7 +1215,6 @@ class TestAdminSupportEndpoints:
             error_text = str(data["errors"]).lower()
             assert "storage is not configured" in error_text or "not configured" in error_text
 
-    @pytest.mark.s3
     def test_download_attachment_file_missing_in_s3(self, logged_in_client, ticket, user, db_session, app):
         """
         Test download handles missing file in S3
@@ -1253,7 +1249,6 @@ class TestAdminSupportEndpoints:
                 assert "not found in storage" in error_text or "not found" in error_text
 
     # Search functionality tests
-    @pytest.mark.s3
     def test_search_ticket_attachments_by_filename(self, admin_client, ticket, user, db_session, ticket_factory):
         """
         Test searching for ticket attachments by filename
@@ -1311,7 +1306,6 @@ class TestAdminSupportEndpoints:
             assert "uploaded_by" in attachment
             assert "uploaded_at" in attachment
 
-    @pytest.mark.s3
     def test_search_attachments_with_pagination(self, admin_client, ticket, user, db_session):
         """
         Test searching attachments with limit and offset
@@ -1354,7 +1348,6 @@ class TestAdminSupportEndpoints:
         data = response.get_json()
         assert len(data["data"]["attachments"]) == 1
 
-    @pytest.mark.s3
     def test_search_attachments_case_insensitive(self, admin_client, ticket, user, db_session):
         """
         Test that search is case insensitive
@@ -1384,7 +1377,6 @@ class TestAdminSupportEndpoints:
         data = response.get_json()
         assert data["data"]["total"] == 1
 
-    @pytest.mark.s3
     def test_search_attachments_empty_query(self, admin_client):
         """
         Test searching with empty query returns error
@@ -1397,7 +1389,6 @@ class TestAdminSupportEndpoints:
         assert "validation" in data["errors"]
         assert "filename" in str(data["errors"]["validation"]).lower()
 
-    @pytest.mark.s3
     def test_search_attachments_short_query(self, admin_client):
         """
         Test searching with query less than 3 characters returns error
@@ -1410,7 +1401,6 @@ class TestAdminSupportEndpoints:
         assert "validation" in data["errors"]
         assert "at least 3 characters" in str(data["errors"]["validation"]).lower()
 
-    @pytest.mark.s3
     def test_search_attachments_no_results(self, admin_client):
         """
         Test searching returns empty list when no matches
@@ -1424,7 +1414,6 @@ class TestAdminSupportEndpoints:
         assert data["data"]["attachments"] == []
         assert data["data"]["query"] == "nonexistent"
 
-    @pytest.mark.s3
     def test_search_attachments_invalid_pagination(self, admin_client):
         """
         Test invalid pagination parameters
@@ -1443,7 +1432,6 @@ class TestAdminSupportEndpoints:
         assert data["success"] is False
         assert "pagination" in data["errors"]
 
-    @pytest.mark.s3
     def test_search_attachments_requires_admin(self, logged_in_client):
         """
         Test that regular users cannot access search endpoint
