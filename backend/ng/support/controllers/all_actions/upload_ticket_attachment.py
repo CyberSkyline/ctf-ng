@@ -21,31 +21,7 @@ def upload_ticket_attachment(
     ticket: Ticket,
     uploaded_by: int,
 ) -> TicketAttachment:
-    """
-    Upload an attachment for a support ticket to private S3 storage
-
-    This function handles secure file uploads for support ticket attachments:
-    - Validates file format (PNG, JPEG, JPG, WebP)
-    - Enforces size limits (max 5MB)
-    - Uploads to private S3 bucket with unique UUID-based filename
-    - Creates database record for attachment tracking
-    - Returns attachment with proxy download URL for security
-
-    Args:
-        file: FileStorage object containing the uploaded file
-        ticket: Ticket model instance to attach the file to
-        uploaded_by: User ID of the person uploading the attachment
-
-    Returns:
-        TicketAttachment: Database model with file metadata and download URL
-
-    Raises:
-        ValidationError: If file is invalid, too large, or wrong format
-
-    Note:
-        Files are stored privately and accessed via proxy endpoints to maintain
-        proper access control and prevent direct S3 URL exposure.
-    """
+    """Upload attachment for support ticket to private S3 storage"""
     if not file or not file.filename:
         raise ValidationError("No file provided")
 

@@ -15,19 +15,7 @@ logger = get_logger(__name__)
 
 
 def download_attachment(attachment: TicketAttachment) -> Response:
-    """
-    Stream attachment from S3 to client via proxy using shared service.
-
-    Args:
-        attachment: TicketAttachment object with S3 location info
-
-    Returns:
-        Flask Response with streaming content
-
-    Raises:
-        NotFoundError: If the file doesn't exist in S3
-        BusinessLogicError: If S3 is not configured or other S3 errors
-    """
+    """Stream attachment from S3 to client via secure proxy"""
     try:
         s3_service = get_support_s3_service()
 
@@ -46,9 +34,7 @@ def download_attachment(attachment: TicketAttachment) -> Response:
         )
 
         def generate() -> Generator[bytes, None, None]:
-            """
-            Generator to stream S3 content in chunks
-            """
+            """Stream S3 content in chunks"""
             try:
                 chunk_size = config.S3_DOWNLOAD_CHUNK_SIZE
                 while True:
