@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """
-Standalone test for S3 public files search functionality
+Standalone test for S3 search functionality
+Tests search logic without complex imports
 """
-
-import sys
 
 def test_s3_search_standalone():
     """Test S3 search functionality with standalone logic"""
@@ -180,9 +179,7 @@ def test_s3_search_standalone():
 
     print("  - Limit enforcement works correctly")
 
-    print("\nAll S3 search functionality standalone tests passed successfully.")
-    return True
+    print("All S3 search functionality tests passed successfully.")
 
 if __name__ == "__main__":
-    success = test_s3_search_standalone()
-    sys.exit(0 if success else 1)
+    test_s3_search_standalone()

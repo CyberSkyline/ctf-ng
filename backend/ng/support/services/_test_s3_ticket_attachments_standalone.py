@@ -4,8 +4,6 @@ Simple standalone test for S3 ticket attachment functionality
 Tests the core logic without importing the problematic ng module
 """
 
-import sys
-
 def test_s3_ticket_attachments_standalone():
     """Test S3 ticket attachments functionality with standalone logic"""
     print("=== Testing S3 Ticket Attachments (Standalone) ===")
@@ -124,8 +122,6 @@ def test_s3_ticket_attachments_standalone():
     print("  - Upload workflow simulation works correctly")
 
     print("\nAll S3 ticket attachment standalone tests passed successfully.")
-    return True
 
 if __name__ == "__main__":
-    success = test_s3_ticket_attachments_standalone()
-    sys.exit(0 if success else 1)
+    test_s3_ticket_attachments_standalone()
