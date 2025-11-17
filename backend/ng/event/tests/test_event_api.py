@@ -1130,7 +1130,7 @@ class Test_Event_Team_Start:
         assert not data["success"]
         assert "errors" in data
         assert "EVENT_NOT_STARTED" in data["errors"]["forbidden"]
-        
+
     def test_start_near_end_of_event_end_time_is_clamped(
         self,
         client_factory,
