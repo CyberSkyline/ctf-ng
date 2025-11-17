@@ -7,7 +7,6 @@ import {
 } from '@radix-ui/themes';
 import { TbCancel } from 'react-icons/tb';
 import { useParams } from 'react-router';
-import StartModal from 'routes/events/StartModal';
 
 export default function NotAvailable() {
   const { idEvent } = useParams();
@@ -30,9 +29,6 @@ export default function NotAvailable() {
             {event.start_time.toLocaleTimeString()}
             .
           </Text>
-        )}
-        {isOngoing && (
-          <StartModal eventId={Number(idEvent)} />
         )}
       </Flex>
     </Container>
