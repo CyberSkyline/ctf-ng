@@ -6,6 +6,7 @@ Supports multiple search modes with proper parameter validation and response for
 """
 from flask import jsonify, request, current_app
 from ...core.services.s3_service import get_s3_service
+from ...core.utils import success_response
 from ... import config
 
 # Import allowed folders from config
@@ -36,14 +37,11 @@ def search_public_files():
             prefix = f"{folder}/"
             files = s3_service.search_files(prefix=prefix, filename_pattern='', limit=limit)
 
-            return jsonify({
-                "success": True,
-                "data": {
-                    "files": files,
-                    "total_count": len(files),
-                    "folder": folder,
-                    "search_type": "folder_listing"
-                }
+            return success_response({
+                "files": files,
+                "total_count": len(files),
+                "folder": folder,
+                "search_type": "folder_listing"
             })
 
         elif filename_pattern and not folder:
@@ -62,15 +60,12 @@ def search_public_files():
             if limit > 0:
                 all_files = all_files[:limit]
 
-            return jsonify({
-                "success": True,
-                "data": {
-                    "files": all_files,
-                    "total_count": len(all_files),
-                    "query": filename_pattern,
-                    "folder": "all",
-                    "search_type": "cross_folder_search"
-                }
+            return success_response({
+                "files": all_files,
+                "total_count": len(all_files),
+                "query": filename_pattern,
+                "folder": "all",
+                "search_type": "cross_folder_search"
             })
 
         elif folder and filename_pattern:
@@ -84,15 +79,12 @@ def search_public_files():
                 limit=limit
             )
 
-            return jsonify({
-                "success": True,
-                "data": {
-                    "files": files,
-                    "total_count": len(files),
-                    "query": filename_pattern,
-                    "folder": folder,
-                    "search_type": "folder_specific_search"
-                }
+            return success_response({
+                "files": files,
+                "total_count": len(files),
+                "query": filename_pattern,
+                "folder": folder,
+                "search_type": "folder_specific_search"
             })
 
         else:

@@ -284,7 +284,7 @@ class MyAttachmentDownload(Resource):
     @load_attachment(LoaderType.PARAM)
     @check_attachment_ownership()
     @support_user_namespace.doc(
-        description="Download an attachment from your support ticket via secure proxy",
+        description="Download an attachment from user support ticket via presigned S3 URL redirect",
         params={
             "attachment_id": {
                 "description": "ID of the attachment to download",
@@ -295,16 +295,16 @@ class MyAttachmentDownload(Resource):
             }
         },
         responses={
-            200: "Success - File content streamed from S3 storage",
+            302: "Success - Redirect to presigned S3 URL for secure download (1 hour expiration)",
             401: "Unauthorized - Authentication required",
             403: "Forbidden - You can only download attachments from your own tickets",
             404: "Not found - Attachment does not exist or file missing in S3 storage",
-            500: "Internal Server Error - Download failed",
-        },
-        produces=['application/octet-stream', 'image/png', 'image/jpeg', 'image/webp']
+            500: "Internal Server Error - Failed to generate presigned URL",
+            503: "Service Unavailable - S3 storage not configured",
+        }
     )
     def get(self, attachment_id: int, attachment, current_user: User, **kwargs):
         """
-        Download attachment via proxy
+        Download attachment via presigned URL redirect
         """
         return download_attachment(attachment=attachment)

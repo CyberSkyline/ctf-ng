@@ -1,11 +1,9 @@
 """
-Download attachment from S3 via proxy endpoint
+Download attachment from S3 via presigned URL redirect
 """
 
-from flask import Response
-from collections.abc import Generator
+from flask import redirect, Response
 
-from .... import config
 from ....core.utils.logger import get_logger
 from ....core.exceptions import NotFoundError, BusinessLogicError
 from ...models import TicketAttachment
@@ -15,12 +13,12 @@ logger = get_logger(__name__)
 
 
 def download_attachment(attachment: TicketAttachment) -> Response:
-    """Stream attachment from S3 to client via secure proxy"""
+    """Redirect to presigned S3 URL for attachment download"""
     try:
         s3_service = get_support_s3_service()
 
         logger.info(
-            "Fetching attachment from S3 via shared service",
+            "Generating presigned URL for attachment download",
             extra={
                 "bucket": attachment.file_upload.bucket_name,
                 "key": attachment.file_upload.s3_key,
@@ -28,47 +26,24 @@ def download_attachment(attachment: TicketAttachment) -> Response:
             }
         )
 
-        # Use shared service for streaming
-        stream, content_length, content_type = s3_service.download_ticket_attachment(
+        # Get presigned URL from service
+        presigned_url = s3_service.download_ticket_attachment(
             attachment.file_upload.s3_key
         )
 
-        def generate() -> Generator[bytes, None, None]:
-            """Stream S3 content in chunks"""
-            try:
-                chunk_size = config.S3_DOWNLOAD_CHUNK_SIZE
-                while True:
-                    chunk = stream.read(chunk_size)
-                    if not chunk:
-                        break
-                    yield chunk
-            except Exception as e:
-                logger.error(f"Error streaming from S3: {e}")
-                return
-            finally:
-                stream.close()
+        if not presigned_url:
+            logger.error(
+                "Failed to generate presigned URL",
+                extra={"attachment_id": attachment.id}
+            )
+            raise BusinessLogicError("Unable to generate download link")
 
-        is_image = content_type.startswith('image/')
-        disposition = 'inline' if is_image else 'attachment'
-
-        safe_filename = attachment.file_upload.filename.replace('"', '\\"').replace('\n', '').replace('\r', '')
-
-        response = Response(
-            generate(),
-            mimetype=content_type,
-            headers={
-                'Content-Disposition': f'{disposition}; filename="{safe_filename}"',
-                'Content-Length': str(content_length),
-                'Cache-Control': 'private, max-age=3600',
-                'X-Content-Type-Options': 'nosniff',
-            }
-        )
-
-        return response
+        # Redirect to presigned URL
+        return redirect(presigned_url)
 
     except Exception as e:
         logger.error(
-            f"Error downloading attachment via shared service: {e}",
+            f"Error generating presigned URL for attachment: {e}",
             extra={"attachment_id": attachment.id}
         )
 

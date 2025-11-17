@@ -687,7 +687,7 @@ class AdminAttachmentDownload(Resource):
     @admin_endpoint()
     @load_attachment(LoaderType.PARAM)
     @support_admin_namespace.doc(
-        description="Download any support ticket attachment via secure proxy (Admin privilege required)",
+        description="Download any support ticket attachment via presigned S3 URL redirect (Admin privilege required)",
         params={
             "attachment_id": {
                 "description": "ID of the attachment to download",
@@ -698,16 +698,16 @@ class AdminAttachmentDownload(Resource):
             }
         },
         responses={
-            200: "Success - File content streamed from S3 storage with admin privileges",
+            302: "Success - Redirect to presigned S3 URL for secure download (1 hour expiration)",
             403: "Forbidden - Admin access required",
             404: "Not found - Attachment does not exist or file missing in S3 storage",
-            500: "Internal Server Error - Download failed",
-        },
-        produces=['application/octet-stream', 'image/png', 'image/jpeg', 'image/webp']
+            500: "Internal Server Error - Failed to generate presigned URL",
+            503: "Service Unavailable - S3 storage not configured",
+        }
     )
     def get(self, attachment_id: int, attachment, current_user: User, **kwargs):
         """
-        Download any attachment (admin access)
+        Download any attachment via presigned URL redirect (admin access)
         """
         return download_attachment(attachment=attachment)
 

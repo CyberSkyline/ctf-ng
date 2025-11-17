@@ -77,16 +77,26 @@ class SupportS3Service:
             current_app.logger.error(f"Ticket attachment upload error: {e}")
             return None
 
-    def download_ticket_attachment(self, s3_key: str):
+    def download_ticket_attachment(self, s3_key: str) -> str | None:
         """
-        Stream ticket attachment for proxy download
-        Returns (stream, content_length, content_type)
+        Generate presigned URL for ticket attachment download
+        Returns presigned URL string or None if failed
         """
         s3_service = self._get_s3_service()
         if not s3_service or not s3_service.is_configured():
-            raise Exception("S3 service not configured")
+            current_app.logger.error("S3 service not configured")
+            return None
 
-        return s3_service.download_file_stream(s3_key)
+        try:
+            # Generate presigned URL with 1 hour expiration
+            presigned_url = s3_service.generate_download_url(
+                s3_key,
+                expires_in=3600  # 1 hour
+            )
+            return presigned_url
+        except Exception as e:
+            current_app.logger.error(f"Failed to generate presigned URL for {s3_key}: {e}")
+            return None
 
     def _get_extension_from_content_type(self, content_type: str) -> str:
         """Get file extension from content type"""
