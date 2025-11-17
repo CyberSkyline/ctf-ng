@@ -24,6 +24,8 @@ from ..controllers import (
 support_user_namespace = Namespace("support", description="Support ticket operations for users")
 
 
+
+
 @support_user_namespace.route("/tickets/create")
 class Tickets(Resource):
     @user_endpoint(json_required=True)
@@ -232,29 +234,31 @@ class TicketImageUpload(Resource):
     @load_ticket(LoaderType.PARAM)
     @check_ownership(resource_key="ticket", user_field="author_id")
     @support_user_namespace.doc(
-        description="Upload an image to a support ticket (WebP only, max 5MB)",
+        description="Upload an image attachment to your support ticket",
         params={
             "ticket_id": {
-                "description": "Ticket ID",
+                "description": "ID of the ticket to attach the image to",
                 "required": True,
                 "type": "integer",
+                "in": "path",
                 "example": 123
             },
             "file": {
-                "description": "Image file (WebP format, max 5MB)",
+                "description": "Image file to upload (PNG, JPEG, JPG, WebP formats supported, max 5MB)",
                 "in": "formData",
                 "required": True,
                 "type": "file"
             }
         },
         responses={
-            200: "Success - Image uploaded, returns image_url",
-            400: "Bad request - Invalid file type or size",
+            200: "Success - Image uploaded and attachment created",
+            400: "Bad request - No file provided, invalid format, or file too large",
             401: "Unauthorized - Authentication required",
             403: "Forbidden - You can only upload to your own tickets",
             404: "Not found - Ticket does not exist",
-            500: "Internal Server Error",
+            500: "Internal Server Error - Upload failed",
         },
+        consumes=['multipart/form-data']
     )
     def post(self, ticket_id: int, ticket, current_user: User, **kwargs):
         """
@@ -280,22 +284,24 @@ class MyAttachmentDownload(Resource):
     @load_attachment(LoaderType.PARAM)
     @check_attachment_ownership()
     @support_user_namespace.doc(
-        description="Download an attachment from your own support ticket",
+        description="Download an attachment from your support ticket via secure proxy",
         params={
             "attachment_id": {
-                "description": "Attachment ID",
+                "description": "ID of the attachment to download",
                 "required": True,
                 "type": "integer",
+                "in": "path",
                 "example": 123
             }
         },
         responses={
-            200: "Success - File streamed from S3",
+            200: "Success - File content streamed from S3 storage",
             401: "Unauthorized - Authentication required",
             403: "Forbidden - You can only download attachments from your own tickets",
-            404: "Not found - Attachment does not exist or file missing in storage",
-            500: "Internal Server Error",
+            404: "Not found - Attachment does not exist or file missing in S3 storage",
+            500: "Internal Server Error - Download failed",
         },
+        produces=['application/octet-stream', 'image/png', 'image/jpeg', 'image/webp']
     )
     def get(self, attachment_id: int, attachment, current_user: User, **kwargs):
         """

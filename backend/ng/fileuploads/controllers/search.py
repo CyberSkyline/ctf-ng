@@ -1,5 +1,8 @@
 """
 Cross-folder search with permission awareness
+
+This module provides comprehensive search functionality for public files stored in S3.
+Supports multiple search modes with proper parameter validation and response formatting.
 """
 from flask import jsonify, request, current_app
 from ...core.services.s3_service import get_s3_service

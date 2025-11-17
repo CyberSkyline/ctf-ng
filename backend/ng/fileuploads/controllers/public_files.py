@@ -15,7 +15,29 @@ ALLOWED_FOLDERS = config.PUBLIC_FILE_ALLOWED_FOLDERS
 
 def generate_upload_url(args):
     """
-    Generate presigned URL for client-side upload
+    Generate presigned URL for client-side upload to public S3 folders
+
+    This function creates a presigned URL that allows clients to upload files
+    directly to S3 without routing through the server, improving performance
+    and reducing server load.
+
+    Args:
+        args (dict): Request arguments containing:
+            - folder (str): Target folder (sponsor-logos, event-cards, favicons)
+            - content_type (str): MIME type of file to upload
+
+    Returns:
+        tuple: (response_dict, status_code) where response_dict contains:
+            - presigned_url: S3 presigned URL for PUT request
+            - filename: Generated UUID-based filename
+            - object_key: Full S3 object key (folder/filename)
+            - content_type: Validated content type
+            - upload_method: HTTP method (PUT)
+
+    Raises:
+        400: Invalid folder or content type
+        500: Internal server error
+        503: S3 storage not configured
     """
     try:
         folder = args.get('folder')
@@ -55,7 +77,30 @@ def generate_upload_url(args):
         return {"error": "Internal server error"}, 500
 
 def get_public_file(args):
-    """Get presigned URL for public file access (no authentication required)"""
+    """
+    Get presigned download URL for public file access (no authentication required)
+
+    Generates a secure, time-limited download URL for public files stored in S3.
+    URLs are valid for 24 hours and allow direct access to the file content.
+
+    Args:
+        args (dict): Request arguments containing:
+            - folder (str): Folder containing the file
+            - filename (str): Name of the file to access
+
+    Returns:
+        tuple: (response_dict, status_code) where response_dict contains:
+            - url: Presigned download URL (expires in 24 hours)
+            - filename: Original filename
+            - folder: Folder name
+            - object_key: Full S3 object key
+
+    Raises:
+        400: Missing folder or filename parameter
+        404: File not found or invalid folder
+        500: Internal server error
+        503: S3 storage not configured
+    """
     try:
         folder = args.get('folder')
         filename = args.get('filename')
@@ -92,7 +137,33 @@ def get_public_file(args):
         return {"error": "File not found"}, 404
 
 def list_public_files(args):
-    """List files in a public folder"""
+    """
+    List all files in a specified public folder
+
+    Retrieves metadata for all files in the specified folder from S3 storage.
+    Returns comprehensive file information including size and modification dates.
+
+    Args:
+        args (dict): Request arguments containing:
+            - folder (str): Folder to list files from
+
+    Returns:
+        tuple: (response_dict, status_code) where response_dict contains:
+            - folder: Folder name
+            - files: List of file objects with metadata
+            - count: Total number of files
+
+    Each file object contains:
+        - filename: File name
+        - size: File size in bytes
+        - last_modified: ISO timestamp of last modification
+        - key: Full S3 object key
+
+    Raises:
+        400: Invalid or missing folder parameter
+        500: Internal server error
+        503: S3 storage not configured
+    """
     try:
         folder = args.get('folder')
 
@@ -128,7 +199,41 @@ def list_public_files(args):
         return {"error": "Internal server error"}, 500
 
 def search_public_files():
-    """Search files across folders or within specific folder"""
+    """
+    Search files across folders or within specific folder with flexible parameters
+
+    Provides comprehensive file search functionality supporting multiple modes:
+    - List all files in a folder (folder parameter only)
+    - Search by filename pattern across all folders (filename parameter only)
+    - Search by filename pattern within specific folder (both parameters)
+
+    Query parameters are read directly from Flask request.args:
+        - folder (str, optional): Specific folder to search in
+        - filename (str, optional): Filename pattern to search for
+        - limit (int, optional): Max results (default 10, max 50)
+
+    Returns:
+        tuple: (response_dict, status_code) where response_dict contains:
+            - success: Boolean indicating operation success
+            - data: Search results object with:
+                - files: List of matching file objects
+                - total_count: Number of results returned
+                - folder: Target folder (or 'all' for cross-folder)
+                - query: Search pattern (if provided)
+                - search_type: Type of search performed
+
+    Each file object contains:
+        - filename: File name
+        - folder: Folder containing the file
+        - size: File size in bytes
+        - last_modified: ISO timestamp
+        - key: Full S3 object key
+
+    Raises:
+        400: Invalid search parameters
+        500: Internal server error
+        503: S3 storage not configured
+    """
     try:
         folder = request.args.get('folder')
         filename = request.args.get('filename')
@@ -188,7 +293,28 @@ def search_public_files():
         return {"error": "Internal server error"}, 500
 
 def get_file_extension(content_type: str) -> str:
-    """Get file extension from content type"""
+    """
+    Get appropriate file extension from MIME content type
+
+    Maps MIME types to standard file extensions for consistent file naming.
+    Used internally by upload functions to ensure proper file extensions.
+
+    Args:
+        content_type (str): MIME type (e.g., 'image/png', 'image/jpeg')
+
+    Returns:
+        str: File extension without dot (e.g., 'png', 'jpg', 'webp')
+             Returns 'bin' for unknown content types
+
+    Supported content types:
+        - image/png -> png
+        - image/jpeg -> jpg
+        - image/jpg -> jpg
+        - image/webp -> webp
+        - image/svg+xml -> svg
+        - image/x-icon -> ico
+        - application/octet-stream -> bin
+    """
     extension_map = {
         'image/png': 'png',
         'image/jpeg': 'jpg',
@@ -202,9 +328,37 @@ def get_file_extension(content_type: str) -> str:
 
 def direct_upload_file(args):
     """
-    Upload a file directly to S3 using presigned URLs
+    Upload a file directly to S3 using server-side presigned URL generation
 
-    Takes the file, generates the upload URL, uploads to S3, and returns file info
+    This function provides a complete server-side upload workflow:
+    1. Validates the uploaded file and target folder
+    2. Generates a presigned upload URL
+    3. Uploads the file directly to S3
+    4. Returns comprehensive file metadata
+
+    This is an alternative to client-side uploads for cases where the client
+    cannot or should not handle the S3 upload directly.
+
+    Args:
+        args (dict): Request arguments containing:
+            - folder (str): Target folder for upload
+            - file (FileStorage): Uploaded file object
+
+    Returns:
+        tuple: (response_dict, status_code) where response_dict contains:
+            - success: Boolean indicating upload success
+            - file_info: Object with file metadata including:
+                - object_key: Full S3 object key
+                - filename: Generated UUID filename
+                - original_filename: Original uploaded filename
+                - folder: Target folder
+                - content_type: Validated MIME type
+                - file_size: File size in bytes
+
+    Raises:
+        400: Invalid folder, missing file, or unsupported content type
+        500: Upload failed or internal server error
+        503: S3 storage not configured
     """
     try:
         folder = args.get('folder')

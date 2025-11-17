@@ -37,7 +37,11 @@ from ..controllers import (
 )
 
 
-support_admin_namespace = Namespace("admin/support", description="Admin support ticket operations")
+support_admin_namespace = Namespace(
+    "admin/support", description="Admin Support ticket operations"
+)
+
+
 
 
 @support_admin_namespace.route("/tickets")
@@ -635,28 +639,30 @@ class AdminTicketImageUpload(Resource):
     @admin_endpoint()
     @load_ticket(LoaderType.PARAM)
     @support_admin_namespace.doc(
-        description="Upload an image to any support ticket (Admin only, WebP only, max 5MB)",
+        description="Upload an image attachment to any support ticket (Admin privilege required)",
         params={
             "ticket_id": {
-                "description": "Ticket ID",
+                "description": "ID of the ticket to attach the image to",
                 "required": True,
                 "type": "integer",
+                "in": "path",
                 "example": 123
             },
             "file": {
-                "description": "Image file (WebP format, max 5MB)",
+                "description": "Image file to upload (PNG, JPEG, JPG, WebP formats supported, max 5MB)",
                 "in": "formData",
                 "required": True,
                 "type": "file"
             }
         },
         responses={
-            200: "Success - Image uploaded, returns image_url",
-            400: "Bad request - Invalid file type or size",
+            200: "Success - Image uploaded and attachment created with admin privileges",
+            400: "Bad request - No file provided, invalid format, or file too large",
             403: "Forbidden - Admin access required",
             404: "Not found - Ticket does not exist",
-            500: "Internal Server Error",
+            500: "Internal Server Error - Upload failed",
         },
+        consumes=['multipart/form-data']
     )
     def post(self, ticket_id: int, ticket, current_user: User, **kwargs):
         """
@@ -681,21 +687,23 @@ class AdminAttachmentDownload(Resource):
     @admin_endpoint()
     @load_attachment(LoaderType.PARAM)
     @support_admin_namespace.doc(
-        description="Download any support ticket attachment",
+        description="Download any support ticket attachment via secure proxy (Admin privilege required)",
         params={
             "attachment_id": {
-                "description": "Attachment ID",
+                "description": "ID of the attachment to download",
                 "required": True,
                 "type": "integer",
+                "in": "path",
                 "example": 123
             }
         },
         responses={
-            200: "Success - File streamed from S3",
+            200: "Success - File content streamed from S3 storage with admin privileges",
             403: "Forbidden - Admin access required",
-            404: "Not found - Attachment does not exist or file missing in storage",
-            500: "Internal Server Error",
+            404: "Not found - Attachment does not exist or file missing in S3 storage",
+            500: "Internal Server Error - Download failed",
         },
+        produces=['application/octet-stream', 'image/png', 'image/jpeg', 'image/webp']
     )
     def get(self, attachment_id: int, attachment, current_user: User, **kwargs):
         """
