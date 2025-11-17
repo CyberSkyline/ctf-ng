@@ -1,3 +1,4 @@
+import { COLOR_POSITIVE } from '@/constants';
 import { registerMyEvent, registerMyEventTeamJoin } from '@/hooks/events';
 import type { Event } from '@/types';
 import {
@@ -16,7 +17,7 @@ import RadixMarkdown from 'components/RadixMarkdown';
 import { isUndefined } from 'lodash';
 import { useState } from 'react';
 import { Controller } from 'react-hook-form';
-import { TbArrowRight, TbPlus } from 'react-icons/tb';
+import { TbArrowRight, TbDoorEnter, TbPlus } from 'react-icons/tb';
 import { useNavigate, useParams } from 'react-router';
 
 export default function RegistrationModal({ eventId, eventName, isTeamGame }: {eventId : Event['id'], eventName: string, isTeamGame: boolean}) {
@@ -53,7 +54,10 @@ export default function RegistrationModal({ eventId, eventName, isTeamGame }: {e
     <Modal
       title={`Register for ${eventName}`}
       trigger={(
-        <Button variant="soft">Register</Button>
+        <Button color={COLOR_POSITIVE}>
+          <TbDoorEnter />
+          Register
+        </Button>
       )}
       onSubmit={handleRegister}
       submitVerb="Register"

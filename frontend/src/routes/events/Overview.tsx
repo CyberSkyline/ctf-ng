@@ -12,7 +12,7 @@ import HeaderContainer from 'components/HeaderContainer';
 import ChallengesTab from './OverviewTabs/ChallengesTab';
 import LeaderboardTab from './OverviewTabs/LeaderboardTab';
 import TeamTab from './OverviewTabs/TeamTab';
-import RegistrationLine from './RegistrationLine';
+import RegistrationCard from './RegistrationCard';
 
 export default function Overview() {
   const [ searchParams, setSearchParams ] = useSearchParams();
@@ -51,9 +51,8 @@ export default function Overview() {
             event={data}
           >
             {isAuthenticated && data && (
-              <RegistrationLine event={data} />
+              <RegistrationCard event={data} />
             )}
-
             {isUnauthenticated && (
               <InfoCallout>
                 To participate in this event, please
