@@ -1104,6 +1104,33 @@ class Test_Event_Team_Start:
         assert "errors" in data
         assert "TEAM_HAS_STARTED" in data["errors"]["forbidden"]
 
+    def test_start_event_for_team_event_not_started(
+        self,
+        client_factory,
+        event_factory,
+        team_factory,
+        user_factory
+    ):
+        event = event_factory(
+            name = "Future Event for Team Start",
+            public = True,
+            start_time = datetime.utcnow() + timedelta(days = 1),
+            end_time = datetime.utcnow() + timedelta(days = 2),
+        )
+        user = user_factory(name = "futureuser", email = "futureuser@example.com")
+        client = client_factory(user = user)
+        team_factory(event = event, members = [user])
+
+        response = client.post(
+            self.post_endpoint(event.id),
+            json = {}
+        )
+        assert response.status_code == 403
+        data = response.get_json()
+        assert not data["success"]
+        assert "errors" in data
+        assert "EVENT_NOT_STARTED" in data["errors"]["forbidden"]
+
     def test_start_near_end_of_event_end_time_is_clamped(
         self,
         client_factory,
@@ -1134,6 +1161,7 @@ class Test_Event_Team_Start:
         assert "end_time" in data["data"]
         team_end_time = datetime.fromisoformat(data["data"]["end_time"]).replace(tzinfo=None)
         assert team_end_time <= event.end_time
+
 
 
 class Test_Event_Admin_Register:
