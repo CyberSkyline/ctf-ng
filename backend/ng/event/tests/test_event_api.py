@@ -1013,7 +1013,6 @@ class Test_Event_Team_Management:
             f"/ng/events/{event.id}/me/team/leave",
             json = {}
         )
-        print(response.get_json())
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
@@ -1854,5 +1853,3 @@ class Test_Event_Challenge_Statuses:
         assert progress["num_attempts_made"] == 0
         assert progress["num_unique_questions_attempted"] == 0
         assert progress["is_completed"] is False
-
-
