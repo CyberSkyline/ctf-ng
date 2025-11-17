@@ -39,6 +39,10 @@ def initial_admin_setup(admin_user = None) -> None:
         name=PermissionEnum.CAN_ACCESS_ADMIN_PANEL,
         description="Can access the admin panel",
     )
+    create_permission(
+        name=PermissionEnum.CAN_LEAVE_TEAM,
+        description="Can leave a team",
+    )
 
     create_role(
         name=RoleEnum.ADMIN,
