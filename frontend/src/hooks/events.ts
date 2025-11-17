@@ -69,23 +69,25 @@ export function useAdminEvent(eventId: number | null) {
 export function registerMyEvent(eventId: number, teamName: string) {
   return apiMutation(`/events/${eventId}/me/register`, { team_name : teamName }, {
     method : 'POST',
-  }).then(() => {
-    mutate('/users/me/events');
-    mutate('/users/me/teams');
-    mutate(`/events/${eventId}/me/team`);
+  }).then(() => Promise.all([
+    mutate('/users/me/events'),
+    mutate('/users/me/teams'),
+    mutate(`/events/${eventId}/me/team`),
+    mutate(`/permissions/${eventId}/me`),
+  ])).then(() => {
     mutate(`/events/${eventId}/me/eligibility`);
-    mutate(`/permissions/${eventId}/me`);
   });
 }
 export function registerMyEventTeamJoin(eventId: number, inviteCode: string) {
   return apiMutation(`/events/${eventId}/me/register`, { invite_code : inviteCode }, {
     method : 'POST',
-  }).then(() => {
-    mutate('/users/me/events');
-    mutate('/users/me/teams');
-    mutate(`/events/${eventId}/me/team`);
+  }).then(() => Promise.all([
+    mutate('/users/me/events'),
+    mutate('/users/me/teams'),
+    mutate(`/events/${eventId}/me/team`),
+    mutate(`/permissions/${eventId}/me`),
+  ])).then(() => {
     mutate(`/events/${eventId}/me/eligibility`);
-    mutate(`/permissions/${eventId}/me`);
   });
 }
 
@@ -142,7 +144,9 @@ export function leaveMyTeam(eventId: number) {
     mutate(`/events/${eventId}/me/team`);
     mutate('/users/me/teams');
     mutate('/users/me/events');
-    mutate(`/permissions/${eventId}/me`);
+    mutate(`/events/${eventId}/me/eligibility`);
+    // zero out permissions to avoid caching stale ones from previous registration
+    mutate(`/permissions/${eventId}/me`, { permissions : [] });
   });
 }
 
@@ -195,6 +199,9 @@ export function updateTeamName(eventId: number, teamName: Team['name']) {
     method : 'PUT',
   }).then(() => {
     mutate('/users/me/team');
+    mutate('/users/me/teams');
+    mutate(`/events/${eventId}/me/team`);
+    mutate(`/events/${eventId}/leaderboard`);
   });
 }
 

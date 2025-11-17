@@ -29,7 +29,6 @@ export interface Team {
   event_name?: string;
   member_count: number;
   ranked: boolean;
-  locked: boolean;
   invite_code?: string;
   start_timestamp: Date | null;
   end_time: Date | null;

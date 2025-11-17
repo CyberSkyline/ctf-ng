@@ -174,6 +174,25 @@ class TestUserScoringEndpoints:
         assert data["data"]["is_correct"] is False
         assert data["data"]["points"] == 0
 
+    def tests_submit_answer_already_correct(self, started_player_client, challenge_factory, question_factory):
+        challenge = challenge_factory(event_id=1)
+        question = question_factory(challenge_id=challenge.id)
+
+        started_player_client.post(
+            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/questions/{question.id}/submit",
+            json={"submission": question.answer},
+        )
+
+        response = started_player_client.post(
+            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/questions/{question.id}/submit",
+            json={"submission": question.answer},
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        print(data)
+        assert data["success"] is False
+
     def test_submit_answer_no_team(
         self,
         logged_in_client,
@@ -1012,15 +1031,6 @@ class TestAdminScoringEndpoints:
         """
         from ..models import Attempt
 
-        # Create a correct attempt
-        correct_attempt = Attempt.create_attempt(
-            user_id=user.id,
-            team_id=team_with_member.id,
-            challenge_id=challenge.id,
-            question_id=question.id,
-            submission=question.answer,  # Correct answer
-        )
-
         # Create a failed attempt (this is the key - failed attempts are now included!)
         failed_attempt = Attempt.create_attempt(
             user_id=user.id,
@@ -1028,6 +1038,15 @@ class TestAdminScoringEndpoints:
             challenge_id=challenge.id,
             question_id=question.id,
             submission="wrong answer",  # Wrong answer
+        )
+
+        # Create a correct attempt
+        correct_attempt = Attempt.create_attempt(
+            user_id=user.id,
+            team_id=team_with_member.id,
+            challenge_id=challenge.id,
+            question_id=question.id,
+            submission=question.answer,  # Correct answer
         )
 
         response = admin_client.get(

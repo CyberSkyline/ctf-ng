@@ -272,3 +272,45 @@ class NotificationService:
             path=f"/ng/teams/{team_id}",
             team_id=team_id
         )
+
+    @staticmethod
+    def notify_player_kicked_from_team(
+        kicked_user_id: int,
+        team_id: int,
+        team_name: str,
+        event_id: int,
+        event_name: str,
+        kicked_by_id: int | None = None,
+    ) -> None:
+        """
+        Notify player when they are kicked from a team (DB notification + Email)
+
+        Args:
+            kicked_user_id: ID of the user who was kicked
+            team_id: ID of the team they were kicked from
+            team_name: Name of the team
+            event_id: ID of the event
+            event_name: Name of the event
+            kicked_by_id: ID of the user who kicked them (admin or captain)
+        """
+        from ...emails.services.email_notification_service import TicketEmailService
+
+        notification = Notification.create_notification(
+            notification_type=NotificationType.TEAM_MEMBER_KICKED,
+            title="Removed from Team",
+            message=f"You have been removed from team '{team_name}' in event '{event_name}'",
+            recipient_id=kicked_user_id,
+            sender_id=kicked_by_id,
+            team_id=team_id,
+            event_id=event_id,
+        )
+
+        NotificationService._emit_notification(notification)
+
+        TicketEmailService.send_player_kicked_email(
+            kicked_user_id=kicked_user_id,
+            team_name=team_name,
+            event_name=event_name,
+            event_id=event_id,
+            kicked_by_id=kicked_by_id,
+        )

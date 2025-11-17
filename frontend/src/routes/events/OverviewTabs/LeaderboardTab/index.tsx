@@ -1,6 +1,6 @@
 import { radixTheme } from '@/grid';
 import { useLeaderboard } from '@/hooks/events';
-import { Container, Flex } from '@radix-ui/themes';
+import { Container, Flex, Spinner } from '@radix-ui/themes';
 import { AgGridReact } from 'ag-grid-react';
 import { ErrorCallout } from 'components/Callouts';
 import { useParams } from 'react-router';
@@ -50,6 +50,7 @@ export default function LeaderboardTab() {
           pagination
           paginationPageSize={20}
           domLayout="autoHeight"
+          loadingOverlayComponent={Spinner}
         />
       </Flex>
     </Container>

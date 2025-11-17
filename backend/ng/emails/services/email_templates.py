@@ -51,6 +51,16 @@ class MessageData(TypedDict):
     author_name: NotRequired[str]
 
 
+class TeamKickedData(TypedDict):
+    """
+    Type definition for team kicked notification data
+    """
+    team_name: str
+    event_name: str
+    kicked_by_name: NotRequired[str | None]
+    event_url: NotRequired[str | None]
+
+
 TEMPLATE_DIR = os.path.join(
     os.path.dirname(os.path.dirname(__file__)),
     'templates'
@@ -159,6 +169,36 @@ class TicketEmailTemplates:
             'message': message_data,
             'ticket_url': ticket_url,
             'reply_type': reply_type,
+        }
+
+        html_body = html_template.render(context)
+        text_body = text_template.render(context)
+
+        return subject, html_body.strip(), text_body.strip()
+
+    @staticmethod
+    def team_member_kicked(
+        team_kicked_data: TeamKickedData
+    ) -> tuple[str, str, str]:
+        """
+        Generate team member kicked notification email
+
+        Args:
+            team_kicked_data: Data about the kick event
+
+        Returns:
+            Tuple of (subject, html_body, text_body)
+        """
+        subject = f"Removed from Team: {team_kicked_data['team_name']}"
+
+        html_template = jinja_env.get_template('team_member_kicked.html')
+        text_template = jinja_env.get_template('team_member_kicked.txt')
+
+        context = {
+            'team_name': team_kicked_data['team_name'],
+            'event_name': team_kicked_data['event_name'],
+            'kicked_by_name': team_kicked_data.get('kicked_by_name'),
+            'event_url': team_kicked_data.get('event_url'),
         }
 
         html_body = html_template.render(context)
