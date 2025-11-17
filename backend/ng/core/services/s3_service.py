@@ -166,26 +166,6 @@ class S3Service:
             logger.error(f"Error uploading file to S3: {e}")
             return False
 
-    def download_file_stream(self, object_key: str) -> tuple[Any, int, str]:
-        """Stream file from S3 for proxy downloads (ticket attachments)"""
-        if not self.is_configured():
-            raise Exception("S3 service not configured")
-
-        try:
-            response = self.s3_client.get_object(
-                Bucket=self.bucket_name,
-                Key=object_key
-            )
-
-            content_type = response.get('ContentType', 'application/octet-stream')
-            content_length = response.get('ContentLength', 0)
-
-            return response['Body'], content_length, content_type
-
-        except ClientError as e:
-            logger.error(f"Error downloading file from S3: {e}")
-            raise
-
     def list_objects(self, prefix: str = '') -> list[dict[str, Any]]:
         """List objects in S3 bucket with prefix"""
         if not self.is_configured():
