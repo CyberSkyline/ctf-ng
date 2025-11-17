@@ -51,6 +51,7 @@ def initial_admin_setup(admin_user = None) -> None:
             PermissionEnum.CAN_PLAY_CHALLENGES,
             PermissionEnum.CAN_START_TEAM_TIMER,
             PermissionEnum.CAN_ACCESS_ADMIN_PANEL,
+            PermissionEnum.CAN_LEAVE_TEAM,
         ],
     )
     create_role(
