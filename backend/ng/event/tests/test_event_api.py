@@ -1075,6 +1075,33 @@ class Test_Event_Team_Start:
         assert "errors" in data
         assert "TEAM_HAS_STARTED" in data["errors"]["forbidden"]
 
+    def test_start_event_for_team_event_not_started(
+        self,
+        client_factory,
+        event_factory,
+        team_factory,
+        user_factory
+    ):
+        event = event_factory(
+            name = "Future Event for Team Start",
+            public = True,
+            start_time = datetime.utcnow() + timedelta(days = 1),
+            end_time = datetime.utcnow() + timedelta(days = 2),
+        )
+        user = user_factory(name = "futureuser", email = "futureuser@example.com")
+        client = client_factory(user = user)
+        team_factory(event = event, members = [user])
+
+        response = client.post(
+            self.post_endpoint(event.id),
+            json = {}
+        )
+        assert response.status_code == 403
+        data = response.get_json()
+        assert not data["success"]
+        assert "errors" in data
+        assert "EVENT_NOT_STARTED" in data["errors"]["forbidden"]
+
 
 class Test_Event_Admin_Register:
     def post_endpoint(self, event_id: int, user_id: int) -> str:
