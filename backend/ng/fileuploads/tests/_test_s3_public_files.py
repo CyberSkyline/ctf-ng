@@ -132,7 +132,7 @@ def test_direct_upload_file_no_file():
     assert 'error' in result
     assert 'Valid file is required' in result['error']
 
-    print("✓ No file validation test passed")
+    print("No file validation test passed")
 
 def test_direct_upload_file_invalid_folder():
     """Test direct upload with invalid folder"""
@@ -155,7 +155,7 @@ def test_direct_upload_file_invalid_folder():
     assert 'error' in result
     assert 'Invalid folder' in result['error']
 
-    print("✓ Invalid folder in direct upload test passed")
+    print("Invalid folder in direct upload test passed")
 
 @patch('ng.fileuploads.controllers.public_files.requests.put')
 def test_direct_upload_file_success(mock_requests_put):
@@ -208,7 +208,7 @@ def test_direct_upload_file_success(mock_requests_put):
         assert call_args[1]['headers']['Content-Type'] == 'image/png'
         assert call_args[1]['timeout'] == 60
 
-    print("✓ Direct upload success test passed")
+    print("Direct upload success test passed")
 
 def run_all_tests():
     """Run all S3 public files tests"""
@@ -228,7 +228,7 @@ def run_all_tests():
         return True
 
     except Exception as e:
-        print(f"\n❌ Test failed: {e}")
+        print(f"\nTest failed: {e}")
         import traceback
         traceback.print_exc()
         return False

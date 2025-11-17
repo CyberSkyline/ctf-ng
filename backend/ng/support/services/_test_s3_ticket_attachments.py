@@ -21,9 +21,9 @@ def test_s3_ticket_attachments():
 
     # Test config values
     from ng import config
-    print(f"✓ Max attachment size: {config.TICKET_ATTACHMENT_MAX_SIZE / (1024*1024)}MB")
-    print(f"✓ Allowed types: {config.TICKET_ATTACHMENT_ALLOWED_TYPES}")
-    print(f"✓ S3 prefix: {config.S3_TICKET_ATTACHMENTS_PREFIX}")
+    print(f"Max attachment size: {config.TICKET_ATTACHMENT_MAX_SIZE / (1024*1024)}MB")
+    print(f"Allowed types: {config.TICKET_ATTACHMENT_ALLOWED_TYPES}")
+    print(f"S3 prefix: {config.S3_TICKET_ATTACHMENTS_PREFIX}")
 
     # Test that all expected file types are allowed
     expected_types = ['png', 'jpeg', 'jpg', 'webp']
@@ -32,15 +32,15 @@ def test_s3_ticket_attachments():
     # Test S3 upload service can be imported
     try:
         from ng.support.services.s3_upload_service import AWSS3UploadService
-        print("✓ S3 upload service imports successfully")
+        print("S3 upload service imports successfully")
 
         # Test service instantiation
         service = AWSS3UploadService()
         assert service is not None
-        print("✓ S3 upload service can be instantiated")
+        print("S3 upload service can be instantiated")
 
     except Exception as e:
-        print(f"❌ S3 service import failed: {e}")
+        print(f"S3 service import failed: {e}")
         return False
 
     # Test mock file upload workflow
@@ -67,9 +67,9 @@ def test_s3_ticket_attachments():
             assert result is not None
             assert 'support-tickets/123/' in result['s3_key']
             assert result['file_size'] == 8
-            print("✓ Mock file upload test passed")
+            print("Mock file upload test passed")
 
-    print("🎉 All S3 ticket attachment tests passed!")
+    print("All S3 ticket attachment tests passed")
     return True
 
 if __name__ == "__main__":

@@ -42,7 +42,7 @@ class S3Service:
             logger.info(f"S3 Service configured for bucket: {self.bucket_name}")
 
         except Exception as e:
-            logger.error(f"❌ S3 Service configuration failed: {e}")
+            logger.error(f"S3 Service configuration failed: {e}")
             self._is_configured = False
 
     def is_configured(self) -> bool:
