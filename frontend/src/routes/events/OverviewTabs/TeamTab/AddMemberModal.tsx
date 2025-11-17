@@ -1,7 +1,8 @@
+import { COLOR_POSITIVE, ROUTEPREFIX } from '@/constants';
+import type { Team } from '@/types';
 import { Button, TextField } from '@radix-ui/themes';
 import Modal from 'components/Modal';
-import type { Team } from '@/types';
-import { COLOR_POSITIVE, ROUTEPREFIX } from '@/constants';
+import { TbShare } from 'react-icons/tb';
 
 export default function AddMemberModal({ eventId, inviteCode }: { eventId: Team['event_id'], inviteCode : Team['invite_code']}) {
   const inviteURL = `${window.location.origin}${ROUTEPREFIX}/events/${eventId}/invitecode/${inviteCode}`;
@@ -10,10 +11,10 @@ export default function AddMemberModal({ eventId, inviteCode }: { eventId: Team[
     <Modal
       trigger={(
         <Button
-          className="!max-w-32"
           color={COLOR_POSITIVE}
           variant="soft"
         >
+          <TbShare />
           Add Member
         </Button>
       )}
