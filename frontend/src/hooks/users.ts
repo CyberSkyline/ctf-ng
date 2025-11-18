@@ -5,7 +5,7 @@ import type {
   User,
   Workspace,
 } from '@/types';
-import useSWR from 'swr';
+import useSWR, { mutate } from 'swr';
 
 /**
  * Get the currently signed in user.
@@ -126,6 +126,18 @@ export function useUserEvents(userId: number | undefined) {
 
 export function useUserWorkspace(userId: number) {
   return useSWR<Workspace, Error>(`/admin/users/${userId}/container`);
+}
+
+export function restartWorkspace(userId : number) {
+  return apiMutation(`/admin/users/${userId}/container/restart`, undefined, {
+    method : 'POST',
+  }).then(() => mutate(`/admin/users/${userId}/container`));
+}
+
+export function recycleWorkspace(userId : number) {
+  return apiMutation(`/admin/users/${userId}/container/recycle`, undefined, {
+    method : 'POST',
+  }).then(() => mutate(`/admin/users/${userId}/container`));
 }
 
 export function impersonateUser(userId: number) {

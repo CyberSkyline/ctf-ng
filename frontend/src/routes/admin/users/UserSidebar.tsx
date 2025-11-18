@@ -12,6 +12,8 @@ import RoleBadge from 'components/RoleBadge';
 import { keyBy } from 'lodash';
 import AdminRegisterUserModal from './AdminRegisterUserModal';
 import ImpersonateUserButton from './ImpersonateUserButton';
+import RecycleWorkspaceModal from './RecycleWorkspaceModal';
+import RestartWorkspaceModal from './RestartWorkspaceModal';
 
 function RegistrationRow({ userId, team, event }: { userId: number, team: Team, event: Event }) {
   const { data : teamMembers } = useTeamMembers(team.id);
@@ -97,10 +99,11 @@ export default function UserSidebar({ entity }: { entity: User }) {
             <Table.ColumnHeaderCell>Id</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Host Ip</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Docker Id</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell align="right">Actions</Table.ColumnHeaderCell>
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          <Table.Row>
+          <Table.Row key={workspaceData?.id}>
             <Table.Cell>
               { workspaceData?.id }
             </Table.Cell>
@@ -109,6 +112,10 @@ export default function UserSidebar({ entity }: { entity: User }) {
             </Table.Cell>
             <Table.Cell>
               { workspaceData?.dockerid }
+            </Table.Cell>
+            <Table.Cell align="right">
+              <RestartWorkspaceModal userId={entity.id} />
+              <RecycleWorkspaceModal userId={entity.id} />
             </Table.Cell>
           </Table.Row>
         </Table.Body>
