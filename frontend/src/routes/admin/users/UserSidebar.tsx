@@ -1,6 +1,11 @@
 import { EventIcon, TeamIcon, UserIcon } from '@/constants';
 import { useTeamMembers } from '@/hooks/team';
-import { useUserEvents, useUserTeams, useUserWorkspace } from '@/hooks/users';
+import {
+  useUserEvents,
+  useUserTeams,
+  useUserWorkspace,
+  useWorkspaceStatus,
+} from '@/hooks/users';
 import type { Event, Team, User } from '@/types';
 import { Table } from '@radix-ui/themes';
 import AdminDataList from 'components/AdminDataList';
@@ -52,6 +57,7 @@ export default function UserSidebar({ entity }: { entity: User }) {
   const { data : teamsData, error : teamsError } = useUserTeams(entity.id);
   const { data : eventsData, error : eventsError } = useUserEvents(entity.id);
   const { data : workspaceData, error : workspaceError } = useUserWorkspace(entity.id);
+  const { data : workspaceStatus, error : workspaceStatusError } = useWorkspaceStatus(entity.id);
 
   const eventsMap = keyBy(eventsData, 'id');
 
@@ -93,12 +99,14 @@ export default function UserSidebar({ entity }: { entity: User }) {
 
       <AdminSidebarHeader title="Workspace" />
       {workspaceError && <ErrorCallout>{workspaceError.message}</ErrorCallout> }
+      {workspaceStatusError && <ErrorCallout>{workspaceStatusError.message}</ErrorCallout> }
       <Table.Root>
         <Table.Header>
           <Table.Row>
             <Table.ColumnHeaderCell>Id</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Host Ip</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Docker Id</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell align="right">Actions</Table.ColumnHeaderCell>
           </Table.Row>
         </Table.Header>
@@ -112,6 +120,9 @@ export default function UserSidebar({ entity }: { entity: User }) {
             </Table.Cell>
             <Table.Cell>
               { workspaceData?.dockerid }
+            </Table.Cell>
+            <Table.Cell>
+              { workspaceStatus }
             </Table.Cell>
             <Table.Cell align="right">
               <RestartWorkspaceModal userId={entity.id} />
