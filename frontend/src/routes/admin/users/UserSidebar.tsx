@@ -1,6 +1,6 @@
 import { EventIcon, TeamIcon, UserIcon } from '@/constants';
 import { useTeamMembers } from '@/hooks/team';
-import { useUserEvents, useUserTeams } from '@/hooks/users';
+import { useUserEvents, useUserTeams, useUserWorkspace } from '@/hooks/users';
 import type { Event, Team, User } from '@/types';
 import { Table } from '@radix-ui/themes';
 import AdminDataList from 'components/AdminDataList';
@@ -49,6 +49,7 @@ function RegistrationRow({ userId, team, event }: { userId: number, team: Team, 
 export default function UserSidebar({ entity }: { entity: User }) {
   const { data : teamsData, error : teamsError } = useUserTeams(entity.id);
   const { data : eventsData, error : eventsError } = useUserEvents(entity.id);
+  const { data : workspaceData, error : workspaceError } = useUserWorkspace(entity.id);
 
   const eventsMap = keyBy(eventsData, 'id');
 
@@ -89,6 +90,29 @@ export default function UserSidebar({ entity }: { entity: User }) {
       )}
 
       <AdminSidebarHeader title="Workspace" />
+      {workspaceError && <ErrorCallout>{workspaceError.message}</ErrorCallout> }
+      <Table.Root>
+        <Table.Header>
+          <Table.Row>
+            <Table.ColumnHeaderCell>Id</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell>Host Ip</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell>Docker Id</Table.ColumnHeaderCell>
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          <Table.Row>
+            <Table.Cell>
+              { workspaceData?.id }
+            </Table.Cell>
+            <Table.Cell>
+              { workspaceData?.hostip }
+            </Table.Cell>
+            <Table.Cell>
+              { workspaceData?.dockerid }
+            </Table.Cell>
+          </Table.Row>
+        </Table.Body>
+      </Table.Root>
     </AdminSidebar>
   );
 }

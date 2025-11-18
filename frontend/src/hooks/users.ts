@@ -1,5 +1,10 @@
 import { apiMutation } from '@/fetchers';
-import type { Event, Team, User } from '@/types';
+import type {
+  Event,
+  Team,
+  User,
+  Workspace,
+} from '@/types';
 import useSWR from 'swr';
 
 /**
@@ -117,6 +122,10 @@ export function useUserEvents(userId: number | undefined) {
   return useSWR<Event[], Error>(
     userId ? `/admin/users/${userId}/events` : null,
   );
+}
+
+export function useUserWorkspace(userId: number) {
+  return useSWR<Workspace, Error>(`/admin/users/${userId}/container`);
 }
 
 export function impersonateUser(userId: number) {

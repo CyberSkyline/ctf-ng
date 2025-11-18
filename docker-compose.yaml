@@ -85,5 +85,9 @@ services:
 
 networks:
   default:
+    driver: overlay
+    attachable: true
   internal:
+    driver: overlay
     internal: true
+    attachable: true
