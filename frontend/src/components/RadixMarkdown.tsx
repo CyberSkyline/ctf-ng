@@ -9,7 +9,28 @@ import {
   Text,
 } from '@radix-ui/themes';
 import ReactMarkdown, { type Components } from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
+
+const DISALLOWED_TAGS = [ 'input', 'picture', 'source', 'kbd', 'script' ];
+
+const SELF_ROOT_PATH = window.location.origin;
+const PRESCUP_DOMAIN = 'presidentscup.us';
+
+const SANITIZE_SCHEMA = {
+  ...defaultSchema,
+  tagNames : defaultSchema.tagNames?.filter((t) => !DISALLOWED_TAGS.includes(t)),
+  attributes : {
+    ...defaultSchema.attributes,
+    img : [
+      // Only allow src urls from predefined domains
+      [ 'src', new RegExp(`^${SELF_ROOT_PATH}`) ],
+      [ 'src', new RegExp(`^${PRESCUP_DOMAIN}`) ],
+    ],
+  },
+};
 
 /**
  * Mapping of html elements to their themed Radix UI counterparts to use when rendering markdown.
@@ -46,7 +67,7 @@ export default function RadixMarkdown({ children }: {
   children: string;
 }) {
   return (
-    <ReactMarkdown components={Components} remarkPlugins={[ remarkGfm ]}>
+    <ReactMarkdown components={Components} remarkPlugins={[ remarkBreaks, remarkGfm ]} rehypePlugins={[ rehypeRaw, [ rehypeSanitize, SANITIZE_SCHEMA ] ]}>
       {children}
     </ReactMarkdown>
   );
