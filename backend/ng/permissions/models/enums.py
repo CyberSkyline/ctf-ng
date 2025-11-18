@@ -10,6 +10,7 @@ class PermissionEnum(str,Enum):
     CAN_PLAY_CHALLENGES = "CAN_PLAY_CHALLENGES"
     CAN_START_TEAM_TIMER = "CAN_START_TEAM_TIMER"
     CAN_ACCESS_ADMIN_PANEL = "CAN_ACCESS_ADMIN_PANEL"
+    CAN_LEAVE_TEAM = "CAN_LEAVE_TEAM"
 
 class RoleEnum(str,Enum):
     ADMIN = "admin"
@@ -24,6 +25,7 @@ class DenyReason(Enum):
     EVENT_NOT_STARTED = auto()
     TEAM_NOT_STARTED = auto()
     TEAM_HAS_STARTED = auto()
+    CAPTAIN_CANNOT_LEAVE = auto()
     MISSING_ROLE = auto()
     GENERIC = auto()
     TIME_LIMIT_EXCEEDED = auto()
