@@ -16,12 +16,14 @@ from ..controllers import (
     list_tickets,
     get_ticket,
     create_ticket_message,
-    upload_ticket_attachment,
     download_attachment,
+    upload_attachment,
 )
 
 
 support_user_namespace = Namespace("support", description="Support ticket operations for users")
+
+
 
 
 @support_user_namespace.route("/tickets/create")
@@ -226,35 +228,37 @@ class CloseMyTicket(Resource):
         return success_response(closed_ticket)
 
 
-@support_user_namespace.route("/me/tickets/<int:ticket_id>/upload_image")
-class TicketImageUpload(Resource):
+@support_user_namespace.route("/me/tickets/<int:ticket_id>/upload")
+class AttachmentUpload(Resource):
     @user_endpoint()
     @load_ticket(LoaderType.PARAM)
     @check_ownership(resource_key="ticket", user_field="author_id")
     @support_user_namespace.doc(
-        description="Upload an image to a support ticket (WebP only, max 5MB)",
+        description="Upload an image attachment to your support ticket",
         params={
             "ticket_id": {
-                "description": "Ticket ID",
+                "description": "ID of the ticket to attach the image to",
                 "required": True,
                 "type": "integer",
+                "in": "path",
                 "example": 123
             },
             "file": {
-                "description": "Image file (WebP format, max 5MB)",
+                "description": "Image file to upload (PNG, JPEG, JPG, WebP formats supported, max 5MB)",
                 "in": "formData",
                 "required": True,
                 "type": "file"
             }
         },
         responses={
-            200: "Success - Image uploaded, returns image_url",
-            400: "Bad request - Invalid file type or size",
+            200: "Success - Image uploaded and attachment created",
+            400: "Bad request - No file provided, invalid format, or file too large",
             401: "Unauthorized - Authentication required",
             403: "Forbidden - You can only upload to your own tickets",
             404: "Not found - Ticket does not exist",
-            500: "Internal Server Error",
+            500: "Internal Server Error - Upload failed",
         },
+        consumes=['multipart/form-data']
     )
     def post(self, ticket_id: int, ticket, current_user: User, **kwargs):
         """
@@ -265,7 +269,7 @@ class TicketImageUpload(Resource):
 
         file = request.files['file']
 
-        attachment = upload_ticket_attachment(
+        attachment = upload_attachment(
             file=file,
             ticket=ticket,
             uploaded_by=current_user.id,
@@ -273,32 +277,33 @@ class TicketImageUpload(Resource):
 
         return success_response(attachment)
 
-
 @support_user_namespace.route("/me/attachments/<int:attachment_id>")
-class MyAttachmentDownload(Resource):
+class AttachmentDownload(Resource):
     @user_endpoint()
     @load_attachment(LoaderType.PARAM)
     @check_attachment_ownership()
     @support_user_namespace.doc(
-        description="Download an attachment from your own support ticket",
+        description="Download an attachment from user support ticket via presigned S3 URL redirect",
         params={
             "attachment_id": {
-                "description": "Attachment ID",
+                "description": "ID of the attachment to download",
                 "required": True,
                 "type": "integer",
+                "in": "path",
                 "example": 123
             }
         },
         responses={
-            200: "Success - File streamed from S3",
+            302: "Success - Redirect to presigned S3 URL for secure download (1 hour expiration)",
             401: "Unauthorized - Authentication required",
             403: "Forbidden - You can only download attachments from your own tickets",
-            404: "Not found - Attachment does not exist or file missing in storage",
-            500: "Internal Server Error",
-        },
+            404: "Not found - Attachment does not exist or file missing in S3 storage",
+            500: "Internal Server Error - Failed to generate presigned URL",
+            503: "Service Unavailable - S3 storage not configured",
+        }
     )
     def get(self, attachment_id: int, attachment, current_user: User, **kwargs):
         """
-        Download attachment via proxy
+        Download attachment via presigned URL redirect
         """
         return download_attachment(attachment=attachment)

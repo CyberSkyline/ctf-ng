@@ -5,7 +5,6 @@ Admin API routes for support tickets
 from flask import request
 from flask_restx import Namespace, Resource
 
-from ... import config
 from ...core.middleware import admin_endpoint
 from ...core.middleware.loaders import (
     LoaderType,
@@ -14,7 +13,7 @@ from ...core.middleware.loaders import (
     load_user,
     load_attachment,
 )
-from ...core.utils import success_response, error_response
+from ...core.utils import success_response
 from ...user.models import User
 
 from ..controllers import (
@@ -33,13 +32,15 @@ from ..controllers import (
     list_tickets,
     get_ticket,
     create_ticket_message,
-    upload_ticket_attachment,
     download_attachment,
-    search_ticket_attachments,
 )
 
 
-support_admin_namespace = Namespace("admin/support", description="Admin support ticket operations")
+support_admin_namespace = Namespace(
+    "admin/support", description="Admin Support ticket operations"
+)
+
+
 
 
 @support_admin_namespace.route("/tickets")
@@ -632,134 +633,75 @@ class AdminTag(Resource):
         return success_response(updated_tag)
 
 
-@support_admin_namespace.route("/tickets/<int:ticket_id>/upload_image")
-class AdminTicketImageUpload(Resource):
-    @admin_endpoint()
-    @load_ticket(LoaderType.PARAM)
-    @support_admin_namespace.doc(
-        description="Upload an image to any support ticket (Admin only, WebP only, max 5MB)",
-        params={
-            "ticket_id": {
-                "description": "Ticket ID",
-                "required": True,
-                "type": "integer",
-                "example": 123
-            },
-            "file": {
-                "description": "Image file (WebP format, max 5MB)",
-                "in": "formData",
-                "required": True,
-                "type": "file"
-            }
-        },
-        responses={
-            200: "Success - Image uploaded, returns image_url",
-            400: "Bad request - Invalid file type or size",
-            403: "Forbidden - Admin access required",
-            404: "Not found - Ticket does not exist",
-            500: "Internal Server Error",
-        },
-    )
-    def post(self, ticket_id: int, ticket, current_user: User, **kwargs):
-        """
-        Upload image to any ticket (admin)
-        """
-        if 'file' not in request.files:
-            return error_response("No file provided", "file", 400)
-
-        file = request.files['file']
-
-        attachment = upload_ticket_attachment(
-            file=file,
-            ticket=ticket,
-            uploaded_by=current_user.id,
-        )
-
-        return success_response(attachment)
-
-
 @support_admin_namespace.route("/attachments/<int:attachment_id>")
 class AdminAttachmentDownload(Resource):
     @admin_endpoint()
     @load_attachment(LoaderType.PARAM)
     @support_admin_namespace.doc(
-        description="Download any support ticket attachment",
+        description="Download any support ticket attachment via presigned S3 URL redirect (Admin privilege required)",
         params={
             "attachment_id": {
-                "description": "Attachment ID",
+                "description": "ID of the attachment to download",
                 "required": True,
                 "type": "integer",
+                "in": "path",
                 "example": 123
             }
         },
         responses={
-            200: "Success - File streamed from S3",
+            302: "Success - Redirect to presigned S3 URL for secure download (1 hour expiration)",
             403: "Forbidden - Admin access required",
-            404: "Not found - Attachment does not exist or file missing in storage",
-            500: "Internal Server Error",
-        },
+            404: "Not found - Attachment does not exist or file missing in S3 storage",
+            500: "Internal Server Error - Failed to generate presigned URL",
+            503: "Service Unavailable - S3 storage not configured",
+        }
     )
     def get(self, attachment_id: int, attachment, current_user: User, **kwargs):
         """
-        Download any attachment (admin access)
+        Download any attachment via presigned URL redirect (admin access)
         """
         return download_attachment(attachment=attachment)
 
 
-@support_admin_namespace.route("/attachments/search")
-class SearchTicketAttachments(Resource):
-    @admin_endpoint()
+@support_admin_namespace.route("/tickets/<int:ticket_id>/upload")
+class AdminAttachmentUpload(Resource):
+    @admin_endpoint(json_required=False)
+    @load_ticket(LoaderType.PARAM)
     @support_admin_namespace.doc(
-        description="Search ticket attachments by filename with case insensitive partial matching",
+        description="Direct ticket attachment upload for admins - server handles S3 upload behind the scenes",
         params={
-            "filename": {
-                "description": "Search term for filename",
+            "ticket_id": {
+                "description": "ID of the ticket to attach the file to",
                 "required": True,
-                "type": "string",
-                "example": "screenshot"
-            },
-            "limit": {
-                "description": "Maximum number of results to return",
-                "required": False,
                 "type": "integer",
-                "example": 100,
-                "default": 50
+                "in": "path",
+                "example": 123
             },
-            "offset": {
-                "description": "Number of results to skip for pagination",
-                "required": False,
-                "type": "integer",
-                "example": 0,
-                "default": 0
+            "file": {
+                "description": "File to upload",
+                "required": True,
+                "type": "file",
+                "in": "formData"
             }
         },
         responses={
-            200: "Success - Returns matching attachments with presigned URLs and pagination metadata",
-            400: "Bad request - Missing or invalid search parameters",
+            201: "Created - File uploaded successfully with admin privileges",
+            400: "Bad request - No file provided or invalid file type",
             403: "Forbidden - Admin access required",
-            500: "Internal Server Error",
-        },
+            404: "Not found - Ticket does not exist",
+            500: "Internal Server Error - Upload failed",
+            503: "Service Unavailable - S3 storage not configured",
+        }
     )
-    def get(self, current_user: User, **kwargs):
+    def post(self, ticket_id: int, ticket, current_user: User, **kwargs):
         """
-        Search ticket attachments by filename
+        Direct ticket attachment upload (admin with access to all tickets)
         """
-        filename_query = request.args.get('filename', '').strip()
+        from ..controllers.all_actions.upload_attachment import UploadAttachment
 
-        try:
-            limit = int(request.args.get('limit', config.DEFAULT_ATTACHMENT_SEARCH_LIMIT))
-            offset = int(request.args.get('offset', 0))
-        except ValueError:
-            return error_response(
-                "Limit and offset must be valid integers",
-                "pagination",
-                400
-            )
+        controller = UploadAttachment()
+        return controller.handle_direct_upload(ticket_id, current_user.id, ticket)
 
-        result = search_ticket_attachments(
-            filename_query=filename_query,
-            limit=limit,
-            offset=offset
-        )
 
-        return success_response(result)
+
+

@@ -25,7 +25,7 @@ TICKET_TAG_COLOR_MAX_LENGTH = 7 # Hex color code like #FF0000
 
 # Support ticket attachment upload config
 TICKET_ATTACHMENT_MAX_SIZE = 5 * 1024 * 1024  # 5MB in bytes
-TICKET_ATTACHMENT_ALLOWED_TYPES = ['webp']
+TICKET_ATTACHMENT_ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp']
 TICKET_ATTACHMENT_S3_KEY_MAX_LENGTH = 512
 TICKET_ATTACHMENT_BUCKET_NAME_MAX_LENGTH = 256
 TICKET_ATTACHMENT_FILENAME_MAX_LENGTH = 256
@@ -37,10 +37,12 @@ S3_DOWNLOAD_CHUNK_SIZE = 8192  # 8KB chunks for streaming downloads
 TICKET_ATTACHMENT_USER_DOWNLOAD_PATH = "/ng/support/me/attachments"
 TICKET_ATTACHMENT_ADMIN_DOWNLOAD_PATH = "/ng/admin/support/attachments"
 
-# Search configuration
-DEFAULT_ATTACHMENT_SEARCH_LIMIT = 50
-MAX_ATTACHMENT_SEARCH_LIMIT = 200
-MIN_SEARCH_QUERY_LENGTH = 3  # Minimum characters for search queries
+# Public file upload configuration
+PUBLIC_FILE_ALLOWED_FOLDERS = {
+    'sponsor-logos': ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'],
+    'event-cards': ['image/png', 'image/jpeg', 'image/webp'],
+    'favicons': ['image/x-icon', 'image/png', 'image/svg+xml']
+}
 
 # Scoring Cache Config & Model Length Limits
 LEADERBOARD_CACHE_TIMEOUT = 60  # Seconds

@@ -21,17 +21,7 @@ def upload_ticket_attachment(
     ticket: Ticket,
     uploaded_by: int,
 ) -> TicketAttachment:
-    """
-    Upload an attachment for a support ticket
-
-    Args:
-        file: File to upload
-        ticket: Ticket to attach file to
-        uploaded_by: User ID of uploader
-
-    Returns:
-        TicketAttachment with presigned URL
-    """
+    """Upload attachment for support ticket to private S3 storage"""
     if not file or not file.filename:
         raise ValidationError("No file provided")
 
