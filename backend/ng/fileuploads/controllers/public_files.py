@@ -212,14 +212,12 @@ def direct_upload_file(args):
         if not file or not isinstance(file, FileStorage) or not file.filename:
             return {"error": "Valid file is required"}, 400
 
-        # Get content type
         content_type = file.content_type or 'application/octet-stream'
         if content_type not in ALLOWED_FOLDERS[folder]:
             return {
                 "error": f"Invalid content type for {folder}. Allowed: {', '.join(ALLOWED_FOLDERS[folder])}"
             }, 400
 
-        # Generate presigned URL
         presigned_response = generate_upload_url({
             'folder': folder,
             'content_type': content_type
@@ -234,11 +232,9 @@ def direct_upload_file(args):
         if not presigned_url:
             return {"error": "Failed to generate presigned URL"}, 500
 
-        file.stream.seek(0, 2)
-        file_size = file.stream.tell()
         file.stream.seek(0)
         file_data = file.stream.read()
-        file.stream.seek(0)
+        file_size = len(file_data)
 
         upload_response = requests.put(
             presigned_url,

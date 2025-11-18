@@ -12,6 +12,8 @@ from .all_actions import (
     list_tickets,
     upload_ticket_attachment,
     download_attachment,
+
+    upload_attachment,
 )
 from .admin_actions import (
     create_tag,
@@ -38,6 +40,8 @@ __all__ = [
     "list_tickets",
     "upload_ticket_attachment",
     "download_attachment",
+
+    "upload_attachment",
     # Admin actions
     "create_tag",
     "update_tag",

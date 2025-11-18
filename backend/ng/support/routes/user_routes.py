@@ -16,8 +16,8 @@ from ..controllers import (
     list_tickets,
     get_ticket,
     create_ticket_message,
-    upload_ticket_attachment,
     download_attachment,
+    upload_attachment,
 )
 
 
@@ -228,8 +228,8 @@ class CloseMyTicket(Resource):
         return success_response(closed_ticket)
 
 
-@support_user_namespace.route("/me/tickets/<int:ticket_id>/upload_image")
-class TicketImageUpload(Resource):
+@support_user_namespace.route("/me/tickets/<int:ticket_id>/upload")
+class AttachmentUpload(Resource):
     @user_endpoint()
     @load_ticket(LoaderType.PARAM)
     @check_ownership(resource_key="ticket", user_field="author_id")
@@ -269,7 +269,7 @@ class TicketImageUpload(Resource):
 
         file = request.files['file']
 
-        attachment = upload_ticket_attachment(
+        attachment = upload_attachment(
             file=file,
             ticket=ticket,
             uploaded_by=current_user.id,
@@ -277,9 +277,8 @@ class TicketImageUpload(Resource):
 
         return success_response(attachment)
 
-
 @support_user_namespace.route("/me/attachments/<int:attachment_id>")
-class MyAttachmentDownload(Resource):
+class AttachmentDownload(Resource):
     @user_endpoint()
     @load_attachment(LoaderType.PARAM)
     @check_attachment_ownership()

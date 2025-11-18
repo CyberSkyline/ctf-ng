@@ -32,8 +32,8 @@ from ..controllers import (
     list_tickets,
     get_ticket,
     create_ticket_message,
-    upload_ticket_attachment,
     download_attachment,
+    upload_attachment,
 )
 
 
@@ -673,7 +673,7 @@ class AdminTicketImageUpload(Resource):
 
         file = request.files['file']
 
-        attachment = upload_ticket_attachment(
+        attachment = upload_attachment(
             file=file,
             ticket=ticket,
             uploaded_by=current_user.id,
@@ -710,4 +710,47 @@ class AdminAttachmentDownload(Resource):
         Download any attachment via presigned URL redirect (admin access)
         """
         return download_attachment(attachment=attachment)
+
+
+@support_admin_namespace.route("/tickets/<int:ticket_id>/upload")
+class AdminAttachmentUpload(Resource):
+    @admin_endpoint(json_required=False)
+    @load_ticket(LoaderType.PARAM)
+    @support_admin_namespace.doc(
+        description="Direct ticket attachment upload for admins - server handles S3 upload behind the scenes",
+        params={
+            "ticket_id": {
+                "description": "ID of the ticket to attach the file to",
+                "required": True,
+                "type": "integer",
+                "in": "path",
+                "example": 123
+            },
+            "file": {
+                "description": "File to upload (multipart/form-data field)",
+                "required": True,
+                "type": "file",
+                "in": "formData"
+            }
+        },
+        responses={
+            201: "Created - File uploaded successfully with admin privileges",
+            400: "Bad request - No file provided or invalid file type",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Ticket does not exist",
+            500: "Internal Server Error - Upload failed",
+            503: "Service Unavailable - S3 storage not configured",
+        }
+    )
+    def post(self, ticket_id: int, ticket, current_user: User, **kwargs):
+        """
+        Direct ticket attachment upload (admin with access to all tickets)
+        """
+        from ..controllers.all_actions.upload_attachment import UploadAttachment
+
+        controller = UploadAttachment()
+        return controller.handle_direct_upload(ticket_id, current_user.id, ticket)
+
+
+
 

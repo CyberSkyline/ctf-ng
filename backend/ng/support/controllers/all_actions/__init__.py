@@ -8,10 +8,14 @@ from .list_tickets import list_tickets
 from .upload_ticket_attachment import upload_ticket_attachment
 from .download_attachment import download_attachment
 
+from .upload_attachment import upload_attachment
+
 __all__ = [
     "create_ticket_message",
     "get_ticket",
     "list_tickets",
     "upload_ticket_attachment",
     "download_attachment",
+
+    "upload_attachment",
 ]
