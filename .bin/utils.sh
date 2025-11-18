@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 SCRIPT_DIR=$(dirname $BASH_SOURCE)
 ENV_PATH=$(realpath "$SCRIPT_DIR/../.env")
 
@@ -40,4 +42,8 @@ check_ctfd_running() {
     exit 1
   fi
   echo "$container_name"
+}
+
+get_current_commit() {
+  git log --no-color -n 1 --pretty=format:%H | tr -d '[:space:]'
 }
