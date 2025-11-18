@@ -13,7 +13,7 @@ from ...core.middleware.loaders import (
     load_user,
     load_attachment,
 )
-from ...core.utils import success_response, error_response
+from ...core.utils import success_response
 from ...user.models import User
 
 from ..controllers import (
@@ -33,7 +33,6 @@ from ..controllers import (
     get_ticket,
     create_ticket_message,
     download_attachment,
-    upload_attachment,
 )
 
 
@@ -634,54 +633,6 @@ class AdminTag(Resource):
         return success_response(updated_tag)
 
 
-@support_admin_namespace.route("/tickets/<int:ticket_id>/upload_image")
-class AdminTicketImageUpload(Resource):
-    @admin_endpoint()
-    @load_ticket(LoaderType.PARAM)
-    @support_admin_namespace.doc(
-        description="Upload an image attachment to any support ticket (Admin privilege required)",
-        params={
-            "ticket_id": {
-                "description": "ID of the ticket to attach the image to",
-                "required": True,
-                "type": "integer",
-                "in": "path",
-                "example": 123
-            },
-            "file": {
-                "description": "Image file to upload (PNG, JPEG, JPG, WebP formats supported, max 5MB)",
-                "in": "formData",
-                "required": True,
-                "type": "file"
-            }
-        },
-        responses={
-            200: "Success - Image uploaded and attachment created with admin privileges",
-            400: "Bad request - No file provided, invalid format, or file too large",
-            403: "Forbidden - Admin access required",
-            404: "Not found - Ticket does not exist",
-            500: "Internal Server Error - Upload failed",
-        },
-        consumes=['multipart/form-data']
-    )
-    def post(self, ticket_id: int, ticket, current_user: User, **kwargs):
-        """
-        Upload image to any ticket (admin)
-        """
-        if 'file' not in request.files:
-            return error_response("No file provided", "file", 400)
-
-        file = request.files['file']
-
-        attachment = upload_attachment(
-            file=file,
-            ticket=ticket,
-            uploaded_by=current_user.id,
-        )
-
-        return success_response(attachment)
-
-
 @support_admin_namespace.route("/attachments/<int:attachment_id>")
 class AdminAttachmentDownload(Resource):
     @admin_endpoint()
@@ -727,7 +678,7 @@ class AdminAttachmentUpload(Resource):
                 "example": 123
             },
             "file": {
-                "description": "File to upload (multipart/form-data field)",
+                "description": "File to upload",
                 "required": True,
                 "type": "file",
                 "in": "formData"
