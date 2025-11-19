@@ -274,3 +274,10 @@ export interface Announcement {
   sender_name: string;
   type: string;
 }
+
+export interface Workspace {
+  id : number;
+  hostip : string;
+  dockerid : string;
+  user : number;
+}

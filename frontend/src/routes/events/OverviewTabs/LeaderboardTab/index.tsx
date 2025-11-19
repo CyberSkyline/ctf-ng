@@ -51,6 +51,8 @@ export default function LeaderboardTab() {
           paginationPageSize={20}
           domLayout="autoHeight"
           loadingOverlayComponent={Spinner}
+          suppressCellFocus
+          suppressHeaderFocus
         />
       </Flex>
     </Container>

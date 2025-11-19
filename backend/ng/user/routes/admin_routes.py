@@ -198,7 +198,7 @@ class UserIndvidualContainerRestart(Resource):
         }
     )
     @load_indvidual_container_by_user()
-    def get(self, indvidual_container, user_id, **kwargs):
+    def post(self, indvidual_container, user_id, **kwargs):
         indvidual_container.restart()
         return success_response(True)
 
@@ -213,7 +213,7 @@ class UserIndvidualContainerRecycle(Resource):
         }
     )
     @load_indvidual_container_by_user()
-    def get(self, user_id, indvidual_container, **kwargs):
+    def post(self, user_id, indvidual_container, **kwargs):
         indvidual_container.recycle()
         res = indvidual_container.serialize()
         return success_response(res)

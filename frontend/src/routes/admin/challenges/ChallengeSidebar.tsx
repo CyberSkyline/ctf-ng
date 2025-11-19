@@ -1,10 +1,11 @@
-import { COLOR_INFO, DeploymentIcon, EventIcon } from '@/constants';
+import { DeploymentIcon, EventIcon } from '@/constants';
 import type { Challenge } from '@/types';
-import { Button, Tabs } from '@radix-ui/themes';
+import { Tabs } from '@radix-ui/themes';
+import AdminLink from 'components/AdminLink';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import ChallengeIcon from 'components/ChallengeIcon';
-import { Link, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 import ChallengeDownloadButton from './ChallengeDownloadButton';
 import ChallengeUpdateModal from './ChallengeUpdateModal';
 import ChallengeAttemptsTab from './SidebarTabs/ChallengeAttemptsTab';
@@ -17,25 +18,21 @@ export default function ChallengeSidebar({ entity }: {entity: Challenge}) {
   return (
     <AdminSidebar>
       <AdminSidebarHeader title={entity.name} icon={<ChallengeIcon icon={entity.icon} />}>
-        <Button variant="soft" color={COLOR_INFO} asChild>
-          <Link to={`/admin/events?id=${entity.event_id}`}>
-            <EventIcon />
-            Event
-          </Link>
-        </Button>
-        <Button variant="soft" color={COLOR_INFO} asChild>
-          <Link
-            to={`/admin/deployments/?filter=${btoa(JSON.stringify(
-              {
-                challenge_name : { filterType : 'text', type : 'equals', filter : entity.name },
-                event_name : { filterType : 'text', type : 'equals', filter : entity.event_name },
-              },
-            ))}`}
-          >
-            <DeploymentIcon />
-            Deployments
-          </Link>
-        </Button>
+        <AdminLink
+          to="/admin/events"
+          id={entity.event_id}
+          icon={EventIcon}
+          label="Event"
+        />
+        <AdminLink
+          to="/admin/deployments"
+          filter={{
+            challenge_name : { filterType : 'text', type : 'equals', filter : entity.name },
+            event_name : { filterType : 'text', type : 'equals', filter : entity.event_name },
+          }}
+          icon={DeploymentIcon}
+          label="Deployments"
+        />
         <ChallengeUpdateModal challengeId={entity.id} />
         <ChallengeDownloadButton challenge={entity} />
       </AdminSidebarHeader>

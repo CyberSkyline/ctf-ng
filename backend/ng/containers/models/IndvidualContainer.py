@@ -1,4 +1,5 @@
 from CTFd.models import db
+from CTFd.utils import get_app_config
 import docker
 from typing import TypedDict
 from ... import config
@@ -75,8 +76,9 @@ class IndvidualContainer(db.Model):
 
     @staticmethod
     def run_container(client, container_name):
+        NOVNC_CONTAINER = get_app_config("NOVNC_CONTAINER")
         return client.containers.run(
-            config.NOVNC_CONTAINER,
+            NOVNC_CONTAINER,
             name=container_name,
             detach=True,
             publish_all_ports=True,
@@ -103,13 +105,15 @@ class IndvidualContainer(db.Model):
         network.connect(ctr)
 
     def get_novnc_port(self):
+        NOVNC_PORT = get_app_config("NOVNC_PORT")
+
         client = get_client(self.hostip)
 
         ctr_info = client.api.inspect_container(self.dockerid)
         ports = ctr_info["NetworkSettings"]["Ports"]
 
         ## Port entries are an array of two one ipv4 one v6
-        host_port = ports[f"{config.NOVNC_PORT}/tcp"][0]["HostPort"]
+        host_port = ports[f"{NOVNC_PORT}/tcp"][0]["HostPort"]
 
         return host_port
 

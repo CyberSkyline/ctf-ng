@@ -1,17 +1,16 @@
 import {
   ChallengeIcon,
-  COLOR_INFO,
   DeploymentIcon,
   EventIcon,
   TeamIcon,
 } from '@/constants';
 import { useDeploymentServices } from '@/hooks/container';
 import type { Deployment } from '@/types';
-import { Button, Grid, Skeleton } from '@radix-ui/themes';
+import { Grid, Skeleton } from '@radix-ui/themes';
+import AdminLink from 'components/AdminLink';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { ErrorCallout } from 'components/Callouts';
-import { Link } from 'react-router';
 import ServiceCard from './ServiceCard';
 
 export default function DeploymentSidebar({ entity }: {entity: Deployment}) {
@@ -20,24 +19,24 @@ export default function DeploymentSidebar({ entity }: {entity: Deployment}) {
   return (
     <AdminSidebar>
       <AdminSidebarHeader title={`${entity.challenge_name} - ${entity.team_name}`} icon={<DeploymentIcon />}>
-        <Button variant="soft" color={COLOR_INFO} asChild>
-          <Link to={`/admin/challenges?id=${entity.id}`}>
-            <ChallengeIcon />
-            Challenge
-          </Link>
-        </Button>
-        <Button variant="soft" color={COLOR_INFO} asChild>
-          <Link to={`/admin/teams?id=${entity.team_id}`}>
-            <TeamIcon />
-            Team
-          </Link>
-        </Button>
-        <Button variant="soft" color={COLOR_INFO} asChild>
-          <Link to={`/admin/events?id=${entity.event_id}`}>
-            <EventIcon />
-            Event
-          </Link>
-        </Button>
+        <AdminLink
+          to="/admin/challenges"
+          id={entity.challenge_id}
+          icon={ChallengeIcon}
+          label="Challenge"
+        />
+        <AdminLink
+          to="/admin/teams"
+          id={entity.team_id}
+          icon={TeamIcon}
+          label="Team"
+        />
+        <AdminLink
+          to="/admin/events"
+          id={entity.event_id}
+          icon={EventIcon}
+          label="Event"
+        />
       </AdminSidebarHeader>
 
       <AdminSidebarHeader title="Services" />

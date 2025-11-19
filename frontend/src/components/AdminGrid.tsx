@@ -1,4 +1,5 @@
 import { radixTheme } from '@/grid';
+import { base64ToUtf8, utf8ToBase64 } from '@/util';
 import { Flex, Spinner } from '@radix-ui/themes';
 import type { ColDef, GridApi, GridOptions } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
@@ -63,7 +64,7 @@ export default function AdminGrid<T>({
     if (searchParams.has('filter')) {
       const filterModel = searchParams.get('filter')!;
       try {
-        gridApi.setFilterModel(JSON.parse(atob(filterModel)));
+        gridApi.setFilterModel(JSON.parse(base64ToUtf8(filterModel)));
       } catch {
         // If parsing fails, reset filters
         gridApi.setFilterModel({});
@@ -80,7 +81,7 @@ export default function AdminGrid<T>({
         const filter = searchParams.get('filter');
         if (filter) {
           try {
-            return JSON.parse(atob(filter));
+            return JSON.parse(base64ToUtf8(filter));
           } catch {
             return {};
           }
@@ -138,7 +139,7 @@ export default function AdminGrid<T>({
           // Update the URL when grid filter model changes
             const filterModel = params.api.getFilterModel();
             if (Object.keys(filterModel).length > 0) {
-              const filterString = btoa(JSON.stringify(filterModel));
+              const filterString = utf8ToBase64(JSON.stringify(filterModel));
 
               // don't double nav if the filter won't change
               if (searchParams.get('filter') === filterString) return;
