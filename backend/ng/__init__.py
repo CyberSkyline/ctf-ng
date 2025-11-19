@@ -34,6 +34,7 @@ from .scoring.models.HintRedemption import HintRedemption  # noqa: F401
 from .scoring.models.ManualPointAward import ManualPointAward  # noqa: F401
 from .notifications.models.Notification import Notification  # noqa: F401
 from .announcements.models.Announcement import Announcement  # noqa: F401
+from .feedback.models.Feedback import Feedback  # noqa: F401
 
 
 logger = get_logger(__name__)
