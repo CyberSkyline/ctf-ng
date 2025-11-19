@@ -7,9 +7,6 @@ from ..constants import DOCKER_RUNNING, DOCKER_BRIDGE
 from ..utils.get_client import get_client
 from .ContainerInstance import ContainerInstance
 
-NOVNC_CONTAINER = get_app_config("NOVNC_CONTAINER")
-NOVNC_PORT = get_app_config("NOVNC_PORT")
-
 class SerializedIndvidualContainerInfo(TypedDict):
     id: int
     hostip: str
@@ -79,6 +76,7 @@ class IndvidualContainer(db.Model):
 
     @staticmethod
     def run_container(client, container_name):
+        NOVNC_CONTAINER = get_app_config("NOVNC_CONTAINER")
         return client.containers.run(
             NOVNC_CONTAINER,
             name=container_name,
@@ -107,6 +105,8 @@ class IndvidualContainer(db.Model):
         network.connect(ctr)
 
     def get_novnc_port(self):
+        NOVNC_PORT = get_app_config("NOVNC_PORT")
+
         client = get_client(self.hostip)
 
         ctr_info = client.api.inspect_container(self.dockerid)
