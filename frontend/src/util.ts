@@ -31,7 +31,7 @@ export function utf8ToBase64(str: string): string {
  */
 export function base64ToUtf8(str: string): string {
   const binary = atob(str);
-  const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+  const bytes = Uint8Array.from(binary, (c) => c.codePointAt(0) as number);
   const decoder = new TextDecoder();
   return decoder.decode(bytes);
 }
