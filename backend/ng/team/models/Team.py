@@ -152,6 +152,12 @@ class Team(db.Model):
             )
             if res:
                 raise ValidationError(f"Team name '{data['name']}' already exists in event ID {data['event_id']}.")
+        if "start_timestamp" in data and "end_time" in data:
+            validator.validate_time_window(data, start_field="start_timestamp", end_field="end_time")
+        elif "start_timestamp" in data:
+            validator.validate_datetime(data, "start_timestamp", friendly_name="Start Timestamp")
+        elif "end_time" in data:
+            validator.validate_datetime(data, "end_time", friendly_name="End Time")
 
         return validator.validate()
 
@@ -258,7 +264,11 @@ class Team(db.Model):
 
     def set_end_time(self, end_time: datetime | None = None, commit=True):
         """Set the team's end time."""
-        self.end_time = end_time
+        end_time = end_time.replace(tzinfo=None)
+        if self.event.end_time and end_time > self.event.end_time:
+            self.end_time = self.event.end_time
+        else:
+            self.end_time = end_time
         if commit:
             db.session.commit()
 

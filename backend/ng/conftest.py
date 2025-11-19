@@ -1253,3 +1253,5 @@ def other_user_ticket(db_session, user_factory, event):
     db_session.add(ticket)
     db_session.commit()
     return ticket
+
+

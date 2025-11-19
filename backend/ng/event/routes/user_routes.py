@@ -2,7 +2,6 @@
 User Routes for Event Operations
 """
 
-from datetime import datetime
 from flask_restx import Namespace, Resource
 
 from CTFd.models import db
@@ -39,12 +38,11 @@ from ...containers.controllers.recycle_containers import recycle_containers
 
 from ...user.models.User import User
 from ...team.models.Team import Team
-from ...team.models.enums import TeamRole
-from ...team.models.TeamMember import TeamMember
 from ...event.models.Event import Event
 from ...event.models.Demographic import Demographic
 from ...challenge.models.Challenge import Challenge
 from ...permissions.models.enums import PermissionEnum
+from ...notifications.services.notification_service import NotificationService
 
 
 events_user_namespace = Namespace(
@@ -309,6 +307,7 @@ class EventTeamKick(Resource):
         team: Team,
         permissions,
         current_user: User,
+        event: Event,
         **kwargs
     ):
         """
@@ -328,6 +327,16 @@ class EventTeamKick(Resource):
             demographic = Demographic.find_by_user_and_event(user_id, event_id)
             demographic.delete(commit = False)
             db.session.commit()
+
+            NotificationService.notify_player_kicked_from_team(
+                kicked_user_id=user_id,
+                team_id=team.id,
+                team_name=team.name,
+                event_id=event_id,
+                event_name=event.name,
+                kicked_by_id=current_user.ctfd_user.id,
+            )
+
         except Exception as e:
             db.session.rollback()
             raise e
@@ -386,6 +395,7 @@ class EventTeamLeave(Resource):
     @user_endpoint()
     @load_event(source = LoaderType.PARAM)
     @load_team_by_user_and_event()
+    @check_permissions(PermissionEnum.CAN_LEAVE_TEAM, "You do not have permission to leave your team.")
     @events_user_namespace.doc(
         description="Leave the user's team in the event.",
         responses={
@@ -394,26 +404,10 @@ class EventTeamLeave(Resource):
             404: "Not Found if user is not part of a team",
         },
     )
-    def post(self, event_id, event, team, current_user, **kwargs):
+    def post(self, event_id, event, team, current_user, permissions, **kwargs):
         """
         Leave the user's team in the event
         """
-        team_member = TeamMember.find_by_user_and_team(
-            current_user.id,
-            team.id
-        )
-        if event.end_time and event.end_time < datetime.utcnow():
-            return error_response(
-                "You cannot leave the team after the event has ended.",
-                "forbidden",
-                403
-            )
-        if len(team.members) > 1 and team_member.role == TeamRole.CAPTAIN:
-            return error_response(
-                "You cannot leave the team as a captain. Please promote another member first.",
-                "forbidden",
-                403,
-            )
 
         remove_member(team, current_user)
         return success_response()

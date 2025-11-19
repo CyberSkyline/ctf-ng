@@ -155,4 +155,3 @@ class InstanceExec(Resource):
         # the int variable in the url
         container_instance_id = int(request.headers.get('container-id'))
         return admin_exec(container_instance_id)
-

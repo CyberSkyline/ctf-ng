@@ -1,21 +1,14 @@
 import { useMyTeam, useMyTeamMembers } from '@/hooks/events';
 import { useCurrentUser } from '@/hooks/users';
-import {
-  Container,
-  Flex,
-  Table,
-  Text,
-} from '@radix-ui/themes';
+import { Container, Flex, Table } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
 import RequireEventPermission from 'components/RequireEventPermission';
 import RoleBadge from 'components/RoleBadge';
-import { find, isUndefined, map } from 'lodash';
-import { useMemo } from 'react';
+import Statistic from 'components/Statistic';
+import { isUndefined, map } from 'lodash';
 import { useParams } from 'react-router';
 import AddMemberModal from './AddMemberModal';
 import AssignCaptainModal from './AssignCaptainModal';
-import EditTeamName from './EditTeamName';
-import LeaveTeamModal from './LeaveTeamModal';
 import RemovePlayerModal from './RemovePlayerModal';
 
 export default function TeamManagement() {
@@ -25,13 +18,6 @@ export default function TeamManagement() {
   const { data : team, error : teamError } = useMyTeam(Number(idEvent));
 
   const { data : fullMembersList, error : fullMembersError } = useMyTeamMembers(team?.event_id);
-
-  const userIsCaptain = useMemo(() => !!find(fullMembersList, (member) => {
-    if (member.user_id === currentUser?.id) {
-      return member.role === 'captain';
-    }
-    return false;
-  }), [ fullMembersList, currentUser ]);
 
   if (teamError || fullMembersError) {
     return (
@@ -51,17 +37,16 @@ export default function TeamManagement() {
 
   return (
     <Container size="4">
-
-      <RequireEventPermission
-        permission="CAN_EDIT_TEAM"
-        eventId={eventId}
-        permissionDeniedPlaceholder={<Text>{`Team Name: ${teamName}`}</Text>}
-      >
-        <Flex gap="3" direction="row" justify="between">
-          <EditTeamName eventId={eventId} defaultTeamName={teamName} />
+      <Flex gap="3" direction="row" justify="between" align="center" mb="3">
+        <Statistic label="Your Team" value={teamName} />
+        <RequireEventPermission
+          permission="CAN_EDIT_TEAM"
+          eventId={eventId}
+          permissionDeniedPlaceholder={null}
+        >
           {!isUndefined(team.invite_code) && <AddMemberModal inviteCode={team.invite_code} eventId={eventId} />}
-        </Flex>
-      </RequireEventPermission>
+        </RequireEventPermission>
+      </Flex>
 
       <Table.Root>
         <Table.Header>
@@ -93,26 +78,20 @@ export default function TeamManagement() {
                     permissionDeniedPlaceholder={null}
                   >
                     {id !== currentUser?.id && (
-                      <>
-                        <RemovePlayerModal
-                          eventId={eventId}
-                          userId={id}
-                          name={name}
-                        />
-                        <AssignCaptainModal
-                          eventId={eventId}
-                          userId={id}
-                          name={name}
-                        />
-                      </>
+                      <RemovePlayerModal
+                        eventId={eventId}
+                        userId={id}
+                        name={name}
+                      />
+                    )}
+                    {role !== 'captain' && (
+                      <AssignCaptainModal
+                        eventId={eventId}
+                        userId={id}
+                        name={name}
+                      />
                     )}
                   </RequireEventPermission>
-                  { !team.locked && id === currentUser?.id && (
-                    <LeaveTeamModal
-                      eventId={eventId}
-                      transferCaptain={userIsCaptain && team.member_count !== 1}
-                    />
-                  )}
                 </Flex>
               </Table.Cell>
             </Table.Row>

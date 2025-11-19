@@ -175,37 +175,4 @@ class TicketAttachment(db.Model):
         """
         return cls.query.get(attachment_id)
 
-    @classmethod
-    def search_by_filename(
-        cls,
-        filename_query: str,
-        limit: int = config.DEFAULT_ATTACHMENT_SEARCH_LIMIT,
-        offset: int = 0
-    ) -> tuple[list[TicketAttachment], int]:
-        """
-        Search attachments by filename with case insensitive partial matching
-
-        Args:
-            filename_query: Search term to match against filename
-            limit: Maximum number of results to return
-            offset: Number of results to skip
-
-        Returns:
-            Tuple of (list of matching attachments, total count)
-        """
-        search_pattern = f"%{filename_query}%"
-
-        query = cls.query.join(
-            FileUpload, cls.file_upload_id == FileUpload.id
-        ).filter(
-            FileUpload.filename.ilike(search_pattern)
-        )
-
-        attachments = query.order_by(
-            FileUpload.uploaded_at.desc()
-        ).limit(limit).offset(offset).all()
-
-        total_count = query.count()
-
-        return attachments, total_count
 

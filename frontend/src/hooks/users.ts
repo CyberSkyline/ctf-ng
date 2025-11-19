@@ -1,5 +1,11 @@
-import type { Event, Team, User } from '@/types';
-import useSWR from 'swr';
+import { apiMutation } from '@/fetchers';
+import type {
+  Event,
+  Team,
+  User,
+  Workspace,
+} from '@/types';
+import useSWR, { mutate } from 'swr';
 
 /**
  * Get the currently signed in user.
@@ -116,6 +122,28 @@ export function useUserEvents(userId: number | undefined) {
   return useSWR<Event[], Error>(
     userId ? `/admin/users/${userId}/events` : null,
   );
+}
+
+export function useUserWorkspace(userId: number) {
+  return useSWR<Workspace, Error>(`/admin/users/${userId}/container`);
+}
+
+export function useWorkspaceStatus(userId : number) {
+  return useSWR<string, Error>(`/admin/users/${userId}/container/status`, {
+    refreshInterval : 5000, // Refresh every 5 seconds
+  });
+}
+
+export function restartWorkspace(userId : number) {
+  return apiMutation(`/admin/users/${userId}/container/restart`, undefined, {
+    method : 'POST',
+  }).then(() => mutate(`/admin/users/${userId}/container/status`));
+}
+
+export function recycleWorkspace(userId : number) {
+  return apiMutation(`/admin/users/${userId}/container/recycle`, undefined, {
+    method : 'POST',
+  }).then(() => mutate(`/admin/users/${userId}/container/status`));
 }
 
 export function impersonateUser(userId: number) {

@@ -1,222 +1,171 @@
 """
-AWS S3 Upload Service for support ticket images
-(and MinIO for development)
+Support-specific file operations using shared core S3 service
+Private ticket attachments with proxy download
 """
-
 import uuid
-import boto3
-from enum import Enum
-from typing import Any
-from botocore.exceptions import (
-    ClientError,
-    NoCredentialsError,
-    BotoCoreError,
-)
 from flask import current_app
-from werkzeug.datastructures import FileStorage
-
 from ... import config
-from ...core.utils.logger import get_logger
-from ...core.utils.file_helpers import get_file_size
+from ...core.exceptions import ValidationError
+from ..models import TicketAttachment
 
 
-logger = get_logger(__name__)
+class SupportS3Service:
+    """S3 service for support ticket attachments"""
 
-
-class StorageType(Enum):
-    """
-    Enum for different storage backend types
-    """
-    UNCONFIGURED = "unconfigured"
-    AWS = "aws"
-    MINIO = "minio"
-
-
-class AWSS3UploadService:
-    """
-    Service for uploading files to AWS S3 or S3 compatible storage (MinIO)
-    """
     def __init__(self):
-        self.s3_client: Any | None = None
-        self.storage_type: StorageType = StorageType.UNCONFIGURED
-        self.bucket_name: str | None = None
-        self._initialize_client()
+        self.s3_service = None
 
-    def _initialize_client(self) -> None:
-        """
-        Initialize S3 client (AWS S3 or MinIO) based on USE_MINIO flag
-        Falls back gracefully if neither is configured
-        """
-        try:
-            use_minio = current_app.config.get('USE_MINIO',
-                                               'false').lower() == 'true'
-
-            if use_minio:
-                access_key = current_app.config.get('MINIO_ACCESS_KEY')
-                secret_key = current_app.config.get('MINIO_SECRET_KEY')
-                endpoint_url = current_app.config.get('MINIO_ENDPOINT')
-                self.bucket_name = current_app.config.get('MINIO_BUCKET')
-
-                if not access_key or not secret_key or not endpoint_url:
-                    logger.debug(
-                        "MinIO credentials not fully configured - checking AWS"
-                    )
-                    use_minio = False
-                else:
-                    # Prod setup wont have MinIO configured
-                    self.s3_client = boto3.client(
-                        's3',
-                        aws_access_key_id = access_key,
-                        aws_secret_access_key = secret_key,
-                        endpoint_url = endpoint_url,
-                        region_name = 'us-east-1'  # MinIO doesn't care about region but boto3 needs it
-                    )
-                    self.storage_type = StorageType.MINIO
-                    logger.info(
-                        f"MinIO client initialized at {endpoint_url}"
-                    )
-                    return
-
-            if not use_minio:
-                aws_access_key = current_app.config.get(
-                    'AWS_S3_ACCESS_KEY_ID'
-                )
-                aws_secret_key = current_app.config.get(
-                    'AWS_S3_SECRET_ACCESS_KEY'
-                )
-                aws_region = current_app.config.get(
-                    'AWS_DEFAULT_REGION',
-                    'us-east-1'
-                )
-                self.bucket_name = current_app.config.get(
-                    'AWS_S3_BUCKET_NAME'
-                )
-
-                if not aws_access_key or not aws_secret_key:
-                    logger.debug(
-                        "No storage credentials configured - file uploads disabled"
-                    )
-                    return
-
-                self.s3_client = boto3.client(
-                    's3',
-                    aws_access_key_id = aws_access_key,
-                    aws_secret_access_key = aws_secret_key,
-                    region_name = aws_region
-                )
-                self.storage_type = StorageType.AWS
-                logger.info("AWS S3 client initialized successfully")
-
-        except NoCredentialsError:
-            logger.debug(
-                "Storage credentials not found - file uploads disabled"
-            )
-        except ClientError as e:
-            logger.error(
-                f"Failed to initialize {self.storage_type.value} client: %s",
-                e
-            )
-        except BotoCoreError as e:
-            logger.error(
-                f"Connection error initializing {self.storage_type.value}: %s",
-                e
-            )
-        except Exception as e:
-            logger.error("Unexpected error initializing storage: %s", e)
+    def _get_s3_service(self):
+        if self.s3_service is None:
+            from ...core.services.s3_service import get_s3_service
+            self.s3_service = get_s3_service()
+        return self.s3_service
 
     def is_configured(self) -> bool:
-        """
-        Check if S3 storage is properly configured
-        """
-        return self.s3_client is not None and self.bucket_name is not None
+        s3_service = self._get_s3_service()
+        return self.s3_service is not None and s3_service.is_configured()
 
-    def get_storage_type(self) -> str:
-        """
-        Get the current storage type: 'aws', 'minio', or 'unconfigured'
-        """
-        return self.storage_type.value
+    def upload_file_direct(self, ticket_id: int, file_data: bytes, filename: str,
+                          content_type: str, uploaded_by: int) -> TicketAttachment | None:
+        """Upload file to S3 and create database record"""
+        from ..models import TicketAttachment
+        import requests
 
-    def upload_ticket_attachment(
-        self,
-        file: FileStorage,
-        ticket_id: int,
-        file_extension: str,
-    ) -> dict[str,
-              Any] | None:
-        """
-        Upload ticket attachment to S3
-        (validation in controller)
+        s3_service = self._get_s3_service()
 
-        Args:
-            file: File to upload
-            ticket_id: Ticket ID for organizing uploads
-            file_extension: File extension without dot (e.g., 'webp', 'png')
-
-        Returns:
-            dict with s3_key, bucket_name, file_size, or None on failure
-        """
-        if not self.is_configured():
-            logger.debug(
-                f"Storage not configured ({self.storage_type.value}) - cannot upload file"
-            )
-            return None
-
-        if not self.bucket_name:
-            logger.error("No bucket configured")
+        if not s3_service or not s3_service.is_configured():
+            current_app.logger.error("S3 not configured for ticket attachment upload")
             return None
 
         try:
-            file_size = get_file_size(file)
-            file.seek(0)
-
-            content_type = f"image/{file_extension}"
+            file_extension = self._get_extension_from_content_type(content_type)
             unique_id = str(uuid.uuid4())
-            s3_key = f"{config.S3_TICKET_ATTACHMENTS_PREFIX}/{ticket_id}/{unique_id}.{file_extension}"
+            generated_filename = f"{unique_id}.{file_extension}"
+            object_key = f"support-tickets/{ticket_id}/{generated_filename}"
 
-            if self.s3_client is None:
-                logger.error("S3 client is None")
+            result = s3_service.generate_upload_url(f"support-tickets/{ticket_id}", generated_filename, content_type)
+
+            response = requests.put(
+                result['presigned_url'],
+                data=file_data,
+                headers={'Content-Type': content_type}
+            )
+
+            if response.status_code != 200:
+                current_app.logger.error(f"S3 upload failed: {response.status_code} - {response.text}")
                 return None
 
-            self.s3_client.upload_fileobj(
-                file,
-                self.bucket_name,
-                s3_key,
-                ExtraArgs = {
-                    'ContentType': content_type,
+            attachment = TicketAttachment.create_attachment(
+                ticket_id=ticket_id,
+                s3_key=object_key,
+                bucket_name=s3_service.bucket_name,
+                filename=filename,
+                file_size=len(file_data),
+                content_type=content_type,
+                uploaded_by=uploaded_by,
+            )
+
+            current_app.logger.info(f"Direct upload successful for ticket {ticket_id}, attachment {attachment.id}")
+            return attachment
+
+        except Exception as e:
+            current_app.logger.error(f"Direct upload failed: {e}")
+            return None
+
+    def confirm_upload_and_create_attachment(
+        self,
+        ticket_id: int,
+        object_key: str,
+        filename: str,
+        original_filename: str,
+        content_type: str,
+        file_size: int,
+        uploaded_by: int
+    ) -> 'TicketAttachment':
+        """Validate upload and create attachment record"""
+        from ..models import TicketAttachment
+
+        if not all([object_key, filename, original_filename, content_type]):
+            raise ValidationError(
+                "Missing required fields",
+                errors={
+                    "object_key": "S3 object key is required",
+                    "filename": "Generated filename is required",
+                    "original_filename": "Original filename is required",
+                    "content_type": "Content type is required"
                 }
             )
 
-            logger.info(
-                "File uploaded successfully to %s (s3://%s/%s)",
-                self.storage_type.value,
-                self.bucket_name,
-                s3_key
+        if not file_size or file_size <= 0:
+            raise ValidationError("Invalid file size", errors={"file_size": "File size must be positive"})
+
+        if file_size > config.TICKET_ATTACHMENT_MAX_SIZE:
+            max_mb = config.TICKET_ATTACHMENT_MAX_SIZE / (1024 * 1024)
+            raise ValidationError(
+                f"File size exceeds maximum of {max_mb}MB",
+                errors={"file_size": f"File must be smaller than {max_mb}MB"}
             )
 
-            return {
-                's3_key': s3_key,
-                'bucket_name': self.bucket_name,
-                'file_size': file_size,
-            }
+        expected_prefix = f"support-tickets/{ticket_id}/"
+        if not object_key.startswith(expected_prefix):
+            raise ValidationError("Invalid object key", errors={"object_key": "Object key does not match ticket"})
 
-        except ClientError as e:
-            logger.error(
-                f"{self.storage_type.value} error uploading file: %s",
-                e
-            )
+        s3_service = self._get_s3_service()
+        if not s3_service or not s3_service.is_configured():
+            raise ValidationError("File storage not configured", errors={}, status_code=503)
+
+        if not s3_service.object_exists(object_key):
+            raise ValidationError("File not found in storage", errors={"object_key": "Uploaded file not found"})
+
+        attachment = TicketAttachment.create_attachment(
+            ticket_id=ticket_id,
+            s3_key=object_key,
+            bucket_name=s3_service.bucket_name,
+            filename=original_filename,
+            file_size=file_size,
+            content_type=content_type,
+            uploaded_by=uploaded_by,
+        )
+
+        current_app.logger.info(f"Confirmed upload and created attachment {attachment.id} for ticket {ticket_id}")
+        return attachment
+
+    def download_ticket_attachment(self, s3_key: str) -> str | None:
+        """Generate presigned download URL"""
+        s3_service = self._get_s3_service()
+        if not s3_service or not s3_service.is_configured():
+            current_app.logger.error("S3 service not configured")
             return None
+
+        try:
+            presigned_url = s3_service.generate_download_url(
+                s3_key,
+                expires_in=3600  # 1 hour
+            )
+            return presigned_url
         except Exception as e:
-            logger.error("Unexpected error uploading file: %s", e)
+            current_app.logger.error(f"Failed to generate presigned URL for {s3_key}: {e}")
             return None
 
-_s3_upload_service: AWSS3UploadService | None = None
+    def _get_extension_from_content_type(self, content_type: str) -> str:
+        extension_map = {
+            'image/png': 'png',
+            'image/jpeg': 'jpg',
+            'image/jpg': 'jpg',
+            'image/webp': 'webp',
+            'image/svg+xml': 'svg',
+            'image/x-icon': 'ico',
+            'application/octet-stream': 'bin'
+        }
+        return extension_map.get(content_type, 'bin')
 
+_support_s3_service: SupportS3Service | None = None
 
-def get_s3_upload_service() -> AWSS3UploadService:
-    """
-    Get the global S3 upload service instance
-    """
-    global _s3_upload_service
-    if _s3_upload_service is None:
-        _s3_upload_service = AWSS3UploadService()
-    return _s3_upload_service
+def get_support_s3_service() -> SupportS3Service:
+    global _support_s3_service
+    if _support_s3_service is None:
+        _support_s3_service = SupportS3Service()
+    return _support_s3_service
+
+def get_s3_upload_service() -> SupportS3Service:
+    return get_support_s3_service()

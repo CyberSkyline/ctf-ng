@@ -1,0 +1,16 @@
+You Have Been Removed From a Team
+
+Team Membership Update:
+You have been removed from the team "{{ team_name }}" in the event "{{ event_name }}".
+
+Details:
+- Team: {{ team_name }}
+- Event: {{ event_name }}
+{% if kicked_by_name %}- Removed by: {{ kicked_by_name }}{% endif %}
+
+If you believe this was done in error, please contact the event organizers or support team.
+
+{% if event_url %}View Event: {{ event_url }}{% endif %}
+
+---
+This email was sent by the CTF System.

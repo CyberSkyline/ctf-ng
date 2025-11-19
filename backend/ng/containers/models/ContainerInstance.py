@@ -141,7 +141,7 @@ class ContainerInstance(db.Model):
                 net_exists = client.get_network_by_name(networkname)
                 if not net_exists:
                     ipam = None
-                    if netconf.ipam:
+                    if netconf and netconf.ipam:
                         ipam_pools = [
                             docker.types.IPAMPool(subnet=pool.subnet) for pool in netconf.ipam.config
                         ]

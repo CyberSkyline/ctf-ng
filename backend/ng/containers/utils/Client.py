@@ -69,6 +69,6 @@ class Client(docker.DockerClient):
                     "username": get_app_config("CONTAINER_REGISTRY_USER"),
                     "password": get_app_config("CONTAINER_REGISTRY_PASSWORD"),
                 }
-                self.images.pull(image, auth_config=auth)
+            self.images.pull(image, auth_config=auth)
         else:
             self.images.pull(image)

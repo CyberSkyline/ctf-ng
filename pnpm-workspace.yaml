@@ -4,3 +4,4 @@ packages:
   - "frontend"
   - "services/exec-service"
   - "tools/load-test"
+  - "tools/operations"

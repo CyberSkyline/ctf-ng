@@ -29,7 +29,6 @@ export interface Team {
   event_name?: string;
   member_count: number;
   ranked: boolean;
-  locked: boolean;
   invite_code?: string;
   start_timestamp: Date | null;
   end_time: Date | null;
@@ -273,4 +272,11 @@ export interface Announcement {
   sender_id: number;
   sender_name: string;
   type: string;
+}
+
+export interface Workspace {
+  id : number;
+  hostip : string;
+  dockerid : string;
+  user : number;
 }

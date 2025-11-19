@@ -30,8 +30,7 @@
     "build": "cd ./frontend && vite build",
     "start-prod": "pnpm build && ENV_FILE=.env.prod docker compose -f docker-compose.prod.yaml up --build",
     "start-staging": "pnpm build && ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up --build",
-    "start": "USE_MINIO=true ENV_FILE=.env.dev docker compose -f docker-compose.yaml up --build",
-    "start-aws": "USE_MINIO=false ENV_FILE=.env.dev docker compose -f docker-compose.yaml up --build",
+    "start": "ENV_FILE=.env.dev docker compose -f docker-compose.yaml up --build",
     "stop": "docker compose down",
     "reload": "docker exec -it ng-ctfd supervisorctl restart ctfd",
     "restart": "docker exec -it ng-ctfd supervisorctl restart ctfd",
@@ -54,8 +53,7 @@
     "swarm-logs": "docker service logs --tail=100 -f ctf-ng_ctfd",
     "swarm-logs-nginx": "docker service logs --tail=100 -f ctf-ng_nginx",
     "swarm-logs-vite": "docker service logs --tail=100 -f ctf-ng_vite",
-    "swarm-update": "pnpm build && pnpm swarm-build:all && docker service update --force ctf-ng_ctfd",
-    "minio": "docker compose up -d minio && bash ./setup-minio.sh"
+    "swarm-update": "pnpm build && pnpm swarm-build:all && docker service update --force ctf-ng_ctfd"
   },
   "packageManager": "pnpm@10.17.1"
 }

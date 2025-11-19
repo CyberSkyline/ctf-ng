@@ -950,7 +950,7 @@ class Test_Event_Team_Management:
         assert not data["success"]
         assert "errors" in data
         assert (
-            "You cannot leave the team as a captain. Please promote another member first."
+            "You do not have permission to leave your team.: CAPTAIN_CANNOT_LEAVE"
             in data["errors"]["forbidden"]
         )
 
@@ -964,8 +964,36 @@ class Test_Event_Team_Management:
         data = response.get_json()
         assert not data["success"]
         assert "errors" in data
-        assert "You cannot leave the team after the event has ended." in data[
+        assert "You do not have permission to leave your team.: EVENT_LOCKED" in data[
             "errors"]["forbidden"]
+
+
+    def test_user_cannot_start_event_then_leave(self,client_factory, event_factory, user_factory):
+        """Test that a user who starts an event, leaves their team, and then re-registers cannot start the event again."""
+        event = event_factory(name = "Re-Register Start Event", public = True)
+        user = user_factory(name = "Test User", email = "reregister@example.com")
+        client = client_factory(user = user)
+        # User registers and starts the event
+        client.post(
+            f"/ng/events/{event.id}/me/register",
+            json = {"team_name": "ReRegister Team"},
+        )
+        client.post(
+            f"/ng/events/{event.id}/me/team/start",
+            json = {}
+        )
+        # User attempts to leaves the team
+        response = client.post(
+            f"/ng/events/{event.id}/me/team/leave",
+            json = {}
+        )
+
+        assert response.status_code == 403
+        data = response.get_json()
+        assert not data["success"]
+        assert "errors" in data
+        assert "You do not have permission to leave your team.: TEAM_HAS_STARTED" in data["errors"]["forbidden"]
+
 
     def test_solo_captain_can_leave(
         self,
@@ -988,6 +1016,35 @@ class Test_Event_Team_Management:
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
+
+    def test_leaving_user_can_reregister(
+        self,
+        client_factory,
+        user_factory,
+        event_factory,
+        team_factory
+    ):
+        """Test that a user who leaves a team can re-register for the event."""
+        event = event_factory(name = "Reregister Test Event", public = True)
+        user = user_factory(name = "reregisteruser", email = "reregisteruser@example.com")
+        user2 = user_factory(name = "otheruser", email = "otheruser@example.com")
+        team = team_factory(event = event, members = [user2, user])
+        logged_in_client = client_factory(user = user)
+
+        response = logged_in_client.post(
+            f"/ng/events/{event.id}/me/team/leave",
+            json = {}
+        )
+        assert response.status_code == 200
+
+        response = logged_in_client.post(
+            f"/ng/events/{event.id}/me/register",
+            json = {"invite_code": team.invite_code},
+        )
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["name"] == "Test Team 1"
 
     def test_update_name(self, team_captain_client):
         """Test that the team name can be updated."""
@@ -1074,6 +1131,65 @@ class Test_Event_Team_Start:
         assert not data["success"]
         assert "errors" in data
         assert "TEAM_HAS_STARTED" in data["errors"]["forbidden"]
+
+    def test_start_event_for_team_event_not_started(
+        self,
+        client_factory,
+        event_factory,
+        team_factory,
+        user_factory
+    ):
+        event = event_factory(
+            name = "Future Event for Team Start",
+            public = True,
+            start_time = datetime.utcnow() + timedelta(days = 1),
+            end_time = datetime.utcnow() + timedelta(days = 2),
+        )
+        user = user_factory(name = "futureuser", email = "futureuser@example.com")
+        client = client_factory(user = user)
+        team_factory(event = event, members = [user])
+
+        response = client.post(
+            self.post_endpoint(event.id),
+            json = {}
+        )
+        assert response.status_code == 403
+        data = response.get_json()
+        assert not data["success"]
+        assert "errors" in data
+        assert "EVENT_NOT_STARTED" in data["errors"]["forbidden"]
+
+    def test_start_near_end_of_event_end_time_is_clamped(
+        self,
+        client_factory,
+        user_factory,
+        event_factory,
+        team_factory,
+        db_session
+    ):
+        """Test that starting an event near its end time clamps the end time correctly."""
+        time = utc_now()
+        event = event_factory(
+            name = "Clamp End Time Event",
+            public = True,
+            start_time = time - timedelta(hours = 1),
+            end_time = time + timedelta(minutes = 30),
+            time_limit_minutes = 600
+        )
+        user = user_factory(name = "clampuser", email = "clampuser@example.com")
+        team_factory(event = event, members = [user])
+        client = client_factory(user = user)
+        response = client.post(
+            f"/ng/events/{event.id}/me/team/start",
+            json = {}
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"]
+        assert "end_time" in data["data"]
+        team_end_time = datetime.fromisoformat(data["data"]["end_time"]).replace(tzinfo=None)
+        assert team_end_time <= event.end_time
+
 
 
 class Test_Event_Admin_Register:

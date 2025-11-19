@@ -16,10 +16,12 @@ from CTFd.models import db
 from ... import config
 from ...core.utils import utc_now
 from ...core.utils.validator import BaseValidator
+from ...core.utils.sqlalchemy_types import EnumWithUnknown
 from ...notifications.models import Notification
 
 
 class AnnouncementType(str, Enum):
+    UNKNOWN = "unknown"
     GENERAL = "general"
     EVENT_UPDATE = "event_update"
     EVENT_START = "event_start"
@@ -46,7 +48,15 @@ class Announcement(db.Model):
     __tablename__ = "ng_announcements"
 
     id = db.Column(db.Integer, primary_key = True)
-    type = db.Column(db.Enum(AnnouncementType), nullable = False)
+    type = db.Column(
+        EnumWithUnknown(
+            AnnouncementType,
+            values_callable=lambda t: [str(item.value) for item in t],
+            unknown_value=AnnouncementType.UNKNOWN,
+            native_enum=False
+        ),
+        nullable = False
+    )
     title = db.Column(
         db.String(config.NOTIFICATIONS_TITLE_MAX_LENGTH),
         nullable = False
