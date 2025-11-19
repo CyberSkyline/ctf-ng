@@ -19,36 +19,42 @@ import ContainerLogsModal from './ContainerLogsModal';
 import RecycleContainerModal from './RecycleContainerModal';
 import RestartContainerModal from './RestartContainerModal';
 
-export default function ServiceCard({ service }: {service: ContainerInstance}) {
-  const { data : status, error } = useContainerStatus(service.id);
+export default function ServiceCard({ service }: { service: ContainerInstance }) {
+  const { data : statusData, error } = useContainerStatus(service.id);
+
+  const { dockerid, hostip } = service;
+  const {
+    name, image, status, env,
+  } = statusData || {};
+
   return (
     <Card key={service.id}>
       {error && <ErrorCallout>{error.message}</ErrorCallout>}
       <Flex direction="column" gap="2">
         <Flex direction="row" align="start" justify="between" gap="2">
           <Box>
-            <Skeleton loading={!status}><Heading size="4">{status?.name || 'Unknown'}</Heading></Skeleton>
-            <Skeleton loading={!status}><Text color="gray">{status?.image || 'unknown'}</Text></Skeleton>
+            <Skeleton loading={!statusData}><Heading size="4">{name || 'Unknown'}</Heading></Skeleton>
+            <Skeleton loading={!statusData}><Text color="gray">{image || 'unknown'}</Text></Skeleton>
           </Box>
           <Box className="text-right">
-            <Skeleton loading={!status}>
-              <Badge color={status?.status === 'running' ? COLOR_POSITIVE : COLOR_NEGATIVE}>
-                {upperCase(status?.status || 'unknown')}
+            <Skeleton loading={!statusData}>
+              <Badge color={status === 'running' ? COLOR_POSITIVE : COLOR_NEGATIVE}>
+                {upperCase(status || 'unknown')}
               </Badge>
             </Skeleton>
             <br />
-            <Tooltip content={<Text>{service?.dockerid}</Text>}>
-              <Text color="gray">{service?.dockerid.slice(0, 12)}</Text>
+            <Tooltip content={<Text>{dockerid}</Text>}>
+              <Text color="gray">{dockerid.slice(0, 12)}</Text>
             </Tooltip>
             <br />
-            <Text color="gray">{service.hostip}</Text>
+            <Text color="gray">{hostip}</Text>
           </Box>
         </Flex>
-        <Skeleton loading={!status}>
+        <Skeleton loading={!statusData}>
           <details>
             <summary>Environment</summary>
             <Code color="gray" className="block whitespace-pre overflow-auto max-h-32">
-              {status?.env.join('\n')}
+              {env?.join('\n')}
             </Code>
           </details>
         </Skeleton>
