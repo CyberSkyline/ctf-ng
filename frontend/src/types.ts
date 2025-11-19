@@ -197,6 +197,7 @@ export interface ContainerStatus {
   image: string;
   docker_id: string;
   status: 'created' | 'running' | 'paused' | 'restarting' | 'exited' | 'removing' | 'dead';
+  env: string[];
 }
 
 export interface Ticket {

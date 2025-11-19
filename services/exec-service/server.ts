@@ -40,5 +40,20 @@ wss.on('connection', (socket: WebSocket, request: DockerHeaderRequest) => {
     const sockStream = ws.createWebSocketStream(socket);
     sockStream.pipe(execStream);
     execStream.pipe(sockStream);
+
+    sockStream.on('error', (err) => {
+      console.error('sockStream error:', err);
+    });
+    execStream.on('error', (err) => {
+      console.error('execStream error:', err);
+    });
+
+    socket.on('close', async () => {
+      // clean up sockets
+      execStream.unpipe(sockStream);
+      sockStream.unpipe(execStream);
+      sockStream.destroy();
+      execStream.destroy();
+    });
   })();
 });

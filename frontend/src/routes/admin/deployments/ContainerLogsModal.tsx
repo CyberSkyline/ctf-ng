@@ -1,4 +1,4 @@
-import { COLOR_HINT } from '@/constants';
+import { COLOR_INFO } from '@/constants';
 import { useContainerLogs } from '@/hooks/container';
 import { Button, Code, Skeleton } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
@@ -36,8 +36,7 @@ export default function ContainerLogsModal({ containerId }: { containerId: numbe
       trigger={(
         <Button
           variant="ghost"
-          color={COLOR_HINT}
-          className="!mx-0"
+          color={COLOR_INFO}
         >
           <TbScript />
           Logs
