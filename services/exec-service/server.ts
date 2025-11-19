@@ -24,7 +24,7 @@ wss.on('connection', (socket: WebSocket, request: DockerHeaderRequest) => {
   const ctr = docker.getContainer(dockerId);
   (async () => {
     const exec = await ctr.exec({
-      Cmd : [ '/bin/bash' ],
+      Cmd : [ '/bin/sh' ],
       User : 'root',
       Tty : true,
       AttachStdin : true,
