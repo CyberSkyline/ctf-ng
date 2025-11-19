@@ -141,6 +141,8 @@ def update_challenge_from_yaml(challenge: Challenge, payload: str) -> Challenge:
 
         blueprints = {blueprint.name: blueprint for blueprint in challenge.blueprints}
         if compose_file.services:
+            if len(set(blueprints.keys()) - set(compose_file.services.keys())) > 0:
+                raise ValidationError("Cannot remove existing services when updating a challenge.")
             for (service_name, service_data) in compose_file.services.items():
                 if service_name in blueprints:
                     existing_blueprint = blueprints[service_name]
