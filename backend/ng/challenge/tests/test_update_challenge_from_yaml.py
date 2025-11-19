@@ -163,7 +163,7 @@ class TestUpdateChallengeFromYaml:
     def test_update_challenge_cannot_remove_existing_services(self, db_session, existing_challenge: Challenge):
         """Test that existing questions cannot be removed during update"""
         # Add a question to existing challenge
-        container_blueprint = ContainerBlueprint.create_container_blueprint(
+        ContainerBlueprint.create_container_blueprint(
             challenge_id=existing_challenge.id,
             name="existing_service",
             image="nginx:latest",
