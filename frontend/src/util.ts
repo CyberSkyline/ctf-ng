@@ -20,7 +20,7 @@ export function adjustDateForInput(date: Date | null): string | null {
 export function utf8ToBase64(str: string): string {
   const encoder = new TextEncoder();
   const data = encoder.encode(str);
-  const binary = Array.from(data).map((byte) => String.fromCodePoint(byte)).join('');
+  const binary = Array.from(data, (byte) => String.fromCodePoint(byte)).join('');
   return btoa(binary);
 }
 
