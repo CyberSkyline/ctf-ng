@@ -7,6 +7,7 @@ import {
   useWorkspaceStatus,
 } from '@/hooks/users';
 import type { Event, Team, User } from '@/types';
+import { utf8ToBase64 } from '@/util';
 import { Table } from '@radix-ui/themes';
 import AdminDataList from 'components/AdminDataList';
 import AdminSidebar from 'components/AdminSidebar';
@@ -40,7 +41,10 @@ function RegistrationRow({ userId, team, event }: { userId: number, team: Team, 
         <Entity
           label={team.name}
           icon={TeamIcon}
-          to={`/admin/teams?id=${team.id}&filter=${btoa(JSON.stringify({ event_name : { filterType : 'text', type : 'equals', filter : event.name } }))}`}
+          to={
+            `/admin/teams?id=${team.id}&filter=${
+              encodeURIComponent(utf8ToBase64(JSON.stringify({ event_name : { filterType : 'text', type : 'equals', filter : event.name } })))}`
+          }
         />
       </Table.Cell>
       <Table.Cell>
