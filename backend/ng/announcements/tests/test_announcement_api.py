@@ -9,6 +9,7 @@ from datetime import (
     timedelta,
 )
 
+from CTFd.models import db
 from CTFd.cache import cache
 from CTFd.utils.security.csrf import generate_nonce
 
@@ -446,3 +447,83 @@ class TestAnnouncementEndpoints:
         assert len(admin_data) >= 2
         assert any(a["title"] == "Global Maintenance" for a in admin_data)
         assert any(a["title"] == "Event Update" for a in admin_data)
+
+    def test_graceful_handling_of_removed_enum_values_user(
+        self,
+        logged_in_client,
+        announcement_factory,
+        db_session
+    ):
+        """
+        Test that announcements with removed/invalid enum values
+        are handled gracefully without causing 500 errors
+        """
+        valid_announcement = announcement_factory(
+            type = AnnouncementType.GENERAL,
+            title = "Valid Announcement",
+            message = "This announcement has a valid type"
+        )
+
+        announcement_with_invalid_enum = announcement_factory(
+            type = AnnouncementType.EVENT_UPDATE,
+            title = "Invalid Enum Announcement",
+            message = "This will have an invalid enum value"
+        )
+
+        db_session.execute(
+            db.text("UPDATE ng_announcements SET type = 'removed_type' WHERE id = :id"),
+            {"id": announcement_with_invalid_enum.id}
+        )
+        db_session.commit()
+
+        response = logged_in_client.get("/ng/announcements")
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert isinstance(data["data"], list)
+        assert len(data["data"]) == 2
+
+        announcement_types = {a["id"]: a["type"] for a in data["data"]}
+        assert announcement_types[valid_announcement.id] == "general"
+        assert announcement_types[announcement_with_invalid_enum.id] == "unknown"
+
+    def test_graceful_handling_of_removed_enum_values_admin(
+        self,
+        admin_client,
+        announcement_factory,
+        db_session
+    ):
+        """
+        Test that announcements with removed/invalid enum values
+        are handled gracefully without causing 500 errors
+        """
+        valid_announcement = announcement_factory(
+            type = AnnouncementType.GENERAL,
+            title = "Valid Admin Announcement",
+            message = "This announcement has a valid type"
+        )
+
+        announcement_with_invalid_enum = announcement_factory(
+            type = AnnouncementType.EVENT_UPDATE,
+            title = "Invalid Admin Enum Announcement",
+            message = "This will have an invalid enum value"
+        )
+
+        db_session.execute(
+            db.text("UPDATE ng_announcements SET type = 'removed_type' WHERE id = :id"),
+            {"id": announcement_with_invalid_enum.id}
+        )
+        db_session.commit()
+
+        response = admin_client.get("/ng/admin/announcements")
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert isinstance(data["data"], list)
+        assert len(data["data"]) == 2
+
+        announcement_types = {a["id"]: a["type"] for a in data["data"]}
+        assert announcement_types[valid_announcement.id] == "general"
+        assert announcement_types[announcement_with_invalid_enum.id] == "unknown"
