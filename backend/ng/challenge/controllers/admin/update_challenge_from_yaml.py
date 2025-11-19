@@ -140,44 +140,44 @@ def update_challenge_from_yaml(challenge: Challenge, payload: str) -> Challenge:
                     db_variable_questions[question.answer.parent_variable] = db_question
 
         blueprints = {blueprint.name: blueprint for blueprint in challenge.blueprints}
-        if compose_file.services:
-            if len(set(blueprints.keys()) - set(compose_file.services.keys())) > 0:
-                raise ValidationError("Cannot remove existing services when updating a challenge.")
-            for (service_name, service_data) in compose_file.services.items():
-                if service_name in blueprints:
-                    existing_blueprint = blueprints[service_name]
-                    existing_blueprint.image = service_data.image
-                    existing_blueprint.hostname = service_data.hostname
-                    existing_blueprint.stdin_open = service_data.stdin_open
-                    existing_blueprint.tty = service_data.tty
-                    existing_blueprint.command = service_data.command
-                    existing_blueprint.entrypoint = service_data.entrypoint
-                    existing_blueprint.environment = partial_environment(service_data.environment, challenge, db_variable_questions)
-                    existing_blueprint.networks = service_data.networks
-                    existing_blueprint.cap_add = service_data.cap_add
-                    existing_blueprint.mem_limit = service_data.mem_limit
-                    existing_blueprint.memswap_limit = service_data.memswap_limit
-                    existing_blueprint.cpus = float(service_data.cpus) if service_data.cpus else None
-                    existing_blueprint.user = service_data.user
-                else:
-                    ContainerBlueprint.create_container_blueprint(
-                        challenge_id=challenge.id,
-                        name=service_name,
-                        image=service_data.image,
-                        hostname=service_data.hostname,
-                        stdin_open=service_data.stdin_open,
-                        tty=service_data.tty,
-                        command=service_data.command,
-                        entrypoint=service_data.entrypoint,
-                        environment=partial_environment(service_data.environment, challenge, db_variable_questions),
-                        networks=service_data.networks,
-                        cap_add=service_data.cap_add,
-                        mem_limit=service_data.mem_limit,
-                        memswap_limit=service_data.memswap_limit,
-                        cpus=float(service_data.cpus) if service_data.cpus else None,
-                        user=service_data.user,
-                        commit=False,
-                    )
+        updated_services = compose_file.services or {}
+        if len(set(blueprints.keys()) - set(updated_services.keys())) > 0:
+            raise ValidationError("Cannot remove existing services when updating a challenge.")
+        for (service_name, service_data) in updated_services.items():
+            if service_name in blueprints:
+                existing_blueprint = blueprints[service_name]
+                existing_blueprint.image = service_data.image
+                existing_blueprint.hostname = service_data.hostname
+                existing_blueprint.stdin_open = service_data.stdin_open
+                existing_blueprint.tty = service_data.tty
+                existing_blueprint.command = service_data.command
+                existing_blueprint.entrypoint = service_data.entrypoint
+                existing_blueprint.environment = partial_environment(service_data.environment, challenge, db_variable_questions)
+                existing_blueprint.networks = service_data.networks
+                existing_blueprint.cap_add = service_data.cap_add
+                existing_blueprint.mem_limit = service_data.mem_limit
+                existing_blueprint.memswap_limit = service_data.memswap_limit
+                existing_blueprint.cpus = float(service_data.cpus) if service_data.cpus else None
+                existing_blueprint.user = service_data.user
+            else:
+                ContainerBlueprint.create_container_blueprint(
+                    challenge_id=challenge.id,
+                    name=service_name,
+                    image=service_data.image,
+                    hostname=service_data.hostname,
+                    stdin_open=service_data.stdin_open,
+                    tty=service_data.tty,
+                    command=service_data.command,
+                    entrypoint=service_data.entrypoint,
+                    environment=partial_environment(service_data.environment, challenge, db_variable_questions),
+                    networks=service_data.networks,
+                    cap_add=service_data.cap_add,
+                    mem_limit=service_data.mem_limit,
+                    memswap_limit=service_data.memswap_limit,
+                    cpus=float(service_data.cpus) if service_data.cpus else None,
+                    user=service_data.user,
+                    commit=False,
+                )
 
         db.session.commit()
 
