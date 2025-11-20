@@ -22,10 +22,15 @@ const mailTransportConfig = {
 const mailer = nodemailer.createTransport(mailTransportConfig);
 
 export const templates = {
+  'nov-2025-game-of-the-month' : new Template({ 
+    name : 'nov-2025-game-of-the-month',
+    subject : `The President's Cup Challenges You - Play November's Game of the Month!`,
+    file : '2025.11.18.game-of-the-month.mjml',
+  }),
   'pc7-registration-announcement': new Template({
     name: 'pc7-registration-announcement',
     subject: `President's Cup 7 Registration is Coming! Will You Return?`,
-    file: '2025.11.17.pc7-registration-announcement.mjml',
+    file: '2025.11.20.pc7-registration-announcement.mjml',
   }),
 };
 
