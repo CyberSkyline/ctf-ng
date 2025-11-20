@@ -3,6 +3,7 @@ import {
   Card,
   Flex,
   Heading,
+  Link as RadixLink,
   Text,
 } from '@radix-ui/themes';
 
@@ -44,7 +45,6 @@ export default function GovernmentNotice({ onAccept }: GovernmentNoticeProps) {
           <Heading size="4">
             Cookie Policy
           </Heading>
-
           <Text size="2" className="block mb-3">
             This site uses browser cookies for authentication.
             When you login, we add a cookie that gets sent back to this server with each request for the duration of your session.
@@ -53,7 +53,6 @@ export default function GovernmentNotice({ onAccept }: GovernmentNoticeProps) {
           <Heading size="4">
             Privacy Policy
           </Heading>
-
           <Text size="2" className="block mb-3">
             We store your email address, and if you provide them, your name and organization name.
             This information is available to DHS CISA staff for the purpose of analyzing participation and communicating with participants.
@@ -62,66 +61,63 @@ export default function GovernmentNotice({ onAccept }: GovernmentNoticeProps) {
           <Heading size="4">
             Terms of Service
           </Heading>
-
           <Text size="2" className="block mb-3">
-            Use of this site is &ldquo;AS IS&rdquo;, and you acknowledge any liability stemming from your use of it.
-
-            Users agree to abide by software copyrights and to comply with all the terms of all
-            applicable software licenses, including third party software, that may be used in the
-            President&apos;s Cup.
-            Users may choose to opt out of third party privacy policies if permitted by such privacy policy.
+            {`Use of this site is "AS IS", and you acknowledge any liability stemming from your use of it. `}
+            {`Users agree to abide by software copyrights and to comply with all the terms of all applicable software licenses,
+            including third party software, that may be used in the President's Cup. `}
+            {`Users may choose to opt out of third party privacy policies if permitted by such privacy policy. `}
           </Text>
 
           <Heading size="4">
             Privacy Act Statement
           </Heading>
-
-          <Text size="2" className="block">
+          <Text size="2">
             <b>Authority: </b>
-            5 U.S.C. § 301, 44 U.S.C. §3101, and the Executive Order on America&apos;s
-            Cybersecurity Workforce authorize the collection of this information.
+            {`5 U.S.C. § 301, 44 U.S.C. §3101, and the Executive Order on America's
+            Cybersecurity Workforce authorize the collection of this information. `}
           </Text>
-          <Text size="2" className="block">
+          <Text size="2">
             <b>Purpose: </b>
-            The primary purpose for the collection of this information is for registration to the Department of Homeland Security’s Presidents Cup.
+            {`The primary purpose for the collection of this information is for registration to the Department of Homeland Security's Presidents Cup. `}
           </Text>
-          <Text size="2" className="block">
+          <Text size="2">
             <b>Routine Uses: </b>
             The information collected may be disclosed as generally permitted under
             5 U.S.C. §552a(b) of the Privacy Act of 1974, as amended. This includes using the
-            information as necessary and authorized by the routine uses published in DHS/ALL-002 –
+            information as necessary and authorized by the routine uses published in DHS/ALL-002 -
             Department of Homeland Security (DHS) Mailing and Other Lists system,
             November 25, 2008, 73 FR 71659.
           </Text>
-          <Text size="2" className="block">
+          <Text size="2">
             <b>Disclosure: </b>
-            Providing this information is voluntary. However, failure to provide this
+            {`Providing this information is voluntary. However, failure to provide this
             information will prevent DHS from successfully registering you for the DHS
-            President&apos;s Cup.
+            President's Cup. `}
           </Text>
 
           <Heading size="4">
             Competition Rules
           </Heading>
-
-          <Text size="2" className="block">
-            Users agree to abide by all rules set forth by the competition. These rules include,
-            but are not limited to, the competition rules outlined on the President&apos;s Cup Website.
-
-            Users understand that they are allowed to publish their thoughts and opinions about
-            the President&apos;s Cup and the President&apos;s Cup challenges online, on social media, and
+          <Text size="2">
+            {`Users agree to abide by all rules set forth by the competition. These rules include,
+            but are not limited to, the competition rules outlined on the `}
+            <RadixLink href="https://pccc.cisa.gov/pc7/#rules">President's Cup Website</RadixLink>
+            {`.`}
+            <br />
+            <br />
+            {`Users understand that they are allowed to publish their thoughts and opinions about
+            the President's Cup and the President's Cup challenges online, on social media, and
             on other forms of media. Users agree that publication of any materials related to a
-            specific round of the President&apos;s Cup Competition must be posted after that respective
+            specific round of the President's Cup Competition must be posted after that respective
             competition round. Users agree that all posts will comply with the posted competition
-            rules.
+            rules. `}
           </Text>
 
         </Flex>
-
-        <div className="p-4 flex justify-center">
+        <div className="p-4 flex">
           <Button
             size="4"
-            className="!w-full max-w-xs"
+            className="!w-full"
             onClick={onAccept}
           >
             I Acknowledge
