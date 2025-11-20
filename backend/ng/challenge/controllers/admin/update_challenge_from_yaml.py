@@ -96,8 +96,10 @@ def update_challenge_from_yaml(challenge: Challenge, payload: str) -> Challenge:
                 existing_question.body = question.body
                 if isinstance(question.answer, str):
                     existing_question.answer = question.answer
+                    existing_question.answer_variable_id = None
                 elif isinstance(question.answer, ParserAnswer):
                     existing_question.answer = question.answer.body
+                    existing_question.answer_variable_id = None
                 else:
                     variable = variables.get(question.answer.parent_variable)
                     if variable:
