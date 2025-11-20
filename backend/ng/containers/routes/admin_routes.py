@@ -1,5 +1,7 @@
 from flask_restx import Namespace, Resource
 from flask import request
+from ...challenge.utils import generate_seed
+from ...challenge.models import Challenge
 from ..controllers.get_stats import get_stats
 from ..controllers.admin_exec import admin_exec
 from ..models.ContainerInstance import ContainerInstance
@@ -10,7 +12,9 @@ from ...core.middleware import (
 
 from ...core.middleware.loaders import (
     LoaderType,
+    load_team,
     load_container_instance,
+    load_challenge
 )
 
 from ...core.utils import (
@@ -66,7 +70,28 @@ class ServiceGroup(Resource):
         res = ContainerInstance.get_service_group(challenge_id, team_id)
         return success_response(res)
 
+@admin_container_namespace.route("/challenge/<int:challenge_id>/team/<int:team_id>/variables")
+class ContainerVars(Resource):
+    @admin_container_namespace.doc(
+        description="Get Container instance variables for a challenge given a team",
+        params={
+            "challenge_id": "Id of the challenge",
+            "team_id": "Id of the team",
+        },
+        responses={
+            200: "Success",
+            400: "Bad request"
+        },
+    )
+    @load_team(LoaderType.PARAM)
+    @load_challenge(LoaderType.PARAM)
+    @admin_endpoint()
+    def get(self, challenge: Challenge, team, **kwargs):
+      # create answer variable to question map to ensure seeding is consistent with questions/env
+      qids = {q.answer_variable_id: q.id  for q in challenge.questions}
 
+      values = {v.name: v.as_attr().template.eval(generate_seed(challenge.event_id, challenge.id, qids.get(v.id), team_seed=team.seed)) for v in challenge.variables}
+      return success_response(values)
 
 @admin_container_namespace.route("/<int:container_instance_id>/status")
 class InstanceStatus(Resource):
