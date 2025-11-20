@@ -18,7 +18,6 @@ export default function RestartContainerModal({ containerId }: {containerId: num
         <Button
           variant="ghost"
           color={COLOR_WARNING}
-          className="!mx-0"
         >
           <TbReload />
           Restart

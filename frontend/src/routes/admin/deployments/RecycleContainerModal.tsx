@@ -18,7 +18,6 @@ export default function RecycleContainerModal({ containerId }: {containerId: num
         <Button
           variant="ghost"
           color={COLOR_NEGATIVE}
-          className="!mx-0"
         >
           <TbRecycle />
           Recycle

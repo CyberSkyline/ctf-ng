@@ -251,6 +251,7 @@ class ContainerInstance(db.Model):
             "image": image,
             "docker_id": self.dockerid,
             "status": ctr.status,
+            "env": ctr.attrs['Config']['Env'],
         }
 
         return SerializedInstanceStats(**data)

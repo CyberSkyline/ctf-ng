@@ -36,6 +36,7 @@ module.exports = {
       'max-len' : 160, // Maximum line length for imports. Must be kept in sync with max-len rule above.
       semi : true, // Imports should end with a semicolon
     } ],
+    'no-console': 'off', // Services can and should perform logging via console
   },
   settings : {
     'import/resolver' : {
