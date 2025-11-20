@@ -3,6 +3,7 @@ import type {
   AdminQuestion,
   Attempt,
   Challenge,
+  ChallengeVariable,
   ContainerBlueprint,
   Hint,
   MeChallenge,
@@ -113,6 +114,12 @@ export function useAdminChallengeQuestions(challengeId: number | null) {
 export function useAdminChallengeHints(challengeId: number | null) {
   return useSWR<Hint[], Error>(
     challengeId ? `/admin/challenges/${challengeId}/hints` : null,
+  );
+}
+
+export function useAdminChallengeVariables(challengeId: number | null) {
+  return useSWR<ChallengeVariable[], Error>(
+    challengeId ? `/admin/challenges/${challengeId}/variables` : null,
   );
 }
 

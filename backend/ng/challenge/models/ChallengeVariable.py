@@ -28,6 +28,18 @@ class ChallengeVariable(db.Model):
     def __repr__(self):
         return f"<NgChallengeVariable {self.id}, name={self.name}>"
 
+    def serialize(self, include_admin_fields=False):
+      if not include_admin_fields:
+        # Do not expose variable details to non-admins
+        return {}
+
+      return {
+        "id": self.id,
+        "name": self.name,
+        "default": self.default,
+        "template": self.template,
+      }
+
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
         """

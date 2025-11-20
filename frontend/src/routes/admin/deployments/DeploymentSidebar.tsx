@@ -4,17 +4,19 @@ import {
   EventIcon,
   TeamIcon,
 } from '@/constants';
-import { useDeploymentServices } from '@/hooks/container';
+import { useDeploymentServices, useDeploymentVariables } from '@/hooks/container';
 import type { Deployment } from '@/types';
-import { Grid, Skeleton } from '@radix-ui/themes';
+import { Grid, Skeleton, Table } from '@radix-ui/themes';
 import AdminLink from 'components/AdminLink';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
-import { ErrorCallout } from 'components/Callouts';
+import { ErrorCallout, InfoCallout } from 'components/Callouts';
+import { TbVariable } from 'react-icons/tb';
 import ServiceCard from './ServiceCard';
 
 export default function DeploymentSidebar({ entity }: {entity: Deployment}) {
   const { data : serviceData, error } = useDeploymentServices(entity.challenge_id, entity.team_id);
+  const { data : variables, error : varsError } = useDeploymentVariables(entity.challenge_id, entity.team_id);
 
   return (
     <AdminSidebar>
@@ -42,12 +44,36 @@ export default function DeploymentSidebar({ entity }: {entity: Deployment}) {
       <AdminSidebarHeader title="Services" />
       {error && <ErrorCallout>{error.message}</ErrorCallout>}
       <Skeleton loading={!serviceData}>
-        <Grid columns="2">
+        <Grid columns="2" gap="2">
           { serviceData?.map((service) => (
             <ServiceCard key={service.id} service={service} />
           )) }
         </Grid>
       </Skeleton>
+
+      <AdminSidebarHeader title="Variables" />
+      {varsError && <ErrorCallout>{varsError.message}</ErrorCallout> }
+      {variables && Object.keys(variables).length === 0 && <InfoCallout>This challenge does not have any variables.</InfoCallout>}
+      {variables && Object.keys(variables).length > 0
+      && (
+        <Table.Root>
+          <Table.Header>
+            <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell>Value</Table.ColumnHeaderCell>
+          </Table.Header>
+          <Table.Body>
+            {Object.entries(variables || {}).map(([ key, value ]) => (
+              <Table.Row key={key}>
+                <Table.Cell>
+                  <TbVariable className="inline me-1 opacity-50" aria-label="Variable" />
+                  {key}
+                </Table.Cell>
+                <Table.Cell>{value as string}</Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table.Root>
+      )}
     </AdminSidebar>
   );
 }
