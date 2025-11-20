@@ -28,7 +28,7 @@ export default defineConfig(({ command }) => ({
       clientPort : 5173,
     },
   },
-  base : '/static/',
+  base : command === 'build' ? '/dist/' : '/static/',
   plugins : [
     react(),
     tailwindcss(),

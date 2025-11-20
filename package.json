@@ -28,6 +28,7 @@
     "test": "pnpm -r test",
     "build": "cd ./frontend && vite build",
     "upload-frontend": ".bin/upload_frontend.sh",
+    "download-frontend": ".bin/download_frontend.sh",
     "start-prod": "pnpm build && ENV_FILE=.env.prod docker compose -f docker-compose.prod.yaml up --build",
     "start-staging": "pnpm build && ENV_FILE=.env.staging docker compose -f docker-compose.prod.yaml up --build",
     "start": "USE_MINIO=true ENV_FILE=.env.dev docker compose -f docker-compose.yaml up --build",
