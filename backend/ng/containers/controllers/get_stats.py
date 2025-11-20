@@ -1,4 +1,5 @@
 from ..utils.get_client import get_client
+from CTFd.utils import get_app_config
 from typing import TypedDict
 from ... import config
 
@@ -9,7 +10,9 @@ class SeralizedDockerInfo(TypedDict):
     memory: int
 
 def get_stats():
-    client = get_client(config.DOCKER_HOST)
+
+    DOCKER_HOST = get_app_config("DOCKER_HOST")
+    client = get_client(DOCKER_HOST)
     client_info = client.api.info()
 
     return SeralizedDockerInfo(
