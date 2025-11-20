@@ -18,6 +18,7 @@ from ...scoring.routes import scoring_admin_namespace, scoring_user_namespace
 from ...support.routes import support_user_namespace, support_admin_namespace
 from ...sponsors.routes import sponsors_user_namespace, sponsors_admin_namespace
 from ...fileuploads.routes import fileuploads_namespace
+from ...feedback.routes import feedback_user_namespace, feedback_admin_namespace
 
 
 from ...admin.routes.admin import admin_namespace
@@ -167,6 +168,7 @@ api_v1.add_namespace(announcements_user_namespace, path="/announcements")
 api_v1.add_namespace(permissions_user_namespace, path="/permissions")
 api_v1.add_namespace(sponsors_user_namespace, path="/sponsors")
 api_v1.add_namespace(fileuploads_namespace, path='/fileuploads')
+api_v1.add_namespace(feedback_user_namespace, path="/events")
 
 # Admin namespaces
 api_v1.add_namespace(admin_namespace, path="/admin")
@@ -180,3 +182,4 @@ api_v1.add_namespace(scoring_admin_namespace, path="/admin/scoring")
 api_v1.add_namespace(admin_container_namespace, path="/admin/container")
 api_v1.add_namespace(announcements_admin_namespace, path="/admin/announcements")
 api_v1.add_namespace(sponsors_admin_namespace, path="/admin/sponsors")
+api_v1.add_namespace(feedback_admin_namespace, path="/admin/events")

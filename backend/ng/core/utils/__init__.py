@@ -32,6 +32,7 @@ def get_models():
     from ...containers.models.IndvidualContainer import IndvidualContainer
     from ...containers.models.ContainerInstance import ContainerInstance
     from ..models.FileUpload import FileUpload
+    from ...feedback.models import Feedback
 
     return {
         "Announcement": Announcement,
@@ -41,6 +42,7 @@ def get_models():
         "ContainerBlueprint": ContainerBlueprint,
         "Demographic": Demographic,
         "Event": Event,
+        "Feedback": Feedback,
         "FileUpload": FileUpload,
         "Hint": Hint,
         "HintRedemption": HintRedemption,
