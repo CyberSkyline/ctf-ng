@@ -83,6 +83,7 @@ export interface AdminQuestion extends Question {
 export interface Hint {
   id: number;
   challenge_id: number;
+  name: string;
   preview: string;
   body: string | null; // Null if hint has not been redeemed, string if it has.
   deduction: number;
@@ -280,4 +281,11 @@ export interface Workspace {
   hostip : string;
   dockerid : string;
   user : number;
+}
+
+export interface ChallengeVariable {
+  id: number;
+  name: string;
+  default: string;
+  template: string;
 }

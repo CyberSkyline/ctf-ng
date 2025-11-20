@@ -165,6 +165,17 @@ class ChallengeAttempts(Resource):
 
         return success_response(attempts)
 
+
+@challenge_admin_namespace.route("/<int:challenge_id>/variables")
+class ChallengeVars(Resource):
+    @admin_endpoint()
+    @load_challenge(source = LoaderType.PARAM)
+    def get(self, challenge: Challenge, **kwargs):
+        """
+        Get the variables for a specific challenge, including defaults/templates.
+        """
+        return success_response(challenge.variables)
+
 @challenge_admin_namespace.route("/<int:challenge_id>/pull")
 class PullImages(Resource):
     @challenge_admin_namespace.doc(
