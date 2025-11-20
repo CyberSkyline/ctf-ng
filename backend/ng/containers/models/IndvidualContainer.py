@@ -2,7 +2,6 @@ from CTFd.models import db
 from CTFd.utils import get_app_config
 import docker
 from typing import TypedDict
-from ... import config
 from ..constants import DOCKER_RUNNING, DOCKER_BRIDGE
 from ..utils.get_client import get_client
 from .ContainerInstance import ContainerInstance
@@ -30,7 +29,8 @@ class IndvidualContainer(db.Model):
     @classmethod
     def create_indvidual_container(cls, user_id: int, commit: bool = True):
         db_exists = cls.query.filter_by(user=user_id).first()
-        client = get_client(config.DOCKER_HOST)
+        DOCKER_HOST = get_app_config("DOCKER_HOST")
+        client = get_client(DOCKER_HOST)
         container_name = cls.render_container_name(user_id)
 
         if db_exists:
@@ -48,7 +48,7 @@ class IndvidualContainer(db.Model):
 
             indv = cls(
                 user=user_id,
-                hostip=config.DOCKER_HOST,
+                hostip=DOCKER_HOST,
                 dockerid=exists.id,
             )
             db.session.add(indv)
@@ -61,7 +61,7 @@ class IndvidualContainer(db.Model):
 
             indvidual_container = cls(
                 user=user_id,
-                hostip=config.DOCKER_HOST,
+                hostip=DOCKER_HOST,
                 dockerid=ctr.id,
             )
 
