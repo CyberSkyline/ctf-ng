@@ -2,7 +2,6 @@ from CTFd.models import db
 from CTFd.utils import get_app_config
 import docker
 from typing import TypedDict
-from ... import config
 from ..constants import DOCKER_RUNNING, DOCKER_BRIDGE
 from ..utils.get_client import get_client
 from .ContainerInstance import ContainerInstance

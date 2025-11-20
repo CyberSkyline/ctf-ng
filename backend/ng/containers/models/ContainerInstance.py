@@ -8,7 +8,6 @@ from typing import TypedDict
 from ..utils.get_client import get_client
 from ..utils.Client import Client
 from CTFd.utils import get_app_config
-from ... import config
 from .. constants import DOCKER_RUNNING, DOCKER_BRIDGE
 from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 from ...team.models.Team import Team

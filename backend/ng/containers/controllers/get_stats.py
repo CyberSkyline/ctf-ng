@@ -1,7 +1,6 @@
 from ..utils.get_client import get_client
 from CTFd.utils import get_app_config
 from typing import TypedDict
-from ... import config
 
 class SeralizedDockerInfo(TypedDict):
     containers_running: int
