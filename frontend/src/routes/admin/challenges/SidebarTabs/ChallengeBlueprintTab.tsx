@@ -96,7 +96,7 @@ export default function ChallengeBlueprintTab({ challengeId }: {challengeId: num
         <ErrorCallout key={err} className="mt-2">{err}</ErrorCallout>
       ))}
 
-      <Grid columns="2" mt="2">
+      <Grid columns="2" gap="2" mt="2">
         {blueprints?.map((blueprint) => (
           <Card key={blueprint.id} className="mb-3">
             <AdminSidebarHeader title={blueprint.name} icon={<TbPackage />}>
