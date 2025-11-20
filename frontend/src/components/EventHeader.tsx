@@ -3,7 +3,6 @@ import {
   Box,
   Flex,
   Heading,
-  Link as LinkTheme,
   Text,
 } from '@radix-ui/themes';
 import gameCardOffensive from 'assets/offensive.png';
@@ -11,7 +10,6 @@ import gameCardTeam from 'assets/teams.png';
 import { isNull } from 'lodash';
 import type { ReactNode } from 'react';
 import { TbCalendar, TbUser } from 'react-icons/tb';
-import { Link } from 'react-router';
 import EventBadge from './EventBadge';
 import RadixMarkdown from './RadixMarkdown';
 
@@ -44,9 +42,7 @@ export default function EventHeader({
         <EventBadge eventId={id} size="3" />
         <Box>
           <Heading size="8">
-            <LinkTheme asChild>
-              <Link to={`/events/${id}`}>{name}</Link>
-            </LinkTheme>
+            {name}
           </Heading>
           <RadixMarkdown>
             {description || ''}
