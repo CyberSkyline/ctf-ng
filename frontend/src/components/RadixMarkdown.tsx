@@ -11,7 +11,6 @@ import {
 import ReactMarkdown, { type Components } from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
-import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
 
 const DISALLOWED_TAGS = [ 'input', 'picture', 'source', 'kbd', 'script' ];
@@ -67,7 +66,7 @@ export default function RadixMarkdown({ children }: {
   children: string;
 }) {
   return (
-    <ReactMarkdown components={Components} remarkPlugins={[ remarkBreaks, remarkGfm ]} rehypePlugins={[ rehypeRaw, [ rehypeSanitize, SANITIZE_SCHEMA ] ]}>
+    <ReactMarkdown components={Components} remarkPlugins={[ remarkGfm ]} rehypePlugins={[ rehypeRaw, [ rehypeSanitize, SANITIZE_SCHEMA ] ]}>
       {children}
     </ReactMarkdown>
   );
