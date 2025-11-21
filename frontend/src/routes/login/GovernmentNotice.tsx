@@ -101,7 +101,7 @@ export default function GovernmentNotice({ onAccept }: GovernmentNoticeProps) {
           <Text size="2">
             {`Users agree to abide by all rules set forth by the competition. These rules include,
             but are not limited to, the competition rules outlined on the `}
-            <RadixLink href="https://pccc.cisa.gov/pc7/#rules">President's Cup Website</RadixLink>
+            <RadixLink href="https://presidentscup.cisa.gov/pc7/#rules">President's Cup Website</RadixLink>
             {`.`}
             <br />
             <br />
