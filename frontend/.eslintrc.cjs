@@ -14,7 +14,7 @@ module.exports = {
     'plugin:react-hooks/recommended', // Recommended React Hooks rules
     'plugin:jsx-a11y/recommended', // Accessibility rules for JSX
   ],
-  plugins : [ '@typescript-eslint', 'react', 'react-hooks', 'import-newlines' ], // Enable TypeScript, React, and React Hooks plugins
+  plugins : [ '@typescript-eslint', '@stylistic', 'react', 'react-hooks', 'import-newlines' ], // Enable TypeScript, React, and React Hooks plugins
   rules : {
     // Customize any rules here
     'key-spacing' : [ 'error', {
@@ -22,7 +22,7 @@ module.exports = {
       afterColon : true, // Enforce spacing after colons in object literals
       mode : 'strict', // Enforce strict spacing rules
     } ],
-    '@stylistic/quotes' : [ 'error', 'single', { allowTemplateLiterals: true } ],
+    '@stylistic/quotes' : [ 'error', 'single', { allowTemplateLiterals : true } ],
     'array-bracket-spacing' : [ 'error', 'always' ], // Require spaces inside array brackets
     'object-curly-spacing' : [ 'error', 'always' ], // Require spaces inside curly braces
     'max-len' : [ 'error', { code : 160 } ], // Set maximum line length to 160 characters
