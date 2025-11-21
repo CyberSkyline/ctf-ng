@@ -24,7 +24,7 @@ export default function Login() {
   }
 
   return (
-    <Flex className="absolute inset-0 overflow-hidden bg-dots-1" align="center" justify="center" direction="column" gap="3" p="3">
+    <Flex className="absolute inset-0 overflow-hidden bg-dots-1 min-h-[350px]" align="center" justify="center" direction="column" gap="3" p="3">
       <title>Login</title>
       <Card size="3">
         <Flex direction="column" className="max-w-96" gap="3" align="center">
