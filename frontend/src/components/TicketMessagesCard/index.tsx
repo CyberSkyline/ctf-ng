@@ -8,7 +8,6 @@ import {
 import RadixMarkdown from 'components/RadixMarkdown';
 import { map } from 'lodash';
 import { twMerge } from 'tailwind-merge';
-import styles from './ticketMessagesCard.module.css';
 
 export default function TicketMessagesCard({
   messages,
@@ -25,7 +24,7 @@ export default function TicketMessagesCard({
         <Card
           className={
             twMerge(
-              message.author_id === currentUserId ? styles.cardSelf : styles.cardResponder,
+              message.author_id === currentUserId ? '' : 'outline outline-(--accent-8)',
               'mb-2',
               className,
             )

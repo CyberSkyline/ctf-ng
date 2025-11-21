@@ -2,10 +2,31 @@
 
 .milkdownEditor :global(.milkdown) {
   /* Text color */
-  --crepe-color-on-background : var(--gray-12);
+  --crepe-color-on-background : var(--gray-a11);
   /* Background color */
   --crepe-color-background: var(--gray-1);
-  --crepe-color-selected: var(--accent-8);
+  --crepe-color-selected: var(--accent-a8);
+  --crepe-color-hover: var(--accent-a8);
+
+  --crepe-color-surface: var(--color-panel);
+  --crepe-color-surface-low: var(--color-panel);
+
+  --crepe-color-on-surface: var(--gray-12);
+  --crepe-color-outline: var(--gray-12);
+  --crepe-color-on-surface-variant: var(--accent-contrast);
+
+  --crepe-color-primary: var(--accent-9);
+  --crepe-color-secondary: var(--accent-9);
+  --crepe-color-on-primary: var(--accent-contrast);
+
+  --crepe-color-inline-area: var(--gray-a3);
+  --crepe-color-inline-code: var(--gray-a11);
+
+  --crepe-font-title: var(--heading-font-family);
+  --crepe-font-text: var(--default-font-family);
+
+  --crepe-shadow-1: var(--base-card-surface-box-shadow);
+  --crepe-shadow-2: var(--base-card-surface-box-shadow);
 }
 
 .milkdownEditor :global(.milkdown .editor) {
@@ -19,8 +40,44 @@
   display : none;
 }
 
-/* End Milkdown Overrides */
+.milkdownEditor :global(.milkdown .ProseMirror h1) {
+  font-size: var(--font-size-6);
+  line-height: var(--heading-line-height-6);
+  font-weight: var(--font-weight-bold);
+  color: var(--gray-12);
+  margin: 0;
+}
 
+.milkdownEditor :global(.milkdown .ProseMirror h2) {
+  font-size: var(--font-size-5);
+  line-height: var(--heading-line-height-5);
+  font-weight: var(--font-weight-bold);
+  color: var(--gray-12);
+  margin: 0;
+}
+
+.milkdownEditor :global(.milkdown .ProseMirror h3) {
+  font-size: var(--font-size-4);
+  line-height: var(--heading-line-height-4);
+  font-weight: var(--font-weight-bold);
+  color: var(--gray-12);
+  margin: 0;
+}
+
+.milkdownEditor :global(.milkdown .ProseMirror h4), :global(.milkdown .ProseMirror h5), :global(.milkdown .ProseMirror h6) {
+  font-size: var(--font-size-3);
+  line-height: var(--heading-line-height-3);
+  font-weight: var(--font-weight-bold);
+  color: var(--gray-12);
+  margin: 0;
+}
+
+.milkdownEditor :global(.milkdown .ProseMirror th) {
+  font-weight: var(--font-weight-bold);
+  color: var(--gray-12);
+}
+
+/* End Milkdown Overrides */
 
 .milkdownEditor :global(.milkdown .milkdown-slash-menu), .milkdownEditor :global(.milkdown .milkdown-toolbar) {
   z-index: 3;

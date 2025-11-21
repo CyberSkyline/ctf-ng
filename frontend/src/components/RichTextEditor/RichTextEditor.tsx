@@ -1,8 +1,8 @@
-import { nord } from '@milkdown/theme-nord';
 import { Crepe } from '@milkdown/crepe';
+import { automd } from '@milkdown/plugin-automd';
 import { listener as listenerPlugin } from '@milkdown/plugin-listener';
 import { Milkdown, MilkdownProvider, useEditor } from '@milkdown/react';
-import { automd } from '@milkdown/plugin-automd';
+import { nord } from '@milkdown/theme-nord';
 
 import '@milkdown/crepe/theme/common/style.css';
 import '@milkdown/crepe/theme/nord.css';
@@ -36,6 +36,7 @@ function CrepeEditor({
   const featureConfigs = {
     placeholder : {
       text : 'Type here...',
+      mode : 'doc' as const,
     },
   };
 
