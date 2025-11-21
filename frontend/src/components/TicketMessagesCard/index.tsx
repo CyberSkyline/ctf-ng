@@ -24,7 +24,7 @@ export default function TicketMessagesCard({
         <Card
           className={
             twMerge(
-              message.author_id === currentUserId ? '' : 'outline outline-(--accent-8)',
+              message.author_id !== currentUserId && 'before:!bg-(--accent-2)',
               'mb-2',
               className,
             )
