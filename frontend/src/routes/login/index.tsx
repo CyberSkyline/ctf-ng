@@ -8,9 +8,21 @@ import {
   Link as RadixLink,
   Text,
 } from '@radix-ui/themes';
+import { useState } from 'react';
 import ExpoLoginForm from './ExpoLoginForm';
+import GovernmentNotice from './GovernmentNotice';
 
 export default function Login() {
+  const [ hasAcceptedNotice, setHasAcceptedNotice ] = useState(false);
+
+  const handleAcceptNotice = () => {
+    setHasAcceptedNotice(true);
+  };
+
+  if (!hasAcceptedNotice) {
+    return <GovernmentNotice onAccept={handleAcceptNotice} />;
+  }
+
   return (
     <Flex className="absolute inset-0 overflow-hidden bg-dots-1" align="center" justify="center" direction="column" gap="3" p="3">
       <title>Login</title>
