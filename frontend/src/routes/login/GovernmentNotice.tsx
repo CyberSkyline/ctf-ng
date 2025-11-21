@@ -13,8 +13,8 @@ interface GovernmentNoticeProps {
 
 export default function GovernmentNotice({ onAccept }: GovernmentNoticeProps) {
   return (
-    <Flex className="absolute inset-0 bg-dots-1 min-h-[400px]" align="center" justify="center" direction="column" gap="3" p="3">
-      <Card size="4" className="w-full max-w-2xl max-h-[95vh] min-h-[300px] flex flex-col">
+    <Flex className="absolute inset-0 bg-dots-1" align="center" justify="center" direction="column" gap="3" p="3">
+      <Card size="4" className="w-full max-w-2xl max-h-[95vh] min-h-fit flex flex-col">
         <Heading size="6" align="center">
           NOTICE
         </Heading>
