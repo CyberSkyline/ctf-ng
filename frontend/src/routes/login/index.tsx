@@ -9,6 +9,7 @@ import {
   Text,
 } from '@radix-ui/themes';
 import { useState } from 'react';
+import { Link } from 'react-router';
 import ExpoLoginForm from './ExpoLoginForm';
 import GovernmentNotice from './GovernmentNotice';
 
@@ -34,9 +35,9 @@ export default function Login() {
           </Text>
 
           <Button asChild size="4" className="!w-full">
-            <a href={SSOPATH}>
+            <Link to={SSOPATH} reloadDocument>
               Log in with SSO
-            </a>
+            </Link>
           </Button>
 
           <Text color="gray" size="2">
