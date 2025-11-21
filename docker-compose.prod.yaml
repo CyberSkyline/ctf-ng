@@ -62,6 +62,10 @@ services:
         target: /etc/nginx/nginx.conf
         read_only: true
       - type: bind
+        source: ./conf/nginx/self.pem
+        target: /etc/nginx/self.pem
+        read_only: true
+      - type: bind
         source: ./sslpublickey.pem
         target: /certificates/sslpublickey.pem
         read_only: true
