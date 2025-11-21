@@ -62,10 +62,10 @@ export default function GovernmentNotice({ onAccept }: GovernmentNoticeProps) {
             Terms of Service
           </Heading>
           <Text size="2" className="block mb-3">
-            {`Use of this site is "AS IS", and you acknowledge any liability stemming from your use of it. `}
+            {'Use of this site is "AS IS", and you acknowledge any liability stemming from your use of it. '}
             {`Users agree to abide by software copyrights and to comply with all the terms of all applicable software licenses,
             including third party software, that may be used in the President's Cup. `}
-            {`Users may choose to opt out of third party privacy policies if permitted by such privacy policy. `}
+            {'Users may choose to opt out of third party privacy policies if permitted by such privacy policy. '}
           </Text>
 
           <Heading size="4">
@@ -78,7 +78,7 @@ export default function GovernmentNotice({ onAccept }: GovernmentNoticeProps) {
           </Text>
           <Text size="2">
             <b>Purpose: </b>
-            {`The primary purpose for the collection of this information is for registration to the Department of Homeland Security's Presidents Cup. `}
+            {'The primary purpose for the collection of this information is for registration to the Department of Homeland Security\'s Presidents Cup. '}
           </Text>
           <Text size="2">
             <b>Routine Uses: </b>
@@ -101,8 +101,8 @@ export default function GovernmentNotice({ onAccept }: GovernmentNoticeProps) {
           <Text size="2">
             {`Users agree to abide by all rules set forth by the competition. These rules include,
             but are not limited to, the competition rules outlined on the `}
-            <RadixLink href="https://presidentscup.cisa.gov/pc7/#rules">President's Cup Website</RadixLink>
-            {`.`}
+            <RadixLink href="https://presidentscup.cisa.gov/pc7/#rules">{'President\'s Cup Website'}</RadixLink>
+            .
             <br />
             <br />
             {`Users understand that they are allowed to publish their thoughts and opinions about
