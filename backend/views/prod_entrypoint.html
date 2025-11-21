@@ -11,8 +11,8 @@
       impersonated: {{ (session.impersonated or false) | tojson }}
     };
   </script>
-  <script type="module" crossorigin src="/dist/index.js"></script>
-  <link rel="stylesheet" crossorigin href="/dist/style.css">
+  <script type="module" crossorigin src="{{ static_build_path }}/index.js"></script>
+  <link rel="stylesheet" crossorigin href="{{ static_build_path }}/style.css">
 </head>
 
 <body>
