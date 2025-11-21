@@ -13,10 +13,10 @@
 
   --crepe-color-on-surface: var(--gray-12);
   --crepe-color-outline: var(--gray-12);
-  --crepe-color-on-surface-variant: var(--accent-contrast);
+  --crepe-color-on-surface-variant: var(--gray-12);
 
-  --crepe-color-primary: var(--accent-9);
-  --crepe-color-secondary: var(--accent-9);
+  --crepe-color-primary: var(--accent-8);
+  --crepe-color-secondary: var(--accent-8);
   --crepe-color-on-primary: var(--accent-contrast);
 
   --crepe-color-inline-area: var(--gray-a3);
@@ -75,6 +75,10 @@
 .milkdownEditor :global(.milkdown .ProseMirror th) {
   font-weight: var(--font-weight-bold);
   color: var(--gray-12);
+}
+
+.milkdownEditor :global(.milkdown .ProseMirror table) {
+  width: auto;
 }
 
 /* End Milkdown Overrides */
