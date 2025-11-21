@@ -264,8 +264,8 @@ class Team(db.Model):
 
     def set_end_time(self, end_time: datetime | None = None, commit=True):
         """Set the team's end time."""
-        end_time = end_time.replace(tzinfo=None)
-        if self.event.end_time and end_time > self.event.end_time:
+        end_time = end_time.replace(tzinfo=None) if end_time is not None else None
+        if end_time is not None and self.event.end_time and end_time > self.event.end_time:
             self.end_time = self.event.end_time
         else:
             self.end_time = end_time
