@@ -232,3 +232,23 @@ class EventChallenges(Resource):
         """
         challenges = event.get_all_challenges()
         return success_response(challenges)
+
+@events_admin_namespace.route("/<int:event_id>/toggle_leaderboard")
+class EventToggleLeaderboard(Resource):
+    @events_admin_namespace.doc(
+        description="Toggle the visibility of the event leaderboard",
+        responses={
+            200: "Success - Leaderboard visibility toggled",
+            404: "Not found - Event does not exist",
+            403: "Forbidden - Admin access required",
+            500: "Internal Server Error",
+        },
+    )
+    @admin_endpoint()
+    @load_event(source=LoaderType.PARAM)
+    def post(self, event: Event, **kwargs):
+        """
+        Toggle event leaderboard visibility
+        """
+        event.show_leaderboard = not event.show_leaderboard
+        return success_response({"show_leaderboard": event.show_leaderboard})

@@ -9,7 +9,7 @@ from datetime import datetime
 from CTFd.cache import cache
 
 from ..models import Score, ScoreEvent
-
+from ...core.utils import utc_now
 
 @pytest.fixture(autouse=True)
 def clear_score_cache():
@@ -211,6 +211,7 @@ class TestGetLeaderboard:
         for i in range(3):
             captain = user_factory(name=f"Captain{i}", email=f"captain{i}@example.com")
             team = team_factory(event=fresh_event, members=[captain])
+            team.set_start_timestamp(utc_now())
             # Get the auto-created score
             score = Score.query.filter_by(team_id=team.id, event_id=fresh_event.id).first()
             score.points = (i + 1) * 100
@@ -241,6 +242,7 @@ class TestGetLeaderboard:
         # Create initial team and update its score
         captain1 = user_factory(name="CacheCaptain1", email="cachec1@example.com")
         team1 = team_factory(event=fresh_event, members=[captain1])
+        team1.set_start_timestamp(utc_now())
         score1 = Score.query.filter_by(team_id=team1.id, event_id=fresh_event.id).first()
         score1.points = 100
         db_session.commit()
@@ -252,6 +254,7 @@ class TestGetLeaderboard:
         # Add another team and update its score
         captain2 = user_factory(name="CacheCaptain2", email="cachec2@example.com")
         team2 = team_factory(event=fresh_event, members=[captain2])
+        team2.set_start_timestamp(utc_now())
         score2 = Score.query.filter_by(team_id=team2.id, event_id=fresh_event.id).first()
         score2.points = 200
         db_session.commit()
@@ -278,11 +281,13 @@ class TestGetLeaderboard:
         # Create teams and update their scores
         captain1 = user_factory(name="TiedCaptain1", email="tiedc1@example.com")
         team1 = team_factory(event=fresh_event, members=[captain1])
+        team1.set_start_timestamp(utc_now())
         captain2 = user_factory(name="TiedCaptain2", email="tiedc2@example.com")
         team2 = team_factory(event=fresh_event, members=[captain2])
+        team2.set_start_timestamp(utc_now())
         captain3 = user_factory(name="TiedCaptain3", email="tiedc3@example.com")
         team3 = team_factory(event=fresh_event, members=[captain3])
-
+        team3.set_start_timestamp(utc_now())
         # Update auto-created scores
         score1 = Score.query.filter_by(team_id=team1.id, event_id=fresh_event.id).first()
         score1.points = 100

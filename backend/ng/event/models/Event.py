@@ -34,6 +34,7 @@ class Event(db.Model):
     hints_enabled = db.Column(db.Boolean, default=False, nullable=False)
     time_limit_minutes = db.Column(db.Integer, nullable=True)
     allowed_domains: Mapped[list[str]] = db.Column(JSON, nullable=False, default=[])
+    show_leaderboard = db.Column(db.Boolean, default=False, nullable=False)
 
     __table_args__ = (
         CheckConstraint(

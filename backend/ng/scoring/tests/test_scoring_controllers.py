@@ -31,6 +31,7 @@ from ..models import (
     ScoreEvent,
 )
 from ...challenge.models.Hint import Hint
+from ...core.utils import utc_now
 
 
 @pytest.fixture(autouse=True)
@@ -455,7 +456,7 @@ class TestControllerIntegration:
     ):
         """Test complete flow: submit answer, redeem hint, award points"""
         initial_score = score.points
-
+        team_with_member.set_start_timestamp(utc_now())
         # 1. Submit correct answer
         answer_result = submit_answer(
             event=event,
