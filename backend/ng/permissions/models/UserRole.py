@@ -64,8 +64,12 @@ class UserRole(db.Model):
         return cls.create_user_role(user_id, role_id)
 
     @classmethod
-    def assign_role_to_user_by_name(cls, user_id: int, role_name: RoleEnum):
-        role = Role.query.filter_by(name=role_name.value).first()
+    def assign_role_to_user_by_name(cls, user_id: int, role_name):
+        name = role_name.value if isinstance(role_name, RoleEnum) else role_name
+        role = Role.query.filter_by(name=name).first()
+
+        if not role:
+            raise ValidationError(f"Role '{name}' not found")
 
         return cls.assign_role_to_user_by_id(user_id, role.id)
 
