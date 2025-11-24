@@ -17,6 +17,7 @@ export default defineConfig(({ command }) => ({
   define : {
     BUILD_MODE : command === 'build',
     RELEASE : JSON.stringify(RELEASE),
+    BASE_PATH : JSON.stringify(command === 'build' ? '/ctf' : '/'),
   },
   server : {
     allowedHosts : [ '.cisa.gov', '.localhost' ],

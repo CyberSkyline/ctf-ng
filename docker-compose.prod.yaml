@@ -75,6 +75,10 @@ services:
         source: ./frontend/dist
         target: /var/www/vite-build
         read_only: true
+      - type: bind
+        source: /mnt/prescup-web
+        target: /usr/share/nginx/html
+        read_only: true
     ports:
       - mode: host
         target: 80
