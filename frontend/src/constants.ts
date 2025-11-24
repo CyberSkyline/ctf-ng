@@ -15,9 +15,9 @@ import {
 
 export type AccentColor = (typeof accentColors)[number];
 
-export const ROUTEPREFIX: string = '';
-export const APIPREFIX: string = '/ng';
-export const SSOPATH: string = '/ng/authenticate/okta/login';
+export const ROUTEPREFIX: string = '/ctf'; // TODO: REPLACE THIS!!!!!
+export const APIPREFIX: string = `${ROUTEPREFIX}/ng`;
+export const SSOPATH: string = `${ROUTEPREFIX}/ng/authenticate/okta/login`;
 
 // Semantic icons used throughout the UI, defined here for consistency
 export const EventIcon = TbCalendarEvent;
