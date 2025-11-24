@@ -251,5 +251,5 @@ class EventToggleLeaderboard(Resource):
         Toggle event leaderboard visibility
         """
         event.toggle_leaderboard()
-        
+
         return success_response({"show_leaderboard": event.show_leaderboard})
