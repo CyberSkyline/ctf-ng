@@ -1434,6 +1434,29 @@ class Test_Event_Admin_Create:
         assert data["success"] is True
         assert data["data"]["allowed_domains"] == new_event_data["allowed_domains"]
 
+    def test_admin_toggle_leaderboard_visibility(self, admin_client, event_factory):
+        event = event_factory(name = "Leaderboard Visibility Event", public = True, show_leaderboard = True)
+
+        # Toggle leaderboard visibility to False
+        response = admin_client.post(
+            f"/ng/admin/events/{event.id}/toggle_leaderboard",
+            json = {}
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["show_leaderboard"] is False
+
+        # Toggle leaderboard visibility back to True
+        response = admin_client.post(
+            f"/ng/admin/events/{event.id}/toggle_leaderboard",
+            json = {}
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["show_leaderboard"] is True
+
 
 class Test_Event_Challenge_Import:
     def get_endpoint(self) -> str:

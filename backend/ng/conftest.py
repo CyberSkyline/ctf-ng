@@ -318,6 +318,7 @@ def event_factory(db_session):
             "time_limit_minutes": 120,
             "allowed_domains": [],
             "hints_enabled": True,
+            "show_leaderboard": True
         }
         defaults.update(kwargs)
         event = Event.create_event(**defaults)
