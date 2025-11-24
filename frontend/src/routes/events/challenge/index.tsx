@@ -1,3 +1,4 @@
+import { APIPREFIX } from '@/constants';
 import {
   Card,
   Flex,
@@ -15,7 +16,7 @@ export default function Challenge() {
     let timer = null;
 
     const checkWorkspace = async () => {
-      const response = await fetch('/ng/vnc/access/vnc.html');
+      const response = await fetch(`${APIPREFIX}/vnc/access/vnc.html`);
       if (response.ok) {
         setWorkspaceUp(true);
         clearInterval(timer!);
@@ -47,11 +48,10 @@ export default function Challenge() {
             side="all"
             className="grow shrink"
           >
-
             <iframe
               title="VNC session"
               className="w-full h-full"
-              src="/ng/vnc/access/vnc.html?autoconnect=true&password=vncpassword&resize=remote&reconnect=true"
+              src={`${APIPREFIX}/vnc/access/vnc.html?autoconnect=true&password=vncpassword&resize=remote&reconnect=true`}
             />
           </Inset>
         ) : (
