@@ -2,13 +2,12 @@ import { useState } from 'react';
 import { useSponsors } from '@/hooks/sponsors';
 import { useMySponsor, setMySponsor } from '@/hooks/users';
 import {
+  Box,
   Button,
-  Card,
   Container,
   Flex,
-  Heading,
   Grid,
-  Text,
+  Heading,
 } from '@radix-ui/themes';
 import {
   isNil,
@@ -17,12 +16,15 @@ import {
   map,
 } from 'lodash';
 import { ErrorCallout } from 'components/Callouts';
+import SponsorImageCard from './SponsorImageCard';
+import { useFileUrl } from '@/hooks/fileuploads'
 
 export default function Profile() {
   const [ isEditing, setIsEditing ] = useState<boolean>(false);
   const [ newSponsorError, setNewSponsorError ] = useState<string | null>(null);
   const { data : allSponsors, error } = useSponsors();
   const { data : mySponsor, error : mySponsorError } = useMySponsor();
+  const { data: image } = useFileUrl('sponsor-logos', mySponsor?.logo)
 
   const selectSponsor = (id: number) => {
     setNewSponsorError(null);
@@ -62,21 +64,10 @@ export default function Profile() {
             {!isUndefined(error) && <ErrorCallout>{error.message}</ErrorCallout>}
             <Grid columns="3" gap="1">
               {map(allSponsors, (sponsor) => (
-                <Card
-                  key={sponsor.id}
-                  asChild
-                >
-                  <button
-                    type="button"
-                    onClick={() => selectSponsor(sponsor.id)}
-                    aria-label={sponsor.name}
-                  >
-                    <Flex direction="column">
-                      <Text weight="bold" align="center">{sponsor.name}</Text>
-                      {sponsor.logo && <img src={sponsor.logo} alt="" />}
-                    </Flex>
-                  </button>
-                </Card>
+                <SponsorImageCard
+                  sponsor={sponsor}
+                  selectSponsor={selectSponsor}
+                />
               ))}
             </Grid>
           </>
@@ -84,7 +75,11 @@ export default function Profile() {
           !isNil(mySponsor) && (
             <>
               <p>{mySponsor.name}</p>
-              {mySponsor.logo && <img src={mySponsor.logo} alt={mySponsor.name} />}
+              {image?.url && (
+                <Box maxHeight='500px'>
+                  <img src={image?.url} alt='' />
+                </Box>
+              )}
             </>
           )
         )}
