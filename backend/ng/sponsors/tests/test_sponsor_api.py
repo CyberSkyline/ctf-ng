@@ -98,19 +98,19 @@ class Test_Sponsor_Admin_Creation:
     def test_create_sponsor_admin(self, admin_client):
         sponsor_data = {
             "name": "New Sponsor",
-            "logo": "https://www.ndow.org/wp-content/uploads/2021/10/branta_canadensis-scaled.jpeg"
+            "logo": "branta_canadensis-scaled.jpeg"
         }
         response = admin_client.post(self.endpoint, json=sponsor_data)
         print(response.get_json())
         assert response.status_code == 201
         data = response.json["data"]
         assert data["name"] == "New Sponsor"
-        assert data["logo"] == "https://www.ndow.org/wp-content/uploads/2021/10/branta_canadensis-scaled.jpeg"
+        assert data["logo"] == "branta_canadensis-scaled.jpeg"
 
     def test_create_sponsor_invalid_data_admin(self, admin_client):
         sponsor_data = {
             "name": "",
-            "logo": "https://www.ndow.org/wp-content/uploads/2021/10/branta_canadensis-scaled.jpeg"
+            "logo": "branta_canadensis-scaled.jpeg"
         }
         response = admin_client.post(self.endpoint, json=sponsor_data)
         assert response.status_code == 400
@@ -126,7 +126,7 @@ class Test_Sponsor_Admin_Creation:
     def test_only_admins_can_create_sponsor(self, logged_in_client):
         sponsor_data = {
             "name": "New Sponsor",
-            "logo": "https://www.ndow.org/wp-content/uploads/2021/10/branta_canadensis-scaled.jpeg"
+            "logo": "branta_canadensis-scaled.jpeg"
         }
         response = logged_in_client.post(self.endpoint, json=sponsor_data)
         assert response.status_code == 403
@@ -137,19 +137,19 @@ class Test_Sponsor_Admin_Update:
         sponsor = sponsor_factory(name="Old Sponsor", logo="oldlogo.png")
         update_data = {
             "name": "Updated Sponsor",
-            "logo": "https://www.ndow.org/wp-content/uploads/2021/10/branta_canadensis-scaled.jpeg"
+            "logo": "branta_canadensis-scaled.jpeg"
         }
         response = admin_client.put(self.endpoint.format(sponsor_id=sponsor.id), json=update_data)
         assert response.status_code == 200
         data = response.json["data"]
         assert data["name"] == "Updated Sponsor"
-        assert data["logo"] == "https://www.ndow.org/wp-content/uploads/2021/10/branta_canadensis-scaled.jpeg"
+        assert data["logo"] == "branta_canadensis-scaled.jpeg"
 
     def test_update_sponsor_invalid_data_admin(self, admin_client, sponsor_factory):
         sponsor = sponsor_factory(name="Old Sponsor", logo="oldlogo.png")
         update_data = {
             "name": "",  # Invalid name
-            "logo": "https://www.ndow.org/wp-content/uploads/2021/10/branta_canadensis-scaled.jpeg"
+            "logo": "branta_canadensis-scaled.jpeg"
         }
         response = admin_client.put(self.endpoint.format(sponsor_id=sponsor.id), json=update_data)
         assert response.status_code == 400
@@ -158,7 +158,7 @@ class Test_Sponsor_Admin_Update:
         sponsor = sponsor_factory(name="Old Sponsor", logo="oldlogo.png")
         update_data = {
             "name": "Updated Sponsor",
-            "logo": "not_a_valid_url"  # Invalid URL
+            "logo": ""  # Invalid logo filename
         }
         response = admin_client.put(self.endpoint.format(sponsor_id=sponsor.id), json=update_data)
         assert response.status_code == 400
@@ -167,7 +167,7 @@ class Test_Sponsor_Admin_Update:
         sponsor = sponsor_factory(name="Old Sponsor", logo="oldlogo.png")
         update_data = {
             "name": "Updated Sponsor",
-            "logo": "https://www.ndow.org/wp-content/uploads/2021/10/branta_canadensis-scaled.jpeg"
+            "logo": "branta_canadensis-scaled.jpeg"
         }
         response = logged_in_client.put(self.endpoint.format(sponsor_id=sponsor.id), json=update_data)
         assert response.status_code == 403
