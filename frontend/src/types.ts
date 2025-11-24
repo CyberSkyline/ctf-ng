@@ -20,6 +20,13 @@ export interface Sponsor {
   logo?: string;
 }
 
+export interface UploadedFile {
+  filename: string,
+  folder: string,
+  last_modified?: Date,
+  url?: string,
+}
+
 export interface User {
   id: number;
   name: string;
