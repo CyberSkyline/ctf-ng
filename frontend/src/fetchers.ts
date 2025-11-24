@@ -91,7 +91,6 @@ export const apiMutation = async (resource: string, body: unknown, init?: Reques
   return json;
 };
 
-
 /**
  * Function used to perform API mutations.
  * After the promise resolves, make sure to call SWR's mutate with the relevant resource(s) to ensure data is updated.
@@ -106,8 +105,8 @@ export const fileApiMutation = async (resource: string, formData: FormData, init
 
   const res = await fetch(APIPREFIX + resource, {
     ...init,
-    body: formData,
+    body : formData,
   });
   const json = await parseResponseData(res);
-  return json
+  return json;
 };

@@ -2,9 +2,9 @@ import type { Sponsor } from '@/types';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { ErrorCallout, WarningCallout } from 'components/Callouts';
-import SponsorModal from './SponsorModal';
 import { useFileUrl } from '@/hooks/fileuploads';
-import { Box, DataList } from '@radix-ui/themes'
+import { Box, DataList } from '@radix-ui/themes';
+import SponsorModal from './SponsorModal';
 
 export default function SponsorSidebar({ entity }: {entity: Sponsor}) {
   const { data, error } = useFileUrl('sponsor-logos', entity.logo);
@@ -25,7 +25,7 @@ export default function SponsorSidebar({ entity }: {entity: Sponsor}) {
         </DataList.Item>
       </DataList.Root>
       {entity.logo ? (
-        <Box maxHeight='500px'>
+        <Box maxHeight="500px">
           <img src={data?.url} alt={data?.filename} />
         </Box>
       ) : <WarningCallout>No logo is associated with this sponsor</WarningCallout>}

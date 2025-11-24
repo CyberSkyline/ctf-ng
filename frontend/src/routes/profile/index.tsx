@@ -16,15 +16,15 @@ import {
   map,
 } from 'lodash';
 import { ErrorCallout } from 'components/Callouts';
+import { useFileUrl } from '@/hooks/fileuploads';
 import SponsorImageCard from './SponsorImageCard';
-import { useFileUrl } from '@/hooks/fileuploads'
 
 export default function Profile() {
   const [ isEditing, setIsEditing ] = useState<boolean>(false);
   const [ newSponsorError, setNewSponsorError ] = useState<string | null>(null);
   const { data : allSponsors, error } = useSponsors();
   const { data : mySponsor, error : mySponsorError } = useMySponsor();
-  const { data: image } = useFileUrl('sponsor-logos', mySponsor?.logo)
+  const { data : image } = useFileUrl('sponsor-logos', mySponsor?.logo);
 
   const selectSponsor = (id: number) => {
     setNewSponsorError(null);
@@ -76,8 +76,8 @@ export default function Profile() {
             <>
               <p>{mySponsor.name}</p>
               {image?.url && (
-                <Box maxHeight='500px'>
-                  <img src={image?.url} alt='' />
+                <Box maxHeight="500px">
+                  <img src={image?.url} alt="" />
                 </Box>
               )}
             </>

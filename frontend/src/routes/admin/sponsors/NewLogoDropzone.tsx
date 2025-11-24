@@ -7,21 +7,21 @@ import { Spinner } from '@radix-ui/themes';
 import type { UseFormSetValue } from 'react-hook-form';
 import type { Sponsor } from '@/types';
 
-export default function NewLogoDropzone({setValue}: {setValue: UseFormSetValue<Omit<Sponsor, "id">>}) {
-  const [ uploadError, setUploadError ] = useState<string | null>(null)
-  const [ loading, setLoading ] = useState<boolean>(false)
+export default function NewLogoDropzone({ setValue }: {setValue: UseFormSetValue<Omit<Sponsor, 'id'>>}) {
+  const [ uploadError, setUploadError ] = useState<string | null>(null);
+  const [ loading, setLoading ] = useState<boolean>(false);
 
   const onDrop = async (acceptedFiles: File[]) => {
-    const formData = new FormData() 
-    formData.append('folder', 'sponsor-logos')
-    formData.append('file', acceptedFiles[0])
+    const formData = new FormData();
+    formData.append('folder', 'sponsor-logos');
+    formData.append('file', acceptedFiles[0]);
 
     setUploadError(null);
     directUpload(formData).then((data) => {
-      setValue('logo', data.filename)
-    }).catch(err => setUploadError(err.message))
-    .finally(() => setLoading(false));
-  }
+      setValue('logo', data.filename);
+    }).catch((err) => setUploadError(err.message))
+      .finally(() => setLoading(false));
+  };
 
   return (
     <>
@@ -48,8 +48,8 @@ export default function NewLogoDropzone({setValue}: {setValue: UseFormSetValue<O
                 isDragReject && 'border-[var(--red-7)] text-[var(--red-11)]',
               )}
             >
-              <input {...getInputProps()} disabled={loading}/>
-              <Spinner size='3' loading={loading}>
+              <input {...getInputProps()} disabled={loading} />
+              <Spinner size="3" loading={loading}>
                 <p>Drag and drop a file here, or click to select a file</p>
                 <p>File will automatically upload.</p>
               </Spinner>

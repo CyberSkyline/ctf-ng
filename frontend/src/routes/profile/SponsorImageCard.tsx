@@ -1,10 +1,10 @@
-import type { Sponsor } from '@/types'
-import { Card, Flex, Text } from '@radix-ui/themes'
-import { useFileUrl } from '@/hooks/fileuploads'
+import type { Sponsor } from '@/types';
+import { Card, Flex, Text } from '@radix-ui/themes';
+import { useFileUrl } from '@/hooks/fileuploads';
 
-export default function SponsorImageCard({sponsor, selectSponsor}: {sponsor: Sponsor, selectSponsor: (id: number) => void}){
+export default function SponsorImageCard({ sponsor, selectSponsor }: {sponsor: Sponsor, selectSponsor: (id: number) => void}) {
   const { id, name, logo } = sponsor;
-  const { data } = useFileUrl('sponsor-logos', logo)
+  const { data } = useFileUrl('sponsor-logos', logo);
 
   return (
     <Card
@@ -18,11 +18,11 @@ export default function SponsorImageCard({sponsor, selectSponsor}: {sponsor: Spo
       >
         <Flex direction="column">
           <Text weight="bold" align="center">{name}</Text>
-          
+
           <img src={data?.url} alt={data?.filename} />
-          
+
         </Flex>
       </button>
     </Card>
-  )
+  );
 }

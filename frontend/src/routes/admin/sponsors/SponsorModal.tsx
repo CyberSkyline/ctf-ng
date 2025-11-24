@@ -6,7 +6,7 @@ import type { Sponsor } from '@/types';
 import { isUndefined } from 'lodash';
 import SponsorDataForm from './SponsorDataForm';
 
-export default function SponsorModal({ sponsor }: {sponsor?: Sponsor}) { 
+export default function SponsorModal({ sponsor }: {sponsor?: Sponsor}) {
   const isEditing = !isUndefined(sponsor);
 
   const handleSubmit = async (data: {name: string, logo?: string}) => {
@@ -33,7 +33,7 @@ export default function SponsorModal({ sponsor }: {sponsor?: Sponsor}) {
       )}
       defaultValues={sponsor}
     >
-      {(rhf) => <SponsorDataForm rhf={rhf}/>}
+      {(rhf) => <SponsorDataForm rhf={rhf} />}
     </Modal>
   );
 }

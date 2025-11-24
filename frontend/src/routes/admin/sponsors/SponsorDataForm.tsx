@@ -13,20 +13,22 @@ export default function SponsorDataForm({
   rhf,
 }: {
   rhf: UseFormReturn<Omit<Sponsor, 'id'>>,
-}){
-  const { register, control, formState : { errors }, watch, setValue } = rhf;
+}) {
+  const {
+    register, control, formState : { errors }, watch, setValue,
+  } = rhf;
   const selectedImage = watch('logo');
-  
-  const { data: imagePreview, error: imageError } = useFileUrl('sponsor-logos', selectedImage)
+
+  const { data : imagePreview, error : imageError } = useFileUrl('sponsor-logos', selectedImage);
 
   const [ selectedOption, setSelectedOption ] = useState<'existing' | 'upload'>('existing');
-  
-  const { data, error: listError } = useFileList('sponsor-logos')
+
+  const { data, error : listError } = useFileList('sponsor-logos');
   const options = chain(data?.files)
-    .filter((file) => file.filename !== "")
-    .map(({filename}) => ({ name: filename, value: filename }))
+    .filter((file) => file.filename !== '')
+    .map(({ filename }) => ({ name : filename, value : filename }))
     .value() || [];
-   
+
   return (
     <>
       <FormField label="Full Name" error={errors?.name}>
@@ -68,5 +70,5 @@ export default function SponsorDataForm({
         <NewLogoDropzone setValue={setValue} />
       )}
     </>
-  )
+  );
 }
