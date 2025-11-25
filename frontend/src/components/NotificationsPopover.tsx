@@ -66,13 +66,13 @@ export default function NotificationsPopover({ triggerClassName, contentClassNam
           }
         }}
         onClick={() => markRead(link, notif.id)}
-        className="hover:border-b-2"
+        className="hover:border-b-2 w-xs"
       >
-        <Flex justify="between">
+        <Flex direction="column">
           <Text weight={notif.read_at ? 'regular' : 'bold'}>{notif.title}</Text>
-          <Text>{notif.created_at.toLocaleDateString('en-US', dateFormat)}</Text>
+          <Text size="1">{notif.created_at.toLocaleDateString('en-US', dateFormat)}</Text>
+          <Text size="2" wrap="pretty" className="pt-2">{notif.message}</Text>
         </Flex>
-        <Text size="2">{notif.message}</Text>
       </Card>
     );
   };
