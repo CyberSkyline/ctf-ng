@@ -12,7 +12,7 @@ import { Link } from 'react-router';
 export default function Landing() {
   return (
     <Flex className="absolute inset-0 overflow-hidden bg-dots-1" align="center" justify="center" direction="column" gap="3" p="3">
-      <title>Login</title>
+      <title>Home</title>
       <Heading size="8">Welcome to President&apos;s Cup</Heading>
       <Card size="3" className="max-w-172" role="main">
         <Flex direction="row" gap="8">
