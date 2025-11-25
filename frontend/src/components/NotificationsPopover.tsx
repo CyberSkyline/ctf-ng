@@ -89,7 +89,7 @@ export default function NotificationsPopover({ triggerClassName, contentClassNam
           && <TbCircleDotFilled color="var(--accent-indicator)" className="absolute -mt-6 ml-2" aria-label="Unread" />}
       </NavigationMenu.Trigger>
       <NavigationMenu.Content
-        className={twMerge(contentClassName)}
+        className={contentClassName}
         onPointerEnter={(event) => event.preventDefault()}
         onPointerLeave={(event) => event.preventDefault()}
       >

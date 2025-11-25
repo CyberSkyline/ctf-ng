@@ -49,7 +49,6 @@ export default function ThemeToggle({ triggerClassName, contentClassName, conten
           >
             <button type="button">
               <Icon />
-              {' '}
               {name}
             </button>
           </NavigationMenu.Item>
