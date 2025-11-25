@@ -23,6 +23,7 @@ class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(config.EVENT_NAME_MAX_LENGTH), nullable=False, unique=True)
     description = db.Column(db.Text, nullable=True)
+    image = db.Column(db.String(255), nullable=True)
     max_team_size = db.Column(db.Integer, default=config.MAX_TEAM_SIZE, nullable=False)
     start_time = db.Column(db.DateTime, nullable=True)
     end_time = db.Column(db.DateTime, nullable=True)
@@ -80,6 +81,7 @@ class Event(db.Model):
             "id": self.id,
             "name": self.name,
             "description": self.description,
+            "image": self.image,
             "max_team_size": self.max_team_size,
             "start_time": self.start_time.isoformat() + "Z" if self.start_time else None,
             "end_time": self.end_time.isoformat() + "Z" if self.end_time else None,
@@ -112,6 +114,13 @@ class Event(db.Model):
             config.EVENT_DESCRIPTION_MAX_LENGTH,
             required=False,
             friendly_name="Event description",
+        )
+        validator.validate_string(
+            data,
+            "image",
+            255,
+            required=False,
+            friendly_name="Event image filename",
         )
         validator.validate_integer_range(
             data,
@@ -174,6 +183,7 @@ class Event(db.Model):
         cls,
         name: str,
         description: str = "",
+        image: str | None = None,
         max_team_size: int | None = config.MAX_TEAM_SIZE,
         start_time: datetime | None = None,
         end_time: datetime | None = None,
@@ -208,6 +218,7 @@ class Event(db.Model):
         event = cls(
             name=name,
             description=description,
+            image=image,
             max_team_size=max_team_size,
             start_time=start_time,
             end_time=end_time,

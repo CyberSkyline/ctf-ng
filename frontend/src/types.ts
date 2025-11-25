@@ -2,6 +2,7 @@ export interface Event {
   id: number;
   name: string;
   description?: string | null;
+  image?: string | null;
   max_team_size: number;
   start_time?: Date;
   end_time?: Date;
