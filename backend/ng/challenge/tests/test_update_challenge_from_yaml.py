@@ -1,6 +1,8 @@
 import base64
 import pytest
 
+from ..models import ContainerBlueprint
+
 from ..controllers.admin import update_challenge_from_yaml
 from ..models import Challenge, ChallengeYaml, ChallengeTag, Question, ChallengeVariable, Hint
 from ...core.exceptions import ValidationError
@@ -156,6 +158,34 @@ class TestUpdateChallengeFromYaml:
         """
 
         with pytest.raises(ValidationError, match="Cannot remove existing questions"):
+            update_challenge_from_yaml(existing_challenge, yaml_content)
+
+    def test_update_challenge_cannot_remove_existing_services(self, db_session, existing_challenge: Challenge):
+        """Test that existing questions cannot be removed during update"""
+        # Add a question to existing challenge
+        ContainerBlueprint.create_container_blueprint(
+            challenge_id=existing_challenge.id,
+            name="existing_service",
+            image="nginx:latest",
+            hostname="web",
+        )
+
+        # Try to update without the service
+        yaml_content = """
+        x-challenge:
+          name: Updated Challenge Name
+          description: Updated description text
+          summary: Updated summary text
+          icon: TbUpdatedIcon
+          questions:
+            - name: sample_question
+              body: What is 2 + 2?
+              points: 10
+              answer: "4"
+              max_attempts: 3
+        """
+
+        with pytest.raises(ValidationError, match="Cannot remove existing services"):
             update_challenge_from_yaml(existing_challenge, yaml_content)
 
     @pytest.mark.parametrize("existing_tags,new_tags,expected_final_tags", [
