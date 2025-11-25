@@ -87,7 +87,7 @@ export default function NavBar() {
         <div className="flex">
           <NavLink to="/" className={location.pathname === '/' ? activeLinkClass : defaultLinkClass}>
             <NavigationMenu.Item>
-              Dashboard
+              {isAuthenticated ? 'Dashboard' : 'Home'}
             </NavigationMenu.Item>
           </NavLink>
           <NavLink to="/events" className={location.pathname === '/events' ? activeLinkClass : defaultLinkClass}>
@@ -102,17 +102,19 @@ export default function NavBar() {
           </NavLink> */}
         </div>
         <div className="flex ml-auto">
-          <NavLink to="/support" className={location.pathname === '/support' ? activeLinkClass : defaultLinkClass}>
-            <NavigationMenu.Item>
-              Support
-            </NavigationMenu.Item>
-          </NavLink>
 
           {isAuthenticated && (
-            <NotificationsPopover
-              triggerClassName={defaultLinkClass}
-              contentClassName={contentBase}
-            />
+            <>
+              <NavLink to="/support" className={location.pathname === '/support' ? activeLinkClass : defaultLinkClass}>
+                <NavigationMenu.Item>
+                  Support
+                </NavigationMenu.Item>
+              </NavLink>
+              <NotificationsPopover
+                triggerClassName={defaultLinkClass}
+                contentClassName={contentBase}
+              />
+            </>
           )}
 
           <NavigationMenu.Item>
@@ -143,14 +145,17 @@ export default function NavBar() {
               onPointerLeave={(event) => event.preventDefault()}
             >
               <ul className="grid gap-2 p-3">
-                <li>
-                  <NavLink
-                    to="/profile"
-                    className={contentItem}
-                  >
-                    Profile
-                  </NavLink>
-                </li>
+                {isAuthenticated && (
+                  <li>
+                    <NavLink
+                      to="/profile"
+                      className={contentItem}
+                    >
+                      Profile
+                    </NavLink>
+                  </li>
+                )}
+
                 {canAccessAdminPanel && (
                   <li>
                     <NavLink

@@ -2,6 +2,7 @@ import { useRoutes } from 'react-router';
 
 import NotFound from 'components/NotFound';
 import Dashboard from 'routes/dashboard';
+import Landing from 'routes/dashboard/Landing';
 import Profile from 'routes/profile';
 
 import RequireUser from 'components/RequireUser';
@@ -19,20 +20,20 @@ import Overview from 'routes/events/Overview';
 import Challenge from 'routes/events/challenge';
 
 // Admin Section
+import AdminAnnouncements from 'routes/admin/announcements';
 import AdminApiTest from 'routes/admin/api-test';
 import AdminChallenges from 'routes/admin/challenges';
 import AdminDashboard from 'routes/admin/dashboard';
 import AdminDeployments from 'routes/admin/deployments';
 import AdminEvents from 'routes/admin/events';
 import AdminLayout from 'routes/admin/layout';
-import AdminAnnouncements from 'routes/admin/announcements';
 import AdminReports from 'routes/admin/reports';
 import AdminSettings from 'routes/admin/settings';
+import AdminSponsors from 'routes/admin/sponsors';
 import AdminTags from 'routes/admin/tags';
 import AdminTeams from 'routes/admin/teams';
 import AdminTickets from 'routes/admin/tickets';
 import AdminUsers from 'routes/admin/users';
-import AdminSponsors from 'routes/admin/sponsors';
 
 function Routes() {
   const routes = useRoutes([
@@ -40,7 +41,7 @@ function Routes() {
       path : '*',
       element : <NotFound />, // Catch-all route for 404 page
     },
-    { path : '/', element : <RequireUser replace={<AvailableEvents />}><Dashboard /></RequireUser> },
+    { path : '/', element : <RequireUser replace={<Landing />}><Dashboard /></RequireUser> },
     { path : '/login', element : <Login /> },
     {
       path : '/events',
