@@ -1,28 +1,60 @@
-import { Flex, Switch, Text } from '@radix-ui/themes';
 import { useTheme } from 'next-themes';
-import { useEffect, useState } from 'react';
+import { NavigationMenu } from 'radix-ui';
+import { TbMoon, TbSun, TbSunMoon } from 'react-icons/tb';
+import { twMerge } from 'tailwind-merge';
 
-export default function ThemeToggle({ className }: {className : string}) {
-  const { theme, setTheme } = useTheme();
-  const [ mounted, setMounted ] = useState(false);
+export default function ThemeToggle({ triggerClassName, contentClassName, contentItemClassName }
+  : {triggerClassName: string, contentClassName: string, contentItemClassName: string}) {
+  const { theme, resolvedTheme, setTheme } = useTheme();
 
-  // Prevent hydration mismatch
-  useEffect(() => setMounted(true), []);
-  if (!mounted) return null;
+  const themes = {
+    light : {
+      name : 'Light',
+      icon : TbSun,
+    },
+    dark : {
+      name : 'Dark',
+      icon : TbMoon,
+    },
+    system : {
+      name : 'System',
+      icon : TbSunMoon,
+    },
+  };
+
+  // use resolvedTheme to show the actual active theme icon (in case of "system" theme)
+  // sun/moon are a clearer signifier for a theme switcher than a mixed icon is
+  const ActiveIcon = themes[resolvedTheme as keyof typeof themes].icon;
 
   return (
-    <Flex gap="2" align="center" className={className}>
-      <Switch
-        checked={theme === 'dark'}
-        onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-        aria-label="Dark Theme"
-      />
-      <Text
-        className="dark:text-(--gray-a11)"
-        size="3"
+    <NavigationMenu.Item value="theme" className="relative">
+      <NavigationMenu.Trigger
+        className={twMerge(triggerClassName, 'h-full')}
+        onPointerMove={(event) => event.preventDefault()}
+        onPointerLeave={(event) => event.preventDefault()}
       >
-        {theme.charAt(0).toUpperCase() + theme.slice(1)}
-      </Text>
-    </Flex>
+        <ActiveIcon aria-label="Theme Selector" />
+      </NavigationMenu.Trigger>
+      <NavigationMenu.Content
+        onPointerEnter={(event) => event.preventDefault()}
+        onPointerLeave={(event) => event.preventDefault()}
+        className={twMerge(contentClassName, 'flex flex-col gap-2')}
+      >
+        {Object.entries(themes).map(([ key, { name, icon : Icon } ]) => (
+          <NavigationMenu.Item
+            asChild
+            key={key}
+            onClick={() => setTheme(key)}
+            className={twMerge(contentItemClassName, theme === key && '!bg-(--accent-9) !text-(--accent-contrast)')}
+          >
+            <button type="button">
+              <Icon />
+              {' '}
+              {name}
+            </button>
+          </NavigationMenu.Item>
+        ))}
+      </NavigationMenu.Content>
+    </NavigationMenu.Item>
   );
 }
