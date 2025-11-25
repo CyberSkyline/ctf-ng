@@ -49,6 +49,7 @@ export default function Support() {
               columnDefs={colDefs}
               domLayout="autoHeight"
               onRowClicked={(e) => navigate(`/support/${e.data?.id}`)}
+              defaultColDef={{ flex : 1 }}
             />
           </Flex>
         )}
