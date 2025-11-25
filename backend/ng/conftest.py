@@ -318,6 +318,7 @@ def event_factory(db_session):
             "time_limit_minutes": 120,
             "allowed_domains": [],
             "hints_enabled": True,
+            "show_leaderboard": True
         }
         defaults.update(kwargs)
         event = Event.create_event(**defaults)
@@ -1084,6 +1085,7 @@ def multiple_teams_with_scores(db_session, event, team_factory, score_factory):
             captain_id=user_ids[i],
             invite_code=f"score{i}123",
         )
+        team.set_start_timestamp(utc_now())
 
         score = Score.query.filter_by(team_id=team.id, event_id=event.id).first()
         score.points = (i + 1) * 100
