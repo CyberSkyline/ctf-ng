@@ -159,6 +159,7 @@ export default function AdminGrid<T>({
           }}
           initialState={initialState}
           className="w-full h-full grow"
+          defaultColDef={{ flex : 1 }}
           gridOptions={gridOptions}
         />
       </Flex>
