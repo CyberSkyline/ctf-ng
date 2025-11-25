@@ -94,6 +94,7 @@ class Event(db.Model):
             "hints_enabled": self.hints_enabled,
             "time_limit_minutes": self.time_limit_minutes,
             "allowed_domains": self.allowed_domains,
+            "show_leaderboard": self.show_leaderboard,
         }
 
         return data
@@ -175,6 +176,12 @@ class Event(db.Model):
             "allowed_domains",
             required=False,
             friendly_name="Allowed email domains",
+        )
+        validator.validate_boolean(
+            data,
+            "show_leaderboard",
+            required=False,
+            friendly_name="Show leaderboard",
         )
 
         return validator.validate()

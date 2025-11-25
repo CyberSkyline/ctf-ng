@@ -84,6 +84,56 @@ export default function EventDataForm({
           )}
         </FormField>
 
+        <FormField label="Registration Open" error={errors.registration_open}>
+          {(injected) => (
+            <Controller
+              control={rhf.control}
+              name="registration_open"
+              defaultValue
+              rules={{}}
+              render={({ field }) => (
+                <Box>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={(checked) => {
+                      field.onChange(checked);
+                    }}
+                    name={field.name}
+                    ref={field.ref}
+                    size="3"
+                    {...injected}
+                  />
+                </Box>
+              )}
+            />
+          )}
+        </FormField>
+
+        <FormField label="Show Leaderboard" error={errors.show_leaderboard}>
+          {(injected) => (
+            <Controller
+              control={rhf.control}
+              name="show_leaderboard"
+              defaultValue
+              rules={{}}
+              render={({ field }) => (
+                <Box>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={(checked) => {
+                      field.onChange(checked);
+                    }}
+                    name={field.name}
+                    ref={field.ref}
+                    size="3"
+                    {...injected}
+                  />
+                </Box>
+              )}
+            />
+          )}
+        </FormField>
+
         <FormField label="Hints Enabled" error={errors.hints_enabled}>
           {(injected) => (
             <Controller

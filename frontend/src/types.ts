@@ -13,6 +13,7 @@ export interface Event {
   registration_end_date?: Date;
   hints_enabled: boolean;
   time_limit_minutes: number | null;
+  show_leaderboard: boolean;
 }
 
 export interface Sponsor {
