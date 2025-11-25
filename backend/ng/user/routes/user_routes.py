@@ -139,6 +139,10 @@ class UserLogin(Resource):
         username = json_data.get("username")
         password = json_data.get("password")
 
+        # Check that the username and password are strings
+        if not isinstance(username, str) or not isinstance(password, str):
+            return {"success": False, "errors": {"authentication": "Invalid username or password"}}, 401
+
 
         user = Users.query.filter_by(name=username).first()
         if not user:
@@ -148,7 +152,7 @@ class UserLogin(Resource):
             if user.password is None:
                 return {"success": False, "errors": {"authentication": "Invalid username or password"}}, 401
 
-            if user and verify_password(password, user.password):
+            if verify_password(password, user.password):
                 session['id'] = user.id
                 session['nonce'] = generate_nonce()
                 session['hash'] = hmac(user.password)
@@ -159,6 +163,7 @@ class UserLogin(Resource):
                 return {"success": False, "errors": {"authentication": "Invalid username or password"}}, 401
 
         else:
+            verify_password("asdf", "$bcrypt-sha256$2b,12$I0CNXRkGD2Bi/lbC4vZ7Y.$1WoilsadKpOjXa/be9x3dyu7p.mslZ6")  # Timing attack mitigation
             return {"success": False, "errors": {"authentication": "Invalid username or password"}}, 401
 
 
