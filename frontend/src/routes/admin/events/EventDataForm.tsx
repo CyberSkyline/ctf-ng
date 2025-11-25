@@ -84,7 +84,7 @@ export default function EventDataForm({
           )}
         </FormField>
 
-        <FormField label="Registration Open" error={errors.public}>
+        <FormField label="Registration Open" error={errors.registration_open}>
           {(injected) => (
             <Controller
               control={rhf.control}
