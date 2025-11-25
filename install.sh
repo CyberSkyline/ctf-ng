@@ -207,7 +207,7 @@ if ! compgen -G "$HOME/.docker/*.pem" > /dev/null; then
     cp cert.pem ~/.docker/
     cp key.pem ~/.docker/
     sudo mkdir -p /var/lib/certs/ssl/
-    sudo cp ~/.docker/* /var/lib/certs/ssl/
+    sudo cp ~/.docker/*.json ~/.docker/*.pem /var/lib/certs/ssl/
     cd ../
     sudo mkdir -p /etc/docker/ssl
     sudo cp ca.pem /etc/docker/ssl
