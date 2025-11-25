@@ -1,9 +1,10 @@
+from ...team.models.Team import Team
 from ...team.models.TeamMember import TeamMember
 from ...team.models.enums import TeamRole
 from datetime import datetime
 from ..models.enums import PermissionEnum, PermissionCheck, DenyReason
 
-def get_team_management_permissions(team, user):
+def get_team_management_permissions(team: Team, user):
 
     """
     Get permissions for managing a team based on the current user's role in the team.
@@ -37,6 +38,10 @@ def get_team_management_permissions(team, user):
         else:
             trace.add_grant(PermissionEnum.CAN_LEAVE_TEAM)
         if team.event.start_time is None or team.event.start_time <= datetime.utcnow():
+          if team.event.max_team_size > 1 and len(team.members) < 2:
+            # solo team cannot start timer if team size requirement is more than 1
+            trace.add_denial(PermissionEnum.CAN_START_TEAM_TIMER, DenyReason.INSUFFICIENT_TEAM_MEMBERS)
+          else:
             trace.add_grant(PermissionEnum.CAN_START_TEAM_TIMER)
         else:
             trace.add_denial(PermissionEnum.CAN_START_TEAM_TIMER, DenyReason.EVENT_NOT_STARTED)
@@ -47,5 +52,3 @@ def get_team_management_permissions(team, user):
 
 
     return trace
-
-

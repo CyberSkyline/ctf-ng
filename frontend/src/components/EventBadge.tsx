@@ -16,6 +16,7 @@ import {
   TbCheck,
   TbClock,
   TbPlayerPlay,
+  TbUsersPlus,
 } from 'react-icons/tb';
 
 /** Maps an event state onto label, color, and icon to display in the UI. */
@@ -35,6 +36,11 @@ const EVENT_STATES: {
     color : COLOR_POSITIVE,
     label : 'Registered',
     icon : TbCheck,
+  },
+  invalid : {
+    color : COLOR_NEGATIVE,
+    label : 'More Members Required',
+    icon : TbUsersPlus,
   },
   ready : {
     color : COLOR_INFO,
@@ -70,10 +76,10 @@ const EVENT_STATES: {
 
 export default function EventBadge({ eventId, size, className }: { eventId: number; size?: Responsive<'1' | '2' | '3'>; className?: string }) {
   const {
-    isRegistered, isStarted, team, isLoading,
+    isRegistered, isStarted, isFinished, team, isLoading,
   } = useRegistration(eventId);
   const {
-    isRegistrationOpen, isOngoing, isConcluded, isLoading : statusLoading,
+    isRegistrationOpen, isOngoing, isConcluded, isLoading : statusLoading, event,
   } = useEventStatus(eventId);
   const { granted, isLoading : permissionLoading } = useEventPermission('CAN_START_TEAM_TIMER', isRegistered ? eventId : null);
 
@@ -94,15 +100,19 @@ export default function EventBadge({ eventId, size, className }: { eventId: numb
   if (isRegistered) {
     state = 'registered';
 
-    if (isOngoing) {
-      if (isStarted) {
-        state = 'playing';
-      } else {
-        state = granted ? 'ready' : 'waiting';
-      }
+    if (isOngoing && !isStarted) {
+      state = granted ? 'ready' : 'waiting';
     }
 
-    if (team?.end_time && team.end_time < new Date()) {
+    if (team!.member_count === 1 && event!.max_team_size > 1) {
+      state = 'invalid';
+    }
+
+    if (isOngoing && isStarted) {
+      state = 'playing';
+    }
+
+    if (isFinished) {
       state = 'participated';
     }
   }
@@ -118,7 +128,7 @@ export default function EventBadge({ eventId, size, className }: { eventId: numb
   const { color, label, icon : Icon } = EVENT_STATES[state];
 
   return (
-    <Badge color={color} variant="soft" size={size} className={className}>
+    <Badge color={color} variant="soft" size={size} className={className} role="status">
       {Icon && <Icon className="inline" />}
       {label}
     </Badge>
