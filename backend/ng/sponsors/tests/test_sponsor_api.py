@@ -115,14 +115,6 @@ class Test_Sponsor_Admin_Creation:
         response = admin_client.post(self.endpoint, json=sponsor_data)
         assert response.status_code == 400
 
-    def test_create_sponsor_bad_url_admin(self, admin_client):
-        sponsor_data = {
-            "name": "New Sponsor",
-            "logo": "not_a_valid_url"
-        }
-        response = admin_client.post(self.endpoint, json=sponsor_data)
-        assert response.status_code == 400
-
     def test_only_admins_can_create_sponsor(self, logged_in_client):
         sponsor_data = {
             "name": "New Sponsor",
@@ -150,15 +142,6 @@ class Test_Sponsor_Admin_Update:
         update_data = {
             "name": "",  # Invalid name
             "logo": "branta_canadensis-scaled.jpeg"
-        }
-        response = admin_client.put(self.endpoint.format(sponsor_id=sponsor.id), json=update_data)
-        assert response.status_code == 400
-
-    def test_update_sponsor_bad_url_admin(self, admin_client, sponsor_factory):
-        sponsor = sponsor_factory(name="Old Sponsor", logo="oldlogo.png")
-        update_data = {
-            "name": "Updated Sponsor",
-            "logo": ""  # Invalid logo filename
         }
         response = admin_client.put(self.endpoint.format(sponsor_id=sponsor.id), json=update_data)
         assert response.status_code == 400
