@@ -29,6 +29,7 @@ class DenyReason(Enum):
     MISSING_ROLE = auto()
     GENERIC = auto()
     TIME_LIMIT_EXCEEDED = auto()
+    INSUFFICIENT_TEAM_MEMBERS = auto()
 
 @dataclass
 class Denial:

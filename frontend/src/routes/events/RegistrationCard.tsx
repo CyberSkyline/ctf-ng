@@ -2,7 +2,7 @@ import { useEventStatus, useMyEligibility } from '@/hooks/events';
 import { useRegistration } from '@/hooks/users';
 import type { Event } from '@/types';
 import { Card, Flex, Text } from '@radix-ui/themes';
-import { ErrorCallout } from 'components/Callouts';
+import { ErrorCallout, WarningCallout } from 'components/Callouts';
 import RequireEventPermission from 'components/RequireEventPermission';
 import Statistic from 'components/Statistic';
 import LeaveTeamModal from './LeaveTeamModal';
@@ -32,8 +32,9 @@ export default function RegistrationCard({ event }: {event: Event}) {
   }
 
   return (
-    <Card className="!flex flex-col gap-3">
-      {isRegistered && (
+    <>
+      <Card className="!flex flex-col gap-3">
+        {isRegistered && (
         <>
           <Statistic
             label={`You ${isConcluded ? 'were' : 'are'} registered ${!isIndividual ? 'on team' : 'as'}:`}
@@ -49,15 +50,21 @@ export default function RegistrationCard({ event }: {event: Event}) {
             </RequireEventPermission>
           </Flex>
         </>
-      )}
-      { isUnregistered && eligibility && !eligibilityError && (
+        )}
+        { isUnregistered && eligibility && !eligibilityError && (
         <>
           <Text>You are not registered for this event.</Text>
           <Flex direction="row" gap="4" align="center">
             <RegistrationModal eventId={event.id} eventName={event.name} isTeamGame={event.max_team_size > 1} />
           </Flex>
         </>
+        )}
+      </Card>
+      {team?.member_count === 1 && event.max_team_size > 1 && (
+        <WarningCallout>
+          Your team only has one member. You will not be able to participate in this event until more members join your team.
+        </WarningCallout>
       )}
-    </Card>
+    </>
   );
 }
