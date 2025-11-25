@@ -32,6 +32,7 @@ import AdminTags from 'routes/admin/tags';
 import AdminTeams from 'routes/admin/teams';
 import AdminTickets from 'routes/admin/tickets';
 import AdminUsers from 'routes/admin/users';
+import AdminSponsors from 'routes/admin/sponsors';
 
 function Routes() {
   const routes = useRoutes([
@@ -69,6 +70,7 @@ function Routes() {
         { path : '*', element : <NotFound /> }, // Catch-all for admin routes
         { index : true, element : <AdminDashboard /> },
         { path : 'reports', element : <AdminReports /> },
+        { path : 'sponsors', element : <AdminSponsors /> },
         { path : 'events', element : <AdminEvents /> },
         { path : 'users', element : <AdminUsers /> },
         { path : 'teams', element : <AdminTeams /> },

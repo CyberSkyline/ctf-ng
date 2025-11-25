@@ -148,7 +148,7 @@ export default function NavBar() {
                     to="/profile"
                     className={contentItem}
                   >
-                    Profile*
+                    Profile
                   </NavLink>
                 </li>
                 {canAccessAdminPanel && (

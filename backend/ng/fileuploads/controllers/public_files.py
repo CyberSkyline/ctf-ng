@@ -4,6 +4,7 @@ Public file operations for sponsor-logos, event-cards, favicons
 import uuid
 import logging
 import requests
+from ...core.utils import success_response, error_response
 from flask import request
 from werkzeug.datastructures import FileStorage
 
@@ -59,35 +60,35 @@ def get_public_file(args):
         filename = args.get('filename')
 
         if not folder or not filename:
-            return {"error": "Folder and filename are required"}, 400
+            return error_response("Folder and filename are required", 400)
 
         if folder not in ALLOWED_FOLDERS:
-            return {"error": "Invalid folder"}, 404
+            return error_response("Invalid folder", 404)
 
         from ...core.services.s3_service import get_s3_service
         s3_service = get_s3_service()
         if not s3_service or not s3_service.is_configured():
-            return {"error": "File storage not configured"}, 503
+            return error_response("File storage not configured", 503)
 
         object_key = f"{folder}/{filename}"
 
         if not s3_service.object_exists(object_key):
-            return {"error": "File not found"}, 404
+            return error_response("File not found", 404)
 
         presigned_url = s3_service.generate_download_url(object_key, expires_in=86400)
 
         logger.info(f"Generated download URL for {object_key}")
 
-        return {
+        return success_response({
             "url": presigned_url,
             "filename": filename,
             "folder": folder,
             "object_key": object_key
-        }
+        })
 
     except Exception as e:
         logger.error(f"Get public file error: {e}")
-        return {"error": "File not found"}, 404
+        return error_response("File not found", 404)
 
 def list_public_files(args):
     """List all files in a specified public folder"""
@@ -95,12 +96,12 @@ def list_public_files(args):
         folder = args.get('folder')
 
         if not folder or folder not in ALLOWED_FOLDERS:
-            return {"error": "Valid folder parameter required"}, 400
+            return error_response("Valid folder parameter required", 400)
 
         from ...core.services.s3_service import get_s3_service
         s3_service = get_s3_service()
         if not s3_service or not s3_service.is_configured():
-            return {"error": "File storage not configured"}, 503
+            return error_response("File storage not configured", 503)
 
         objects = s3_service.list_objects(prefix=folder)
         files = []
@@ -115,11 +116,11 @@ def list_public_files(args):
                     'key': obj['key']
                 })
 
-        return {
+        return success_response({
             "folder": folder,
             "files": files,
             "count": len(files)
-        }
+        })
 
     except Exception as e:
         logger.error(f"List public files error: {e}")
@@ -205,18 +206,14 @@ def direct_upload_file(args):
         file = args.get('file')
 
         if not folder or folder not in ALLOWED_FOLDERS:
-            return {
-                "error": f"Invalid folder. Must be one of: {', '.join(ALLOWED_FOLDERS.keys())}"
-            }, 400
+            return error_response(f"Invalid folder. Must be one of: {', '.join(ALLOWED_FOLDERS.keys())}", 400)
 
         if not file or not isinstance(file, FileStorage) or not file.filename:
-            return {"error": "Valid file is required"}, 400
+            return error_response("Valid file is required", 400)
 
         content_type = file.content_type or 'application/octet-stream'
         if content_type not in ALLOWED_FOLDERS[folder]:
-            return {
-                "error": f"Invalid content type for {folder}. Allowed: {', '.join(ALLOWED_FOLDERS[folder])}"
-            }, 400
+            return error_response(f"Invalid content type for {folder}. Allowed: {', '.join(ALLOWED_FOLDERS[folder])}", 400)
 
         presigned_response = generate_upload_url({
             'folder': folder,
@@ -230,7 +227,7 @@ def direct_upload_file(args):
         object_key = presigned_response.get('object_key')
 
         if not presigned_url:
-            return {"error": "Failed to generate presigned URL"}, 500
+            return error_response("Failed to generate presigned URL", 500)
 
         file.stream.seek(0)
         file_data = file.stream.read()
@@ -245,21 +242,18 @@ def direct_upload_file(args):
 
         if upload_response.status_code not in [200, 204]:
             logger.error(f"S3 upload failed: HTTP {upload_response.status_code}")
-            return {"error": "Failed to upload file to S3"}, 500
+            return error_response("Failed to upload file to S3", 500)
 
         logger.info(f"Successfully uploaded file to S3: {object_key}")
 
-        return {
-            "success": True,
-            "file_info": {
-                "object_key": object_key,
-                "filename": presigned_response.get('filename'),
-                "original_filename": file.filename,
-                "folder": folder,
-                "content_type": content_type,
-                "file_size": file_size
-            }
-        }
+        return success_response({
+            "object_key": object_key,
+            "filename": presigned_response.get('filename'),
+            "original_filename": file.filename,
+            "folder": folder,
+            "content_type": content_type,
+            "file_size": file_size
+        })
 
     except Exception as e:
         logger.error(f"Upload error: {e}")

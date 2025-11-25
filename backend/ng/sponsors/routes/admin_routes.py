@@ -8,7 +8,7 @@ from ...core.middleware.loaders import LoaderType
 sponsors_admin_namespace = Namespace("/admin/sponsors", description="admin endpoints for managing sponsors")
 
 
-@sponsors_admin_namespace.route("/")
+@sponsors_admin_namespace.route("")
 class SponsorsAdmin(Resource):
     @admin_endpoint()
     @sponsors_admin_namespace.doc(
@@ -22,7 +22,7 @@ class SponsorsAdmin(Resource):
     def get(self, **kwargs):
         """Get all sponsors (admin only)"""
         sponsors = Sponsor.query.all()
-        return {"sponsors": [s.serialize() for s in sponsors]}
+        return success_response(sponsors)
 
     @admin_endpoint(json_required=True, validation_func=Sponsor.validate)
     @sponsors_admin_namespace.doc(

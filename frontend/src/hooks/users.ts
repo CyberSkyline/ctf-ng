@@ -80,6 +80,20 @@ export function useMyTeams() {
   );
 }
 
+/* Get the user's sponsor/affiliation */
+export function useMySponsor() {
+  return useSWR('/users/me/sponsor');
+}
+
+/* Set the user's sponsor/affiliation */
+export function setMySponsor(id: number) {
+  return apiMutation('/users/me/sponsor', { sponsor_id : id }, {
+    method : 'PUT',
+  }).then(() => {
+    mutate('/users/me/sponsor');
+  });
+}
+
 /* ADMIN ENDPOINTS */
 
 /**
