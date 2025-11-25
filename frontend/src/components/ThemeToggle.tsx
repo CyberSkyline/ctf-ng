@@ -1,6 +1,6 @@
+import { Flex, Switch, Text } from '@radix-ui/themes';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
-import { Flex, Switch, Text } from '@radix-ui/themes';
 
 export default function ThemeToggle({ className }: {className : string}) {
   const { theme, setTheme } = useTheme();
@@ -15,6 +15,7 @@ export default function ThemeToggle({ className }: {className : string}) {
       <Switch
         checked={theme === 'dark'}
         onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+        aria-label="Dark Theme"
       />
       <Text
         className="dark:text-(--gray-a11)"
