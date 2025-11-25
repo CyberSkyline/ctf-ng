@@ -78,7 +78,14 @@ if ! id -nG "$USER" | grep -qw "docker"; then
   }
 fi
 
-docker swarm init
+if ! isSwarmNode; then
+  echo "Initializing Docker Swarm..."
+  docker swarm init || {
+    echo "Failed to initialize Docker Swarm. If this was a permission issue try restarting docker " \
+         "and if that still doesn't work then try restarting the computer. Exiting."
+    exit 1
+  }
+fi
 
 # Install npm / node
 if ! command -v npm &> /dev/null; then
@@ -174,10 +181,10 @@ cd $PROJECT_DIR
 pnpm install
 
 if ! compgen -G "$HOME/.docker/*.pem" > /dev/null; then
-  prompt_user "Would you like to generate tls certs for docker? You will be prompted" && {
+  if prompt_user "Would you like to generate tls certs for docker? You will be prompted"; then
     mkdir ssl
     cd ssl
-    read -p "Please enter the ip of your dev instance" machineip
+    read -p "Please enter the ip of your dev instance: " machineip
     openssl genrsa -aes256 -out ca-key.pem 4096
     openssl req -new -x509 -days 365 -key ca-key.pem -sha256 -out ca.pem
     openssl genrsa -out server-key.pem 4096
@@ -200,7 +207,8 @@ if ! compgen -G "$HOME/.docker/*.pem" > /dev/null; then
     cp cert.pem ~/.docker/
     cp key.pem ~/.docker/
     sudo mkdir -p /var/lib/certs/ssl/
-    sudo cp ~/.docker/* /var/lib/certs/ssl/
+    # Turns out that the buildx folder also gets put in that folder and so when you try to copy everything it fails because there's a directory in there that it can't copy without -r
+    sudo cp ~/.docker/*.json ~/.docker/*.pem /var/lib/certs/ssl/
     cd ../
     sudo mkdir -p /etc/docker/ssl
     sudo cp ca.pem /etc/docker/ssl
@@ -216,16 +224,16 @@ if ! compgen -G "$HOME/.docker/*.pem" > /dev/null; then
     }' > daemon.json
     sudo cp daemon.json /etc/docker/
     rm daemon.json
-    echo "Please restart your docker daemon. You may have to start it mannually from the cli calling dockerd"
-    echo "Add the following to your zshrc/bashrc/fishrc make sure the homepath is reflective of your user"
-    echo 'export DOCKER_HOST="127.0.0.1:2376"
-  export DOCKER_TLS_VERIFY="true"
-  export DOCKER_CERT_PATH=/home/ubuntu/.docker/'
-    
-  } || {
+    echo "Please restart your docker daemon. You may have to start it manually from the cli calling dockerd"
+    echo "Add the following to your zshrc/bashrc/fishrc."
+    printf '%s\n' \
+      'export DOCKER_HOST="127.0.0.1:2376"' \
+      'export DOCKER_TLS_VERIFY="true"' \
+      'export DOCKER_CERT_PATH=$HOME/.docker/'
+  else 
     echo "TLS gen aborted"
     exit 1
-  }
+  fi
 fi
 
 

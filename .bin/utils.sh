@@ -47,3 +47,17 @@ check_ctfd_running() {
 get_current_commit() {
   git log --no-color -n 1 --pretty=format:%H | tr -d '[:space:]'
 }
+
+isSwarmNode() {
+  if ! command -v docker &> /dev/null; then
+    echo "Docker is not installed."
+    exit 1
+  fi
+
+  echo "Checking if this node is part of a Docker Swarm..."
+  if [ "$(docker info | grep Swarm | sed 's/Swarm: //g')" == "inactive" ]; then
+      return 1
+  else
+      return 0
+  fi
+}
