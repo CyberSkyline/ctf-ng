@@ -207,6 +207,7 @@ if ! compgen -G "$HOME/.docker/*.pem" > /dev/null; then
     cp cert.pem ~/.docker/
     cp key.pem ~/.docker/
     sudo mkdir -p /var/lib/certs/ssl/
+    # Turns out that the buildx folder also gets put in that folder and so when you try to copy everything it fails because there's a directory in there that it can't copy without -r
     sudo cp ~/.docker/*.json ~/.docker/*.pem /var/lib/certs/ssl/
     cd ../
     sudo mkdir -p /etc/docker/ssl
