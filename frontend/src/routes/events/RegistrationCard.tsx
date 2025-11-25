@@ -40,8 +40,10 @@ export default function RegistrationCard({ event }: {event: Event}) {
             value={`${team!.name}`}
             size="6"
           />
-          <Flex direction="row" gap="4" align="center">
-            <LeaveTeamModal event={event} />
+          <Flex direction="row" gap="4" align="center" className="empty:!hidden">
+            <RequireEventPermission eventId={event.id} permission="CAN_LEAVE_TEAM" permissionDeniedPlaceholder={null}>
+              <LeaveTeamModal event={event} />
+            </RequireEventPermission>
             <RequireEventPermission eventId={event.id} permission="CAN_EDIT_TEAM" permissionDeniedPlaceholder={null}>
               <RenameTeamModal event={event} />
             </RequireEventPermission>
