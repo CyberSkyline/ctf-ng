@@ -64,7 +64,7 @@ class UserRole(db.Model):
         return cls.create_user_role(user_id, role_id)
 
     @classmethod
-    def assign_role_to_user_by_name(cls, user_id: int, role_name):
+    def assign_role_to_user_by_name(cls, user_id: int, role_name: RoleEnum | str):
         name = role_name.value if isinstance(role_name, RoleEnum) else role_name
         role = Role.query.filter_by(name=name).first()
 
@@ -135,4 +135,8 @@ class UserRole(db.Model):
         for role in data["roles"]:
             validator.validate_enum({"roles": role}, "roles", RoleEnum, friendly_name="Role_name")
 
-        return validator.validate()
+        result = validator.validate()
+        if "roles" in result and not isinstance(result["roles"], list):
+            result["roles"] = [result["roles"]]
+
+        return result
