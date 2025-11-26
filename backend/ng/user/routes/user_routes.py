@@ -7,7 +7,11 @@ from CTFd.utils.security.csrf import generate_nonce
 from CTFd.utils.security.signing import hmac
 from flask_restx import Namespace, Resource
 from flask import session
-from ...core.utils import success_response
+
+from ...core.utils import (
+    error_response,
+    success_response,
+)
 from ...core.middleware import (
     user_endpoint,
     public_endpoint,
@@ -111,18 +115,18 @@ class UserSponsor(Resource):
 
         sponsor_id = json_data.get("sponsor_id")
         if not sponsor_id:
-            return {"success": False, "errors": {"sponsor": "Sponsor data is required"}}, 400
+            return error_response("Sponsor data is required", "sponsor", 400)
 
         sponsor = Sponsor.find_by_id(sponsor_id)
         if not sponsor:
-            return {"success": False, "errors": {"sponsor": "Sponsor not found"}}, 404
+            return error_response("Sponsor not found", "sponsor", 404)
 
         current_user.set_sponsor(sponsor)
 
         return success_response(sponsor)
 
 
-#The POST request for login must have a nonce attached to it or it will be blocked by CSRF protection in many cases
+# The POST request for login must have a nonce attached to it or it will be blocked by CSRF protection in many cases
 @users_user_namespace.route("/login")
 class UserLogin(Resource):
     @public_endpoint(json_required=True)
@@ -145,8 +149,11 @@ class UserLogin(Resource):
             user = Users.query.filter_by(email=username).first()
 
         if user:
+            if user.banned:
+                return error_response("Your account has been banned.", "authentication", 403)
+
             if user.password is None:
-                return {"success": False, "errors": {"authentication": "Invalid username or password"}}, 401
+                return error_response("Invalid username or password", "authentication", 401)
 
             if user and verify_password(password, user.password):
                 session['id'] = user.id
@@ -154,12 +161,12 @@ class UserLogin(Resource):
                 session['hash'] = hmac(user.password)
                 session['permanent'] = True
 
-                return {"success": True}, 200
+                return success_response()
             else:
-                return {"success": False, "errors": {"authentication": "Invalid username or password"}}, 401
+                return error_response("Invalid username or password", "authentication", 401)
 
         else:
-            return {"success": False, "errors": {"authentication": "Invalid username or password"}}, 401
+            return error_response("Invalid username or password", "authentication", 401)
 
 
 
@@ -179,4 +186,4 @@ class UserLogout(Resource):
 
         session.clear()
 
-        return {"success": True}, 200
+        return success_response()
