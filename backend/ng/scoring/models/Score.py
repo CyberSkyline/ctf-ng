@@ -192,7 +192,18 @@ class Score(db.Model):
         Returns:
             List of serialized scores ordered by points
         """
-        query = cls.query.filter_by(event_id=event_id).order_by(cls.points.desc())
+        # LAZY-IMPORT
+        from ...team.models.Team import Team
+        query = (
+            cls.query
+            .join(cls.team)
+            .filter(cls.event_id == event_id)
+            .filter(
+                Team.ranked.is_(True),
+                Team.start_timestamp.isnot(None),
+            )
+            .order_by(cls.points.desc(), cls.last_update.asc())
+        )
 
         if limit:
             query = query.limit(limit)

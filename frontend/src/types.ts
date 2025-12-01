@@ -2,6 +2,7 @@ export interface Event {
   id: number;
   name: string;
   description?: string | null;
+  image?: string | null;
   max_team_size: number;
   start_time?: Date;
   end_time?: Date;
@@ -12,6 +13,20 @@ export interface Event {
   registration_end_date?: Date;
   hints_enabled: boolean;
   time_limit_minutes: number | null;
+  show_leaderboard: boolean;
+}
+
+export interface Sponsor {
+  id: number;
+  name: string;
+  logo?: string;
+}
+
+export interface UploadedFile {
+  filename: string,
+  folder: string,
+  last_modified?: Date,
+  url?: string,
 }
 
 export interface User {
@@ -20,6 +35,7 @@ export interface User {
   email: string;
   roles: string[];
   registered_at: Date;
+  affiliation: Sponsor | null;
 }
 
 export interface Team {

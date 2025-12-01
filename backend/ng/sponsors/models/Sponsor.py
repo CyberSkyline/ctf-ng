@@ -58,7 +58,7 @@ class Sponsor(db.Model):
 
         validator.validate_string(data, "name", 128, required=True)
 
-        validator.validate_url(data, "logo", required=False)
+        validator.validate_string(data, "logo", required=False)
 
         return validator.validate()
 

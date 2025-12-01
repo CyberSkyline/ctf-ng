@@ -42,6 +42,21 @@ export default function EventDataForm({
         )}
       </FormField>
 
+      <FormField label="Image" error={errors.image}>
+        {(injected) => (
+          <TextField.Root
+            placeholder="Image"
+            {...register('image', {
+              maxLength : {
+                value : 255,
+                message : 'Image name cannot exceed 255 characters',
+              },
+            })}
+            {...injected}
+          />
+        )}
+      </FormField>
+
       <Flex direction="row" gap="2" className="*:grow *:basis-0">
 
         <FormField label="Public" error={errors.public}>
@@ -49,6 +64,56 @@ export default function EventDataForm({
             <Controller
               control={rhf.control}
               name="public"
+              defaultValue
+              rules={{}}
+              render={({ field }) => (
+                <Box>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={(checked) => {
+                      field.onChange(checked);
+                    }}
+                    name={field.name}
+                    ref={field.ref}
+                    size="3"
+                    {...injected}
+                  />
+                </Box>
+              )}
+            />
+          )}
+        </FormField>
+
+        <FormField label="Registration Open" error={errors.registration_open}>
+          {(injected) => (
+            <Controller
+              control={rhf.control}
+              name="registration_open"
+              defaultValue
+              rules={{}}
+              render={({ field }) => (
+                <Box>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={(checked) => {
+                      field.onChange(checked);
+                    }}
+                    name={field.name}
+                    ref={field.ref}
+                    size="3"
+                    {...injected}
+                  />
+                </Box>
+              )}
+            />
+          )}
+        </FormField>
+
+        <FormField label="Show Leaderboard" error={errors.show_leaderboard}>
+          {(injected) => (
+            <Controller
+              control={rhf.control}
+              name="show_leaderboard"
               defaultValue
               rules={{}}
               render={({ field }) => (

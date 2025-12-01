@@ -16,6 +16,7 @@ class TestUserScoringEndpoints:
         event,
         multiple_teams_with_scores
     ):
+        event.show_leaderboard = True
         """Test getting basic leaderboard"""
         response = logged_in_client.get(f"/ng/events/{event.id}/leaderboard")
 
@@ -35,6 +36,7 @@ class TestUserScoringEndpoints:
         multiple_teams_with_scores
     ):
         """Test getting leaderboard with limit"""
+        event.show_leaderboard = True
         response = logged_in_client.get(
             f"/ng/events/{event.id}/leaderboard?limit=3"
         )
@@ -74,8 +76,8 @@ class TestUserScoringEndpoints:
 
     def test_public_access_leaderboard(self, public_client, event, multiple_teams_with_scores):
         """Test that public client can access leaderboard"""
+        event.show_leaderboard = True
         response = public_client.get(f"/ng/events/{event.id}/leaderboard")
-
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True

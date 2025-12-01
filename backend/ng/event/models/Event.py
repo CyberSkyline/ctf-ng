@@ -23,6 +23,7 @@ class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(config.EVENT_NAME_MAX_LENGTH), nullable=False, unique=True)
     description = db.Column(db.Text, nullable=True)
+    image = db.Column(db.String(255), nullable=True)
     max_team_size = db.Column(db.Integer, default=config.MAX_TEAM_SIZE, nullable=False)
     start_time = db.Column(db.DateTime, nullable=True)
     end_time = db.Column(db.DateTime, nullable=True)
@@ -34,6 +35,7 @@ class Event(db.Model):
     hints_enabled = db.Column(db.Boolean, default=False, nullable=False)
     time_limit_minutes = db.Column(db.Integer, nullable=True)
     allowed_domains: Mapped[list[str]] = db.Column(JSON, nullable=False, default=[])
+    show_leaderboard = db.Column(db.Boolean, default=False, nullable=False)
 
     __table_args__ = (
         CheckConstraint(
@@ -80,6 +82,7 @@ class Event(db.Model):
             "id": self.id,
             "name": self.name,
             "description": self.description,
+            "image": self.image,
             "max_team_size": self.max_team_size,
             "start_time": self.start_time.isoformat() + "Z" if self.start_time else None,
             "end_time": self.end_time.isoformat() + "Z" if self.end_time else None,
@@ -91,6 +94,7 @@ class Event(db.Model):
             "hints_enabled": self.hints_enabled,
             "time_limit_minutes": self.time_limit_minutes,
             "allowed_domains": self.allowed_domains,
+            "show_leaderboard": self.show_leaderboard,
         }
 
         return data
@@ -112,6 +116,13 @@ class Event(db.Model):
             config.EVENT_DESCRIPTION_MAX_LENGTH,
             required=False,
             friendly_name="Event description",
+        )
+        validator.validate_string(
+            data,
+            "image",
+            255,
+            required=False,
+            friendly_name="Event image filename",
         )
         validator.validate_integer_range(
             data,
@@ -166,6 +177,12 @@ class Event(db.Model):
             required=False,
             friendly_name="Allowed email domains",
         )
+        validator.validate_boolean(
+            data,
+            "show_leaderboard",
+            required=False,
+            friendly_name="Show leaderboard",
+        )
 
         return validator.validate()
 
@@ -174,6 +191,7 @@ class Event(db.Model):
         cls,
         name: str,
         description: str = "",
+        image: str | None = None,
         max_team_size: int | None = config.MAX_TEAM_SIZE,
         start_time: datetime | None = None,
         end_time: datetime | None = None,
@@ -185,6 +203,7 @@ class Event(db.Model):
         hints_enabled: bool = False,
         time_limit_minutes: int | None = None,
         allowed_domains: list[str] | None = None,
+        show_leaderboard: bool = False,
         commit: bool = True,
     ):
         """Create and persist a new event to the database.
@@ -208,6 +227,7 @@ class Event(db.Model):
         event = cls(
             name=name,
             description=description,
+            image=image,
             max_team_size=max_team_size,
             start_time=start_time,
             end_time=end_time,
@@ -219,6 +239,7 @@ class Event(db.Model):
             hints_enabled=hints_enabled,
             time_limit_minutes=time_limit_minutes,
             allowed_domains=allowed_domains,
+            show_leaderboard=show_leaderboard,
         )
 
         db.session.add(event)
@@ -372,6 +393,11 @@ class Event(db.Model):
     def toggle_hints(self) -> None:
         """Toggle the hints_enabled status for the event."""
         self.hints_enabled = not self.hints_enabled
+        db.session.commit()
+
+    def toggle_leaderboard(self) -> None:
+        """Toggle the show_leaderboard status for the event."""
+        self.show_leaderboard = not self.show_leaderboard
         db.session.commit()
 
     def check_eligibility(self, user):

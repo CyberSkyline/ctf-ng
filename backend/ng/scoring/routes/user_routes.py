@@ -59,6 +59,8 @@ class EventLeaderboard(Resource):
         """
         Get event leaderboard
         """
+        if event.show_leaderboard is False:
+            raise ValidationError("Leaderboard is not available for this event.")
         limit = request.args.get("limit", config.DEFAULT_LEADERBOARD_LIMIT, type=int)
         if limit < 1 or limit > config.MAX_LEADERBOARD_LIMIT:
             raise ValidationError(f"Limit must be between 1 and {config.MAX_LEADERBOARD_LIMIT}")

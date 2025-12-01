@@ -66,29 +66,30 @@ export default function NotificationsPopover({ triggerClassName, contentClassNam
           }
         }}
         onClick={() => markRead(link, notif.id)}
-        className="hover:border-b-2"
+        className="hover:border-b-2 w-xs"
       >
-        <Flex justify="between">
+        <Flex direction="column">
           <Text weight={notif.read_at ? 'regular' : 'bold'}>{notif.title}</Text>
-          <Text>{notif.created_at.toLocaleDateString('en-US', dateFormat)}</Text>
+          <Text size="1">{notif.created_at.toLocaleDateString('en-US', dateFormat)}</Text>
+          <Text size="2" wrap="pretty" className="pt-2">{notif.message}</Text>
         </Flex>
-        <Text size="2">{notif.message}</Text>
       </Card>
     );
   };
 
   return (
-    <NavigationMenu.Item value="temp">
+    <NavigationMenu.Item value="temp" className="relative">
       <NavigationMenu.Trigger
         className={twMerge(triggerClassName, 'h-full')}
         onPointerMove={(event) => event.preventDefault()}
         onPointerLeave={(event) => event.preventDefault()}
       >
-        <TbBell />
-        {unreadCount && unreadCount.count > 0 && <TbCircleDotFilled color="var(--accent-indicator)" className="absolute -mt-6 ml-2" />}
+        <TbBell aria-label="Notifications" />
+        {unreadCount && unreadCount.count > 0
+          && <TbCircleDotFilled color="var(--accent-indicator)" className="absolute -mt-6 ml-2" aria-label="Unread" />}
       </NavigationMenu.Trigger>
       <NavigationMenu.Content
-        className={twMerge(contentClassName, 'p-4')}
+        className={contentClassName}
         onPointerEnter={(event) => event.preventDefault()}
         onPointerLeave={(event) => event.preventDefault()}
       >

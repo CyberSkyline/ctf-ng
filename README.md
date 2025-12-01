@@ -40,3 +40,24 @@ should fix this.
 
 You will also need to change ng/config.py to make `DOCKER_HOST` point to your docker host.
 
+### Docker Service Overrides
+
+If you are having issues with your docker service not starting and see an error in the logs saying something about how you have
+flags and configuration conflicting, you can add this file to your systemd folders to override the base docker service.
+
+Youc can put it in an override configuration file using the following commands:
+
+```bash
+sudo mkdir /etc/systemd/system/docker.service.d/
+sudo nano /etc/systemd/system/docker.service.d/override.conf
+```
+
+And then you can copy the following into the override file
+
+```
+[Service]
+ExecStart=
+ExecStart=/usr/bin/dockerd
+User=root
+Group=root
+```

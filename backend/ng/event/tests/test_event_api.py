@@ -970,7 +970,7 @@ class Test_Event_Team_Management:
 
     def test_user_cannot_start_event_then_leave(self,client_factory, event_factory, user_factory):
         """Test that a user who starts an event, leaves their team, and then re-registers cannot start the event again."""
-        event = event_factory(name = "Re-Register Start Event", public = True)
+        event = event_factory(name = "Re-Register Start Event", public = True, max_team_size = 1)
         user = user_factory(name = "Test User", email = "reregister@example.com")
         client = client_factory(user = user)
         # User registers and starts the event
@@ -1174,7 +1174,8 @@ class Test_Event_Team_Start:
             public = True,
             start_time = time - timedelta(hours = 1),
             end_time = time + timedelta(minutes = 30),
-            time_limit_minutes = 600
+            time_limit_minutes = 600,
+            max_team_size = 1
         )
         user = user_factory(name = "clampuser", email = "clampuser@example.com")
         team_factory(event = event, members = [user])
@@ -1461,6 +1462,29 @@ class Test_Event_Admin_Create:
         data = response.get_json()
         assert data["success"] is True
         assert data["data"]["allowed_domains"] == new_event_data["allowed_domains"]
+
+    def test_admin_toggle_leaderboard_visibility(self, admin_client, event_factory):
+        event = event_factory(name = "Leaderboard Visibility Event", public = True, show_leaderboard = True)
+
+        # Toggle leaderboard visibility to False
+        response = admin_client.post(
+            f"/ng/admin/events/{event.id}/toggle_leaderboard",
+            json = {}
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["show_leaderboard"] is False
+
+        # Toggle leaderboard visibility back to True
+        response = admin_client.post(
+            f"/ng/admin/events/{event.id}/toggle_leaderboard",
+            json = {}
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["show_leaderboard"] is True
 
 
 class Test_Event_Challenge_Import:

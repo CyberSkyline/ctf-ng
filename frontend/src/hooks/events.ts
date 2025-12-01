@@ -44,6 +44,7 @@ export function useEventStatus(eventId: number | null) {
     isConcluded : !!(data && data.end_time && data.end_time < new Date()),
     isLoading,
     error,
+    event : data,
   };
 }
 
