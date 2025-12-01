@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import { spawnSync } from 'child_process';
 import path from 'path';
 import { defineConfig } from 'vite';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 function gitStatus(...args: string[]) {
   return spawnSync('git', args, { cwd : __dirname }).stdout.toString().trim();
@@ -18,6 +19,7 @@ export default defineConfig(({ command }) => ({
     BUILD_MODE : command === 'build',
     RELEASE : JSON.stringify(RELEASE),
     BASE_PATH : JSON.stringify(command === 'build' ? '/ctf' : ''),
+    PUBLIC_BASE : command === 'build' ? '/dist/public/' : '/static/public/',
   },
   server : {
     allowedHosts : [ '.cisa.gov', '.localhost' ],
@@ -45,6 +47,14 @@ export default defineConfig(({ command }) => ({
         return undefined;
       },
     },
+    viteStaticCopy({
+      targets : [
+        {
+          src : path.resolve(__dirname, './public/'),
+          dest : './',
+        },
+      ],
+    }),
   ],
   resolve : {
     alias : {
@@ -67,4 +77,5 @@ export default defineConfig(({ command }) => ({
   optimizeDeps : {
     include : [ 'react', 'react-dom', 'react-router-dom' ],
   },
+  publicDir : command === 'serve' ? 'public' : false,
 }));
