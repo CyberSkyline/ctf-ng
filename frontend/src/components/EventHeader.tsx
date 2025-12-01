@@ -5,12 +5,11 @@ import {
   Heading,
   Text,
 } from '@radix-ui/themes';
-import gameCardOffensive from 'assets/offensive.png';
-import gameCardTeam from 'assets/teams.png';
 import { isNull } from 'lodash';
 import type { ReactNode } from 'react';
 import { TbCalendar, TbUser } from 'react-icons/tb';
 import EventBadge from './EventBadge';
+import EventGraphic from './EventGraphic';
 import RadixMarkdown from './RadixMarkdown';
 
 export default function EventHeader({
@@ -33,11 +32,7 @@ export default function EventHeader({
 
   return (
     <Flex direction="row" gap="6" align="start">
-      <img
-        className="w-48 shrink-0 rounded-lg shadow-xl"
-        src={event.max_team_size === 1 ? gameCardOffensive : gameCardTeam}
-        alt={`Card for ${event.name}`}
-      />
+      <EventGraphic event={event} className="w-48 shrink-0 rounded-lg shadow-xl" />
       <Flex direction="column" flexGrow="1" align="start" gap="2">
         <EventBadge eventId={id} size="3" />
         <Box>
