@@ -2,18 +2,18 @@
 AWS SES Email Service for support ticket notifications
 """
 
-import boto3
 from typing import Any
+
+import boto3
 from botocore.exceptions import (
-    ClientError,
-    NoCredentialsError,
     BotoCoreError,
+    ClientError,
     EndpointConnectionError,
+    NoCredentialsError,
 )
 from flask import current_app
 
 from ...core.utils.logger import get_logger
-
 
 logger = get_logger(__name__)
 
@@ -31,8 +31,8 @@ class AWSEmailService:
         Initialize AWS SES client if credentials are configured
         """
         try:
-            aws_access_key = current_app.config.get('AWS_SES_ACCESS_KEY_ID')
-            aws_secret_key = current_app.config.get('AWS_SES_SECRET_ACCESS_KEY')
+            aws_access_key = current_app.config.get('AWS_ACCESS_KEY_ID')
+            aws_secret_key = current_app.config.get('AWS_SECRET_ACCESS_KEY')
             aws_region = current_app.config.get('AWS_DEFAULT_REGION', 'us-east-1')
 
             if not aws_access_key or not aws_secret_key:
