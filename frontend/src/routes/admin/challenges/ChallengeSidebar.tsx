@@ -5,6 +5,7 @@ import AdminLink from 'components/AdminLink';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import ChallengeIcon from 'components/ChallengeIcon';
+import { useId } from 'react';
 import { useSearchParams } from 'react-router';
 import ChallengeDownloadButton from './ChallengeDownloadButton';
 import ChallengeUpdateModal from './ChallengeUpdateModal';
@@ -14,10 +15,11 @@ import ChallengeDetailsTab from './SidebarTabs/ChallengeDetailsTab';
 
 export default function ChallengeSidebar({ entity }: {entity: Challenge}) {
   const [ searchParams, setSearchParams ] = useSearchParams();
+  const headerId = useId();
 
   return (
-    <AdminSidebar>
-      <AdminSidebarHeader title={entity.name} icon={<ChallengeIcon icon={entity.icon} />}>
+    <AdminSidebar labelId={headerId}>
+      <AdminSidebarHeader title={entity.name} icon={<ChallengeIcon icon={entity.icon} />} id={headerId}>
         <AdminLink
           to="/admin/events"
           id={entity.event_id}

@@ -11,16 +11,22 @@ import AdminLink from 'components/AdminLink';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { ErrorCallout, InfoCallout } from 'components/Callouts';
+import { useId } from 'react';
 import { TbVariable } from 'react-icons/tb';
 import ServiceCard from './ServiceCard';
 
 export default function DeploymentSidebar({ entity }: {entity: Deployment}) {
   const { data : serviceData, error } = useDeploymentServices(entity.challenge_id, entity.team_id);
   const { data : variables, error : varsError } = useDeploymentVariables(entity.challenge_id, entity.team_id);
+  const headerId = useId();
 
   return (
-    <AdminSidebar>
-      <AdminSidebarHeader title={`${entity.challenge_name} - ${entity.team_name}`} icon={<DeploymentIcon />}>
+    <AdminSidebar labelId={headerId}>
+      <AdminSidebarHeader
+        title={`${entity.challenge_name} - ${entity.team_name}`}
+        icon={<DeploymentIcon />}
+        id={headerId}
+      >
         <AdminLink
           to="/admin/challenges"
           id={entity.challenge_id}
