@@ -4,6 +4,7 @@ import re
 import boto3
 import docker
 from CTFd.utils import get_app_config
+from ..tasks import pull_image_celery
 
 from ..constants import DOCKER_RUNNING
 
@@ -53,8 +54,9 @@ class Client(docker.DockerClient):
             "registry": auth_data["proxyEndpoint"],
         }
 
-    def pull_image(self, image):
+    def pull_image(self, image, user_id, blueprint_id):
         auth_repo = get_app_config("CONTAINER_REGISTRY")
+        host = get_app_config("DOCKER_HOST")
 
         #  Auth repo will default to blank str not none
         if auth_repo != "" and re.search(auth_repo, image):
@@ -69,6 +71,8 @@ class Client(docker.DockerClient):
                     "username": get_app_config("CONTAINER_REGISTRY_USER"),
                     "password": get_app_config("CONTAINER_REGISTRY_PASSWORD"),
                 }
-            self.images.pull(image, auth_config=auth)
+            host = get_app_config("DOCKER_HOST")
+            print(auth)
+            pull_image_celery.delay(host, image, user_id, blueprint_id, auth_conf=auth)
         else:
-            self.images.pull(image)
+            pull_image_celery.delay(host, image, user_id, blueprint_id)
