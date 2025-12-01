@@ -2,11 +2,13 @@
 Integration tests for player kicked notification emails
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
-from ..services import email_sender as email_sender_module
+
 from ...notifications.models import Notification, NotificationType
 from ...notifications.services.notification_service import NotificationService
+from ..services import email_sender as email_sender_module
 
 
 @pytest.mark.db
@@ -28,8 +30,8 @@ class TestKickedPlayerEmailNotification:
         """
         Standard email configuration for tests
         """
-        app.config['AWS_SES_ACCESS_KEY_ID'] = 'test_key'
-        app.config['AWS_SES_SECRET_ACCESS_KEY'] = 'test_secret'
+        app.config['AWS_ACCESS_KEY_ID'] = 'test_key'
+        app.config['AWS_SECRET_ACCESS_KEY'] = 'test_secret'
         app.config['AWS_DEFAULT_REGION'] = 'us-east-1'
         app.config['AWS_SES_FROM_EMAIL'] = 'noreply@ctf.com'
         app.config['SERVER_DOMAIN'] = 'http://localhost:8000'
