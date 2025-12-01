@@ -1,10 +1,17 @@
 import { useEventStatus, useMyEligibility } from '@/hooks/events';
-import { useRegistration } from '@/hooks/users';
+import { useMySponsor, useRegistration } from '@/hooks/users';
 import type { Event } from '@/types';
-import { Card, Flex, Text } from '@radix-ui/themes';
+import {
+  Card,
+  Flex,
+  Link as RadixLink,
+  Text,
+} from '@radix-ui/themes';
+import { Link } from 'react-router';
 import { ErrorCallout, WarningCallout } from 'components/Callouts';
 import RequireEventPermission from 'components/RequireEventPermission';
 import Statistic from 'components/Statistic';
+import { isNil } from 'lodash';
 import LeaveTeamModal from './LeaveTeamModal';
 import RegistrationModal from './RegistrationModal';
 import RenameTeamModal from './RenameTeamModal';
@@ -19,9 +26,11 @@ export default function RegistrationCard({ event }: {event: Event}) {
 
   // don't check eligibility if already registered since we know it will fail
   const { data : eligibility, error : eligibilityError } = useMyEligibility(isUnregistered ? event.id : null);
+  const { data : mySponsor, error : mySponsorError } = useMySponsor();
 
   if (isLoading) return null; // don't show anything while loading
   if (isUnregistered && !eligibility && !eligibilityError) return null; // if not eligible, don't show registration
+  if (mySponsorError) return null;
 
   if (error) {
     return <ErrorCallout>{error.message}</ErrorCallout>;
@@ -55,7 +64,19 @@ export default function RegistrationCard({ event }: {event: Event}) {
         <>
           <Text>You are not registered for this event.</Text>
           <Flex direction="row" gap="4" align="center">
-            <RegistrationModal eventId={event.id} eventName={event.name} isTeamGame={event.max_team_size > 1} />
+            {isNil(mySponsor)
+              ? (
+                <WarningCallout>
+                  You must select a sponsor on the
+                  {' '}
+                  <RadixLink asChild>
+                    <Link to="/profile">profile page</Link>
+                  </RadixLink>
+                  {' '}
+                  prior to registering for events.
+                </WarningCallout>
+              )
+              : <RegistrationModal eventId={event.id} eventName={event.name} isTeamGame={event.max_team_size > 1} />}
           </Flex>
         </>
         )}
