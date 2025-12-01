@@ -14,6 +14,7 @@ install_plugin_deps() {
 }
 
 start_dev() {
+  celery -A CTFd.plugins.ng.containers.tasks worker --loglevel=INFO &
   python serve_debug.py
 }
 
@@ -44,6 +45,8 @@ start_prod() {
 
   # Initialize database
   flask db upgrade
+
+  celery -A CTFd.plugins.ng.containers.tasks worker --loglevel=INFO &
 
   # Start CTFd
   echo "Starting CTFd"
