@@ -3,19 +3,16 @@ Service for sending ticket-related emails
 """
 
 from enum import Enum
+
+from CTFd.models import Users
 from flask import current_app
 from sqlalchemy.exc import SQLAlchemyError
 
-from CTFd.models import Users
-
 from ...core.utils.logger import get_logger
-
-from ...team.models import TeamMember
 from ...support.models.Ticket import Ticket
-
+from ...team.models import TeamMember
 from .email_sender import get_email_service
-from .email_templates import TicketEmailTemplates, TeamKickedData
-
+from .email_templates import TeamKickedData, TicketEmailTemplates
 
 logger = get_logger(__name__)
 
@@ -24,6 +21,7 @@ class EmailType(str, Enum):
     """
     Enum for email types for type safety
     """
+
     NEW_TICKET = "new_ticket"
     REPLY = "reply"
 
@@ -32,18 +30,17 @@ class TicketEmailService:
     """
     Service for handling ticket-related email notifications
     """
+
     @staticmethod
     def _get_admin_support_inbox_emails() -> list[str]:
         """
         Get admin support inbox email/s from config
         """
-        admin_emails = current_app.config.get('ADMIN_SUPPORT_INBOX_EMAILS', '')
+        admin_emails = current_app.config.get("ADMIN_SUPPORT_INBOX_EMAILS", "")
         if not admin_emails:
             return []
 
-        emails = [
-            email.strip() for email in admin_emails.split(',') if email.strip()
-        ]
+        emails = [email.strip() for email in admin_emails.split(",") if email.strip()]
         return emails
 
     @staticmethod
@@ -57,11 +54,7 @@ class TicketEmailService:
             user = Users.query.get(user_id)
             return user.email if user and user.email else None
         except SQLAlchemyError as e:
-            logger.error(
-                "Database error getting user email for user %s: %s",
-                user_id,
-                e
-            )
+            logger.error("Database error getting user email for user %s: %s", user_id, e)
             return None
         except Exception as e:
             logger.error("Error getting user email for user %s: %s", user_id, e)
@@ -73,7 +66,7 @@ class TicketEmailService:
         Get emails for all users in a team
         """
         try:
-            team_members = TeamMember.query.filter_by(team_id = team_id).all()
+            team_members = TeamMember.query.filter_by(team_id=team_id).all()
             emails = []
 
             for member in team_members:
@@ -82,24 +75,14 @@ class TicketEmailService:
 
             return emails
         except SQLAlchemyError as e:
-            logger.error(
-                "Database error getting team member emails for team %s: %s",
-                team_id,
-                e
-            )
+            logger.error("Database error getting team member emails for team %s: %s", team_id, e)
             return []
         except Exception as e:
-            logger.error(
-                "Error getting team member emails for team %s: %s",
-                team_id,
-                e
-            )
+            logger.error("Error getting team member emails for team %s: %s", team_id, e)
             return []
 
     @staticmethod
-    def _build_email_recipients(ticket: Ticket,
-                                email_type: EmailType,
-                                **kwargs) -> list[str]:
+    def _build_email_recipients(ticket: Ticket, email_type: EmailType, **kwargs) -> list[str]:
         """
         Build email list based on ticket context and notification type
 
@@ -113,44 +96,36 @@ class TicketEmailService:
         """
         emails = set()
 
+        print(TicketEmailService._get_admin_support_inbox_emails())
+
         if email_type == EmailType.NEW_TICKET:
             # Only admin support inbox for new unassigned tickets
             emails.update(TicketEmailService._get_admin_support_inbox_emails())
 
         elif email_type == EmailType.REPLY:
-            is_admin_reply = kwargs.get('is_admin_reply', False)
+            is_admin_reply = kwargs.get("is_admin_reply", False)
 
             if is_admin_reply:
                 # Admin replying
                 if ticket.team_id:
                     # Team ticket: notify all team members
-                    emails.update(
-                        TicketEmailService._get_team_member_emails(
-                            ticket.team_id
-                        )
-                    )
+                    emails.update(TicketEmailService._get_team_member_emails(ticket.team_id))
                 else:
                     # Non team ticket: notify just the ticket author
-                    author_email = TicketEmailService._get_user_email(
-                        ticket.author_id
-                    )
+                    author_email = TicketEmailService._get_user_email(ticket.author_id)
                     if author_email:
                         emails.add(author_email)
             else:
                 # User replying
                 if ticket.assigned_to:
                     # Send to assigned admin
-                    assigned_email = TicketEmailService._get_user_email(
-                        ticket.assigned_to
-                    )
+                    assigned_email = TicketEmailService._get_user_email(ticket.assigned_to)
                     if assigned_email:
                         emails.add(assigned_email)
                 else:
                     # Unassigned ticket, send to admin support inbox
                     # NOTE: This is a fallback - admins get auto assigned upon initial reply
-                    emails.update(
-                        TicketEmailService._get_admin_support_inbox_emails()
-                    )
+                    emails.update(TicketEmailService._get_admin_support_inbox_emails())
 
         return [email for email in emails if email]
 
@@ -164,30 +139,19 @@ class TicketEmailService:
         """
         email_service = get_email_service()
 
-        recipient_emails = TicketEmailService._build_email_recipients(
-            ticket,
-            EmailType.NEW_TICKET
-        )
+        recipient_emails = TicketEmailService._build_email_recipients(ticket, EmailType.NEW_TICKET)
 
         if not recipient_emails:
-            logger.warning(
-                "No recipient emails found for new ticket %s",
-                ticket.id
-            )
+            logger.warning("No recipient emails found for new ticket %s", ticket.id)
             return
 
         try:
-            ticket_data = ticket.serialize(include_admin_fields = True)
+            ticket_data = ticket.serialize(include_admin_fields=True)
 
-            subject, html_body, text_body = TicketEmailTemplates.new_ticket(
-                ticket_data
-            )
+            subject, html_body, text_body = TicketEmailTemplates.new_ticket(ticket_data)
 
             email_service.send_email(
-                to_emails = recipient_emails,
-                subject = subject,
-                html_body = html_body,
-                text_body = text_body
+                to_emails=recipient_emails, subject=subject, html_body=html_body, text_body=text_body
             )
 
         except SQLAlchemyError as e:
@@ -196,11 +160,7 @@ class TicketEmailService:
             logger.error("Failed to send new ticket email: %s", e)
 
     @staticmethod
-    def send_ticket_reply_email(
-        ticket: Ticket,
-        message,
-        is_admin_reply: bool
-    ) -> None:
+    def send_ticket_reply_email(ticket: Ticket, message, is_admin_reply: bool) -> None:
         """
         Send email notification for ticket reply
 
@@ -212,33 +172,21 @@ class TicketEmailService:
         email_service = get_email_service()
 
         recipient_emails = TicketEmailService._build_email_recipients(
-            ticket,
-            EmailType.REPLY,
-            is_admin_reply = is_admin_reply
+            ticket, EmailType.REPLY, is_admin_reply=is_admin_reply
         )
 
         if not recipient_emails:
-            logger.warning(
-                "No recipient emails found for ticket %s reply",
-                ticket.id
-            )
+            logger.warning("No recipient emails found for ticket %s reply", ticket.id)
             return
 
         try:
-            ticket_data = ticket.serialize(include_admin_fields = True)
-            message_data = message.serialize(include_admin_fields = True)
+            ticket_data = ticket.serialize(include_admin_fields=True)
+            message_data = message.serialize(include_admin_fields=True)
 
-            subject, html_body, text_body = TicketEmailTemplates.ticket_reply(
-                ticket_data,
-                message_data,
-                is_admin_reply
-            )
+            subject, html_body, text_body = TicketEmailTemplates.ticket_reply(ticket_data, message_data, is_admin_reply)
 
             email_service.send_email(
-                to_emails = recipient_emails,
-                subject = subject,
-                html_body = html_body,
-                text_body = text_body
+                to_emails=recipient_emails, subject=subject, html_body=html_body, text_body=text_body
             )
 
         except SQLAlchemyError as e:
@@ -269,10 +217,7 @@ class TicketEmailService:
         kicked_user_email = TicketEmailService._get_user_email(kicked_user_id)
 
         if not kicked_user_email:
-            logger.warning(
-                "No email found for kicked user %s",
-                kicked_user_id
-            )
+            logger.warning("No email found for kicked user %s", kicked_user_id)
             return
 
         try:
@@ -282,25 +227,20 @@ class TicketEmailService:
                 if kicked_by_user:
                     kicked_by_name = kicked_by_user.name
 
-            base_url = current_app.config.get('SERVER_DOMAIN')
+            base_url = current_app.config.get("SERVER_DOMAIN")
             event_url = f"{base_url}/events/{event_id}" if base_url else None
 
             team_kicked_data: TeamKickedData = {
-                'team_name': team_name,
-                'event_name': event_name,
-                'kicked_by_name': kicked_by_name,
-                'event_url': event_url,
+                "team_name": team_name,
+                "event_name": event_name,
+                "kicked_by_name": kicked_by_name,
+                "event_url": event_url,
             }
 
-            subject, html_body, text_body = TicketEmailTemplates.team_member_kicked(
-                team_kicked_data
-            )
+            subject, html_body, text_body = TicketEmailTemplates.team_member_kicked(team_kicked_data)
 
             email_service.send_email(
-                to_emails=[kicked_user_email],
-                subject=subject,
-                html_body=html_body,
-                text_body=text_body
+                to_emails=[kicked_user_email], subject=subject, html_body=html_body, text_body=text_body
             )
 
         except SQLAlchemyError as e:
