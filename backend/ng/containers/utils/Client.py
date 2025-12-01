@@ -72,7 +72,6 @@ class Client(docker.DockerClient):
                     "password": get_app_config("CONTAINER_REGISTRY_PASSWORD"),
                 }
             host = get_app_config("DOCKER_HOST")
-            print(auth)
             pull_image_celery.delay(host, image, user_id, blueprint_id, auth_conf=auth)
         else:
             pull_image_celery.delay(host, image, user_id, blueprint_id)
