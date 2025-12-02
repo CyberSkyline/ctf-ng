@@ -223,7 +223,7 @@ class TestStringValidationUnicode:
             with pytest.raises(ValidationError) as exc_info:
                 validator.validate()
             assert "field" in exc_info.value.errors
-            assert "contains non-printable characters" in exc_info.value.errors["field"]
+            assert "contains disallowed characters" in exc_info.value.errors["field"]
 
 
 class TestBooleanValidation:

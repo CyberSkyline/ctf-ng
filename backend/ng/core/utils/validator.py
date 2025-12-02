@@ -119,7 +119,7 @@ class BaseValidator:
             return
 
         if printable_only and (stripped_value.isprintable() is False or stripped_value.isascii() is False):
-            self.errors[field] = f"{friendly_name} contains non-printable characters"
+            self.errors[field] = f"{friendly_name} contains disallowed characters"
             return
 
         self._add_parsed_data(field, stripped_value)
@@ -157,7 +157,7 @@ class BaseValidator:
                 )
                 return
             if printable_only and (stripped_item.isprintable() is False or stripped_item.isascii() is False):
-                    self.errors[field] = f"Items in {friendly_name} contain non-printable characters"
+                    self.errors[field] = f"Items in {friendly_name} contain disallowed characters"
                     return
 
             validated_list.append(stripped_item)

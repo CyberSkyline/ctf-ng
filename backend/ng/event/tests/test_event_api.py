@@ -694,7 +694,7 @@ class Test_Event_Registration:
         assert data["success"] is False
         assert "errors" in data
         print(data["errors"])
-        assert "Team name contains non-printable characters" in data["errors"]["validation"]
+        assert "Team name contains disallowed characters" in data["errors"]["validation"]
 
 class Test_Event_Team_Lookup:
     def get_endpoint(self, event_id: int) -> str:
