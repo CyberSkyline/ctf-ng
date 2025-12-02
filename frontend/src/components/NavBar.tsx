@@ -1,4 +1,4 @@
-import { COLOR_HINT, ImpersonateIcon } from '@/constants';
+import { COLOR_HINT, ImpersonateIcon, ROUTEPREFIX } from '@/constants';
 import { apiMutation } from '@/fetchers';
 import { useGlobalPermission } from '@/hooks/permissions';
 import { stopImpersonation, useAuth } from '@/hooks/users';
@@ -13,7 +13,7 @@ export default function NavBar() {
   const logout = () => {
     apiMutation('/users/logout', {}, { method : 'POST' }).finally(() => {
       // do a full reload to make sure window.init is updated
-      window.location.href = '/';
+      window.location.href = `${ROUTEPREFIX}/`;
     });
   };
 
