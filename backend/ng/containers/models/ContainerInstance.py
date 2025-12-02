@@ -67,7 +67,7 @@ class ContainerInstance(db.Model):
         ctr = None
         try:
             ctr = client.get_running(
-                cls.render_container_name(team.id, blueprint_obj.hostname, blueprint_obj.challenge_id)
+                cls.render_container_name(team.id, blueprint_obj.name, blueprint_obj.challenge_id)
             )
 
         ## Container Needs created
@@ -91,8 +91,8 @@ class ContainerInstance(db.Model):
         return container_instance
 
     @staticmethod
-    def render_container_name(team_id: int, hostname: str, challenge_id: int) -> str:
-        return f"{team_id}-{hostname}-{challenge_id}"
+    def render_container_name(team_id: int, servicename: str, challenge_id: int) -> str:
+        return f"{team_id}-{servicename}-{challenge_id}"
 
     @staticmethod
     def render_network_name(team_id: int, network_name: str, challenge_id: int) -> str:
@@ -114,7 +114,7 @@ class ContainerInstance(db.Model):
         ctr = client.containers.run(
             blueprint_obj.image,
             environment=blueprint_obj.render_environment(team.seed),
-            name=ContainerInstance.render_container_name(team.id, blueprint_obj.hostname, blueprint_obj.challenge_id),
+            name=ContainerInstance.render_container_name(team.id, blueprint_obj.name, blueprint_obj.challenge_id),
             detach=True,
             cpu_period=100000,
             cpu_quota=10000,
