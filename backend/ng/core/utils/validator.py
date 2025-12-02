@@ -101,12 +101,13 @@ class BaseValidator:
         friendly_name: str | None = None,
         value: Any = None,  # Injected by decorator
         printable_only: bool = False,
+        trim_whitespace: bool = True,
     ) -> None:
         if not isinstance(value, str):
             self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_STRING.format(field=friendly_name)
             return
 
-        stripped_value = value.strip()
+        stripped_value = value.strip() if trim_whitespace else value
         if len(stripped_value) == 0 and required:
             self.errors[field] = ValidationErrorMessages.FIELD_EMPTY.format(field=friendly_name)
             return
@@ -133,6 +134,7 @@ class BaseValidator:
         friendly_name: str | None = None,
         value: Any = None,  # Injected by decorator
         printable_only: bool = False,
+        trim_whitespace: bool = True,
     ) -> None:
         if not isinstance(value, list):
             self.errors[field] = f"{friendly_name} must be a list of strings"
@@ -144,7 +146,7 @@ class BaseValidator:
                 self.errors[field] = f"All items in {friendly_name} must be strings"
                 return
 
-            stripped_item = item.strip()
+            stripped_item = item.strip() if trim_whitespace else item
             if len(stripped_item) == 0:
                 self.errors[field] = f"Items in {friendly_name} cannot be empty strings"
                 return

@@ -130,6 +130,7 @@ class Team(db.Model):
                 required=True,
                 friendly_name="Team name",
                 printable_only=True,
+                trim_whitespace=True,
             )
         if "event_id" in data:
             validator.validate_positive_integer(data, "event_id", required=True, friendly_name="Event ID")
