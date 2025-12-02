@@ -11,6 +11,7 @@ import {
 } from '@radix-ui/themes';
 import FormField from 'components/FormField';
 import Modal from 'components/Modal';
+import { pick } from 'lodash';
 import { Controller } from 'react-hook-form';
 import { TbPencil } from 'react-icons/tb';
 
@@ -34,7 +35,7 @@ export default function AdminUpdateUserModal({ user }: {user: User}) {
         }
 
         return Promise.all([
-          adminUpdateUser(user.id, data),
+          adminUpdateUser(user.id, pick(data, [ 'name', 'email' ])),
           adminUpdateUserRoles(user.id, roles),
         ]);
       }}
