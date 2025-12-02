@@ -152,11 +152,12 @@ class Team(db.Model):
             )
             if res:
                 raise ValidationError(f"Team name '{data['name']}' already exists in event ID {data['event_id']}.")
-        if "start_timestamp" in data and "end_time" in data:
+        if "start_timestamp" in data and "end_time" in data and data["start_timestamp"] is not None and data["end_time"] is not None:
             validator.validate_time_window(data, start_field="start_timestamp", end_field="end_time")
-        elif "start_timestamp" in data:
+        else:
+          if "start_timestamp" in data:
             validator.validate_datetime(data, "start_timestamp", friendly_name="Start Timestamp")
-        elif "end_time" in data:
+          if "end_time" in data:
             validator.validate_datetime(data, "end_time", friendly_name="End Time")
 
         return validator.validate()
