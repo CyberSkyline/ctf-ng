@@ -47,6 +47,10 @@ PUBLIC_FILE_ALLOWED_FOLDERS = {
 # Maximum number to try when auto-numbering duplicate filenames (e.g., file_1.png, file_2.png, etc)
 PUBLIC_FILE_AUTO_NUMBER_MAX_ATTEMPTS = 999
 
+# S3 URL expiration configuration
+S3_UPLOAD_URL_EXPIRATION = 3600
+S3_DOWNLOAD_URL_EXPIRATION = 600
+
 # Scoring Cache Config & Model Length Limits
 LEADERBOARD_CACHE_TIMEOUT = 60  # Seconds
 MAX_SUBMISSION_LENGTH = 4096
