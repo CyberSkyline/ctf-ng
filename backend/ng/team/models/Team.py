@@ -129,6 +129,7 @@ class Team(db.Model):
                 config.TEAM_NAME_MAX_LENGTH,
                 required=True,
                 friendly_name="Team name",
+                printable_only=True,
             )
         if "event_id" in data:
             validator.validate_positive_integer(data, "event_id", required=True, friendly_name="Event ID")

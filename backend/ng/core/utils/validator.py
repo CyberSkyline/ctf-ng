@@ -100,6 +100,7 @@ class BaseValidator:
         required: bool = False,
         friendly_name: str | None = None,
         value: Any = None,  # Injected by decorator
+        printable_only: bool = False,
     ) -> None:
         if not isinstance(value, str):
             self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_STRING.format(field=friendly_name)
@@ -116,6 +117,10 @@ class BaseValidator:
             )
             return
 
+        if printable_only and (stripped_value.isprintable() is False or stripped_value.isascii() is False):
+            self.errors[field] = f"{friendly_name} contains non-printable characters"
+            return
+
         self._add_parsed_data(field, stripped_value)
 
     @validation_field
@@ -127,6 +132,7 @@ class BaseValidator:
         required: bool = False,
         friendly_name: str | None = None,
         value: Any = None,  # Injected by decorator
+        printable_only: bool = False,
     ) -> None:
         if not isinstance(value, list):
             self.errors[field] = f"{friendly_name} must be a list of strings"
@@ -148,6 +154,9 @@ class BaseValidator:
                     field=friendly_name, max_length=max_length
                 )
                 return
+            if printable_only and (stripped_item.isprintable() is False or stripped_item.isascii() is False):
+                    self.errors[field] = f"Items in {friendly_name} contain non-printable characters"
+                    return
 
             validated_list.append(stripped_item)
 

@@ -160,13 +160,13 @@ class TestStringValidationUnicode:
         validator = BaseValidator()
 
         unicode_text = "café"
-        validator.validate_string({"text": unicode_text}, "text", max_length=5, required=True)
+        validator.validate_string({"text": unicode_text}, "text", max_length=5, required=True, printable_only=True)
         parsed_data = validator.validate()
         assert parsed_data["text"] == unicode_text
 
         validator = BaseValidator()
         long_unicode = "café" * 10
-        validator.validate_string({"text": long_unicode}, "text", max_length=5, required=True)
+        validator.validate_string({"text": long_unicode}, "text", max_length=5, required=True, printable_only=True)
         with pytest.raises(ValidationError) as exc_info:
             validator.validate()
         assert "text" in exc_info.value.errors
@@ -206,6 +206,24 @@ class TestStringValidationUnicode:
             validator.validate()
         assert "field" in exc_info.value.errors
         assert "is required" in exc_info.value.errors["field"]
+
+    def test_string_rejects_non_printable(self):
+        """
+        Test string validation rejects non-printable characters
+        """
+        non_printable_strings = [
+            "valid\x00string",  # Null byte
+            "valid\x1Fstring",  # Unit separator
+            "valid\x7Fstring",  # Delete character
+        ]
+
+        for test_string in non_printable_strings:
+            validator = BaseValidator()
+            validator.validate_string({"field": test_string}, "field", required=True, printable_only=True)
+            with pytest.raises(ValidationError) as exc_info:
+                validator.validate()
+            assert "field" in exc_info.value.errors
+            assert "contains non-printable characters" in exc_info.value.errors["field"]
 
 
 class TestBooleanValidation:
