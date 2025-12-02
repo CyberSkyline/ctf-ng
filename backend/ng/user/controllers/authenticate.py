@@ -1,13 +1,15 @@
 # backend/ng/user/controllers/authenticate.py
+import datetime
+import os
+
+from CTFd.cache import clear_user_session
+from CTFd.models import Users as User
+from CTFd.models import db
+from CTFd.utils.security.csrf import generate_nonce
+from CTFd.utils.security.signing import hmac
 from flask import redirect, request, session
 from requests_oauthlib import OAuth2Session
-import os
-import datetime
-from CTFd.cache import clear_user_session
-from CTFd.utils.security.signing import hmac
-from CTFd.utils.security.csrf import generate_nonce
-from CTFd.models import db
-from CTFd.models import Users as User
+
 from ..models.User import User as NG_User
 
 OKTA_CLIENT_ID = os.getenv("OKTA_CLIENT_ID")
@@ -57,6 +59,7 @@ def okta_callback():
         return {"error": error_msg}, 400
 
     try:
+        # Parse Okta data
         okta = OAuth2Session(
             OKTA_CLIENT_ID,
             state=session['oauth_state'],
@@ -73,70 +76,48 @@ def okta_callback():
         user_data = okta.get(USER_API_URL).json()
 
         email = user_data.get("email")
+        name = user_data.get("name", "N/A")
+        oauth_id = user_data.get("sub")
         if not email:
             error_msg = "No email found in user info response"
             print(error_msg)
             return {"error": error_msg}, 400
 
-        name = user_data.get("name", "N/A")
-        oauth_id = user_data.get("sub")
-
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            user = User(
-                name=name,
-                email=email,
-                password=OAUTH_PLACEHOLDER_HASH,
-                verified=True
-            )
-            db.session.add(user)
-            db.session.flush()
-
-        NG_User_obj = NG_User.find_or_create_by_ctfd_id(user.id)
-        user_data = okta.get(USER_API_URL).json()
-
-        email = user_data.get("email")
-        if not email:
-            error_msg = "No email found in user info response"
+        if not oauth_id:
+            error_msg = "No oauth id in user info response"
             print(error_msg)
             return {"error": error_msg}, 400
 
-        name = user_data.get("name", "N/A")
-        oauth_id = user_data.get("sub")
+        # Check for existing user
+        ng_user = NG_User.query.filter_by(oauth_id=oauth_id).first()
 
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            user = User(
+        if not ng_user:
+            ctfd_user = User(
                 name=name,
                 email=email,
                 password=OAUTH_PLACEHOLDER_HASH,
                 verified=True
             )
-            db.session.add(user)
+            db.session.add(ctfd_user)
             db.session.flush()
+
+            ng_user = NG_User.find_or_create_by_ctfd_id(ctfd_user.id)
+            ng_user.oauth_id = oauth_id
         else:
-            if user.name != name:
-                user.name = name
+            ctfd_user = User.query.filter_by(id=ng_user.id)
 
-        NG_User_obj = NG_User.find_or_create_by_ctfd_id(user.id)
-        NG_User_obj.name = name
-        NG_User_obj.email = email
-        NG_User_obj.oauth_id = oauth_id
-
-        user.last_login = datetime.datetime.now(datetime.UTC)
+        ctfd_user.last_login = datetime.datetime.now(datetime.UTC)
         session.clear()
 
-        session['id'] = user.id
+        session['id'] = ctfd_user.id
         session['nonce'] = generate_nonce()
-        session['hash'] = hmac(user.password)
+        session['hash'] = hmac(ctfd_user.password)
         session.permanent = True
-        clear_user_session(user_id=user.id)
+        clear_user_session(user_id=ctfd_user.id)
 
         db.session.commit()
 
         return redirect("/")
-
-
     except Exception as e:
         db.session.rollback()
         error_msg = f"Authentication failed: {str(e)}"

@@ -8,8 +8,8 @@ from typing import Any, TypedDict
 
 from CTFd.models import db
 from sqlalchemy.ext.associationproxy import association_proxy
-from ...core.utils.validator import BaseValidator
 
+from ...core.utils.validator import BaseValidator
 from ...permissions.models.UserRole import UserRole
 
 
