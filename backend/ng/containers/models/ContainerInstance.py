@@ -12,6 +12,8 @@ from .. constants import DOCKER_RUNNING, DOCKER_BRIDGE
 from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 from ...team.models.Team import Team
 
+NET_ERR_REGEX = re.compile("(?:endpoint.*already exists in)|(?:already attached to network)")
+
 class SerializedInstanceStats(TypedDict):
     id: int
     name: str
@@ -165,7 +167,7 @@ class ContainerInstance(db.Model):
                         net_exists.connect(ctr, aliases=[blueprint_obj.hostname], ipv4_address=ipaddr)
                     except docker.errors.APIError as err:
                         # Check if container is already connected to the network
-                        if not re.search("endpoint.*already exists in", str(err)) or re.search("already attached to network", str(err)):
+                        if not NET_ERR_REGEX.search(str(err)):
                             raise err
 
     @classmethod
