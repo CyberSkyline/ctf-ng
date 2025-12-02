@@ -160,7 +160,7 @@ class TestStringValidationUnicode:
         validator = BaseValidator()
 
         unicode_text = "café"
-        validator.validate_string({"text": unicode_text}, "text", max_length=5, required=True,)
+        validator.validate_string({"text": unicode_text}, "text", max_length=5, required=True)
         parsed_data = validator.validate()
         assert parsed_data["text"] == unicode_text
 
