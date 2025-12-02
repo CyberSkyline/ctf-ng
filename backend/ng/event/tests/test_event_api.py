@@ -670,16 +670,18 @@ class Test_Event_Registration:
 
     def test_create_team_cannot_impersonate_existing_team_using_non_printable_characters(
         self,
-        logged_in_client,
-        user,
+        client_factory,
+        user_factory,
         event_factory,
         team_factory
     ):
         event = event_factory(name = "Event for Non-Printable Team Name", public = True)
-        team_factory(event = event, name = "ExistingTeam")
+        user = user_factory(name = "nonprintableuser", email = "nonprintableuser@example.com")
+        new_user = user_factory(name = "newuser", email = "newuser@example.com")
+        team_factory(event = event, name = "ExistingTeam", members = [user])
 
         non_printable_team_name = "Exist\x00ingTeam"
-
+        logged_in_client = client_factory(user = new_user)
         response = logged_in_client.post(
             self.get_endpoint(event.id),
             json = {
@@ -691,6 +693,7 @@ class Test_Event_Registration:
         data = response.get_json()
         assert data["success"] is False
         assert "errors" in data
+        print(data["errors"])
         assert "Team name contains non-printable characters" in data["errors"]["validation"]
 
 class Test_Event_Team_Lookup:
