@@ -17,7 +17,7 @@ import UpcomingEvents from 'routes/dashboard/UpcomingEvents';
 import EventCard from './EventCard';
 
 export default function Dashboard() {
-  const { data, error, isLoading } = useMyEvents();
+  const { data, error } = useMyEvents();
   const { data : announcements, error : announcementError } = useMyAnnouncements();
 
   const liveEvents = data?.filter(
