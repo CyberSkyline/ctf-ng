@@ -48,6 +48,9 @@ start_prod() {
 
   celery -A CTFd.plugins.ng.containers.tasks worker --loglevel=INFO &
 
+  echo 'from gevent import monkey\nmonkey.patch_all()' | cat - CTFd/__init__.py > init-patch
+  mv init-patch CTFd/__init__.py
+
   # Start CTFd
   echo "Starting CTFd"
   exec gunicorn 'CTFd:create_app()' \
