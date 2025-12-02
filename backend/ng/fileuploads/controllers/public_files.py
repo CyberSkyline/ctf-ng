@@ -90,7 +90,8 @@ def generate_upload_url(args):
         # Optionally include download URL
         include_urls = args.get('include_urls', False)
         if include_urls:
-            download_url = s3_service.generate_download_url(folder, final_filename)
+            object_key = f"{folder}/{final_filename}"
+            download_url = s3_service.generate_download_url(object_key, expires_in=config.S3_DOWNLOAD_URL_EXPIRATION)
             uploaded_file["download_url"] = download_url
 
         return success_response(uploaded_file)
@@ -116,10 +117,11 @@ def get_public_file(args):
         if not s3_service or not s3_service.is_configured():
             return error_response("File storage not configured", "s3_service", 503)
 
+        object_key = f"{folder}/{filename}"
         if not s3_service.object_exists(object_key):
             return error_response("File not found", "file", 404)
 
-        presigned_url = s3_service.generate_download_url(object_key, expires_in=86400)
+        presigned_url = s3_service.generate_download_url(object_key, expires_in=config.S3_DOWNLOAD_URL_EXPIRATION)
 
         logger.info(f"Generated download URL for {object_key}")
 
@@ -162,7 +164,7 @@ def list_public_files(args):
                 # Add presigned download URL if requested
                 if include_urls:
                     try:
-                        presigned_url = s3_service.generate_download_url(obj['key'], expires_in=86400)
+                        presigned_url = s3_service.generate_download_url(obj['key'], expires_in=config.S3_DOWNLOAD_URL_EXPIRATION)
                         file_info['download_url'] = presigned_url
                     except Exception as e:
                         logger.warning(f"Failed to generate download URL for {obj['key']}: {e}")
@@ -172,6 +174,7 @@ def list_public_files(args):
         return success_response({
             "folder": folder,
             "files": files,
+            "count": len(files)
         })
 
     except Exception as e:
@@ -204,7 +207,7 @@ def search_public_files(args):
                 # Add download URL if requested
                 if include_urls:
                     try:
-                        download_url = s3_service.generate_download_url(object_key, expires_in=86400)
+                        download_url = s3_service.generate_download_url(object_key, expires_in=config.S3_DOWNLOAD_URL_EXPIRATION)
                         file_info['download_url'] = download_url
                     except Exception as e:
                         logger.warning(f"Failed to generate download URL for {object_key}: {e}")
@@ -240,7 +243,7 @@ def search_public_files(args):
                 # Add download URL if requested
                 if include_urls:
                     try:
-                        download_url = s3_service.generate_download_url(obj['key'], expires_in=86400)
+                        download_url = s3_service.generate_download_url(obj['key'], expires_in=config.S3_DOWNLOAD_URL_EXPIRATION)
                         file_info['download_url'] = download_url
                     except Exception as e:
                         logger.warning(f"Failed to generate download URL for {obj['key']}: {e}")
@@ -325,10 +328,11 @@ def direct_upload_file(args):
         include_urls = args.get('include_urls', False)  # Default to False for upload endpoints
         if include_urls:
             try:
-                download_url = s3_service.generate_download_url(folder, final_filename)
+                download_url = s3_service.generate_download_url(object_key, expires_in=config.S3_DOWNLOAD_URL_EXPIRATION)
                 uploaded_file["download_url"] = download_url
+                logger.info(f"Generated download URL for newly uploaded file: {object_key}")
             except Exception as e:
-                logger.warning(f"Failed to generate download URL for {final_filename}: {e}")
+                logger.error(f"Failed to generate download URL for {final_filename}: {e}")
                 uploaded_file["download_url"] = None
 
         return success_response(uploaded_file)

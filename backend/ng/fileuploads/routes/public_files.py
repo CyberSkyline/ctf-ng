@@ -95,7 +95,7 @@ class FileList(Resource):
             503: 'Service Unavailable - S3 storage not configured'
         }
     )
-    def get(self):
+    def get(self, current_user: User, **kwargs):
         """List files in a public folder
 
         Retrieve a list of all files in the specified public folder.
@@ -139,7 +139,7 @@ class FileAccess(Resource):
             503: 'Service Unavailable - S3 storage not configured'
         }
     )
-    def get(self):
+    def get(self, current_user: User, **kwargs):
         """Get presigned URL for file access
 
         Generate a presigned download URL for a specific file in a public folder.
@@ -197,7 +197,7 @@ class FileSearch(Resource):
             503: 'Service Unavailable - S3 storage not configured'
         }
     )
-    def get(self):
+    def get(self, current_user: User, **kwargs):
         """Search files across folders or within specific folder
 
         Flexible file search supporting multiple modes:
