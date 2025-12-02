@@ -51,12 +51,24 @@ export default function AdminUpdateUserModal({ user }: {user: User}) {
         <>
           <FormField label="Name" error={errors.name}>
             {(injected) => (
-              <TextField.Root {...register('name', { required : 'Name is required', maxLength : { value : 128, message : 'Name cannot be longer than 128 characters' } })} {...injected} />
+              <TextField.Root
+                {...register(
+                  'name',
+                  { required : 'Name is required', maxLength : { value : 128, message : 'Name cannot be longer than 128 characters' } },
+                )}
+                {...injected}
+              />
             )}
           </FormField>
           <FormField label="Email" error={errors.email}>
             {(injected) => (
-              <TextField.Root {...register('email', { required : 'Email is required', maxLength : { value : 128, message : 'Name cannot be longer than 128 characters' } })} {...injected} />
+              <TextField.Root
+                {...register(
+                  'email',
+                  { required : 'Email is required', maxLength : { value : 128, message : 'Name cannot be longer than 128 characters' } },
+                )}
+                {...injected}
+              />
             )}
           </FormField>
 
