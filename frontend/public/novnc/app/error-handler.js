@@ -6,7 +6,7 @@
  * See README.md for usage and integration instructions.
  */
 
-// Fallback for all uncaught errors
+// Fallback for all uncought errors
 function handleError(event, err) {
     try {
         const msg = document.getElementById('noVNC_fallback_errormsg');

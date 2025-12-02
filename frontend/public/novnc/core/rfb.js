@@ -15,7 +15,6 @@ import { clientToElement } from './util/element.js';
 import { setCapture } from './util/events.js';
 import EventTargetMixin from './util/eventtarget.js';
 import Display from "./display.js";
-import AsyncClipboard from "./clipboard.js";
 import Inflator from "./inflator.js";
 import Deflator from "./deflator.js";
 import Keyboard from "./input/keyboard.js";
@@ -165,7 +164,6 @@ export default class RFB extends EventTargetMixin {
         this._sock = null;              // Websock object
         this._display = null;           // Display object
         this._flushing = false;         // Display flushing state
-        this._asyncClipboard = null;    // Async clipboard object
         this._keyboard = null;          // Keyboard input handler object
         this._gestures = null;          // Gesture input handler object
         this._resizeObserver = null;    // Resize observer object
@@ -268,9 +266,6 @@ export default class RFB extends EventTargetMixin {
             throw exc;
         }
 
-        this._asyncClipboard = new AsyncClipboard(this._canvas);
-        this._asyncClipboard.onpaste = this.clipboardPasteFrom.bind(this);
-
         this._keyboard = new Keyboard(this._canvas);
         this._keyboard.onkeyevent = this._handleKeyEvent.bind(this);
         this._remoteCapsLock = null; // Null indicates unknown or irrelevant
@@ -305,6 +300,10 @@ export default class RFB extends EventTargetMixin {
         this._resizeSession = false;
 
         this._showDotCursor = false;
+        if (options.showDotCursor !== undefined) {
+            Log.Warn("Specifying showDotCursor as a RFB constructor argument is deprecated");
+            this._showDotCursor = options.showDotCursor;
+        }
 
         this._qualityLevel = 6;
         this._compressionLevel = 2;
@@ -320,10 +319,8 @@ export default class RFB extends EventTargetMixin {
             this._rfbConnectionState === "connected") {
             if (viewOnly) {
                 this._keyboard.ungrab();
-                this._asyncClipboard.ungrab();
             } else {
                 this._keyboard.grab();
-                this._asyncClipboard.grab();
             }
         }
     }
@@ -2215,10 +2212,7 @@ export default class RFB extends EventTargetMixin {
         this._setDesktopName(name);
         this._resize(width, height);
 
-        if (!this._viewOnly) {
-            this._keyboard.grab();
-            this._asyncClipboard.grab();
-        }
+        if (!this._viewOnly) { this._keyboard.grab(); }
 
         this._fbDepth = 24;
 
@@ -2333,15 +2327,6 @@ export default class RFB extends EventTargetMixin {
         return this._fail("Unexpected SetColorMapEntries message");
     }
 
-    _writeClipboard(text) {
-        if (this._viewOnly) return;
-        if (this._asyncClipboard.writeClipboard(text)) return;
-        // Fallback clipboard
-        this.dispatchEvent(
-            new CustomEvent("clipboard", {detail: {text: text}})
-        );
-    }
-
     _handleServerCutText() {
         Log.Debug("ServerCutText");
 
@@ -2361,7 +2346,9 @@ export default class RFB extends EventTargetMixin {
                 return true;
             }
 
-            this._writeClipboard(text);
+            this.dispatchEvent(new CustomEvent(
+                "clipboard",
+                { detail: { text: text } }));
 
         } else {
             //Extended msg.
@@ -2497,7 +2484,9 @@ export default class RFB extends EventTargetMixin {
 
                     textData = textData.replaceAll("\r\n", "\n");
 
-                    this._writeClipboard(textData);
+                    this.dispatchEvent(new CustomEvent(
+                        "clipboard",
+                        { detail: { text: textData } }));
                 }
             } else {
                 return this._fail("Unexpected action in extended clipboard message: " + actions);
