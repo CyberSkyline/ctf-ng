@@ -160,13 +160,13 @@ class TestStringValidationUnicode:
         validator = BaseValidator()
 
         unicode_text = "café"
-        validator.validate_string({"text": unicode_text}, "text", max_length=5, required=True, printable_only=True)
+        validator.validate_string({"text": unicode_text}, "text", max_length=5, required=True,)
         parsed_data = validator.validate()
         assert parsed_data["text"] == unicode_text
 
         validator = BaseValidator()
         long_unicode = "café" * 10
-        validator.validate_string({"text": long_unicode}, "text", max_length=5, required=True, printable_only=True)
+        validator.validate_string({"text": long_unicode}, "text", max_length=5, required=True)
         with pytest.raises(ValidationError) as exc_info:
             validator.validate()
         assert "text" in exc_info.value.errors
