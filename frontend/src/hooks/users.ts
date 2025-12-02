@@ -1,3 +1,4 @@
+import { ROUTEPREFIX } from '@/constants';
 import { apiMutation } from '@/fetchers';
 import type {
   Event,
@@ -165,7 +166,7 @@ export function impersonateUser(userId: number) {
     method : 'POST',
   }).then(() => {
     // On success, redirect to the home page to refresh the session
-    window.location.href = '/';
+    window.location.href = `${ROUTEPREFIX}/`;
   });
 }
 
@@ -174,6 +175,6 @@ export function stopImpersonation() {
     method : 'POST',
   }).then((data: unknown) => {
     // On success, redirect to the admin user page
-    window.location.href = `/admin/users?id=${data}`;
+    window.location.href = `${ROUTEPREFIX}/admin/users?id=${data}`;
   });
 }
