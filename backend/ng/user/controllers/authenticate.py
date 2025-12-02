@@ -104,7 +104,7 @@ def okta_callback():
             ng_user = NG_User.find_or_create_by_ctfd_id(ctfd_user.id)
             ng_user.oauth_id = oauth_id
         else:
-            ctfd_user = User.query.filter_by(id=ng_user.id)
+            ctfd_user = User.query.filter_by(id=ng_user.id).first()
 
         ctfd_user.last_login = datetime.datetime.now(datetime.UTC)
         session.clear()
