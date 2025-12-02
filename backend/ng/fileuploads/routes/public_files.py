@@ -81,7 +81,7 @@ class FileList(Resource):
                 'example': 'sponsor-logos'
             },
             'include_urls': {
-                'description': 'Include presigned download URLs for each file (24 hour expiration)',
+                'description': 'Include presigned download URLs for each file',
                 'type': 'boolean',
                 'required': False,
                 'default': False,
@@ -143,7 +143,6 @@ class FileAccess(Resource):
         """Get presigned URL for file access
 
         Generate a presigned download URL for a specific file in a public folder.
-        The URL is valid for 24 hours and allows direct access to the file.
         """
         folder = request.args.get('folder')
         filename = request.args.get('filename')
