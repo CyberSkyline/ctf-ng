@@ -165,7 +165,7 @@ class ContainerInstance(db.Model):
                         net_exists.connect(ctr, aliases=[blueprint_obj.hostname], ipv4_address=ipaddr)
                     except docker.errors.APIError as err:
                         # Check if container is already connected to the network
-                        if not re.search("endpoint.*already exists in", str(err)):
+                        if not re.search("endpoint.*already exists in", str(err)) or re.search("already attached to network", str(err)):
                             raise err
 
     @classmethod
