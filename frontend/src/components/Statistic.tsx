@@ -35,13 +35,17 @@ export default function Statistic({
       <Flex direction="row" align="center" gap="1">
         <Text color="gray" size="2">{label}</Text>
         {description && (
-        <Tooltip content={description}>
-          <Text color="gray"><TbInfoCircle /></Text>
-        </Tooltip>
+          <Tooltip content={description}>
+            <button type="button">
+              <Text color="gray">
+                <TbInfoCircle aria-label="More info" />
+              </Text>
+            </button>
+          </Tooltip>
         )}
         {delta && <Badge color={deltaColor} variant="soft" radius="full">{delta}</Badge> }
       </Flex>
-      <Heading size={size} className="tabular-nums">{value}</Heading>
+      <Heading size={size} asChild className="tabular-nums"><span>{value}</span></Heading>
     </Box>
   );
 }

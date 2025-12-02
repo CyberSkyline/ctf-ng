@@ -16,6 +16,7 @@ import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import RoleBadge from 'components/RoleBadge';
 import { keyBy } from 'lodash';
+import { useId } from 'react';
 import AdminRegisterUserModal from './AdminRegisterUserModal';
 import ImpersonateUserButton from './ImpersonateUserButton';
 import RecycleWorkspaceModal from './RecycleWorkspaceModal';
@@ -64,10 +65,11 @@ export default function UserSidebar({ entity }: { entity: User }) {
   const { data : workspaceStatus, error : workspaceStatusError } = useWorkspaceStatus(entity.id);
 
   const eventsMap = keyBy(eventsData, 'id');
+  const headerId = useId();
 
   return (
-    <AdminSidebar>
-      <AdminSidebarHeader title={entity.name} icon={<UserIcon />}>
+    <AdminSidebar labelId={headerId}>
+      <AdminSidebarHeader title={entity.name} icon={<UserIcon />} id={headerId}>
         <ImpersonateUserButton user={entity} />
       </AdminSidebarHeader>
 

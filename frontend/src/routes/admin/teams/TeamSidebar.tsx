@@ -14,6 +14,7 @@ import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import RoleBadge from 'components/RoleBadge';
+import { useId } from 'react';
 import EditTeamModal from './EditTeamModal';
 import KickUserModal from './KickUserModal';
 import PromoteUserModal from './PromoteUserModal';
@@ -22,10 +23,11 @@ import TeamActivity from './TeamActivity';
 
 export default function TeamSidebar({ entity }: { entity: Team }) {
   const { data : members, error : membersError } = useTeamMembers(entity.id);
+  const headerId = useId();
 
   return (
-    <AdminSidebar>
-      <AdminSidebarHeader title={entity.name} icon={<TeamIcon />}>
+    <AdminSidebar labelId={headerId}>
+      <AdminSidebarHeader title={entity.name} icon={<TeamIcon />} id={headerId}>
         <AdminLink
           to="/admin/deployments"
           filter={{

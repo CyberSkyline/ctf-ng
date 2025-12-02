@@ -6,16 +6,18 @@ import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { ErrorCallout } from 'components/Callouts';
 import EventHeader from 'components/EventHeader';
+import { useId } from 'react';
 import AdminChallengeCard from './AdminChallengeCard';
 import ChallengeUploadModal from './ChallengeUploadModal';
 import EventModal from './EventModal';
 
 export default function EventSidebar({ entity }: { entity: Event }) {
   const { data : challenges, error } = useAdminEventChallenges(entity.id);
+  const headerId = useId();
 
   return (
-    <AdminSidebar>
-      <AdminSidebarHeader title={entity.name} icon={<EventIcon />}>
+    <AdminSidebar labelId={headerId}>
+      <AdminSidebarHeader title={entity.name} icon={<EventIcon />} id={headerId}>
         <AdminLink
           to="/admin/deployments"
           filter={{ event_name : { filterType : 'text', type : 'equals', filter : entity.name } }}

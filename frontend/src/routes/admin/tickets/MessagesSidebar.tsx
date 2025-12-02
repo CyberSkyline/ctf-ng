@@ -45,7 +45,7 @@ import {
   map,
   without,
 } from 'lodash';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { TbMessage, TbX } from 'react-icons/tb';
 
 export default function MessagesSidebar({ entity : selectedRow }: { entity: AdminTicket }) {
@@ -71,6 +71,8 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
   const { data, error } = useAdminTicketMessages(selectedRow.id);
   const { data : userEvents } = useUserEvents(data?.ticket.author_id);
   const { data : userChallenges } = useEventChallenges(data?.ticket.event_id || null);
+
+  const headerId = useId();
 
   if (isNil(data) || error) {
     return (
@@ -214,8 +216,8 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
   };
 
   return (
-    <AdminSidebar>
-      <AdminSidebarHeader title={ticket.subject} icon={<TbMessage />} />
+    <AdminSidebar labelId={headerId}>
+      <AdminSidebarHeader title={ticket.subject} icon={<TbMessage />} id={headerId} />
       {actionError && <ErrorCallout>{actionError}</ErrorCallout>}
       <DataList.Root>
         <DataList.Item>
