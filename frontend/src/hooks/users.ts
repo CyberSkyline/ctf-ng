@@ -197,21 +197,3 @@ export function unbanUser(userId: number) {
     mutate('/admin/users');
   });
 }
-
-export function banUser(userId: number) {
-  return apiMutation(`/admin/users/${userId}/ban`, {}, {
-    method : 'POST',
-  }).then(() => {
-    mutate(`/admin/users/${userId}`);
-    mutate('/admin/users');
-  });
-}
-
-export function unbanUser(userId: number) {
-  return apiMutation(`/admin/users/${userId}/unban`, {}, {
-    method : 'POST',
-  }).then(() => {
-    mutate(`/admin/users/${userId}`);
-    mutate('/admin/users');
-  });
-}
