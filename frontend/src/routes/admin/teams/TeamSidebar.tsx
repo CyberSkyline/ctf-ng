@@ -1,5 +1,4 @@
 import {
-  COLOR_INFO,
   DeploymentIcon,
   EventIcon,
   TeamIcon,
@@ -7,44 +6,43 @@ import {
 } from '@/constants';
 import { useTeamMembers } from '@/hooks/team';
 import type { Team } from '@/types';
-import { Button, Flex, Table } from '@radix-ui/themes';
+import { Flex, Table } from '@radix-ui/themes';
 import AdminDataList from 'components/AdminDataList';
+import AdminLink from 'components/AdminLink';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import RoleBadge from 'components/RoleBadge';
-import { Link } from 'react-router';
+import { useId } from 'react';
+import EditTeamModal from './EditTeamModal';
 import KickUserModal from './KickUserModal';
 import PromoteUserModal from './PromoteUserModal';
 import ScoreAdjustModal from './ScoreAdjustModal';
 import TeamActivity from './TeamActivity';
-import EditTeamModal from './EditTeamModal';
 
 export default function TeamSidebar({ entity }: { entity: Team }) {
   const { data : members, error : membersError } = useTeamMembers(entity.id);
+  const headerId = useId();
 
   return (
-    <AdminSidebar>
-      <AdminSidebarHeader title={entity.name} icon={<TeamIcon />}>
-        <Button variant="soft" color={COLOR_INFO} asChild>
-          <Link to={`/admin/deployments?filter=${btoa(JSON.stringify(
-            {
-              team_name : { filterType : 'text', type : 'equals', filter : entity.name },
-              event_name : { filterType : 'text', type : 'equals', filter : entity.event_name },
-            },
-          ))}`}
-          >
-            <DeploymentIcon />
-            Deployments
-          </Link>
-        </Button>
-        <Button variant="soft" color={COLOR_INFO} asChild>
-          <Link to={`/admin/events?id=${entity.event_id}`}>
-            <EventIcon />
-            Event
-          </Link>
-        </Button>
+    <AdminSidebar labelId={headerId}>
+      <AdminSidebarHeader title={entity.name} icon={<TeamIcon />} id={headerId}>
+        <AdminLink
+          to="/admin/deployments"
+          filter={{
+            team_name : { filterType : 'text', type : 'equals', filter : entity.name },
+            event_name : { filterType : 'text', type : 'equals', filter : entity.event_name },
+          }}
+          icon={DeploymentIcon}
+          label="Deployments"
+        />
+        <AdminLink
+          to="/admin/events"
+          id={entity.event_id}
+          icon={EventIcon}
+          label="Event"
+        />
         <EditTeamModal teamToUpdate={entity} />
       </AdminSidebarHeader>
       <AdminDataList data={{ ...entity }} />

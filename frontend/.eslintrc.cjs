@@ -22,6 +22,7 @@ module.exports = {
       afterColon : true, // Enforce spacing after colons in object literals
       mode : 'strict', // Enforce strict spacing rules
     } ],
+    quotes : [ 'error', 'single', { allowTemplateLiterals : true } ],
     'array-bracket-spacing' : [ 'error', 'always' ], // Require spaces inside array brackets
     'object-curly-spacing' : [ 'error', 'always' ], // Require spaces inside curly braces
     'max-len' : [ 'error', { code : 160 } ], // Set maximum line length to 160 characters

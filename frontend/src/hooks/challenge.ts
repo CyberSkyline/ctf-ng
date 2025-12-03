@@ -3,11 +3,13 @@ import type {
   AdminQuestion,
   Attempt,
   Challenge,
+  ChallengeVariable,
   ContainerBlueprint,
   Hint,
   MeChallenge,
   Question,
 } from '@/types';
+import { utf8ToBase64 } from '@/util';
 import useSWR, { mutate } from 'swr';
 
 export function useEventChallenges(eventId: number | null) {
@@ -115,6 +117,12 @@ export function useAdminChallengeHints(challengeId: number | null) {
   );
 }
 
+export function useAdminChallengeVariables(challengeId: number | null) {
+  return useSWR<ChallengeVariable[], Error>(
+    challengeId ? `/admin/challenges/${challengeId}/variables` : null,
+  );
+}
+
 export function useAdminChallengeBlueprints(challengeId: number | null) {
   return useSWR<ContainerBlueprint[], Error>(
     challengeId ? `/admin/challenges/${challengeId}/blueprints` : null,
@@ -122,7 +130,7 @@ export function useAdminChallengeBlueprints(challengeId: number | null) {
 }
 
 export function createChallenge(eventId: number, yaml: string) {
-  return apiMutation('/admin/challenges', { yaml : btoa(yaml), event_id : eventId }, {
+  return apiMutation('/admin/challenges', { yaml : utf8ToBase64(yaml), event_id : eventId }, {
     method : 'POST',
   }).then(() => {
     // refresh the challenges list when a new challenge is created
@@ -131,7 +139,7 @@ export function createChallenge(eventId: number, yaml: string) {
 }
 
 export function updateChallenge(challengeId: number, yaml: string) {
-  return apiMutation(`/admin/challenges/${challengeId}`, { yaml : btoa(yaml) }, {
+  return apiMutation(`/admin/challenges/${challengeId}`, { yaml : utf8ToBase64(yaml) }, {
     method : 'PUT',
   }).then(() => {
     // refresh the challenges list when a challenge is updated

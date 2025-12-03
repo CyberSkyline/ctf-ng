@@ -19,13 +19,10 @@ export default function UpcomingEvents() {
       <InfoCallout>
         You are not registered for any upcoming events.
         {' '}
-        <RadixLink asChild><Link to="/events">Register for an upcoming event</Link></RadixLink>
+        You can browse and register for upcoming events on the
         {' '}
-        or head to the
-        {' '}
-        <RadixLink asChild><Link to="/practice">practice area</Link></RadixLink>
-        {' '}
-        to hone your skills!
+        <RadixLink asChild><Link to="/events">events page</Link></RadixLink>
+        .
       </InfoCallout>
     );
   }

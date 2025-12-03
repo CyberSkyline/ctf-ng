@@ -65,7 +65,7 @@ class Question(db.Model):
             "challenge_id": self.challenge_id,
         }
         if include_admin_fields:
-            data["answer"] = self.answer_variable.template if self.answer_variable else self.answer
+            data["answer"] = self.answer_variable.name if self.answer_variable else f'"{self.answer}"'
 
         return data
 

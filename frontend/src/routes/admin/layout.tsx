@@ -18,6 +18,7 @@ import {
   TbMessage,
   TbSettings,
   TbTags,
+  TbHeartHandshake,
 } from 'react-icons/tb';
 import { NavLink, Outlet } from 'react-router';
 
@@ -77,6 +78,7 @@ export default function AdminLayout() {
                 <NavigationMenu.List>
                   <NavItem to="/admin" label="Dashboard" icon={TbLayoutDashboard} />
                   <NavItem to="/admin/reports" label="Reports" icon={TbChartPie} />
+                  <NavItem to="/admin/sponsors" label="Sponsors" icon={TbHeartHandshake} />
                   <NavItem to="/admin/events" label="Events" icon={EventIcon} />
                   <NavItem to="/admin/users" label="Users" icon={UserIcon} />
                   <NavItem to="/admin/teams" label="Teams" icon={TeamIcon} />
@@ -92,9 +94,9 @@ export default function AdminLayout() {
             </Card>
           )}
       </div>
-      <main className="flex-grow overflow-y-auto p-3">
+      <div className="flex-grow overflow-y-auto p-3">
         {isLoading ? <Skeleton className="!h-full" /> : <Outlet />}
-      </main>
+      </div>
     </Flex>
   );
 }

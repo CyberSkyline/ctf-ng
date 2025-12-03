@@ -1,10 +1,25 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import { spawnSync } from 'child_process';
 import path from 'path';
 import { defineConfig } from 'vite';
 
+function gitStatus(...args: string[]) {
+  return spawnSync('git', args, { cwd : __dirname }).stdout.toString().trim();
+}
+
+const [ long ] = gitStatus('log', '--no-color', '-n', '1', '--pretty=format:%H%n%aI%n%s').split('\n');
+
+const RELEASE = long;
+
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  define : {
+    BUILD_MODE : command === 'build',
+    RELEASE : JSON.stringify(RELEASE),
+    BASE_PATH : JSON.stringify(command === 'build' ? '/ctf' : ''),
+    PUBLIC_BASE : JSON.stringify(command === 'build' ? '/dist' : '/static'),
+  },
   server : {
     allowedHosts : [ '.cisa.gov', '.localhost' ],
     host : '0.0.0.0',
@@ -15,7 +30,7 @@ export default defineConfig({
       clientPort : 5173,
     },
   },
-  base : '/static/',
+  base : command === 'build' ? '/dist/' : '/static/',
   plugins : [
     react(),
     tailwindcss(),
@@ -44,13 +59,14 @@ export default defineConfig({
     cssCodeSplit : false,
     rollupOptions : {
       output : {
-        entryFileNames : '[name].js',
-        chunkFileNames : '[name].js',
-        assetFileNames : '[name][extname]',
+        entryFileNames : `${RELEASE}/[name].js`,
+        chunkFileNames : `${RELEASE}/[name].js`,
+        assetFileNames : `${RELEASE}/[name][extname]`,
       },
     },
   },
   optimizeDeps : {
     include : [ 'react', 'react-dom', 'react-router-dom' ],
   },
-});
+  publicDir : 'public',
+}));

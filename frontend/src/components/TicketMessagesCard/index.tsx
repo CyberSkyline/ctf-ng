@@ -1,13 +1,13 @@
+import type { TicketMessage } from '@/types';
 import {
   Card,
   Flex,
-  Text,
   Separator,
+  Text,
 } from '@radix-ui/themes';
+import RadixMarkdown from 'components/RadixMarkdown';
 import { map } from 'lodash';
-import type { TicketMessage } from '@/types';
 import { twMerge } from 'tailwind-merge';
-import styles from './ticketMessagesCard.module.css';
 
 export default function TicketMessagesCard({
   messages,
@@ -24,7 +24,7 @@ export default function TicketMessagesCard({
         <Card
           className={
             twMerge(
-              message.author_id === currentUserId ? styles.cardSelf : styles.cardResponder,
+              message.author_id !== currentUserId && 'before:!bg-(--accent-2)',
               'mb-2',
               className,
             )
@@ -36,9 +36,9 @@ export default function TicketMessagesCard({
             <Text weight="bold" size="2">{message.created_at.toLocaleString()}</Text>
           </Flex>
           <Separator size="4" className="mb-1" />
-          <Text as="p">
+          <RadixMarkdown>
             {message.text}
-          </Text>
+          </RadixMarkdown>
         </Card>
       ))}
     </div>

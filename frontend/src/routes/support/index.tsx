@@ -49,6 +49,12 @@ export default function Support() {
               columnDefs={colDefs}
               domLayout="autoHeight"
               onRowClicked={(e) => navigate(`/support/${e.data?.id}`)}
+              onCellKeyDown={(e) => {
+                if (e.event?.code === 'Space') {
+                  navigate(`/support/${e.data?.id}`);
+                }
+              }}
+              defaultColDef={{ flex : 1 }}
             />
           </Flex>
         )}

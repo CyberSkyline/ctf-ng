@@ -101,6 +101,7 @@ export default function AdminAnnouncements() {
         columnDefs={colDefs}
         domLayout="autoHeight"
         loading={isLoading}
+        defaultColDef={{ flex : 1 }}
       />
     </Flex>
   );

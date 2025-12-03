@@ -7,7 +7,7 @@ from typing import TypedDict
 
 from ..utils.get_client import get_client
 from ..utils.Client import Client
-from ... import config
+from CTFd.utils import get_app_config
 from .. constants import DOCKER_RUNNING, DOCKER_BRIDGE
 from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 from ...team.models.Team import Team
@@ -49,7 +49,8 @@ class ContainerInstance(db.Model):
 
         db_exists = cls.query.filter_by(blueprint=blueprint, team_id=team.id).first()
 
-        client = get_client(config.DOCKER_HOST)
+        DOCKER_HOST = get_app_config("DOCKER_HOST")
+        client = get_client(DOCKER_HOST)
 
         if db_exists:
             try:
@@ -80,7 +81,7 @@ class ContainerInstance(db.Model):
         container_instance = cls(
             blueprint=blueprint,
             team_id=team.id,
-            hostip=config.DOCKER_HOST,
+            hostip=DOCKER_HOST,
             dockerid=ctr.id,
         )
 
@@ -226,7 +227,8 @@ class ContainerInstance(db.Model):
         return cls.query.filter_by(id=instance_id).first()
 
     def logs(self, tail: int = 200) -> str:
-        client = get_client(config.DOCKER_HOST)
+        DOCKER_HOST = get_app_config("DOCKER_HOST")
+        client = get_client(DOCKER_HOST)
         try:
             ctr = client.containers.get(self.dockerid)
             return ctr.logs(tail=tail).decode('utf-8')
@@ -234,7 +236,8 @@ class ContainerInstance(db.Model):
             raise ValueError("Container not found, please recycle") from exc
 
     def status(self) -> SerializedInstanceStats:
-        client = get_client(config.DOCKER_HOST)
+        DOCKER_HOST = get_app_config("DOCKER_HOST")
+        client = get_client(DOCKER_HOST)
         ctr = client.containers.get(self.dockerid)
 
         image = "unknown"
@@ -251,6 +254,7 @@ class ContainerInstance(db.Model):
             "image": image,
             "docker_id": self.dockerid,
             "status": ctr.status,
+            "env": ctr.attrs['Config']['Env'],
         }
 
         return SerializedInstanceStats(**data)
@@ -266,7 +270,8 @@ class ContainerInstance(db.Model):
 
 
     def restart(self):
-        client = get_client(config.DOCKER_HOST)
+        DOCKER_HOST = get_app_config("DOCKER_HOST")
+        client = get_client(DOCKER_HOST)
         try:
             ctr = client.containers.get(self.dockerid)
             ctr.restart()
@@ -275,7 +280,8 @@ class ContainerInstance(db.Model):
 
     def recycle(self):
         blueprint_obj = ContainerBlueprint.query.filter_by(id=self.blueprint).first()
-        client = get_client(config.DOCKER_HOST)
+        DOCKER_HOST = get_app_config("DOCKER_HOST")
+        client = get_client(DOCKER_HOST)
 
         try:
             ctr = client.containers.get(self.dockerid)

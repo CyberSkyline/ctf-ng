@@ -33,6 +33,10 @@ export function useDeploymentServices(challengeId: number, teamId: number) {
   return useSWR<ContainerInstance[], Error>(`/admin/container/challenge/${challengeId}/team/${teamId}/services`);
 }
 
+export function useDeploymentVariables(challengeId: number, teamId: number) {
+  return useSWR<Record<string, string>, Error>(`/admin/container/challenge/${challengeId}/team/${teamId}/variables`);
+}
+
 export function useContainerStatus(id: number) {
   return useSWR<ContainerStatus, Error>(`/admin/container/${id}/status`, {
     refreshInterval : 5000, // Refresh every 5 seconds

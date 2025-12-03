@@ -7,6 +7,7 @@ import {
   useWorkspaceStatus,
 } from '@/hooks/users';
 import type { Event, Team, User } from '@/types';
+import { utf8ToBase64 } from '@/util';
 import { Table } from '@radix-ui/themes';
 import AdminDataList from 'components/AdminDataList';
 import AdminSidebar from 'components/AdminSidebar';
@@ -15,6 +16,7 @@ import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import RoleBadge from 'components/RoleBadge';
 import { keyBy } from 'lodash';
+import { useId } from 'react';
 import AdminRegisterUserModal from './AdminRegisterUserModal';
 import ImpersonateUserButton from './ImpersonateUserButton';
 import RecycleWorkspaceModal from './RecycleWorkspaceModal';
@@ -40,7 +42,10 @@ function RegistrationRow({ userId, team, event }: { userId: number, team: Team, 
         <Entity
           label={team.name}
           icon={TeamIcon}
-          to={`/admin/teams?id=${team.id}&filter=${btoa(JSON.stringify({ event_name : { filterType : 'text', type : 'equals', filter : event.name } }))}`}
+          to={
+            `/admin/teams?id=${team.id}&filter=${
+              encodeURIComponent(utf8ToBase64(JSON.stringify({ event_name : { filterType : 'text', type : 'equals', filter : event.name } })))}`
+          }
         />
       </Table.Cell>
       <Table.Cell>
@@ -60,10 +65,11 @@ export default function UserSidebar({ entity }: { entity: User }) {
   const { data : workspaceStatus, error : workspaceStatusError } = useWorkspaceStatus(entity.id);
 
   const eventsMap = keyBy(eventsData, 'id');
+  const headerId = useId();
 
   return (
-    <AdminSidebar>
-      <AdminSidebarHeader title={entity.name} icon={<UserIcon />}>
+    <AdminSidebar labelId={headerId}>
+      <AdminSidebarHeader title={entity.name} icon={<UserIcon />} id={headerId}>
         <ImpersonateUserButton user={entity} />
       </AdminSidebarHeader>
 

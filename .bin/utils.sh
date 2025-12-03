@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 SCRIPT_DIR=$(dirname $BASH_SOURCE)
 ENV_PATH=$(realpath "$SCRIPT_DIR/../.env")
 
@@ -33,11 +35,29 @@ load_env() {
 }
 
 check_ctfd_running() {
-  local container_name=$(docker ps --format '{{.Names}}' | grep -E '^ng-ctfd$|ng_ctfd')
+  local container_name=$(docker ps --format '{{.Names}}' | grep -E 'ng-ctfd|ng_ctfd' | head -n 1)
   
   if [ -z "$container_name" ]; then
-    highlight "The CTFd container is not running. Please run 'pnpm start' to start the container\n" >&2
+    highlight "The CTFd container is not running. Please run 'pnpm start' to start the container in dev or check if your host has a running CTFng instance\n" >&2
     exit 1
   fi
   echo "$container_name"
+}
+
+get_current_commit() {
+  git log --no-color -n 1 --pretty=format:%H | tr -d '[:space:]'
+}
+
+isSwarmNode() {
+  if ! command -v docker &> /dev/null; then
+    echo "Docker is not installed."
+    exit 1
+  fi
+
+  echo "Checking if this node is part of a Docker Swarm..."
+  if [ "$(docker info | grep Swarm | sed 's/Swarm: //g')" == "inactive" ]; then
+      return 1
+  else
+      return 0
+  fi
 }

@@ -15,9 +15,9 @@ import {
 
 export type AccentColor = (typeof accentColors)[number];
 
-export const ROUTEPREFIX: string = '';
-export const APIPREFIX: string = '/ng';
-export const SSOPATH: string = '/ng/authenticate/okta/login';
+export const ROUTEPREFIX: string = BASE_PATH;
+export const APIPREFIX: string = `${ROUTEPREFIX}/ng`;
+export const SSOPATH: string = `/ng/authenticate/okta/login`;
 
 // Semantic icons used throughout the UI, defined here for consistency
 export const EventIcon = TbCalendarEvent;
@@ -44,7 +44,7 @@ export const COLOR_INFO: AccentColor = 'teal';
  * Accent color used for question input fields. Should usually match the global accent,
  * but may need to change for disambiguation if the global accent is green/red.
  */
-export const COLOR_QUESTION: AccentColor = 'amber';
+export const COLOR_QUESTION: AccentColor = 'teal';
 
 /** Use for controls related to hints, remote access, god mode, etc. */
 export const COLOR_HINT: AccentColor = 'violet';

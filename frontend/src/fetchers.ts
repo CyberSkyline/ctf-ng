@@ -90,3 +90,23 @@ export const apiMutation = async (resource: string, body: unknown, init?: Reques
   const json = await parseResponseData(res);
   return json;
 };
+
+/**
+ * Function used to perform API mutations.
+ * After the promise resolves, make sure to call SWR's mutate with the relevant resource(s) to ensure data is updated.
+ * @param resource The resource to mutate.
+ * @param formData FormData object to send in the body of the request.
+ * @param init Additional options to use when making the request.
+ * @returns The response from the API.
+ */
+export const fileApiMutation = async (resource: string, formData: FormData, init?: RequestInit) => {
+  const csrf = window.init.csrfToken;
+  formData.append('nonce', csrf); // required by ctfd's auth middleware
+
+  const res = await fetch(APIPREFIX + resource, {
+    ...init,
+    body : formData,
+  });
+  const json = await parseResponseData(res);
+  return json;
+};
