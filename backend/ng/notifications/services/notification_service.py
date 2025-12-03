@@ -78,7 +78,7 @@ class NotificationService:
         notification = Notification.create_notification(
             notification_type=NotificationType.TICKET_MESSAGE,
             title="Support Ticket Update",
-            message=f"{'Admin' if is_admin_reply else 'User'} replied to your ticket",
+            message=f"{'Admin' if is_admin_reply else 'User'} replied to ticket #{ticket_id}",
             recipient_id=recipient_id,
             sender_id=author_id,
             ticket_id=ticket_id,
@@ -104,7 +104,7 @@ class NotificationService:
         notification = Notification.create_notification(
             notification_type=NotificationType.TICKET_STATUS_CHANGE,
             title="Ticket Status Changed",
-            message=f"Your ticket was {new_status}",
+            message=f"Ticket #{ticket_id} was {new_status}",
             recipient_id=recipient_id,
             sender_id=changed_by_id,
             ticket_id=ticket_id,
@@ -144,7 +144,7 @@ class NotificationService:
             notification = Notification.create_notification(
                 notification_type=NotificationType.TICKET_MESSAGE,
                 title="Support Ticket Update",
-                message="User replied to unassigned ticket",
+                message=f"User replied to unassigned ticket #{ticket_id}",
                 recipient_id=support_user.ctfd_user.id,
                 sender_id=author_id,
                 ticket_id=ticket_id,
@@ -218,7 +218,7 @@ class NotificationService:
         notification = Notification.create_notification(
             notification_type=NotificationType.TICKET_ASSIGNED,
             title="Ticket Assigned",
-            message="A support ticket has been assigned to you",
+            message=f"Ticket #{ticket_id} has been assigned to you",
             recipient_id=assigned_to_id,
             sender_id=assigned_by_id,
             ticket_id=ticket_id,
@@ -314,3 +314,32 @@ class NotificationService:
             event_id=event_id,
             kicked_by_id=kicked_by_id,
         )
+
+
+def generate_notification_link(notification: Notification) -> str | None:
+    """
+    Generate navigation link based on notification type and recipient role
+
+    Args:
+        notification: Notification instance with recipient relationship loaded
+
+    """
+    if not notification.recipient:
+        return None
+
+    is_admin = notification.recipient.type == "admin"
+
+    if notification.type in [NotificationType.TICKET_MESSAGE,
+                             NotificationType.TICKET_STATUS_CHANGE,
+                             NotificationType.TICKET_ASSIGNED]:
+        if notification.ticket_id:
+            if is_admin:
+                return f"/ctf/admin/tickets?id={notification.ticket_id}"
+            else:
+                return f"/ctf/support/{notification.ticket_id}"
+
+    if notification.type == NotificationType.TEAM_MEMBER_KICKED:
+        if notification.event_id:
+            return f"/ctf/events/{notification.event_id}"
+
+    return None
