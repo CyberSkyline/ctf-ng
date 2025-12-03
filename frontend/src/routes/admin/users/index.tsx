@@ -1,12 +1,12 @@
 import { useAllUsers } from '@/hooks/users';
-import type { User } from '@/types';
+import type { AdminUser } from '@/types';
 import type { ColDef } from 'ag-grid-community';
 import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
 import RoleBadge from 'components/RoleBadge';
 import UserSidebar from './UserSidebar';
 
-const colDefs: ColDef<User>[] = [
+const colDefs: ColDef<AdminUser>[] = [
   {
     field : 'id',
     width : 100,
@@ -43,6 +43,19 @@ const colDefs: ColDef<User>[] = [
     headerName : 'Registered At',
     width : 220,
     valueFormatter : (params) => params.value && params.value.toLocaleString(),
+    filter : true,
+    floatingFilter : true,
+  },
+  {
+    field : 'affiliation.name',
+    headerName : 'Affiliation',
+    filter : true,
+    floatingFilter : true,
+    width : 200,
+  },
+  {
+    field : 'banned',
+    width : 100,
     filter : true,
     floatingFilter : true,
   },
