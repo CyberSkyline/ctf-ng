@@ -3,15 +3,23 @@ const ws = require('ws');
 const fs = require('fs');
 
 const wss = new ws.WebSocketServer({ port : 8099, host : '0.0.0.0' });
+const PSK = '';
 
 interface DockerHeaderRequest extends Request {
   headers : Headers & {
     'docker-id' : string,
+    'psk' : string,
   }
 }
 
 wss.on('connection', (socket: WebSocket, request: DockerHeaderRequest) => {
-  const { 'docker-id' : dockerId } = request.headers;
+  const { 'docker-id' : dockerId, psk } = request.headers;
+
+  if (psk !== PSK) {
+    socket.send('Unauthorized');
+    socket.close();
+    return;
+  }
 
   const docker = new Docker({
     host : '127.0.0.1',
