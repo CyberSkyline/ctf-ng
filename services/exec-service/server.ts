@@ -1,9 +1,9 @@
 const Docker = require('dockerode');
 const ws = require('ws');
 const fs = require('fs');
+const { PSK } = require('./config.json');
 
 const wss = new ws.WebSocketServer({ port : 8099, host : '0.0.0.0' });
-const PSK = '';
 
 interface DockerHeaderRequest extends Request {
   headers : Headers & {

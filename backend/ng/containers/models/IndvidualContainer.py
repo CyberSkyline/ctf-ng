@@ -77,6 +77,15 @@ class IndvidualContainer(db.Model):
     @staticmethod
     def run_container(client, container_name):
         NOVNC_CONTAINER = get_app_config("NOVNC_CONTAINER")
+
+        ulimit = docker.types.Ulimit(name="nofile", soft=10000, hard=20000)
+
+        net = client.get_network_by_name(container_name)
+
+        if not net:
+            net = client.networks.create(name=container_name, driver="bridge")
+
+
         return client.containers.run(
             NOVNC_CONTAINER,
             name=container_name,
@@ -86,17 +95,24 @@ class IndvidualContainer(db.Model):
                 "NET_ADMIN",
                 "SYS_PTRACE",
             ]
+            mem_limit="4g",
+            cpu_period=200000,
+            cpu_quota=100000,
+            pids_limit=2000,
+            ulimits=[ulimit],
+            network=net.name,
         )
 
 
     def disconnect_from_networks(self):
         # Disconnect your indvidual container from challenge networks
         # Bridge needs to stay for vnc
+        user_bridge_name = self.render_container_name(self.user)
         client = get_client(self.hostip)
         inspect_results = client.api.inspect_container(self.dockerid)
         networks = inspect_results["NetworkSettings"]["Networks"]
         for network in networks:
-            if network != DOCKER_BRIDGE:
+            if network != DOCKER_BRIDGE and network != user_bridge_name:
                 fetched_network = client.networks.get(networks[network]["NetworkID"])
                 fetched_network.disconnect(self.dockerid)
 
@@ -123,13 +139,15 @@ class IndvidualContainer(db.Model):
 
     def get_current_challenge(self) -> int | None:
         client = get_client(self.hostip)
+        user_bridge_name = self.render_container_name(self.user)
+
         try:
             ctr_info = client.api.inspect_container(self.dockerid)
             current_challenge_network = None
 
             networks = ctr_info["NetworkSettings"]["Networks"]
             for network in networks:
-                if network != DOCKER_BRIDGE:
+                if (network != DOCKER_BRIDGE) and (network != user_bridge_name):
                     current_challenge_network = network
 
             if not current_challenge_network:
