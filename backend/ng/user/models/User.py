@@ -72,6 +72,7 @@ class User(db.Model):
                 "roles": [role.name for role in self.roles],
                 "registered_at": self.ctfd_user.created.isoformat() + "Z",
                 "affiliation": self.affiliation.serialize(include_admin_fields=True) if self.affiliation else None,
+                "banned": self.ctfd_user.banned,
             }
         return {
             "id": self.id,
