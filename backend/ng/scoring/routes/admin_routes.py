@@ -9,6 +9,7 @@ from ...core.middleware import admin_endpoint
 from ...core.exceptions import ValidationError
 from ...core.middleware.loaders import (
     LoaderType,
+    load_attempt,
     load_event,
     load_team,
     load_score_by_team_and_event,
@@ -18,6 +19,7 @@ from ...core.utils import success_response
 
 from ..controllers import (
     award_manual_points,
+    delete_attempt,
     recalculate_score,
     get_score_history,
     get_team_attempts,
@@ -227,3 +229,24 @@ class TeamManualAwards(Resource):
         """
         awards = get_team_manual_awards(team_id, event_id)
         return success_response(awards)
+
+
+@scoring_admin_namespace.route("/attempts/<int:attempt_id>")
+class AttemptDetail(Resource):
+    @admin_endpoint()
+    @load_attempt(source=LoaderType.PARAM)
+    @scoring_admin_namespace.doc(
+        description="Delete an attempt and adjust team score (Admin only)",
+        responses={
+            200: "Success - Attempt deleted and score adjusted",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Attempt does not exist",
+            500: "Internal Server Error",
+        },
+    )
+    def delete(self, attempt_id: int, attempt, **kwargs):
+        """
+        Delete an attempt
+        """
+        delete_attempt(attempt)
+        return success_response()
