@@ -48,7 +48,7 @@ const colDefs: ColDef<AdminUser>[] = [
   },
   {
     field : 'affiliation.name',
-    headerName : 'Affiliation',
+    headerName : 'Sponsor',
     filter : true,
     floatingFilter : true,
     width : 200,
