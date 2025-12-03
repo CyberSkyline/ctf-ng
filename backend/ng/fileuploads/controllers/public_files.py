@@ -4,7 +4,6 @@ Public file operations for sponsor-logos, event-cards, favicons
 import logging
 import requests
 from ...core.utils import success_response, error_response
-from flask import request
 from werkzeug.datastructures import FileStorage
 
 from ... import config
@@ -18,20 +17,20 @@ def generate_unique_filename(s3_service, folder, original_filename, allow_overwr
     """Generate unique filename by appending numbers if file exists"""
     if allow_overwrite:
         return original_filename
-    
+
     object_key = f"{folder}/{original_filename}"
     exists = s3_service.object_exists(object_key)
 
     if not exists:
         return original_filename
-    
+
     if '.' in original_filename:
         name, ext = original_filename.rsplit('.', 1)
         ext = '.' + ext
     else:
         name = original_filename
         ext = ''
-    
+
     counter = 1
     while counter <= MAX_AUTO_NUMBER_ATTEMPTS:
         numbered_filename = f"{name}_{counter}{ext}"
@@ -39,7 +38,7 @@ def generate_unique_filename(s3_service, folder, original_filename, allow_overwr
         if not s3_service.object_exists(numbered_key):
             return numbered_filename
         counter += 1
-    
+
     raise ValueError(f"Could not generate unique filename for '{original_filename}' after {MAX_AUTO_NUMBER_ATTEMPTS} attempts. Too many files with similar names exist.")
 
 def generate_upload_url(args):
@@ -203,7 +202,7 @@ def search_public_files(args):
                     'filename': filename,
                     'folder': folder
                 }
-                
+
                 # Add download URL if requested
                 if include_urls:
                     try:
@@ -212,7 +211,7 @@ def search_public_files(args):
                     except Exception as e:
                         logger.warning(f"Failed to generate download URL for {object_key}: {e}")
                         file_info['download_url'] = None
-                
+
                 return success_response({
                     "files": [file_info],
                     "count": 1
@@ -239,7 +238,7 @@ def search_public_files(args):
                     'folder': key_parts[0],
                     'last_modified': obj['last_modified']
                 }
-                
+
                 # Add download URL if requested
                 if include_urls:
                     try:
@@ -248,7 +247,7 @@ def search_public_files(args):
                     except Exception as e:
                         logger.warning(f"Failed to generate download URL for {obj['key']}: {e}")
                         file_info['download_url'] = None
-                
+
                 files.append(file_info)
 
         return success_response({
@@ -282,7 +281,7 @@ def direct_upload_file(args):
 
         original_filename = file.filename
         allow_overwrite = args.get('allow_overwrite', False)
-        
+
         from ...core.services.s3_service import get_s3_service
         s3_service = get_s3_service()
         if not s3_service or not s3_service.is_configured():
