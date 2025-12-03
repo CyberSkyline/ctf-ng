@@ -18,6 +18,8 @@ import RoleBadge from 'components/RoleBadge';
 import { keyBy } from 'lodash';
 import { useId } from 'react';
 import AdminRegisterUserModal from './AdminRegisterUserModal';
+
+import AdminUpdateUserModal from './AdminUpdateUserModal';
 import BanUserModal from './BanUserModal';
 import ImpersonateUserButton from './ImpersonateUserButton';
 import RecycleWorkspaceModal from './RecycleWorkspaceModal';
@@ -73,6 +75,7 @@ export default function UserSidebar({ entity }: { entity: AdminUser }) {
       <AdminSidebarHeader title={entity.name} icon={<UserIcon />} id={headerId}>
         <ImpersonateUserButton user={entity} />
         <BanUserModal user={entity} />
+        <AdminUpdateUserModal user={entity} />
       </AdminSidebarHeader>
 
       {entity.banned && (<WarningCallout>This user is banned.</WarningCallout>)}

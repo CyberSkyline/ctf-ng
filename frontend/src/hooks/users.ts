@@ -150,6 +150,15 @@ export function useWorkspaceStatus(userId : number) {
   });
 }
 
+export function adminUpdateUser(userId: number, user: Pick<User, 'name' | 'email'>) {
+  return apiMutation(`/admin/users/${userId}`, user, {
+    method : 'PUT',
+  }).then(() => {
+    mutate(`/admin/users`);
+    mutate(`/admin/users/${userId}`);
+  });
+}
+
 export function restartWorkspace(userId : number) {
   return apiMutation(`/admin/users/${userId}/container/restart`, undefined, {
     method : 'POST',

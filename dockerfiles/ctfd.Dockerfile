@@ -65,6 +65,7 @@ COPY ./conf/ctfd/config.ini /opt/CTFd/CTFd/config.ini
 
 COPY ./conf/ctfd/entrypoint.sh /opt/CTFd/entrypoint.sh
 COPY ./conf/ctfd/serve_debug.py /opt/CTFd/serve_debug.py
+COPY ./conf/ctfd/init_patch /opt/CTFd/init_patch
 RUN chmod +x /opt/CTFd/entrypoint.sh
 
 USER 1001
