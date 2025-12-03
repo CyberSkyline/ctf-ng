@@ -32,6 +32,11 @@ export const templates = {
     subject: `President's Cup 7 Registration is Coming! Will You Return?`,
     file: '2025.11.20.pc7-registration-announcement.mjml',
   }),
+  'dec-2025-game-of-the-month' : new Template({ 
+    name : 'dec-2025-game-of-the-month',
+    subject : `The President's Cup Challenges You - Play December's Game of the Month!`,
+    file : '2025.12.03.game-of-the-month.mjml',
+  }),
 };
 
 export async function sendEmail(template, recipient, opts, progressBar) {
