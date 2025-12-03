@@ -1,7 +1,13 @@
 services: 
   load-test:
     network_mode: "host"
+    environment:
+      BASE_URL: "http://localhost"
+      STAGE_ONE_VUS: 2
+      STAGE_TWO_VUS: 5
+      STAGE_THREE_VUS: 10
+
+    cap_add:
+      - SYS_ADMIN
     build:
       context: .
-    security_opt:
-      - seccomp=chrome.json

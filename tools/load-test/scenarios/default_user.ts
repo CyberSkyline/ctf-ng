@@ -1,4 +1,4 @@
-// Visit round one
+import { UserBrowserSession, UserHttpSession } from "../user";
 
 // visit challenge
 
@@ -33,4 +33,7 @@
 // Logout
 
 // user flow
-export async function defaultUser(user: ) {
+export async function defaultUserScenario(user_session: UserHttpSession | UserBrowserSession) {
+    await user_session.login();
+    await user_session.close();
+}
