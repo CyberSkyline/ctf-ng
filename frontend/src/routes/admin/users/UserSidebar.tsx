@@ -18,6 +18,7 @@ import RoleBadge from 'components/RoleBadge';
 import { keyBy } from 'lodash';
 import { useId } from 'react';
 import AdminRegisterUserModal from './AdminRegisterUserModal';
+import AdminUpdateUserModal from './AdminUpdateUserModal';
 import ImpersonateUserButton from './ImpersonateUserButton';
 import RecycleWorkspaceModal from './RecycleWorkspaceModal';
 import RestartWorkspaceModal from './RestartWorkspaceModal';
@@ -71,6 +72,7 @@ export default function UserSidebar({ entity }: { entity: User }) {
     <AdminSidebar labelId={headerId}>
       <AdminSidebarHeader title={entity.name} icon={<UserIcon />} id={headerId}>
         <ImpersonateUserButton user={entity} />
+        <AdminUpdateUserModal user={entity} />
       </AdminSidebarHeader>
 
       <AdminDataList data={{ ...entity }} />
