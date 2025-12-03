@@ -82,7 +82,8 @@ def test_email_configuration():
                 'AWS_DEFAULT_REGION': os.getenv('AWS_DEFAULT_REGION', 'us-east-1'),
                 'AWS_SES_FROM_EMAIL': os.getenv('AWS_SES_FROM_EMAIL'),
                 'ADMIN_SUPPORT_INBOX_EMAILS': os.getenv('ADMIN_SUPPORT_INBOX_EMAILS'),
-                'SERVER_DOMAIN': os.getenv('SERVER_DOMAIN')
+                'SERVER_DOMAIN': os.getenv('SERVER_DOMAIN'),
+                'ROUTE_PREFIX': os.getenv('ROUTE_PREFIX')
             }
 
             for key, value in config_vars.items():
@@ -94,6 +95,7 @@ def test_email_configuration():
             print(f"From Email: {app.config['AWS_SES_FROM_EMAIL']}")
             print(f"Admin Emails: {app.config['ADMIN_SUPPORT_INBOX_EMAILS']}")
             print(f"Server Domain: {app.config['SERVER_DOMAIN']}")
+            print(f"Route Prefix: {app.config['ROUTE_PREFIX']}")
 
             email_service = get_email_service()
             print(f"AWS SES Configured: {'YES' if email_service.is_configured() else 'NO'}")

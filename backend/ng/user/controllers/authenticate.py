@@ -16,10 +16,11 @@ OKTA_CLIENT_ID = os.getenv("OKTA_CLIENT_ID")
 OKTA_CLIENT_SECRET = os.getenv("OKTA_CLIENT_SECRET")
 OKTA_DOMAIN = os.getenv("OKTA_DOMAIN")
 SERVER_DOMAIN = os.getenv("SERVER_DOMAIN")
+ROUTE_PREFIX = os.getenv("ROUTE_PREFIX")
 AUTHORIZATION_BASE_URL = f"{OKTA_DOMAIN}/oauth2/v1/authorize"
 TOKEN_URL = f"{OKTA_DOMAIN}/oauth2/v1/token"
 USER_API_URL = f"{OKTA_DOMAIN}/oauth2/v1/userinfo"
-REDIRECT_URI = f"{SERVER_DOMAIN}/ng/authenticate/okta/callback"
+REDIRECT_URI = f"{SERVER_DOMAIN}{ROUTE_PREFIX}/ng/authenticate/okta/callback"
 SCOPE = ["openid", "profile", "email"]
 
 # bcrypt-like placeholder hash

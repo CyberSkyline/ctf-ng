@@ -16,6 +16,9 @@ from .email_templates import TeamKickedData, TicketEmailTemplates
 
 logger = get_logger(__name__)
 
+server_domain = current_app.config.get('SERVER_DOMAIN')
+route_prefix = current_app.config.get('ROUTE_PREFIX')
+base_url = f"{server_domain}{route_prefix}"
 
 class EmailType(str, Enum):
     """
@@ -279,7 +282,6 @@ class TicketEmailService:
                 if kicked_by_user:
                     kicked_by_name = kicked_by_user.name
 
-            base_url = current_app.config.get('SERVER_DOMAIN')
             event_url = f"{base_url}/events/{event_id}" if base_url else None
 
             team_kicked_data: TeamKickedData = {
