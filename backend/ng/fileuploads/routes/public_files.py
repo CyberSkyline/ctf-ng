@@ -209,7 +209,7 @@ class FileSearch(Resource):
         folder = request.args.get('folder')
         filename = request.args.get('filename')
         include_urls = request.args.get('include_urls', 'false').lower() == 'true'
-        
+
         return search_public_files({
             'folder': folder,
             'filename': filename,
