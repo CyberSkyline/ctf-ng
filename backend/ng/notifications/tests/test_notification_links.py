@@ -34,7 +34,7 @@ class TestNotificationLinkGeneration:
 
         link = generate_notification_link(notification)
 
-        assert link == f"/ctf/admin/tickets?id={ticket.id}"
+        assert link == f"/admin/tickets?id={ticket.id}"
 
     def test_user_receives_user_ticket_link(
         self,
@@ -57,7 +57,7 @@ class TestNotificationLinkGeneration:
 
         link = generate_notification_link(notification)
 
-        assert link == f"/ctf/support/{ticket.id}"
+        assert link == f"/support/{ticket.id}"
 
     def test_ticket_message_includes_ticket_number(
         self,
@@ -101,7 +101,7 @@ class TestNotificationLinkGeneration:
         serialized = notification.serialize()
 
         assert "link" in serialized
-        assert serialized["link"] == f"/ctf/admin/tickets?id={ticket.id}"
+        assert serialized["link"] == f"/admin/tickets?id={ticket.id}"
 
     def test_notification_without_recipient_returns_none(
         self,
@@ -144,7 +144,7 @@ class TestNotificationLinkGeneration:
 
         link = generate_notification_link(notification)
 
-        assert link == f"/ctf/events/{event.id}"
+        assert link == f"/events/{event.id}"
 
     def test_ticket_assigned_notification_for_admin(
         self,
@@ -166,7 +166,7 @@ class TestNotificationLinkGeneration:
 
         link = generate_notification_link(notification)
 
-        assert link == f"/ctf/admin/tickets?id={ticket.id}"
+        assert link == f"/admin/tickets?id={ticket.id}"
         assert f"#{ticket.id}" in notification.message
 
     def test_ticket_status_change_notification(
@@ -191,4 +191,4 @@ class TestNotificationLinkGeneration:
         serialized = notification.serialize()
 
         assert f"#{ticket.id}" in notification.message
-        assert serialized["link"] == f"/ctf/support/{ticket.id}"
+        assert serialized["link"] == f"/support/{ticket.id}"

@@ -334,12 +334,12 @@ def generate_notification_link(notification: Notification) -> str | None:
                              NotificationType.TICKET_ASSIGNED]:
         if notification.ticket_id:
             if is_admin:
-                return f"/ctf/admin/tickets?id={notification.ticket_id}"
+                return f"/admin/tickets?id={notification.ticket_id}"
             else:
-                return f"/ctf/support/{notification.ticket_id}"
+                return f"/support/{notification.ticket_id}"
 
     if notification.type == NotificationType.TEAM_MEMBER_KICKED:
         if notification.event_id:
-            return f"/ctf/events/{notification.event_id}"
+            return f"/events/{notification.event_id}"
 
     return None
