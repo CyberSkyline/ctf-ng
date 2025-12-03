@@ -135,6 +135,9 @@ class AdminImpersonate(Resource):
         if get_user_roles(user_id) != []:
             return error_response("You cannot impersonate privileged users", "impersonation", 403)
 
+        if user.ctfd_user.banned:
+            return error_response("You cannot impersonate a banned user.", "impersonation", 403)
+
         if session.get("impersonated"):
             # Should never be able to get here but just in case
             return error_response("You are already impersonating another user.", "impersonation", 403)

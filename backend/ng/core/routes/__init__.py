@@ -133,7 +133,7 @@ def remove_registered_helpers(app):
 
     _remove_appwide_handler(
         app.before_request_funcs,
-        lambda f: f.__name__ in {"needs_setup", "needs_setup_safe"}
+        lambda f: f.__name__ in {"needs_setup", "needs_setup_safe", "banned"}
     )
 
 def remove_registered_errorhandlers(app):
