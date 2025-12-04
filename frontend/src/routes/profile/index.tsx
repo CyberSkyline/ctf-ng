@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useFileUrl } from '@/hooks/fileuploads';
 import { useSponsors } from '@/hooks/sponsors';
-import { useMySponsor, setMySponsor } from '@/hooks/users';
+import { setMySponsor, useMySponsor } from '@/hooks/users';
 import {
   Box,
   Button,
@@ -9,14 +9,14 @@ import {
   Grid,
   Heading,
 } from '@radix-ui/themes';
+import { ErrorCallout, WarningCallout } from 'components/Callouts';
 import {
   isNil,
   isNull,
   isUndefined,
   map,
 } from 'lodash';
-import { ErrorCallout, WarningCallout } from 'components/Callouts';
-import { useFileUrl } from '@/hooks/fileuploads';
+import { useState } from 'react';
 import SponsorImageCard from './SponsorImageCard';
 
 export default function Profile() {
@@ -76,9 +76,9 @@ export default function Profile() {
           !isNil(mySponsor) && (
             <>
               <p>{mySponsor.name}</p>
-              {image?.url && (
+              {image?.download_url && (
                 <Box maxHeight="500px">
-                  <img src={image?.url} alt="" />
+                  <img src={image?.download_url} alt="" />
                 </Box>
               )}
             </>
