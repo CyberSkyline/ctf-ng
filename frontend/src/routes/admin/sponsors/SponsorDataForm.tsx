@@ -65,7 +65,7 @@ export default function SponsorDataForm({
             value=""
           />
           {imagePreview && (
-            <Box maxHeight={500} maxWidth={500}>
+            <Box maxHeight="256px" maxWidth="256px">
               <img src={imagePreview.download_url} alt={imagePreview.filename} />
             </Box>
           )}

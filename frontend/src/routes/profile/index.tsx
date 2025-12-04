@@ -77,7 +77,7 @@ export default function Profile() {
             <>
               <p>{mySponsor.name}</p>
               {image?.download_url && (
-                <Box maxHeight="500px" maxWidth="500px">
+                <Box maxHeight="256px" maxWidth="256px">
                   <img src={image?.download_url} alt="" />
                 </Box>
               )}
