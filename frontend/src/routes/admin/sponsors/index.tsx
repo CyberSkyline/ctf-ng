@@ -1,4 +1,4 @@
-import { useAdminSponsors } from '@/hooks/sponsors';
+import { useSponsors } from '@/hooks/sponsors';
 import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
 import type { ColDef } from 'ag-grid-community';
@@ -25,7 +25,7 @@ const colDefs: ColDef<Sponsor>[] = [
 ];
 
 export default function AdminSponsors() {
-  const { data, error, isLoading } = useAdminSponsors();
+  const { data, error, isLoading } = useSponsors();
 
   if (error) {
     return <ErrorCallout>{error.message}</ErrorCallout>;

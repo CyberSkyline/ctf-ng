@@ -50,48 +50,6 @@ class Test_Sponsor_ByID:
         assert data["id"] == sponsor.id
         assert data["name"] == "Test Sponsor"
 
-class Test_Sponsor_Admin_Listing:
-    endpoint = "/ng/admin/sponsors"
-    def test_get_all_sponsors_empty_admin(self, admin_client):
-        response = admin_client.get(self.endpoint)
-        assert response.status_code == 200
-        assert response.json["data"] == []
-
-    def test_get_all_sponsors_admin(self, admin_client, sponsor_factory):
-        sponsor_factory(name="Sponsor One", logo="logo1.png")
-        sponsor_factory(name="Sponsor Two", logo="logo2.png")
-
-        response = admin_client.get(self.endpoint)
-        assert response.status_code == 200
-        data = response.json["data"]
-        assert len(data) == 2
-        assert any(sponsor["name"] == "Sponsor One" for sponsor in data)
-        assert any(sponsor["name"] == "Sponsor Two" for sponsor in data)
-
-    def test_only_admins_can_access_sponsor_listing(self, logged_in_client):
-        response = logged_in_client.get(self.endpoint)
-        assert response.status_code == 403
-
-class Test_Sponsor_Admin_ByID:
-    endpoint = "/ng/admin/sponsors/{sponsor_id}"
-    def test_get_sponsor_by_id_not_found_admin(self, admin_client):
-        response = admin_client.get(self.endpoint.format(sponsor_id=999))
-        assert response.status_code == 404
-
-    def test_get_sponsor_by_id_admin(self, admin_client, sponsor_factory):
-        sponsor = sponsor_factory(name="Test Sponsor", logo="testlogo.png")
-
-        response = admin_client.get(self.endpoint.format(sponsor_id=sponsor.id))
-        assert response.status_code == 200
-        data = response.json["data"]
-        assert data["id"] == sponsor.id
-        assert data["name"] == "Test Sponsor"
-        assert data["logo"] == "testlogo.png"
-
-    def test_only_admins_can_access_sponsor_by_id(self, logged_in_client, sponsor_factory):
-        sponsor = sponsor_factory(name="Test Sponsor", logo="testlogo.png")
-        response = logged_in_client.get(self.endpoint.format(sponsor_id=sponsor.id))
-        assert response.status_code == 403
 
 class Test_Sponsor_Admin_Creation:
     endpoint = "/ng/admin/sponsors"
