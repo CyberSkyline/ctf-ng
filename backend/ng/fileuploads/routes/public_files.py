@@ -139,7 +139,7 @@ class FileAccess(Resource):
             503: 'Service Unavailable - S3 storage not configured'
         }
     )
-    def get(self):
+    def get(self, **kwargs):
         """Get presigned URL for file access
 
         Generate a presigned download URL for a specific file in a public folder.
