@@ -26,7 +26,7 @@ export interface UploadedFile {
   filename: string,
   folder: string,
   last_modified?: Date,
-  url?: string,
+  download_url?: string,
 }
 
 export interface User {

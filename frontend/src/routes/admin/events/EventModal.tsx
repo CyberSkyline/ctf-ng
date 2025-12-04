@@ -1,12 +1,12 @@
 import { COLOR_POSITIVE, COLOR_WARNING } from '@/constants';
 import { createEvent, updateEvent } from '@/hooks/events';
 import type { Event } from '@/types';
+import { adjustDateForInput } from '@/util';
 import { Button } from '@radix-ui/themes';
 import Modal from 'components/Modal';
 import { omit } from 'lodash';
 import type { DefaultValues } from 'react-hook-form';
 import { TbPencil, TbPlus } from 'react-icons/tb';
-import { adjustDateForInput } from '@/util';
 import EventDataForm from './EventDataForm';
 
 export default function EventModal({
@@ -15,6 +15,12 @@ export default function EventModal({
   eventToUpdate?: Event;
 }) {
   const handleSubmit = async (data: Omit<Event, 'id'>) => {
+    const event = data;
+
+    if (event.image === 'None') {
+      event.image = null;
+    }
+
     if (eventToUpdate) {
       // Update existing event
       return updateEvent(eventToUpdate.id, data);
@@ -31,6 +37,7 @@ export default function EventModal({
     registration_end_date : adjustDateForInput(eventToUpdate?.registration_end_date || null) as unknown as Date,
     start_time : adjustDateForInput(eventToUpdate?.start_time || null) as unknown as Date,
     end_time : adjustDateForInput(eventToUpdate?.end_time || null) as unknown as Date,
+    image : eventToUpdate?.image || 'None',
   };
 
   return (
