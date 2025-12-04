@@ -15,7 +15,7 @@ import {
   isUndefined,
   map,
 } from 'lodash';
-import { ErrorCallout } from 'components/Callouts';
+import { ErrorCallout, WarningCallout } from 'components/Callouts';
 import { useFileUrl } from '@/hooks/fileuploads';
 import SponsorImageCard from './SponsorImageCard';
 
@@ -57,6 +57,7 @@ export default function Profile() {
             {isEditing ? 'Cancel Edit' : 'Edit Sponsor'}
           </Button>
         </Flex>
+        {isNil(mySponsor) && <WarningCallout className="mt-4">You must select a sponsor prior to registering for events.</WarningCallout>}
         <Heading size="4" as="h2" className="pt-4">{isEditing ? 'All Sponsors:' : 'My Sponsor:'}</Heading>
         {isEditing ? (
           <>
