@@ -89,6 +89,7 @@ class Ticket(db.Model):
             config.TICKET_SUBJECT_MAX_LENGTH,
             required=True,
             friendly_name="Ticket subject",
+            printable_only=True,
         )
 
         validator.validate_model_id(data, "author_id", "Users", required=True)

@@ -100,12 +100,14 @@ class BaseValidator:
         required: bool = False,
         friendly_name: str | None = None,
         value: Any = None,  # Injected by decorator
+        printable_only: bool = False,
+        trim_whitespace: bool = True,
     ) -> None:
         if not isinstance(value, str):
             self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_STRING.format(field=friendly_name)
             return
 
-        stripped_value = value.strip()
+        stripped_value = value.strip() if trim_whitespace else value
         if len(stripped_value) == 0 and required:
             self.errors[field] = ValidationErrorMessages.FIELD_EMPTY.format(field=friendly_name)
             return
@@ -114,6 +116,10 @@ class BaseValidator:
             self.errors[field] = ValidationErrorMessages.FIELD_TOO_LONG.format(
                 field=friendly_name, max_length=max_length
             )
+            return
+
+        if printable_only and (stripped_value.isprintable() is False or stripped_value.isascii() is False):
+            self.errors[field] = f"{friendly_name} contains disallowed characters"
             return
 
         self._add_parsed_data(field, stripped_value)
@@ -127,6 +133,8 @@ class BaseValidator:
         required: bool = False,
         friendly_name: str | None = None,
         value: Any = None,  # Injected by decorator
+        printable_only: bool = False,
+        trim_whitespace: bool = True,
     ) -> None:
         if not isinstance(value, list):
             self.errors[field] = f"{friendly_name} must be a list of strings"
@@ -138,7 +146,7 @@ class BaseValidator:
                 self.errors[field] = f"All items in {friendly_name} must be strings"
                 return
 
-            stripped_item = item.strip()
+            stripped_item = item.strip() if trim_whitespace else item
             if len(stripped_item) == 0:
                 self.errors[field] = f"Items in {friendly_name} cannot be empty strings"
                 return
@@ -148,6 +156,9 @@ class BaseValidator:
                     field=friendly_name, max_length=max_length
                 )
                 return
+            if printable_only and (stripped_item.isprintable() is False or stripped_item.isascii() is False):
+                    self.errors[field] = f"Items in {friendly_name} contain disallowed characters"
+                    return
 
             validated_list.append(stripped_item)
 
