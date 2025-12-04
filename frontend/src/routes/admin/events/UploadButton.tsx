@@ -15,7 +15,7 @@ export default function UploadButton({ onDrop, loading }: { onDrop: (acceptedFil
       disabled={loading}
     >
       {({
-        getRootProps, getInputProps, isFocused, isDragAccept, isDragReject, acceptedFiles,
+        getRootProps, getInputProps,
       }) => (
         <Button
           {...getRootProps()}

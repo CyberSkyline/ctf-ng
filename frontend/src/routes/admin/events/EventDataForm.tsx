@@ -26,7 +26,7 @@ export default function EventDataForm({
 
   const currentImage = watch('image');
   const [ uploading, setUploading ] = useState(false);
-  const { data : fileUrl, error : fileUrlError, isLoading : fileUrlLoading } = useFileUrl('event-cards', currentImage === 'None' ? '' : currentImage || '');
+  const { data : fileUrl, error : fileUrlError } = useFileUrl('event-cards', currentImage === 'None' ? '' : currentImage || '');
 
   const onDrop = async (acceptedFiles: File[]) => {
     const formData = new FormData();
