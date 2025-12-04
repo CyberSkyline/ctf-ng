@@ -28,6 +28,7 @@ class User(db.Model):
 
     id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)  # links to ctfd's main users table
     sponsor_id = db.Column(db.Integer, db.ForeignKey("ng_sponsors.id"), nullable=True)
+    oauth_id = db.Column(db.String(256), nullable=True)
 
     ctfd_user = db.relationship(
         "Users",
