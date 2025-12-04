@@ -1,5 +1,5 @@
 import { directUpload, useFileList, useFileUrl } from '@/hooks/fileuploads';
-import type { Event, UploadedFile } from '@/types';
+import type { Event } from '@/types';
 import {
   Box,
   Flex,
@@ -73,7 +73,7 @@ export default function EventDataForm({
         <FormDropdown
           name="image"
           label="Image"
-          options={gameCards ? (gameCards.files as UploadedFile[]).filter((file) => file.filename.length > 0).map((file) => ({
+          options={gameCards ? gameCards.files.filter((file) => file.filename.length > 0).map((file) => ({
             name : file.filename,
             value : file.filename,
           })) : []}
@@ -91,7 +91,7 @@ export default function EventDataForm({
         </FormField>
       </Flex>
 
-      {fileUrl && <img src={fileUrl?.url} alt="Selected Event" className="max-h-48 object-contain bg-(--gray-1) rounded" />}
+      {fileUrl && <img src={fileUrl?.download_url} alt="Selected Event" className="max-h-48 object-contain bg-(--gray-1) rounded" />}
       {fileUrlError && (<ErrorCallout>{fileUrlError.message}</ErrorCallout>)}
 
       <Flex direction="row" gap="2" className="*:grow *:basis-0">

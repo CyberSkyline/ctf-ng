@@ -14,7 +14,7 @@ export function useFileUrl(folder: string, filename?: string) {
   Gets a list of all files in a specific folder
 */
 export function useFileList(folder: string) {
-  return useSWR<UploadedFile[]>(`/fileuploads/list?folder=${folder}`);
+  return useSWR<{files: UploadedFile[]}>(`/fileuploads/list?folder=${folder}`);
 }
 
 /*

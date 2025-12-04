@@ -20,11 +20,11 @@ export default function EventGraphic({ event, className }: {event: Event, classN
     <Skeleton loading={isLoading}>
       <div className={twMerge(className, 'overflow-clip')}>
         <AspectRatio ratio={RATIO}>
-          {fileUrl?.url && (
+          {fileUrl?.download_url && (
             <img
               className="object-contain h-full w-full"
-              src={fileUrl?.url}
-              alt=""
+              src={fileUrl?.download_url}
+              alt="" // Event graphic is always accompanied by event name which will already be read out
             />
           )}
         </AspectRatio>
