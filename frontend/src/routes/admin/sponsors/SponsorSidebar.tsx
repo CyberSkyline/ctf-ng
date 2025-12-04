@@ -28,7 +28,7 @@ export default function SponsorSidebar({ entity }: {entity: Sponsor}) {
       </DataList.Root>
       {entity.logo ? (
         <Box maxHeight="500px">
-          <img src={data?.url} alt={data?.filename} />
+          <img src={data?.download_url} alt={data?.filename} />
         </Box>
       ) : <WarningCallout>No logo is associated with this sponsor</WarningCallout>}
       {error && <ErrorCallout>{error.message}</ErrorCallout>}
