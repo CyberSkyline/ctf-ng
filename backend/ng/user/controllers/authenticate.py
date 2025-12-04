@@ -118,7 +118,7 @@ def okta_callback():
 
         db.session.commit()
 
-        return redirect("/")
+        return redirect(f"{SERVER_DOMAIN}{ROUTE_PREFIX}")
     except Exception as e:
         db.session.rollback()
         error_msg = f"Authentication failed: {str(e)}"
