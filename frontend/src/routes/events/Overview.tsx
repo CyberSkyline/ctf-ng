@@ -80,7 +80,7 @@ export default function Overview() {
         }}
         activationMode="manual"
       >
-        <Container size="2" mb="4">
+        <Container size="2" mb="3">
           <Tabs.List className="*:!basis-0 *:!grow" loop={false}>
             {challengesTabAvailable && (
               <Tabs.Trigger value="challenges">

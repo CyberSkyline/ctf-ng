@@ -1,5 +1,5 @@
 import { useChallenge } from '@/hooks/challenge';
-import { useEvent } from '@/hooks/events';
+import { useEvent, useMyTeam } from '@/hooks/events';
 import { useEventPermission } from '@/hooks/permissions';
 import {
   Box,
@@ -14,9 +14,11 @@ import {
 import { ErrorCallout } from 'components/Callouts';
 import ChallengeIcon from 'components/ChallengeIcon';
 import RadixMarkdown from 'components/RadixMarkdown';
+import Timer from 'components/Timer';
 import { groupBy } from 'lodash';
 import { TbArrowLeft } from 'react-icons/tb';
 import { Link, useParams } from 'react-router';
+import { mutate } from 'swr';
 import ChallengeHeader from './ChallengeHeader';
 import ChallengeQuestion from './ChallengeQuestion';
 import ConnectModal from './ConnectModal';
@@ -27,6 +29,7 @@ export default function ChallengeSidebar() {
   const { idEvent, idChallenge } = useParams();
 
   const { data : event, isLoading : isEventLoading } = useEvent(Number(idEvent));
+  const { data : team } = useMyTeam(Number(idEvent));
   const { data, error } = useChallenge(
     Number(idEvent),
     Number(idChallenge),
@@ -46,7 +49,7 @@ export default function ChallengeSidebar() {
       <Card className="shrink-0">
         <Inset side="all" className="shrink-0">
           <ChallengeHeader>
-            <Flex gap="3" direction="row" align="start" justify="between" mb="3">
+            <Flex gap="3" direction="row" align="center" justify="between" mb="3">
 
               <Button variant="ghost" className="!m-0 !shrink" asChild>
                 <Link to={`/events/${idEvent}?tab=challenges`}>
@@ -59,10 +62,18 @@ export default function ChallengeSidebar() {
                 </Link>
               </Button>
 
-              <Box flexShrink="0">
-                {hints && hints.length > 0 && <HintsModal eventId={Number(idEvent)} challengeId={Number(idChallenge)} />}
-                {event && attempts && <HistoryModal isTeam={event.max_team_size > 1} attempts={attempts} />}
-              </Box>
+              {team && team.end_time && (
+                <Timer
+                  target={team.end_time}
+                  size="3"
+                  onEnd={() => {
+                    // Refresh SWR state on timer end
+                    mutate(`/permissions/${idEvent}/me`);
+                    mutate(`/events/${idEvent}/me/team`);
+                    mutate(`/users/me/teams`);
+                  }}
+                />
+              ) }
             </Flex>
 
             {error ? (
@@ -88,8 +99,12 @@ export default function ChallengeSidebar() {
             )}
 
             {challenge && event && granted && (
-              <Flex direction="row" gap="2" mt="3" align="center">
+              <Flex direction="row" gap="2" mt="3" align="center" justify="between">
                 <ConnectModal eventId={event.id} challengeId={challenge.id} isTeam={event.max_team_size > 1} />
+                <Box flexShrink="0">
+                  {hints && hints.length > 0 && <HintsModal eventId={Number(idEvent)} challengeId={Number(idChallenge)} />}
+                  {event && attempts && <HistoryModal isTeam={event.max_team_size > 1} attempts={attempts} />}
+                </Box>
               </Flex>
             )}
           </ChallengeHeader>
