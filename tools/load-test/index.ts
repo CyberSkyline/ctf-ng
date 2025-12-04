@@ -3,8 +3,10 @@ import exec from 'k6/execution';
 import { SharedArray } from 'k6/data';
 import { browser } from 'k6/browser';
 import { sleep, check, fail } from 'k6';
-import { make_user, make_http_session, User, make_browser_session } from './user.ts';
+import { make_user, User } from './model/user.ts';
 import { defaultUserScenario } from './scenarios/default_user.ts';
+import { UserHttpSession } from './session/user_http_session.ts';
+import { UserBrowserSession } from './session/user_browser_session.ts';
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost';
 const STAGE_ONE_VUS = Number(__ENV.STAGE_ONE_VUS) || 2;
@@ -27,36 +29,31 @@ export const options = {
   scenarios: {
     defaultHttpUser: {
       executor: 'ramping-vus',
-      options: {
-        browser: {
-          type: 'chromium',
-        },
-      },
-      startVUs: 0,
+      startVUs: 1,
       stages: [
-        { duration: '30s', target: STAGE_ONE_VUS }, // ramp to STAGE_ONE_VUS
-        { duration: '1m', target: STAGE_TWO_VUS },  // ramp to STAGE_TWO_VUS
-        { duration: '30s', target: STAGE_THREE_VUS },   // ramp to STAGE_THREE_VUS
+        { duration: '5s', target: STAGE_ONE_VUS }, // ramp to STAGE_ONE_VUS
+        { duration: '10s', target: STAGE_TWO_VUS },  // ramp to STAGE_TWO_VUS
+        { duration: '5s', target: STAGE_THREE_VUS },   // ramp to STAGE_THREE_VUS
       ],
       gracefulRampDown: '30s',
       exec: 'defaultHttpUser',
     },
-    defaultBrowserUser: {
-      executor: 'ramping-vus',
-      options: {
-        browser: {
-          type: 'chromium',
-        },
-      },
-      startVUs: 0,
-      stages: [
-        { duration: '30s', target: Math.ceil(STAGE_ONE_VUS / 10) }, // ramp to STAGE_ONE_VUS
-        { duration: '1m', target: Math.ceil(STAGE_TWO_VUS / 10) },  // ramp to STAGE_TWO_VUS
-        { duration: '30s', target: Math.ceil(STAGE_THREE_VUS / 10) },   // ramp to STAGE_THREE_VUS
-      ],
-      gracefulRampDown: '30s',
-      exec: 'defaultBrowserUser',
-    },
+    // defaultBrowserUser: {
+    //   executor: 'ramping-vus',
+    //   options: {
+    //     browser: {
+    //       type: 'chromium',
+    //     },
+    //   },
+    //   startVUs: 0,
+    //   stages: [
+    //     { duration: '30s', target: Math.ceil(STAGE_ONE_VUS / 10) }, // ramp to STAGE_ONE_VUS
+    //     { duration: '1m', target: Math.ceil(STAGE_TWO_VUS / 10) },  // ramp to STAGE_TWO_VUS
+    //     { duration: '30s', target: Math.ceil(STAGE_THREE_VUS / 10) },   // ramp to STAGE_THREE_VUS
+    //   ],
+    //   gracefulRampDown: '30s',
+    //   exec: 'defaultBrowserUser',
+    // },
     // badActor: {
     //   executor: 'ramping-vus',
     //   options: {
@@ -106,14 +103,14 @@ function getDefaultUser() {
 // The default exported function is gonna be picked up by k6 as the entry point for the test script. It will be executed repeatedly in "iterations" for the whole duration of the test.
 export async function defaultHttpUser() {
   let user = getDefaultUser();
-  let session = make_http_session(user);
+  let session = UserHttpSession.make(user);
   await defaultUserScenario(session);
   sleep(1);
 }
 
 export async function defaultBrowserUser() {
   let user = getDefaultUser();
-  let session = await make_browser_session(user, browser);
+  let session = await UserBrowserSession.make(user, browser);
   await defaultUserScenario(session);
   sleep(1);
 }

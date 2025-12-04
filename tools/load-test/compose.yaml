@@ -3,11 +3,14 @@ services:
     network_mode: "host"
     environment:
       BASE_URL: "http://localhost"
-      STAGE_ONE_VUS: 2
-      STAGE_TWO_VUS: 5
-      STAGE_THREE_VUS: 10
+      STAGE_ONE_VUS: 1
+      STAGE_TWO_VUS: 1
+      STAGE_THREE_VUS: 1
+      K6_WEB_DASHBOARD: "true"
 
     cap_add:
       - SYS_ADMIN
     build:
       context: .
+    volumes:
+      - ./output:/app/output:rw

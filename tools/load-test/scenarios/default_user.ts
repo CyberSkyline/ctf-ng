@@ -1,4 +1,4 @@
-import { UserBrowserSession, UserHttpSession } from "../user";
+import { UserSession } from "../session/user_session.ts";
 
 // visit challenge
 
@@ -33,7 +33,7 @@ import { UserBrowserSession, UserHttpSession } from "../user";
 // Logout
 
 // user flow
-export async function defaultUserScenario(user_session: UserHttpSession | UserBrowserSession) {
+export async function defaultUserScenario(user_session: UserSession) {
     await user_session.login();
     await user_session.close();
 }
