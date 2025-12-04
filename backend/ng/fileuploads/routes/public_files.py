@@ -99,7 +99,7 @@ class FileList(Resource):
         """List files in a public folder
 
         Retrieve a list of all files in the specified public folder.
-        Returns file metadata including size, last modified date, and S3 key.
+        Returns file metadata including filename, folder, and last modified date.
         Optionally includes presigned download URLs when include_urls=true.
         """
         folder = request.args.get('folder')
