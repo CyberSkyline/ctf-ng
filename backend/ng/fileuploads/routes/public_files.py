@@ -1,7 +1,7 @@
 from flask_restx import Namespace, Resource
 from flask import request
 
-from ...core.middleware import user_endpoint, admin_endpoint
+from ...core.middleware import public_endpoint, admin_endpoint
 from ...user.models import User
 from ..controllers.public_files import (
     generate_upload_url,
@@ -113,6 +113,7 @@ class FileList(Resource):
 
 @fileuploads_namespace.route('/file')
 class FileAccess(Resource):
+    @public_endpoint()
     @fileuploads_namespace.doc(
         description='Get a presigned download URL for a specific file',
         params={
