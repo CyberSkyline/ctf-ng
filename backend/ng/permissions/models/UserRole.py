@@ -84,9 +84,8 @@ class UserRole(db.Model):
         Returns:
             list: List of UserRole instances assigned to the user.
         """
-
-        role_names = data.get("roles", [])
-        if not role_names:
+        role_names = data.get("roles")
+        if role_names is None:
             raise ValidationError("No role names provided")
 
         # Clear existing roles
@@ -128,7 +127,7 @@ class UserRole(db.Model):
     def validate_user_role_update(cls, data):
         """Validate user role updates."""
         validator = BaseValidator()
-        if not data.get("roles"):
+        if data.get("roles") is None:
             validator.errors["roles"] = "No role names provided"
             raise ValidationError("No role names provided")
 
@@ -138,5 +137,9 @@ class UserRole(db.Model):
         result = validator.validate()
         if "roles" in result and not isinstance(result["roles"], list):
             result["roles"] = [result["roles"]]
+
+        if "roles" not in result:
+            # we passed roles = [], so the field doesn't get created in the result
+            result["roles"] = []
 
         return result
