@@ -26,7 +26,7 @@ export interface UploadedFile {
   filename: string,
   folder: string,
   last_modified?: Date,
-  url?: string,
+  download_url?: string,
 }
 
 export interface User {
@@ -36,6 +36,10 @@ export interface User {
   roles: string[];
   registered_at: Date;
   affiliation: Sponsor | null;
+}
+
+export interface AdminUser extends User {
+  banned: boolean;
 }
 
 export interface Team {

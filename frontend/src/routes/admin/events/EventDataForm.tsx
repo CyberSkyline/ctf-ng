@@ -1,3 +1,4 @@
+import { directUpload, useFileList, useFileUrl } from '@/hooks/fileuploads';
 import type { Event } from '@/types';
 import {
   Box,
@@ -6,15 +7,40 @@ import {
   TextArea,
   TextField,
 } from '@radix-ui/themes';
+import { ErrorCallout } from 'components/Callouts';
 import FormField from 'components/FormField';
+import FormDropdown from 'components/SelectDropdown';
+import { useState } from 'react';
 import { Controller, type UseFormReturn } from 'react-hook-form';
+import UploadButton from './UploadButton';
 
 export default function EventDataForm({
   rhf,
 }: {
   rhf: UseFormReturn<Omit<Event, 'id'>>,
 }) {
-  const { register, formState : { errors } } = rhf;
+  const {
+    register, control, watch, formState : { errors }, setValue, setError, clearErrors,
+  } = rhf;
+  const { data : gameCards, error : gameCardsError, isLoading : gameCardsLoading } = useFileList('event-cards');
+
+  const currentImage = watch('image');
+  const [ uploading, setUploading ] = useState(false);
+  const { data : fileUrl, error : fileUrlError } = useFileUrl('event-cards', currentImage === 'None' ? '' : currentImage || '');
+
+  const onDrop = async (acceptedFiles: File[]) => {
+    const formData = new FormData();
+    formData.append('folder', 'event-cards');
+    formData.append('file', acceptedFiles[0]);
+
+    setUploading(true);
+
+    clearErrors('image');
+    directUpload(formData).then((data) => {
+      setValue('image', data.filename);
+    }).catch((err) => setError('image', { message : err.message }))
+      .finally(() => setUploading(false));
+  };
 
   return (
     <>
@@ -42,20 +68,31 @@ export default function EventDataForm({
         )}
       </FormField>
 
-      <FormField label="Image" error={errors.image}>
-        {(injected) => (
-          <TextField.Root
-            placeholder="Image"
-            {...register('image', {
-              maxLength : {
-                value : 255,
-                message : 'Image name cannot exceed 255 characters',
-              },
-            })}
-            {...injected}
-          />
-        )}
-      </FormField>
+      {gameCardsError && (<ErrorCallout>{gameCardsError.message}</ErrorCallout>)}
+      <Flex direction="row" gap="2" className="[&>*:first-child]:grow">
+        <FormDropdown
+          name="image"
+          label="Image"
+          options={gameCards ? gameCards.files.filter((file) => file.filename.length > 0).map((file) => ({
+            name : file.filename,
+            value : file.filename,
+          })) : []}
+          disabled={gameCardsLoading || !!gameCardsError}
+          error={errors.image}
+          rules={{
+            required : 'Image is required',
+          }}
+          control={control}
+        />
+        <FormField label="Upload">
+          {() => (
+            <UploadButton onDrop={onDrop} loading={uploading} />
+          )}
+        </FormField>
+      </Flex>
+
+      {fileUrl && <img src={fileUrl?.download_url} alt="Selected Event" className="max-h-48 object-contain bg-(--gray-1) rounded" />}
+      {fileUrlError && (<ErrorCallout>{fileUrlError.message}</ErrorCallout>)}
 
       <Flex direction="row" gap="2" className="*:grow *:basis-0">
 

@@ -8,9 +8,8 @@ import {
   Inset,
   Text,
 } from '@radix-ui/themes';
-import gameCardOffensive from 'assets/offensive.png';
-import gameCardTeam from 'assets/teams.png';
 import EventBadge from 'components/EventBadge';
+import EventGraphic from 'components/EventGraphic';
 import { TbCalendarEvent, TbClock } from 'react-icons/tb';
 import { Link } from 'react-router';
 
@@ -21,11 +20,8 @@ export default function EventCard({ event }: { event: Event }) {
     <Card asChild>
       <Link to={`/events/${event.id}`}>
         <Flex direction="row" gap="4">
-          <Inset side="left" className="w-32 shrink-0 shadow">
-            <img
-              src={event.max_team_size === 1 ? gameCardOffensive : gameCardTeam}
-              alt={`Card for ${event.name}`}
-            />
+          <Inset side="left" className="empty:hidden">
+            <EventGraphic event={event} className="w-32 shadow !rounded-none" />
           </Inset>
           <Flex direction="column" gap="2" className="flex-grow" justify="between">
             <Box>

@@ -64,6 +64,8 @@ def _auth_handler(f, auth_required, json_required, validation_func):
         if not current_user and auth_required:
             raise AuthenticationError("Authentication is required to access this endpoint.")
         if current_user:
+            if current_user.banned:
+                raise AuthenticationError("Your account has been banned.")
             kwargs["current_user"] = User.find_or_create_by_ctfd_id(current_user.id)
 
         if json_required:

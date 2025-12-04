@@ -281,21 +281,24 @@ class Test_Event_Eligibility:
 
     def test_check_event_eligibility_already_registered(
         self,
-        logged_in_client,
-        user,
+        sponsor_factory,
+        user_factory,
         event_factory,
-        team_factory
+        client_factory,
     ):
         event = event_factory(name = "Already Registered Event", public = True)
+        sponsor = sponsor_factory()
+        user = user_factory(name = "testuser", email = "testuser@example.com", sponsor = sponsor)
+        client = client_factory(user = user)
 
-        response = logged_in_client.post(
+        response = client.post(
             f"/ng/events/{event.id}/me/register",
             json = {
                 "team_name": "Test Team",
             },
         )
 
-        response = logged_in_client.get(self.get_endpoint(event.id))
+        response = client.get(self.get_endpoint(event.id))
 
         assert response.status_code == 400
         data = response.get_json()
@@ -309,15 +312,40 @@ class Test_Event_Registration:
     def get_endpoint(self, event_id: int) -> str:
         return f"/ng/events/{event_id}/me/register"
 
-    def test_register_for_event_with_new_team(
+    def test_register_for_event_without_user_sponsor(
         self,
         logged_in_client,
-        user,
-        event_factory
+        event_factory,
     ):
-        event = event_factory(name = "Event for Registration", public = True)
+        event = event_factory(
+            name = "Event for Missing Sponsor",
+            public = True
+        )
 
         response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json = {}
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        assert "errors" in data
+
+    def test_register_for_event_with_new_team(
+        self,
+        user,
+        client_factory,
+        event_factory,
+        user_factory,
+        sponsor_factory,
+    ):
+        event = event_factory(name = "Event for Registration", public = True)
+        sponsor = sponsor_factory()
+        user = user_factory(name = "testuser", email = "testuser@example.com", sponsor = sponsor)
+
+        client = client_factory(user = user)
+        response = client.post(
             self.get_endpoint(event.id),
             json = {
                 "team_name": "Test Team",
@@ -342,19 +370,25 @@ class Test_Event_Registration:
 
     def test_register_for_event_with_existing_team(
         self,
-        logged_in_client,
+        client_factory,
         user_factory,
         event_factory,
-        team_factory
+        team_factory,
+        sponsor_factory,
     ):
         event = event_factory(
             name = "Event for Existing Team Registration",
             public = True
         )
-        user = user_factory(name = "testuser", email = "testuser@example.com")
+        sponsor = sponsor_factory()
+
+        user = user_factory(name = "testuser", email = "testuser@example.com", sponsor = sponsor)
         existing_team = team_factory(event = event, members = [user])
 
-        response = logged_in_client.post(
+        user2 = user_factory(name = "testuser2", email = "testuser2@example.com", sponsor = sponsor)
+        client = client_factory(user = user2)
+
+        response = client.post(
             self.get_endpoint(event.id),
             json = {
                 "invite_code": existing_team.invite_code,
@@ -518,17 +552,22 @@ class Test_Event_Registration:
 
     def test_register_twice_for_event(
         self,
-        logged_in_client,
-        user,
+        user_factory,
+        client_factory,
+        sponsor_factory,
         event_factory
     ):
         event = event_factory(
             name = "Event for Duplicate Registration",
             public = True
         )
+        sponsor = sponsor_factory()
+
+        user = user_factory(name = "testuser", email = "testuser@example.com", sponsor = sponsor)
+        client = client_factory(user = user)
 
         # First registration
-        response = logged_in_client.post(
+        response = client.post(
             self.get_endpoint(event.id),
             json = {
                 "team_name": "First Team",
@@ -540,7 +579,7 @@ class Test_Event_Registration:
         assert data["success"] is True
 
         # Second registration attempt
-        response = logged_in_client.post(
+        response = client.post(
             self.get_endpoint(event.id),
             json = {
                 "team_name": "Second Team",
@@ -558,10 +597,12 @@ class Test_Event_Registration:
         self,
         client_factory,
         user_factory,
-        event_factory
+        event_factory,
+        sponsor_factory
     ):
 
-        user = user_factory(name = "domainuser", email = "domainuser@example.com")
+        sponsor = sponsor_factory()
+        user = user_factory(name = "domainuser", email = "domainuser@example.com", sponsor = sponsor)
         logged_in_client = client_factory(user = user)
         event = event_factory(
             name = "Event with Allowed Domains",
@@ -611,9 +652,11 @@ class Test_Event_Registration:
         self,
         client_factory,
         user_factory,
-        event_factory
+        event_factory,
+        sponsor_factory
     ):
-        user = user_factory(name = "multiuser", email = "multiuser@valid.mil")
+        sponsor = sponsor_factory()
+        user = user_factory(name = "multiuser", email = "multiuser@valid.mil", sponsor = sponsor)
         logged_in_client = client_factory(user = user)
         event = event_factory(name = "Event for Multiple Allowed Domains", public = True, allowed_domains = ["valid.mil", "secure.gov","trusted.org"])
 
@@ -632,9 +675,11 @@ class Test_Event_Registration:
         self,
         client_factory,
         user_factory,
-        event_factory
+        event_factory,
+        sponsor_factory
     ):
-        user = user_factory(name = "subdomainuser", email = "subdomainuser@us.valid.mil")
+        sponsor = sponsor_factory()
+        user = user_factory(name = "subdomainuser", email = "subdomainuser@us.valid.mil", sponsor = sponsor)
         logged_in_client = client_factory(user = user)
         event = event_factory(name = "Event for Subdomain Email Registration", public = True, allowed_domains = ["valid.mil"])
 
@@ -653,9 +698,11 @@ class Test_Event_Registration:
         self,
         client_factory,
         user_factory,
-        event_factory
+        event_factory,
+        sponsor_factory,
     ):
-        user = user_factory(name = "emptydomainuser", email = "emptydomainuser@invalid.com")
+        sponsor = sponsor_factory()
+        user = user_factory(name = "emptydomainuser", email = "emptydomainuser@invalid.com", sponsor = sponsor)
         logged_in_client = client_factory(user = user)
         event = event_factory(name = "Event with Empty Allowed Domains", public = True, allowed_domains = [])
 
@@ -667,6 +714,36 @@ class Test_Event_Registration:
         )
 
         assert response.status_code == 201
+
+    def test_create_team_cannot_impersonate_existing_team_using_non_printable_characters(
+        self,
+        client_factory,
+        user_factory,
+        event_factory,
+        team_factory,
+        sponsor_factory,
+    ):
+        event = event_factory(name = "Event for Non-Printable Team Name", public = True)
+        sponsor = sponsor_factory()
+        user = user_factory(name = "nonprintableuser", email = "nonprintableuser@example.com", sponsor = sponsor)
+        new_user = user_factory(name = "newuser", email = "newuser@example.com", sponsor = sponsor)
+        team_factory(event = event, name = "ExistingTeam", members = [user])
+
+        non_printable_team_name = "Exist\x00ingTeam"
+        logged_in_client = client_factory(user = new_user)
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json = {
+                "team_name": non_printable_team_name,
+            },
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        assert "errors" in data
+        print(data["errors"])
+        assert "Team name contains disallowed characters" in data["errors"]["validation"]
 
 class Test_Event_Team_Lookup:
     def get_endpoint(self, event_id: int) -> str:
@@ -912,24 +989,34 @@ class Test_Event_Team_Management:
         reponse = team_member_client.get(f"/ng/events/{1}/me/team")
         assert reponse.status_code == 404
 
-    def test_leave_and_empty_team_deletes(self, logged_in_client, event_factory):
+    def test_leave_and_empty_team_deletes(
+        self,
+        event_factory,
+        client_factory,
+        user_factory,
+        sponsor_factory
+    ):
         """Test that leaving a team as the last member deletes the team."""
+        sponsor = sponsor_factory()
+        user = user_factory(name = "testuser", email = "testuser@example.com", sponsor = sponsor)
 
         event = event_factory(name = "Solo Leave Test Event", public = True)
-        logged_in_client.post(
+
+        client = client_factory(user = user)
+        client.post(
             f"/ng/events/{event.id}/me/register",
             json = {"team_name": "Solo Team"},
         )
-        response = logged_in_client.post(
+        response = client.post(
             f"/ng/events/{event.id}/me/team/leave",
             json = {}
         )
         assert response.status_code == 200
 
-        response = logged_in_client.get(f"/ng/events/{event.id}/me/team")
+        response = client.get(f"/ng/events/{event.id}/me/team")
         assert response.status_code == 404
 
-        response = logged_in_client.get(f"/ng/events/{event.id}/me/team/score")
+        response = client.get(f"/ng/events/{event.id}/me/team/score")
         assert response.status_code == 404
 
         teams = Team.query.all()
@@ -968,10 +1055,17 @@ class Test_Event_Team_Management:
             "errors"]["forbidden"]
 
 
-    def test_user_cannot_start_event_then_leave(self,client_factory, event_factory, user_factory):
+    def test_user_cannot_start_event_then_leave(
+        self,
+        client_factory,
+        event_factory,
+        user_factory,
+        sponsor_factory
+    ):
         """Test that a user who starts an event, leaves their team, and then re-registers cannot start the event again."""
         event = event_factory(name = "Re-Register Start Event", public = True, max_team_size = 1)
-        user = user_factory(name = "Test User", email = "reregister@example.com")
+        sponsor = sponsor_factory()
+        user = user_factory(name = "Test User", email = "reregister@example.com", sponsor = sponsor)
         client = client_factory(user = user)
         # User registers and starts the event
         client.post(
@@ -1022,22 +1116,24 @@ class Test_Event_Team_Management:
         client_factory,
         user_factory,
         event_factory,
-        team_factory
+        team_factory,
+        sponsor_factory,
     ):
         """Test that a user who leaves a team can re-register for the event."""
         event = event_factory(name = "Reregister Test Event", public = True)
-        user = user_factory(name = "reregisteruser", email = "reregisteruser@example.com")
-        user2 = user_factory(name = "otheruser", email = "otheruser@example.com")
+        sponsor = sponsor_factory()
+        user = user_factory(name = "reregisteruser", email = "reregisteruser@example.com", sponsor = sponsor)
+        user2 = user_factory(name = "otheruser", email = "otheruser@example.com", sponsor = sponsor)
         team = team_factory(event = event, members = [user2, user])
-        logged_in_client = client_factory(user = user)
+        client = client_factory(user = user)
 
-        response = logged_in_client.post(
+        response = client.post(
             f"/ng/events/{event.id}/me/team/leave",
             json = {}
         )
         assert response.status_code == 200
 
-        response = logged_in_client.post(
+        response = client.post(
             f"/ng/events/{event.id}/me/register",
             json = {"invite_code": team.invite_code},
         )
@@ -1202,13 +1298,16 @@ class Test_Event_Admin_Register:
         admin_client,
         user_factory,
         event_factory,
-        team_factory
+        team_factory,
+        sponsor_factory,
     ):
         event = event_factory(name = "Admin Register Event", public = True)
-        user = user_factory(name = "testuser", email = "testuser@example.com")
+        sponsor = sponsor_factory()
+        user = user_factory(name = "testuser", email = "testuser@example.com", sponsor = sponsor)
         user2 = user_factory(
             name = "testuser2",
-            email = "testuser2@example.com"
+            email = "testuser2@example.com",
+            sponsor = sponsor
         )
         team = team_factory(event = event, members = [user])
 
@@ -1226,11 +1325,16 @@ class Test_Event_Admin_Register:
 
     def test_admin_register_user_for_event_name(
         self,
-        admin_client,
-        user,
-        event_factory
+        client_factory,
+        user_factory,
+        event_factory,
+        sponsor_factory,
     ):
         event = event_factory(name = "Admin Register Event", public = True)
+
+        sponsor = sponsor_factory()
+        user = user_factory(name = "testuser", email = "testuser@example.com", admin = True, sponsor = sponsor)
+        admin_client = client_factory(user = user)
 
         response = admin_client.post(
             self.post_endpoint(event.id,
@@ -1266,17 +1370,20 @@ class Test_Event_Admin_Register:
         admin_client,
         user_factory,
         event_factory,
-        team_factory
+        team_factory,
+        sponsor_factory,
     ):
         event = event_factory(
             name = "Admin Register Locked Event",
             public = True,
             locked = True
         )
-        user = user_factory(name = "testuser", email = "testuser@example.com")
+        sponsor = sponsor_factory()
+        user = user_factory(name = "testuser", email = "testuser@example.com", sponsor = sponsor)
         user2 = user_factory(
             name = "testuser2",
-            email = "testuser2@example.com"
+            email = "testuser2@example.com",
+            sponsor = sponsor
         )
         team = team_factory(event = event, members = [user])
 

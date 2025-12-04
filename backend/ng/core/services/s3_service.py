@@ -4,6 +4,8 @@ from typing import Any
 import logging
 from werkzeug.datastructures import FileStorage
 
+from ... import config
+
 logger = logging.getLogger(__name__)
 
 # Global S3 service instance
@@ -65,7 +67,7 @@ class S3Service:
                     'Key': object_key,
                     'ContentType': content_type,
                 },
-                ExpiresIn=3600,  # 1 hour
+                ExpiresIn=config.S3_UPLOAD_URL_EXPIRATION,
                 HttpMethod='PUT'
             )
 

@@ -14,7 +14,7 @@ export function useFileUrl(folder: string, filename?: string) {
   Gets a list of all files in a specific folder
 */
 export function useFileList(folder: string) {
-  return useSWR<UploadedFile[]>(`/fileuploads/list?folder=${folder}`);
+  return useSWR<{files: UploadedFile[]}>(`/fileuploads/list?folder=${folder}`);
 }
 
 /*
@@ -25,9 +25,10 @@ export function directUpload(formData: FormData) {
   return fileApiMutation('/fileuploads/upload/direct', formData, {
     method : 'POST',
   }).then(
-    (data): UploadedFile => data,
-  ).finally(() => {
-    // Refetch the list of files in the specified folder
-    mutate(`/fileuploads/list?folder=${formData.get('folder')}`);
-  });
+    async (data) => {
+      // update file list before resolving the promise to ensure dependent form fields are up to date before value change
+      await mutate(`/fileuploads/list?folder=${formData.get('folder')}`);
+      return data as UploadedFile;
+    },
+  );
 }

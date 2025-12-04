@@ -50,6 +50,7 @@ class TicketMessage(db.Model):
             config.TICKET_MESSAGE_MAX_LENGTH,
             required=True,
             friendly_name="Message text",
+            printable_only=True,
         )
         validator.validate_model_id(data, "ticket_id", "Ticket", required=True)
         validator.validate_model_id(data, "author_id", "Users", required=True)

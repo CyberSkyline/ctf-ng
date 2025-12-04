@@ -35,6 +35,7 @@ class TestKickedPlayerEmailNotification:
         app.config['AWS_DEFAULT_REGION'] = 'us-east-1'
         app.config['AWS_SES_FROM_EMAIL'] = 'noreply@ctf.com'
         app.config['SERVER_DOMAIN'] = 'http://localhost:8000'
+        app.config['ROUTE_PREFIX'] = ''
 
     @pytest.fixture
     def mock_ses(self):

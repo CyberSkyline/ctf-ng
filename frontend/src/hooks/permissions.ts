@@ -1,5 +1,6 @@
+import { apiMutation } from '@/fetchers';
 import type { User } from '@/types';
-import useSWR from 'swr';
+import useSWR, { mutate } from 'swr';
 
 /*
   Gets users with Admin or Support roles
@@ -45,4 +46,14 @@ export function useEventPermission(permission: string, eventId : number | null) 
     isLoading,
     error,
   };
+}
+
+// Admin endpoints:
+export function adminUpdateUserRoles(userId: number, roles: string[]) {
+  return apiMutation(`/admin/permissions/${userId}/roles`, { roles }, {
+    method : 'PUT',
+  }).then(() => {
+    mutate('/admin/users');
+    mutate(`/admin/users/${userId}`);
+  });
 }

@@ -11,6 +11,8 @@ def join_event_controller(event: Event, user : User, invite_code : str = "", tea
     """
     if (not invite_code) and (not team_name):
         raise ValidationError("Either invite_code or team_name must be provided")
+    if (not user.affiliation):
+        raise ValidationError("User sponsor not set")
 
     try:
         Demographic.create_demographic(user_id=user.id, event_id=event.id, commit=False)

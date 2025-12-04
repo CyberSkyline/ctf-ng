@@ -1,6 +1,7 @@
 import { ROUTEPREFIX } from '@/constants';
 import { apiMutation } from '@/fetchers';
 import type {
+  AdminUser,
   Event,
   Team,
   User,
@@ -113,7 +114,7 @@ export function useUserTeams(userId: number | null) {
  * This is an admin-only endpoint.
  */
 export function useAllUsers() {
-  return useSWR<User[], Error>(
+  return useSWR<AdminUser[], Error>(
     '/admin/users',
   );
 }
@@ -124,7 +125,7 @@ export function useAllUsers() {
  * @param userId The ID of the user to fetch, or null if this should not be fetched.
  */
 export function useUser(userId: number | null) {
-  return useSWR<User, Error>(
+  return useSWR<AdminUser, Error>(
     userId ? `/admin/users/${userId}` : null,
   );
 }
@@ -146,6 +147,15 @@ export function useUserWorkspace(userId: number) {
 export function useWorkspaceStatus(userId : number) {
   return useSWR<string, Error>(`/admin/users/${userId}/container/status`, {
     refreshInterval : 5000, // Refresh every 5 seconds
+  });
+}
+
+export function adminUpdateUser(userId: number, user: Pick<User, 'name' | 'email'>) {
+  return apiMutation(`/admin/users/${userId}`, user, {
+    method : 'PUT',
+  }).then(() => {
+    mutate(`/admin/users`);
+    mutate(`/admin/users/${userId}`);
   });
 }
 
@@ -176,5 +186,23 @@ export function stopImpersonation() {
   }).then((data: unknown) => {
     // On success, redirect to the admin user page
     window.location.href = `${ROUTEPREFIX}/admin/users?id=${data}`;
+  });
+}
+
+export function banUser(userId: number) {
+  return apiMutation(`/admin/users/${userId}/ban`, {}, {
+    method : 'POST',
+  }).then(() => {
+    mutate(`/admin/users/${userId}`);
+    mutate('/admin/users');
+  });
+}
+
+export function unbanUser(userId: number) {
+  return apiMutation(`/admin/users/${userId}/unban`, {}, {
+    method : 'POST',
+  }).then(() => {
+    mutate(`/admin/users/${userId}`);
+    mutate('/admin/users');
   });
 }

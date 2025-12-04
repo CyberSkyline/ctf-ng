@@ -12,6 +12,10 @@ from ...core.middleware.loaders import (
 )
 
 from ..models.User import User
+from ..controllers.ban_user import (
+    ban_user,
+    unban_user,
+)
 
 
 users_admin_namespace = Namespace("/admin/users", description="user endpoints for admins")
@@ -217,3 +221,45 @@ class UserIndvidualContainerRecycle(Resource):
         indvidual_container.recycle()
         res = indvidual_container.serialize()
         return success_response(res)
+
+
+@users_admin_namespace.route("/<int:user_id>/ban")
+class UserBan(Resource):
+    @admin_endpoint()
+    @load_user(source=LoaderType.PARAM, output_key="target_user")
+    @users_admin_namespace.doc(
+        description="Ban a user",
+        responses={
+            200: "User banned successfully",
+            403: "Forbidden - Admin access required",
+            404: "User not found",
+            500: "Internal server error",
+        },
+    )
+    def post(self, user_id, target_user, **kwargs):
+        """
+        Ban a user
+        """
+        ban_user(target_user)
+        return success_response()
+
+
+@users_admin_namespace.route("/<int:user_id>/unban")
+class UserUnban(Resource):
+    @admin_endpoint()
+    @load_user(source=LoaderType.PARAM, output_key="target_user")
+    @users_admin_namespace.doc(
+        description="Unban a user",
+        responses={
+            200: "User unbanned successfully",
+            403: "Forbidden - Admin access required",
+            404: "User not found",
+            500: "Internal server error",
+        },
+    )
+    def post(self, user_id, target_user, **kwargs):
+        """
+        Unban a user
+        """
+        unban_user(target_user)
+        return success_response()

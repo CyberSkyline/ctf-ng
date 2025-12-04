@@ -231,6 +231,7 @@ class TestEmailSendingSmartRouting:
             app.config['ADMIN_SUPPORT_INBOX_EMAILS'
                        ] = 'admin@ctf.com,support@ctf.com'
             app.config['SERVER_DOMAIN'] = 'http://localhost:8000'
+            app.config['ROUTE_PREFIX'] = ''
 
             from ..services import email_sender as email_sender_module
             email_sender_module._email_service = None

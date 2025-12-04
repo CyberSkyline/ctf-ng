@@ -103,9 +103,10 @@ class TestAdminImpersonation:
         data = response.get_json()
         assert data["data"] == []
 
-    def test_admin_team_management_as_user(self, admin_client, user_factory, team_factory, event_factory):
+    def test_admin_team_management_as_user(self, admin_client, user_factory, sponsor_factory, event_factory):
         """Test that admin can manage teams as the impersonated user."""
-        user = user_factory()
+        sponsor = sponsor_factory()
+        user = user_factory(sponsor = sponsor)
         event = event_factory()
 
         response = self.impersonate(admin_client, user.id)
