@@ -4,7 +4,8 @@ Email templates for support ticket notifications using Jinja2
 
 import os
 from datetime import datetime
-from typing import TypedDict, NotRequired
+from typing import NotRequired, TypedDict
+
 from flask import current_app
 from jinja2 import (
     Environment,
@@ -98,8 +99,9 @@ class TicketEmailTemplates:
         """
         Get the base URL for ticket links
         """
-        domain = current_app.config.get('SERVER_DOMAIN')
-        return str(domain) if domain is not None else None
+        server_domain = current_app.config.get('SERVER_DOMAIN')
+        route_prefix = current_app.config.get('ROUTE_PREFIX')
+        return f"{server_domain}{route_prefix}"
 
     @staticmethod
     def new_ticket(ticket_data: TicketData) -> tuple[str, str, str]:
