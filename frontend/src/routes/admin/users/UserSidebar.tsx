@@ -8,13 +8,20 @@ import {
 } from '@/hooks/users';
 import type { AdminUser, Event, Team } from '@/types';
 import { utf8ToBase64 } from '@/util';
-import { Table } from '@radix-ui/themes';
-import AdminDataList from 'components/AdminDataList';
+import {
+  Box,
+  Flex,
+  Grid,
+  Heading,
+  Table,
+  Text,
+} from '@radix-ui/themes';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { ErrorCallout, WarningCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import RoleBadge from 'components/RoleBadge';
+import Statistic from 'components/Statistic';
 import { keyBy } from 'lodash';
 import { useId } from 'react';
 import AdminRegisterUserModal from './AdminRegisterUserModal';
@@ -80,7 +87,44 @@ export default function UserSidebar({ entity }: { entity: AdminUser }) {
 
       {entity.banned && (<WarningCallout>This user is banned.</WarningCallout>)}
 
-      <AdminDataList data={{ ...entity }} />
+      <Grid columns="2" gap="4" align="center" justify="between">
+        <Statistic
+          label="Name"
+          value={entity.name}
+          size="5"
+        />
+        <Statistic
+          label="ID"
+          value={entity.id}
+          size="5"
+        />
+
+        <Statistic
+          label="Email"
+          value={entity.email}
+          size="5"
+        />
+        <Statistic
+          label="Sponsor"
+          value={entity.affiliation?.name || 'N/A'}
+          size="5"
+        />
+        <Statistic
+          label="Registered At"
+          value={entity.registered_at.toLocaleString()}
+          size="5"
+        />
+        <Box>
+          <Text size="2" color="gray">Roles</Text>
+          <Flex direction="row" wrap="wrap">
+            {entity.roles.length === 0 && <Heading asChild size="5" weight="bold"><span>None</span></Heading>}
+            {entity.roles.map((role) => (
+              <RoleBadge key={role} value={role} size="2" />
+            ))}
+          </Flex>
+        </Box>
+
+      </Grid>
 
       <AdminSidebarHeader title="Registrations">
         <AdminRegisterUserModal userId={entity.id} />

@@ -4,6 +4,7 @@ import type { ColDef } from 'ag-grid-community';
 import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
 import RoleBadge from 'components/RoleBadge';
+import { Fragment } from 'react/jsx-runtime';
 import UserSidebar from './UserSidebar';
 
 const colDefs: ColDef<AdminUser>[] = [
@@ -28,11 +29,12 @@ const colDefs: ColDef<AdminUser>[] = [
   },
   {
     field : 'roles',
+    valueFormatter : (params) => params.value.join(', '),
     cellRenderer : ({ value }: {value: string[]}) => value.map((role) => (
-      <>
-        <RoleBadge key={role} value={role} />
+      <Fragment key={role}>
+        <RoleBadge value={role} />
         &nbsp;
-      </>
+      </Fragment>
     )),
     filter : true,
     floatingFilter : true,
