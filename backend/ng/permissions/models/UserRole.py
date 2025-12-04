@@ -64,8 +64,12 @@ class UserRole(db.Model):
         return cls.create_user_role(user_id, role_id)
 
     @classmethod
-    def assign_role_to_user_by_name(cls, user_id: int, role_name: RoleEnum):
-        role = Role.query.filter_by(name=role_name.value).first()
+    def assign_role_to_user_by_name(cls, user_id: int, role_name: RoleEnum | str):
+        name = role_name.value if isinstance(role_name, RoleEnum) else role_name
+        role = Role.query.filter_by(name=name).first()
+
+        if not role:
+            raise ValidationError(f"Role '{name}' not found")
 
         return cls.assign_role_to_user_by_id(user_id, role.id)
 
@@ -80,9 +84,8 @@ class UserRole(db.Model):
         Returns:
             list: List of UserRole instances assigned to the user.
         """
-
-        role_names = data.get("roles", [])
-        if not role_names:
+        role_names = data.get("roles")
+        if role_names is None:
             raise ValidationError("No role names provided")
 
         # Clear existing roles
@@ -124,11 +127,19 @@ class UserRole(db.Model):
     def validate_user_role_update(cls, data):
         """Validate user role updates."""
         validator = BaseValidator()
-        if not data.get("roles"):
+        if data.get("roles") is None:
             validator.errors["roles"] = "No role names provided"
             raise ValidationError("No role names provided")
 
         for role in data["roles"]:
             validator.validate_enum({"roles": role}, "roles", RoleEnum, friendly_name="Role_name")
 
-        return validator.validate()
+        result = validator.validate()
+        if "roles" in result and not isinstance(result["roles"], list):
+            result["roles"] = [result["roles"]]
+
+        if "roles" not in result:
+            # we passed roles = [], so the field doesn't get created in the result
+            result["roles"] = []
+
+        return result
