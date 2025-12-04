@@ -90,8 +90,6 @@ export default function NotificationsPopover({ triggerClassName, contentClassNam
       </NavigationMenu.Trigger>
       <NavigationMenu.Content
         className={contentClassName}
-        onPointerEnter={(event) => event.preventDefault()}
-        onPointerLeave={(event) => event.preventDefault()}
       >
         {isUndefined(data) || isEmpty(data) ? (
           <Flex
