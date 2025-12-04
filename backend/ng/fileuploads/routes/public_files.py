@@ -113,7 +113,6 @@ class FileList(Resource):
 
 @fileuploads_namespace.route('/file')
 class FileAccess(Resource):
-    @user_endpoint()
     @fileuploads_namespace.doc(
         description='Get a presigned download URL for a specific file',
         params={
@@ -139,7 +138,7 @@ class FileAccess(Resource):
             503: 'Service Unavailable - S3 storage not configured'
         }
     )
-    def get(self, current_user: User, **kwargs):
+    def get(self):
         """Get presigned URL for file access
 
         Generate a presigned download URL for a specific file in a public folder.
