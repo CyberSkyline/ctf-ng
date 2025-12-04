@@ -64,7 +64,7 @@ class Sponsor(db.Model):
 
     @classmethod
     def get_all_sponsors(cls):
-        return cls.query.all()
+        return db.session.query(cls).order_by(cls.name).all()
 
     def delete(self, commit=True):
         db.session.delete(self)
