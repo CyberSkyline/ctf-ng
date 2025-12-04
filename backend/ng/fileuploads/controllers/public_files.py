@@ -247,9 +247,7 @@ def search_public_files(args):
                 files.append(file_info)
 
         return success_response({
-            "folder": folder,
             "files": files,
-            "count": len(files)
         })
 
     except Exception as e:
