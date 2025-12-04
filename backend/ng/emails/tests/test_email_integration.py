@@ -2,16 +2,17 @@
 Integration tests for smart email routing in support ticket workflows
 """
 
-import pytest
 from datetime import datetime
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
+import pytest
+
+from ...notifications.services import NotificationService
 from ...support.controllers import (
-    create_ticket_message,
     create_ticket,
+    create_ticket_message,
 )
 from ..services import get_email_service
-from ...notifications.services import NotificationService
 
 
 @pytest.mark.db
@@ -34,8 +35,8 @@ class TestEmailSendingSmartRouting:
         """
         Standard email configuration for tests
         """
-        app.config['AWS_SES_ACCESS_KEY_ID'] = 'test_key'
-        app.config['AWS_SES_SECRET_ACCESS_KEY'] = 'test_secret'
+        app.config['AWS_ACCESS_KEY_ID'] = 'test_key'
+        app.config['AWS_SECRET_ACCESS_KEY'] = 'test_secret'
         app.config['AWS_DEFAULT_REGION'] = 'us-east-1'
         app.config['AWS_SES_FROM_EMAIL'] = 'noreply@ctf.com'
         app.config['ADMIN_SUPPORT_INBOX_EMAILS'
@@ -223,13 +224,14 @@ class TestEmailSendingSmartRouting:
         Test that user reply to unassigned ticket goes to admin inbox
         """
         with app.app_context():
-            app.config['AWS_SES_ACCESS_KEY_ID'] = 'test_key'
-            app.config['AWS_SES_SECRET_ACCESS_KEY'] = 'test_secret'
+            app.config['AWS_ACCESS_KEY_ID'] = 'test_key'
+            app.config['AWS_SECRET_ACCESS_KEY'] = 'test_secret'
             app.config['AWS_DEFAULT_REGION'] = 'us-east-1'
             app.config['AWS_SES_FROM_EMAIL'] = 'noreply@ctf.com'
             app.config['ADMIN_SUPPORT_INBOX_EMAILS'
                        ] = 'admin@ctf.com,support@ctf.com'
             app.config['SERVER_DOMAIN'] = 'http://localhost:8000'
+            app.config['ROUTE_PREFIX'] = ''
 
             from ..services import email_sender as email_sender_module
             email_sender_module._email_service = None
@@ -301,8 +303,8 @@ class TestEmailSendingSmartRouting:
         with app.app_context():
             team_factory(event = event, members = [user])
 
-            app.config['AWS_SES_ACCESS_KEY_ID'] = None
-            app.config['AWS_SES_SECRET_ACCESS_KEY'] = None
+            app.config['AWS_ACCESS_KEY_ID'] = None
+            app.config['AWS_SECRET_ACCESS_KEY'] = None
             app.config['ADMIN_SUPPORT_INBOX_EMAILS'] = 'admin@ctf.com'
 
             with patch('ng.emails.services.email_sender.logger'
@@ -335,8 +337,8 @@ class TestEmailSendingSmartRouting:
         with app.app_context():
             team_factory(event = event, members = [user])
 
-            app.config['AWS_SES_ACCESS_KEY_ID'] = 'test_key'
-            app.config['AWS_SES_SECRET_ACCESS_KEY'] = 'test_secret'
+            app.config['AWS_ACCESS_KEY_ID'] = 'test_key'
+            app.config['AWS_SECRET_ACCESS_KEY'] = 'test_secret'
             app.config['AWS_DEFAULT_REGION'] = 'us-east-1'
             app.config['AWS_SES_FROM_EMAIL'] = 'noreply@ctf.com'
             app.config['ADMIN_SUPPORT_INBOX_EMAILS'

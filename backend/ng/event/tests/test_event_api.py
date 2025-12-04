@@ -668,6 +668,34 @@ class Test_Event_Registration:
 
         assert response.status_code == 201
 
+    def test_create_team_cannot_impersonate_existing_team_using_non_printable_characters(
+        self,
+        client_factory,
+        user_factory,
+        event_factory,
+        team_factory
+    ):
+        event = event_factory(name = "Event for Non-Printable Team Name", public = True)
+        user = user_factory(name = "nonprintableuser", email = "nonprintableuser@example.com")
+        new_user = user_factory(name = "newuser", email = "newuser@example.com")
+        team_factory(event = event, name = "ExistingTeam", members = [user])
+
+        non_printable_team_name = "Exist\x00ingTeam"
+        logged_in_client = client_factory(user = new_user)
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json = {
+                "team_name": non_printable_team_name,
+            },
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        assert "errors" in data
+        print(data["errors"])
+        assert "Team name contains disallowed characters" in data["errors"]["validation"]
+
 class Test_Event_Team_Lookup:
     def get_endpoint(self, event_id: int) -> str:
         return f"/ng/events/{event_id}/me/team"

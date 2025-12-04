@@ -3,22 +3,18 @@ Service for sending ticket-related emails
 """
 
 from enum import Enum
+
+from CTFd.models import Users
 from flask import current_app
 from sqlalchemy.exc import SQLAlchemyError
 
-from CTFd.models import Users
-
 from ...core.utils.logger import get_logger
-
-from ...team.models import TeamMember
 from ...support.models.Ticket import Ticket
-
+from ...team.models import TeamMember
 from .email_sender import get_email_service
-from .email_templates import TicketEmailTemplates, TeamKickedData
-
+from .email_templates import TeamKickedData, TicketEmailTemplates
 
 logger = get_logger(__name__)
-
 
 class EmailType(str, Enum):
     """
@@ -282,7 +278,10 @@ class TicketEmailService:
                 if kicked_by_user:
                     kicked_by_name = kicked_by_user.name
 
-            base_url = current_app.config.get('SERVER_DOMAIN')
+            server_domain = current_app.config.get('SERVER_DOMAIN')
+            route_prefix = current_app.config.get('ROUTE_PREFIX')
+            base_url = f"{server_domain}{route_prefix}"
+
             event_url = f"{base_url}/events/{event_id}" if base_url else None
 
             team_kicked_data: TeamKickedData = {

@@ -1,17 +1,19 @@
+import { useFileUrl } from '@/hooks/fileuploads';
 import type { Sponsor } from '@/types';
+import { Box, DataList } from '@radix-ui/themes';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { ErrorCallout, WarningCallout } from 'components/Callouts';
-import { useFileUrl } from '@/hooks/fileuploads';
-import { Box, DataList } from '@radix-ui/themes';
+import { useId } from 'react';
 import SponsorModal from './SponsorModal';
 
 export default function SponsorSidebar({ entity }: {entity: Sponsor}) {
   const { data, error } = useFileUrl('sponsor-logos', entity.logo);
+  const headerId = useId();
 
   return (
-    <AdminSidebar>
-      <AdminSidebarHeader title={entity.name}>
+    <AdminSidebar labelId={headerId}>
+      <AdminSidebarHeader title={entity.name} id={headerId}>
         <SponsorModal sponsor={entity} />
       </AdminSidebarHeader>
       <DataList.Root>

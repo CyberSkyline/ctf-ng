@@ -1,3 +1,4 @@
+import { ROUTEPREFIX } from '@/constants';
 import { apiMutation } from '@/fetchers';
 import { Button, TextField } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
@@ -25,7 +26,7 @@ export default function ExpoLoginForm() {
     }, {
       method : 'POST',
     }).then(() => {
-      window.location.href = searchParams.get('redirect') || '/';
+      window.location.href = searchParams.get('redirect') || `${ROUTEPREFIX}/`;
     }).catch((e) => {
       setLoginError(e.message || 'Login failed. Please try again.');
     });

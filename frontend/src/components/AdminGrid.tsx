@@ -93,7 +93,7 @@ export default function AdminGrid<T>({
 
   return (
     <Flex direction="row" gap="3" className="w-full h-full">
-      <Flex direction="column" gap="3" className="grow">
+      <Flex direction="column" gap="3" className="grow" role="main">
         {toolbar}
         <AgGridReact
           key="admin-grid"

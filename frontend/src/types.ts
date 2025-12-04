@@ -38,6 +38,10 @@ export interface User {
   affiliation: Sponsor | null;
 }
 
+export interface AdminUser extends User {
+  banned: boolean;
+}
+
 export interface Team {
   id: number;
   name: string;

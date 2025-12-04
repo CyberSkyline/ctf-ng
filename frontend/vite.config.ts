@@ -18,6 +18,7 @@ export default defineConfig(({ command }) => ({
     BUILD_MODE : command === 'build',
     RELEASE : JSON.stringify(RELEASE),
     BASE_PATH : JSON.stringify(command === 'build' ? '/ctf' : ''),
+    PUBLIC_BASE : JSON.stringify(command === 'build' ? '/dist' : '/static'),
   },
   server : {
     allowedHosts : [ '.cisa.gov', '.localhost' ],
@@ -67,4 +68,5 @@ export default defineConfig(({ command }) => ({
   optimizeDeps : {
     include : [ 'react', 'react-dom', 'react-router-dom' ],
   },
+  publicDir : 'public',
 }));

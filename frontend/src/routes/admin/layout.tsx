@@ -94,9 +94,9 @@ export default function AdminLayout() {
             </Card>
           )}
       </div>
-      <main className="flex-grow overflow-y-auto p-3">
+      <div className="flex-grow overflow-y-auto p-3">
         {isLoading ? <Skeleton className="!h-full" /> : <Outlet />}
-      </main>
+      </div>
     </Flex>
   );
 }

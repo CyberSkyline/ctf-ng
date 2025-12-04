@@ -106,33 +106,6 @@ services:
       - ctf-network
       - ctf-internal
 
-  vite:
-    image: vite-ng:latest
-    build:
-      context: ./
-      dockerfile: ./dockerfiles/vite.Dockerfile
-    deploy:
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
-      restart_policy:
-        condition: any
-    tty: true
-    ports:
-      - mode: host
-        target: 5173
-        published: 5173
-    volumes:
-      - type: bind
-        source: ./frontend
-        target: /app/frontend
-      - type: bind
-        source: ./node_modules
-        target: /app/node_modules
-    networks:
-      - ctf-network
-
 networks:
   ctf-network:
     driver: overlay

@@ -6,17 +6,21 @@ import {
   useUserWorkspace,
   useWorkspaceStatus,
 } from '@/hooks/users';
-import type { Event, Team, User } from '@/types';
+import type { AdminUser, Event, Team } from '@/types';
 import { utf8ToBase64 } from '@/util';
 import { Table } from '@radix-ui/themes';
 import AdminDataList from 'components/AdminDataList';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
-import { ErrorCallout } from 'components/Callouts';
+import { ErrorCallout, WarningCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import RoleBadge from 'components/RoleBadge';
 import { keyBy } from 'lodash';
+import { useId } from 'react';
 import AdminRegisterUserModal from './AdminRegisterUserModal';
+
+import AdminUpdateUserModal from './AdminUpdateUserModal';
+import BanUserModal from './BanUserModal';
 import ImpersonateUserButton from './ImpersonateUserButton';
 import RecycleWorkspaceModal from './RecycleWorkspaceModal';
 import RestartWorkspaceModal from './RestartWorkspaceModal';
@@ -57,19 +61,24 @@ function RegistrationRow({ userId, team, event }: { userId: number, team: Team, 
   );
 }
 
-export default function UserSidebar({ entity }: { entity: User }) {
+export default function UserSidebar({ entity }: { entity: AdminUser }) {
   const { data : teamsData, error : teamsError } = useUserTeams(entity.id);
   const { data : eventsData, error : eventsError } = useUserEvents(entity.id);
   const { data : workspaceData, error : workspaceError } = useUserWorkspace(entity.id);
   const { data : workspaceStatus, error : workspaceStatusError } = useWorkspaceStatus(entity.id);
 
   const eventsMap = keyBy(eventsData, 'id');
+  const headerId = useId();
 
   return (
-    <AdminSidebar>
-      <AdminSidebarHeader title={entity.name} icon={<UserIcon />}>
+    <AdminSidebar labelId={headerId}>
+      <AdminSidebarHeader title={entity.name} icon={<UserIcon />} id={headerId}>
         <ImpersonateUserButton user={entity} />
+        <BanUserModal user={entity} />
+        <AdminUpdateUserModal user={entity} />
       </AdminSidebarHeader>
+
+      {entity.banned && (<WarningCallout>This user is banned.</WarningCallout>)}
 
       <AdminDataList data={{ ...entity }} />
 

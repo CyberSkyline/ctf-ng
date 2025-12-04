@@ -8,8 +8,8 @@ from typing import Any, TypedDict
 
 from CTFd.models import db
 from sqlalchemy.ext.associationproxy import association_proxy
-from ...core.utils.validator import BaseValidator
 
+from ...core.utils.validator import BaseValidator
 from ...permissions.models.UserRole import UserRole
 
 
@@ -28,6 +28,7 @@ class User(db.Model):
 
     id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)  # links to ctfd's main users table
     sponsor_id = db.Column(db.Integer, db.ForeignKey("ng_sponsors.id"), nullable=True)
+    oauth_id = db.Column(db.String(256), nullable=True)
 
     ctfd_user = db.relationship(
         "Users",
@@ -72,6 +73,7 @@ class User(db.Model):
                 "roles": [role.name for role in self.roles],
                 "registered_at": self.ctfd_user.created.isoformat() + "Z",
                 "affiliation": self.affiliation.serialize(include_admin_fields=True) if self.affiliation else None,
+                "banned": self.ctfd_user.banned,
             }
         return {
             "id": self.id,
