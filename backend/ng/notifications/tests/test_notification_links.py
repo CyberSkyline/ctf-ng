@@ -111,7 +111,7 @@ class TestNotificationLinkGeneration:
         """
         Test that notification without recipient returns None for link
         """
-        user = user_factory()
+        user_factory()
         ticket = ticket_factory()
         notification = Notification(
             type=NotificationType.TICKET_MESSAGE,
