@@ -1,10 +1,11 @@
 import { useEvents } from '@/hooks/events';
 import { Container, Heading } from '@radix-ui/themes';
+import { ErrorCallout } from 'components/Callouts';
 import EventGrid from 'components/EventGrid';
 import HeaderContainer from 'components/HeaderContainer';
 
 export default function AvailableEvents() {
-  const { data : events, isLoading } = useEvents();
+  const { data : events, error, isLoading } = useEvents();
 
   return (
     <>
@@ -12,11 +13,11 @@ export default function AvailableEvents() {
       <HeaderContainer>
         <Heading size="9">Events</Heading>
       </HeaderContainer>
-      {events && (
-        <Container size="4">
-          <EventGrid events={events} loading={isLoading} />
-        </Container>
-      )}
+
+      <Container size="4">
+        {error && (<ErrorCallout className="mb-3">{error.message}</ErrorCallout>)}
+        <EventGrid events={events || []} loading={isLoading} />
+      </Container>
     </>
   );
 }
