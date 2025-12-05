@@ -856,7 +856,7 @@ class Test_Event_Team_Management:
         """Test that the team promote endpoint fails when trying to promote self."""
         response = team_captain_client.post(
             f"/ng/events/{1}/me/team/promote",
-            json = {"user_id": 2}
+            json = {"user_id": 1}
         )
         assert response.status_code == 400
         data = response.get_json()
@@ -909,7 +909,7 @@ class Test_Event_Team_Management:
         """Test that the team kick endpoint fails when trying to kick self."""
         response = team_captain_client.post(
             f"/ng/events/{1}/me/team/kick",
-            json = {"user_id": 2}
+            json = {"user_id": 1}
         )
         assert response.status_code == 400
         data = response.get_json()
