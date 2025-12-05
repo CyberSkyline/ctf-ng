@@ -137,8 +137,11 @@ class ContainerInstance(db.Model):
     def connect_networks(client: Client, team: Team, blueprint_obj: ContainerBlueprint, ctr):
         if blueprint_obj.networks:
             for network in blueprint_obj.networks:
-                netconf = blueprint_obj.netconfs[network] or None
+                netconf = None
                 is_static_net = not isinstance(blueprint_obj.networks, list)
+
+                if isinstance(blueprint_obj.netconfs, dict):
+                    netconf = blueprint_obj.netconfs.get(network)
 
                 networkname = ContainerInstance.render_network_name(team.id, network, blueprint_obj.challenge_id)
                 net_exists = client.get_network_by_name(networkname)
