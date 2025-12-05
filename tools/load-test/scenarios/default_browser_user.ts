@@ -1,13 +1,11 @@
 import { Browser, Page } from "k6/browser";
 import { User } from "../model/user.ts";
-import { UserSession } from "../session/user_session.ts";
 
-export class UserBrowserSession extends UserSession {
+export class DefaultBrowserUserScenario {
     user: User;
     page: Page;
 
-    constructor(user: User, page: Page) {
-        super();
+    private constructor(user: User, page: Page) {
         this.user = user;
         this.page = page;
         throw new Error("Browser-based load testing is not yet implemented.");
@@ -46,8 +44,8 @@ export class UserBrowserSession extends UserSession {
         await this.page.close();
     }
 
-    static async make(user: User, browser: Browser): Promise<UserBrowserSession> {
+    static async make(user: User, browser: Browser): Promise<DefaultBrowserUserScenario> {
         const page = await browser.newPage();
-        return new UserBrowserSession(user, page);
+        return new DefaultBrowserUserScenario(user, page);
     }
 }

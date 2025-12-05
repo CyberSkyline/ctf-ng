@@ -4,9 +4,7 @@ import { SharedArray } from 'k6/data';
 import { browser } from 'k6/browser';
 import { sleep, check, fail } from 'k6';
 import { make_user, User } from './model/user.ts';
-import { defaultUserScenario } from './scenarios/default_user.ts';
-import { UserHttpSession } from './session/user_http_session.ts';
-import { UserBrowserSession } from './session/user_browser_session.ts';
+import { DefaultHttpUserScenario } from './scenarios/default_http_user.ts';
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost';
 const STAGE_ONE_VUS = Number(__ENV.STAGE_ONE_VUS) || 2;
@@ -97,23 +95,23 @@ export function setup() {
 }
 
 function getDefaultUser() {
-  return defaultUsers[exec.scenario.iterationInInstance % defaultUsers.length];
+  return defaultUsers[exec.vu.idInInstance];
 }
 
 // The default exported function is gonna be picked up by k6 as the entry point for the test script. It will be executed repeatedly in "iterations" for the whole duration of the test.
 export async function defaultHttpUser() {
   let user = getDefaultUser();
-  let session = UserHttpSession.make(user);
-  await defaultUserScenario(session);
+  let scenario = new DefaultHttpUserScenario(user);
+  scenario.execute();
   sleep(1);
 }
 
-export async function defaultBrowserUser() {
-  let user = getDefaultUser();
-  let session = await UserBrowserSession.make(user, browser);
-  await defaultUserScenario(session);
-  sleep(1);
-}
+// export async function defaultBrowserUser() {
+//   let user = getDefaultUser();
+//   let session = await UserBrowserSession.make(user, browser);
+//   await defaultUserScenario(session);
+//   sleep(1);
+// }
 
 // function getCurrentBadActor() {
 //   return badActors[exec.scenario.iterationInInstance % badActors.length];

@@ -7,6 +7,7 @@ services:
       STAGE_TWO_VUS: 1
       STAGE_THREE_VUS: 1
       K6_WEB_DASHBOARD: "true"
+      K6_LOG_OUTPUT: "file=output/logging.txt,level=trace"
 
     cap_add:
       - SYS_ADMIN
