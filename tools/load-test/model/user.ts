@@ -8,11 +8,11 @@ export type User = {
     base_url: string;
 }
 
-export function make_user(id: number, base_url: string, role: "admin" | "default" = "default"): User {
+export function make_user(id: number, email: string, password: string, base_url: string, role: "admin" | "default" = "default"): User {
     return {
         id: id,
-        email: `loadtesting${id}${role === "admin" ? "admin" : ""}@example.com`,
-        password: `loadtesting${id}${role === "admin" ? "admin" : ""}`,
+        email: email,
+        password: password,
         role: role,
         base_url: base_url
     };

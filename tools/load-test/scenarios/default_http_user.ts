@@ -156,12 +156,15 @@ export class DefaultHttpUserScenario {
     is_event_started(eventNumber: number): boolean {
         const res = this.get(`/ng/users/me/teams`);
         check(res, { [`teams status equals 200`]: (r) => r.status === 200 });
-
-        return res.json(`data.#(event_id==${eventNumber})#.start_timestamp`) !== null;
+        const startTimestamp = res.json(`data.#(event_id==${eventNumber}).start_timestamp`);
+        console.log(`Event ${eventNumber} start timestamp: ${JSON.stringify(startTimestamp)}`);
+        
+        return startTimestamp !== null && startTimestamp !== undefined && startTimestamp !== '';
     }
 
     start_event(eventNumber: number) {
         if (this.is_event_started(eventNumber)) {
+            console.log(`Event ${eventNumber} has already started.`);
             return;
         }
         const resBeforeStart = this.get(`/events/${eventNumber}`);
@@ -178,6 +181,7 @@ export class DefaultHttpUserScenario {
         const res = this.get(`/ng/container/me/current_challenge`);
         check(res, { [`current_challenge status equals 200`]: (r) => r.status === 200 });
         check(res, { [`current_challenge success is true`]: (r) => r.json('success') === true });
+        console.log(`Current challenge response: ${res.body}`);
         return res.json('data') === challengeNumber;
     }
 

@@ -1,8 +1,7 @@
 import http from 'k6/http';
 import exec from 'k6/execution';
 import { SharedArray } from 'k6/data';
-import { browser } from 'k6/browser';
-import { sleep, check, fail } from 'k6';
+import { sleep } from 'k6';
 import { make_user, User } from './model/user.ts';
 import { DefaultHttpUserScenario } from './scenarios/default_http_user.ts';
 
@@ -12,15 +11,21 @@ const STAGE_TWO_VUS = Number(__ENV.STAGE_TWO_VUS) || 5;
 const STAGE_THREE_VUS = Number(__ENV.STAGE_THREE_VUS) || 10;
 
 const adminUsers: User[] = new SharedArray('adminUsers', function () {
-  return [...Array(5).keys()].map(i => make_user(i, BASE_URL, 'admin'));
+  const data = JSON.parse(open('./users.json'))['admins'];
+  if (!Array.isArray(data)) {
+    throw new Error('admins key in users.json must be an array');
+  }
+
+  return data.map((u: any, i: number) => make_user(i, u.email, u.password, BASE_URL, 'admin'));
 });
 
 const defaultUsers: User[] = new SharedArray('defaultUsers', function () {
-  return [...Array(500).keys()].slice(10).map(i => make_user(i, BASE_URL));
-});
+  const data = JSON.parse(open('./users.json'))['users'];
+  if (!Array.isArray(data)) {
+    throw new Error('users key in users.json must be an array');
+  }
 
-const badActors: User[] = new SharedArray('badActors', function () {
-  return [...Array(10).keys()].map(i => make_user(i, BASE_URL));
+  return data.map((u: any, i: number) => make_user(i, u.email, u.password, BASE_URL));
 });
 
 export const options = {
