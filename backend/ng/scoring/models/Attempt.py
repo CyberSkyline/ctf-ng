@@ -258,6 +258,13 @@ class Attempt(db.Model):
         return attempt
 
     @classmethod
+    def find_by_id(cls, attempt_id: int) -> Attempt | None:
+        """
+        Find an attempt by ID
+        """
+        return cls.query.get(attempt_id)
+
+    @classmethod
     def find_filtered_attempts(
         cls,
         user_id: int | None = None,
