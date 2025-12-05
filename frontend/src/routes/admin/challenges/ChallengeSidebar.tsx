@@ -12,6 +12,7 @@ import ChallengeUpdateModal from './ChallengeUpdateModal';
 import ChallengeAttemptsTab from './SidebarTabs/ChallengeAttemptsTab';
 import ChallengeBlueprintTab from './SidebarTabs/ChallengeBlueprintTab';
 import ChallengeDetailsTab from './SidebarTabs/ChallengeDetailsTab';
+import ChallengeFeedbackTab from './SidebarTabs/ChallengeFeedbackTab';
 
 export default function ChallengeSidebar({ entity }: {entity: Challenge}) {
   const [ searchParams, setSearchParams ] = useSearchParams();
@@ -63,6 +64,9 @@ export default function ChallengeSidebar({ entity }: {entity: Challenge}) {
           <Tabs.Trigger value="attempts">
             Attempts
           </Tabs.Trigger>
+          <Tabs.Trigger value="feedback">
+            Feedback
+          </Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="details" className="flex flex-col gap-3 pb-3">
           <ChallengeDetailsTab challenge={entity} />
@@ -72,6 +76,9 @@ export default function ChallengeSidebar({ entity }: {entity: Challenge}) {
         </Tabs.Content>
         <Tabs.Content value="attempts" className="flex flex-col flex-grow">
           <ChallengeAttemptsTab challengeId={entity.id} />
+        </Tabs.Content>
+        <Tabs.Content value="feedback" className="flex flex-col flex-grow">
+          <ChallengeFeedbackTab challenge={entity} />
         </Tabs.Content>
       </Tabs.Root>
     </AdminSidebar>
