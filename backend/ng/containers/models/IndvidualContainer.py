@@ -82,6 +82,10 @@ class IndvidualContainer(db.Model):
             name=container_name,
             detach=True,
             publish_all_ports=True,
+            cap_add=[
+                "NET_ADMIN",
+                "SYS_PTRACE",
+            ]
         )
 
 
