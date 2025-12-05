@@ -58,9 +58,9 @@ services:
     image: nginx:latest
     hostname: web-server
     networks:
-      - boop
+      - competitor_net
 networks:
-  boop:
+  competitor_net:
     internal: true
 """
         caplog.set_level("DEBUG")
@@ -100,10 +100,10 @@ services:
     image: nginx:latest
     hostname: web-server
     networks:
-      boop:
+      competitor_net:
         ipv4_address: "172.16.238.10"
 networks:
-  boop:
+  competitor_net:
     internal: true
     ipam:
       config:
@@ -119,19 +119,19 @@ networks:
         assert web_service.image == "nginx:latest"
         assert web_service.hostname == "web-server"
         assert web_service.networks is not None and isinstance(web_service.networks, dict)
-        assert "boop" in web_service.networks
-        boop_net = web_service.networks["boop"]
-        assert boop_net is not None
-        assert boop_net.ipv4_address == "172.16.238.10"
+        assert "competitor_net" in web_service.networks
+        competitor_net = web_service.networks["competitor_net"]
+        assert competitor_net is not None
+        assert competitor_net.ipv4_address == "172.16.238.10"
         assert compose.networks is not None and isinstance(compose.networks, dict)
-        assert "boop" in compose.networks
-        boop_net = compose.networks[ComposeResourceName("boop")]
-        assert boop_net is not None
-        assert boop_net.internal is True
-        assert boop_net.ipam is not None
-        assert boop_net.ipam.config is not None
-        assert len(boop_net.ipam.config) == 1
-        assert boop_net.ipam.config[0].subnet == "172.16.238.0/24"
+        assert "competitor_net" in compose.networks
+        competitor_net_obj = compose.networks[ComposeResourceName("competitor_net")]
+        assert competitor_net_obj is not None
+        assert competitor_net_obj.internal is True
+        assert competitor_net_obj.ipam is not None
+        assert competitor_net_obj.ipam.config is not None
+        assert len(competitor_net_obj.ipam.config) == 1
+        assert competitor_net_obj.ipam.config[0].subnet == "172.16.238.0/24"
 
     def test_parse_compose_with_challenge(self):
         """Test parsing a compose file with x-challenge extension."""
@@ -459,7 +459,7 @@ services:
         web_service = compose.services[ComposeResourceName("web")]
         assert web_service.image == "nginx:alpine"
         assert web_service.hostname == "web-server"
-        assert web_service.networks == ["challenge-net"]
+        assert web_service.networks == ["competitor_net"]
         assert web_service.mem_limit == "256m"
         assert web_service.cpus == "0.5"
         assert web_service.cap_add == ["NET_ADMIN"]
@@ -503,7 +503,7 @@ services:
         db_service = compose.services[ComposeResourceName("database")]
         assert db_service.image == "mysql:8.0"
         assert db_service.hostname == "db-server"
-        assert db_service.networks == ["challenge-net"]
+        assert db_service.networks == ["competitor_net"]
         assert db_service.mem_limit == "512m"
         assert db_service.memswap_limit == "1g"
         assert db_service.cpus == "1.0"
@@ -536,7 +536,7 @@ services:
         app_service = compose.services[ComposeResourceName("app")]
         assert app_service.image == "vulnerable-webapp:latest"
         assert app_service.hostname == "app-server"
-        assert app_service.networks == ["challenge-net"]
+        assert app_service.networks == ["competitor_net"]
         assert app_service.user == "webapp"
         
         # App service command and entrypoint
@@ -905,9 +905,9 @@ services:
     image: test:latest
     hostname: test-host
     networks:
-      - external_net
+      - competitor_net
 networks:
-  external_net:
+  competitor_net:
     internal: false  # Should be true
 """
         # Previously this raised an Exception; after update we return a ComposeFile
@@ -917,8 +917,8 @@ networks:
         w = compose.warnings()
         # Field warnings yield Warnings objects per resource; find the network warning
         rendered = w.render()
-        # There should be a warning for the external network 'external_net'
-        assert 'external_net' in rendered
+        # There should be a warning for the external network 'competitor_net'
+        assert 'competitor_net' in rendered
         assert 'internal field is False' in rendered
 
     def test_invalid_question_types(self):
@@ -1032,9 +1032,9 @@ services:
     image: nginx:latest
     hostname: web-server
     networks:
-      - boop
+      - competitor_net
 networks:
-  boop:
+  competitor_net:
     internal: true
 """
         chall = parse_compose_string(yaml_content)

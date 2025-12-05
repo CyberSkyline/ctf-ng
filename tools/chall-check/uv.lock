@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 
 [[package]]
@@ -89,7 +89,7 @@ wheels = [
 
 [[package]]
 name = "cyber-skyline-chall-check"
-version = "0.4.0"
+version = "0.5.0"
 source = { editable = "." }
 dependencies = [
     { name = "cyber-skyline-chall-parser" },
@@ -118,7 +118,7 @@ dev = [
 
 [[package]]
 name = "cyber-skyline-chall-parser"
-version = "0.4.2"
+version = "0.5.0"
 source = { editable = "../../lib/parser" }
 dependencies = [
     { name = "attrs" },
