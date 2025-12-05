@@ -1,6 +1,6 @@
 import { COLOR_NEGATIVE, COLOR_POSITIVE, COLOR_WARNING } from '@/constants';
 import { connectWorkspace, recycleChallengeContainers, useCurrentChallengeId } from '@/hooks/container';
-import { Button } from '@radix-ui/themes';
+import { Button, Flex } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
 import Modal from 'components/Modal';
 import { useState } from 'react';
@@ -32,7 +32,7 @@ export default function ConnectModal({ eventId, challengeId, isTeam }: {
 
   if (currentChallenge === challengeId) {
     return (
-      <>
+      <Flex gap="1" align="center">
         <Button variant="soft" disabled m="0">
           <TbCheck />
           Connected
@@ -50,7 +50,7 @@ export default function ConnectModal({ eventId, challengeId, isTeam }: {
           submitColor={COLOR_NEGATIVE}
           onSubmit={handleReset}
         />
-      </>
+      </Flex>
     );
   }
 
