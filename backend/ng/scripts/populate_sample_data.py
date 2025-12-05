@@ -6,8 +6,10 @@ from CTFd import create_app
 from CTFd.cache import cache
 from CTFd.config import Config
 from CTFd.models import Users, db
+from CTFd.models import (
+    Admins
+)
 from sqlalchemy_utils import create_database, database_exists, drop_database
-from tests.helpers import setup_ctfd
 
 if "SCRIPT" not in os.environ:
     raise OSError("This should only be run from a script. DO NOT run this manually.")
@@ -39,16 +41,18 @@ with app.app_context():
     db.session.commit()
 
     # Perform the default setup
-    app = setup_ctfd(
-        app,
-        ctf_name="CTFd",
-        ctf_description="CTF description",
+    admin = Admins(
         name="admin",
         email=DEFAULT_ADMIN_EMAIL,
         password=DEFAULT_ADMIN_PASSWORD,
-        user_mode="users",
-        ctf_theme=None,
+        type="admin",
+        hidden=True,
     )
+    try:
+        db.session.add(admin)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
 
 # Configure app permission system
 with app.app_context():
