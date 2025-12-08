@@ -3,7 +3,7 @@ import faviconLight from '@/assets/favicons/favicon-light.png';
 import { useTheme } from 'next-themes';
 
 export default function Favicon() {
-  const { resolvedTheme } = useTheme();
+  const { systemTheme } = useTheme();
 
-  return <link rel="icon" href={resolvedTheme === 'dark' ? faviconDark : faviconLight} />;
+  return <link rel="icon" href={systemTheme === 'dark' ? faviconDark : faviconLight} />;
 }
