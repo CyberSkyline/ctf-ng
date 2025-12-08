@@ -1,5 +1,4 @@
 # backend/ng/user/controllers/authenticate.py
-import datetime
 import os
 
 from CTFd.cache import clear_user_session
