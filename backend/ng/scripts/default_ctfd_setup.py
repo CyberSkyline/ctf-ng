@@ -24,7 +24,7 @@ if database_exists(database_url):
     drop_database(database_url)
 
 # Recreate the database
-create_database(database_url)
+create_database(database_url, encoding="utf8mb4")
 
 # Now create the app - it won't try to create tables in an existing database
 app = create_app()
