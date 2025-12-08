@@ -10,7 +10,9 @@ from CTFd.models import db
 from sqlalchemy import JSON
 
 from ...core.utils import utc_now
+from ...core.exceptions import ValidationError
 from ...core.utils.validator import BaseValidator
+
 
 
 class SerializedFeedback(TypedDict):
@@ -157,7 +159,7 @@ class Feedback(db.Model):
         commit: bool = True
     ) -> None:
         if not isinstance(feedback_data, dict):
-            raise ValueError("Feedback data must be a dictionary")
+            raise ValidationError("Feedback data must be a dictionary")
 
         self.feedback_data = feedback_data
         self.updated_at = utc_now()
