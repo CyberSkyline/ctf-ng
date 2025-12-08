@@ -1,12 +1,7 @@
 import { EventIcon, TeamIcon, UserIcon } from '@/constants';
 import { useTeamMembers } from '@/hooks/team';
-import {
-  useUserEvents,
-  useUserTeams,
-  useUserWorkspace,
-  useWorkspaceStatus,
-} from '@/hooks/users';
-import type { AdminUser, Event, Team } from '@/types';
+import { useUserTeams, useUserWorkspace, useWorkspaceStatus } from '@/hooks/users';
+import type { AdminUser, Team } from '@/types';
 import { utf8ToBase64 } from '@/util';
 import {
   Box,
@@ -22,7 +17,6 @@ import { ErrorCallout, WarningCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import RoleBadge from 'components/RoleBadge';
 import Statistic from 'components/Statistic';
-import { keyBy } from 'lodash';
 import { useId } from 'react';
 import AdminRegisterUserModal from './AdminRegisterUserModal';
 
@@ -32,7 +26,7 @@ import ImpersonateUserButton from './ImpersonateUserButton';
 import RecycleWorkspaceModal from './RecycleWorkspaceModal';
 import RestartWorkspaceModal from './RestartWorkspaceModal';
 
-function RegistrationRow({ userId, team, event }: { userId: number, team: Team, event: Event }) {
+function RegistrationRow({ userId, team }: { userId: number, team: Team }) {
   const { data : teamMembers } = useTeamMembers(team.id);
   if (!teamMembers) {
     return null;
@@ -46,7 +40,7 @@ function RegistrationRow({ userId, team, event }: { userId: number, team: Team, 
   return (
     <Table.Row key={team.id}>
       <Table.Cell>
-        <Entity label={event.name} icon={EventIcon} to={`/admin/events?id=${event.id}`} />
+        <Entity label={team.event_name || 'Unknown'} icon={EventIcon} to={`/admin/events?id=${team.event_id}`} />
       </Table.Cell>
       <Table.Cell>
         <Entity
@@ -54,7 +48,7 @@ function RegistrationRow({ userId, team, event }: { userId: number, team: Team, 
           icon={TeamIcon}
           to={
             `/admin/teams?id=${team.id}&filter=${
-              encodeURIComponent(utf8ToBase64(JSON.stringify({ event_name : { filterType : 'text', type : 'equals', filter : event.name } })))}`
+              encodeURIComponent(utf8ToBase64(JSON.stringify({ event_name : { filterType : 'text', type : 'equals', filter : team.event_name } })))}`
           }
         />
       </Table.Cell>
@@ -70,11 +64,9 @@ function RegistrationRow({ userId, team, event }: { userId: number, team: Team, 
 
 export default function UserSidebar({ entity }: { entity: AdminUser }) {
   const { data : teamsData, error : teamsError } = useUserTeams(entity.id);
-  const { data : eventsData, error : eventsError } = useUserEvents(entity.id);
   const { data : workspaceData, error : workspaceError } = useUserWorkspace(entity.id);
   const { data : workspaceStatus, error : workspaceStatusError } = useWorkspaceStatus(entity.id);
 
-  const eventsMap = keyBy(eventsData, 'id');
   const headerId = useId();
 
   return (
@@ -130,8 +122,7 @@ export default function UserSidebar({ entity }: { entity: AdminUser }) {
         <AdminRegisterUserModal userId={entity.id} />
       </AdminSidebarHeader>
       {teamsError && <ErrorCallout>{teamsError.message}</ErrorCallout> }
-      {eventsError && <ErrorCallout>{eventsError.message}</ErrorCallout> }
-      {teamsData && eventsData && (
+      {teamsData && (
         <Table.Root>
           <Table.Header>
             <Table.Row>
@@ -142,12 +133,11 @@ export default function UserSidebar({ entity }: { entity: AdminUser }) {
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {teamsData?.map((team) => (
+            {teamsData.map((team) => (
               <RegistrationRow
                 key={team.id}
                 userId={entity.id}
                 team={team}
-                event={eventsMap[team.event_id]}
               />
             ))}
           </Table.Body>
