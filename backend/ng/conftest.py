@@ -8,14 +8,13 @@ from unittest.mock import Mock
 
 import pytest
 from CTFd.cache import cache
-from CTFd.models import Configs, Users, db
+from CTFd.models import Configs, Users, db, Admins
 from CTFd.utils.security.csrf import generate_nonce
 from tests.helpers import (
     create_ctfd as create_ctfd_original,
 )
 from tests.helpers import (
     gen_user,
-    setup_ctfd,
 )
 
 from . import load as plugin_load
@@ -37,13 +36,25 @@ from .user.models.User import User as NgUser
 from .sponsors.models.Sponsor import Sponsor
 from .core.utils import utc_now
 
-
+DEFAULT_ADMIN_EMAIL = "admin@examplectf.com"
+DEFAULT_ADMIN_PASSWORD = "ctfng_password"
 def create_app():
     """A reusable function to create the Flask app instance."""
     app = create_ctfd_original(enable_plugins=True, setup=False)
     with app.app_context():
         plugin_load(app)
-    app = setup_ctfd(app)
+    admin = Admins(
+        name="admin",
+        email=DEFAULT_ADMIN_EMAIL,
+        password=DEFAULT_ADMIN_PASSWORD,
+        type="admin",
+        hidden=True,
+    )
+    try:
+        db.session.add(admin)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
     return app
 
 
