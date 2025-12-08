@@ -107,7 +107,7 @@ def okta_callback():
         else:
             ctfd_user = User.query.filter_by(id=ng_user.id).first()
 
-        ctfd_user.last_login = datetime.datetime.now(datetime.UTC)
+        # ctfd_user.last_login = datetime.datetime.now(datetime.UTC)
         ctfd_user.email = email
         session.clear()
 
