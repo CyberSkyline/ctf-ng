@@ -22,7 +22,7 @@ export default function EventGraphic({ event, className }: {event: Event, classN
         <AspectRatio ratio={RATIO}>
           {fileUrl?.download_url && (
             <img
-              className="object-cover h-full w-full"
+              className="object-cover h-full w-full overflow-visible"
               src={fileUrl?.download_url}
               alt="" // Event graphic is always accompanied by event name which will already be read out
             />
