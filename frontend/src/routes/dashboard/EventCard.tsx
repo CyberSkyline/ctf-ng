@@ -20,7 +20,7 @@ export default function EventCard({ event }: { event: Event }) {
     <Card asChild>
       <Link to={`/events/${event.id}`}>
         <Flex direction="row" gap="4">
-          <Inset side="left" className="empty:hidden">
+          <Inset side="left" className="empty:hidden shrink-0">
             <EventGraphic event={event} className="w-32 shadow !rounded-none" />
           </Inset>
           <Flex direction="column" gap="2" className="flex-grow" justify="between">
