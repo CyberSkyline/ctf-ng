@@ -3,6 +3,7 @@ User Routes for Feedback Operations
 """
 
 from flask_restx import Namespace, Resource
+from flask import request
 
 from ...core.middleware.loaders import (
     LoaderType,
@@ -10,7 +11,8 @@ from ...core.middleware.loaders import (
     load_challenge,
 )
 from ...core.utils import success_response
-from ...core.middleware import user_endpoint
+from ...core.middleware import max_content_length, user_endpoint
+from ...config import CHALLENGE_FEEDBACK_MAX_LENGTH
 
 from ...user.models.User import User
 from ..controllers import (
@@ -49,6 +51,7 @@ class EventFeedback(Resource):
         )
         return success_response(feedback)
 
+    @max_content_length(CHALLENGE_FEEDBACK_MAX_LENGTH)
     @user_endpoint(json_required = True)
     @load_event(source = LoaderType.PARAM)
     @feedback_user_namespace.doc(
@@ -113,6 +116,7 @@ class ChallengeFeedback(Resource):
         )
         return success_response(feedback)
 
+    @max_content_length(CHALLENGE_FEEDBACK_MAX_LENGTH)
     @user_endpoint(json_required = True)
     @load_event(source = LoaderType.PARAM)
     @load_challenge(source = LoaderType.PARAM)

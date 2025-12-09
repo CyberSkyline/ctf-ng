@@ -36,6 +36,9 @@ S3_TICKET_ATTACHMENTS_PREFIX = "support-tickets"
 TICKET_ATTACHMENT_USER_DOWNLOAD_PATH = "/ng/support/me/attachments"
 TICKET_ATTACHMENT_ADMIN_DOWNLOAD_PATH = "/ng/admin/support/attachments"
 
+# Feedback Size Limits (checked against Content-Length header)
+CHALLENGE_FEEDBACK_MAX_LENGTH = 8192
+
 # Public file upload configuration
 PUBLIC_FILE_ALLOWED_FOLDERS = {
     'sponsor-logos': ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'],

@@ -12,6 +12,12 @@ const items = Array(10).fill(null).map((_, i) => (
   <SegmentedControl.Item key={String(i)} value={String(i + 1)}>{i + 1}</SegmentedControl.Item>
 ));
 
+/**
+ * Character limit for textarea fields.
+ * Should be safely below content length restriction assuming all text fields are at max.
+ */
+const CHAR_LIMIT = 2000;
+
 export default function FeedbackModal({ eventId, challengeId }: {eventId: number; challengeId: number}) {
   const { data : currentFeedback, error } = useMyChallengeFeedback(eventId, challengeId);
 
@@ -38,7 +44,7 @@ export default function FeedbackModal({ eventId, challengeId }: {eventId: number
       defaultValues={currentFeedback?.feedback_data || {}}
     >
       {({
-        register, control, formState : { errors },
+        register, control, watch, formState : { errors },
       }) => (
         <>
           {error && (<ErrorCallout>{error.message}</ErrorCallout>)}
@@ -92,6 +98,7 @@ export default function FeedbackModal({ eventId, challengeId }: {eventId: number
 
           <FormField
             label="What did you like about this challenge?"
+            rightLabel={String(CHAR_LIMIT - watch('what_liked', '').length)}
             error={errors.what_liked}
           >
             {(injected) => (
@@ -100,6 +107,7 @@ export default function FeedbackModal({ eventId, challengeId }: {eventId: number
                 rows={3}
                 {...register('what_liked', {
                   required : 'Please provide feedback',
+                  maxLength : { value : CHAR_LIMIT, message : `Feedback may not exceed ${CHAR_LIMIT} characters` },
                 })}
                 {...injected}
               />
@@ -107,6 +115,7 @@ export default function FeedbackModal({ eventId, challengeId }: {eventId: number
           </FormField>
           <FormField
             label="How would you improve this challenge?"
+            rightLabel={String(CHAR_LIMIT - watch('how_to_improve', '').length)}
             error={errors.how_to_improve}
           >
             {(injected) => (
@@ -115,6 +124,7 @@ export default function FeedbackModal({ eventId, challengeId }: {eventId: number
                 rows={3}
                 {...register('how_to_improve', {
                   required : 'Please provide feedback',
+                  maxLength : { value : CHAR_LIMIT, message : `Feedback may not exceed ${CHAR_LIMIT} characters` },
                 })}
                 {...injected}
               />

@@ -14,6 +14,7 @@ from .auth import (
 )
 from .ownership_middleware import check_ownership
 from .attachment_permission import check_attachment_ownership
+from .max_content_length import max_content_length
 
 __all__ = [
     # Core Decorators
@@ -24,4 +25,5 @@ __all__ = [
     "public_endpoint",
     "check_ownership",
     "check_attachment_ownership",
+    "max_content_length"
 ]
