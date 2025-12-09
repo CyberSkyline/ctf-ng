@@ -14,8 +14,6 @@ from sqlalchemy_utils import create_database, database_exists, drop_database
 if "SCRIPT" not in os.environ:
     raise OSError("This should only be run from a script. DO NOT run this manually.")
 
-if "LOAD_TEST" not in os.environ:
-    raise OSError("LOAD_TEST environment variable not set. Absorting...")
 
 DEFAULT_ADMIN_EMAIL = "admin@examplectf.com"
 DEFAULT_ADMIN_PASSWORD = "ctfng_password"
