@@ -69,7 +69,7 @@ class FileUploadURL(Resource):
 
 @fileuploads_namespace.route('/list')
 class FileList(Resource):
-    @admin_endpoint()
+    @public_endpoint()
     @fileuploads_namespace.doc(
         description='List all files in a specified public folder',
         params={
