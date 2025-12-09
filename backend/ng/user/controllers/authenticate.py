@@ -39,7 +39,7 @@ def okta_login():
         prompt="login consent"
     )
     session["oauth_state"] = state
-    
+
     return redirect(authorization_url)
 
 def okta_callback():
@@ -52,7 +52,7 @@ def okta_callback():
     code = None
 
     error_msg = None
-    
+
     if 'oauth_state' not in session:
         error_msg = "No OAuth state found in session"
 
@@ -77,7 +77,7 @@ def okta_callback():
             "request_args": dict(request.args)
         }
         print(f"OAuth Error: {error_msg} - Debug: {debug_info}")
-        
+
         return {
             "error": "Authentication failed. Please try again.",
             "debug": debug_info
@@ -129,14 +129,14 @@ def okta_callback():
 
         # ctfd_user.last_login = datetime.datetime.now(datetime.UTC)
         ctfd_user.email = email
-        
+
         # Clear session and set up new authenticated session
         session.clear()
         session['id'] = ctfd_user.id
         session['nonce'] = generate_nonce()
         session['hash'] = hmac(ctfd_user.password)
         session.permanent = True
-            
+
         clear_user_session(user_id=ctfd_user.id)
 
         db.session.commit()
@@ -147,7 +147,7 @@ def okta_callback():
 
         import traceback
         traceback.print_exc()
-        
+
         print(f"AuthenticationError during OAuth: {str(e)}")
 
         return {
@@ -174,7 +174,7 @@ def okta_callback():
 
         import traceback
         traceback.print_exc()
-        
+
         print(f"Unexpected error during OAuth at stage '{failure_stage}': {str(e)}")
         print(f"Debug info - Email: {email}, OAuth ID: {oauth_id}, Code: {code}")
 
