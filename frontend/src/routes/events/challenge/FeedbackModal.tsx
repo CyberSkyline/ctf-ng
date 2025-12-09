@@ -104,7 +104,7 @@ export default function FeedbackModal({ eventId, challengeId }: {eventId: number
             {(injected) => (
               <TextArea
                 className="w-full"
-                rows={3}
+                rows={5}
                 {...register('what_liked', {
                   required : 'Please provide feedback',
                   maxLength : { value : CHAR_LIMIT, message : `Feedback may not exceed ${CHAR_LIMIT} characters` },
@@ -121,7 +121,7 @@ export default function FeedbackModal({ eventId, challengeId }: {eventId: number
             {(injected) => (
               <TextArea
                 className="w-full"
-                rows={3}
+                rows={5}
                 {...register('how_to_improve', {
                   required : 'Please provide feedback',
                   maxLength : { value : CHAR_LIMIT, message : `Feedback may not exceed ${CHAR_LIMIT} characters` },
