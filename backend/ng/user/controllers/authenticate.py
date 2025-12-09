@@ -130,19 +130,12 @@ def okta_callback():
         # ctfd_user.last_login = datetime.datetime.now(datetime.UTC)
         ctfd_user.email = email
         
-        # Preserve OAuth state temporarily during session clearing
-        oauth_state_backup = session.get('oauth_state')
+        # Clear session and set up new authenticated session
         session.clear()
-
         session['id'] = ctfd_user.id
         session['nonce'] = generate_nonce()
         session['hash'] = hmac(ctfd_user.password)
         session.permanent = True
-        
-        # Clean up OAuth state after successful authentication
-        if oauth_state_backup:
-            # OAuth flow completed successfully, state no longer needed
-            pass
             
         clear_user_session(user_id=ctfd_user.id)
 
