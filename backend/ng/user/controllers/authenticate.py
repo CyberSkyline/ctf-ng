@@ -39,6 +39,11 @@ def okta_login():
         prompt="login consent"
     )
     session["oauth_state"] = state
+    session.permanent = True  # Ensure session persists across requests
+    
+    # Debug logging for OAuth state initialization
+    print(f"OAuth Login: State={state[:8]}..., Session Keys={list(session.keys())}")
+    
     return redirect(authorization_url)
 
 def okta_callback():
@@ -51,8 +56,10 @@ def okta_callback():
     code = None
 
     error_msg = None
+    
+    # Enhanced session state validation
     if 'oauth_state' not in session:
-        error_msg = "No OAuth state found in session - possible session timeout"
+        error_msg = "No OAuth state found in session - possible session timeout or load balancer issue"
 
     if 'error' in request.args:
         error_msg = f"Okta returned error: {request.args.get('error')}"
@@ -63,10 +70,21 @@ def okta_callback():
     if not code:
         error_msg = "No authorization code found in callback URL"
 
+    # Validate state parameter matches session state if both exist
+    state_param = request.args.get('state')
+    session_state = session.get('oauth_state')
+    if state_param and session_state and state_param != session_state:
+        error_msg = "OAuth state parameter mismatch - possible CSRF attack or session issue"
+
     if (error_msg):
         raise AuthenticationError(error_msg, context={
             "request_args": dict(request.args),
-            "has_session_state": 'oauth_state' in session
+            "has_session_state": 'oauth_state' in session,
+            "session_state": session_state,
+            "request_state": state_param,
+            "session_keys": list(session.keys()),
+            "session_permanent": session.permanent,
+            "user_agent": request.headers.get('User-Agent', 'Unknown')
         })
 
     try:
@@ -121,12 +139,21 @@ def okta_callback():
 
         # ctfd_user.last_login = datetime.datetime.now(datetime.UTC)
         ctfd_user.email = email
+        
+        # Preserve OAuth state temporarily during session clearing
+        oauth_state_backup = session.get('oauth_state')
         session.clear()
 
         session['id'] = ctfd_user.id
         session['nonce'] = generate_nonce()
         session['hash'] = hmac(ctfd_user.password)
         session.permanent = True
+        
+        # Clean up OAuth state after successful authentication
+        if oauth_state_backup:
+            # OAuth flow completed successfully, state no longer needed
+            pass
+            
         clear_user_session(user_id=ctfd_user.id)
 
         db.session.commit()
