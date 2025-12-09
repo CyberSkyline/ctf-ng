@@ -313,6 +313,7 @@ export interface ChallengeVariable {
 export interface Feedback {
   id: number;
   user_id: number;
+  user_name: string;
   event_id: number;
   challenge_id: number;
   feedback_data: Record<string, unknown>;
