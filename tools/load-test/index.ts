@@ -6,6 +6,9 @@ import { make_user, User } from './model/user.ts';
 import { DefaultHttpUserScenario } from './scenarios/default_http_user.ts';
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost';
+const STAGE_ONE_DURATION = __ENV.STAGE_ONE_DURATION || '5s';
+const STAGE_TWO_DURATION = __ENV.STAGE_TWO_DURATION || '10s';
+const STAGE_THREE_DURATION = __ENV.STAGE_THREE_DURATION || '5s';
 const STAGE_ONE_VUS = Number(__ENV.STAGE_ONE_VUS) || 2;
 const STAGE_TWO_VUS = Number(__ENV.STAGE_TWO_VUS) || 5;
 const STAGE_THREE_VUS = Number(__ENV.STAGE_THREE_VUS) || 10;
@@ -29,14 +32,15 @@ const defaultUsers: User[] = new SharedArray('defaultUsers', function () {
 });
 
 export const options = {
+  insecureSkipTLSVerify: true,
   scenarios: {
     defaultHttpUser: {
       executor: 'ramping-vus',
       startVUs: 1,
       stages: [
-        { duration: '5s', target: STAGE_ONE_VUS }, // ramp to STAGE_ONE_VUS
-        { duration: '10s', target: STAGE_TWO_VUS },  // ramp to STAGE_TWO_VUS
-        { duration: '5s', target: STAGE_THREE_VUS },   // ramp to STAGE_THREE_VUS
+        { duration: STAGE_ONE_DURATION, target: STAGE_ONE_VUS }, // ramp to STAGE_ONE_VUS
+        { duration: STAGE_TWO_DURATION, target: STAGE_TWO_VUS },  // ramp to STAGE_TWO_VUS
+        { duration: STAGE_THREE_DURATION, target: STAGE_THREE_VUS },   // ramp to STAGE_THREE_VUS
       ],
       gracefulRampDown: '30s',
       exec: 'defaultHttpUser',

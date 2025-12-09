@@ -3,6 +3,9 @@ services:
     network_mode: "host"
     environment:
       BASE_URL: "http://localhost"
+      STAGE_ONE_DURATION: "5s"
+      STAGE_TWO_DURATION: "10s"
+      STAGE_THREE_DURATION: "5s"
       STAGE_ONE_VUS: 2
       STAGE_TWO_VUS: 5
       STAGE_THREE_VUS: 2
