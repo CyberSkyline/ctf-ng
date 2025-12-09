@@ -39,10 +39,6 @@ def okta_login():
         prompt="login consent"
     )
     session["oauth_state"] = state
-    session.permanent = True  # Ensure session persists across requests
-    
-    # Debug logging for OAuth state initialization
-    print(f"OAuth Login: State={state[:8]}..., Session Keys={list(session.keys())}")
     
     return redirect(authorization_url)
 
@@ -74,22 +70,20 @@ def okta_callback():
     state_param = request.args.get('state')
     session_state = session.get('oauth_state')
     if state_param and session_state and state_param != session_state:
-        error_msg = "OAuth state parameter mismatch - possible CSRF attack or session issue"
+        error_msg = "OAuth state parameter mismatch"
 
     if (error_msg):
         debug_info = {
             "session_keys_count": len(session.keys()),
             "session_keys": list(session.keys()),
             "has_oauth_state": 'oauth_state' in session,
-            "session_state_preview": session_state[:8] + "..." if session_state else None,
-            "request_state_preview": state_param[:8] + "..." if state_param else None,
             "session_permanent": session.permanent,
-            "user_agent": request.headers.get('User-Agent', 'Unknown')[:100],
-            "referer": request.headers.get('Referer', 'Unknown'),
             "request_args": dict(request.args)
         }
-        detailed_error = f"{error_msg} - Debug: {debug_info}"
-        raise AuthenticationError(detailed_error)
+        print(f"OAuth Error: {error_msg} - Debug: {debug_info}")
+        
+        login_url = f"{SERVER_DOMAIN}{ROUTE_PREFIX}?error=auth_failed&message=Authentication failed. Please try again."
+        return redirect(login_url)
 
     try:
         # Parse Okta data
@@ -162,21 +156,11 @@ def okta_callback():
 
         import traceback
         traceback.print_exc()
+        
+        print(f"AuthenticationError during OAuth: {str(e)}")
 
-        return {
-            "error": str(e),
-            "debug": {
-                "error_type": "AuthenticationError",
-                "session_keys": list(session.keys()),
-                "has_oauth_state": 'oauth_state' in session,
-                "session_permanent": session.permanent,
-                "oauth_state_preview": session.get('oauth_state', '')[:8] + "..." if session.get('oauth_state') else None,
-                "request_method": request.method,
-                "request_path": request.path,
-                "request_args": dict(request.args),
-                "user_agent": request.headers.get('User-Agent', 'Unknown')[:100]
-            }
-        }, 400
+        login_url = f"{SERVER_DOMAIN}{ROUTE_PREFIX}?error=auth_failed&message=Authentication failed. Please try logging in again."
+        return redirect(login_url)
     except Exception as e:
         db.session.rollback()
 
@@ -194,19 +178,11 @@ def okta_callback():
 
         import traceback
         traceback.print_exc()
+        
+        print(f"Unexpected error during OAuth at stage '{failure_stage}': {str(e)}")
+        print(f"Debug info - Email: {email}, OAuth ID: {oauth_id}, Code: {code}")
 
-        return {
-            "error": f"Authentication failed: {str(e)}",
-            "debug": {
-                "failure_stage": failure_stage,
-                "email": email,
-                "oauth_id": oauth_id,
-                "name": name,
-                "auth_code": code,
-                "ng_user_id": ng_user.id if ng_user else None,
-                "ctfd_user_id": ctfd_user.id if ctfd_user else None,
-                "ctfd_user_email": ctfd_user.email if ctfd_user else None
-            }
-        }, 400
+        login_url = f"{SERVER_DOMAIN}{ROUTE_PREFIX}?error=server_error&message=Something went wrong during login. Please try again."
+        return redirect(login_url)
     finally:
         db.session.close()
