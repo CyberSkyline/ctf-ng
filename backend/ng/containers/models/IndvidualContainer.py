@@ -96,7 +96,7 @@ class IndvidualContainer(db.Model):
             cap_add=[
                 "NET_ADMIN",
                 "SYS_PTRACE",
-            ]
+            ],
             mem_limit=NOVNC_RAM,
             cpu_period=200000,
             cpu_quota=100000,
