@@ -39,6 +39,7 @@ def okta_login():
         prompt="login consent"
     )
     session["oauth_state"] = state
+
     return redirect(authorization_url)
 
 def okta_callback():
@@ -51,8 +52,9 @@ def okta_callback():
     code = None
 
     error_msg = None
+
     if 'oauth_state' not in session:
-        error_msg = "No OAuth state found in session - possible session timeout"
+        error_msg = "No OAuth state found in session"
 
     if 'error' in request.args:
         error_msg = f"Okta returned error: {request.args.get('error')}"
@@ -63,11 +65,23 @@ def okta_callback():
     if not code:
         error_msg = "No authorization code found in callback URL"
 
+    # Validate state parameter matches session state if both exist
+    state_param = request.args.get('state')
+    session_state = session.get('oauth_state')
+    if state_param and session_state and state_param != session_state:
+        error_msg = "OAuth state parameter mismatch"
+
     if (error_msg):
-        raise AuthenticationError(error_msg, context={
-            "request_args": dict(request.args),
-            "has_session_state": 'oauth_state' in session
-        })
+        debug_info = {
+            "has_oauth_state": 'oauth_state' in session,
+            "request_args": dict(request.args)
+        }
+        print(f"OAuth Error: {error_msg} - Debug: {debug_info}")
+
+        return {
+            "error": "Authentication failed. Please try again.",
+            "debug": debug_info
+        }, 400
 
     try:
         # Parse Okta data
@@ -90,16 +104,10 @@ def okta_callback():
         name = user_data.get("name", "N/A")
         oauth_id = user_data.get("sub")
         if not email:
-            raise AuthenticationError("No email found in user info response", context={
-                "user_data": user_data,
-                "oauth_id": oauth_id
-            })
+            raise AuthenticationError(f"No email found in user info response. OAuth ID: {oauth_id}")
 
         if not oauth_id:
-            raise AuthenticationError("No oauth id in user info response", context={
-                "user_data": user_data,
-                "email": email
-            })
+            raise AuthenticationError(f"No oauth id in user info response. Email: {email}")
 
         # Check for existing user
         ng_user = NG_User.query.filter_by(oauth_id=oauth_id).first()
@@ -121,12 +129,14 @@ def okta_callback():
 
         # ctfd_user.last_login = datetime.datetime.now(datetime.UTC)
         ctfd_user.email = email
-        session.clear()
 
+        # Clear session and set up new authenticated session
+        session.clear()
         session['id'] = ctfd_user.id
         session['nonce'] = generate_nonce()
         session['hash'] = hmac(ctfd_user.password)
         session.permanent = True
+
         clear_user_session(user_id=ctfd_user.id)
 
         db.session.commit()
@@ -138,9 +148,14 @@ def okta_callback():
         import traceback
         traceback.print_exc()
 
+        print(f"AuthenticationError during OAuth: {str(e)}")
+
         return {
-            "error": str(e),
-            "debug": e.context if hasattr(e, 'context') else {}
+            "error": "Authentication failed. Please try logging in again.",
+            "debug": {
+                "error_type": "AuthenticationError",
+                "message": str(e)
+            }
         }, 400
     except Exception as e:
         db.session.rollback()
@@ -160,18 +175,17 @@ def okta_callback():
         import traceback
         traceback.print_exc()
 
+        print(f"Unexpected error during OAuth at stage '{failure_stage}': {str(e)}")
+        print(f"Debug info - Email: {email}, OAuth ID: {oauth_id}, Code: {code}")
+
         return {
-            "error": f"Authentication failed: {str(e)}",
+            "error": "Something went wrong during login. Please try again.",
             "debug": {
                 "failure_stage": failure_stage,
                 "email": email,
                 "oauth_id": oauth_id,
-                "name": name,
-                "auth_code": code,
-                "ng_user_id": ng_user.id if ng_user else None,
-                "ctfd_user_id": ctfd_user.id if ctfd_user else None,
-                "ctfd_user_email": ctfd_user.email if ctfd_user else None
+                "code": code
             }
-        }, 400
+        }, 500
     finally:
         db.session.close()
