@@ -78,6 +78,8 @@ class IndvidualContainer(db.Model):
     def run_container(client, container_name):
         NOVNC_CONTAINER = get_app_config("NOVNC_CONTAINER")
 
+        NOVNC_RAM = get_app_config("NOVNC_RAM", "4g")
+
         ulimit = docker.types.Ulimit(name="nofile", soft=10000, hard=20000)
 
         net = client.get_network_by_name(container_name)
@@ -95,7 +97,7 @@ class IndvidualContainer(db.Model):
                 "NET_ADMIN",
                 "SYS_PTRACE",
             ]
-            mem_limit="4g",
+            mem_limit=NOVNC_RAM,
             cpu_period=200000,
             cpu_quota=100000,
             pids_limit=2000,
