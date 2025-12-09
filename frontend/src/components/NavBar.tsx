@@ -150,8 +150,6 @@ export default function NavBar() {
               </NavigationMenu.Trigger>
               <NavigationMenu.Content
                 className={contentBase}
-                onPointerEnter={(event) => event.preventDefault()}
-                onPointerLeave={(event) => event.preventDefault()}
               >
                 <ul className="grid gap-2">
                   <li>

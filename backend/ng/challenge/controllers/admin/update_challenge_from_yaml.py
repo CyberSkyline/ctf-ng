@@ -156,6 +156,7 @@ def update_challenge_from_yaml(challenge: Challenge, payload: str) -> Challenge:
                 existing_blueprint.entrypoint = service_data.entrypoint
                 existing_blueprint.environment = partial_environment(service_data.environment, challenge, db_variable_questions)
                 existing_blueprint.networks = service_data.networks
+                existing_blueprint.netconfs = compose_file.networks
                 existing_blueprint.cap_add = service_data.cap_add
                 existing_blueprint.mem_limit = service_data.mem_limit
                 existing_blueprint.memswap_limit = service_data.memswap_limit
@@ -173,6 +174,7 @@ def update_challenge_from_yaml(challenge: Challenge, payload: str) -> Challenge:
                     entrypoint=service_data.entrypoint,
                     environment=partial_environment(service_data.environment, challenge, db_variable_questions),
                     networks=service_data.networks,
+                    netconfs=compose_file.networks,
                     cap_add=service_data.cap_add,
                     mem_limit=service_data.mem_limit,
                     memswap_limit=service_data.memswap_limit,

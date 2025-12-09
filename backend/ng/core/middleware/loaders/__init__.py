@@ -1,4 +1,5 @@
 from ._util import LoaderType
+from .load_attempt import load_attempt
 from .load_challenge import load_challenge
 from .load_event import load_event
 from .load_hint import load_hint
@@ -19,6 +20,7 @@ from .load_announcement import load_announcement
 
 __all__ = [
     "LoaderType",
+    "load_attempt",
     "load_challenge",
     "load_event",
     "load_hint",

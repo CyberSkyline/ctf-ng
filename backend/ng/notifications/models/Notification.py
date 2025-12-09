@@ -39,6 +39,7 @@ class SerializedNotification(TypedDict):
     read_at: str | None
     created_at: str
     expires_at: str | None
+    link: NotRequired[str | None]
     # Optional reference fields
     ticket_id: NotRequired[int | None]
     team_id: NotRequired[int | None]
@@ -203,6 +204,9 @@ class Notification(db.Model):
             data["event_name"] = self.event.name
         if self.challenge_id and self.challenge:
             data["challenge_name"] = self.challenge.name
+
+        from ..services.notification_service import generate_notification_link
+        data["link"] = generate_notification_link(self)
 
         return SerializedNotification(**data)
 

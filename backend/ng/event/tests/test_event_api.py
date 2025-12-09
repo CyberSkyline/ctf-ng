@@ -773,6 +773,40 @@ class Test_Event_Team_Lookup:
         data = response.get_json()
         assert data["success"] is False
 
+    def test_get_team_by_invite_code(
+        self,
+        logged_in_client,
+        user,
+        event_factory,
+        team_factory
+    ):
+        event = event_factory(name = "Event for Team Lookup by Invite Code", public = True)
+        team = team_factory(event = event, members = [user])
+
+        response = logged_in_client.get(
+            f"/ng/events/{event.id}/team/{team.invite_code}",
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"] == team.serialize()
+
+    def test_get_team_by_invalid_invite_code(
+        self,
+        logged_in_client,
+        event_factory
+    ):
+        event = event_factory(name = "Event for Invalid Invite Code Lookup", public = True)
+
+        response = logged_in_client.get(
+            f"/ng/events/{event.id}/team/INVALIDCODE",
+        )
+
+        assert response.status_code == 404
+        data = response.get_json()
+        assert data["success"] is False
+
 
 class Test_Event_TeamMember_Lookup:
     def get_endpoint(self, event_id: int) -> str:
@@ -856,7 +890,7 @@ class Test_Event_Team_Management:
         """Test that the team promote endpoint fails when trying to promote self."""
         response = team_captain_client.post(
             f"/ng/events/{1}/me/team/promote",
-            json = {"user_id": 2}
+            json = {"user_id": 1}
         )
         assert response.status_code == 400
         data = response.get_json()
@@ -909,7 +943,7 @@ class Test_Event_Team_Management:
         """Test that the team kick endpoint fails when trying to kick self."""
         response = team_captain_client.post(
             f"/ng/events/{1}/me/team/kick",
-            json = {"user_id": 2}
+            json = {"user_id": 1}
         )
         assert response.status_code == 400
         data = response.get_json()

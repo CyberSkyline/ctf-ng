@@ -1,12 +1,12 @@
-import { SegmentedControl, TextField } from '@radix-ui/themes';
-import FormField from 'components/FormField';
-import FormDropdown from 'components/SelectDropdown';
-import { useState } from 'react';
 import { useFileList, useFileUrl } from '@/hooks/fileuploads';
 import type { Sponsor } from '@/types';
-import { chain } from 'lodash';
-import type { UseFormReturn } from 'react-hook-form';
+import { Box, SegmentedControl, TextField } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
+import FormField from 'components/FormField';
+import FormDropdown from 'components/SelectDropdown';
+import { chain } from 'lodash';
+import { useState } from 'react';
+import type { UseFormReturn } from 'react-hook-form';
 import NewLogoDropzone from './NewLogoDropzone';
 
 export default function SponsorDataForm({
@@ -64,7 +64,11 @@ export default function SponsorDataForm({
             placeholder="Select a logo..."
             value=""
           />
-          {imagePreview && <img src={imagePreview.url} alt={imagePreview.filename} />}
+          {imagePreview && (
+            <Box maxHeight="256px" maxWidth="256px">
+              <img src={imagePreview.download_url} alt={imagePreview.filename} />
+            </Box>
+          )}
         </>
       ) : (
         <NewLogoDropzone setValue={setValue} />

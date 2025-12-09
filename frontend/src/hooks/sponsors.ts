@@ -14,16 +14,6 @@ export function useSponsorById(id: number | null) {
 
 /* ADMIN ENDPOINTS */
 
-export function useAdminSponsors() {
-  return useSWR<Sponsor[], Error>('/admin/sponsors');
-}
-
-export function useAdminSponsorById(id: number | null) {
-  return useSWR<Sponsor, Error>(
-    id ? `/admin/sponsors/${id}` : null,
-  );
-}
-
 export function createSponsor(formData: {
   name: string,
   logo?: string,

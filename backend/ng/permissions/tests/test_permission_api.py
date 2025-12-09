@@ -78,6 +78,18 @@ def test_update_user_roles(admin_client, user_with_roles):
     assert data["success"]
     assert "admin" in data["data"]["roles"]
 
+def test_update_user_single_role(admin_client, user_with_roles):
+    """
+    Check that updating with a single role works correctly
+    """
+    response = admin_client.put(f"/ng/admin/permissions/{user_with_roles.id}/roles", json={
+        "roles": ["admin"]
+    })
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"]
+    assert "admin" in data["data"]["roles"]
+
 def test_update_user_roles_invalid_role(admin_client, user_with_roles):
     """Check that we cannot update roles for a specific user with an invalid role."""
     response = admin_client.put(f"/ng/admin/permissions/{user_with_roles.id}/roles", json={

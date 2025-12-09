@@ -6,7 +6,7 @@ import { ErrorCallout } from './Callouts';
 
 export default function EventGraphic({ event, className }: {event: Event, className ?: string}) {
   // aspect ratio for event card graphics
-  const RATIO = 1 / 1.446015424;
+  const RATIO = 2 / 3;
 
   const { data : fileUrl, error : fileUrlError, isLoading } = useFileUrl('event-cards', event.image ?? undefined);
 
@@ -22,7 +22,7 @@ export default function EventGraphic({ event, className }: {event: Event, classN
         <AspectRatio ratio={RATIO}>
           {fileUrl?.download_url && (
             <img
-              className="object-contain h-full w-full"
+              className="object-cover h-full w-full overflow-visible"
               src={fileUrl?.download_url}
               alt="" // Event graphic is always accompanied by event name which will already be read out
             />

@@ -2,16 +2,19 @@ import { useEventStatus, useMyEligibility } from '@/hooks/events';
 import { useMySponsor, useRegistration } from '@/hooks/users';
 import type { Event } from '@/types';
 import {
+  Box,
   Card,
   Flex,
   Link as RadixLink,
   Text,
 } from '@radix-ui/themes';
-import { Link } from 'react-router';
 import { ErrorCallout, WarningCallout } from 'components/Callouts';
 import RequireEventPermission from 'components/RequireEventPermission';
 import Statistic from 'components/Statistic';
+import Timer from 'components/Timer';
 import { isNil } from 'lodash';
+import { Link } from 'react-router';
+import { mutate } from 'swr';
 import LeaveTeamModal from './LeaveTeamModal';
 import RegistrationModal from './RegistrationModal';
 import RenameTeamModal from './RenameTeamModal';
@@ -50,6 +53,20 @@ export default function RegistrationCard({ event }: {event: Event}) {
             value={`${team!.name}`}
             size="6"
           />
+          {team?.end_time && (
+            <Box>
+              <Text color="gray" size="2">Time remaining:</Text>
+              <Timer
+                target={team.end_time}
+                onEnd={() => {
+                  // Refresh SWR state on timer end
+                  mutate(`/permissions/${event.id}/me`);
+                  mutate(`/events/${event.id}/me/team`);
+                  mutate(`/users/me/teams`);
+                }}
+              />
+            </Box>
+          )}
           <Flex direction="row" gap="4" align="center" className="empty:!hidden">
             <RequireEventPermission eventId={event.id} permission="CAN_LEAVE_TEAM" permissionDeniedPlaceholder={null}>
               <LeaveTeamModal event={event} />

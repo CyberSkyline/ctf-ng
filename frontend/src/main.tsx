@@ -9,6 +9,7 @@ import { SWRConfig } from 'swr';
 
 import { ROUTEPREFIX } from '@/constants';
 import { apiFetcher } from '@/fetchers';
+import Favicon from 'components/Favicon';
 import Routes from './Routes';
 import './grid';
 import './index.css';
@@ -30,6 +31,7 @@ createRoot(document.getElementById('root')!).render(
           <SWRConfig
             value={{ fetcher : apiFetcher }}
           >
+            <Favicon />
             <NavBar />
             <Routes />
             <FooterBar />

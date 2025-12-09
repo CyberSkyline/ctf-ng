@@ -12,6 +12,7 @@ from .all_actions import (
 )
 from .admin_actions import (
     award_manual_points,
+    delete_attempt,
     get_score_history,
     get_team_attempts,
     get_team_hint_redemptions,
@@ -21,6 +22,7 @@ from .admin_actions import (
 
 __all__ = [
     "award_manual_points",
+    "delete_attempt",
     "get_score_history",
     "get_team_attempts",
     "get_team_hint_redemptions",
