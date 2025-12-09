@@ -74,16 +74,15 @@ def okta_callback():
 
     if (error_msg):
         debug_info = {
-            "session_keys_count": len(session.keys()),
-            "session_keys": list(session.keys()),
             "has_oauth_state": 'oauth_state' in session,
-            "session_permanent": session.permanent,
             "request_args": dict(request.args)
         }
         print(f"OAuth Error: {error_msg} - Debug: {debug_info}")
         
-        login_url = f"{SERVER_DOMAIN}{ROUTE_PREFIX}?error=auth_failed&message=Authentication failed. Please try again."
-        return redirect(login_url)
+        return {
+            "error": "Authentication failed. Please try again.",
+            "debug": debug_info
+        }, 400
 
     try:
         # Parse Okta data
@@ -159,8 +158,13 @@ def okta_callback():
         
         print(f"AuthenticationError during OAuth: {str(e)}")
 
-        login_url = f"{SERVER_DOMAIN}{ROUTE_PREFIX}?error=auth_failed&message=Authentication failed. Please try logging in again."
-        return redirect(login_url)
+        return {
+            "error": "Authentication failed. Please try logging in again.",
+            "debug": {
+                "error_type": "AuthenticationError",
+                "message": str(e)
+            }
+        }, 400
     except Exception as e:
         db.session.rollback()
 
@@ -182,7 +186,14 @@ def okta_callback():
         print(f"Unexpected error during OAuth at stage '{failure_stage}': {str(e)}")
         print(f"Debug info - Email: {email}, OAuth ID: {oauth_id}, Code: {code}")
 
-        login_url = f"{SERVER_DOMAIN}{ROUTE_PREFIX}?error=server_error&message=Something went wrong during login. Please try again."
-        return redirect(login_url)
+        return {
+            "error": "Something went wrong during login. Please try again.",
+            "debug": {
+                "failure_stage": failure_stage,
+                "email": email,
+                "oauth_id": oauth_id,
+                "code": code
+            }
+        }, 500
     finally:
         db.session.close()
