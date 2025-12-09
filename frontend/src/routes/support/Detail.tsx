@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { addNewTicketMessage, resolveMyTicket, useMyTicketMessages } from '@/hooks/support';
+import { useCurrentUser } from '@/hooks/users';
 import {
   Box,
   Button,
@@ -6,19 +7,18 @@ import {
   Container,
   Flex,
   Heading,
+  Section,
   Separator,
   Text,
-  Section,
 } from '@radix-ui/themes';
-import { StatusBadge } from 'components/StatusBadge';
 import { ErrorCallout } from 'components/Callouts';
+import RichTextEditor from 'components/RichTextEditor';
+import { StatusBadge } from 'components/StatusBadge';
+import TicketMessagesCard from 'components/TicketMessagesCard';
+import { isNil, isUndefined } from 'lodash';
+import { useState } from 'react';
 import { TbArrowLeft } from 'react-icons/tb';
 import { useNavigate, useParams } from 'react-router';
-import { isNil, isUndefined } from 'lodash';
-import RichTextEditor from 'components/RichTextEditor';
-import { useMyTicketMessages, addNewTicketMessage, resolveMyTicket } from '@/hooks/support';
-import TicketMessagesCard from 'components/TicketMessagesCard';
-import { useCurrentUser } from '@/hooks/users';
 
 export default function Detail() {
   const navigate = useNavigate();
@@ -116,6 +116,7 @@ export default function Detail() {
           <Flex gap="2" direction="column">
             <RichTextEditor
               initialValue={newText}
+              fileUploadPath={`/support/me/tickets/${idTicket}/upload`}
               onChange={setNewText}
               version={version}
             />

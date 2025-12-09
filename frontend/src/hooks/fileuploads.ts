@@ -32,3 +32,17 @@ export function directUpload(formData: FormData) {
     },
   );
 }
+
+/*
+  Upload a file to an existing support ticket
+*/
+export function ticketAttachmentUpload(uploadPath : string, file : File) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return fileApiMutation(uploadPath, formData, {
+    method : 'POST',
+  }).then(
+    (data) => data as UploadedFile,
+  );
+}

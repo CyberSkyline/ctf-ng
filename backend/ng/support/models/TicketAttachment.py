@@ -5,12 +5,14 @@ Defines the TicketAttachment model
 from __future__ import annotations
 
 from typing import Any, TypedDict
+
 from CTFd.models import db
 
 from ... import config
 from ...core.models.FileUpload import FileUpload
 from ...core.utils import utc_now
 from ...core.utils.validator import BaseValidator
+
 
 class SerializedTicketAttachment(TypedDict):
     id: int
@@ -91,11 +93,7 @@ class TicketAttachment(db.Model):
         if not self.file_upload:
             raise ValueError("FileUpload not loaded for TicketAttachment")
 
-        download_path = (
-            config.TICKET_ATTACHMENT_ADMIN_DOWNLOAD_PATH
-            if include_admin_fields
-            else config.TICKET_ATTACHMENT_USER_DOWNLOAD_PATH
-        )
+        download_path = config.TICKET_ATTACHMENT_DOWNLOAD_PATH
 
         data = {
             "id": self.id,

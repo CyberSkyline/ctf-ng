@@ -459,6 +459,7 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
       <Flex gap="2" direction="column">
         <RichTextEditor
           initialValue={newText}
+          fileUploadPath={`/admin/support/tickets/${ticketId}/upload`}
           onChange={setNewText}
           version={version}
         />
