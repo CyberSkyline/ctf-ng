@@ -39,9 +39,9 @@ services:
     mem_limit: "256m"
     cpus: "0.5"
     networks:
-      - "challenge-net"
+      - "competitor_net"
 
 networks:
-  challenge-net:
+  competitor_net:
     # Required: Internal-only network
     internal: true

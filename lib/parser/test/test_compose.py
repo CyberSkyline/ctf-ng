@@ -59,7 +59,8 @@ class TestComposeFile:
         
         networks = {
             ComposeResourceName("frontend"): Network(internal=True),
-            ComposeResourceName("backend"): Network(internal=True)
+            ComposeResourceName("backend"): Network(internal=True),
+            ComposeResourceName("competitor_net"): Network(internal=True)
         }
         
         compose = ComposeFile(
@@ -70,7 +71,7 @@ class TestComposeFile:
         
         assert len(compose.services) == 2
         assert compose.networks is not None
-        assert len(compose.networks) == 2
+        assert len(compose.networks) == 3
         assert compose.challenge.name == "Full Test"
 
 class TestComposeNameValidation:
