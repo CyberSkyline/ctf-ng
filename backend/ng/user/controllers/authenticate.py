@@ -53,9 +53,8 @@ def okta_callback():
 
     error_msg = None
     
-    # Enhanced session state validation
     if 'oauth_state' not in session:
-        error_msg = "No OAuth state found in session - possible session timeout or load balancer issue"
+        error_msg = "No OAuth state found in session"
 
     if 'error' in request.args:
         error_msg = f"Okta returned error: {request.args.get('error')}"
