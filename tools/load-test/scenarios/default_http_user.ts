@@ -2,40 +2,6 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { User } from "../model/user.ts";
 
-// visit challenge
-
-
-// start challenge
-
-// solve challenge
-
-// Submit challenge
-
-// challenge flow
-
-// leaderboard flow
-
-// join team
-
-// leave team
-
-// change captain
-
-// remove player
-
-// add player
-
-// team flow
-
-// create ticket
-
-// comment on ticket
-
-// resolve ticket
-
-// Logout
-
-// user flow
 export class DefaultHttpUserScenario {
     
     user: User;
