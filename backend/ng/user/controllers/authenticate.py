@@ -77,15 +77,19 @@ def okta_callback():
         error_msg = "OAuth state parameter mismatch - possible CSRF attack or session issue"
 
     if (error_msg):
-        raise AuthenticationError(error_msg, context={
-            "request_args": dict(request.args),
-            "has_session_state": 'oauth_state' in session,
-            "session_state": session_state,
-            "request_state": state_param,
+        debug_info = {
+            "session_keys_count": len(session.keys()),
             "session_keys": list(session.keys()),
+            "has_oauth_state": 'oauth_state' in session,
+            "session_state_preview": session_state[:8] + "..." if session_state else None,
+            "request_state_preview": state_param[:8] + "..." if state_param else None,
             "session_permanent": session.permanent,
-            "user_agent": request.headers.get('User-Agent', 'Unknown')
-        })
+            "user_agent": request.headers.get('User-Agent', 'Unknown')[:100],
+            "referer": request.headers.get('Referer', 'Unknown'),
+            "request_args": dict(request.args)
+        }
+        detailed_error = f"{error_msg} - Debug: {debug_info}"
+        raise AuthenticationError(detailed_error)
 
     try:
         # Parse Okta data
@@ -108,16 +112,10 @@ def okta_callback():
         name = user_data.get("name", "N/A")
         oauth_id = user_data.get("sub")
         if not email:
-            raise AuthenticationError("No email found in user info response", context={
-                "user_data": user_data,
-                "oauth_id": oauth_id
-            })
+            raise AuthenticationError(f"No email found in user info response. OAuth ID: {oauth_id}")
 
         if not oauth_id:
-            raise AuthenticationError("No oauth id in user info response", context={
-                "user_data": user_data,
-                "email": email
-            })
+            raise AuthenticationError(f"No oauth id in user info response. Email: {email}")
 
         # Check for existing user
         ng_user = NG_User.query.filter_by(oauth_id=oauth_id).first()
@@ -167,7 +165,17 @@ def okta_callback():
 
         return {
             "error": str(e),
-            "debug": e.context if hasattr(e, 'context') else {}
+            "debug": {
+                "error_type": "AuthenticationError",
+                "session_keys": list(session.keys()),
+                "has_oauth_state": 'oauth_state' in session,
+                "session_permanent": session.permanent,
+                "oauth_state_preview": session.get('oauth_state', '')[:8] + "..." if session.get('oauth_state') else None,
+                "request_method": request.method,
+                "request_path": request.path,
+                "request_args": dict(request.args),
+                "user_agent": request.headers.get('User-Agent', 'Unknown')[:100]
+            }
         }, 400
     except Exception as e:
         db.session.rollback()
