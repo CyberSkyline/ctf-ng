@@ -26,6 +26,7 @@
     "update-user-password": ".bin/update_user_password.sh $1",
     "setup-ctfd": ".bin/default_ctfd_setup.sh",
     "populate-data": ".bin/populate_data.sh",
+    "populate-load-test": ".bin/populate_load_test.sh",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
     "build": "cd ./frontend && vite build",

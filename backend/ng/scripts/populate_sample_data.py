@@ -2,7 +2,7 @@
 
 import os
 
-from CTFd import create_app
+from CTFd import create_app, CTFdFlask
 from CTFd.cache import cache
 from CTFd.config import Config
 from CTFd.models import Users, db
@@ -13,6 +13,7 @@ from sqlalchemy_utils import create_database, database_exists, drop_database
 
 if "SCRIPT" not in os.environ:
     raise OSError("This should only be run from a script. DO NOT run this manually.")
+
 
 DEFAULT_ADMIN_EMAIL = "admin@examplectf.com"
 DEFAULT_ADMIN_PASSWORD = "ctfng_password"
@@ -28,7 +29,7 @@ if database_exists(database_url):
 create_database(database_url)
 
 # Now create the app - it won't try to create tables in an existing database
-app = create_app()
+app: CTFdFlask = create_app()
 
 with app.app_context():
     # Clear cache
@@ -75,6 +76,8 @@ with app.app_context():
 
     initial_admin_setup(admin_user=ng_admin_user)
 
+
+app.logger.info("Inserting sample data...")
 # Insert sample data
 with app.app_context():
     try:
