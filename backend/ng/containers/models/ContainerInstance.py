@@ -57,7 +57,21 @@ class ContainerInstance(db.Model):
         if db_exists:
             try:
                 ctr = client.get_running(db_exists.dockerid)
+
+            ## Container Needs created
             except docker.errors.NotFound:
+                ctr = cls.run_container(client, team, blueprint_obj)
+                cls.connect_networks(client, team, blueprint_obj, ctr)
+
+                db_exists.dockerid = ctr.id
+                db.session.commit()
+
+            ## Container won't start
+            ## Edge case of entry point getting nuked or something
+            except docker.errors.APIError:
+                tmp_ctr = client.containers.get(db_exists.dockerid)
+                tmp_ctr.remove(force=True)
+
                 ctr = cls.run_container(client, team, blueprint_obj)
                 cls.connect_networks(client, team, blueprint_obj, ctr)
 
@@ -74,11 +88,26 @@ class ContainerInstance(db.Model):
 
         ## Container Needs created
         except docker.errors.NotFound:
-            ## Need To detach or it will hang
-            ## (TODO) add in env vars and what not
             ctr = cls.run_container(client, team, blueprint_obj)
 
-        cls.connect_networks(client, team, blueprint_obj, ctr)
+        ## Container won't start
+        ## Edge case of entry point getting nuked or something
+        except docker.errors.APIError:
+            tmp_ctr = client.containers.get(
+                cls.render_container_name(team.id, blueprint_obj.name, blueprint_obj.challenge_id)
+             )
+            tmp_ctr.remove(force=True)
+
+            ctr = cls.run_container(client, team, blueprint_obj)
+
+        try:
+            cls.connect_networks(client, team, blueprint_obj, ctr)
+
+        except Exception as err:
+            # Remove on network fail
+            ctr.remove(force=True)
+            raise err
+
 
         container_instance = cls(
             blueprint=blueprint,

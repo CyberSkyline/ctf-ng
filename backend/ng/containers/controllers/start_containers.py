@@ -17,23 +17,24 @@ def start_containers(challenge_id: int, team_id: int, current_user: User) -> boo
     networks = []
     try:
         for blueprint in blueprints:
-            ctrs.append(ContainerInstance.create_container_instance(blueprint.id, team, commit=False))
+            ## Networks should get appened first to ensure they get properly
+            ## cleaned up
             if blueprint.networks:
                 networks.extend(blueprint.networks)
+            ctrs.append(ContainerInstance.create_container_instance(blueprint.id, team, commit=False))
 
     except Exception as err:
+        DOCKER_HOST = get_app_config("DOCKER_HOST")
+        client = get_client(DOCKER_HOST)
         for ctr in ctrs:
             ctr.remove()
-        print(networks)
-        for net in networks:
-            DOCKER_HOST = get_app_config("DOCKER_HOST")
-            client = get_client(DOCKER_HOST)
+        for net in set(networks):
             net_obj = client.get_network_by_name(ContainerInstance.render_network_name(team_id, net, challenge_id))
             if net_obj:
                 net_obj.remove()
 
         db.session.rollback()
-        raise BusinessLogicError(f"Challenge failed to start, please contact support {str(err)}") from err
+        raise BusinessLogicError(f"Challenge failed to start, please contact support: {str(err)}") from err
 
     db.session.commit()
 
