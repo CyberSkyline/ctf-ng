@@ -106,7 +106,6 @@ export default function FeedbackModal({ eventId, challengeId }: {eventId: number
                 className="w-full"
                 rows={5}
                 {...register('what_liked', {
-                  required : 'Please provide feedback',
                   maxLength : { value : CHAR_LIMIT, message : `Feedback may not exceed ${CHAR_LIMIT} characters` },
                 })}
                 {...injected}
@@ -123,7 +122,6 @@ export default function FeedbackModal({ eventId, challengeId }: {eventId: number
                 className="w-full"
                 rows={5}
                 {...register('how_to_improve', {
-                  required : 'Please provide feedback',
                   maxLength : { value : CHAR_LIMIT, message : `Feedback may not exceed ${CHAR_LIMIT} characters` },
                 })}
                 {...injected}
