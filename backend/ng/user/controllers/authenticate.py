@@ -9,8 +9,8 @@ from CTFd.utils.security.signing import hmac
 from flask import redirect, request, session
 from requests_oauthlib import OAuth2Session
 
-from ..models.User import User as NG_User
 from ...core.exceptions import AuthenticationError
+from ..models.User import User as NG_User
 
 OKTA_CLIENT_ID = os.getenv("OKTA_CLIENT_ID")
 OKTA_CLIENT_SECRET = os.getenv("OKTA_CLIENT_SECRET")
@@ -128,7 +128,7 @@ def okta_callback():
             ctfd_user = User.query.filter_by(id=ng_user.id).first()
 
         # ctfd_user.last_login = datetime.datetime.now(datetime.UTC)
-        ctfd_user.email = email
+        # ctfd_user.email = email
 
         # Clear session and set up new authenticated session
         session.clear()
