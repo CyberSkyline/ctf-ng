@@ -573,3 +573,48 @@ class TestUserFeedbackEndpoints:
         assert data["data"][0]["user_id"] == user3.id
         assert data["data"][1]["user_id"] == user2.id
         assert data["data"][2]["user_id"] == user1.id
+
+    def test_submit_feedback_string_too_long(self, logged_in_client, event):
+        """
+        Test that submitting feedback with string exceeding max length fails
+        """
+        long_string = "A" * 5001
+
+        response = logged_in_client.post(
+            f"/ng/events/{event.id}/feedback",
+            json = {"feedback_data": {"comments": long_string}},
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        assert "5000" in str(data["errors"])
+
+    def test_update_feedback_string_too_long(
+        self,
+        logged_in_client,
+        user,
+        event,
+        feedback_factory
+    ):
+        """
+        Test that updating feedback with string exceeding max length fails
+        """
+        feedback_factory(
+            user_id = user.id,
+            event_id = event.id,
+            challenge_id = None,
+            feedback_data = {"rating": 3},
+        )
+
+        long_string = "A" * 5001
+
+        response = logged_in_client.post(
+            f"/ng/events/{event.id}/feedback",
+            json = {"feedback_data": {"comments": long_string}},
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        assert "5000" in str(data["errors"])

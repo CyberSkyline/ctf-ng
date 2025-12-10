@@ -11,6 +11,8 @@ from sqlalchemy import JSON
 
 from ...core.utils import utc_now
 from ...core.utils.validator import BaseValidator
+from ...core.exceptions import ValidationError
+from ... import config
 
 
 class SerializedFeedback(TypedDict):
@@ -89,6 +91,34 @@ class Feedback(db.Model):
         }
 
     @classmethod
+    def _validate_feedback_data(cls, feedback_data: dict[str, Any]) -> None:
+        """
+        Validate the dynamic feedback_data JSON object.
+        Enforces limits on keys, key lengths, and string value lengths.
+        """
+        if len(feedback_data) > config.FEEDBACK_MAX_KEYS:
+            raise ValidationError(
+                f"Feedback data cannot have more than {config.FEEDBACK_MAX_KEYS} fields",
+                errors={"feedback_data": f"Too many fields (max {config.FEEDBACK_MAX_KEYS})"}
+            )
+
+        errors = {}
+        for key, value in feedback_data.items():
+            if len(key) > config.FEEDBACK_MAX_KEY_LENGTH:
+                errors[key] = f"Field name cannot exceed {config.FEEDBACK_MAX_KEY_LENGTH} characters"
+                continue
+
+            if isinstance(value, str) and len(value) > config.FEEDBACK_MAX_STRING_LENGTH:
+                errors[key] = f"Value cannot exceed {config.FEEDBACK_MAX_STRING_LENGTH} characters"
+            elif isinstance(value, list):
+                for i, item in enumerate(value):
+                    if isinstance(item, str) and len(item) > config.FEEDBACK_MAX_STRING_LENGTH:
+                        errors[f"{key}[{i}]"] = f"Value cannot exceed {config.FEEDBACK_MAX_STRING_LENGTH} characters"
+
+        if errors:
+            raise ValidationError("Feedback data validation failed", errors=errors)
+
+    @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
         """
         Validate feedback data
@@ -110,6 +140,8 @@ class Feedback(db.Model):
                              ] = "Feedback data must be a valid object"
 
         validated_data = validator.validate()
+
+        cls._validate_feedback_data(data.get("feedback_data", {}))
         validated_data["feedback_data"] = data.get("feedback_data", {})
 
         return validated_data
@@ -158,6 +190,8 @@ class Feedback(db.Model):
     ) -> None:
         if not isinstance(feedback_data, dict):
             raise ValueError("Feedback data must be a dictionary")
+
+        self._validate_feedback_data(feedback_data)
 
         self.feedback_data = feedback_data
         self.updated_at = utc_now()
