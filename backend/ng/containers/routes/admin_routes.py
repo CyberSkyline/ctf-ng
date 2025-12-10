@@ -4,6 +4,7 @@ from ...challenge.utils import generate_seed
 from ...challenge.models import Challenge
 from ..controllers.get_stats import get_stats
 from ..controllers.admin_exec import admin_exec
+from ..controllers.pull_vnc import pull_vnc
 from ..models.ContainerInstance import ContainerInstance
 
 from ...core.middleware import (
@@ -175,8 +176,23 @@ class InstanceExec(Resource):
             400: "Bad request"
         },
     )
-    def get(self):
+    @admin_endpoint()
+    def get(self, **kwargs):
         # Container id has to be a header because nginx was not rendering
         # the int variable in the url
         container_instance_id = int(request.headers.get('container-id'))
         return admin_exec(container_instance_id)
+
+@admin_container_namespace.route("/vnc/pull")
+class PullVnc(Resource):
+    @admin_container_namespace.doc(
+        description="Pull vnc container image onto docker host",
+        responses={
+            200: "Success",
+            400: "Bad request"
+        },
+    )
+    @admin_endpoint()
+    def post(self, current_user):
+        pull_vnc(current_user.id)
+        return success_response(True)

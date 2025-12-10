@@ -1,14 +1,47 @@
 import { radixTheme } from '@/grid';
 import { useLeaderboard } from '@/hooks/events';
-import { Container, Flex, Spinner } from '@radix-ui/themes';
-import { AgGridReact } from 'ag-grid-react';
+import {
+  Container,
+  Flex,
+  Spinner,
+  Tooltip,
+} from '@radix-ui/themes';
+import { AgGridReact, type CustomCellRendererProps } from 'ag-grid-react';
 import { ErrorCallout, WarningCallout } from 'components/Callouts';
 import { useParams } from 'react-router';
+import { map, keyBy } from 'lodash';
+import type { UploadedFile, Score, Sponsor } from '@/types';
+import { useFileList } from '@/hooks/fileuploads';
+import { TbInfoCircle } from 'react-icons/tb';
 import TeamPerformance from './TeamPerformance';
+
+function SponsorCell({ sponsors, lookup }: {sponsors: Sponsor[], lookup: Record<string, UploadedFile>}) {
+  return (
+    <Flex gap="1" className="pt-px">
+      {map(sponsors, ({ logo, name, id }) => {
+        let url;
+        if (logo) {
+          url = lookup[logo]?.download_url;
+        }
+
+        return (
+          <Tooltip content={name} key={id}>
+            {url
+              ? <img src={url} alt="" className="h-9 w-9 object-cover" />
+              : <TbInfoCircle key={id} className="h-9 w-9 object-cover" />}
+          </Tooltip>
+        );
+      })}
+    </Flex>
+  );
+}
 
 export default function LeaderboardTab() {
   const { idEvent } = useParams();
   const { data : leaderboard, error : leaderboardError } = useLeaderboard(Number(idEvent));
+  const { data : logoList } = useFileList('sponsor-logos', true);
+  const files = logoList?.files ?? [];
+  const lookup = keyBy(files.filter((f: UploadedFile) => f.filename), 'filename');
 
   return (
     <Container size="4">
@@ -27,13 +60,22 @@ export default function LeaderboardTab() {
             columnDefs={[
               {
                 headerName : '#',
-                valueGetter : (params) => (params.node?.rowIndex != null ? params.node.rowIndex + 1 : ''),
+                valueGetter : (params: CustomCellRendererProps<Score>) => (params.node?.rowIndex != null ? params.node.rowIndex + 1 : ''),
                 width : 80,
               },
               {
                 headerName : 'Team',
                 field : 'team_name',
                 flex : 1,
+              },
+              {
+                headerName : 'Sponsors',
+                flex : 1,
+                cellRenderer : SponsorCell,
+                cellRendererParams : (params: CustomCellRendererProps<Score>) => ({
+                  sponsors : params.data.sponsors,
+                  lookup,
+                }),
               },
               {
                 headerName : 'Score',

@@ -76,9 +76,24 @@ export function submitFlag(
     submission : flag,
   }, {
     method : 'POST',
-  }).then(() => {
+  }).then((att) => {
     // refresh the challenge data after submitting a flag
-    mutate(`/events/${eventId}/challenges/${challengeId}`);
+    mutate(
+      `/events/${eventId}/challenges/${challengeId}`,
+      (data: undefined | {
+        challenge: Challenge;
+        questions: Question[];
+        hints: Hint[];
+        attempts: Attempt[];
+      }) => {
+        if (!data) return data;
+        return {
+          ...data,
+          attempts : [ ...data.attempts, att as Attempt ],
+        };
+      },
+      false,
+    );
   });
 }
 

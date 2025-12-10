@@ -30,7 +30,7 @@ import ipaddress
 from typing import Any
 from cyber_skyline.chall_parser.compose.answer import Answer, AnswerTestCase
 from cyber_skyline.chall_parser.template import Template
-from collections.abc import Callable
+from collections.abc import Callable, Container
 
 
 logger = logging.getLogger(__name__)
@@ -49,6 +49,20 @@ def is_ipv4(instance, attribute, value: str) -> None:
         ipaddress.IPv4Address(value)
     except ipaddress.AddressValueError as e:
         raise ValueError(f"Value '{value}' for {attribute.name} is not a valid IPv4 address") from e
+
+def contains[TValue](value: TValue) -> Callable[[Any, Any, Container[TValue]], None]:
+    """Validator to ensure a container contains a specific value.
+    
+    Args:
+        value: The value that must be present in the container
+        
+    Returns:
+        A validator function
+    """
+    def validate(instance, attribute, container: Container[TValue]):
+        if value not in container:
+            raise ValueError(f"Container for {attribute.name} must contain value: {value}")
+    return validate
 
 def is_ipv4_cidr(instance, attribute, value: str) -> None:
     """Validator to ensure a string is a valid IPv4 CIDR notation.

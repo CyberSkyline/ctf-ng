@@ -6,8 +6,10 @@ from CTFd import create_app
 from CTFd.cache import cache
 from CTFd.config import Config
 from CTFd.models import db
+from CTFd.models import (
+    Admins
+)
 from sqlalchemy_utils import create_database, database_exists, drop_database
-from tests.helpers import setup_ctfd
 
 
 if "SCRIPT" not in os.environ:
@@ -24,7 +26,7 @@ if database_exists(database_url):
     drop_database(database_url)
 
 # Recreate the database
-create_database(database_url)
+create_database(database_url, encoding="utf8mb4")
 
 # Now create the app - it won't try to create tables in an existing database
 app = create_app()
@@ -39,17 +41,19 @@ with app.app_context():
     # Commit the changes
     db.session.commit()
 
-    # Perform the default setup
-    app = setup_ctfd(
-        app,
-        ctf_name="CTFd",
-        ctf_description="CTF description",
+    admin = Admins(
         name="admin",
         email=DEFAULT_ADMIN_EMAIL,
         password=DEFAULT_ADMIN_PASSWORD,
-        user_mode="users",
-        ctf_theme=None,
+        type="admin",
+        hidden=True,
     )
+    try:
+        db.session.add(admin)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
 
 with app.app_context():
     # Import plugin modules after app initialization

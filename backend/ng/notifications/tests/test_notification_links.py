@@ -105,11 +105,13 @@ class TestNotificationLinkGeneration:
 
     def test_notification_without_recipient_returns_none(
         self,
-        ticket_factory
+        ticket_factory,
+        user_factory
     ):
         """
         Test that notification without recipient returns None for link
         """
+        user_factory()
         ticket = ticket_factory()
         notification = Notification(
             type=NotificationType.TICKET_MESSAGE,

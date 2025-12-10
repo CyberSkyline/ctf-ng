@@ -13,8 +13,8 @@ export function useFileUrl(folder: string, filename?: string) {
 /*
   Gets a list of all files in a specific folder
 */
-export function useFileList(folder: string) {
-  return useSWR<{files: UploadedFile[]}>(`/fileuploads/list?folder=${folder}`);
+export function useFileList(folder: string, includeUrls?: boolean) {
+  return useSWR<{files: UploadedFile[]}>(`/fileuploads/list?folder=${folder}&include_urls=${includeUrls || false}`);
 }
 
 /*

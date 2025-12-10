@@ -214,6 +214,30 @@ class EventTeam(Resource):
         """
         return success_response(team)
 
+@events_user_namespace.route("/<int:event_id>/team/<string:invite_code>")
+class EventTeamCode(Resource):
+    @user_endpoint()
+    @load_event(source = LoaderType.PARAM)
+    @events_user_namespace.doc(
+        description="Get a teams data from a join code",
+        responses={
+            200: "Success",
+            404: "Not Found if join code is invalid",
+            400: "Bad Request if invite code is missing",
+        },
+    )
+    def get(self, event_id: int, invite_code: str, **kwargs):
+        """
+        Get team by join code
+        """
+        if not invite_code:
+            return error_response("Invite code is required.", "validation", 400)
+        team = Team.find_by_invite_code(invite_code)
+        if not team:
+            return error_response("Invalid invite code.", "not_found", 404)
+        return success_response(team)
+
+
 
 @events_user_namespace.route("/<int:event_id>/me/team/members")
 class EventTeamMembers(Resource):
