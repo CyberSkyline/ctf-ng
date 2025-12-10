@@ -31,7 +31,7 @@ services:
     image: nginx:latest
     hostname: web-server
     networks:
-      - boop
+      - competitor_net
 networks:
-  boop:
+  competitor_net:
     internal: true
