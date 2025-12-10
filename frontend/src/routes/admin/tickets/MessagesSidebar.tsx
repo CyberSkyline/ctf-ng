@@ -45,17 +45,24 @@ import {
   map,
   without,
 } from 'lodash';
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { TbMessage, TbX } from 'react-icons/tb';
 
 export default function MessagesSidebar({ entity : selectedRow }: { entity: AdminTicket }) {
   // Dropdowns
   const [ actionError, setActionError ] = useState<string | null>(null);
   const [ actionLoading, setActionLoading ] = useState<boolean>(false);
-  const [ assignedUser, setAssignedUser ] = useState<string>(String(selectedRow.assigned_to));
-  const [ selectedEvent, setSelectedEvent ] = useState<string | undefined>(String(selectedRow.event_id));
-  const [ selectedChallenge, setSelectedChallenge ] = useState<string | undefined>(String(selectedRow.challenge_id));
+  const [ assignedUser, setAssignedUser ] = useState<string>(selectedRow.assigned_to ? String(selectedRow.assigned_to) : '');
+  const [ selectedEvent, setSelectedEvent ] = useState<string | undefined>(selectedRow.event_id ? String(selectedRow.event_id) : '');
+  const [ selectedChallenge, setSelectedChallenge ] = useState<string | undefined>(selectedRow.challenge_id ? String(selectedRow.challenge_id) : '');
   const [ selectedTag, setSelectedTag ] = useState<string | undefined>('');
+
+  useEffect(() => {
+    setAssignedUser(selectedRow.assigned_to ? String(selectedRow.assigned_to) : '');
+    setSelectedEvent(selectedRow.event_id ? String(selectedRow.event_id) : '');
+    setSelectedChallenge(selectedRow.challenge_id ? String(selectedRow.challenge_id) : '');
+    setSelectedTag('');
+  }, [selectedRow.id]);
 
   // Rich Text Reply Messages
   const [ version, setVersion ] = useState<number>(0); // To reinit the RichTextEditor
