@@ -106,7 +106,7 @@ export class DefaultHttpUserScenario {
             return false;
         }
 
-        return eventIds.includes(eventNumber);
+        return eventIds.includes(eventNumber) || eventIds.includes((eventNumber).toString());
     }
 
     register_event() {
