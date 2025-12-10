@@ -6,10 +6,13 @@ import Modal from 'components/Modal';
 import { useState } from 'react';
 import { TbCheck, TbPlayerPlay, TbRotateClockwise } from 'react-icons/tb';
 
-export default function ConnectModal({ eventId, challengeId, isTeam }: {
+export default function ConnectModal({
+  eventId, challengeId, isTeam, onError,
+}: {
   eventId: number;
   challengeId: number;
   isTeam: boolean;
+  onError?: (error: Error | undefined) => void;
 }) {
   const {
     data : currentChallenge, isValidating, error,
@@ -18,16 +21,20 @@ export default function ConnectModal({ eventId, challengeId, isTeam }: {
 
   const handleConnect = async () => {
     setLoading(true);
+    onError?.(undefined);
     return connectWorkspace(eventId, challengeId).finally(() => {
       setLoading(false);
     });
   };
 
-  const handleReset = async () => recycleChallengeContainers(eventId, challengeId);
+  const handleReset = async () => {
+    onError?.(undefined);
+    return recycleChallengeContainers(eventId, challengeId);
+  };
 
   if (error) {
     // if we can't get the current challenge, show an error where the button would otherwise go
-    return <ErrorCallout>{error.message}</ErrorCallout>;
+    return <ErrorCallout>{error}</ErrorCallout>;
   }
 
   if (currentChallenge === challengeId) {
@@ -57,7 +64,16 @@ export default function ConnectModal({ eventId, challengeId, isTeam }: {
   if (currentChallenge === null) {
     // If the workspace isn't connected to anything, don't require confirmation
     return (
-      <Button onClick={handleConnect} loading={loading || isValidating} color={COLOR_POSITIVE} className="pulsate">
+      <Button
+        // For starting without modal, pass errors to the parent for display
+        onClick={
+            () => handleConnect()
+              .catch(onError)
+        }
+        loading={loading || isValidating}
+        color={COLOR_POSITIVE}
+        className="pulsate"
+      >
         <TbPlayerPlay />
         Start Challenge
       </Button>
