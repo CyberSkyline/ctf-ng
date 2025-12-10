@@ -8,18 +8,45 @@ with redirect_stdout(sys.stderr):
     from CTFd import create_app, CTFdFlask
     from CTFd.models import Users, db
     from CTFd.plugins.ng.user.models.User import User as NgUser  # type: ignore
+    from CTFd.plugins.ng.event.models.Event import Event  # type: ignore
     from CTFd.plugins.ng.permissions.controllers.assign_role_to_user import assign_role_to_user # type: ignore
+    from CTFd.plugins.ng.challenge.controllers.admin.import_challenge_from_yaml import (  # type: ignore
+        import_challenge_from_yaml,  # type: ignore
+    )
     from CTFd.plugins.ng.permissions.models.enums import RoleEnum # type: ignore
     import secrets
     import json
+    import os
 
 
     # Now create the app - it won't try to create tables in an existing database
     app: CTFdFlask = create_app()
 
     with app.app_context():
+
+        event = Event.create_event(
+            name="CTFd Load Testing Event",
+            description="A CTF open to all teams",
+            max_team_size=1,
+            public=True,
+            registration_open=True,
+            commit=True,
+        )
+
+            # Import sample challenge from default yaml
+        with open(os.path.join(os.path.dirname(__file__), "../challenge/tests/yamls/default.yaml"), "rb") as f:
+            yaml = f.read()
+
+        challenge = import_challenge_from_yaml(event=event, payload=yaml)
+
         # Create load testing users
-        users = {"users": [], "admins": []}
+        users = {
+            "event_id": event.id,
+            "challenge_id": challenge.id,
+            "question_id": challenge.questions[0].id if challenge.questions else None,
+            "users": [], 
+            "admins": []
+        }
 
         for i in range(0, 500):
             app.logger.info(f"Creating load testing user {i}")

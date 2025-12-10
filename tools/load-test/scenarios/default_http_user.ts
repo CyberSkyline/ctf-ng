@@ -6,13 +6,19 @@ export class DefaultHttpUserScenario {
     
     user: User;
     params: http.Params;
+    eventId: number; // Add eventId property
+    challengeId: number; // Add challengeId property
+    questionId: number; // Add questionId property
 
-    constructor(user: User) {
+    constructor(user: User, eventId: number, challengeId: number, questionId: number) {
         this.user = user;
         this.params = {
             headers: {},
             cookies: {},
         };
+        this.eventId = eventId; // Store eventId
+        this.challengeId = challengeId; // Store challengeId
+        this.questionId = questionId; // Store questionId
     }
 
     url(path: string): string {
@@ -84,7 +90,7 @@ export class DefaultHttpUserScenario {
         });
         check(sponsorRes, { "select sponsor status equals 200": (r) => r.status === 200 });
         check(sponsorRes, { "select sponsor success": (r) => r.json('success') === true });
-        check(sponsorRes, { "select sponsor correct sponsor": (r) => r.json('data.name') === "sample sponsor" });
+        check(sponsorRes, { "select sponsor correct sponsor": (r) => r.json('data.name') === "Administrative Office of the United States Courts" });
     }
 
     dashboard() {
@@ -103,20 +109,20 @@ export class DefaultHttpUserScenario {
         return eventIds.includes(eventNumber);
     }
 
-    register_event(eventNumber: number) {
-        if (this.is_registered(eventNumber)) {
+    register_event() {
+        if (this.is_registered(this.eventId)) {
             return;
         }
-        const resBeforeRegister = this.get(`/events/${eventNumber}`);
-        check(resBeforeRegister, { [`event ${eventNumber} status before register equals 200`]: (r) => r.status === 200 });
+        const resBeforeRegister = this.get(`/events/${this.eventId}`);
+        check(resBeforeRegister, { [`event ${this.eventId} status before register equals 200`]: (r) => r.status === 200 });
 
-        const registerRes = this.post(`/ng/events/${eventNumber}/me/register`, {
+        const registerRes = this.post(`/ng/events/${this.eventId}/me/register`, {
             team_name: `lt${this.user.id}_team`,
         });
-        check(registerRes, { [`event ${eventNumber} register status equals 201`]: (r) => r.status === 201 });
+        check(registerRes, { [`event ${this.eventId} register status equals 201`]: (r) => r.status === 201 });
 
-        const resAfterRegister = this.get(`/events/${eventNumber}`);
-        check(resAfterRegister, { [`event ${eventNumber} status after register equals 200`]: (r) => r.status === 200 });
+        const resAfterRegister = this.get(`/events/${this.eventId}`);
+        check(resAfterRegister, { [`event ${this.eventId} status after register equals 200`]: (r) => r.status === 200 });
     }
 
     is_event_started(eventNumber: number): boolean {
@@ -128,19 +134,19 @@ export class DefaultHttpUserScenario {
         return startTimestamp !== null && startTimestamp !== undefined && startTimestamp !== '';
     }
 
-    start_event(eventNumber: number) {
-        if (this.is_event_started(eventNumber)) {
-            console.log(`Event ${eventNumber} has already started.`);
+    start_event() {
+        if (this.is_event_started(this.eventId)) {
+            console.log(`Event ${this.eventId} has already started.`);
             return;
         }
-        const resBeforeStart = this.get(`/events/${eventNumber}`);
-        check(resBeforeStart, { [`event ${eventNumber} status before start equals 200`]: (r) => r.status === 200 });
+        const resBeforeStart = this.get(`/events/${this.eventId}`);
+        check(resBeforeStart, { [`event ${this.eventId} status before start equals 200`]: (r) => r.status === 200 });
 
-        const startRes = this.post(`/ng/events/${eventNumber}/me/team/start`, {});
-        check(startRes, { [`event ${eventNumber} start status equals 200`]: (r) => r.status === 200 });
+        const startRes = this.post(`/ng/events/${this.eventId}/me/team/start`, {});
+        check(startRes, { [`event ${this.eventId} start status equals 200`]: (r) => r.status === 200 });
 
-        const resAfterStart = this.get(`/events/${eventNumber}`);
-        check(resAfterStart, { [`event ${eventNumber} status after start equals 200`]: (r) => r.status === 200 });
+        const resAfterStart = this.get(`/events/${this.eventId}`);
+        check(resAfterStart, { [`event ${this.eventId} status after start equals 200`]: (r) => r.status === 200 });
     }
 
     is_challenge_started(challengeNumber: number): boolean {
@@ -151,52 +157,52 @@ export class DefaultHttpUserScenario {
         return res.json('data') === challengeNumber;
     }
 
-    start_basic_challenge(eventNumber: number, challengeNumber: number) {
-        if (this.is_challenge_started(challengeNumber)) {
+    start_basic_challenge() {
+        if (this.is_challenge_started(this.challengeId)) {
             return;
         }
-        const resBeforeStart = this.get(`/events/${eventNumber}/challenge/${challengeNumber}`);
-        check(resBeforeStart, { [`event ${eventNumber} challenge ${challengeNumber} status before start equals 200`]: (r) => r.status === 200 });
+        const resBeforeStart = this.get(`/events/${this.eventId}/challenge/${this.challengeId}`);
+        check(resBeforeStart, { [`event ${this.eventId} challenge ${this.challengeId} status before start equals 200`]: (r) => r.status === 200 });
 
-        const startRes = this.post(`/ng/events/${eventNumber}/challenge/${challengeNumber}/containers`, {});
-        check(startRes, { [`event ${eventNumber} challenge ${challengeNumber} start status equals 200`]: (r) => r.status === 200 });
+        const startRes = this.post(`/ng/events/${this.eventId}/challenge/${this.challengeId}/containers`, {});
+        check(startRes, { [`event ${this.eventId} challenge ${this.challengeId} start status equals 200`]: (r) => r.status === 200 });
 
-        const resAfterStart = this.get(`/events/${eventNumber}/challenge/${challengeNumber}`);
-        check(resAfterStart, { [`event ${eventNumber} challenge ${challengeNumber} status after start equals 200`]: (r) => r.status === 200 });
+        const resAfterStart = this.get(`/events/${this.eventId}/challenge/${this.challengeId}`);
+        check(resAfterStart, { [`event ${this.eventId} challenge ${this.challengeId} status after start equals 200`]: (r) => r.status === 200 });
     }
 
-    answer_basic_challenge(eventNumber: number, challengeNumber: number, questionNumber: number, correct: boolean) {
+    answer_basic_challenge(correct: boolean) {
         if (correct) {
-            const answerRes = this.post(`/ng/events/${eventNumber}/challenges/${challengeNumber}/questions/${questionNumber}/submit`, {
+            const answerRes = this.post(`/ng/events/${this.eventId}/challenges/${this.challengeId}/questions/${this.questionId}/submit`, {
                 submission: 'CTF{test_flag}	'
             });
-            check(answerRes, { [`event ${eventNumber} challenge ${challengeNumber} question ${questionNumber} correct answer status equals 201`]: (r) => r.status === 201 });
-            check(answerRes, { [`event ${eventNumber} challenge ${challengeNumber} question ${questionNumber} correct answer accepted`]: (r) => r.json('data.is_correct') === true });
+            check(answerRes, { [`event ${this.eventId} challenge ${this.challengeId} question ${this.questionId} correct answer status equals 201`]: (r) => r.status === 201 });
+            check(answerRes, { [`event ${this.eventId} challenge ${this.challengeId} question ${this.questionId} correct answer accepted`]: (r) => r.json('data.is_correct') === true });
         } else {
-            const answerRes = this.post(`/ng/events/${eventNumber}/challenges/${challengeNumber}/questions/${questionNumber}/submit`, {
+            const answerRes = this.post(`/ng/events/${this.eventId}/challenges/${this.challengeId}/questions/${this.questionId}/submit`, {
                 submission: 'wrong_flag'
             });
-            check(answerRes, { [`event ${eventNumber} challenge ${challengeNumber} question ${questionNumber} incorrect answer status equals 201`]: (r) => r.status === 201 });
-            check(answerRes, { [`event ${eventNumber} challenge ${challengeNumber} question ${questionNumber} incorrect answer rejected`]: (r) => r.json('data.is_correct') === false });
+            check(answerRes, { [`event ${this.eventId} challenge ${this.challengeId} question ${this.questionId} incorrect answer status equals 201`]: (r) => r.status === 201 });
+            check(answerRes, { [`event ${this.eventId} challenge ${this.challengeId} question ${this.questionId} incorrect answer rejected`]: (r) => r.json('data.is_correct') === false });
         }
     }
 
-    reset_basic_challenge(eventNumber: number, challengeNumber: number) {
-        const resetRes = this.post(`/ng/events/${eventNumber}/challenge/${challengeNumber}/containers/recycle`, {});
-        check(resetRes, { [`event ${eventNumber} challenge ${challengeNumber} reset status equals 200`]: (r) => r.status === 200 });
-        check(resetRes, { [`event ${eventNumber} challenge ${challengeNumber} reset success`]: (r) => r.json('success') === true });
-        check(resetRes, { [`event ${eventNumber} challenge ${challengeNumber} reset new container id`]: (r) => r.json('data') === true });
+    reset_basic_challenge() {
+        const resetRes = this.post(`/ng/events/${this.eventId}/challenge/${this.challengeId}/containers/recycle`, {});
+        check(resetRes, { [`event ${this.eventId} challenge ${this.challengeId} reset status equals 200`]: (r) => r.status === 200 });
+        check(resetRes, { [`event ${this.eventId} challenge ${this.challengeId} reset success`]: (r) => r.json('success') === true });
+        check(resetRes, { [`event ${this.eventId} challenge ${this.challengeId} reset new container id`]: (r) => r.json('data') === true });
     }
 
     execute() {
         this.login();
         this.select_sponsor();
         this.dashboard();
-        this.register_event(3);
-        this.start_event(3);
-        this.start_basic_challenge(3, 3);
+        this.register_event();
+        this.start_event();
+        this.start_basic_challenge();
         for (let i = 0; i < 10; i++) {
-            this.reset_basic_challenge(3, 3);
+            this.reset_basic_challenge();
             sleep(1);
         }
 
