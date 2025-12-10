@@ -58,7 +58,7 @@ export default function ServiceCard({ service }: { service: ContainerInstance })
             </Code>
           </details>
         </Skeleton>
-        <Flex direction="row" gap="4">
+        <Flex direction="row" gapX="4" gapY="2" className="flex-wrap">
           <RecycleContainerModal containerId={service.id} />
           <RestartContainerModal containerId={service.id} />
           <ContainerLogsModal containerId={service.id} />

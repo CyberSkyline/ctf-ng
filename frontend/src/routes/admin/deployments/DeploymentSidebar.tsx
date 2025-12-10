@@ -64,8 +64,10 @@ export default function DeploymentSidebar({ entity }: {entity: Deployment}) {
       && (
         <Table.Root>
           <Table.Header>
-            <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
-            <Table.ColumnHeaderCell>Value</Table.ColumnHeaderCell>
+            <Table.Row>
+              <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell>Value</Table.ColumnHeaderCell>
+            </Table.Row>
           </Table.Header>
           <Table.Body>
             {Object.entries(variables || {}).map(([ key, value ]) => (
