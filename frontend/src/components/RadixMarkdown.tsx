@@ -50,7 +50,7 @@ const Components: Components = {
   h6 : ({ children }) => <Heading size="3" as="h6">{children}</Heading>,
   ul : ({ children }) => <ul className="list-disc list-inside mb-2 ms-2">{children}</ul>,
   ol : ({ children }) => <ol className="list-decimal list-inside mb-2 ms-2">{children}</ol>,
-  li : ({ children }) => <Text asChild color="gray" mb="1"><li className="*:inline">{children}</li></Text>,
+  li : ({ children }) => <Text asChild color="gray" mb="1"><li>{children}</li></Text>,
   table : ({ children }) => <Table.Root className="w-fit max-w-full mb-2">{children}</Table.Root>,
   thead : ({ children }) => <Table.Header>{children}</Table.Header>,
   tbody : ({ children }) => <Table.Body>{children}</Table.Body>,
