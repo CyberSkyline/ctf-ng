@@ -48,7 +48,7 @@ export default function ConnectModal({
           title="Reset challenge?"
           description={`The challenge will be reset to its initial state${isTeam ? ' for all players on your team' : ''}.`}
           trigger={(
-            <Button variant="ghost" className="!m-0" color={COLOR_NEGATIVE}>
+            <Button variant="ghost" className="!m-0" color={COLOR_NEGATIVE} aria-label="Reset Challenge">
               <TbRotateClockwise />
               Reset
             </Button>
