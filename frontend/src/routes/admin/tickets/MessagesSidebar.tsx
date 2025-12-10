@@ -62,7 +62,7 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
     setSelectedEvent(selectedRow.event_id ? String(selectedRow.event_id) : '');
     setSelectedChallenge(selectedRow.challenge_id ? String(selectedRow.challenge_id) : '');
     setSelectedTag('');
-  }, [selectedRow.id]);
+  }, [ selectedRow.id, selectedRow.assigned_to, selectedRow.event_id, selectedRow.challenge_id ]);
 
   // Rich Text Reply Messages
   const [ version, setVersion ] = useState<number>(0); // To reinit the RichTextEditor
