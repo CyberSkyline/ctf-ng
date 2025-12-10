@@ -1,17 +1,17 @@
 import { COLOR_NEGATIVE } from '@/constants';
 import { Flex, Text } from '@radix-ui/themes';
-import { useId } from 'react';
+import { useId, type ReactNode } from 'react';
 import type { FieldError } from 'react-hook-form';
 
 export default function FormField({
   children,
   label,
-  rightLabel,
+  rightComponent,
   error,
 }: {
   children: (injected: { id: string; 'aria-describedby'?: string; 'aria-invalid': 'true' | 'false' }) => React.ReactNode,
   label: string | null,
-  rightLabel?: string,
+  rightComponent?: ReactNode,
   error?: FieldError,
 }) {
   const id = useId(); // Unique ID for accessibility linking
@@ -26,7 +26,7 @@ export default function FormField({
     <Flex direction="column" gap="1">
       <Flex direction="row" justify="between" align="end" className="empty:hidden">
         {label && <label htmlFor={id} data-invalid={error ? 'true' : 'false'}>{label}</label>}
-        {rightLabel && <Text size="2" color={rightLabel.startsWith('-') ? 'red' : 'gray'}>{rightLabel}</Text>}
+        {rightComponent}
       </Flex>
       {children(injected)}
       {error && <Text as="span" color={COLOR_NEGATIVE} id={`${id}-error`} aria-live="polite" aria-atomic>{error.message || 'Invalid input'}</Text>}

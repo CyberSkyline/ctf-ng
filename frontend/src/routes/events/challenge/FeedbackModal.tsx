@@ -1,6 +1,11 @@
 import { COLOR_INFO } from '@/constants';
 import { submitFeedback, useMyChallengeFeedback } from '@/hooks/feedback';
-import { Button, SegmentedControl, TextArea } from '@radix-ui/themes';
+import {
+  Button,
+  SegmentedControl,
+  Text,
+  TextArea,
+} from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
 import FormField from 'components/FormField';
 import Modal from 'components/Modal';
@@ -16,7 +21,7 @@ const items = Array(10).fill(null).map((_, i) => (
  * Character limit for textarea fields.
  * Should be safely below content length restriction assuming all text fields are at max.
  */
-const CHAR_LIMIT = 2000;
+const CHAR_LIMIT = 500;
 
 export default function FeedbackModal({ eventId, challengeId }: {eventId: number; challengeId: number}) {
   const { data : currentFeedback, error } = useMyChallengeFeedback(eventId, challengeId);
@@ -98,7 +103,11 @@ export default function FeedbackModal({ eventId, challengeId }: {eventId: number
 
           <FormField
             label="What did you like about this challenge?"
-            rightLabel={String(CHAR_LIMIT - watch('what_liked', '').length)}
+            rightComponent={(
+              <Text size="2" color="gray" className="[label[data-invalid=true]+&]:!text-(--red-11)">
+                {CHAR_LIMIT - watch('what_liked', '').length}
+              </Text>
+            )}
             error={errors.what_liked}
           >
             {(injected) => (
@@ -114,7 +123,11 @@ export default function FeedbackModal({ eventId, challengeId }: {eventId: number
           </FormField>
           <FormField
             label="How would you improve this challenge?"
-            rightLabel={String(CHAR_LIMIT - watch('how_to_improve', '').length)}
+            rightComponent={(
+              <Text size="2" color="gray" className="[label[data-invalid=true]+&]:!text-(--red-11)">
+                {CHAR_LIMIT - watch('how_to_improve', '').length}
+              </Text>
+            )}
             error={errors.how_to_improve}
           >
             {(injected) => (
