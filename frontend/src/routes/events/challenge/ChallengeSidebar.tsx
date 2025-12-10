@@ -112,8 +112,8 @@ export default function ChallengeSidebar() {
                     onError={setProvisioningError}
                   />
                   <Box flexShrink="0">
-                    {hints && hints.length > 0 && <HintsModal eventId={Number(idEvent)} challengeId={Number(idChallenge)} />}
-                    {event && attempts && <HistoryModal isTeam={event.max_team_size > 1} attempts={attempts} />}
+                    {hints && hints.length > 0 && <HintsModal eventId={event.id} challengeId={challenge.id} />}
+                    {attempts && <HistoryModal isTeam={event.max_team_size > 1} attempts={attempts} />}
                   </Box>
                 </Flex>
               </>
