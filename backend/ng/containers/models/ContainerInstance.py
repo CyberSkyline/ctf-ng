@@ -306,3 +306,8 @@ class ContainerInstance(db.Model):
 
             self.dockerid = new_ctr.id
             db.session.commit()
+    def remove(self):
+        client = get_client(self.hostip)
+
+        ctr = client.containers.get(self.dockerid)
+        ctr.remove(force=True)
