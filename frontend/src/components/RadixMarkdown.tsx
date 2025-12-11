@@ -25,6 +25,7 @@ const SANITIZE_SCHEMA = {
     ...defaultSchema.attributes,
     img : [
       // Only allow src urls from predefined domains
+      [ 'src', /^\// ],
       [ 'src', new RegExp(`^${SELF_ROOT_PATH}`) ],
       [ 'src', new RegExp(`^${PRESCUP_DOMAIN}`) ],
     ],

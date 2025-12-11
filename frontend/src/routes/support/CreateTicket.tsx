@@ -1,3 +1,6 @@
+import { useMyChallenges } from '@/hooks/challenge';
+import { useMyEvents } from '@/hooks/events';
+import { createTicket } from '@/hooks/support';
 import {
   Box,
   Button,
@@ -6,24 +9,21 @@ import {
   Heading,
   TextField,
 } from '@radix-ui/themes';
-import { TbArrowLeft } from 'react-icons/tb';
-import { useNavigate } from 'react-router';
-import { useState } from 'react';
+import { ErrorCallout } from 'components/Callouts';
+import FormField from 'components/FormField';
+import RequireEventPermission from 'components/RequireEventPermission';
+import RichTextEditor from 'components/RichTextEditor';
+import SelectDropdown from 'components/SelectDropdown';
 import { isUndefined, map } from 'lodash';
+import { useState } from 'react';
 import {
   Controller,
   useForm,
-  type FieldError,
   type Control,
+  type FieldError,
 } from 'react-hook-form';
-import RichTextEditor from 'components/RichTextEditor';
-import FormField from 'components/FormField';
-import SelectDropdown from 'components/SelectDropdown';
-import RequireEventPermission from 'components/RequireEventPermission';
-import { ErrorCallout } from 'components/Callouts';
-import { createTicket } from '@/hooks/support';
-import { useMyEvents } from '@/hooks/events';
-import { useMyChallenges } from '@/hooks/challenge';
+import { TbArrowLeft } from 'react-icons/tb';
+import { useNavigate } from 'react-router';
 
 type CreateInputs = {
   subject: string,
@@ -118,6 +118,7 @@ export default function CreateTicket() {
           </Button>
         </Box>
         <Heading size="7">Create a New Support Ticket</Heading>
+        <span>You can upload supporting images/screenshots after creating your initial support ticket.</span>
 
         <form
           onSubmit={handleSubmit(create)}

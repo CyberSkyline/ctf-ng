@@ -1,0 +1,76 @@
+import { ticketAttachmentUpload } from '@/hooks/fileuploads';
+import { compressImageFile } from '@/util';
+import { Spinner } from '@radix-ui/themes';
+import { ErrorCallout } from 'components/Callouts';
+import { useState } from 'react';
+import Dropzone from 'react-dropzone';
+import { twMerge } from 'tailwind-merge';
+
+export default function SupportAttachmentUpload({ fileUploadPath, ticketMutationUrl } : { fileUploadPath : string, ticketMutationUrl : string }) {
+  const [ uploadError, setUploadError ] = useState<string | null>(null);
+  const [ loading, setLoading ] = useState<boolean>(false);
+
+  const onDrop = async (acceptedFiles: File[]) => {
+    const file = acceptedFiles[0]; // Only accepting 1 file at a time
+
+    let compressedFile;
+    try {
+      compressedFile = await compressImageFile(file);
+    } catch (err) {
+      if (err instanceof Error) {
+        setUploadError(err.message);
+      }
+      return;
+    }
+
+    setUploadError(null);
+    setLoading(true);
+
+    ticketAttachmentUpload(fileUploadPath, compressedFile, ticketMutationUrl)
+      .catch((err) => setUploadError(err.message))
+      .finally(() => setLoading(false));
+  };
+
+  return (
+    <>
+      {uploadError && <ErrorCallout>{uploadError}</ErrorCallout>}
+      <Dropzone
+        accept={{
+          'image/png' : [ '.png' ],
+          'image/jpeg' : [ '.jpeg' ],
+          'image/webp' : [ '.webp' ],
+          'image/gif' : [ '.gif' ],
+          'image/bmp' : [ '.bmp' ],
+          'image/heic' : [ '.heic' ],
+          'image/tiff' : [ '.tiff' ],
+          'image/svg+xml' : [ '.svg' ],
+        }}
+        multiple={false}
+        onDrop={onDrop}
+      >
+        {({
+          getRootProps, getInputProps, isFocused, isDragAccept, isDragReject,
+        }) => (
+          <section>
+            <div
+              {...getRootProps()}
+              className={twMerge(
+                'flex flex-col items-center p-5 border border-dashed ',
+                !isFocused && 'border-[var(--gray-7)] text-[var(--gray-11)] bg-[var(--gray-2)]',
+                isFocused && 'border-[var(--gray-8)] text-[var(--gray-12)] bg-[var(--gray-3)]',
+                isDragAccept && 'border-[var(--lime-7)] text-[var(--lime-11)]',
+                isDragReject && 'border-[var(--red-7)] text-[var(--red-11)]',
+              )}
+            >
+              <input {...getInputProps()} disabled={loading} />
+              <Spinner size="3" loading={loading}>
+                <p>Drag and drop a file here, or click to select a file</p>
+                <p>File will automatically upload.</p>
+              </Spinner>
+            </div>
+          </section>
+        )}
+      </Dropzone>
+    </>
+  );
+}

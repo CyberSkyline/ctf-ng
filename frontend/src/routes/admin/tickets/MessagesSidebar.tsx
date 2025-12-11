@@ -21,13 +21,14 @@ import {
   useSupportTags,
 } from '@/hooks/support';
 import { useCurrentUser, useUserEvents } from '@/hooks/users';
-import type { AdminTicket } from '@/types';
+import type { AdminTicket, TicketAttachment } from '@/types';
 import {
   Badge,
   Box,
   Button,
   DataList,
   Flex,
+  Grid,
   Select,
 } from '@radix-ui/themes';
 import AdminSidebar from 'components/AdminSidebar';
@@ -36,6 +37,7 @@ import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import RichTextEditor from 'components/RichTextEditor';
 import { StatusBadge } from 'components/StatusBadge';
+import SupportAttachmentUpload from 'components/SupportAttachmentUpload';
 import TicketMessagesCard from 'components/TicketMessagesCard';
 import {
   chain,
@@ -83,7 +85,7 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
       </ErrorCallout>
     );
   }
-  const { ticket, messages } = data;
+  const { ticket, messages, attachments } = data;
   const {
     id : ticketId,
     status,
@@ -449,6 +451,16 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
             </Button>
           </DataList.Value>
         </DataList.Item>
+        <DataList.Item>
+          <DataList.Label>Attachments</DataList.Label>
+          <DataList.Value className="whitespace-pre-wrap">
+            <Grid columns="4" gap="1">
+              {map(attachments, (attachment : TicketAttachment) => (
+                <img key={attachment.id} src={attachment.download_url} alt={attachment.filename} />
+              ))}
+            </Grid>
+          </DataList.Value>
+        </DataList.Item>
       </DataList.Root>
 
       <AdminSidebarHeader title="Messages" />
@@ -461,6 +473,10 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
           initialValue={newText}
           onChange={setNewText}
           version={version}
+        />
+        <SupportAttachmentUpload
+          fileUploadPath={`/admin/support/tickets/${ticketId}/upload`}
+          ticketMutationUrl={`/admin/support/tickets/${ticketId}`}
         />
         <Button
           onClick={sendNewMessage}
