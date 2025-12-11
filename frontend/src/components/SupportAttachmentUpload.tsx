@@ -41,6 +41,12 @@ export default function SupportAttachmentUpload({ fileUploadPath, ticketMutation
         accept={{
           'image/png' : [ '.png' ],
           'image/jpeg' : [ '.jpeg' ],
+          'image/webp' : [ '.webp' ],
+          'image/gif' : [ '.gif' ],
+          'image/bmp' : [ '.bmp' ],
+          'image/heic' : [ '.heic' ],
+          'image/tiff' : [ '.tiff' ],
+          'image/svg+xml' : [ '.svg' ],
         }}
         multiple={false}
         onDrop={onDrop}
