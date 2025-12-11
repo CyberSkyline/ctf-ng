@@ -47,7 +47,6 @@ def test_change_role_invalid_permissions(admin_client, role_with_permissions):
     data = response.get_json()
     assert not data["success"]
     assert "errors" in data
-    assert "validation" in data["errors"]
 
 
 def test_get_user_roles(admin_client, user_with_roles):
@@ -99,7 +98,6 @@ def test_update_user_roles_invalid_role(admin_client, user_with_roles):
     data = response.get_json()
     assert not data["success"]
     assert "errors" in data
-    assert "validation" in data["errors"]
 
 def test_get_user_permissions(team_captain_client, user_with_roles):
     """Check that a user can get their own permissions."""

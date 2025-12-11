@@ -75,7 +75,7 @@ def test_teamdetail_update_timestamps_must_have_continuity(admin_client, event, 
     )
     assert response.status_code == 400
     data = response.get_json()
-    assert data['errors']['validation'] ==  "Validation failed: {'end_time': 'End Time must be after start timestamp.'}"
+    assert data['errors'] ==  {'end_time': 'End Time must be after start timestamp.'}
 
 def test_teamdetail_update_just_start(admin_client, event, team_factory, user):
     """Test that the team detail endpoint allows updating just start timestamp."""

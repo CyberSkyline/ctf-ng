@@ -742,8 +742,7 @@ class Test_Event_Registration:
         data = response.get_json()
         assert data["success"] is False
         assert "errors" in data
-        print(data["errors"])
-        assert "Team name contains disallowed characters" in data["errors"]["validation"]
+        assert "Team name contains disallowed characters" in data["errors"]["name"]
 
 class Test_Event_Team_Lookup:
     def get_endpoint(self, event_id: int) -> str:
@@ -1582,7 +1581,6 @@ class Test_Event_Admin_Create:
         data = response.get_json()
         assert data["success"] is False
         assert "errors" in data
-        assert "validation" in data["errors"]
 
     def test_admin_create_event_with_domain_restrictions(self, admin_client):
         new_event_data = {
