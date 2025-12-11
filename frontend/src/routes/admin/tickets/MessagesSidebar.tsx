@@ -454,7 +454,7 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
         <DataList.Item>
           <DataList.Label>Attachments</DataList.Label>
           <DataList.Value className="whitespace-pre-wrap">
-            <Grid columns="2" gap="1">
+            <Grid columns="4" gap="1">
               {map(attachments, (attachment : TicketAttachment) => (
                 <img key={attachment.id} src={attachment.download_url} alt={attachment.filename} />
               ))}
