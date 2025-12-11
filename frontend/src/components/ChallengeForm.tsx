@@ -1,11 +1,6 @@
 import { lintChallenge } from '@/hooks/challenge';
 import type { LintResult } from '@/types';
-import {
-  Box,
-  Flex,
-  Strong,
-  Text,
-} from '@radix-ui/themes';
+import { Flex, Strong, Text } from '@radix-ui/themes';
 import { throttle } from 'lodash';
 import { useEffect, useRef, useState } from 'react';
 import { Controller, type UseFormReturn } from 'react-hook-form';
@@ -55,18 +50,20 @@ export default function ChallengeForm({ rhf }: {rhf: UseFormReturn<{yaml: string
     }
       />
       {lintResult && ('errors' in lintResult || 'warnings' in lintResult) && (
-        <CalloutType>
-          <Flex gap="3" direction="column">
-            {('errors' in lintResult ? lintResult.errors : lintResult.warnings)
-              .map((msg) => (
-                <Box key={msg.field + msg.message}>
-                  <Strong>{msg.field}</Strong>
-                  <br />
-                  <Text>{msg.message}</Text>
-                </Box>
-              ))}
-          </Flex>
-        </CalloutType>
+        <Flex direction="column" gap="3">
+          {('errors' in lintResult ? lintResult.errors : lintResult.warnings)
+            .map((msg) => (
+              <CalloutType key={msg.message + msg.field}>
+                <Strong>{msg.message}</Strong>
+                <Text>
+                  {' '}
+                  at
+                  {' '}
+                  {msg.field}
+                </Text>
+              </CalloutType>
+            ))}
+        </Flex>
       )}
     </>
   );
