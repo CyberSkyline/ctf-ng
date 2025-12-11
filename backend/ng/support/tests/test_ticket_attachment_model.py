@@ -2,8 +2,9 @@
 Model tests for TicketAttachment
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from ... import config
 from ...core.exceptions import ValidationError
@@ -229,7 +230,7 @@ class TestTicketAttachment:
         assert data["content_type"] == "image/webp"
         assert data["uploaded_by"] == user.id
         assert data["uploaded_at"] is not None
-        assert data["download_url"] == f"/ng/support/me/attachments/{attachment.id}"
+        assert data["download_url"] == f"/ng/support/attachments/{attachment.id}"
 
     def test_serialize_attachment_admin(
         self,
@@ -238,7 +239,7 @@ class TestTicketAttachment:
         user
     ):
         """
-        Test serialization of attachment with admin proxy URL
+        Test serialization of attachment with proxy URL w/ admin permissions
         """
         attachment = TicketAttachment.create_attachment(
             ticket_id = ticket.id,
@@ -260,7 +261,7 @@ class TestTicketAttachment:
         assert data["content_type"] == "image/webp"
         assert data["uploaded_by"] == user.id
         assert data["uploaded_at"] is not None
-        assert data["download_url"] == f"/ng/admin/support/attachments/{attachment.id}"
+        assert data["download_url"] == f"/ng/support/attachments/{attachment.id}"
 
 
     def test_validation_requires_all_fields(self, db_session):
