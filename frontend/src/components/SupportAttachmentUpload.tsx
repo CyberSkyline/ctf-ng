@@ -9,7 +9,6 @@ import { twMerge } from 'tailwind-merge';
 export default function SupportAttachmentUpload({ fileUploadPath, ticketMutationUrl } : { fileUploadPath : string, ticketMutationUrl : string }) {
   const [ uploadError, setUploadError ] = useState<string | null>(null);
   const [ loading, setLoading ] = useState<boolean>(false);
-  const [ uploadedImageSrc, setUploadedImageSrc ] = useState<string | null>(null);
 
   const onDrop = async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0]; // Only accepting 1 file at a time
@@ -28,19 +27,9 @@ export default function SupportAttachmentUpload({ fileUploadPath, ticketMutation
     setLoading(true);
 
     ticketAttachmentUpload(fileUploadPath, compressedFile, ticketMutationUrl)
-      .then((result) => setUploadedImageSrc(result.download_url || null))
       .catch((err) => setUploadError(err.message))
       .finally(() => setLoading(false));
   };
-
-  if (uploadedImageSrc) {
-    return null; // Hide after a successful upload
-    // return (
-    //   <Box maxHeight="256px" maxWidth="256px">
-    //     <img style={{ maxHeight : '100%', maxWidth : '100%' }} src={uploadedImageSrc} alt="Your uploaded attachment" />
-    //   </Box>
-    // );
-  }
 
   return (
     <>
