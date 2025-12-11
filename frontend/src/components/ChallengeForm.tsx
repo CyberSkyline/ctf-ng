@@ -18,7 +18,10 @@ export default function ChallengeForm({ rhf }: {rhf: UseFormReturn<{yaml: string
     setLintResult(result);
   }, 1000));
 
-  const CalloutType = (lintResult && 'errors' in lintResult) ? ErrorCallout : WarningCallout;
+  const hasErrors = !!(lintResult && 'errors' in lintResult);
+  const hasWarnings = !!(lintResult && 'warnings' in lintResult);
+
+  const CalloutType = hasErrors ? ErrorCallout : WarningCallout;
 
   useEffect(() => {
     const yaml = getValues('yaml');
@@ -35,9 +38,7 @@ export default function ChallengeForm({ rhf }: {rhf: UseFormReturn<{yaml: string
     <>
       <Controller
         control={control}
-        rules={{
-          validate : () => !(lintResult && 'errors' in lintResult),
-        }}
+        rules={{ validate : () => !hasErrors }}
         name="yaml"
         render={
       ({ field }) => (
@@ -49,9 +50,9 @@ export default function ChallengeForm({ rhf }: {rhf: UseFormReturn<{yaml: string
       )
     }
       />
-      {lintResult && ('errors' in lintResult || 'warnings' in lintResult) && (
+      {(hasErrors || hasWarnings) && (
         <Flex direction="column" gap="3">
-          {('errors' in lintResult ? lintResult.errors : lintResult.warnings)
+          {(hasErrors ? lintResult.errors : lintResult.warnings)
             .map((msg) => (
               <CalloutType key={msg.message + msg.field}>
                 <Strong>{msg.message}</Strong>
