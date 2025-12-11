@@ -15,7 +15,7 @@ export default function ConnectModal({
   onError?: (error: Error | undefined) => void;
 }) {
   const {
-    data : currentChallenge, isValidating, error,
+    data : currentChallenge, isLoading, error,
   } = useCurrentChallengeId();
   const [ loading, setLoading ] = useState(false);
 
@@ -70,7 +70,7 @@ export default function ConnectModal({
             () => handleConnect()
               .catch(onError)
         }
-        loading={loading || isValidating}
+        loading={loading || isLoading}
         color={COLOR_POSITIVE}
         className="pulsate"
       >
@@ -85,7 +85,7 @@ export default function ConnectModal({
       title="Switch challenge?"
       description="Your workspace will be disconnected from your previous challenge and connected to this one."
       trigger={(
-        <Button loading={loading || isValidating} color={COLOR_POSITIVE} className="pulsate">
+        <Button loading={loading || isLoading} color={COLOR_POSITIVE} className="pulsate">
           <TbPlayerPlay />
           Start Challenge
         </Button>
