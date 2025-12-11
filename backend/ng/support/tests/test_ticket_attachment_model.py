@@ -155,7 +155,7 @@ class TestTicketAttachment:
                 content_type = "image/webp",
                 uploaded_by = 999999,  # Non existent user
             )
-        assert "User" in str(exc_info.value) or "uploaded_by" in str(
+        assert "User" in str(exc_info.value) or "uploaded by" in str(
             exc_info.value
         ).lower()
 
