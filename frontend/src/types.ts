@@ -309,3 +309,10 @@ export interface ChallengeVariable {
   default: string;
   template: string;
 }
+
+export interface LintItem {
+  message: string;
+  field: string;
+}
+
+export type LintResult = null | {warnings: LintItem[]} | {errors: LintItem[]};
