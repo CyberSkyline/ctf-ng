@@ -238,6 +238,18 @@ export interface Ticket {
   message_count: number;
 }
 
+export interface TicketAttachment {
+  id: number;
+  ticket_id: number;
+  uploaded_at: Date;
+  uploaded_by: number;
+  content_type: string;
+  download_url: string;
+  file_size: number;
+  file_upload_id: number;
+  filename: string;
+}
+
 export interface TicketTag {
   id: number;
   name: string;
