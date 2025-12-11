@@ -31,7 +31,12 @@ def start_containers(challenge_id: int, team_id: int, current_user: User) -> boo
         for net in set(networks):
             net_obj = client.get_network_by_name(ContainerInstance.render_network_name(team_id, net, challenge_id))
             if net_obj:
-                net_obj.remove()
+                ## There is a potential race condition where the daemon has deleted the network
+                ## But the network is not fully removed from NETDB
+                try:
+                    net_obj.remove()
+                except Exception:
+                    pass
 
         db.session.rollback()
         raise BusinessLogicError(f"Challenge failed to start, please contact support: {str(err)}") from err
