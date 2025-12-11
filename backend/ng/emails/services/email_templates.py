@@ -104,13 +104,12 @@ class TicketEmailTemplates:
         return f"{server_domain}{route_prefix}"
 
     @staticmethod
-    def new_ticket(ticket_data: TicketData, is_admin_recipient: bool = True) -> tuple[str, str, str]:
+    def new_ticket(ticket_data: TicketData) -> tuple[str, str, str]:
         """
         Generate new ticket notification email
 
         Args:
             ticket_data: Serialized ticket data
-            is_admin_recipient: Whether recipient is admin (uses admin URL path)
 
         Returns:
             Tuple of (subject, html_body, text_body)
@@ -119,10 +118,7 @@ class TicketEmailTemplates:
         if not base_url:
             raise ValueError("SERVER_DOMAIN not configured")
 
-        if is_admin_recipient:
-            ticket_url = f"{base_url}{config.ADMIN_TICKET_URL_PATH}?id={ticket_data['id']}"
-        else:
-            ticket_url = f"{base_url}{config.TICKET_URL_PATH}/{ticket_data['id']}"
+        ticket_url = f"{base_url}{config.ADMIN_TICKET_URL_PATH}?id={ticket_data['id']}"
 
         subject = f"New Support Ticket: {ticket_data['subject']}"
 
