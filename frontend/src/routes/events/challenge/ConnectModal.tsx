@@ -34,7 +34,7 @@ export default function ConnectModal({
 
   if (error) {
     // if we can't get the current challenge, show an error where the button would otherwise go
-    return <ErrorCallout>{error}</ErrorCallout>;
+    return <ErrorCallout>{error.message}</ErrorCallout>;
   }
 
   if (currentChallenge === challengeId) {
