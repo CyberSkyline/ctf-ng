@@ -20,9 +20,10 @@ from ...permissions.models.enums import PermissionEnum
 from ... import config
 from ...core.utils import success_response
 from ...core.exceptions import ValidationError
-
+from ...permissions.models.enums import RoleEnum
+from ...permissions.controllers.get_user_roles import get_user_roles
 from ...user.models import User
-
+from CTFd.utils.user import get_current_user
 from ..controllers import (
     get_leaderboard,
     get_team_score,
@@ -59,7 +60,8 @@ class EventLeaderboard(Resource):
         """
         Get event leaderboard
         """
-        if event.show_leaderboard is False:
+        current_user = get_current_user()
+        if not event.show_leaderboard and not (current_user and RoleEnum.ADMIN in get_user_roles(current_user.id)):
             raise ValidationError("Leaderboard is not available for this event.")
         limit = request.args.get("limit", config.DEFAULT_LEADERBOARD_LIMIT, type=int)
         if limit < 1 or limit > config.MAX_LEADERBOARD_LIMIT:
