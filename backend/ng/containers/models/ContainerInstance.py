@@ -8,7 +8,7 @@ from typing import TypedDict
 from ..utils.get_client import get_client
 from ..utils.Client import Client
 from CTFd.utils import get_app_config
-from .. constants import DOCKER_RUNNING, DOCKER_BRIDGE
+from .. constants import DOCKER_RUNNING, DOCKER_BRIDGE, DOCKER_MEM_REGEX
 from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 from ...team.models.Team import Team
 
@@ -113,6 +113,17 @@ class ContainerInstance(db.Model):
     def run_container(client: Client, team: Team, blueprint_obj: ContainerBlueprint):
         ulimit = docker.types.Ulimit(name="nofile", soft=10000, hard=20000)
         mem_limit = blueprint_obj.mem_limit or "128m"
+
+        parsed_ram = DOCKER_MEM_REGEX.match(mem_limit)
+        ram_number = int(parsed_ram.group(1))
+        ram_postfix = parsed_ram.group(2)
+
+        swap_mem = f"{round(ram_number * 1.5)}{ram_postfix}"
+        mem_resv = f"{round(ram_number * 0.8)}{ram_postfix}"
+
+        # I am not setting a kernel memory limit
+        # As you it is deprecated
+        # See https://github.com/torvalds/linux/commit/0158115f702b0ba208ab0b5adf44cae99b3ebcc7
         ctr = client.containers.run(
             blueprint_obj.image,
             environment=blueprint_obj.render_environment(team.seed),
@@ -122,6 +133,8 @@ class ContainerInstance(db.Model):
             cpu_quota=10000,
             pids_limit=100,
             mem_limit=mem_limit,
+            mem_reservation=mem_resv,
+            memswap_limit=swap_mem,
             ulimits=[ulimit],
         )
 
