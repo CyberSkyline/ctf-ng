@@ -23,6 +23,7 @@ import { mutate } from 'swr';
 import ChallengeHeader from './ChallengeHeader';
 import ChallengeQuestion from './ChallengeQuestion';
 import ConnectModal from './ConnectModal';
+import FeedbackModal from './FeedbackModal';
 import HintsModal from './HintsModal';
 import HistoryModal from './HistoryModal';
 
@@ -114,6 +115,7 @@ export default function ChallengeSidebar() {
                   <Box flexShrink="0">
                     {hints && hints.length > 0 && <HintsModal eventId={event.id} challengeId={challenge.id} />}
                     {attempts && <HistoryModal isTeam={event.max_team_size > 1} attempts={attempts} />}
+                    <FeedbackModal eventId={event.id} challengeId={challenge.id} />
                   </Box>
                 </Flex>
               </>

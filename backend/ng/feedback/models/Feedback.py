@@ -18,6 +18,7 @@ from ...core.utils.validator import BaseValidator
 class SerializedFeedback(TypedDict):
     id: int
     user_id: int
+    user_name: str
     event_id: int
     challenge_id: int | None
     feedback_data: dict[str, Any]
@@ -83,6 +84,7 @@ class Feedback(db.Model):
         return {
             "id": self.id,
             "user_id": self.user_id,
+            "user_name": self.user.ctfd_user.name,
             "event_id": self.event_id,
             "challenge_id": self.challenge_id,
             "feedback_data": self.feedback_data,
