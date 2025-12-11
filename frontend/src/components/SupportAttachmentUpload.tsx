@@ -14,7 +14,15 @@ export default function SupportAttachmentUpload({ fileUploadPath, ticketMutation
   const onDrop = async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0]; // Only accepting 1 file at a time
 
-    const compressedFile = await compressImageFile(file);
+    let compressedFile;
+    try {
+      compressedFile = await compressImageFile(file);
+    } catch (err) {
+      if (err instanceof Error) {
+        setUploadError(err.message);
+      }
+      return;
+    }
 
     setUploadError(null);
     setLoading(true);
