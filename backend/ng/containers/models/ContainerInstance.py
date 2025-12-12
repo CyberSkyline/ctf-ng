@@ -362,7 +362,7 @@ class ContainerInstance(db.Model):
                 lock.release()
 
                 logger.error(str(err))
-                raise BusinessLogicError(f"Challenge failed to start, please contact support") from err
+                raise BusinessLogicError("Challenge failed to start, please contact support") from err
             db.session.commit()
             lock.release()
             return networks

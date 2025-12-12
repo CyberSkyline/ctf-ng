@@ -7,9 +7,6 @@ from ..controllers.admin_exec import admin_exec
 from ..controllers.pull_vnc import pull_vnc
 from ..controllers.recycle_containers import recycle_containers
 from ..models.ContainerInstance import ContainerInstance
-from ..models.IndvidualContainer import IndvidualContainer
-from ..constants import CHALLENGER_NET_NAME
-from ...core import BusinessLogicError
 
 from ...core.middleware import (
     admin_endpoint,
