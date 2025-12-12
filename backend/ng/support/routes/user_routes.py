@@ -8,6 +8,7 @@ from flask_restx import Namespace, Resource
 from ...core.middleware import check_attachment_ownership, check_ownership, user_endpoint
 from ...core.middleware.loaders import LoaderType, load_attachment, load_ticket
 from ...core.utils import error_response, success_response
+from ...core.utils.rate_limit import limiter
 from ...user.models import User
 from ..controllers import (
     close_my_ticket,
@@ -27,6 +28,7 @@ support_user_namespace = Namespace("support", description="Support ticket operat
 @support_user_namespace.route("/tickets/create")
 class Tickets(Resource):
     @user_endpoint(json_required=True)
+    @limiter.limit("1 per 5 seconds")
     @support_user_namespace.doc(
         description="Create a new support ticket with initial message. Team ID is automatically derived from the user and event.",
         params={
@@ -151,6 +153,7 @@ class TicketMessage(Resource):
     @user_endpoint(json_required=True)
     @load_ticket(LoaderType.PARAM)
     @check_ownership(resource_key="ticket", user_field="author_id")
+    @limiter.limit("1 per 5 seconds")
     @support_user_namespace.doc(
         description="Add a new message to an existing support ticket thread",
         params={
@@ -231,6 +234,7 @@ class AttachmentUpload(Resource):
     @user_endpoint()
     @load_ticket(LoaderType.PARAM)
     @check_ownership(resource_key="ticket", user_field="author_id")
+    @limiter.limit("1 per 5 seconds")
     @support_user_namespace.doc(
         description="Upload an image attachment to your support ticket",
         params={
