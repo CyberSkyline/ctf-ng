@@ -10,6 +10,7 @@ import {
 } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
 import Modal from 'components/Modal';
+import RequireEventPermission from 'components/RequireEventPermission';
 import { useState } from 'react';
 import { TbBulb, TbLockOpen } from 'react-icons/tb';
 
@@ -33,42 +34,52 @@ function HintRow({ hint, eventId }: {hint: Hint, eventId: number}) {
         {hint.body
           ? <Text>{hint.body}</Text>
           : (
-            <Popover.Root>
-              <Popover.Trigger>
-                <Button variant="ghost" color={COLOR_HINT} type="button">
+            <RequireEventPermission
+              eventId={eventId}
+              permission="CAN_PLAY_CHALLENGES"
+              permissionDeniedPlaceholder={(
+                <Button variant="ghost" disabled type="button">
                   <TbLockOpen />
-                  {' '}
                   Redeem
                 </Button>
-              </Popover.Trigger>
-              <Popover.Content width="360px">
-                <Text>
-                  Are you sure you want to redeem
-                  {' '}
-                  {hint.preview}
-                  ?
-                </Text>
-                <br />
-                <Text color="gray" size="2">
-                  This will deduct
-                  {' '}
-                  {hint.deduction}
-                  {' '}
-                  points from your score.
-                </Text>
-
-                <Flex direction="row" gap="2" mt="2" className="*:!grow">
-                  <Popover.Close>
-                    <Button variant="soft" color="gray">
-                      Cancel
-                    </Button>
-                  </Popover.Close>
-                  <Button variant="soft" color={COLOR_HINT} onClick={handleRedeem} loading={loading}>
-                    Confirm
+              )}
+            >
+              <Popover.Root>
+                <Popover.Trigger>
+                  <Button variant="ghost" color={COLOR_HINT} type="button">
+                    <TbLockOpen />
+                    Redeem
                   </Button>
-                </Flex>
-              </Popover.Content>
-            </Popover.Root>
+                </Popover.Trigger>
+                <Popover.Content width="360px">
+                  <Text>
+                    Are you sure you want to redeem
+                    {' '}
+                    {hint.preview}
+                    ?
+                  </Text>
+                  <br />
+                  <Text color="gray" size="2">
+                    This will deduct
+                    {' '}
+                    {hint.deduction}
+                    {' '}
+                    points from your score.
+                  </Text>
+
+                  <Flex direction="row" gap="2" mt="2" className="*:!grow">
+                    <Popover.Close>
+                      <Button variant="soft" color="gray">
+                        Cancel
+                      </Button>
+                    </Popover.Close>
+                    <Button variant="soft" color={COLOR_HINT} onClick={handleRedeem} loading={loading}>
+                      Confirm
+                    </Button>
+                  </Flex>
+                </Popover.Content>
+              </Popover.Root>
+            </RequireEventPermission>
           )}
       </Table.Cell>
     </Table.Row>
