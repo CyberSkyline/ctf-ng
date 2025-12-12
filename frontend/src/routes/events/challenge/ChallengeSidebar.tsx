@@ -1,6 +1,5 @@
 import { useChallenge } from '@/hooks/challenge';
 import { useEvent, useMyTeam } from '@/hooks/events';
-import { useEventPermission } from '@/hooks/permissions';
 import {
   Box,
   Button,
@@ -42,8 +41,6 @@ export default function ChallengeSidebar() {
   const {
     challenge, questions, hints, attempts,
   } = data || {};
-
-  const { granted } = useEventPermission('CAN_PLAY_CHALLENGES', Number(idEvent));
 
   const groupedAttempts = groupBy(attempts || [], 'question_id');
 
@@ -102,7 +99,7 @@ export default function ChallengeSidebar() {
               </Box>
             )}
 
-            {challenge && event && granted && (
+            {challenge && event && (
               <>
                 {provisioningError && <ErrorCallout className="mt-3">{provisioningError.message}</ErrorCallout>}
                 <Flex direction="row" gap="2" mt="3" align="center" justify="between">
