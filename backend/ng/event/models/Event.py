@@ -35,6 +35,7 @@ class Event(db.Model):
     hints_enabled = db.Column(db.Boolean, default=False, nullable=False)
     time_limit_minutes = db.Column(db.Integer, nullable=True)
     allowed_domains: Mapped[list[str]] = db.Column(JSON, nullable=False, default=[])
+    blocked_domains: Mapped[list[str]] = db.Column(JSON, nullable=False, default=[])
     show_leaderboard = db.Column(db.Boolean, default=False, nullable=False)
 
     __table_args__ = (
@@ -94,6 +95,7 @@ class Event(db.Model):
             "hints_enabled": self.hints_enabled,
             "time_limit_minutes": self.time_limit_minutes,
             "allowed_domains": self.allowed_domains,
+            "blocked_domains": self.blocked_domains,
             "show_leaderboard": self.show_leaderboard,
         }
 
@@ -177,6 +179,12 @@ class Event(db.Model):
             required=False,
             friendly_name="Allowed email domains",
         )
+        validator.validate_string_list(
+            data,
+            "blocked_domains",
+            required=False,
+            friendly_name="Blocked email domains",
+        )
         validator.validate_boolean(
             data,
             "show_leaderboard",
@@ -203,6 +211,7 @@ class Event(db.Model):
         hints_enabled: bool = False,
         time_limit_minutes: int | None = None,
         allowed_domains: list[str] | None = None,
+        blocked_domains: list[str] | None = None,
         show_leaderboard: bool = False,
         commit: bool = True,
     ):
@@ -239,6 +248,7 @@ class Event(db.Model):
             hints_enabled=hints_enabled,
             time_limit_minutes=time_limit_minutes,
             allowed_domains=allowed_domains,
+            blocked_domains=blocked_domains,
             show_leaderboard=show_leaderboard,
         )
 
@@ -424,10 +434,12 @@ class Event(db.Model):
         if self.allowed_domains:
             user_email_domain = user.ctfd_user.email.split("@")[-1].lower()
             allowed_domains_lower = [domain.lower() for domain in self.allowed_domains]
-            for domain in allowed_domains_lower:
-                if domain in user_email_domain:
-                    break
-            else:
+            blocked_domains_lower = [domain.lower() for domain in self.blocked_domains]
+
+            if any(user_email_domain == domain or user_email_domain.endswith("." + domain) for domain in blocked_domains_lower):
+                raise BusinessLogicError("User's email domain is not allowed for this event.")
+
+            if not any(user_email_domain == domain or user_email_domain.endswith("." + domain) for domain in allowed_domains_lower):
                 raise BusinessLogicError("User's email domain is not allowed for this event.")
 
         return True

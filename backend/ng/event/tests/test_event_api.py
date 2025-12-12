@@ -694,6 +694,56 @@ class Test_Event_Registration:
         data = response.get_json()
         assert data["success"] is True
 
+    def test_register_event_with_disallowed_domain_in_subdomain(
+        self,
+        client_factory,
+        user_factory,
+        event_factory,
+        sponsor_factory
+    ):
+        sponsor = sponsor_factory()
+        user = user_factory(name = "subdomainuser", email = "subdomainuser@la.gov", sponsor = sponsor)
+        logged_in_client = client_factory(user = user)
+        event = event_factory(name = "Event for Disallowed Subdomain Email Registration", public = True, allowed_domains = ["gov"], blocked_domains = ["la.gov"])
+
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json = {
+                "team_name": "Subdomain Test Team",
+            },
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        assert "errors" in data
+        assert "User's email domain is not allowed for this event." in data["errors"]["business_logic"]
+
+    def test_register_event_with_blocked_domain_partial(
+        self,
+        client_factory,
+        user_factory,
+        event_factory,
+        sponsor_factory
+    ):
+        sponsor = sponsor_factory()
+        user = user_factory(name = "subdomainuser", email = "subdomainuser@partial.la.gov", sponsor = sponsor)
+        logged_in_client = client_factory(user = user)
+        event = event_factory(name = "Event for Disallowed Subdomain Email Registration", public = True, allowed_domains = ["gov"], blocked_domains = ["la.gov"])
+
+        response = logged_in_client.post(
+            self.get_endpoint(event.id),
+            json = {
+                "team_name": "Subdomain Test Team",
+            },
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        assert "errors" in data
+        assert "User's email domain is not allowed for this event." in data["errors"]["business_logic"]
+
     def test_register_event_with_empty_allowed_domains(
         self,
         client_factory,
