@@ -6,6 +6,9 @@ from ..controllers.get_stats import get_stats
 from ..controllers.admin_exec import admin_exec
 from ..controllers.pull_vnc import pull_vnc
 from ..models.ContainerInstance import ContainerInstance
+from ..models.IndvidualContainer import IndvidualContainer
+from ..constants import CHALLENGER_NET_NAME
+from ...core import BusinessLogicError
 
 from ...core.middleware import (
     admin_endpoint,
@@ -147,6 +150,35 @@ class InstanceRecycle(Resource):
     @load_container_instance(source=LoaderType.PARAM)
     def post(self, container_instance, **kwargs):
         container_instance.recycle()
+        return success_response(True)
+
+@admin_container_namespace.route("/challenge/<int:challenge_id>/team/<int:team_id>/recycle")
+class DeploymentRecycle(Resource):
+    @admin_container_namespace.doc(
+        description="Deletes a challenge deployment without deleting the backing db objects",
+        params={
+            "challenge_id": "Id of the challenge",
+            "team_id": "Id of the team to recycle",
+        },
+        responses={
+            200: "Success",
+            400: "Bad request"
+        },
+    )
+    @admin_endpoint()
+    def post(self, challenge_id, team_id, **kwargs):
+        indv_ctrs = ContainerInstance.recycle_instance_group(challenge_id, team_id)
+
+        networks = ContainerInstance.start_instance_group(challenge_id, team_id)
+        if CHALLENGER_NET_NAME not in set(networks):
+            raise BusinessLogicError("Challenge has no challenger network")
+
+        for ctr in indv_ctrs:
+            indv_ctr_obj = IndvidualContainer.get_indvidual_container_by_dockerid(ctr)
+            if indv_ctr_obj:
+                indv_ctr_obj.disconnect_from_networks()
+                indv_ctr_obj.connect_to_network(ContainerInstance.render_network_name(team_id, CHALLENGER_NET_NAME, challenge_id))
+
         return success_response(True)
 
 @admin_container_namespace.route("/<int:container_instance_id>/logs")

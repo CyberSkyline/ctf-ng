@@ -27,6 +27,10 @@ class IndvidualContainer(db.Model):
         return cls.query.filter_by(user=user_id).first()
 
     @classmethod
+    def get_indvidual_container_by_dockerid(cls, docker_id: str):
+        return cls.query.filter_by(dockerid=docker_id).first()
+
+    @classmethod
     def create_indvidual_container(cls, user_id: int, commit: bool = True):
         db_exists = cls.query.filter_by(user=user_id).first()
         DOCKER_HOST = get_app_config("DOCKER_HOST")
