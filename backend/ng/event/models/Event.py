@@ -433,8 +433,8 @@ class Event(db.Model):
 
         if self.allowed_domains:
             user_email_domain = user.ctfd_user.email.split("@")[-1].lower()
-            allowed_domains_lower = [domain.lower() for domain in self.allowed_domains]
-            blocked_domains_lower = [domain.lower() for domain in self.blocked_domains]
+            allowed_domains_lower = [domain.lower().lstrip('.') for domain in self.allowed_domains]
+            blocked_domains_lower = [domain.lower().lstrip('.') for domain in self.blocked_domains]
 
             if any(user_email_domain == domain or user_email_domain.endswith("." + domain) for domain in blocked_domains_lower):
                 raise BusinessLogicError("User's email domain is not allowed for this event.")
