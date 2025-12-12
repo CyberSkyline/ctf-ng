@@ -5,6 +5,7 @@ from ...challenge.models import Challenge
 from ..controllers.get_stats import get_stats
 from ..controllers.admin_exec import admin_exec
 from ..controllers.pull_vnc import pull_vnc
+from ..controllers.recycle_containers import recycle_containers
 from ..models.ContainerInstance import ContainerInstance
 from ..models.IndvidualContainer import IndvidualContainer
 from ..constants import CHALLENGER_NET_NAME
@@ -167,19 +168,8 @@ class DeploymentRecycle(Resource):
     )
     @admin_endpoint()
     def post(self, challenge_id, team_id, **kwargs):
-        indv_ctrs = ContainerInstance.recycle_instance_group(challenge_id, team_id)
-
-        networks = ContainerInstance.start_instance_group(challenge_id, team_id)
-        if CHALLENGER_NET_NAME not in set(networks):
-            raise BusinessLogicError("Challenge has no challenger network")
-
-        for ctr in indv_ctrs:
-            indv_ctr_obj = IndvidualContainer.get_indvidual_container_by_dockerid(ctr)
-            if indv_ctr_obj:
-                indv_ctr_obj.disconnect_from_networks()
-                indv_ctr_obj.connect_to_network(ContainerInstance.render_network_name(team_id, CHALLENGER_NET_NAME, challenge_id))
-
-        return success_response(True)
+        res = recycle_containers(challenge_id, team_id)
+        return success_response(res)
 
 @admin_container_namespace.route("/<int:container_instance_id>/logs")
 class InstanceLogs(Resource):
