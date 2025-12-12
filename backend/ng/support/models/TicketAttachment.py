@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Any, TypedDict
 
 from CTFd.models import db
+from flask import current_app
 
 from ... import config
 from ...core.models.FileUpload import FileUpload
@@ -93,7 +94,7 @@ class TicketAttachment(db.Model):
         if not self.file_upload:
             raise ValueError("FileUpload not loaded for TicketAttachment")
 
-        download_path = config.TICKET_ATTACHMENT_DOWNLOAD_PATH
+        download_path = f"{current_app.config.get('ROUTE_PREFIX')}{config.TICKET_ATTACHMENT_DOWNLOAD_PATH}"
 
         data = {
             "id": self.id,
