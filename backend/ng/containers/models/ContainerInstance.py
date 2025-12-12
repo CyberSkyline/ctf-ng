@@ -5,6 +5,7 @@ import redis_lock
 from sqlalchemy import func, select
 from sqlalchemy.orm import Mapped
 from typing import TypedDict
+import logging
 
 from ..utils.get_client import get_client
 from ..utils.Client import Client
@@ -14,6 +15,8 @@ from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 from ...team.models.Team import Team
 from ...core import BusinessLogicError
 from ..utils.redis import get_redis_client
+
+logger = logging.getLogger(__name__)
 
 NET_ERR_REGEX = re.compile("(?:endpoint.*already exists in)|(?:already attached to network)")
 
@@ -281,7 +284,7 @@ class ContainerInstance(db.Model):
         return cls.query.filter_by(id=instance_id).first()
 
     @classmethod
-    def recycle_instance_group(cls, challenge_id: int, team_id: int):
+    def remove_instance_group(cls, challenge_id: int, team_id: int) -> list[str]:
         from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 
         redis_client = get_redis_client(3)
@@ -320,7 +323,7 @@ class ContainerInstance(db.Model):
             raise BusinessLogicError("Challenge is already being started/reset")
 
     @classmethod
-    def start_instance_group(cls, challenge_id: int, team_id: int):
+    def start_instance_group(cls, challenge_id: int, team_id: int) -> list[str]:
         from ...challenge.models.ContainerBlueprint import ContainerBlueprint
         from ...team.models.Team import Team
 
@@ -357,7 +360,9 @@ class ContainerInstance(db.Model):
                             pass
                 db.session.rollback()
                 lock.release()
-                raise BusinessLogicError(f"Challenge failed to start, please contact support: {str(err)}") from err
+
+                logger.error(str(err))
+                raise BusinessLogicError(f"Challenge failed to start, please contact support") from err
             db.session.commit()
             lock.release()
             return networks

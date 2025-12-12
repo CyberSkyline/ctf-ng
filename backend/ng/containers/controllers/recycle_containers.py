@@ -4,7 +4,7 @@ from ..constants import CHALLENGER_NET_NAME
 from ...core import BusinessLogicError
 
 def recycle_containers(challenge_id: int, team_id: int) -> bool:
-    disconnected_indvidual_containers = ContainerInstance.recycle_instance_group(challenge_id, team_id)
+    disconnected_indvidual_containers = ContainerInstance.remove_instance_group(challenge_id, team_id)
 
     networks = ContainerInstance.start_instance_group(challenge_id, team_id)
 
