@@ -139,7 +139,7 @@ def lint_challenge(yaml_content: str) -> SerializedLint | None:
         compose_file = parse_compose_string(yaml_content)
         warnings = compose_file.warnings()
 
-        if warnings.self_warnings or warnings.field_warnings:
+        if warnings is not None:
             return {
                 "warnings": serialize_warnings(warnings),
             }

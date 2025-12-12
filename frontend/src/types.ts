@@ -322,6 +322,13 @@ export interface ChallengeVariable {
   template: string;
 }
 
+export interface LintItem {
+  message: string;
+  field: string;
+}
+
+export type LintResult = null | {warnings: LintItem[]} | {errors: LintItem[]};
+
 export interface Feedback {
   id: number;
   user_id: number;
