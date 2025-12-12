@@ -82,3 +82,4 @@ CONTAINER_REGISTRY_PASSWORD = ""
 
 # Email notification URL paths - Frontend routes
 TICKET_URL_PATH = "/support"
+ADMIN_TICKET_URL_PATH = "/admin/tickets"
