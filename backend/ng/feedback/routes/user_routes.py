@@ -2,7 +2,6 @@
 User Routes for Feedback Operations
 """
 
-from datetime import datetime
 from flask_restx import Namespace, Resource
 
 
