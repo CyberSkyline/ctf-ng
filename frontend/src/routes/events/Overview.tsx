@@ -29,12 +29,12 @@ export default function Overview() {
   const { data, error } = useEvent(eventId);
   const { isAuthenticated, isUnauthenticated } = useAuth();
   const {
-    isRegistered, isUnregistered, isStarted, isFinished,
+    isRegistered, isUnregistered, isStarted, isFinished, team,
   } = useRegistration(eventId);
 
   const challengesTabAvailable = isRegistered;
   const teamTabAvailable = isRegistered && data && data.max_team_size > 1;
-  const feedbackAvailable = isFinished || (isStarted && !data?.end_time);
+  const feedbackAvailable = isRegistered && (isFinished || (isStarted && !team!.end_time));
 
   const { data : feedback } = useMyEventFeedback(feedbackAvailable ? eventId : null);
 
