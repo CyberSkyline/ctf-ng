@@ -142,6 +142,7 @@ class TestUser:
         assert "registered_at" in data
         assert data["registered_at"].endswith("Z")
         assert "roles" not in data
+        assert "banned" not in data
 
     def test_serialize_with_admin_fields(self, user_factory):
         """
@@ -160,6 +161,8 @@ class TestUser:
         assert "registered_at" in data
         assert "roles" in data
         assert isinstance(data["roles"], list)
+        assert "banned" in data
+        assert isinstance(data["banned"], bool)
 
     def test_serialize_missing_ctfd_user(self):
         """

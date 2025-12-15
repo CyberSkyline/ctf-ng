@@ -1,5 +1,5 @@
-import { useMyEvents } from '@/hooks/events';
 import { useMyAnnouncements } from '@/hooks/announcements';
+import { useMyEvents } from '@/hooks/events';
 
 import { AnnouncementIcon, COLOR_WARNING } from '@/constants';
 import {
@@ -7,10 +7,9 @@ import {
   Container,
   Flex,
   Heading,
-  Skeleton,
   Text,
 } from '@radix-ui/themes';
-import { ErrorCallout, InfoCallout } from 'components/Callouts';
+import { ErrorCallout } from 'components/Callouts';
 import HeaderContainer from 'components/HeaderContainer';
 import { isEmpty, map } from 'lodash';
 import PastEvents from 'routes/dashboard/PastEvents';
@@ -18,7 +17,7 @@ import UpcomingEvents from 'routes/dashboard/UpcomingEvents';
 import EventCard from './EventCard';
 
 export default function Dashboard() {
-  const { data, error, isLoading } = useMyEvents();
+  const { data, error } = useMyEvents();
   const { data : announcements, error : announcementError } = useMyAnnouncements();
 
   const liveEvents = data?.filter(
@@ -65,18 +64,13 @@ export default function Dashboard() {
           }
           </Flex>
         )}
-        {isEmpty(liveEvents) && (
-          <Skeleton loading={isLoading}>
-            <InfoCallout>
-              No events are currently running. This should eventually be something more interesting, i.e. the first upcoming event or practice area.
-            </InfoCallout>
-          </Skeleton>
+        {liveEvents && liveEvents.length > 0 && (
+          <Flex direction="column" gap="3">
+            {liveEvents.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </Flex>
         )}
-        <Flex direction="column" gap="3">
-          {liveEvents?.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </Flex>
       </HeaderContainer>
 
       <Container size="4">

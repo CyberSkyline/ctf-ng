@@ -1,32 +1,15 @@
 import { Flex } from '@radix-ui/themes';
-import { WarningCallout } from 'components/Callouts';
-import AdminEventCard from './AdminEventCard';
+import AdminCountsCard from './AdminCountsCard';
 import AdminProvisionerCard from './AdminProvisionerCard';
-import AdminActivityCard from './AdminActivityCard';
-import AdminOverviewCard from './AdminOverviewCard';
 
-/**
- * Admin dashboard with system monitoring and important metrics.
- */
 export default function AdminDashboard() {
   return (
     <>
       <title>Admin Dashboard</title>
-      <WarningCallout>Something bad happened!</WarningCallout>
-
-      <Flex direction={{ initial : 'column', lg : 'row' }} gap="4" mt="4">
-        <Flex direction="column" gap="4" className="flex-grow basis-1/2 h-full">
-          <AdminOverviewCard />
-          <AdminActivityCard />
-          <AdminProvisionerCard />
-        </Flex>
-        <Flex direction="column" gap="4" flexGrow="1" flexBasis="50%">
-          <AdminEventCard id="event1" />
-          <AdminEventCard id="event2" />
-          <AdminEventCard id="event3" />
-        </Flex>
+      <Flex direction="column" gap="4" className="flex-grow basis-1/2 h-full">
+        <AdminCountsCard />
+        <AdminProvisionerCard />
       </Flex>
-
     </>
   );
 }

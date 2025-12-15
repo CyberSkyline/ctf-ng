@@ -3,9 +3,10 @@ Defines the TicketMessage model for support ticket thread messages.
 """
 
 from __future__ import annotations
+
 from typing import Any, TypedDict
 
-from CTFd.models import db, Users
+from CTFd.models import Users, db
 
 from ... import config
 from ...core.utils import utc_now
@@ -50,6 +51,7 @@ class TicketMessage(db.Model):
             config.TICKET_MESSAGE_MAX_LENGTH,
             required=True,
             friendly_name="Message text",
+            printable_only=False,
         )
         validator.validate_model_id(data, "ticket_id", "Ticket", required=True)
         validator.validate_model_id(data, "author_id", "Users", required=True)

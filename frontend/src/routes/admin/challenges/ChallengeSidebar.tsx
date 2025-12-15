@@ -5,19 +5,22 @@ import AdminLink from 'components/AdminLink';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import ChallengeIcon from 'components/ChallengeIcon';
+import { useId } from 'react';
 import { useSearchParams } from 'react-router';
 import ChallengeDownloadButton from './ChallengeDownloadButton';
 import ChallengeUpdateModal from './ChallengeUpdateModal';
 import ChallengeAttemptsTab from './SidebarTabs/ChallengeAttemptsTab';
 import ChallengeBlueprintTab from './SidebarTabs/ChallengeBlueprintTab';
 import ChallengeDetailsTab from './SidebarTabs/ChallengeDetailsTab';
+import ChallengeFeedbackTab from './SidebarTabs/ChallengeFeedbackTab';
 
 export default function ChallengeSidebar({ entity }: {entity: Challenge}) {
   const [ searchParams, setSearchParams ] = useSearchParams();
+  const headerId = useId();
 
   return (
-    <AdminSidebar>
-      <AdminSidebarHeader title={entity.name} icon={<ChallengeIcon icon={entity.icon} />}>
+    <AdminSidebar labelId={headerId}>
+      <AdminSidebarHeader title={entity.name} icon={<ChallengeIcon icon={entity.icon} />} id={headerId}>
         <AdminLink
           to="/admin/events"
           id={entity.event_id}
@@ -61,6 +64,9 @@ export default function ChallengeSidebar({ entity }: {entity: Challenge}) {
           <Tabs.Trigger value="attempts">
             Attempts
           </Tabs.Trigger>
+          <Tabs.Trigger value="feedback">
+            Feedback
+          </Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="details" className="flex flex-col gap-3 pb-3">
           <ChallengeDetailsTab challenge={entity} />
@@ -70,6 +76,9 @@ export default function ChallengeSidebar({ entity }: {entity: Challenge}) {
         </Tabs.Content>
         <Tabs.Content value="attempts" className="flex flex-col flex-grow">
           <ChallengeAttemptsTab challengeId={entity.id} />
+        </Tabs.Content>
+        <Tabs.Content value="feedback" className="flex flex-col flex-grow">
+          <ChallengeFeedbackTab challenge={entity} />
         </Tabs.Content>
       </Tabs.Root>
     </AdminSidebar>

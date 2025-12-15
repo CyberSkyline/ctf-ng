@@ -1,0 +1,34 @@
+import { useFileUrl } from '@/hooks/fileuploads';
+import type { Event } from '@/types';
+import { AspectRatio, Skeleton } from '@radix-ui/themes';
+import { twMerge } from 'tailwind-merge';
+import { ErrorCallout } from './Callouts';
+
+export default function EventGraphic({ event, className }: {event: Event, className ?: string}) {
+  // aspect ratio for event card graphics
+  const RATIO = 2 / 3;
+
+  const { data : fileUrl, error : fileUrlError, isLoading } = useFileUrl('event-cards', event.image ?? undefined);
+
+  if (!event.image) return null;
+
+  if (fileUrlError) {
+    return <ErrorCallout>Failed to load image.</ErrorCallout>;
+  }
+
+  return (
+    <Skeleton loading={isLoading}>
+      <div className={twMerge(className, 'overflow-clip')}>
+        <AspectRatio ratio={RATIO}>
+          {fileUrl?.download_url && (
+            <img
+              className="object-cover h-full w-full overflow-visible"
+              src={fileUrl?.download_url}
+              alt="" // Event graphic is always accompanied by event name which will already be read out
+            />
+          )}
+        </AspectRatio>
+      </div>
+    </Skeleton>
+  );
+}

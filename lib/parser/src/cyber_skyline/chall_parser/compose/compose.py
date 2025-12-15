@@ -32,7 +32,7 @@ from attrs import define, field
 from cyber_skyline.chall_parser.compose.service import Service
 from cyber_skyline.chall_parser.compose.network import Network
 from cyber_skyline.chall_parser.compose.challenge_info import ChallengeInfo
-from cyber_skyline.chall_parser.compose.validators import validate_compose_name_pattern
+from cyber_skyline.chall_parser.compose.validators import validate_compose_name_pattern, contains
 from cyber_skyline.chall_parser.warnings import Warnings    
 
 # Custom types for pattern-validated dictionaries
@@ -66,7 +66,7 @@ class ComposeFile:
 
     networks: NetworksDict | None = field(
         default=None,
-        validator=v.optional(validate_compose_name_pattern)
+        validator=v.optional(v.and_(validate_compose_name_pattern, contains("competitor_net")))
     )
     # Network definitions for service communication
     # - All networks are internal-only for security
@@ -122,7 +122,11 @@ class ComposeFile:
             yield Warnings("service warnings", None, service_warnings)
 
     def warnings(self) -> Warnings:
-        return Warnings("ComposeFile", self._warnings(), self._field_warnings())
+        warning =  Warnings("ComposeFile", self._warnings(), self._field_warnings())
+        if warning.self_warnings or warning.field_warnings:
+            return warning
+        return None
+            
 
 # Deliberately excluded Docker Compose features:
 # - volumes: Persistent storage could be a security risk and complexity issue

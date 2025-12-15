@@ -207,6 +207,24 @@ class TestStringValidationUnicode:
         assert "field" in exc_info.value.errors
         assert "is required" in exc_info.value.errors["field"]
 
+    def test_string_rejects_non_printable(self):
+        """
+        Test string validation rejects non-printable characters
+        """
+        non_printable_strings = [
+            "valid\x00string",  # Null byte
+            "valid\x1Fstring",  # Unit separator
+            "valid\x7Fstring",  # Delete character
+        ]
+
+        for test_string in non_printable_strings:
+            validator = BaseValidator()
+            validator.validate_string({"field": test_string}, "field", required=True, printable_only=True)
+            with pytest.raises(ValidationError) as exc_info:
+                validator.validate()
+            assert "field" in exc_info.value.errors
+            assert "contains disallowed characters" in exc_info.value.errors["field"]
+
 
 class TestBooleanValidation:
     """Test boolean validation edge cases."""

@@ -1,27 +1,32 @@
 import { EventIcon, TeamIcon, UserIcon } from '@/constants';
 import { useTeamMembers } from '@/hooks/team';
-import {
-  useUserEvents,
-  useUserTeams,
-  useUserWorkspace,
-  useWorkspaceStatus,
-} from '@/hooks/users';
-import type { Event, Team, User } from '@/types';
+import { useUserTeams, useUserWorkspace, useWorkspaceStatus } from '@/hooks/users';
+import type { AdminUser, Team } from '@/types';
 import { utf8ToBase64 } from '@/util';
-import { Table } from '@radix-ui/themes';
-import AdminDataList from 'components/AdminDataList';
+import {
+  Box,
+  Flex,
+  Grid,
+  Heading,
+  Table,
+  Text,
+} from '@radix-ui/themes';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
-import { ErrorCallout } from 'components/Callouts';
+import { ErrorCallout, WarningCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import RoleBadge from 'components/RoleBadge';
-import { keyBy } from 'lodash';
+import Statistic from 'components/Statistic';
+import { useId } from 'react';
 import AdminRegisterUserModal from './AdminRegisterUserModal';
+
+import AdminUpdateUserModal from './AdminUpdateUserModal';
+import BanUserModal from './BanUserModal';
 import ImpersonateUserButton from './ImpersonateUserButton';
 import RecycleWorkspaceModal from './RecycleWorkspaceModal';
 import RestartWorkspaceModal from './RestartWorkspaceModal';
 
-function RegistrationRow({ userId, team, event }: { userId: number, team: Team, event: Event }) {
+function RegistrationRow({ userId, team }: { userId: number, team: Team }) {
   const { data : teamMembers } = useTeamMembers(team.id);
   if (!teamMembers) {
     return null;
@@ -35,7 +40,7 @@ function RegistrationRow({ userId, team, event }: { userId: number, team: Team, 
   return (
     <Table.Row key={team.id}>
       <Table.Cell>
-        <Entity label={event.name} icon={EventIcon} to={`/admin/events?id=${event.id}`} />
+        <Entity label={team.event_name || 'Unknown'} icon={EventIcon} to={`/admin/events?id=${team.event_id}`} />
       </Table.Cell>
       <Table.Cell>
         <Entity
@@ -43,7 +48,7 @@ function RegistrationRow({ userId, team, event }: { userId: number, team: Team, 
           icon={TeamIcon}
           to={
             `/admin/teams?id=${team.id}&filter=${
-              encodeURIComponent(utf8ToBase64(JSON.stringify({ event_name : { filterType : 'text', type : 'equals', filter : event.name } })))}`
+              encodeURIComponent(utf8ToBase64(JSON.stringify({ event_name : { filterType : 'text', type : 'equals', filter : team.event_name } })))}`
           }
         />
       </Table.Cell>
@@ -57,28 +62,67 @@ function RegistrationRow({ userId, team, event }: { userId: number, team: Team, 
   );
 }
 
-export default function UserSidebar({ entity }: { entity: User }) {
+export default function UserSidebar({ entity }: { entity: AdminUser }) {
   const { data : teamsData, error : teamsError } = useUserTeams(entity.id);
-  const { data : eventsData, error : eventsError } = useUserEvents(entity.id);
   const { data : workspaceData, error : workspaceError } = useUserWorkspace(entity.id);
   const { data : workspaceStatus, error : workspaceStatusError } = useWorkspaceStatus(entity.id);
 
-  const eventsMap = keyBy(eventsData, 'id');
+  const headerId = useId();
 
   return (
-    <AdminSidebar>
-      <AdminSidebarHeader title={entity.name} icon={<UserIcon />}>
+    <AdminSidebar labelId={headerId}>
+      <AdminSidebarHeader title={entity.name} icon={<UserIcon />} id={headerId}>
         <ImpersonateUserButton user={entity} />
+        <BanUserModal user={entity} />
+        <AdminUpdateUserModal user={entity} />
       </AdminSidebarHeader>
 
-      <AdminDataList data={{ ...entity }} />
+      {entity.banned && (<WarningCallout>This user is banned.</WarningCallout>)}
+
+      <Grid columns="2" gap="4" align="center" justify="between">
+        <Statistic
+          label="Name"
+          value={entity.name}
+          size="5"
+        />
+        <Statistic
+          label="ID"
+          value={entity.id}
+          size="5"
+        />
+
+        <Statistic
+          label="Email"
+          value={entity.email}
+          size="5"
+        />
+        <Statistic
+          label="Sponsor"
+          value={entity.affiliation?.name || 'N/A'}
+          size="5"
+        />
+        <Statistic
+          label="Registered At"
+          value={entity.registered_at.toLocaleString()}
+          size="5"
+        />
+        <Box>
+          <Text size="2" color="gray">Roles</Text>
+          <Flex direction="row" wrap="wrap">
+            {entity.roles.length === 0 && <Heading asChild size="5" weight="bold"><span>None</span></Heading>}
+            {entity.roles.map((role) => (
+              <RoleBadge key={role} value={role} size="2" />
+            ))}
+          </Flex>
+        </Box>
+
+      </Grid>
 
       <AdminSidebarHeader title="Registrations">
         <AdminRegisterUserModal userId={entity.id} />
       </AdminSidebarHeader>
       {teamsError && <ErrorCallout>{teamsError.message}</ErrorCallout> }
-      {eventsError && <ErrorCallout>{eventsError.message}</ErrorCallout> }
-      {teamsData && eventsData && (
+      {teamsData && (
         <Table.Root>
           <Table.Header>
             <Table.Row>
@@ -89,12 +133,11 @@ export default function UserSidebar({ entity }: { entity: User }) {
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {teamsData?.map((team) => (
+            {teamsData.map((team) => (
               <RegistrationRow
                 key={team.id}
                 userId={entity.id}
                 team={team}
-                event={eventsMap[team.event_id]}
               />
             ))}
           </Table.Body>

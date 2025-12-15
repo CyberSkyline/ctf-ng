@@ -6,6 +6,7 @@ import type {
   ChallengeVariable,
   ContainerBlueprint,
   Hint,
+  LintResult,
   MeChallenge,
   Question,
 } from '@/types';
@@ -76,9 +77,24 @@ export function submitFlag(
     submission : flag,
   }, {
     method : 'POST',
-  }).then(() => {
+  }).then((att) => {
     // refresh the challenge data after submitting a flag
-    mutate(`/events/${eventId}/challenges/${challengeId}`);
+    mutate(
+      `/events/${eventId}/challenges/${challengeId}`,
+      (data: undefined | {
+        challenge: Challenge;
+        questions: Question[];
+        hints: Hint[];
+        attempts: Attempt[];
+      }) => {
+        if (!data) return data;
+        return {
+          ...data,
+          attempts : [ ...data.attempts, att as Attempt ],
+        };
+      },
+      false,
+    );
   });
 }
 
@@ -136,6 +152,12 @@ export function createChallenge(eventId: number, yaml: string) {
     // refresh the challenges list when a new challenge is created
     mutate(`/admin/events/${eventId}/challenges`);
   });
+}
+
+export function lintChallenge(yaml: string) {
+  return apiMutation('/admin/challenges/lint', { yaml : utf8ToBase64(yaml) }, {
+    method : 'POST',
+  }) as Promise<LintResult>;
 }
 
 export function updateChallenge(challengeId: number, yaml: string) {

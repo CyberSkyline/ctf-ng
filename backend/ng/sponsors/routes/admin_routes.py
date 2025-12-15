@@ -8,22 +8,8 @@ from ...core.middleware.loaders import LoaderType
 sponsors_admin_namespace = Namespace("/admin/sponsors", description="admin endpoints for managing sponsors")
 
 
-@sponsors_admin_namespace.route("/")
+@sponsors_admin_namespace.route("")
 class SponsorsAdmin(Resource):
-    @admin_endpoint()
-    @sponsors_admin_namespace.doc(
-        description="Get all sponsors",
-        responses={
-            200: "Success",
-            403: "Forbidden - Admin access required",
-            500: "Internal server error",
-        },
-    )
-    def get(self, **kwargs):
-        """Get all sponsors (admin only)"""
-        sponsors = Sponsor.query.all()
-        return {"sponsors": [s.serialize() for s in sponsors]}
-
     @admin_endpoint(json_required=True, validation_func=Sponsor.validate)
     @sponsors_admin_namespace.doc(
         description="Create a new sponsor",
@@ -57,23 +43,6 @@ class SponsorsAdmin(Resource):
 
 @sponsors_admin_namespace.route("/<int:sponsor_id>")
 class SponsorByIDAdmin(Resource):
-    @admin_endpoint()
-    @load_sponsor(LoaderType.PARAM)
-    @sponsors_admin_namespace.doc(
-        description="Get sponsor by ID",
-        responses={
-            200: "Success",
-            403: "Forbidden - Admin access required",
-            404: "Sponsor not found",
-            500: "Internal server error",
-        },
-    )
-    def get(self, sponsor_id, sponsor, **kwargs):
-        """Get sponsor by ID (admin only)"""
-
-        return success_response(sponsor)
-
-
     @admin_endpoint(json_required=True, validation_func=Sponsor.validate)
     @load_sponsor(source=LoaderType.PARAM)
     @sponsors_admin_namespace.doc(

@@ -1,7 +1,7 @@
 import { Flex } from '@radix-ui/themes';
 import { useEffect, useRef, type ReactNode } from 'react';
 
-export default function AdminSidebar({ basis, children }: {basis?: string, children: ReactNode}) {
+export default function AdminSidebar({ basis, children, labelId }: {basis?: string, children: ReactNode, labelId: string}) {
   const headerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -18,6 +18,8 @@ export default function AdminSidebar({ basis, children }: {basis?: string, child
       ref={headerRef}
       tabIndex={-1}
       flexBasis={basis || '50%'}
+      role="complementary"
+      aria-labelledby={labelId}
     >
       {children}
     </Flex>

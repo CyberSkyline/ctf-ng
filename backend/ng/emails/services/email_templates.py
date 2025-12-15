@@ -4,7 +4,8 @@ Email templates for support ticket notifications using Jinja2
 
 import os
 from datetime import datetime
-from typing import TypedDict, NotRequired
+from typing import NotRequired, TypedDict
+
 from flask import current_app
 from jinja2 import (
     Environment,
@@ -98,8 +99,9 @@ class TicketEmailTemplates:
         """
         Get the base URL for ticket links
         """
-        domain = current_app.config.get('SERVER_DOMAIN')
-        return str(domain) if domain is not None else None
+        server_domain = current_app.config.get('SERVER_DOMAIN')
+        route_prefix = current_app.config.get('ROUTE_PREFIX')
+        return f"{server_domain}{route_prefix}"
 
     @staticmethod
     def new_ticket(ticket_data: TicketData) -> tuple[str, str, str]:
@@ -116,7 +118,7 @@ class TicketEmailTemplates:
         if not base_url:
             raise ValueError("SERVER_DOMAIN not configured")
 
-        ticket_url = f"{base_url}{config.TICKET_URL_PATH}/{ticket_data['id']}"
+        ticket_url = f"{base_url}{config.ADMIN_TICKET_URL_PATH}?id={ticket_data['id']}"
 
         subject = f"New Support Ticket: {ticket_data['subject']}"
 
@@ -156,7 +158,10 @@ class TicketEmailTemplates:
         if not base_url:
             raise ValueError("SERVER_DOMAIN not configured")
 
-        ticket_url = f"{base_url}{config.TICKET_URL_PATH}/{ticket_data['id']}"
+        if is_admin_reply:
+            ticket_url = f"{base_url}{config.TICKET_URL_PATH}/{ticket_data['id']}"
+        else:
+            ticket_url = f"{base_url}{config.ADMIN_TICKET_URL_PATH}?id={ticket_data['id']}"
 
         reply_type = "Admin" if is_admin_reply else "User"
         subject = f"Support Ticket Reply: {ticket_data['subject']}"

@@ -8,9 +8,11 @@ from typing import TypedDict
 from ..utils.get_client import get_client
 from ..utils.Client import Client
 from CTFd.utils import get_app_config
-from .. constants import DOCKER_RUNNING, DOCKER_BRIDGE
+from .. constants import DOCKER_RUNNING, DOCKER_BRIDGE, DOCKER_MEM_REGEX
 from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 from ...team.models.Team import Team
+
+NET_ERR_REGEX = re.compile("(?:endpoint.*already exists in)|(?:already attached to network)")
 
 class SerializedInstanceStats(TypedDict):
     id: int
@@ -55,7 +57,21 @@ class ContainerInstance(db.Model):
         if db_exists:
             try:
                 ctr = client.get_running(db_exists.dockerid)
+
+            ## Container Needs created
             except docker.errors.NotFound:
+                ctr = cls.run_container(client, team, blueprint_obj)
+                cls.connect_networks(client, team, blueprint_obj, ctr)
+
+                db_exists.dockerid = ctr.id
+                db.session.commit()
+
+            ## Container won't start
+            ## Edge case of entry point getting nuked or something
+            except docker.errors.APIError:
+                tmp_ctr = client.containers.get(db_exists.dockerid)
+                tmp_ctr.remove(force=True)
+
                 ctr = cls.run_container(client, team, blueprint_obj)
                 cls.connect_networks(client, team, blueprint_obj, ctr)
 
@@ -67,16 +83,31 @@ class ContainerInstance(db.Model):
         ctr = None
         try:
             ctr = client.get_running(
-                cls.render_container_name(team.id, blueprint_obj.hostname, blueprint_obj.challenge_id)
+                cls.render_container_name(team.id, blueprint_obj.name, blueprint_obj.challenge_id)
             )
 
         ## Container Needs created
         except docker.errors.NotFound:
-            ## Need To detach or it will hang
-            ## (TODO) add in env vars and what not
             ctr = cls.run_container(client, team, blueprint_obj)
 
-        cls.connect_networks(client, team, blueprint_obj, ctr)
+        ## Container won't start
+        ## Edge case of entry point getting nuked or something
+        except docker.errors.APIError:
+            tmp_ctr = client.containers.get(
+                cls.render_container_name(team.id, blueprint_obj.name, blueprint_obj.challenge_id)
+             )
+            tmp_ctr.remove(force=True)
+
+            ctr = cls.run_container(client, team, blueprint_obj)
+
+        try:
+            cls.connect_networks(client, team, blueprint_obj, ctr)
+
+        except Exception as err:
+            # Remove on network fail
+            ctr.remove(force=True)
+            raise err
+
 
         container_instance = cls(
             blueprint=blueprint,
@@ -91,8 +122,8 @@ class ContainerInstance(db.Model):
         return container_instance
 
     @staticmethod
-    def render_container_name(team_id: int, hostname: str, challenge_id: int) -> str:
-        return f"{team_id}-{hostname}-{challenge_id}"
+    def render_container_name(team_id: int, servicename: str, challenge_id: int) -> str:
+        return f"{team_id}-{servicename}-{challenge_id}"
 
     @staticmethod
     def render_network_name(team_id: int, network_name: str, challenge_id: int) -> str:
@@ -111,15 +142,28 @@ class ContainerInstance(db.Model):
     def run_container(client: Client, team: Team, blueprint_obj: ContainerBlueprint):
         ulimit = docker.types.Ulimit(name="nofile", soft=10000, hard=20000)
         mem_limit = blueprint_obj.mem_limit or "128m"
+
+        parsed_ram = DOCKER_MEM_REGEX.match(mem_limit)
+        ram_number = int(parsed_ram.group(1))
+        ram_postfix = parsed_ram.group(2)
+
+        swap_mem = f"{round(ram_number * 1.5)}{ram_postfix}"
+        mem_resv = f"{round(ram_number * 0.8)}{ram_postfix}"
+
+        # I am not setting a kernel memory limit
+        # As you it is deprecated
+        # See https://github.com/torvalds/linux/commit/0158115f702b0ba208ab0b5adf44cae99b3ebcc7
         ctr = client.containers.run(
             blueprint_obj.image,
             environment=blueprint_obj.render_environment(team.seed),
-            name=ContainerInstance.render_container_name(team.id, blueprint_obj.hostname, blueprint_obj.challenge_id),
+            name=ContainerInstance.render_container_name(team.id, blueprint_obj.name, blueprint_obj.challenge_id),
             detach=True,
             cpu_period=100000,
             cpu_quota=10000,
             pids_limit=100,
             mem_limit=mem_limit,
+            mem_reservation=mem_resv,
+            memswap_limit=swap_mem,
             ulimits=[ulimit],
         )
 
@@ -135,8 +179,11 @@ class ContainerInstance(db.Model):
     def connect_networks(client: Client, team: Team, blueprint_obj: ContainerBlueprint, ctr):
         if blueprint_obj.networks:
             for network in blueprint_obj.networks:
-                netconf = blueprint_obj.netconfs[network] or None
+                netconf = None
                 is_static_net = not isinstance(blueprint_obj.networks, list)
+
+                if isinstance(blueprint_obj.netconfs, dict):
+                    netconf = blueprint_obj.netconfs.get(network)
 
                 networkname = ContainerInstance.render_network_name(team.id, network, blueprint_obj.challenge_id)
                 net_exists = client.get_network_by_name(networkname)
@@ -165,7 +212,7 @@ class ContainerInstance(db.Model):
                         net_exists.connect(ctr, aliases=[blueprint_obj.hostname], ipv4_address=ipaddr)
                     except docker.errors.APIError as err:
                         # Check if container is already connected to the network
-                        if not re.search("endpoint.*already exists in", str(err)):
+                        if not NET_ERR_REGEX.search(str(err)):
                             raise err
 
     @classmethod
@@ -301,3 +348,8 @@ class ContainerInstance(db.Model):
 
             self.dockerid = new_ctr.id
             db.session.commit()
+    def remove(self):
+        client = get_client(self.hostip)
+
+        ctr = client.containers.get(self.dockerid)
+        ctr.remove(force=True)

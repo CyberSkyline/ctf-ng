@@ -2,7 +2,7 @@ from CTFd.models import db
 from CTFd.utils import get_app_config
 import docker
 from typing import TypedDict
-from ..constants import DOCKER_RUNNING, DOCKER_BRIDGE
+from ..constants import DOCKER_RUNNING, DOCKER_BRIDGE, DOCKER_MEM_REGEX
 from ..utils.get_client import get_client
 from .ContainerInstance import ContainerInstance
 
@@ -77,22 +77,57 @@ class IndvidualContainer(db.Model):
     @staticmethod
     def run_container(client, container_name):
         NOVNC_CONTAINER = get_app_config("NOVNC_CONTAINER")
+
+        NOVNC_RAM = get_app_config("NOVNC_RAM", "4g")
+
+        parsed_ram = DOCKER_MEM_REGEX.match(NOVNC_RAM)
+        ram_number = int(parsed_ram.group(1))
+        ram_postfix = parsed_ram.group(2)
+
+        swap_mem = f"{round(ram_number * 1.5)}{ram_postfix}"
+        mem_resv = f"{round(ram_number * 0.8)}{ram_postfix}"
+
+
+        ulimit = docker.types.Ulimit(name="nofile", soft=10000, hard=20000)
+
+        net = client.get_network_by_name(container_name)
+
+        if not net:
+            net = client.networks.create(name=container_name, driver="bridge")
+
+
+        # I am not setting a kernel memory limit
+        # As you it is deprecated
+        # See https://github.com/torvalds/linux/commit/0158115f702b0ba208ab0b5adf44cae99b3ebcc7
         return client.containers.run(
             NOVNC_CONTAINER,
             name=container_name,
             detach=True,
             publish_all_ports=True,
+            cap_add=[
+                "NET_ADMIN",
+                "SYS_PTRACE",
+            ],
+            mem_limit=NOVNC_RAM,
+            mem_reservation=mem_resv,
+            memswap_limit=swap_mem,
+            cpu_period=200000,
+            cpu_quota=100000,
+            pids_limit=2000,
+            ulimits=[ulimit],
+            network=net.name,
         )
 
 
     def disconnect_from_networks(self):
         # Disconnect your indvidual container from challenge networks
         # Bridge needs to stay for vnc
+        user_bridge_name = self.render_container_name(self.user)
         client = get_client(self.hostip)
         inspect_results = client.api.inspect_container(self.dockerid)
         networks = inspect_results["NetworkSettings"]["Networks"]
         for network in networks:
-            if network != DOCKER_BRIDGE:
+            if network != DOCKER_BRIDGE and network != user_bridge_name:
                 fetched_network = client.networks.get(networks[network]["NetworkID"])
                 fetched_network.disconnect(self.dockerid)
 
@@ -119,13 +154,15 @@ class IndvidualContainer(db.Model):
 
     def get_current_challenge(self) -> int | None:
         client = get_client(self.hostip)
+        user_bridge_name = self.render_container_name(self.user)
+
         try:
             ctr_info = client.api.inspect_container(self.dockerid)
             current_challenge_network = None
 
             networks = ctr_info["NetworkSettings"]["Networks"]
             for network in networks:
-                if network != DOCKER_BRIDGE:
+                if (network != DOCKER_BRIDGE) and (network != user_bridge_name):
                     current_challenge_network = network
 
             if not current_challenge_network:

@@ -69,7 +69,7 @@ class TestAdminImpersonation:
         assert response.status_code == 200
 
         with admin_client.session_transaction() as session:
-            assert session["id"] == 2
+            assert session["id"] == 1
 
     def test_admin_identity_endpoints_report_as_user(self, admin_client, user_factory, team_factory):
         """Test that endpoints report as impersonated user"""
@@ -103,9 +103,10 @@ class TestAdminImpersonation:
         data = response.get_json()
         assert data["data"] == []
 
-    def test_admin_team_management_as_user(self, admin_client, user_factory, team_factory, event_factory):
+    def test_admin_team_management_as_user(self, admin_client, user_factory, sponsor_factory, event_factory):
         """Test that admin can manage teams as the impersonated user."""
-        user = user_factory()
+        sponsor = sponsor_factory()
+        user = user_factory(sponsor = sponsor)
         event = event_factory()
 
         response = self.impersonate(admin_client, user.id)
@@ -188,7 +189,7 @@ class TestAdminImpersonation:
 
     def test_cannot_impersonate_self(self, admin_client, user_factory):
         """Test that admin cannot impersonate other admins."""
-        response = self.impersonate(admin_client, 2)
+        response = self.impersonate(admin_client, 1)
         assert response.status_code == 403
         assert response.get_json()["errors"]["impersonation"] == "You cannot impersonate yourself."
 

@@ -68,6 +68,7 @@ export default function SupportTags() {
         rowData={data || []}
         columnDefs={colDefs}
         domLayout="autoHeight"
+        defaultColDef={{ flex : 1 }}
       />
     </>
   );

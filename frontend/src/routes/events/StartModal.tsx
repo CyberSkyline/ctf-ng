@@ -1,5 +1,6 @@
 import { COLOR_POSITIVE } from '@/constants';
 import { startMyTeam, useEventStatus } from '@/hooks/events';
+import { useRegistration } from '@/hooks/users';
 import type { Event } from '@/types';
 import { Box, Button, Text } from '@radix-ui/themes';
 import Modal from 'components/Modal';
@@ -8,6 +9,7 @@ import { TbPlayerPlay } from 'react-icons/tb';
 
 export default function StartModal({ event }: {event: Event}) {
   const { isOngoing } = useEventStatus(event.id);
+  const { team } = useRegistration(event.id);
   const isIndividual = event.max_team_size === 1;
 
   const handleStart = async () => startMyTeam(event.id);
@@ -19,7 +21,9 @@ export default function StartModal({ event }: {event: Event}) {
       permissionDeniedPlaceholder={isOngoing
         ? (
           <Text size="3" color="gray">
-            Waiting for your team captain to start the event.
+            {(team?.member_count === 1 && !isIndividual)
+              ? `Your team must have at least two members to start.`
+              : 'Waiting for your team captain to start the event.'}
           </Text>
         )
         : null}

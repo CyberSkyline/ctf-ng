@@ -1,13 +1,14 @@
 from typing import Any, Literal
 
 from CTFd.models import db
+from CTFd.utils import get_app_config
+
 from sqlalchemy.orm import Mapped
 
 from ..utils.challenge_yaml import EnvVarRenderer
 
 from ...core.utils.validator import BaseValidator
 from ...containers.utils.get_client import get_client
-from ... import config
 
 from cyber_skyline.chall_parser.compose.service import ServiceNetwork
 
@@ -179,7 +180,9 @@ class ContainerBlueprint(db.Model):
 
         return {k: (v(team_seed=team_seed) if isinstance(v, EnvVarRenderer) else v) for k, v in self.environment.items()}
 
-    def pull_image(self):
-        client = get_client(config.DOCKER_HOST)
 
-        client.pull_image(self.image)
+    def pull_image(self, user_id):
+        DOCKER_HOST = get_app_config("DOCKER_HOST")
+
+        client = get_client(DOCKER_HOST)
+        client.pull_image(self.image, user_id, self.id)

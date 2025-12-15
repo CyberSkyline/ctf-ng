@@ -9,6 +9,7 @@ import { SWRConfig } from 'swr';
 
 import { ROUTEPREFIX } from '@/constants';
 import { apiFetcher } from '@/fetchers';
+import Favicon from 'components/Favicon';
 import Routes from './Routes';
 import './grid';
 import './index.css';
@@ -24,12 +25,13 @@ createRoot(document.getElementById('root')!).render(
       >
         <Theme
           panelBackground="solid" // disable blur effect on surfaces for performance
-          grayColor="sand"
-          accentColor="amber"
+          grayColor="sage"
+          accentColor="teal"
         >
           <SWRConfig
             value={{ fetcher : apiFetcher }}
           >
+            <Favicon />
             <NavBar />
             <Routes />
             <FooterBar />

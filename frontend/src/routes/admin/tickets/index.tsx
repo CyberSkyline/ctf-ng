@@ -1,3 +1,9 @@
+import {
+  ChallengeIcon,
+  EventIcon,
+  TeamIcon,
+  UserIcon,
+} from '@/constants';
 import { useAdminAllTickets } from '@/hooks/support';
 import type { AdminTicket } from '@/types';
 import type { ColDef } from 'ag-grid-community';
@@ -7,12 +13,6 @@ import Entity from 'components/Entity';
 import { StatusBadgeCell } from 'components/StatusBadge';
 import { isNull, isUndefined } from 'lodash';
 import type { IconType } from 'react-icons';
-import {
-  ChallengeIcon,
-  EventIcon,
-  TeamIcon,
-  UserIcon,
-} from '@/constants';
 import MessagesSidebar from './MessagesSidebar';
 
 function NameLinkCell(
@@ -46,6 +46,8 @@ const colDefs: ColDef<AdminTicket>[] = [
     field : 'status',
     headerName : 'Status',
     cellRenderer : StatusBadgeCell,
+    filter : true,
+    floatingFilter : true,
   },
   {
     field : 'subject',
@@ -54,7 +56,7 @@ const colDefs: ColDef<AdminTicket>[] = [
     floatingFilter : true,
   },
   {
-    field : 'author_id',
+    field : 'author_name',
     headerName : 'Author',
     cellRenderer : NameLinkCell,
     cellRendererParams : (params: { data: { author_id: number; author_name: string; }; }) => ({
@@ -74,7 +76,7 @@ const colDefs: ColDef<AdminTicket>[] = [
     floatingFilter : true,
   },
   {
-    field : 'event_id',
+    field : 'event_name',
     headerName : 'Event',
     cellRenderer : NameLinkCell,
     cellRendererParams : (params: { data: { event_id: number; event_name: string; }; }) => ({
@@ -87,7 +89,7 @@ const colDefs: ColDef<AdminTicket>[] = [
     floatingFilter : true,
   },
   {
-    field : 'team_id',
+    field : 'team_name',
     headerName : 'Team',
     cellRenderer : NameLinkCell,
     cellRendererParams : (params: { data: { team_id: number; team_name: string; }; }) => ({
@@ -100,13 +102,13 @@ const colDefs: ColDef<AdminTicket>[] = [
     floatingFilter : true,
   },
   {
-    field : 'challenge_id',
+    field : 'challenge_name',
     headerName : 'Challenge',
     cellRenderer : NameLinkCell,
-    cellRendererParams : (params: { data: { challenge_id: number; challenge_name: string; event_id: number; }; }) => ({
+    cellRendererParams : (params: { data: { challenge_id: number; challenge_name: string; }; }) => ({
       id : params.data.challenge_id,
       name : params.data.challenge_name,
-      linkTo : `/admin/events?id=${params.data.event_id}`,
+      linkTo : `/admin/challenges?id=${params.data.challenge_id}`,
       icon : ChallengeIcon,
     }),
     filter : true,
@@ -135,10 +137,10 @@ export default function AdminTickets() {
         getRowId={(params) => params.data.id.toString()}
         sidebarComponent={MessagesSidebar}
         stopCellSelection={[
-          'author_id',
-          'event_id',
-          'team_id',
-          'challenge_id',
+          'author_name',
+          'event_name',
+          'team_name',
+          'challenge_name',
         ]}
       />
     </>

@@ -1,11 +1,11 @@
 import { Container } from '@radix-ui/themes';
-import type { ReactNode } from 'react';
+import { Children, type ReactNode } from 'react';
 
 export default function HeaderContainer({ children = undefined }: {
   children?: ReactNode
 }) {
   return (
-    children && (
+    Children.toArray(children).length > 0 && (
       <Container
         size="2"
         px="3"
@@ -13,7 +13,7 @@ export default function HeaderContainer({ children = undefined }: {
         mx="-3"
         mt="-3"
         mb="3"
-        className="bg-dots-2 shadow dark:shadow-none"
+        className="bg-dots-2 shadow dark:shadow-none has-[.rt-ContainerInner:empty]:hidden"
       >
         {children}
       </Container>

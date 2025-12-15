@@ -19,7 +19,12 @@ export default function AdminLink({
   }
 
   return (
-    <Button variant="soft" color={COLOR_INFO} asChild>
+    <Button
+      variant="soft"
+      color={COLOR_INFO}
+      aria-label={`Navigate to associated ${label}`}
+      asChild
+    >
       <Link
         to={params.toString() ? `${to}?${params.toString()}` : to}
       >

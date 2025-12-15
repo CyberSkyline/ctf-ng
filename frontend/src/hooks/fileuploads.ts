@@ -1,0 +1,51 @@
+import { fileApiMutation } from '@/fetchers';
+import type { UploadedFile } from '@/types';
+import useSWR, { mutate } from 'swr';
+
+/*
+  Gets the presigned url for the file based on folder and filename.
+  Filename should include the extension (png, jpeg, etc...)
+*/
+export function useFileUrl(folder: string, filename?: string) {
+  return useSWR<UploadedFile>(filename && filename !== '' ? `/fileuploads/file?folder=${folder}&filename=${filename}` : null);
+}
+
+/*
+  Gets a list of all files in a specific folder
+*/
+export function useFileList(folder: string, includeUrls?: boolean) {
+  return useSWR<{files: UploadedFile[]}>(`/fileuploads/list?folder=${folder}&include_urls=${includeUrls || false}`);
+}
+
+/*
+  Uploads a file (as FormData type) to the folder specified
+  FormData: { folder, file }
+*/
+export function directUpload(formData: FormData) {
+  return fileApiMutation('/fileuploads/upload/direct', formData, {
+    method : 'POST',
+  }).then(
+    async (data) => {
+      // update file list before resolving the promise to ensure dependent form fields are up to date before value change
+      await mutate(`/fileuploads/list?folder=${formData.get('folder')}`);
+      return data as UploadedFile;
+    },
+  );
+}
+
+/*
+  Upload a file to an existing support ticket
+*/
+export function ticketAttachmentUpload(uploadPath : string, file : File, ticketMutationUrl : string) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return fileApiMutation(uploadPath, formData, {
+    method : 'POST',
+  }).then(
+    async (data) => {
+      await mutate(ticketMutationUrl);
+      return data as UploadedFile;
+    },
+  );
+}

@@ -2,15 +2,18 @@
 
 import os
 
-from CTFd import create_app
+from CTFd import create_app, CTFdFlask
 from CTFd.cache import cache
 from CTFd.config import Config
 from CTFd.models import Users, db
+from CTFd.models import (
+    Admins
+)
 from sqlalchemy_utils import create_database, database_exists, drop_database
-from tests.helpers import setup_ctfd
 
 if "SCRIPT" not in os.environ:
     raise OSError("This should only be run from a script. DO NOT run this manually.")
+
 
 DEFAULT_ADMIN_EMAIL = "admin@examplectf.com"
 DEFAULT_ADMIN_PASSWORD = "ctfng_password"
@@ -23,10 +26,10 @@ if database_exists(database_url):
     drop_database(database_url)
 
 # Recreate the database
-create_database(database_url)
+create_database(database_url, encoding="utf8mb4")
 
 # Now create the app - it won't try to create tables in an existing database
-app = create_app()
+app: CTFdFlask = create_app()
 
 with app.app_context():
     # Clear cache
@@ -39,16 +42,18 @@ with app.app_context():
     db.session.commit()
 
     # Perform the default setup
-    app = setup_ctfd(
-        app,
-        ctf_name="CTFd",
-        ctf_description="CTF description",
+    admin = Admins(
         name="admin",
         email=DEFAULT_ADMIN_EMAIL,
         password=DEFAULT_ADMIN_PASSWORD,
-        user_mode="users",
-        ctf_theme=None,
+        type="admin",
+        hidden=True,
     )
+    try:
+        db.session.add(admin)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
 
 # Configure app permission system
 with app.app_context():
@@ -57,6 +62,7 @@ with app.app_context():
         # where the plugin is properly located at /opt/CTFd/CTFd/plugins/ng
         from CTFd.plugins.ng.permissions.controllers.initial_admin_setup import initial_admin_setup  # type: ignore
         from CTFd.plugins.ng.user.models.User import User as NgUser  # type: ignore
+        from CTFd.plugins.ng.sponsors.models.Sponsor import Sponsor as NgSponsor # type: ignore
     except ImportError as e:
         print(f"Failed to import plugin modules: {e}")
         print("This script should be run via 'pnpm populate-data' from the project root.")
@@ -70,6 +76,8 @@ with app.app_context():
 
     initial_admin_setup(admin_user=ng_admin_user)
 
+
+app.logger.info("Inserting sample data...")
 # Insert sample data
 with app.app_context():
     try:
@@ -125,11 +133,25 @@ with app.app_context():
     # Commit the events
     db.session.commit()
 
+    # Create a sponsor
+    sponsor = NgSponsor.query.filter_by(name="sample sponsor").first()
+    if not sponsor:
+        sponsor = NgSponsor.create_sponsor(name="sample sponsor", logo=None, commit=True)
+        db.session.add(sponsor)
+        db.session.commit()
+    sponsor = NgSponsor.query.filter_by(name="sample sponsor").first()
+
     # Get the admin user and create NG user extension
     ctfd_admin_user = Users.query.filter_by(name="admin").first()
+
     ng_admin_user = NgUser.query.filter_by(id=ctfd_admin_user.id).first()
     if not ng_admin_user:
         ng_admin_user = NgUser.create_user(user_id=ctfd_admin_user.id, commit=True)
+
+    ng_admin_user.affiliation = sponsor
+    db.session.add(ng_admin_user)
+    db.session.commit()
+    ng_admin_user = NgUser.query.filter_by(id=ng_admin_user.id).first()
 
     # Create additional test user for team membership
     ctfd_test_user = Users(name="testuser", email="test@example.com", password="password", type="user")
@@ -144,6 +166,15 @@ with app.app_context():
 
     test_user = NgUser.create_user(user_id=ctfd_test_user.id, commit=True)
     test_user_2 = NgUser.create_user(user_id=ctfd_test_user_2.id, commit=True)
+
+    test_user.affiliation = sponsor
+    test_user_2.affiliation = sponsor
+    db.session.add(test_user)
+    db.session.add(test_user_2)
+    db.session.commit()
+
+    test_user = NgUser.query.filter_by(id=test_user.id).first()
+    test_user_2 = NgUser.query.filter_by(id=test_user_2.id).first()
 
     # Register admin for first two events (Public CTF Championship and Private Training Event)
     admin_teams = []

@@ -21,13 +21,14 @@ import {
   useSupportTags,
 } from '@/hooks/support';
 import { useCurrentUser, useUserEvents } from '@/hooks/users';
-import type { AdminTicket } from '@/types';
+import type { AdminTicket, TicketAttachment } from '@/types';
 import {
   Badge,
   Box,
   Button,
   DataList,
   Flex,
+  Grid,
   Select,
 } from '@radix-ui/themes';
 import AdminSidebar from 'components/AdminSidebar';
@@ -36,6 +37,7 @@ import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import RichTextEditor from 'components/RichTextEditor';
 import { StatusBadge } from 'components/StatusBadge';
+import SupportAttachmentUpload from 'components/SupportAttachmentUpload';
 import TicketMessagesCard from 'components/TicketMessagesCard';
 import {
   chain,
@@ -45,17 +47,24 @@ import {
   map,
   without,
 } from 'lodash';
-import { useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { TbMessage, TbX } from 'react-icons/tb';
 
 export default function MessagesSidebar({ entity : selectedRow }: { entity: AdminTicket }) {
   // Dropdowns
   const [ actionError, setActionError ] = useState<string | null>(null);
   const [ actionLoading, setActionLoading ] = useState<boolean>(false);
-  const [ assignedUser, setAssignedUser ] = useState<string>(String(selectedRow.assigned_to));
-  const [ selectedEvent, setSelectedEvent ] = useState<string | undefined>(String(selectedRow.event_id));
-  const [ selectedChallenge, setSelectedChallenge ] = useState<string | undefined>(String(selectedRow.challenge_id));
+  const [ assignedUser, setAssignedUser ] = useState<string>(selectedRow.assigned_to ? String(selectedRow.assigned_to) : '');
+  const [ selectedEvent, setSelectedEvent ] = useState<string | undefined>(selectedRow.event_id ? String(selectedRow.event_id) : '');
+  const [ selectedChallenge, setSelectedChallenge ] = useState<string | undefined>(selectedRow.challenge_id ? String(selectedRow.challenge_id) : '');
   const [ selectedTag, setSelectedTag ] = useState<string | undefined>('');
+
+  useEffect(() => {
+    setAssignedUser(selectedRow.assigned_to ? String(selectedRow.assigned_to) : '');
+    setSelectedEvent(selectedRow.event_id ? String(selectedRow.event_id) : '');
+    setSelectedChallenge(selectedRow.challenge_id ? String(selectedRow.challenge_id) : '');
+    setSelectedTag('');
+  }, [ selectedRow.id, selectedRow.assigned_to, selectedRow.event_id, selectedRow.challenge_id ]);
 
   // Rich Text Reply Messages
   const [ version, setVersion ] = useState<number>(0); // To reinit the RichTextEditor
@@ -72,6 +81,8 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
   const { data : userEvents } = useUserEvents(data?.ticket.author_id);
   const { data : userChallenges } = useEventChallenges(data?.ticket.event_id || null);
 
+  const headerId = useId();
+
   if (isNil(data) || error) {
     return (
       <ErrorCallout>
@@ -81,7 +92,7 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
       </ErrorCallout>
     );
   }
-  const { ticket, messages } = data;
+  const { ticket, messages, attachments } = data;
   const {
     id : ticketId,
     status,
@@ -214,8 +225,8 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
   };
 
   return (
-    <AdminSidebar>
-      <AdminSidebarHeader title={ticket.subject} icon={<TbMessage />} />
+    <AdminSidebar labelId={headerId}>
+      <AdminSidebarHeader title={ticket.subject} icon={<TbMessage />} id={headerId} />
       {actionError && <ErrorCallout>{actionError}</ErrorCallout>}
       <DataList.Root>
         <DataList.Item>
@@ -447,6 +458,16 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
             </Button>
           </DataList.Value>
         </DataList.Item>
+        <DataList.Item>
+          <DataList.Label>Attachments</DataList.Label>
+          <DataList.Value className="whitespace-pre-wrap">
+            <Grid columns="4" gap="1">
+              {map(attachments, (attachment : TicketAttachment) => (
+                <img key={attachment.id} src={attachment.download_url} alt={attachment.filename} />
+              ))}
+            </Grid>
+          </DataList.Value>
+        </DataList.Item>
       </DataList.Root>
 
       <AdminSidebarHeader title="Messages" />
@@ -459,6 +480,10 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
           initialValue={newText}
           onChange={setNewText}
           version={version}
+        />
+        <SupportAttachmentUpload
+          fileUploadPath={`/admin/support/tickets/${ticketId}/upload`}
+          ticketMutationUrl={`/admin/support/tickets/${ticketId}`}
         />
         <Button
           onClick={sendNewMessage}

@@ -38,7 +38,7 @@ export default function ServiceCard({ service }: { service: ContainerInstance })
           </Box>
           <Box className="text-right">
             <Skeleton loading={!statusData}>
-              <Badge color={status === 'running' ? COLOR_POSITIVE : COLOR_NEGATIVE}>
+              <Badge color={status === 'running' ? COLOR_POSITIVE : COLOR_NEGATIVE} role="status">
                 {upperCase(status || 'unknown')}
               </Badge>
             </Skeleton>

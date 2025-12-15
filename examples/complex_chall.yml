@@ -124,7 +124,7 @@ services:
     
     # Optional networking
     networks:
-      - "challenge-net"
+      - "competitor_net"
     
     # Environment variables using templated values
     environment:
@@ -148,7 +148,7 @@ services:
     hostname: "db-server"
     
     networks:
-      - "challenge-net"
+      - "competitor_net"
     
     environment:
       MYSQL_ROOT_PASSWORD: *db_pass_default
@@ -179,7 +179,7 @@ services:
       - "webapp"
     
     networks:
-      - "challenge-net"
+      - "competitor_net"
     
     environment:
       APP_ENV: "production"
@@ -192,6 +192,6 @@ services:
 
 # Network definitions
 networks:
-  challenge-net:
+  competitor_net:
     # Required: Internal-only network
     internal: true

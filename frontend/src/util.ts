@@ -35,3 +35,57 @@ export function base64ToUtf8(str: string): string {
   const decoder = new TextDecoder();
   return decoder.decode(bytes);
 }
+
+/**
+ * Converts and compresses an image file to webp
+ * @param file - The image file to be converted
+ * @returns The converted file
+ */
+export const compressImageFile = async (file : File) => new Promise<File>((resolve, reject) => {
+  const MAX_OUTPUT_IMAGE_MB = 5;
+  const img = new Image();
+
+  const toMb = (bytes : number) => bytes / 1024 / 1024;
+  const getCompressionAmount = (size : number) => {
+    if (size > toMb(3)) {
+      return 0.7;
+    } if (size > toMb(1)) {
+      return 0.8;
+    } if (size > toMb(0.5)) {
+      return 0.9;
+    }
+    return 1;
+  };
+
+  img.onload = () => {
+    URL.revokeObjectURL(img.src);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    if (!ctx) {
+      reject(new Error('Failed to compress image'));
+      return;
+    }
+
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error('Failed to compress image'));
+        return;
+      }
+      if (blob.size > MAX_OUTPUT_IMAGE_MB * 1024 * 1024) {
+        reject(new Error(`Compressed file size exceeds ${MAX_OUTPUT_IMAGE_MB}MB`));
+        return;
+      }
+
+      const compressedFile = new File([ blob ], file.name.replace(/\.[^/.]+$/, '.webp'), { type : 'image/webp' });
+
+      resolve(compressedFile);
+    }, 'image/webp', getCompressionAmount(file.size));
+  };
+
+  img.src = URL.createObjectURL(file);
+});

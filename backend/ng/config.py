@@ -31,18 +31,24 @@ TICKET_ATTACHMENT_BUCKET_NAME_MAX_LENGTH = 256
 TICKET_ATTACHMENT_FILENAME_MAX_LENGTH = 256
 TICKET_ATTACHMENT_CONTENT_TYPE_MAX_LENGTH = 128
 S3_TICKET_ATTACHMENTS_PREFIX = "support-tickets"
-S3_DOWNLOAD_CHUNK_SIZE = 8192  # 8KB chunks for streaming downloads
 
 # Support ticket attachment download endpoints
-TICKET_ATTACHMENT_USER_DOWNLOAD_PATH = "/ng/support/me/attachments"
-TICKET_ATTACHMENT_ADMIN_DOWNLOAD_PATH = "/ng/admin/support/attachments"
+TICKET_ATTACHMENT_DOWNLOAD_PATH = "/ng/support/attachments"
 
 # Public file upload configuration
 PUBLIC_FILE_ALLOWED_FOLDERS = {
     'sponsor-logos': ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'],
-    'event-cards': ['image/png', 'image/jpeg', 'image/webp'],
-    'favicons': ['image/x-icon', 'image/png', 'image/svg+xml']
+    'event-cards': ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'],
+    'favicons': ['image/x-icon', 'image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']
 }
+
+# Auto-numbering configuration for file uploads
+# Maximum number to try when auto-numbering duplicate filenames (e.g., file_1.png, file_2.png, etc)
+PUBLIC_FILE_AUTO_NUMBER_MAX_ATTEMPTS = 999
+
+# S3 URL expiration configuration
+S3_UPLOAD_URL_EXPIRATION = 3600
+S3_DOWNLOAD_URL_EXPIRATION = 600
 
 # Scoring Cache Config & Model Length Limits
 LEADERBOARD_CACHE_TIMEOUT = 60  # Seconds
@@ -76,3 +82,4 @@ CONTAINER_REGISTRY_PASSWORD = ""
 
 # Email notification URL paths - Frontend routes
 TICKET_URL_PATH = "/support"
+ADMIN_TICKET_URL_PATH = "/admin/tickets"

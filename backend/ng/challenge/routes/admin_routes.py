@@ -1,6 +1,5 @@
 import base64
 from flask_restx import Namespace, Resource
-import multiprocessing
 
 from ..controllers.admin import import_challenge_from_yaml, update_challenge_from_yaml, lint_challenge
 from ..models import Challenge, ContainerBlueprint
@@ -8,7 +7,6 @@ from ...core.middleware.loaders import load_event, load_challenge
 from ...core.middleware.loaders._util import LoaderType
 from ...core.middleware.auth import admin_endpoint
 from ...core.utils.api import success_response
-from ...core.utils.emitters import emit_to_user
 from ...event.models import Event
 
 challenge_admin_namespace = Namespace("/admin/challenges", description="challenge management")
@@ -58,6 +56,7 @@ class ChallengeList(Resource): # Feels like I should rename this but I'm not sur
         challenge = import_challenge_from_yaml(event, payload)
         return success_response(challenge)
 
+@challenge_admin_namespace.route("/lint")
 class ChallengeLint(Resource):
     @challenge_admin_namespace.doc(
         description="Lint a challenge YAML configuration without creating the challenge",
@@ -192,25 +191,6 @@ class PullImages(Resource):
     def post(self, challenge: Challenge, current_user, **kwargs):
         blueprints = ContainerBlueprint.get_for_challenge(challenge.id)
         for blueprint in blueprints:
-            # Will emit a websocket event to the user
-            # On pull or fail
-            def background_task(blueprint, current_user):
-                try:
-                    blueprint.pull_image()
-                    emit_to_user(
-                        "pull-success",
-                        { "id" : blueprint.id, "image": blueprint.image },
-                        current_user.id
-                    )
-                except Exception as err:
-                    emit_to_user(
-                        "pull-fail",
-                        { "error": str(err), "id" : blueprint.id, "image": blueprint.image },
-                        current_user.id
-                    )
-
-
-            proc = multiprocessing.Process(target=background_task, args=(blueprint, current_user))
-            proc.start()
+            blueprint.pull_image(current_user.id)
 
         return success_response(True)

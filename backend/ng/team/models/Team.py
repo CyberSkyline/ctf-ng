@@ -4,20 +4,21 @@ Defines the Team database model and its properties
 
 from __future__ import annotations
 
-from datetime import datetime
 import random
 import string
+from datetime import datetime
 from typing import (
     Any,
-    cast,
-    TypedDict,
     NotRequired,
+    TypedDict,
+    cast,
 )
+
 from CTFd.models import db
 from sqlalchemy import func, select
-from sqlalchemy.orm import Mapped
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import Mapped
 
 from ... import config
 from ...core.exceptions import (
@@ -25,10 +26,10 @@ from ...core.exceptions import (
     ValidationError,
 )
 from ...core.utils.validator import BaseValidator
+from ...event.models.Event import Event
+from ...scoring.models.Score import Score
 from .enums import TeamRole
 from .TeamMember import TeamMember
-from ...scoring.models.Score import Score
-from ...event.models.Event import Event
 
 HEX_CHARS = string.hexdigits.lower()[:16]  # '0123456789abcdef'
 SEED_LENGTH = 16  # 8 bytes for random seed
@@ -129,6 +130,8 @@ class Team(db.Model):
                 config.TEAM_NAME_MAX_LENGTH,
                 required=True,
                 friendly_name="Team name",
+                printable_only=True,
+                trim_whitespace=True,
             )
         if "event_id" in data:
             validator.validate_positive_integer(data, "event_id", required=True, friendly_name="Event ID")
@@ -145,18 +148,21 @@ class Team(db.Model):
 
         # Check if team name is unique within event
         if "name" in data and "event_id" in data:
-            res = Team.name_exists_in_event_excluding_self(
-                event_id=data["event_id"],
-                name=data["name"],
-                exclude_team_id=data.get("id", 0),  # Exclude current team if updating
-            )
-            if res:
-                raise ValidationError(f"Team name '{data['name']}' already exists in event ID {data['event_id']}.")
-        if "start_timestamp" in data and "end_time" in data:
+            # TODO - Remove this temporary fix to solve the unicode db crash bug when running the db dup check
+            if (data["name"].isprintable() is True and data["name"].isascii() is True):
+                res = Team.name_exists_in_event_excluding_self(
+                    event_id=data["event_id"],
+                    name=data["name"],
+                    exclude_team_id=data.get("id", 0),  # Exclude current team if updating
+                )
+                if res:
+                    raise ValidationError(f"Team name '{data['name']}' already exists in this event.")
+        if "start_timestamp" in data and "end_time" in data and data["start_timestamp"] is not None and data["end_time"] is not None:
             validator.validate_time_window(data, start_field="start_timestamp", end_field="end_time")
-        elif "start_timestamp" in data:
+        else:
+          if "start_timestamp" in data:
             validator.validate_datetime(data, "start_timestamp", friendly_name="Start Timestamp")
-        elif "end_time" in data:
+          if "end_time" in data:
             validator.validate_datetime(data, "end_time", friendly_name="End Time")
 
         return validator.validate()
@@ -296,10 +302,11 @@ class Team(db.Model):
         # LAZY-IMPORT
         from ...scoring.models.Score import Score
 
+        self.self_validate()
+
         if "name" in kwargs:
             Score.query.filter_by(team_id=self.id).update({"team_name": kwargs["name"]})
 
-        self.self_validate()
         db.session.commit()
         return self
 

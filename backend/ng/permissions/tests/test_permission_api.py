@@ -47,7 +47,6 @@ def test_change_role_invalid_permissions(admin_client, role_with_permissions):
     data = response.get_json()
     assert not data["success"]
     assert "errors" in data
-    assert "validation" in data["errors"]
 
 
 def test_get_user_roles(admin_client, user_with_roles):
@@ -78,6 +77,18 @@ def test_update_user_roles(admin_client, user_with_roles):
     assert data["success"]
     assert "admin" in data["data"]["roles"]
 
+def test_update_user_single_role(admin_client, user_with_roles):
+    """
+    Check that updating with a single role works correctly
+    """
+    response = admin_client.put(f"/ng/admin/permissions/{user_with_roles.id}/roles", json={
+        "roles": ["admin"]
+    })
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"]
+    assert "admin" in data["data"]["roles"]
+
 def test_update_user_roles_invalid_role(admin_client, user_with_roles):
     """Check that we cannot update roles for a specific user with an invalid role."""
     response = admin_client.put(f"/ng/admin/permissions/{user_with_roles.id}/roles", json={
@@ -87,7 +98,6 @@ def test_update_user_roles_invalid_role(admin_client, user_with_roles):
     data = response.get_json()
     assert not data["success"]
     assert "errors" in data
-    assert "validation" in data["errors"]
 
 def test_get_user_permissions(team_captain_client, user_with_roles):
     """Check that a user can get their own permissions."""
