@@ -2,6 +2,7 @@
 Tests for feedback API endpoints
 """
 
+from ...team.models.Team import Team
 import pytest
 from datetime import timedelta
 
@@ -12,10 +13,15 @@ class TestUserFeedbackEndpoints:
     """
     Tests for user feedback API endpoints
     """
-    def test_submit_event_feedback_new(self, logged_in_client, user, event):
+    def test_submit_event_feedback_new(self, logged_in_client, user, event, team_with_member: Team):
         """
         Test submitting new event feedback
         """
+
+        # team finished 30 minutes ago
+        team_with_member.start_timestamp = utc_now() - timedelta(hours = 1)
+        team_with_member.end_timestamp = utc_now() - timedelta(minutes = 30)
+
         response = logged_in_client.post(
             f"/ng/events/{event.id}/feedback",
             json = {
@@ -41,11 +47,16 @@ class TestUserFeedbackEndpoints:
         logged_in_client,
         user,
         event,
+        team_with_member: Team,
         feedback_factory
     ):
         """
         Test updating existing event feedback
         """
+        # team finished 30 minutes ago
+        team_with_member.start_timestamp = utc_now() - timedelta(hours = 1)
+        team_with_member.end_timestamp = utc_now() - timedelta(minutes = 30)
+
         existing_feedback = feedback_factory(
             user_id = user.id,
             event_id = event.id,
@@ -73,16 +84,61 @@ class TestUserFeedbackEndpoints:
         assert data["data"]["feedback_data"]["rating"] == 5
         assert data["data"]["feedback_data"]["comments"] == "Actually, great event!"
 
+    def test_submit_event_feedback_too_early(self, logged_in_client, user, event, team_with_member: Team):
+        """
+        Test submitting feedback before team has finished (end_timestamp in future) returns 403
+        """
+        # team finishes 30 minutes in the future
+        from ...core.utils import utc_now
+        from datetime import timedelta
+
+        team_with_member.start_timestamp = utc_now() - timedelta(hours=1)
+        team_with_member.end_time = utc_now() + timedelta(minutes=30)
+
+        response = logged_in_client.post(
+            f"/ng/events/{event.id}/feedback",
+            json={
+                "feedback_data": {
+                    "rating": 5,
+                    "comments": "Too early!",
+                },
+            },
+        )
+
+        assert response.status_code == 403
+
+    def test_submit_event_feedback_not_registered(self, logged_in_client, user, event):
+        """
+        Test that submitting feedback for an event the user is not registered for produces an error
+        """
+        # User is not registered for this event (no team_with_member fixture)
+        response = logged_in_client.post(
+            f"/ng/events/{event.id}/feedback",
+            json={
+                "feedback_data": {
+                    "rating": 5,
+                    "comments": "Should not be allowed",
+                },
+            },
+        )
+
+        assert response.status_code == 404
+
     def test_get_my_event_feedback(
         self,
         logged_in_client,
         user,
         event,
+        team_with_member: Team,
         feedback_factory
     ):
         """
         Test getting my event feedback
         """
+        # team finished 30 minutes ago
+        team_with_member.start_timestamp = utc_now() - timedelta(hours = 1)
+        team_with_member.end_timestamp = utc_now() - timedelta(minutes = 30)
+
         feedback_factory(
             user_id = user.id,
             event_id = event.id,
@@ -99,10 +155,14 @@ class TestUserFeedbackEndpoints:
         assert data["data"]["event_id"] == event.id
         assert data["data"]["feedback_data"]["rating"] == 4
 
-    def test_get_my_event_feedback_not_submitted(self, logged_in_client, event):
+    def test_get_my_event_feedback_not_submitted(self, logged_in_client, user, team_with_member: Team, event):
         """
         Test getting event feedback when none submitted
         """
+        # team finished 30 minutes ago
+        team_with_member.start_timestamp = utc_now() - timedelta(hours = 1)
+        team_with_member.end_timestamp = utc_now() - timedelta(minutes = 30)
+
         response = logged_in_client.get(f"/ng/events/{event.id}/feedback")
 
         assert response.status_code == 200
@@ -115,11 +175,15 @@ class TestUserFeedbackEndpoints:
         logged_in_client,
         user,
         event,
+        team_with_member: Team,
         challenge
     ):
         """
         Test submitting new challenge feedback
         """
+        # team started 1 hour ago
+        team_with_member.start_timestamp = utc_now() - timedelta(hours = 1)
+
         response = logged_in_client.post(
             f"/ng/events/{event.id}/challenges/{challenge.id}/feedback",
             json = {
@@ -145,12 +209,16 @@ class TestUserFeedbackEndpoints:
         logged_in_client,
         user,
         event,
+        team_with_member: Team,
         challenge,
         feedback_factory
     ):
         """
         Test updating existing challenge feedback
         """
+        # team started 1 hour ago
+        team_with_member.start_timestamp = utc_now() - timedelta(hours = 1)
+
         existing_feedback = feedback_factory(
             user_id = user.id,
             event_id = event.id,
@@ -179,17 +247,70 @@ class TestUserFeedbackEndpoints:
         assert data["data"]["feedback_data"]["difficulty"] == "hard"
         assert data["data"]["feedback_data"]["quality"] == 5
 
+    def test_submit_challenge_feedback_too_early(
+        self,
+        logged_in_client,
+        user,
+        event,
+        team_with_member: Team,
+        challenge
+    ):
+        """
+        Test submitting challenge feedback before team has started returns 403
+        """
+        # team has no start time (not started)
+        response = logged_in_client.post(
+            f"/ng/events/{event.id}/challenges/{challenge.id}/feedback",
+            json={
+                "feedback_data": {
+                    "difficulty": "hard",
+                    "quality": 5,
+                    "comments": "Trying to submit too early!",
+                },
+            },
+        )
+
+        assert response.status_code == 403
+
+    def test_submit_challenge_feedback_not_registered(
+        self,
+        logged_in_client,
+        user,
+        event,
+        challenge
+    ):
+        """
+        Test that submitting challenge feedback for an event the user is not registered for produces a 404
+        """
+        # User is not registered for this event (no team_with_member fixture)
+        response = logged_in_client.post(
+            f"/ng/events/{event.id}/challenges/{challenge.id}/feedback",
+            json={
+                "feedback_data": {
+                    "difficulty": "medium",
+                    "quality": 4,
+                    "comments": "Should not be allowed",
+                },
+            },
+        )
+
+        assert response.status_code == 404
+
     def test_get_my_challenge_feedback(
         self,
         logged_in_client,
         user,
         event,
+        team_with_member: Team,
         challenge,
         feedback_factory
     ):
         """
         Test getting my challenge feedback
         """
+        # team started 1 hour ago
+        team_with_member.start_timestamp = utc_now() - timedelta(hours = 1)
+
         feedback_factory(
             user_id = user.id,
             event_id = event.id,
@@ -211,12 +332,17 @@ class TestUserFeedbackEndpoints:
     def test_get_my_challenge_feedback_not_submitted(
         self,
         logged_in_client,
+        user,
         event,
+        team_with_member: Team,
         challenge
     ):
         """
         Test getting challenge feedback when none submitted
         """
+        # team started 1 hour ago
+        team_with_member.start_timestamp = utc_now() - timedelta(hours = 1)
+
         response = logged_in_client.get(
             f"/ng/events/{event.id}/challenges/{challenge.id}/feedback"
         )
@@ -256,10 +382,14 @@ class TestUserFeedbackEndpoints:
 
         assert response.status_code == 404
 
-    def test_submit_feedback_empty_data(self, logged_in_client, event):
+    def test_submit_feedback_empty_data(self, logged_in_client, user, team_with_member, event):
         """
         Test submitting feedback with empty feedback_data
         """
+        # team finished 30 minutes ago
+        team_with_member.start_timestamp = utc_now() - timedelta(hours = 1)
+        team_with_member.end_timestamp = utc_now() - timedelta(minutes = 30)
+
         response = logged_in_client.post(
             f"/ng/events/{event.id}/feedback",
             json = {"feedback_data": {}},
@@ -270,10 +400,14 @@ class TestUserFeedbackEndpoints:
         assert data["success"] is True
         assert data["data"]["feedback_data"] == {}
 
-    def test_submit_feedback_missing_feedback_data(self, logged_in_client, event):
+    def test_submit_feedback_missing_feedback_data(self, logged_in_client, user, team_with_member, event):
         """
         Test submitting feedback without feedback_data field
         """
+        # team finished 30 minutes ago
+        team_with_member.start_timestamp = utc_now() - timedelta(hours = 1)
+        team_with_member.end_timestamp = utc_now() - timedelta(minutes = 30)
+
         response = logged_in_client.post(
             f"/ng/events/{event.id}/feedback",
             json = {},
