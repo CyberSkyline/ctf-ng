@@ -558,7 +558,6 @@ class EventChallengeRecycleContainers(Resource):
             400: "Bad request",
         },
     )
-    def post(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event):
-        started = recycle_containers(challenge_id, team.id, current_user)
+    def post(self, team: Team, challenge_id: int, event_id: int, event: Event, **kwargs):
+        started = recycle_containers(challenge_id, team.id)
         return success_response(started)
-
