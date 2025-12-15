@@ -89,7 +89,7 @@ export default function NotificationsPopover({ triggerClassName, contentClassNam
           && <TbCircleDotFilled color="var(--accent-indicator)" className="absolute -mt-6 ml-2" aria-label="Unread" />}
       </NavigationMenu.Trigger>
       <NavigationMenu.Content
-        className={contentClassName}
+        className={twMerge(contentClassName, 'max-h-86 overflow-y-auto overflow-x-hidden')}
       >
         {isUndefined(data) || isEmpty(data) ? (
           <Flex
