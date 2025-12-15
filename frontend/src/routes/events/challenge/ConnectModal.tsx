@@ -1,5 +1,6 @@
 import { COLOR_NEGATIVE, COLOR_POSITIVE, COLOR_WARNING } from '@/constants';
 import { connectWorkspace, recycleChallengeContainers, useCurrentChallengeId } from '@/hooks/container';
+import { useEventPermission } from '@/hooks/permissions';
 import { Button, Flex } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
 import Modal from 'components/Modal';
@@ -17,6 +18,8 @@ export default function ConnectModal({
   const {
     data : currentChallenge, isLoading, error,
   } = useCurrentChallengeId();
+  const { granted } = useEventPermission('CAN_PLAY_CHALLENGES', eventId);
+
   const [ loading, setLoading ] = useState(false);
 
   const handleConnect = async () => {
@@ -35,6 +38,12 @@ export default function ConnectModal({
   if (error) {
     // if we can't get the current challenge, show an error where the button would otherwise go
     return <ErrorCallout>{error.message}</ErrorCallout>;
+  }
+
+  if (!granted) {
+    // if we don't have permission to play, don't show anything.
+    // we return an empty div to not cause layout shift in the parent flex layout
+    return <div />;
   }
 
   if (currentChallenge === challengeId) {
