@@ -50,7 +50,7 @@ export default function FeedbackTab() {
   const { data : currentFeedback, error : currentFeedbackError } = useMyEventFeedback(eventId);
 
   const {
-    register, reset, control, handleSubmit, formState : { errors, dirtyFields },
+    register, reset, control, handleSubmit, formState : { errors },
   } = useForm<EventFeedbackFormData>({
     mode : 'onTouched',
     defaultValues : currentFeedback?.feedback_data || {},
@@ -61,6 +61,7 @@ export default function FeedbackTab() {
 
   const submitFeedback = async (data: EventFeedbackFormData) => {
     setButtonState('loading');
+    setError(null);
     try {
       await submitEventFeedback(eventId, data);
       setButtonState('success');
