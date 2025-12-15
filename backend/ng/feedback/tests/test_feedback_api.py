@@ -5,7 +5,6 @@ Tests for feedback API endpoints
 from ...team.models.Team import Team
 import pytest
 from datetime import timedelta
-
 from ...core.utils import utc_now
 
 
@@ -89,9 +88,6 @@ class TestUserFeedbackEndpoints:
         Test submitting feedback before team has finished (end_timestamp in future) returns 403
         """
         # team finishes 30 minutes in the future
-        from ...core.utils import utc_now
-        from datetime import timedelta
-
         team_with_member.start_timestamp = utc_now() - timedelta(hours=1)
         team_with_member.end_time = utc_now() + timedelta(minutes=30)
 
