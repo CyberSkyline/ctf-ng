@@ -13,7 +13,7 @@ When users spawn individual containers for challenges, the system uses the `cons
 **Default Credentials:**
 - **VNC Password:** `vncpassword`
 - **Root Password:** `vncpassword`
-- **User:** `root` (or the default user configured in the container image)
+- **Default User:** Containers run as `root` by default
 
 These credentials allow users to:
 - Access the VNC desktop environment
