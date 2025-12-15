@@ -33,8 +33,7 @@ TICKET_ATTACHMENT_CONTENT_TYPE_MAX_LENGTH = 128
 S3_TICKET_ATTACHMENTS_PREFIX = "support-tickets"
 
 # Support ticket attachment download endpoints
-TICKET_ATTACHMENT_USER_DOWNLOAD_PATH = "/ng/support/me/attachments"
-TICKET_ATTACHMENT_ADMIN_DOWNLOAD_PATH = "/ng/admin/support/attachments"
+TICKET_ATTACHMENT_DOWNLOAD_PATH = "/ng/support/attachments"
 
 # Public file upload configuration
 PUBLIC_FILE_ALLOWED_FOLDERS = {

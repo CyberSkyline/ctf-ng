@@ -42,9 +42,14 @@ class ValidationError(APIException):
     def __init__(self, message: str, errors: dict[str, str] | None = None):
         """Initialize with a message and optional detailed errors dictionary."""
         if errors is None:
-            errors = {}
-
-        super().__init__(f"{message}: {str(errors)}")
+            super().__init__(message)
+        else:
+            if len(errors) == 1:
+                # If only one error, set the main message to that error
+                key, val = next(iter(errors.items()))
+                super().__init__(val, key)
+            else:
+                super().__init__(f"{message}: {str(errors)}")
         self.errors = errors
 
     def to_dict(self) -> dict:

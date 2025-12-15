@@ -93,7 +93,7 @@ class TestLintChallenge:
             image: nginx:latest
             hostname: web-server
         networks:
-          external-net:
+          competitor_net:
             internal: false
           undefined-net:
         x-challenge:
@@ -244,17 +244,20 @@ class TestLintChallenge:
     @pytest.mark.parametrize("network_config,expected_warning", [
         # Network with internal: false should warn
         ("""
+          competitor_net:
           external-network:
             internal: false
         """, "internal field is False, this network will not be created in production"),
 
         # Network with no internal field should warn (appears as undefined)
         ("""
+          competitor_net:
           missing-internal:
         """, "is not defined, so is external and will not be created"),
 
         # Network defined as None should warn
         ("""
+          competitor_net:
           undefined-network:
         """, "is not defined, so is external and will not be created"),
     ])
@@ -275,7 +278,7 @@ class TestLintChallenge:
               body: What is 2 + 2?
               points: 10
               answer: "4"
-              max_attempts: 3
+              max_attempts: 3.
         """
         # Act
         result = lint_challenge(yaml_content)
@@ -299,7 +302,7 @@ class TestLintChallenge:
             internal: false
           missing-internal-net:
           undefined-net:
-          good-net:
+          competitor_net:
             internal: true
         x-challenge:
           name: Multiple Network Warnings Test
@@ -344,7 +347,7 @@ class TestLintChallenge:
             ports:
               - "8000:8000"
         networks:
-          external-net:
+          competitor_net:
             internal: false
         x-challenge:
           name: Field Path Test

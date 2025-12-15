@@ -118,7 +118,7 @@ class TicketEmailTemplates:
         if not base_url:
             raise ValueError("SERVER_DOMAIN not configured")
 
-        ticket_url = f"{base_url}{config.TICKET_URL_PATH}/{ticket_data['id']}"
+        ticket_url = f"{base_url}{config.ADMIN_TICKET_URL_PATH}?id={ticket_data['id']}"
 
         subject = f"New Support Ticket: {ticket_data['subject']}"
 
@@ -158,7 +158,10 @@ class TicketEmailTemplates:
         if not base_url:
             raise ValueError("SERVER_DOMAIN not configured")
 
-        ticket_url = f"{base_url}{config.TICKET_URL_PATH}/{ticket_data['id']}"
+        if is_admin_reply:
+            ticket_url = f"{base_url}{config.TICKET_URL_PATH}/{ticket_data['id']}"
+        else:
+            ticket_url = f"{base_url}{config.ADMIN_TICKET_URL_PATH}?id={ticket_data['id']}"
 
         reply_type = "Admin" if is_admin_reply else "User"
         subject = f"Support Ticket Reply: {ticket_data['subject']}"

@@ -1,9 +1,8 @@
 import { COLOR_WARNING } from '@/constants';
 import { updateChallenge, useAdminChallengeYaml } from '@/hooks/challenge';
 import { Button } from '@radix-ui/themes';
+import ChallengeForm from 'components/ChallengeForm';
 import Modal from 'components/Modal';
-import YamlEditor from 'components/YamlEditor';
-import { Controller } from 'react-hook-form';
 import { TbPencil } from 'react-icons/tb';
 
 export default function ChallengeUpdateModal({ challengeId }: { challengeId: number }) {
@@ -32,20 +31,8 @@ export default function ChallengeUpdateModal({ challengeId }: { challengeId: num
       }}
       className="!max-w-[80ch]"
     >
-      {({ control }) => (
-        <Controller
-          control={control}
-          name="yaml"
-          render={
-            ({ field }) => (
-              <YamlEditor
-                value={field.value}
-                onChange={field.onChange}
-                ref={field.ref}
-              />
-            )
-          }
-        />
+      {(rhf) => (
+        <ChallengeForm rhf={rhf} />
       )}
     </Modal>
   );

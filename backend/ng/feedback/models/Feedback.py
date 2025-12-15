@@ -10,14 +10,17 @@ from CTFd.models import db
 from sqlalchemy import JSON
 
 from ...core.utils import utc_now
+from ...core.exceptions import ValidationError
 from ...core.utils.validator import BaseValidator
 from ...core.exceptions import ValidationError
 from ... import config
 
 
+
 class SerializedFeedback(TypedDict):
     id: int
     user_id: int
+    user_name: str
     event_id: int
     challenge_id: int | None
     feedback_data: dict[str, Any]
@@ -83,6 +86,7 @@ class Feedback(db.Model):
         return {
             "id": self.id,
             "user_id": self.user_id,
+            "user_name": self.user.ctfd_user.name,
             "event_id": self.event_id,
             "challenge_id": self.challenge_id,
             "feedback_data": self.feedback_data,
@@ -189,7 +193,7 @@ class Feedback(db.Model):
         commit: bool = True
     ) -> None:
         if not isinstance(feedback_data, dict):
-            raise ValueError("Feedback data must be a dictionary")
+            raise ValidationError("Feedback data must be a dictionary")
 
         self._validate_feedback_data(feedback_data)
 

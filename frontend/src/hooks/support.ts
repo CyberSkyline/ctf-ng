@@ -1,11 +1,12 @@
-import useSWR, { mutate } from 'swr';
 import { apiMutation } from '@/fetchers';
 import type {
   AdminTicket,
   Ticket,
+  TicketAttachment,
   TicketMessage,
   TicketTag,
 } from '@/types';
+import useSWR, { mutate } from 'swr';
 
 export function useMyTickets() {
   return useSWR<Ticket[], Error>('/support/me/tickets');
@@ -29,11 +30,12 @@ export function createTicket(formData: {
 
 export function useMyTicketMessages(ticketId : number) {
   return useSWR<{
-  ticket: Ticket,
-  messages: TicketMessage[]
-}, Error>(
-  ticketId ? `/support/me/tickets/${ticketId}` : null,
-);
+    ticket: Ticket,
+    attachments: TicketAttachment[],
+    messages: TicketMessage[]
+  }, Error>(
+    ticketId ? `/support/me/tickets/${ticketId}` : null,
+  );
 }
 
 export function addNewTicketMessage(ticketId: number, text: string) {
@@ -136,7 +138,8 @@ export function removeTicketChallenge(ticketId: number) {
 export function useAdminTicketMessages(ticketId : number) {
   return useSWR<{
   ticket: AdminTicket,
-  messages: TicketMessage[]
+  messages: TicketMessage[],
+  attachments : TicketAttachment[],
 }, Error>(
   ticketId ? `/admin/support/tickets/${ticketId}` : null,
 );

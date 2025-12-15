@@ -3,17 +3,18 @@ Tests for support API endpoints
 """
 
 import json
-import pytest
 from datetime import datetime
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
+import pytest
 from CTFd.models import Users
 
+from ...notifications.models import Notification
+from ...permissions.controllers import assign_role_to_user
+from ...permissions.models.enums import RoleEnum
 from ...permissions.models.Role import Role
 from ...user.models.User import User as NgUser
-from ...notifications.models import Notification
-from ...permissions.models.enums import RoleEnum
-from ...permissions.controllers import assign_role_to_user
+
 
 class TestUserSupportEndpoints:
     """Tests for user support API endpoints"""
@@ -1012,6 +1013,6 @@ class TestAdminSupportEndpoints:
         """
         Test downloading a nonexistent attachment returns 404
         """
-        response = logged_in_client.get("/ng/support/me/attachments/999999")
+        response = logged_in_client.get("/ng/support/attachments/999999")
         assert response.status_code == 404
 

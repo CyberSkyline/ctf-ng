@@ -13,8 +13,8 @@ export function useFileUrl(folder: string, filename?: string) {
 /*
   Gets a list of all files in a specific folder
 */
-export function useFileList(folder: string) {
-  return useSWR<{files: UploadedFile[]}>(`/fileuploads/list?folder=${folder}`);
+export function useFileList(folder: string, includeUrls?: boolean) {
+  return useSWR<{files: UploadedFile[]}>(`/fileuploads/list?folder=${folder}&include_urls=${includeUrls || false}`);
 }
 
 /*
@@ -28,6 +28,23 @@ export function directUpload(formData: FormData) {
     async (data) => {
       // update file list before resolving the promise to ensure dependent form fields are up to date before value change
       await mutate(`/fileuploads/list?folder=${formData.get('folder')}`);
+      return data as UploadedFile;
+    },
+  );
+}
+
+/*
+  Upload a file to an existing support ticket
+*/
+export function ticketAttachmentUpload(uploadPath : string, file : File, ticketMutationUrl : string) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return fileApiMutation(uploadPath, formData, {
+    method : 'POST',
+  }).then(
+    async (data) => {
+      await mutate(ticketMutationUrl);
       return data as UploadedFile;
     },
   );

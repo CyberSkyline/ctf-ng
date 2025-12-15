@@ -3,7 +3,20 @@ Attachment-specific permission middleware for checking access via parent entitie
 """
 
 from functools import wraps
-from ..exceptions import PermissionError, NotFoundError
+
+from ...permissions.controllers.get_user_permissions import get_user_permissions
+from ...permissions.models.enums import PermissionCheck, PermissionEnum
+from ..exceptions import NotFoundError, PermissionError
+
+SUPPORT_MANAGEMENT_PERMISSION = PermissionEnum.CAN_MANAGE_SUPPORT_TICKETS
+
+def has_support_management_permission(user):
+    trace = PermissionCheck()
+    trace.merge(get_user_permissions(user))
+
+    permissions = list({grant.permission.name for grant in trace.granted})
+
+    return SUPPORT_MANAGEMENT_PERMISSION.name in permissions
 
 
 def check_attachment_ownership(attachment_key: str = "attachment", error_message: str = None):
@@ -29,7 +42,8 @@ def check_attachment_ownership(attachment_key: str = "attachment", error_message
             if not ticket:
                 raise NotFoundError("Associated ticket not found for this attachment")
 
-            if ticket.author_id != current_user.id:
+            # You must be the author or have support ticket permissions
+            if ticket.author_id != current_user.id and not has_support_management_permission(current_user):
                 message = error_message or "You can only access attachments from your own tickets"
                 raise PermissionError(message)
 

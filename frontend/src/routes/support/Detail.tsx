@@ -1,24 +1,27 @@
-import { useState } from 'react';
+import { addNewTicketMessage, resolveMyTicket, useMyTicketMessages } from '@/hooks/support';
+import { useCurrentUser } from '@/hooks/users';
+import type { TicketAttachment } from '@/types';
 import {
   Box,
   Button,
   Card,
   Container,
   Flex,
+  Grid,
   Heading,
+  Section,
   Separator,
   Text,
-  Section,
 } from '@radix-ui/themes';
-import { StatusBadge } from 'components/StatusBadge';
 import { ErrorCallout } from 'components/Callouts';
+import RichTextEditor from 'components/RichTextEditor';
+import { StatusBadge } from 'components/StatusBadge';
+import SupportAttachmentUpload from 'components/SupportAttachmentUpload';
+import TicketMessagesCard from 'components/TicketMessagesCard';
+import { isNil, isUndefined, map } from 'lodash';
+import { useState } from 'react';
 import { TbArrowLeft } from 'react-icons/tb';
 import { useNavigate, useParams } from 'react-router';
-import { isNil, isUndefined } from 'lodash';
-import RichTextEditor from 'components/RichTextEditor';
-import { useMyTicketMessages, addNewTicketMessage, resolveMyTicket } from '@/hooks/support';
-import TicketMessagesCard from 'components/TicketMessagesCard';
-import { useCurrentUser } from '@/hooks/users';
 
 export default function Detail() {
   const navigate = useNavigate();
@@ -44,7 +47,7 @@ export default function Detail() {
     );
   }
 
-  const { messages, ticket } = data;
+  const { messages, ticket, attachments } = data;
 
   const {
     subject,
@@ -161,6 +164,20 @@ export default function Detail() {
               Status
               <Separator size="4" />
               <StatusBadge status={status} />
+            </Section>
+            <Section size="1">
+              Attachments
+              <Separator size="4" />
+              <SupportAttachmentUpload
+                fileUploadPath={`/support/me/tickets/${idTicket}/upload`}
+                ticketMutationUrl={`/support/me/tickets/${idTicket}`}
+              />
+              <br />
+              <Grid columns="2" gap="1">
+                {map(attachments, (attachment : TicketAttachment) => (
+                  <img key={attachment.id} src={attachment.download_url} alt={attachment.filename} />
+                ))}
+              </Grid>
             </Section>
           </Flex>
         </Card>

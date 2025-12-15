@@ -137,10 +137,10 @@ export default function AdminTickets() {
         getRowId={(params) => params.data.id.toString()}
         sidebarComponent={MessagesSidebar}
         stopCellSelection={[
-          'author_id',
-          'event_id',
-          'team_id',
-          'challenge_id',
+          'author_name',
+          'event_name',
+          'team_name',
+          'challenge_name',
         ]}
       />
     </>

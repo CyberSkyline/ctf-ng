@@ -328,6 +328,7 @@ def event_factory(db_session):
             "end_time": utc_now() + timedelta(days=1),
             "time_limit_minutes": 120,
             "allowed_domains": [],
+            "blocked_domains": [],
             "hints_enabled": True,
             "show_leaderboard": True
         }

@@ -19,7 +19,7 @@ export default function AdminProvisionerCard() {
   return (
     <Card>
       <Heading>Provisioner</Heading>
-      <Flex gap="4" my="4">
+      <Flex gap="4" mt="3">
         <Statistic
           label="Containers Running"
           value={data?.containers_running || 0}

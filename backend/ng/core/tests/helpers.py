@@ -4,7 +4,11 @@ Test helper functions for setting up the plugin's test environment.
 
 from tests.helpers import (
     create_ctfd as create_ctfd_original,
+)
+from tests.helpers import (
     destroy_ctfd as destroy_ctfd_original,
+)
+from tests.helpers import (
     setup_ctfd,
 )
 
@@ -27,6 +31,9 @@ def create_ctfd():
     """Prepares the Flask app instance for the test session."""
 
     app = create_ctfd_original(enable_plugins=True, setup=False)
+
+    # Disable rate limiters for testing
+    app.config["RATELIMIT_ENABLED"] = False
 
     with app.app_context():
         plugin_load(app)
