@@ -72,6 +72,8 @@ NOTIFICATIONS_MESSAGE_MAX_LENGTH = 1000
 DOCKER_HOST = "172.17.0.1"
 
 # This is a place holder vnc image
+# Default credentials for consol/debian-xfce-vnc: VNC password and root password are both "vncpassword"
+# See README.md "Default Container Credentials" section for more details
 NOVNC_CONTAINER = "consol/debian-xfce-vnc"
 NOVNC_PORT = 8080
 # For Testing
