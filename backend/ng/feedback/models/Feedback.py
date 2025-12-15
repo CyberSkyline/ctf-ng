@@ -12,7 +12,6 @@ from sqlalchemy import JSON
 from ...core.utils import utc_now
 from ...core.exceptions import ValidationError
 from ...core.utils.validator import BaseValidator
-from ...core.exceptions import ValidationError
 from ... import config
 
 
