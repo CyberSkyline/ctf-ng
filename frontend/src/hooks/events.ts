@@ -92,6 +92,12 @@ export function registerMyEventTeamJoin(eventId: number, inviteCode: string) {
   });
 }
 
+export function useTeamNameFromCode(eventId: number, inviteCode?: string) {
+  return useSWR(
+    inviteCode ? `/events/${eventId}/team/${inviteCode}` : null,
+  );
+}
+
 export function adminRegisterEvent(eventId: number, userId: number, teamName: string) {
   return apiMutation(`/admin/events/${eventId}/${userId}/register`, { team_name : teamName }, {
     method : 'POST',
