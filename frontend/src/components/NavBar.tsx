@@ -97,11 +97,11 @@ export default function NavBar() {
               Events
             </NavigationMenu.Item>
           </NavLink>
-          {/* <NavLink className={location.pathname === '/practice' ? activeLinkClass : defaultLinkClass}>
+          <NavLink to="/practice" className={location.pathname === '/practice' ? activeLinkClass : defaultLinkClass}>
             <NavigationMenu.Item>
-              Practice*
+              Practice
             </NavigationMenu.Item>
-          </NavLink> */}
+          </NavLink>
         </div>
         <div className="flex ml-auto">
 
