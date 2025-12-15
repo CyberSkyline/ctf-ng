@@ -18,6 +18,7 @@ export default function UserVncModal({ userId }: {userId: number}) {
       <iframe
         title="VNC session"
         className="w-full h-full"
+        style={{ height : '600px' }}
         src={`${PUBLIC_BASE}/novnc/vnc.html?autoconnect=true&path=${APIPREFIX}/admin/user/${userId}/vnc/access/websockify&reconnect=true`}
       />
     </Modal>
