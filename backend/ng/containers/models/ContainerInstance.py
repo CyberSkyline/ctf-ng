@@ -8,7 +8,7 @@ from typing import TypedDict
 from ..utils.get_client import get_client
 from ..utils.Client import Client
 from CTFd.utils import get_app_config
-from .. constants import DOCKER_RUNNING, DOCKER_BRIDGE
+from .. constants import DOCKER_RUNNING, DOCKER_BRIDGE, DOCKER_MEM_REGEX
 from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 from ...team.models.Team import Team
 
@@ -57,7 +57,21 @@ class ContainerInstance(db.Model):
         if db_exists:
             try:
                 ctr = client.get_running(db_exists.dockerid)
+
+            ## Container Needs created
             except docker.errors.NotFound:
+                ctr = cls.run_container(client, team, blueprint_obj)
+                cls.connect_networks(client, team, blueprint_obj, ctr)
+
+                db_exists.dockerid = ctr.id
+                db.session.commit()
+
+            ## Container won't start
+            ## Edge case of entry point getting nuked or something
+            except docker.errors.APIError:
+                tmp_ctr = client.containers.get(db_exists.dockerid)
+                tmp_ctr.remove(force=True)
+
                 ctr = cls.run_container(client, team, blueprint_obj)
                 cls.connect_networks(client, team, blueprint_obj, ctr)
 
@@ -74,11 +88,26 @@ class ContainerInstance(db.Model):
 
         ## Container Needs created
         except docker.errors.NotFound:
-            ## Need To detach or it will hang
-            ## (TODO) add in env vars and what not
             ctr = cls.run_container(client, team, blueprint_obj)
 
-        cls.connect_networks(client, team, blueprint_obj, ctr)
+        ## Container won't start
+        ## Edge case of entry point getting nuked or something
+        except docker.errors.APIError:
+            tmp_ctr = client.containers.get(
+                cls.render_container_name(team.id, blueprint_obj.name, blueprint_obj.challenge_id)
+             )
+            tmp_ctr.remove(force=True)
+
+            ctr = cls.run_container(client, team, blueprint_obj)
+
+        try:
+            cls.connect_networks(client, team, blueprint_obj, ctr)
+
+        except Exception as err:
+            # Remove on network fail
+            ctr.remove(force=True)
+            raise err
+
 
         container_instance = cls(
             blueprint=blueprint,
@@ -113,6 +142,17 @@ class ContainerInstance(db.Model):
     def run_container(client: Client, team: Team, blueprint_obj: ContainerBlueprint):
         ulimit = docker.types.Ulimit(name="nofile", soft=10000, hard=20000)
         mem_limit = blueprint_obj.mem_limit or "128m"
+
+        parsed_ram = DOCKER_MEM_REGEX.match(mem_limit)
+        ram_number = int(parsed_ram.group(1))
+        ram_postfix = parsed_ram.group(2)
+
+        swap_mem = f"{round(ram_number * 1.5)}{ram_postfix}"
+        mem_resv = f"{round(ram_number * 0.8)}{ram_postfix}"
+
+        # I am not setting a kernel memory limit
+        # As you it is deprecated
+        # See https://github.com/torvalds/linux/commit/0158115f702b0ba208ab0b5adf44cae99b3ebcc7
         ctr = client.containers.run(
             blueprint_obj.image,
             environment=blueprint_obj.render_environment(team.seed),
@@ -122,6 +162,8 @@ class ContainerInstance(db.Model):
             cpu_quota=10000,
             pids_limit=100,
             mem_limit=mem_limit,
+            mem_reservation=mem_resv,
+            memswap_limit=swap_mem,
             ulimits=[ulimit],
         )
 
@@ -306,3 +348,8 @@ class ContainerInstance(db.Model):
 
             self.dockerid = new_ctr.id
             db.session.commit()
+    def remove(self):
+        client = get_client(self.hostip)
+
+        ctr = client.containers.get(self.dockerid)
+        ctr.remove(force=True)

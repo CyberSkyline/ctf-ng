@@ -56,6 +56,7 @@ class ChallengeList(Resource): # Feels like I should rename this but I'm not sur
         challenge = import_challenge_from_yaml(event, payload)
         return success_response(challenge)
 
+@challenge_admin_namespace.route("/lint")
 class ChallengeLint(Resource):
     @challenge_admin_namespace.doc(
         description="Lint a challenge YAML configuration without creating the challenge",

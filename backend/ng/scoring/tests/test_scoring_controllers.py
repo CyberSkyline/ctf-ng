@@ -250,6 +250,62 @@ class TestGetLeaderboard:
         # Should return all teams (5 in this case)
         assert len(result) == 5
 
+    def test_get_leaderboard_has_sponsor_data(self, db_session, event_factory, sponsor_factory,user_factory,team_factory, score_factory):
+        """Test that leaderboard includes sponsor data"""
+        sponsor = sponsor_factory()
+        user = user_factory(sponsor=sponsor)
+        event = event_factory()
+        team = team_factory(event=event, members=[user])
+        team.set_start_timestamp(utc_now())
+
+        result = get_leaderboard(event.id,limit=1)
+
+        assert len(result) == 1
+        assert "sponsors" in result[0]
+
+    def test_get_leaderboard_team_has_multiple_sponsors(self, db_session, event_factory, sponsor_factory,user_factory,team_factory, score_factory):
+        """Test that leaderboard includes multiple sponsors for a team"""
+        sponsor1 = sponsor_factory(name="Sponsor One")
+        sponsor2 = sponsor_factory(name="Sponsor Two")
+        user1 = user_factory(sponsor=sponsor1,email="T1@example.com")
+        user2 = user_factory(sponsor=sponsor2,email="T2@example.com")
+        event = event_factory()
+        team = team_factory(event=event, members=[user1, user2])
+        team.set_start_timestamp(utc_now())
+
+        result = get_leaderboard(event.id,limit=1)
+
+        assert len(result) == 1
+        assert "sponsors" in result[0]
+        sponsor_names = [s["name"] for s in result[0]["sponsors"]]
+        assert "Sponsor One" in sponsor_names
+        assert "Sponsor Two" in sponsor_names
+
+    def test_get_leaderboard_many_teams_sponsors(self, db_session, sponsor_factory,event_factory, team_factory, user_factory, score_factory):
+        """Test leaderboard with many teams to check performance and correctness"""
+        event = event_factory()
+        sponsor = sponsor_factory(name="Bulk Sponsor")
+        sponsor2 = sponsor_factory(name="Bulk Sponsor 2")
+        sponsor3 = sponsor_factory(name="Bulk Sponsor 3")
+        sponsors = [sponsor, sponsor2, sponsor3, None]
+
+        # Create 50 teams with scores
+        for i in range(20):
+            user = user_factory(email=f"test{i}@example.com", sponsor=sponsors[i % len(sponsors)])
+            user2 = user_factory(email=f"test{i+20}@example.com", sponsor=sponsors[(i+1) % len(sponsors)])
+            team = team_factory(event=event, members=[user, user2])
+            team.set_start_timestamp(utc_now())
+
+        result = get_leaderboard(event.id, limit=20)
+
+        assert len(result) == 20
+        assert all("sponsors" in entry for entry in result)
+        single_sponsor_count = sum(1 for entry in result if len(entry["sponsors"]) == 1)
+        multiple_sponsor_count = sum(1 for entry in result if len(entry["sponsors"]) > 1)
+        assert single_sponsor_count > 0
+        assert multiple_sponsor_count > 0
+
+
 
 class TestGetTeamScore:
     """Test the get_team_score controller"""

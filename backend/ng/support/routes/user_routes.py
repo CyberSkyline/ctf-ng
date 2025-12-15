@@ -5,21 +5,20 @@ User API routes for support tickets
 from flask import request
 from flask_restx import Namespace, Resource
 
-from ...core.middleware import user_endpoint, check_ownership, check_attachment_ownership
-from ...core.middleware.loaders import LoaderType, load_ticket, load_attachment
-from ...core.utils import success_response, error_response
+from ...core.middleware import check_attachment_ownership, check_ownership, user_endpoint
+from ...core.middleware.loaders import LoaderType, load_attachment, load_ticket
+from ...core.utils import error_response, success_response
+from ...core.utils.rate_limit import limiter
 from ...user.models import User
-
 from ..controllers import (
-    create_ticket,
     close_my_ticket,
-    list_tickets,
-    get_ticket,
+    create_ticket,
     create_ticket_message,
     download_attachment,
+    get_ticket,
+    list_tickets,
     upload_attachment,
 )
-
 
 support_user_namespace = Namespace("support", description="Support ticket operations for users")
 
@@ -29,6 +28,7 @@ support_user_namespace = Namespace("support", description="Support ticket operat
 @support_user_namespace.route("/tickets/create")
 class Tickets(Resource):
     @user_endpoint(json_required=True)
+    @limiter.limit("1 per 5 seconds")
     @support_user_namespace.doc(
         description="Create a new support ticket with initial message. Team ID is automatically derived from the user and event.",
         params={
@@ -153,6 +153,7 @@ class TicketMessage(Resource):
     @user_endpoint(json_required=True)
     @load_ticket(LoaderType.PARAM)
     @check_ownership(resource_key="ticket", user_field="author_id")
+    @limiter.limit("1 per 5 seconds")
     @support_user_namespace.doc(
         description="Add a new message to an existing support ticket thread",
         params={
@@ -233,6 +234,7 @@ class AttachmentUpload(Resource):
     @user_endpoint()
     @load_ticket(LoaderType.PARAM)
     @check_ownership(resource_key="ticket", user_field="author_id")
+    @limiter.limit("1 per 5 seconds")
     @support_user_namespace.doc(
         description="Upload an image attachment to your support ticket",
         params={
@@ -277,7 +279,7 @@ class AttachmentUpload(Resource):
 
         return success_response(attachment)
 
-@support_user_namespace.route("/me/attachments/<int:attachment_id>")
+@support_user_namespace.route("/attachments/<int:attachment_id>")
 class AttachmentDownload(Resource):
     @user_endpoint()
     @load_attachment(LoaderType.PARAM)
