@@ -51,8 +51,8 @@ S3_UPLOAD_URL_EXPIRATION = 3600
 S3_DOWNLOAD_URL_EXPIRATION = 600
 
 # Cache TTL buffer settings (in seconds)
-URL_CACHE_MIN_TTL = 300  # Minimum cache time: 5 minutes
-URL_CACHE_BUFFER_TIME = 300  # Buffer time to subtract from expiration: 5 minutes
+URL_CACHE_MIN_TTL = 300  # Minimum cache time (5min)
+URL_CACHE_BUFFER_TIME = 300  # Buffer time to subtract from expiration (5min)
 
 # Scoring Cache Config & Model Length Limits
 LEADERBOARD_CACHE_TIMEOUT = 60  # Seconds
