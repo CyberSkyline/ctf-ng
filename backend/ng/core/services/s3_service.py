@@ -53,7 +53,6 @@ class S3Service:
     def is_configured(self) -> bool:
         """Check if S3 service is properly configured"""
         return self._is_configured and self.s3_client is not None
-    
     def _generate_cache_key(self, operation: str, object_key: str, expires_in: int, content_type: str = None) -> str:
         """Generate a unique cache key for the presigned URL"""
         key_data = f"{self.bucket_name}:{operation}:{object_key}:{expires_in}"
@@ -61,17 +60,17 @@ class S3Service:
             key_data += f":{content_type}"
         key_hash = hashlib.md5(key_data.encode()).hexdigest()
         return f"s3_presigned:{key_hash}"
-    
+
     def _get_cache_ttl(self, expires_in: int) -> int:
         """Get the appropriate cache TTL based on URL expiration"""
         return max(config.URL_CACHE_MIN_TTL, expires_in - config.URL_CACHE_BUFFER_TIME)
-    
+
     def _get_cached_url(self, operation: str, object_key: str, expires_in: int, content_type: str = None) -> str:
         """Try to get a cached presigned URL"""
         redis_manager = get_redis_notification_manager()
         if not redis_manager or not redis_manager.redis_client:
             return None
-            
+
         cache_key = self._generate_cache_key(operation, object_key, expires_in, content_type)
         try:
             cached_data = redis_manager.redis_client.get(cache_key)
@@ -82,13 +81,13 @@ class S3Service:
         except Exception as e:
             logger.warning(f"Redis cache read error: {e}")
         return None
-    
+
     def _cache_url(self, operation: str, object_key: str, url: str, expires_in: int, content_type: str = None):
         """Cache a presigned URL"""
         redis_manager = get_redis_notification_manager()
         if not redis_manager or not redis_manager.redis_client:
             return
-            
+
         cache_key = self._generate_cache_key(operation, object_key, expires_in, content_type)
         cache_data = {
             'url': url,
@@ -98,7 +97,7 @@ class S3Service:
         }
         if content_type:
             cache_data['content_type'] = content_type
-            
+
         try:
             cache_ttl = self._get_cache_ttl(expires_in)
             redis_manager.redis_client.setex(cache_key, cache_ttl, json.dumps(cache_data))
@@ -113,7 +112,7 @@ class S3Service:
             raise Exception("S3 service not configured")
 
         object_key = f"{folder}/{filename}"
-        
+
         cached_url = self._get_cached_url('upload', object_key, config.S3_UPLOAD_URL_EXPIRATION, content_type)
         if cached_url:
             logger.info(f"Using cached upload URL for {object_key}")
@@ -135,7 +134,7 @@ class S3Service:
                 ExpiresIn=config.S3_UPLOAD_URL_EXPIRATION,
                 HttpMethod='PUT'
             )
-            
+
             self._cache_url('upload', object_key, presigned_url, config.S3_UPLOAD_URL_EXPIRATION, content_type)
 
             logger.info(f"Generated upload URL for {object_key}")
@@ -155,7 +154,7 @@ class S3Service:
         """Generate presigned URL for downloads (public files)"""
         if not self.is_configured():
             raise Exception("S3 service not configured")
-        
+
         cached_url = self._get_cached_url('download', object_key, expires_in)
         if cached_url:
             logger.info(f"Using cached download URL for {object_key}")
@@ -170,9 +169,9 @@ class S3Service:
                 },
                 ExpiresIn=expires_in
             )
-            
+
             self._cache_url('download', object_key, url, expires_in)
-            
+
             logger.info(f"Generated download URL for {object_key}")
             return url
         except ClientError as e:
