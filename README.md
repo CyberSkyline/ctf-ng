@@ -5,6 +5,23 @@ Run `./install.sh` from the project root folder
 
 Make sure to complete the initial setup for CTFd on the webportal
 
+## Default Container Credentials
+
+### Individual User Containers (noVNC)
+When users spawn individual containers for challenges, the system uses the `consol/debian-xfce-vnc` Docker image by default (configurable via `NOVNC_CONTAINER` in `backend/ng/config.py`).
+
+**Default Credentials:**
+- **VNC Password:** `vncpassword`
+- **Root Password:** `vncpassword`
+- **User:** `root` (or the default user configured in the container image)
+
+These credentials allow users to:
+- Access the VNC desktop environment
+- Use `sudo` or switch to root user within the container
+- Execute privileged commands for challenge tasks
+
+**Note:** For production environments, consider using a custom noVNC image with modified credentials or setting the `VNC_PW` environment variable when spawning containers.
+
 ## Development
 
 ### Submodules
