@@ -89,3 +89,7 @@ ADMIN_TICKET_URL_PATH = "/admin/tickets"
 FEEDBACK_MAX_STRING_LENGTH = 5000
 FEEDBACK_MAX_KEYS = 50
 FEEDBACK_MAX_KEY_LENGTH = 100
+
+# Global request size limit (Flask MAX_CONTENT_LENGTH)
+# Limits POST body size before parsing to prevent DoS from large payloads
+MAX_REQUEST_SIZE = 16 * 1024 * 1024  # 16MB

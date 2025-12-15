@@ -4,6 +4,7 @@ from typing import Any
 from flask_socketio import SocketIO
 
 from CTFd.models import db
+from . import config
 from .core.utils.logger import get_logger
 from .core.routes import delete_unwanted_ctfd_routes, api_blueprint, remove_registered_helpers, remove_registered_errorhandlers
 from .core.routes.views import plugin_views
@@ -47,6 +48,8 @@ def load(app: Any) -> None:
         remove_registered_errorhandlers(app)
 
         logger.info("Loading plugin", extra={"context": {"stage": "initialization"}})
+
+        app.config['MAX_CONTENT_LENGTH'] = config.MAX_REQUEST_SIZE
 
         db.create_all()
 
