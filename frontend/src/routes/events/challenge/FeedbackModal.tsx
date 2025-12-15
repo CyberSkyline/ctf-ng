@@ -1,5 +1,5 @@
 import { COLOR_INFO } from '@/constants';
-import { submitFeedback, useMyChallengeFeedback } from '@/hooks/feedback';
+import { submitChallengeFeedback, useMyChallengeFeedback } from '@/hooks/feedback';
 import {
   Button,
   SegmentedControl,
@@ -33,7 +33,7 @@ export default function FeedbackModal({ eventId, challengeId }: {eventId: number
       what_liked: string,
       how_to_improve: string
     },
-  ) => submitFeedback(eventId, challengeId, data);
+  ) => submitChallengeFeedback(eventId, challengeId, data);
 
   return (
     <Modal

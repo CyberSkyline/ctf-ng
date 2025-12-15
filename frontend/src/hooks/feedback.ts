@@ -2,13 +2,31 @@ import { apiMutation } from '@/fetchers';
 import type { Feedback } from '@/types';
 import useSWR, { mutate } from 'swr';
 
+export function useMyEventFeedback(eventId: number | null) {
+  return useSWR<Feedback | null>(
+    eventId ? `/events/${eventId}/feedback` : null,
+  );
+}
+
 export function useMyChallengeFeedback(eventId: number, challengeId: number) {
   return useSWR<Feedback | null>(
     eventId && challengeId ? `/events/${eventId}/challenges/${challengeId}/feedback` : null,
   );
 }
 
-export function submitFeedback(eventId: number, challengeId: number, feedback: Record<string, unknown>) {
+export function submitEventFeedback(eventId: number, feedback: Record<string, unknown>) {
+  return apiMutation(
+    `/events/${eventId}/feedback`,
+    { feedback_data : feedback },
+    {
+      method : 'POST',
+    },
+  ).then(() => {
+    mutate(`/events/${eventId}/feedback`);
+  });
+}
+
+export function submitChallengeFeedback(eventId: number, challengeId: number, feedback: Record<string, unknown>) {
   return apiMutation(
     `/events/${eventId}/challenges/${challengeId}/feedback`,
     { feedback_data : feedback },
