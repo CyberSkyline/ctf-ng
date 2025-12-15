@@ -7,7 +7,7 @@ import traceback
 from functools import wraps
 
 from CTFd.models import db
-from flask import current_app as app, request
+from flask import current_app as app, request, session
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from ..exceptions import APIException
@@ -22,10 +22,14 @@ def _get_request_context() -> dict:
     Get basic request context for logging
     """
     try:
-        return {
+        context = {
             "path": request.path,
             "method": request.method,
         }
+        user_id = session.get("id")
+        if user_id is not None:
+            context["user_id"] = user_id
+        return context
     except RuntimeError:
         return {}
 

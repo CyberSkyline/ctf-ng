@@ -228,3 +228,27 @@ class TestRequestContextHelper:
         """
         context = _get_request_context()
         assert context == {}
+
+    def test_includes_user_id_when_authenticated(self, app):
+        """
+        Should include user_id when session contains id
+        """
+        with app.test_request_context("/ng/teams/5", method = "GET"):
+            from flask import session
+            session["id"] = 42
+            context = _get_request_context()
+
+        assert context["path"] == "/ng/teams/5"
+        assert context["method"] == "GET"
+        assert context["user_id"] == 42
+
+    def test_excludes_user_id_when_not_authenticated(self, app):
+        """
+        Should not include user_id when session has no id
+        """
+        with app.test_request_context("/ng/teams/5", method = "GET"):
+            context = _get_request_context()
+
+        assert context["path"] == "/ng/teams/5"
+        assert context["method"] == "GET"
+        assert "user_id" not in context
