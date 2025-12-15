@@ -170,7 +170,7 @@ class ContainerInstance(db.Model):
             detach=True,
             cpu_period=100000,
             cpu_quota=10000,
-            pids_limit=100,
+            pids_limit=512,
             mem_limit=mem_limit,
             mem_reservation=mem_resv,
             memswap_limit=swap_mem,
