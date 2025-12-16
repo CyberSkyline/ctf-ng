@@ -5,10 +5,9 @@ Generic Redis caching utility
 import json
 import time
 import redis
-from typing import Any, Optional
+from typing import Any
 from collections.abc import Callable
 from flask import current_app
-from functools import wraps
 from .logger import get_logger
 from ...config import (
     REDIS_SOCKET_CONNECT_TIMEOUT, REDIS_SOCKET_TIMEOUT, REDIS_SOCKET_KEEPALIVE,
