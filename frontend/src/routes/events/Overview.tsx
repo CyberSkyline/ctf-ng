@@ -66,7 +66,7 @@ export default function Overview() {
             {isAuthenticated && data && (
               <RegistrationCard event={data} />
             )}
-            {feedbackAvailable && feedback === null && (
+            {isFinished && feedback === null && (
               <InfoCallout className="max-w-128">
                 Please take a moment to provide feedback on your experience so that we can improve future events.
                 <br />
