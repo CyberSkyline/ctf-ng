@@ -26,6 +26,7 @@ import FeedbackModal from './FeedbackModal';
 import FeedbackPrompt from './FeedbackPrompt';
 import HintsModal from './HintsModal';
 import HistoryModal from './HistoryModal';
+import NotConnectedWarning from './NotConnectedWarning';
 
 export default function ChallengeSidebar() {
   const { idEvent, idChallenge } = useParams();
@@ -123,6 +124,7 @@ export default function ChallengeSidebar() {
       </Card>
 
       {challenge && <FeedbackPrompt eventId={challenge.event_id} challengeId={challenge.id} /> }
+      {challenge && <NotConnectedWarning challenge={challenge} /> }
 
       <Card className="!flex flex-col">
         <Inset side="all" className="shrink !overflow-y-auto">

@@ -2,10 +2,10 @@ import { COLOR_NEGATIVE, COLOR_POSITIVE, COLOR_WARNING } from '@/constants';
 import { connectWorkspace, recycleChallengeContainers, useCurrentChallengeId } from '@/hooks/container';
 import { useEventPermission } from '@/hooks/permissions';
 import { Button, Flex } from '@radix-ui/themes';
-import { ErrorCallout } from 'components/Callouts';
+import { ErrorCallout, WarningCallout } from 'components/Callouts';
 import Modal from 'components/Modal';
 import { useState } from 'react';
-import { TbCheck, TbPlayerPlay, TbRotateClockwise } from 'react-icons/tb';
+import { TbCheck, TbPlug, TbRotateClockwise } from 'react-icons/tb';
 
 export default function ConnectModal({
   eventId, challengeId, isTeam, onError,
@@ -83,8 +83,8 @@ export default function ConnectModal({
         color={COLOR_POSITIVE}
         className="pulsate"
       >
-        <TbPlayerPlay />
-        Start Challenge
+        <TbPlug />
+        Connect
       </Button>
     );
   }
@@ -95,13 +95,17 @@ export default function ConnectModal({
       description="Your workspace will be disconnected from your previous challenge and connected to this one."
       trigger={(
         <Button loading={loading || isLoading} color={COLOR_POSITIVE} className="pulsate">
-          <TbPlayerPlay />
-          Start Challenge
+          <TbPlug />
+          Connect
         </Button>
       )}
       onSubmit={handleConnect}
       submitVerb="Confirm"
       submitColor={COLOR_WARNING}
-    />
+    >
+      <WarningCallout>
+        Resources from the previously connected challenge will no longer be available unless you reconnect to it.
+      </WarningCallout>
+    </Modal>
   );
 }
