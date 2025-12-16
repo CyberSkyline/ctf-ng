@@ -69,11 +69,11 @@ class S3Service:
         """Try to get a cached presigned URL"""
         cache_key = self._generate_cache_key(operation, object_key, expires_in, content_type)
         cached_data = RedisCache.get(cache_key)
-        
+
         if cached_data and isinstance(cached_data, dict):
             logger.debug(f"Using cached {operation} URL for {object_key}")
             return cached_data.get('url')
-        
+
     def _cache_url(self, operation: str, object_key: str, url: str, expires_in: int, content_type: str = None):
         """Cache a presigned URL"""
         cache_key = self._generate_cache_key(operation, object_key, expires_in, content_type)
@@ -85,12 +85,14 @@ class S3Service:
         }
         if content_type:
             cache_data['content_type'] = content_type
-        
+
         cache_ttl = self._get_cache_ttl(expires_in)
         success = RedisCache.set(cache_key, cache_data, ttl=cache_ttl)
-        
+
         if success:
             logger.debug(f"Cached {operation} URL for {object_key} (TTL: {cache_ttl}s)")
+
+    def generate_presigned_upload_url(self, folder: str, filename: str,
                           content_type: str = 'application/octet-stream') -> dict[str, Any]:
         """Generate presigned URL for client-side upload (public files)"""
         if not self.is_configured():
@@ -120,6 +122,8 @@ class S3Service:
                 HttpMethod='PUT'
             )
 
+            # Cache the URL
+            self._cache_url('upload', object_key, presigned_url, config.S3_UPLOAD_URL_EXPIRATION, content_type)
 
             logger.info(f"Generated upload URL for {object_key}")
 
@@ -154,6 +158,8 @@ class S3Service:
                 ExpiresIn=expires_in
             )
 
+            # Cache the URL
+            self._cache_url('download', object_key, url, expires_in)
 
             logger.info(f"Generated download URL for {object_key}")
             return url
@@ -262,6 +268,8 @@ class S3Service:
             return True
         except ClientError:
             return False
+
+
 
 # Global instance management
 def init_s3_service() -> 'S3Service':

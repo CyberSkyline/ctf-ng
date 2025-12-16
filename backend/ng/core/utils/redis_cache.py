@@ -187,34 +187,6 @@ class RedisCache:
         return bool(result) if result is not None else False
 
     @classmethod
-    def health_check(cls) -> dict:
-        """Check Redis connection health and return status"""
-        def _health_check_operation(client):
-            info = client.info()
-            return {
-                'connected': True,
-                'redis_version': info.get('redis_version'),
-                'connected_clients': info.get('connected_clients'),
-                'used_memory': info.get('used_memory'),
-                'used_memory_human': info.get('used_memory_human'),
-                'used_memory_peak': info.get('used_memory_peak'),
-                'uptime_in_seconds': info.get('uptime_in_seconds'),
-                'total_commands_processed': info.get('total_commands_processed'),
-                'keyspace_hits': info.get('keyspace_hits'),
-                'keyspace_misses': info.get('keyspace_misses'),
-                'expired_keys': info.get('expired_keys')
-            }
-
-        try:
-            result = cls._execute_with_retry(_health_check_operation)
-            if result:
-                return result
-            else:
-                return {'connected': False, 'error': 'Connection failed'}
-        except Exception as e:
-            return {'connected': False, 'error': str(e)}
-
-    @classmethod
     def reset_connection(cls):
         """Force reset of Redis connection (useful for testing or recovery)"""
         cls._client = None
