@@ -1,5 +1,6 @@
 import { useMyChallengeFeedback } from '@/hooks/feedback';
 import { useRegistration } from '@/hooks/users';
+import { Strong } from '@radix-ui/themes';
 import { InfoCallout } from 'components/Callouts';
 
 export default function FeedbackPrompt({ eventId, challengeId }: { eventId: number, challengeId: number }) {
@@ -10,6 +11,9 @@ export default function FeedbackPrompt({ eventId, challengeId }: { eventId: numb
 
   return (
     <InfoCallout>
+      <Strong>You are out of time.</Strong>
+      {' '}
+      Thank you for participating!
       Please consider sharing your thoughts about this challenge by selecting the Feedback option above.
     </InfoCallout>
   );
