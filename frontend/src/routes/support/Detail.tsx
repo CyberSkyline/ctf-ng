@@ -27,7 +27,7 @@ export default function Detail() {
   const navigate = useNavigate();
   const { idTicket } = useParams();
   const { data, error : errorMessages, isLoading } = useMyTicketMessages(Number(idTicket));
-  const { data : currentUser } = useCurrentUser();
+  const { data : currentUser, error : errorUser, isLoading : isLoadingUser } = useCurrentUser();
   const [ version, setVersion ] = useState<number>(0); // To reinit the RichTextEditor
   const [ newText, setNewText ] = useState<string>('');
   const [ replyError, setReplyError ] = useState<string | null>(null);
@@ -35,7 +35,17 @@ export default function Detail() {
   const [ resolveLoading, setResolveLoading ] = useState<boolean>(false);
   const [ replyLoading, setReplyLoading ] = useState<boolean>(false);
 
-  if (isLoading) { return null; }
+  if (isLoading || isLoadingUser) { return null; }
+
+  if (isNil(currentUser) || errorUser) {
+    return (
+      <ErrorCallout>
+        {isUndefined(errorUser)
+          ? 'User could not be found'
+          : errorUser.message}
+      </ErrorCallout>
+    );
+  }
 
   if (isNil(data) || errorMessages) {
     return (
@@ -114,7 +124,7 @@ export default function Detail() {
           </Box>
           <TicketMessagesCard
             messages={messages}
-            currentUserId={currentUser!.id}
+            currentUserId={currentUser.id}
           />
           <Flex gap="2" direction="column">
             <RichTextEditor
