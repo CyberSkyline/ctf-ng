@@ -13,13 +13,13 @@ export default function UserVncModal({ userId }: {userId: number}) {
           VNC
         </Button>
       )}
-      className="!max-w-4xl !max-h-4xl"
+      className="!max-w-[75vw]"
     >
       <iframe
         title="VNC session"
-        className="w-full h-full"
+        className="w-full h-[75vh]"
         style={{ height : '600px' }}
-        src={`${PUBLIC_BASE}/novnc/vnc.html?autoconnect=true&path=${APIPREFIX}/admin/user/${userId}/vnc/access/websockify&reconnect=true`}
+        src={`${PUBLIC_BASE}/novnc/vnc.html?autoconnect=true&path=${APIPREFIX}/admin/user/${userId}/vnc/access/websockify&reconnect=true&resize=scale`}
       />
     </Modal>
   );
