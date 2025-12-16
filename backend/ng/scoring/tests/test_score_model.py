@@ -2,14 +2,15 @@
 Tests for the Score model
 """
 
-import pytest
+from datetime import datetime, timedelta
 from unittest.mock import patch
-from datetime import datetime
 
+import pytest
 from CTFd.cache import cache
 
-from ..models import Score, ScoreEvent
 from ...core.utils import utc_now
+from ..models import Score, ScoreEvent
+
 
 @pytest.fixture(autouse=True)
 def clear_score_cache():
@@ -137,6 +138,27 @@ class TestScoreAdjust:
 
         assert score.points == 100
 
+class TestScoreMarkCorrectSubmission:
+    """Test the mark_correct_submission method"""
+
+    def test_mark_correct_submission(self, db_session, score, team_with_member, question, user):
+        from ..models.Attempt import Attempt
+
+        team_with_member.set_start_timestamp(utc_now())
+
+        new_attempt = Attempt.create_attempt(
+            user_id=user.id,
+            team_id=team_with_member.id,
+            challenge_id=question.challenge_id,
+            question_id=question.id,
+            submission=question.answer,  # Correct answer
+        )
+
+        score.mark_correct_submission(timestamp=new_attempt.timestamp)
+
+        delta = new_attempt.timestamp.replace(tzinfo=None) - team_with_member.start_timestamp.replace(tzinfo=None)
+        offset = delta / timedelta(milliseconds=1)
+        assert offset == score.last_correct_offset
 
 class TestScoreRecalculate:
     """Test the recalculate method"""
@@ -149,27 +171,48 @@ class TestScoreRecalculate:
         score.recalculate()
 
         assert score.points == 0
+        assert score.last_correct_offset == 0
         db_session.refresh(score)
         assert score.points == 0
+        assert score.last_correct_offset == 0
 
-    def test_recalculate_with_events(self, db_session, score, score_event_factory):
+    def test_recalculate_with_events(self, db_session, score, team_with_member, question, user, score_event_factory):
         """Test recalculating with multiple score events"""
+        team_with_member.set_start_timestamp(utc_now())
+
         # Create several score events
         score_event_factory(score_id=score.id, team_id=score.team_id, points=100)
         score_event_factory(score_id=score.id, team_id=score.team_id, points=-20)
         score_event_factory(score_id=score.id, team_id=score.team_id, points=50)
 
+        # Create a correct attempt
+        from ..models.Attempt import Attempt
+
+        new_attempt = Attempt.create_attempt(
+            user_id=user.id,
+            team_id=team_with_member.id,
+            challenge_id=question.challenge_id,
+            question_id=question.id,
+            submission=question.answer,  # Correct answer
+        )
+
         # Set score to wrong value
         score.points = 999
+        score.last_correct_offset = 0
         db_session.commit()
 
         # Recalculate
         score.recalculate()
 
+        delta = new_attempt.timestamp.replace(tzinfo=None) - team_with_member.start_timestamp.replace(tzinfo=None)
+        offset = delta / timedelta(milliseconds=1)
+
         # Should be sum of events: 100 - 20 + 50 = 130
-        assert score.points == 130
+        assert score.points == 130 + question.points
+        assert score.last_correct_offset == offset
         db_session.refresh(score)
-        assert score.points == 130
+        assert score.points == 130 + question.points
+        assert score.last_correct_offset == offset
 
     def test_recalculate_no_commit(self, db_session, score, score_event_factory):
         score_event_factory(score_id=score.id, team_id=score.team_id, points=100)
