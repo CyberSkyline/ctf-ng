@@ -122,7 +122,7 @@ export default function ChallengeSidebar() {
           </ChallengeHeader>
         </Inset>
       </Card>
-      
+
       {challenge && <FeedbackPrompt eventId={challenge.event_id} challengeId={challenge.id} /> }
       {challenge && <NotConnectedWarning challenge={challenge} /> }
 
