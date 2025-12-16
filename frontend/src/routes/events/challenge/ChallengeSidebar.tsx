@@ -23,6 +23,7 @@ import ChallengeHeader from './ChallengeHeader';
 import ChallengeQuestion from './ChallengeQuestion';
 import ConnectModal from './ConnectModal';
 import FeedbackModal from './FeedbackModal';
+import FeedbackPrompt from './FeedbackPrompt';
 import HintsModal from './HintsModal';
 import HistoryModal from './HistoryModal';
 
@@ -120,6 +121,8 @@ export default function ChallengeSidebar() {
           </ChallengeHeader>
         </Inset>
       </Card>
+
+      {challenge && <FeedbackPrompt eventId={challenge.event_id} challengeId={challenge.id} /> }
 
       <Card className="!flex flex-col">
         <Inset side="all" className="shrink !overflow-y-auto">
