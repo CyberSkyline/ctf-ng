@@ -6,6 +6,7 @@ import {
   Flex,
   RadioCards,
   Strong,
+  Text,
   TextArea,
 } from '@radix-ui/themes';
 import { ErrorCallout, InfoCallout, SuccessCallout } from 'components/Callouts';
@@ -18,10 +19,10 @@ import { useParams } from 'react-router';
 type EventFeedbackFormData = Partial<{
   role: string,
   education: string,
-  cyberExperience: string,
-  participationReason: string,
-  participationAgain: string,
-  additionalFeedback: string,
+  cyber_experience: string,
+  participation_reason: string,
+  participation_again: string,
+  additional_feedback: string,
 }>
 
 const ROLES = [
@@ -37,6 +38,15 @@ const ROLES = [
   'Threat/Warning Analyst',
 ];
 
+const EDUCATION_LEVELS = [
+  'High School Diploma/GED',
+  'Associate Degree',
+  'Other (Some College)',
+  'Bachelor\'s Degree',
+  'Master\'s Degree',
+  'PhD',
+];
+
 const PARTICIPATION_REASONS: Record<string, string> = {
   'Promotional messages about the President\'s Cup' : 'Emails, social media, presentation, etc.',
   'Word-of-Mouth' : 'A supervisor, colleague or friend encouraged me to register.',
@@ -44,13 +54,15 @@ const PARTICIPATION_REASONS: Record<string, string> = {
   'Professional Development' : 'A chance to grow my cybersecurity skills.',
 };
 
+const CHAR_LIMIT = 500;
+
 export default function FeedbackTab() {
   const { idEvent } = useParams<{idEvent: string}>();
   const eventId = Number(idEvent);
   const { data : currentFeedback, error : currentFeedbackError } = useMyEventFeedback(eventId);
 
   const {
-    register, reset, control, handleSubmit, formState : { errors },
+    register, reset, control, watch, handleSubmit, formState : { errors },
   } = useForm<EventFeedbackFormData>({
     mode : 'onTouched',
     defaultValues : currentFeedback?.feedback_data || {},
@@ -104,12 +116,12 @@ export default function FeedbackTab() {
               <Controller
                 name="role"
                 control={control}
+                rules={{ maxLength : { value : CHAR_LIMIT, message : `Feedback cannot exceed ${CHAR_LIMIT} characters.` } }}
                 render={({ field }) => (
                   <RadioCards.Root
                     value={field.value || null}
-                    onValueChange={(e) => {
-                      field.onChange(e);
-                    }}
+                    onValueChange={field.onChange}
+                    onBlur={field.onBlur}
                     columns="3"
                     gap="1"
                     {...injected}
@@ -123,6 +135,7 @@ export default function FeedbackTab() {
                     <TextArea
                       value={field.value && ROLES.includes(field.value) ? '' : field.value || ''}
                       onChange={field.onChange}
+                      onBlur={field.onBlur}
                       placeholder="Other..."
                       className="!min-h-min"
                       rows={1}
@@ -150,29 +163,11 @@ export default function FeedbackTab() {
                     gap="1"
                     {...injected}
                   >
-                    <RadioCards.Item value="High School Diploma/GED">
-                      High School Diploma/GED
-                    </RadioCards.Item>
-
-                    <RadioCards.Item value="Associate Degree">
-                      Associate Degree
-                    </RadioCards.Item>
-
-                    <RadioCards.Item value="Other (Some College)">
-                      Other (Some College)
-                    </RadioCards.Item>
-
-                    <RadioCards.Item value="Bachelor's Degree">
-                      Bachelor&apos;s Degree
-                    </RadioCards.Item>
-
-                    <RadioCards.Item value="Master's Degree">
-                      Master&apos;s Degree
-                    </RadioCards.Item>
-
-                    <RadioCards.Item value="PhD">
-                      PhD
-                    </RadioCards.Item>
+                    {EDUCATION_LEVELS.map((level) => (
+                      <RadioCards.Item key={level} value={level}>
+                        {level}
+                      </RadioCards.Item>
+                    ))}
                   </RadioCards.Root>
                 )}
               />
@@ -181,11 +176,11 @@ export default function FeedbackTab() {
 
           <FormField
             label="How many years of cybersecurity experience do you have?"
-            error={errors.cyberExperience}
+            error={errors.cyber_experience}
           >
             {(injected) => (
               <Controller
-                name="cyberExperience"
+                name="cyber_experience"
                 control={control}
                 render={({ field }) => (
                   <RadioCards.Root
@@ -222,16 +217,18 @@ export default function FeedbackTab() {
 
           <FormField
             label="What made you decide to participate?"
-            error={errors.participationReason}
+            error={errors.participation_reason}
           >
             {(injected) => (
               <Controller
-                name="participationReason"
+                name="participation_reason"
                 control={control}
+                rules={{ maxLength : { value : CHAR_LIMIT, message : `Feedback cannot exceed ${CHAR_LIMIT} characters.` } }}
                 render={({ field }) => (
                   <RadioCards.Root
                     value={field.value || null}
                     onValueChange={field.onChange}
+                    onBlur={field.onBlur}
                     columns="2"
                     gap="1"
                     className="[&_button]:!flex-col"
@@ -247,6 +244,7 @@ export default function FeedbackTab() {
                     <TextArea
                       value={field.value && Object.keys(PARTICIPATION_REASONS).includes(field.value) ? '' : field.value || ''}
                       onChange={field.onChange}
+                      onBlur={field.onBlur}
                       placeholder="Other..."
                       className="!min-h-min"
                       rows={3}
@@ -259,11 +257,11 @@ export default function FeedbackTab() {
 
           <FormField
             label="Will you participate again next year if your schedule permits?"
-            error={errors.participationAgain}
+            error={errors.participation_again}
           >
             {(injected) => (
               <Controller
-                name="participationAgain"
+                name="participation_again"
                 control={control}
                 render={({ field }) => (
                   <RadioCards.Root
@@ -290,12 +288,17 @@ export default function FeedbackTab() {
 
           <FormField
             label="How can we improve the next President’s Cup? Please provide any other feedback you would like to share."
-            error={errors.additionalFeedback}
+            rightComponent={(
+              <Text size="2" color="gray" className="[label[data-invalid=true]+&]:!text-(--red-11)">
+                {CHAR_LIMIT - (watch('additional_feedback') || '').length}
+              </Text>
+            )}
+            error={errors.additional_feedback}
           >
             {(injected) => (
               <TextArea
                 rows={3}
-                {...register('additionalFeedback')}
+                {...register('additional_feedback', { maxLength : { value : CHAR_LIMIT, message : `Feedback cannot exceed ${CHAR_LIMIT} characters.` } })}
                 placeholder="Please specify..."
                 {...injected}
               />

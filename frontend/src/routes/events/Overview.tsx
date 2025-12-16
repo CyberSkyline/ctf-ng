@@ -68,7 +68,7 @@ export default function Overview() {
             )}
             {isFinished && feedback === null && (
               <InfoCallout className="max-w-128">
-                Please take a moment to provide feedback on your experience so that we can improve future events.
+                Please take a moment to provide feedback on your experience to help us improve future events.
                 <br />
                 <Button variant="soft" mt="3">
                   <Link to={`/events/${data.id}?tab=feedback`}>
