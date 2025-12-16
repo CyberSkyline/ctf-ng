@@ -35,8 +35,14 @@ export default function Timer(
 
       if (diff <= 0) {
         setTimerString('0:00:00');
-        clearInterval(interval);
-        if (onEnd) onEnd();
+
+        if (interval) {
+          // if the timer is running, clear it and call onEnd
+          // if we're initializing, skip these steps
+          clearInterval(interval);
+          if (onEnd) onEnd();
+        }
+
         return;
       }
 
@@ -51,6 +57,9 @@ export default function Timer(
 
     // if there's no target date, do not set interval
     if (!target) return () => {};
+
+    // if target date is in the past, do not set interval
+    if (target <= new Date()) return () => {};
 
     // if hidden, do not set interval
     if (hidden) return () => {};
