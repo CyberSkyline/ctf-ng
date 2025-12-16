@@ -92,7 +92,7 @@ class S3Service:
         if success:
             logger.debug(f"Cached {operation} URL for {object_key} (TTL: {cache_ttl}s)")
 
-    def generate_presigned_upload_url(self, folder: str, filename: str,
+    def generate_upload_url(self, folder: str, filename: str,
                           content_type: str = 'application/octet-stream') -> dict[str, Any]:
         """Generate presigned URL for client-side upload (public files)"""
         if not self.is_configured():
