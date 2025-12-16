@@ -38,7 +38,7 @@ class ContainerBlueprint(db.Model):
     cap_add: Mapped[list[Literal['NET_ADMIN', 'SYS_PTRACE']] | None] = db.Column(db.PickleType, nullable=True)
     mem_limit: Mapped[int | str | None] = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_MEM_LIMIT_LENGTH), nullable=True)
     memswap_limit: Mapped[int | str | None] = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_MEMSWAP_LIMIT_LENGTH), nullable=True)
-    cpus: Mapped[float | None] = db.Column(db.Numeric, nullable=True)
+    cpus: Mapped[float | None] = db.Column(db.Numeric(10,2), nullable=True)
     user: Mapped[str | None] = db.Column(db.String(MAX_CONTAINER_BLUEPRINT_USER_LENGTH), nullable=True)
     challenge_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
 

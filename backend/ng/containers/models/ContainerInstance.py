@@ -10,7 +10,7 @@ import logging
 from ..utils.get_client import get_client
 from ..utils.Client import Client
 from CTFd.utils import get_app_config
-from .. constants import DOCKER_RUNNING, DOCKER_BRIDGE, DOCKER_MEM_REGEX
+from .. constants import DOCKER_RUNNING, DOCKER_BRIDGE, DOCKER_MEM_REGEX, DOCKER_QUOTA_CONST
 from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 from ...team.models.Team import Team
 from ...core import BusinessLogicError
@@ -152,6 +152,13 @@ class ContainerInstance(db.Model):
     def run_container(client: Client, team: Team, blueprint_obj: ContainerBlueprint):
         ulimit = docker.types.Ulimit(name="nofile", soft=10000, hard=20000)
         mem_limit = blueprint_obj.mem_limit or "128m"
+        cpus = 0.1
+        if blueprint_obj.cpus:
+            if float(blueprint_obj.cpus) > 0.5:
+                raise BusinessLogicError("Please set cpus to a value under 0.5")
+
+            cpus = float(blueprint_obj.cpus)
+
 
         parsed_ram = DOCKER_MEM_REGEX.match(mem_limit)
         ram_number = int(parsed_ram.group(1))
@@ -168,8 +175,9 @@ class ContainerInstance(db.Model):
             environment=blueprint_obj.render_environment(team.seed),
             name=ContainerInstance.render_container_name(team.id, blueprint_obj.name, blueprint_obj.challenge_id),
             detach=True,
+            # Default period of o .1 second
             cpu_period=100000,
-            cpu_quota=10000,
+            cpu_quota=round(cpus * DOCKER_QUOTA_CONST),
             pids_limit=512,
             mem_limit=mem_limit,
             mem_reservation=mem_resv,
