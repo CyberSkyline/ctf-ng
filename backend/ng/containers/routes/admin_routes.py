@@ -6,6 +6,7 @@ from ..controllers.get_stats import get_stats
 from ..controllers.admin_exec import admin_exec
 from ..controllers.pull_vnc import pull_vnc
 from ..controllers.recycle_containers import recycle_containers
+from ..controllers.vnc import forward_vnc
 from ..models.ContainerInstance import ContainerInstance
 
 from ...core.middleware import (
@@ -215,3 +216,17 @@ class PullVnc(Resource):
     def post(self, current_user):
         pull_vnc(current_user.id)
         return success_response(True)
+
+@admin_container_namespace.route("/vnc/<int:user_id>/view")
+class AdminViewVnc(Resource):
+    @admin_container_namespace.doc(
+        description="Forward no vnc info to nginx. This should only be called by nginx",
+        params={"user_id": "User id for user's vnc instance"},
+        responses={
+            200: "Sucess",
+            400: "Bad request"
+        }
+    )
+    @admin_endpoint()
+    def get(self, user_id, **kwargs):
+        return forward_vnc(user_id)

@@ -25,6 +25,7 @@ import BanUserModal from './BanUserModal';
 import ImpersonateUserButton from './ImpersonateUserButton';
 import RecycleWorkspaceModal from './RecycleWorkspaceModal';
 import RestartWorkspaceModal from './RestartWorkspaceModal';
+import UserVncModal from './UserVncModal';
 
 function RegistrationRow({ userId, team }: { userId: number, team: Team }) {
   const { data : teamMembers } = useTeamMembers(team.id);
@@ -174,6 +175,7 @@ export default function UserSidebar({ entity }: { entity: AdminUser }) {
             <Table.Cell align="right">
               <RestartWorkspaceModal userId={entity.id} />
               <RecycleWorkspaceModal userId={entity.id} />
+              <UserVncModal userId={entity.id} />
             </Table.Cell>
           </Table.Row>
         </Table.Body>
