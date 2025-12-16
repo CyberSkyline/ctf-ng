@@ -131,7 +131,7 @@ class Event(db.Model):
             "max_team_size",
             1,
             config.MAX_TEAM_SIZE,
-            required=True,
+            required=False,
             friendly_name="Max team size",
         )
         validator.validate_boolean(
