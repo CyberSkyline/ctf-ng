@@ -39,6 +39,11 @@ export function submitChallengeFeedback(eventId: number, challengeId: number, fe
 }
 
 // ADMIN ROUTES
+export function useEventFeedback(eventId: number) {
+  return useSWR<Feedback[]>(
+    eventId ? `/admin/events/${eventId}/feedback` : null,
+  );
+}
 
 export function useChallengeFeedback(eventId: number, challengeId: number) {
   return useSWR<Feedback[]>(
