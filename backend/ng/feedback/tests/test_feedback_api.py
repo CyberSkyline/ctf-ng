@@ -574,11 +574,11 @@ class TestUserFeedbackEndpoints:
         assert data["data"][1]["user_id"] == user2.id
         assert data["data"][2]["user_id"] == user1.id
 
-    def test_submit_feedback_string_too_long(self, logged_in_client, event):
+    def test_submit_feedback_data_too_large(self, logged_in_client, event):
         """
-        Test that submitting feedback with string exceeding max length fails
+        Test that submitting feedback exceeding max serialized size fails
         """
-        long_string = "A" * 5001
+        long_string = "A" * 50001
 
         response = logged_in_client.post(
             f"/ng/events/{event.id}/feedback",
@@ -588,9 +588,9 @@ class TestUserFeedbackEndpoints:
         assert response.status_code == 400
         data = response.get_json()
         assert data["success"] is False
-        assert "5000" in str(data["errors"])
+        assert "50000" in str(data["errors"])
 
-    def test_update_feedback_string_too_long(
+    def test_update_feedback_data_too_large(
         self,
         logged_in_client,
         user,
@@ -598,7 +598,7 @@ class TestUserFeedbackEndpoints:
         feedback_factory
     ):
         """
-        Test that updating feedback with string exceeding max length fails
+        Test that updating feedback exceeding max serialized size fails
         """
         feedback_factory(
             user_id = user.id,
@@ -607,7 +607,7 @@ class TestUserFeedbackEndpoints:
             feedback_data = {"rating": 3},
         )
 
-        long_string = "A" * 5001
+        long_string = "A" * 50001
 
         response = logged_in_client.post(
             f"/ng/events/{event.id}/feedback",
@@ -617,4 +617,4 @@ class TestUserFeedbackEndpoints:
         assert response.status_code == 400
         data = response.get_json()
         assert data["success"] is False
-        assert "5000" in str(data["errors"])
+        assert "50000" in str(data["errors"])

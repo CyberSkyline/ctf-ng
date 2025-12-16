@@ -97,29 +97,22 @@ class Feedback(db.Model):
     def _validate_feedback_data(cls, feedback_data: dict[str, Any]) -> None:
         """
         Validate the dynamic feedback_data JSON object.
-        Enforces limits on keys, key lengths, and string value lengths.
+        Enforces limits on number of keys and total serialized size.
         """
+        import json
+
         if len(feedback_data) > config.FEEDBACK_MAX_KEYS:
             raise ValidationError(
                 f"Feedback data cannot have more than {config.FEEDBACK_MAX_KEYS} fields",
                 errors={"feedback_data": f"Too many fields (max {config.FEEDBACK_MAX_KEYS})"}
             )
 
-        errors = {}
-        for key, value in feedback_data.items():
-            if len(key) > config.FEEDBACK_MAX_KEY_LENGTH:
-                errors[key] = f"Field name cannot exceed {config.FEEDBACK_MAX_KEY_LENGTH} characters"
-                continue
-
-            if isinstance(value, str) and len(value) > config.FEEDBACK_MAX_STRING_LENGTH:
-                errors[key] = f"Value cannot exceed {config.FEEDBACK_MAX_STRING_LENGTH} characters"
-            elif isinstance(value, list):
-                for i, item in enumerate(value):
-                    if isinstance(item, str) and len(item) > config.FEEDBACK_MAX_STRING_LENGTH:
-                        errors[f"{key}[{i}]"] = f"Value cannot exceed {config.FEEDBACK_MAX_STRING_LENGTH} characters"
-
-        if errors:
-            raise ValidationError("Feedback data validation failed", errors=errors)
+        serialized_size = len(json.dumps(feedback_data))
+        if serialized_size > config.FEEDBACK_MAX_DATA_SIZE:
+            raise ValidationError(
+                f"Feedback data exceeds maximum size of {config.FEEDBACK_MAX_DATA_SIZE} characters",
+                errors={"feedback_data": f"Data too large (max {config.FEEDBACK_MAX_DATA_SIZE} characters)"}
+            )
 
     @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
