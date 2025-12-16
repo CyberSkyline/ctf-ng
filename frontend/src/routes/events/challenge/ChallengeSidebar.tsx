@@ -23,6 +23,7 @@ import ChallengeHeader from './ChallengeHeader';
 import ChallengeQuestion from './ChallengeQuestion';
 import ConnectModal from './ConnectModal';
 import FeedbackModal from './FeedbackModal';
+import FeedbackPrompt from './FeedbackPrompt';
 import HintsModal from './HintsModal';
 import HistoryModal from './HistoryModal';
 import NotConnectedWarning from './NotConnectedWarning';
@@ -121,7 +122,8 @@ export default function ChallengeSidebar() {
           </ChallengeHeader>
         </Inset>
       </Card>
-
+      
+      {challenge && <FeedbackPrompt eventId={challenge.event_id} challengeId={challenge.id} /> }
       {challenge && <NotConnectedWarning challenge={challenge} /> }
 
       <Card className="!flex flex-col">

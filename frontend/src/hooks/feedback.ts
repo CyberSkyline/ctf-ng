@@ -8,7 +8,7 @@ export function useMyEventFeedback(eventId: number | null) {
   );
 }
 
-export function useMyChallengeFeedback(eventId: number, challengeId: number) {
+export function useMyChallengeFeedback(eventId: number | null, challengeId: number) {
   return useSWR<Feedback | null>(
     eventId && challengeId ? `/events/${eventId}/challenges/${challengeId}/feedback` : null,
   );
