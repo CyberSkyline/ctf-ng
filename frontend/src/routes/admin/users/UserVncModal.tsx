@@ -6,7 +6,7 @@ import { TbTerminal } from 'react-icons/tb';
 export default function UserVncModal({ userId }: {userId: number}) {
   return (
     <Modal
-      title="Workspace Vnc"
+      title="Workspace VNC"
       trigger={(
         <Button variant="ghost" color={COLOR_HINT}>
           <TbTerminal />
@@ -18,7 +18,6 @@ export default function UserVncModal({ userId }: {userId: number}) {
       <iframe
         title="VNC session"
         className="w-full h-[75vh]"
-        style={{ height : '600px' }}
         src={`${PUBLIC_BASE}/novnc/vnc.html?autoconnect=true&path=${APIPREFIX}/admin/user/${userId}/vnc/access/websockify&reconnect=true&resize=scale`}
       />
     </Modal>
