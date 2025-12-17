@@ -1,22 +1,31 @@
-import { EventIcon, TeamIcon, UserIcon } from '@/constants';
+import {
+  COLOR_NEGATIVE,
+  COLOR_POSITIVE,
+  EventIcon,
+  TeamIcon,
+  UserIcon,
+} from '@/constants';
 import { useTeamMembers } from '@/hooks/team';
 import { useUserTeams, useUserWorkspace, useWorkspaceStatus } from '@/hooks/users';
 import type { AdminUser, Team } from '@/types';
 import { utf8ToBase64 } from '@/util';
 import {
+  Badge,
   Box,
   Flex,
   Grid,
   Heading,
   Table,
   Text,
+  Tooltip,
 } from '@radix-ui/themes';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
-import { ErrorCallout, WarningCallout } from 'components/Callouts';
+import { ErrorCallout, InfoCallout, WarningCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import RoleBadge from 'components/RoleBadge';
 import Statistic from 'components/Statistic';
+import { upperCase } from 'lodash';
 import { useId } from 'react';
 import AdminRegisterUserModal from './AdminRegisterUserModal';
 
@@ -146,40 +155,60 @@ export default function UserSidebar({ entity }: { entity: AdminUser }) {
       )}
 
       <AdminSidebarHeader title="Workspace" />
-      {workspaceError && <ErrorCallout>{workspaceError.message}</ErrorCallout> }
-      {workspaceStatusError && <ErrorCallout>{workspaceStatusError.message}</ErrorCallout> }
-      <Table.Root>
-        <Table.Header>
-          <Table.Row>
-            <Table.ColumnHeaderCell>Id</Table.ColumnHeaderCell>
-            <Table.ColumnHeaderCell>Host Ip</Table.ColumnHeaderCell>
-            <Table.ColumnHeaderCell>Docker Id</Table.ColumnHeaderCell>
-            <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
-            <Table.ColumnHeaderCell align="right">Actions</Table.ColumnHeaderCell>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          <Table.Row key={workspaceData?.id}>
-            <Table.Cell>
-              { workspaceData?.id }
-            </Table.Cell>
-            <Table.Cell>
-              { workspaceData?.hostip }
-            </Table.Cell>
-            <Table.Cell>
-              { workspaceData?.dockerid }
-            </Table.Cell>
-            <Table.Cell>
-              { workspaceStatus }
-            </Table.Cell>
-            <Table.Cell align="right">
-              <RestartWorkspaceModal userId={entity.id} />
-              <RecycleWorkspaceModal userId={entity.id} />
-              <UserVncModal userId={entity.id} />
-            </Table.Cell>
-          </Table.Row>
-        </Table.Body>
-      </Table.Root>
+      {workspaceError
+        && (workspaceError.message.includes('Workspace not found')
+          ? <InfoCallout>This user does not have a workspace.</InfoCallout>
+          : <ErrorCallout>{workspaceError.message}</ErrorCallout>
+        ) }
+      {workspaceData && (
+        <>
+          { workspaceStatusError && (
+            <ErrorCallout>
+              Failed to get workspace status.
+              <br />
+              {workspaceStatusError.message}
+            </ErrorCallout>
+          ) }
+          <Table.Root>
+            <Table.Header>
+              <Table.Row>
+                <Table.ColumnHeaderCell>ID</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Docker ID</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Host IP</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell align="right">Actions</Table.ColumnHeaderCell>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              <Table.Row key={workspaceData.id}>
+                <Table.Cell>
+                  { workspaceData.id }
+                </Table.Cell>
+                <Table.Cell>
+                  <Badge color={workspaceStatus === 'running' ? COLOR_POSITIVE : COLOR_NEGATIVE} role="status">
+                    {upperCase(workspaceStatus || 'unknown')}
+                  </Badge>
+                </Table.Cell>
+                <Table.Cell>
+                  <Tooltip content={<Text>{workspaceData.dockerid}</Text>}>
+                    <Text>{workspaceData.dockerid.slice(0, 12)}</Text>
+                  </Tooltip>
+                </Table.Cell>
+                <Table.Cell>
+                  { workspaceData.hostip }
+                </Table.Cell>
+                <Table.Cell align="right">
+                  <Flex direction="row" justify="end" gap="4">
+                    <UserVncModal userId={entity.id} />
+                    <RestartWorkspaceModal userId={entity.id} />
+                    <RecycleWorkspaceModal userId={entity.id} />
+                  </Flex>
+                </Table.Cell>
+              </Table.Row>
+            </Table.Body>
+          </Table.Root>
+        </>
+      )}
     </AdminSidebar>
   );
 }
