@@ -8,7 +8,6 @@ def load_indvidual_container_by_user(source: LoaderType = LoaderType.PARAM, inpu
         @wraps(f)
         def decorated_function(*args, **kwargs):
             IndvidualContainer = get_model_class("IndvidualContainer")
-            print(IndvidualContainer)
             if source == LoaderType.PARAM:
                 user_id = get_param_val(kwargs, input_key)
             elif source == LoaderType.BODY:
@@ -19,7 +18,7 @@ def load_indvidual_container_by_user(source: LoaderType = LoaderType.PARAM, inpu
             indvidual_container = IndvidualContainer.get_user_indvidual_container(user_id)
 
             if not indvidual_container:
-                raise NotFoundError(f"Invalid user: {user_id}")
+                raise NotFoundError(f"Workspace not found for user {user_id}")
 
             kwargs[output_key] = indvidual_container
             return f(*args, **kwargs)
