@@ -19,7 +19,7 @@ export default function EventCard({ event }: { event: Event }) {
   return (
     <Card asChild>
       <Link to={`/events/${event.id}`}>
-        <Flex direction="row" gap="4">
+        <Flex direction="row" gap="4" className="h-full">
           <Inset side="left" className="empty:hidden shrink-0">
             <EventGraphic event={event} className="w-32 shadow !rounded-none" />
           </Inset>

@@ -1,29 +1,68 @@
 import type { Event } from '@/types';
-import { Grid, Skeleton } from '@radix-ui/themes';
+import {
+  Box,
+  Flex,
+  Grid,
+  Heading,
+  Skeleton,
+} from '@radix-ui/themes';
+import { groupBy } from 'lodash';
+import { useMemo } from 'react';
 import EventCard from 'routes/dashboard/EventCard';
 
-export default function EventGrid({ events, loading = false } : {events: Event[], loading?: boolean}) {
-  return (
-    <Grid
-      columns={{
-        initial : '1', xs : '1', sm : '2', lg : '3',
-      }}
-      gap="3"
-    >
-      {loading && (
-      <>
-        <Skeleton className="min-h-48 !rounded-lg" />
-        <Skeleton className="min-h-48 !rounded-lg" />
-        <Skeleton className="min-h-48 !rounded-lg" />
-      </>
-      )}
+export default function EventGrid({ events, loading = false, group = false } : { events: Event[], loading?: boolean, group?: boolean }) {
+  const sortedEvents = useMemo(() => events.slice().sort((a, b) => {
+    const dateA = a.start_time?.getTime() || 0;
+    const dateB = b.start_time?.getTime() || 0;
+    return dateA - dateB;
+  }), [ events ]);
 
-      {events?.map((event) => (
-        <EventCard
-          key={event.id}
-          event={event}
-        />
-      ))}
-    </Grid>
+  const groupedEvents = useMemo(() => {
+    if (!group) return { Unknown : sortedEvents };
+    return groupBy(sortedEvents, (event) => event.start_time?.getFullYear()?.toString() || 'Unknown');
+  }, [ sortedEvents, group ]);
+
+  return (
+    <Flex direction="column" gap="8">
+      {loading && (
+        <Box>
+          {group && <Heading className="!mb-3" size="4"><Skeleton>YYYY</Skeleton></Heading>}
+          <Grid
+            columns={{
+              initial : '1', xs : '1', sm : '2', lg : '3',
+            }}
+            gap="3"
+          >
+            <Skeleton className="min-h-48 !rounded-lg" />
+            <Skeleton className="min-h-48 !rounded-lg" />
+            <Skeleton className="min-h-48 !rounded-lg" />
+          </Grid>
+        </Box>
+      )}
+      {[ ...Object.entries(groupedEvents) ]
+        .reverse()
+        .map(([ year, eventsInYear ]) => (
+          <section key={year}>
+            {year !== 'Unknown' && (
+              <Heading key={year} className="!mb-3" size="4">
+                {year}
+              </Heading>
+            )}
+            <Grid
+              columns={{
+                initial : '1', xs : '1', sm : '2', lg : '3',
+              }}
+              gap="3"
+            >
+              {eventsInYear.map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                />
+              ))}
+            </Grid>
+          </section>
+        ))}
+    </Flex>
   );
 }

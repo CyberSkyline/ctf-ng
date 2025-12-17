@@ -14,9 +14,9 @@ export default function AvailableEvents() {
         <Heading size="9">Events</Heading>
       </HeaderContainer>
 
-      <Container size="4">
+      <Container size="4" my="8">
         {error && (<ErrorCallout className="mb-3">{error.message}</ErrorCallout>)}
-        <EventGrid events={events || []} loading={isLoading} />
+        <EventGrid events={events || []} loading={isLoading} group />
       </Container>
     </>
   );
