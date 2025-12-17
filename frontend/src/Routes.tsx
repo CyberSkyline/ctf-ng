@@ -19,6 +19,9 @@ import AvailableEvents from 'routes/events/AvailableEvents';
 import Overview from 'routes/events/Overview';
 import Challenge from 'routes/events/challenge';
 
+// Practice area
+import Practice from 'routes/practice';
+
 // Admin Section
 import AdminAnnouncements from 'routes/admin/announcements';
 import AdminApiTest from 'routes/admin/api-test';
@@ -52,6 +55,10 @@ function Routes() {
         { path : 'invitecode/:inviteCode', element : <RequireUser><Overview /></RequireUser> },
         { path : 'challenge/:idChallenge', element : <RequireUser><Challenge /></RequireUser> },
       ],
+    },
+    {
+      path : '/practice',
+      element : <Practice />,
     },
     { path : '/profile', element : <RequireUser><Profile /></RequireUser> },
     {
