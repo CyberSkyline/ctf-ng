@@ -2,26 +2,25 @@
 Tests for the Attempt model
 """
 
-import pytest
+from datetime import UTC, datetime, timedelta, timezone
 from unittest.mock import patch
-from datetime import datetime, timezone, timedelta, UTC
+
+import pytest
 
 from ...challenge.models.ChallengeVariable import ChallengeVariable
-from ...challenge.utils import generate_seed
-
-from ...core.exceptions import (
-    ValidationError,
-    BusinessLogicError,
-)
-
 from ...challenge.models.Question import Question
-from ...team.models.Team import Team
+from ...challenge.utils import generate_seed
+from ...core.exceptions import (
+    BusinessLogicError,
+    ValidationError,
+)
+from ...core.utils import utc_now
 from ...event.models.Event import Event
-
+from ...team.models.Team import Team
 from ..models import (
     Attempt,
-    ScoreEvent,
     Score,
+    ScoreEvent,
 )
 
 
@@ -55,6 +54,8 @@ class TestCreateAttempt:
     """Test the create_attempt method"""
 
     def test_create_attempt_correct_answer(self, db_session, user, team_with_member, score, event, challenge, question):
+        team_with_member.set_start_timestamp(utc_now())
+
         """Test creating an attempt with correct answer"""
         attempt = Attempt.create_attempt(
             user_id=user.id,
@@ -86,6 +87,7 @@ class TestCreateAttempt:
 
     def test_create_attempt_correct_templated_answer(self, db_session, user, team_with_member, score, event, challenge, question_factory, variable_factory):
         """Test creating an attempt with correct answer"""
+        team_with_member.set_start_timestamp(utc_now())
         variable: ChallengeVariable = variable_factory(challenge=challenge)
         question: Question = question_factory(challenge=challenge, answer_variable=variable)
         correct_answer: str = str(res) if (res := variable.as_attr().template.eval(generate_seed(event_id=event.id, challenge_id=challenge.id, question_id=question.id, team_seed=team_with_member.seed))) else ""
@@ -121,6 +123,7 @@ class TestCreateAttempt:
         self, db_session, user, team_with_member, score, event, challenge, question
     ):
         """Test creating an attempt with incorrect answer"""
+        team_with_member.set_start_timestamp(utc_now())
         attempt = Attempt.create_attempt(
             user_id=user.id,
             team_id=team_with_member.id,
@@ -144,6 +147,7 @@ class TestCreateAttempt:
         self, db_session, user, team_with_member, score, event, challenge, question_factory, variable_factory
     ):
         """Test creating an attempt with incorrect answer"""
+        team_with_member.set_start_timestamp(utc_now())
         variable: ChallengeVariable = variable_factory(challenge=challenge)
         question: Question = question_factory(challenge=challenge, answer_variable=variable)
         attempt = Attempt.create_attempt(
@@ -169,6 +173,7 @@ class TestCreateAttempt:
         self, db_session, user, team_with_member, score, event, challenge, question
     ):
         """Test that answer checking is case insensitive"""
+        team_with_member.set_start_timestamp(utc_now())
         # Assuming the answer is "4"
         attempt = Attempt.create_attempt(
             user_id=user.id,
@@ -183,6 +188,7 @@ class TestCreateAttempt:
 
     def test_create_attempt_with_timestamp(self, db_session, user, team_with_member, event, challenge, question):
         """Test creating an attempt with custom timestamp"""
+        team_with_member.set_start_timestamp(utc_now())
         custom_time = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
 
         attempt = Attempt.create_attempt(
@@ -205,6 +211,7 @@ class TestCreateAttempt:
 
     def test_create_attempt_no_commit(self, db_session, user, team_with_member, event, challenge, question):
         """Test creating an attempt without committing"""
+        team_with_member.set_start_timestamp(utc_now())
         with patch.object(db_session, "commit") as mock_commit:
             attempt = Attempt.create_attempt(
                 user_id=user.id,
@@ -220,6 +227,7 @@ class TestCreateAttempt:
 
     def test_create_attempt_with_commit(self, db_session, user, team_with_member, event, challenge, question):
         """Test creating an attempt with commit"""
+        team_with_member.set_start_timestamp(utc_now())
         with patch.object(db_session, "commit") as mock_commit:
             Attempt.create_attempt(
                 user_id=user.id,
@@ -233,6 +241,7 @@ class TestCreateAttempt:
 
     def test_create_attempt_invalid_question_fails(self, db_session, user, team_with_member, event, challenge):
         """Test that creating an attempt with invalid question fails"""
+        team_with_member.set_start_timestamp(utc_now())
         with pytest.raises(ValidationError):
             Attempt.create_attempt(
                 user_id=user.id,
@@ -246,6 +255,7 @@ class TestCreateAttempt:
         self, db_session, user, team_with_member, locked_event, challenge, question
     ):
         """Test that creating an attempt for locked event fails"""
+        team_with_member.set_start_timestamp(utc_now())
         locked_team = Team.create_team_with_captain(
             name="Locked Team", event_id=locked_event.id, captain_id=user.id, invite_code="locked123"
         )
@@ -269,6 +279,7 @@ class TestDeleteAttempt:
         self, db_session, user, team_with_member, score, event, challenge, question
     ):
         """Test that deleting an attempt deletes its score event"""
+        team_with_member.set_start_timestamp(utc_now())
         # Create a correct attempt
         attempt = Attempt.create_attempt(
             user_id=user.id,
@@ -296,6 +307,7 @@ class TestDeleteAttempt:
 
     def test_delete_attempt_without_score_event(self, db_session, user, team_with_member, event, challenge, question):
         """Test deleting an incorrect attempt (no score event)"""
+        team_with_member.set_start_timestamp(utc_now())
         # Create an incorrect attempt
         attempt = Attempt.create_attempt(
             user_id=user.id,
@@ -318,6 +330,7 @@ class TestDeleteAttempt:
         self, db_session, attempt_factory, user, team_with_member, event, challenge, question
     ):
         """Test deleting an attempt without committing"""
+        team_with_member.set_start_timestamp(utc_now())
         attempt = attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
@@ -333,6 +346,7 @@ class TestDeleteAttempt:
         self, db_session, attempt_factory, user, team_with_member, event, challenge, question
     ):
         """Test deleting an attempt with commit"""
+        team_with_member.set_start_timestamp(utc_now())
         attempt = attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
@@ -353,6 +367,7 @@ class TestFindFilteredAttempts:
     ):
         """Test filtering attempts by user_id"""
         # Create attempts for different users
+        team_with_member.set_start_timestamp(utc_now())
         attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
@@ -394,6 +409,7 @@ class TestFindFilteredAttempts:
         user_factory,
     ):
         """Test filtering attempts by team_id"""
+        team_with_member.set_start_timestamp(utc_now())
         # Create another team
         other_captain = user_factory(name="AttemptCapt1", email="attemptcapt1@example.com")
         other_team = team_factory(event=event, members=[other_captain])
@@ -420,6 +436,7 @@ class TestFindFilteredAttempts:
 
     def test_find_by_question_id(self, db_session, attempt_factory, user, team_with_member, event, challenge, question):
         """Test filtering attempts by question_id"""
+        team_with_member.set_start_timestamp(utc_now())
         # Create another question
         other_question = Question(
             challenge_id=challenge.id, name="Other Question", body="What is 3+3?", answer="6", points=50, max_attempts=5, index=1
@@ -449,6 +466,7 @@ class TestFindFilteredAttempts:
 
     def test_find_only_correct_attempts(self, db_session, user, team_with_member, event, challenge, question):
         """Test filtering only correct attempts"""
+        team_with_member.set_start_timestamp(utc_now())
         # Create correct and incorrect attempts
         Attempt.create_attempt(
             user_id=user.id,
@@ -474,6 +492,7 @@ class TestFindFilteredAttempts:
 
     def test_find_with_limit(self, db_session, attempt_factory, user, team_with_member, event, challenge, question):
         """Test filtering results - limit not supported but we test ordering"""
+        team_with_member.set_start_timestamp(utc_now())
         # Create multiple attempts with different timestamps
         for i in range(5):
             attempt_factory(
@@ -497,6 +516,7 @@ class TestFindFilteredAttempts:
         self, db_session, attempt_factory, user, team_with_member, event, challenge, question
     ):
         """Test that attempts are ordered by timestamp descending"""
+        team_with_member.set_start_timestamp(utc_now())
         # Create attempts with different timestamps
         attempt_factory(
             user_id=user.id,
@@ -534,6 +554,7 @@ class TestGetTeamAttemptCount:
 
     def test_get_team_attempt_count(self, db_session, user, team_with_member, event, challenge, question):
         """Test counting team attempts for a question"""
+        team_with_member.set_start_timestamp(utc_now())
         # Create multiple attempts
         for i in range(3):
             Attempt.create_attempt(
@@ -561,6 +582,7 @@ class TestHasCorrectAnswer:
 
     def test_has_correct_answer_true(self, db_session, user, team_with_member, event, challenge, question):
         """Test when team has submitted correct answer"""
+        team_with_member.set_start_timestamp(utc_now())
         # Create a correct attempt
         Attempt.create_attempt(
             user_id=user.id,
@@ -578,6 +600,7 @@ class TestHasCorrectAnswer:
 
     def test_has_correct_answer_false(self, db_session, user, team_with_member, event, challenge, question):
         """Test when team has only incorrect answers"""
+        team_with_member.set_start_timestamp(utc_now())
         # Create incorrect attempts
         Attempt.create_attempt(
             user_id=user.id,
@@ -606,6 +629,7 @@ class TestAttemptSerialization:
 
     def test_serialize_basic(self, db_session, attempt_factory, user, team_with_member, event, challenge, question):
         """Test basic serialization includes name enrichment"""
+        team_with_member.set_start_timestamp(utc_now())
         attempt = attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
@@ -649,6 +673,7 @@ class TestAttemptSerialization:
         self, db_session, attempt_factory, user, team_with_member, event, challenge, question
     ):
         """Test serialization with admin fields includes same name enrichment"""
+        team_with_member.set_start_timestamp(utc_now())
         attempt = attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
@@ -744,6 +769,7 @@ class TestValidateAttemptAllowed:
 
     def test_validate_attempt_allowed_success(self, db_session, user, team_with_member, event, challenge, question):
         """Test validation passes for valid attempt"""
+        team_with_member.set_start_timestamp(utc_now())
         # Should not raise any exception
         Attempt.validate_attempt_allowed(
             user_id=user.id,
@@ -755,6 +781,7 @@ class TestValidateAttemptAllowed:
 
     def test_validate_attempt_locked_event(self, db_session, user, team_with_member, locked_event, challenge, question):
         """Test validation fails for locked event"""
+        team_with_member.set_start_timestamp(utc_now())
         # Create team for locked event
         locked_team = Team.create_team_with_captain(
             name="Locked Team", event_id=locked_event.id, captain_id=user.id, invite_code="locked123"
@@ -773,7 +800,7 @@ class TestValidateAttemptAllowed:
 
     def test_validate_attempt_ended_event(self, db_session, user, team_with_member, challenge, question):
         """Test validation fails for ended event"""
-        now = datetime.utcnow()
+        now = utc_now()
         ended_event = Event(
             name="Ended Event",
             description="This event has ended",
@@ -788,6 +815,8 @@ class TestValidateAttemptAllowed:
             name="Ended Team", event_id=ended_event.id, captain_id=user.id, invite_code="ended123"
         )
 
+        ended_team.set_start_timestamp(now - timedelta(days=2))
+
         with pytest.raises(BusinessLogicError) as exc_info:
             Attempt.validate_attempt_allowed(
                 user_id=user.id,
@@ -801,6 +830,7 @@ class TestValidateAttemptAllowed:
 
     def test_validate_attempt_not_team_member(self, db_session, admin, team_with_member, event, challenge, question):
         """Test validation fails when user is not team member"""
+        team_with_member.set_start_timestamp(utc_now())
         with pytest.raises(BusinessLogicError) as exc_info:
             Attempt.validate_attempt_allowed(
                 user_id=admin.id,
@@ -816,6 +846,7 @@ class TestValidateAttemptAllowed:
         self, db_session, attempt_factory, user, team_with_member, event, challenge, question
     ):
         """Test validation fails when max attempts reached"""
+        team_with_member.set_start_timestamp(utc_now())
         # Create max attempts
         for _i in range(question.max_attempts):
             attempt_factory(
@@ -839,6 +870,7 @@ class TestValidateAttemptAllowed:
     def test_validate_attempt_correct_attempt_already_made(
         self, db_session, user, team_with_member, event, challenge, question
     ):
+        team_with_member.set_start_timestamp(utc_now())
         Attempt.create_attempt(
            user_id=user.id,
             team_id=team_with_member.id,
@@ -865,6 +897,7 @@ class TestAttemptRelationships:
 
     def test_user_relationship(self, db_session, attempt_factory, user, team_with_member, event, challenge, question):
         """Test the user relationship"""
+        team_with_member.set_start_timestamp(utc_now())
         attempt = attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
@@ -876,6 +909,7 @@ class TestAttemptRelationships:
 
     def test_team_relationship(self, db_session, attempt_factory, user, team_with_member, event, challenge, question):
         """Test the team relationship"""
+        team_with_member.set_start_timestamp(utc_now())
         attempt = attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
@@ -889,6 +923,7 @@ class TestAttemptRelationships:
         self, db_session, attempt_factory, user, team_with_member, event, challenge, question
     ):
         """Test the question relationship"""
+        team_with_member.set_start_timestamp(utc_now())
         attempt = attempt_factory(
             user_id=user.id,
             team_id=team_with_member.id,
@@ -900,6 +935,7 @@ class TestAttemptRelationships:
 
     def test_score_event_relationship(self, db_session, user, team_with_member, score, event, challenge, question):
         """Test the score_event relationship"""
+        team_with_member.set_start_timestamp(utc_now())
         # Create correct attempt to get a score event
         attempt = Attempt.create_attempt(
             user_id=user.id,

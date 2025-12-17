@@ -3,8 +3,11 @@ Tests for scoring API endpoints
 """
 
 import json
-import pytest
 from datetime import datetime
+
+import pytest
+
+from ...core.utils import utc_now
 from ..models import ScoreEvent
 
 
@@ -1041,6 +1044,8 @@ class TestAdminScoringEndpoints:
         Test getting team attempts with enriched names (including failed attempts)
         """
         from ..models import Attempt
+
+        team_with_member.set_start_timestamp(utc_now())
 
         # Create a failed attempt (this is the key - failed attempts are now included!)
         failed_attempt = Attempt.create_attempt(

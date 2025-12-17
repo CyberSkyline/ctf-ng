@@ -9,6 +9,7 @@ from datetime import datetime, UTC
 from ..models.ScoreEvent import ScoreEvent
 from ..models.Score import Score
 
+from ...core.utils import utc_now
 
 @pytest.fixture(autouse=True)
 def clear_score_cache():
@@ -179,6 +180,8 @@ class TestDeleteEvent:
     def test_delete_event_does_not_delete_source_records(self, db_session, score, team_with_member, question, user):
         """Test that deleting a score event does NOT delete source records (Attempts, etc)"""
         from ..models.Attempt import Attempt
+
+        team_with_member.set_start_timestamp(utc_now())
 
         # Create an attempt with the correct answer - this should create a score event
         attempt = Attempt.create_attempt(
