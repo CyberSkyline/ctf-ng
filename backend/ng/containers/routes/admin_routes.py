@@ -230,3 +230,31 @@ class AdminViewVnc(Resource):
     @admin_endpoint()
     def get(self, user_id, **kwargs):
         return forward_vnc(user_id)
+
+@admin_container_namespace.route("/challenge/<int:challenge_id>/team/<int:team_id>/stop")
+class DeploymentStop(Resource):
+    @admin_container_namespace.doc(
+        description="Stop an instance group given the team and challenge",
+        responses={
+            200: "Success",
+            400: "Bad request"
+        },
+    )
+    @admin_endpoint()
+    def post(self, challenge_id: int, team_id: int, **kwargs):
+        ContainerInstance.stop_instance_group(challenge_id, team_id)
+        return success_response(True)
+
+@admin_container_namespace.route("/challenge/<int:challenge_id>/team/<int:team_id>/delete")
+class DeploymentDelete(Resource):
+    @admin_container_namespace.doc(
+        description="Delete an instance group given the team and challenge",
+        responses={
+            200: "Success",
+            400: "Bad request"
+        },
+    )
+    @admin_endpoint()
+    def post(self, challenge_id: int, team_id: int, **kwargs):
+        ContainerInstance.delete_instance_group(challenge_id, team_id)
+        return success_response(True)
