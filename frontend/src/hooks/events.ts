@@ -15,14 +15,6 @@ export function useEvents() {
 }
 
 /**
- * Retrieves a list of *all* events.
- * This is an admin-only endpoint.
- */
-export function useAllEvents() {
-  return useSWR<Event[], Error>('/admin/events');
-}
-
-/**
  * Retrieves a specific event by its ID.
  * @param eventId The ID of the event to fetch
  */
@@ -50,15 +42,6 @@ export function useEventStatus(eventId: number | null) {
 
 export function useMyEligibility(eventId: number | null) {
   return useSWR<boolean, Error>(eventId ? `/events/${eventId}/me/eligibility` : null);
-}
-
-/**
- * Retrieves a specific event by its ID for admin purposes.
- * This is an admin-only endpoint.
- * @param eventId The ID of the event to fetch
- */
-export function useAdminEvent(eventId: number | null) {
-  return useSWR<Event, Error>(eventId ? `/admin/events/${eventId}` : null);
 }
 
 /**
@@ -96,24 +79,6 @@ export function useTeamNameFromCode(eventId: number, inviteCode?: string) {
   return useSWR(
     inviteCode ? `/events/${eventId}/team/${inviteCode}` : null,
   );
-}
-
-export function adminRegisterEvent(eventId: number, userId: number, teamName: string) {
-  return apiMutation(`/admin/events/${eventId}/${userId}/register`, { team_name : teamName }, {
-    method : 'POST',
-  }).then(() => {
-    mutate(`/admin/users/${userId}/events`);
-    mutate(`/admin/users/${userId}/teams`);
-  });
-}
-
-export function adminRegisterEventTeamJoin(eventId: number, userId: number, inviteCode: string) {
-  return apiMutation(`/admin/events/${eventId}/${userId}/register`, { invite_code : inviteCode }, {
-    method : 'POST',
-  }).then(() => {
-    mutate(`/admin/users/${userId}/events`);
-    mutate(`/admin/users/${userId}/teams`);
-  });
 }
 
 /**
@@ -221,6 +186,47 @@ export function useMyEvents() {
   );
 }
 
+export function useLeaderboard(eventId: number) {
+  return useSWR<Score[], Error>(eventId ? `/events/${eventId}/leaderboard` : null);
+}
+
+/* ADMIN ENDPOINTS */
+
+/**
+ * Retrieves a list of *all* events.
+ * This is an admin-only endpoint.
+ */
+export function useAllEvents() {
+  return useSWR<Event[], Error>('/admin/events');
+}
+
+/**
+ * Retrieves a specific event by its ID for admin purposes.
+ * This is an admin-only endpoint.
+ * @param eventId The ID of the event to fetch
+ */
+export function useAdminEvent(eventId: number | null) {
+  return useSWR<Event, Error>(eventId ? `/admin/events/${eventId}` : null);
+}
+
+export function adminRegisterEvent(eventId: number, userId: number, teamName: string) {
+  return apiMutation(`/admin/events/${eventId}/${userId}/register`, { team_name : teamName }, {
+    method : 'POST',
+  }).then(() => {
+    mutate(`/admin/users/${userId}/events`);
+    mutate(`/admin/users/${userId}/teams`);
+  });
+}
+
+export function adminRegisterEventTeamJoin(eventId: number, userId: number, inviteCode: string) {
+  return apiMutation(`/admin/events/${eventId}/${userId}/register`, { invite_code : inviteCode }, {
+    method : 'POST',
+  }).then(() => {
+    mutate(`/admin/users/${userId}/events`);
+    mutate(`/admin/users/${userId}/teams`);
+  });
+}
+
 /**
  * Creates a new event.
  * @param event The event object to create
@@ -245,8 +251,4 @@ export function updateEvent(eventId: number, updated: Omit<Event, 'id'>) {
     mutate(`/admin/events/${eventId}`);
     mutate('/admin/events');
   });
-}
-
-export function useLeaderboard(eventId: number) {
-  return useSWR<Score[], Error>(eventId ? `/events/${eventId}/leaderboard` : null);
 }
