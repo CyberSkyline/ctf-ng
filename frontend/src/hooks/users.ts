@@ -162,13 +162,19 @@ export function adminUpdateUser(userId: number, user: Pick<User, 'name' | 'email
 export function restartWorkspace(userId : number) {
   return apiMutation(`/admin/users/${userId}/container/restart`, undefined, {
     method : 'POST',
-  }).then(() => mutate(`/admin/users/${userId}/container/status`));
+  }).then(() => {
+    mutate(`/admin/users/${userId}/container`);
+    mutate(`/admin/users/${userId}/container/status`);
+  });
 }
 
 export function recycleWorkspace(userId : number) {
   return apiMutation(`/admin/users/${userId}/container/recycle`, undefined, {
     method : 'POST',
-  }).then(() => mutate(`/admin/users/${userId}/container/status`));
+  }).then(() => {
+    mutate(`/admin/users/${userId}/container`);
+    mutate(`/admin/users/${userId}/container/status`);
+  });
 }
 
 export function impersonateUser(userId: number) {
