@@ -44,6 +44,22 @@ const colDefs: ColDef<Team>[] = [
     floatingFilter : true,
   },
   {
+    field : 'start_timestamp',
+    headerName : 'Start Time',
+    width : 200,
+    filter : 'agDateColumnFilter',
+    floatingFilter : true,
+    valueFormatter : (params) => params.value?.toLocaleString(),
+  },
+  {
+    field : 'end_time',
+    headerName : 'End Time',
+    width : 200,
+    filter : 'agDateColumnFilter',
+    floatingFilter : true,
+    valueFormatter : (params) => params.value?.toLocaleString(),
+  },
+  {
     field : 'ranked',
     width : 100,
     filter : true,
