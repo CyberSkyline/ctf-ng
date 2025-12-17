@@ -5,6 +5,7 @@ from CTFd import create_app, CTFdFlask
 from CTFd.plugins.ng.team.models.Team import Team
 from CTFd.plugins.ng.challenge.models.Challenge import Challenge
 from CTFd.plugins.ng.containers.models.ContainerInstance import ContainerInstance
+from CTFd.plugins.ng.containers.models.IndvidualContainer import IndvidualContainer
 from CTFd.plugins.ng.core.utils import utc_now
 
 parser = argparse.ArgumentParser(
@@ -29,3 +30,8 @@ with app.app_context():
         challenges = Challenge.query.filter(Challenge.event == team.event).all()
         for challenge in challenges:
             ContainerInstance.stop_instance_group(challenge.id, team.id)
+
+        for member in team.members:
+            workspace_ctr = IndvidualContainer.get_user_indvidual_container(member.user_id)
+            workspace_ctr.disconnect_from_networks()
+            workspace_ctr.stop()
