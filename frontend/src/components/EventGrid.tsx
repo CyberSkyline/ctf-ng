@@ -44,7 +44,7 @@ export default function EventGrid({ events, loading = false, group = false } : {
         .map(([ year, eventsInYear ]) => (
           <section key={year}>
             {year !== 'Unknown' && (
-              <Heading key={year} className="!mb-3" size="4">
+              <Heading className="!mb-3" size="4">
                 {year}
               </Heading>
             )}
