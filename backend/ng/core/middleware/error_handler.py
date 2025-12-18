@@ -99,7 +99,7 @@ def handle_exceptions(f):
                 500,
             )
 
-        except RateLimitExceeded: # 4. Rate limiting errors
+        except RateLimitExceeded:
             db.session.remove()
             return error_response("Rate limit reached for this operation", "rate_limit", 429)
 
