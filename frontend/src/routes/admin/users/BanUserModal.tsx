@@ -20,7 +20,11 @@ export default function BanUserModal({ user }: {user: AdminUser}) {
     <Modal
       title={unban ? 'Unban User?' : 'Ban User?'}
       trigger={(
-        <Button color={COLOR_NEGATIVE} variant="soft">
+        <Button
+          color={COLOR_NEGATIVE}
+          variant="soft"
+          disabled={!unban && user.roles.includes('admin')}
+        >
           <Icon />
           {unban ? 'Unban' : 'Ban'}
         </Button>
