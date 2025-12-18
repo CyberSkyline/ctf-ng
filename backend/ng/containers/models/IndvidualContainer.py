@@ -216,6 +216,21 @@ class IndvidualContainer(db.Model):
         except docker.errors.NotFound:
             pass
 
+    def delete(self, commit=True):
+        client = get_client(self.hostip)
+        try:
+            ctr = client.containers.get(self.dockerid)
+            ctr.remove(force=True)
+        except docker.errors.NotFound:
+            try:
+                ctr = client.containers.get(self.render_container_name(self.user))
+                ctr.remove(force=True)
+            except docker.errors.NotFound:
+                pass
+        db.session.delete(self)
+        if commit:
+            db.session.commit()
+
     def get_status(self) -> str:
         client = get_client(self.hostip)
         ctr = client.containers.get(self.dockerid)
@@ -233,4 +248,3 @@ class IndvidualContainer(db.Model):
         return SerializedIndvidualContainerInfo(
             **data
         )
-
