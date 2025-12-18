@@ -3,22 +3,23 @@ Defines the Score model for tracking team scores per event.
 """
 
 from __future__ import annotations
-from typing import Any, TypedDict, NotRequired
 
-from datetime import datetime
+from datetime import datetime, timedelta
+from typing import Any, NotRequired, TypedDict
 
 from CTFd.models import db
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
+
 from ... import config
-from ...core.utils import utc_now
 from ...core.exceptions import NotFoundError
-from ...core.utils.validator import BaseValidator
+from ...core.utils import utc_now
 from ...core.utils.cache import (
-    memoize,
     clear_cache_for_function,
     clear_cache_for_function_with_prefix,
+    memoize,
 )
+from ...core.utils.validator import BaseValidator
 from ...team.models.TeamMember import TeamMember
 
 
@@ -28,6 +29,7 @@ class SerializedScore(TypedDict):
     event_id: int
     event_name: NotRequired[str]
     points: int
+    last_correct_offset: int
     last_update: str
     team_name: str | None
 
@@ -39,6 +41,7 @@ class Score(db.Model):
     team_id = db.Column(db.Integer, db.ForeignKey("ng_teams.id"), nullable=False, index=True)
     event_id = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
     points = db.Column(db.Integer, default=0, nullable=False)
+    last_correct_offset = db.Column(db.BigInteger, default=0, nullable=False)
     last_update = db.Column(db.DateTime, nullable=False, default=utc_now, onupdate=utc_now)
 
     team_name = db.Column(db.String(config.TEAM_NAME_MAX_LENGTH), nullable=False)  # Cached for leaderboard performance
@@ -64,6 +67,7 @@ class Score(db.Model):
             "team_id": self.team_id,
             "event_id": self.event_id,
             "points": self.points,
+            "last_correct_offset": self.last_correct_offset,
             "last_update": self.last_update.isoformat() + "Z",
             "team_name": self.team_name,
         }
@@ -83,6 +87,7 @@ class Score(db.Model):
         validator.validate_model_id(data, "team_id", "Team", required=True)
         validator.validate_model_id(data, "event_id", "Event", required=True)
         validator.validate_integer(data, "points", required=False)
+        validator.validate_integer(data, "last_correct_offset", required=False)
 
         validator.validate_string(
             data, "team_name", config.TEAM_NAME_MAX_LENGTH, required=True, friendly_name="Team name"
@@ -97,6 +102,7 @@ class Score(db.Model):
         cls,
         team_id: int,
         points: int = 0,
+        last_correct_offset: int = 0,
         last_update: datetime | None = None,
         commit: bool = True,
         team=None,
@@ -127,6 +133,7 @@ class Score(db.Model):
                 "event_id": team.event_id,
                 "team_name": team.name,
                 "points": points,
+                "last_correct_offset": last_correct_offset,
                 "last_update": last_update.isoformat(),
             }
         )
@@ -136,6 +143,7 @@ class Score(db.Model):
             event_id=validated_data["event_id"],
             team_name=validated_data["team_name"],
             points=validated_data.get("points", 0),
+            last_correct_offset=validated_data.get("last_correct_offset", 0),
             last_update=last_update,
         )
 
@@ -164,17 +172,43 @@ class Score(db.Model):
 
         Score.clear_leaderboard_cache(event_id=self.event_id)
 
+    def mark_correct_submission(self, timestamp : datetime | None = None, commit : bool = True) -> None:
+        """
+        Adjust the offset for the last correct submission
+        """
+        if not timestamp:
+            timestamp = utc_now()
+
+        delta = timestamp.replace(tzinfo=None) - self.team.start_timestamp.replace(tzinfo=None)
+        self.last_correct_offset = delta / timedelta(milliseconds=1)
+
+        if commit:
+            db.session.commit()
+
     def recalculate(self, commit: bool = True) -> None:
         """
         Recalculate score by summing all ScoreEvents.
         """
         # LAZY-IMPORT
+        from .Attempt import Attempt
         from .ScoreEvent import ScoreEvent
 
         total = db.session.query(func.sum(ScoreEvent.points)).filter_by(score_id=self.id).scalar() or 0
+        most_recent_correct_attempt = (
+            db.session.query(Attempt)
+            .filter_by(team_id=self.team_id, is_correct=True)
+            .order_by(Attempt.timestamp.desc())
+            .first()
+        )
 
         self.points = total
         self.last_update = utc_now()
+
+        if most_recent_correct_attempt:
+            delta = most_recent_correct_attempt.timestamp.replace(tzinfo=None) - self.team.start_timestamp.replace(tzinfo=None)
+            self.last_correct_offset = delta / timedelta(milliseconds=1)
+        else:
+            self.last_correct_offset = 0
 
         if commit:
             db.session.commit()
@@ -208,7 +242,7 @@ class Score(db.Model):
                 .joinedload(Team.members)
                 .joinedload(TeamMember.sponsor)
             )
-            .order_by(cls.points.desc(), cls.last_update.asc())
+            .order_by(cls.points.desc(), cls.last_correct_offset.asc())
         )
         if limit:
             query = query.limit(limit)

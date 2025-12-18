@@ -2,26 +2,30 @@
 Tests for scoring controllers
 """
 
-import pytest
-from unittest.mock import patch, Mock
-from datetime import datetime
+from datetime import datetime, timedelta
+from operator import mul
+from unittest.mock import Mock, patch
 
+import pytest
+
+from ...challenge.models.Hint import Hint
 from ...core.exceptions import (
     BusinessLogicError,
     NotFoundError,
     ValidationError,
 )
+from ...core.utils import utc_now
 from ..controllers import (
-    submit_answer,
-    redeem_hint,
-    get_leaderboard,
-    get_team_score,
     award_manual_points,
+    get_leaderboard,
     get_score_history,
-    recalculate_score,
     get_team_attempts,
     get_team_hint_redemptions,
     get_team_manual_awards,
+    get_team_score,
+    recalculate_score,
+    redeem_hint,
+    submit_answer,
 )
 from ..models import (
     Attempt,
@@ -30,8 +34,6 @@ from ..models import (
     Score,
     ScoreEvent,
 )
-from ...challenge.models.Hint import Hint
-from ...core.utils import utc_now
 
 
 @pytest.fixture(autouse=True)
@@ -49,6 +51,7 @@ class TestSubmitAnswer:
 
     def test_submit_answer_correct(self, db_session, user, team_with_member, event, challenge, question, score):
         """Test submitting a correct answer"""
+        team_with_member.set_start_timestamp(utc_now())
         result = submit_answer(
             event=event,
             challenge=challenge,
@@ -70,6 +73,7 @@ class TestSubmitAnswer:
 
     def test_submit_answer_incorrect(self, db_session, user, team_with_member, event, challenge, question, score):
         """Test submitting an incorrect answer"""
+        team_with_member.set_start_timestamp(utc_now())
         result = submit_answer(
             event=event,
             challenge=challenge,
@@ -93,6 +97,7 @@ class TestSubmitAnswer:
         self, db_session, user, team_with_member, event, challenge, question, score
     ):
         """Test submitting answer when score exists and gets updated"""
+        team_with_member.set_start_timestamp(utc_now())
         # Set initial score
         score.points = 50
         db_session.commit()
@@ -118,6 +123,7 @@ class TestSubmitAnswer:
 
     def test_submit_answer_no_score_record(self, db_session, user, team_with_member, event, challenge, question):
         """Test submitting answer when no score record exists"""
+        team_with_member.set_start_timestamp(utc_now())
         # Delete any existing score
         Score.query.filter_by(team_id=team_with_member.id, event_id=event.id).delete()
         db_session.commit()
@@ -242,6 +248,54 @@ class TestGetLeaderboard:
         # Should be top 3 teams
         assert result[0]["points"] >= result[1]["points"]
         assert result[1]["points"] >= result[2]["points"]
+
+    # TODO - implement
+    def test_get_leaderboard_tiebreak(self, db_session, event, challenge, question, multiple_teams_with_scores):
+        now = utc_now()
+
+        # Set team 1 and team 2 to have the same points, break tie for team 2 for having the earlier correct submission
+        score1 = multiple_teams_with_scores[0]["score"]
+        score2 = multiple_teams_with_scores[1]["score"]
+
+        score1.points = 1000
+        score2.points = 1000
+        score1.last_correct_offset = now + timedelta(seconds=10)
+        score2.last_correct_offset = now + timedelta(seconds=5)
+
+        # Set team 3 and team 4 to have the same points, break tie for team 3 for with an incorrect not updating their last correct submission
+        score3 = multiple_teams_with_scores[2]["score"]
+        score4 = multiple_teams_with_scores[3]["score"]
+        team3 = multiple_teams_with_scores[3]["team"]
+        user3 = multiple_teams_with_scores[3]["user_id"]
+        score3.points = 500
+        score4.points = 500
+        score3.last_correct_offset = now - timedelta(seconds=10) # Score 3 is earlier
+        score4.last_correct_offset = now - timedelta(seconds=5)
+
+        # Create a failed attempt
+        Attempt.create_attempt(
+            user_id=user3,
+            team_id=team3.id,
+            challenge_id=challenge.id,
+            question_id=question.id,
+            submission="wrong answer",
+        )
+
+        score5 = multiple_teams_with_scores[4]["score"]
+        score5.points = 0
+
+        db_session.commit()
+
+        result = get_leaderboard(event.id)
+
+        # print(result)
+        assert len(result) == 5
+        assert result[0]["team_id"] == score2.team_id
+        assert result[1]["team_id"] == score1.team_id
+        assert result[2]["team_id"] == score3.team_id
+        assert result[3]["team_id"] == score4.team_id
+        assert result[4]["team_id"] == score5.team_id
+
 
     def test_get_leaderboard_default_limit(self, db_session, event, multiple_teams_with_scores):
         """Test getting leaderboard with default limit"""
@@ -564,6 +618,7 @@ class TestControllerIntegration:
     def test_score_history_reflects_all_actions(
         self, db_session, user, team_with_member, event, challenge, question, hint, admin, score
     ):
+        team_with_member.set_start_timestamp(utc_now())
         """Test that score history shows all scoring actions"""
         # Perform various actions
         submit_answer(
@@ -610,6 +665,7 @@ class TestControllerIntegration:
         self, db_session, user, team_with_member, event, challenge, question, hint, admin, score
     ):
         """Test recalculation after complex scoring operations"""
+        team_with_member.set_start_timestamp(utc_now())
         # Perform multiple scoring actions
         submit_answer(
             event=event,
@@ -658,6 +714,7 @@ class TestGetTeamAttempts:
 
     def test_get_team_attempts_with_data(self, db_session, event, team_with_member, user, challenge, question):
         """Test getting attempts for team with attempts (including failed ones)"""
+        team_with_member.set_start_timestamp(utc_now())
         # Create a failed attempt
         failed_attempt = Attempt.create_attempt(
             user_id=user.id,

@@ -3,22 +3,22 @@ Defines the Attempt model for tracking answer submissions.
 """
 
 from __future__ import annotations
-from typing import (
-    Any,
-    TypedDict,
-    NotRequired,
-)
 
 from datetime import datetime
+from typing import (
+    Any,
+    NotRequired,
+    TypedDict,
+)
 
 from CTFd.models import db
 
 from ... import config
-from ...core.utils import utc_now
 from ...core.exceptions import (
-    ValidationError,
     BusinessLogicError,
+    ValidationError,
 )
+from ...core.utils import utc_now
 from ...core.utils.validator import BaseValidator
 
 
@@ -237,16 +237,20 @@ class Attempt(db.Model):
         db.session.add(attempt)
         db.session.flush()
 
-        if points != 0:
+        if is_correct:
             # LAZY-IMPORT
             from .Score import Score
             from .ScoreEvent import ScoreEvent
 
             score = Score.find_by_team(team_id)
-            score_event = ScoreEvent.create_score_event(
-                score_id=score.id, team_id=team_id, points=points, timestamp=timestamp, commit=False
-            )
-            attempt.score_event = score_event
+
+            score.mark_correct_submission(timestamp=timestamp, commit=False)
+
+            if points != 0:
+                score_event = ScoreEvent.create_score_event(
+                    score_id=score.id, team_id=team_id, points=points, timestamp=timestamp, commit=False
+                )
+                attempt.score_event = score_event
 
         if commit:
             try:

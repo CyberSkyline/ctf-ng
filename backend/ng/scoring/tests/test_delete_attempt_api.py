@@ -4,6 +4,7 @@ Tests for delete attempt API endpoint
 
 import pytest
 
+from ...core.utils import utc_now
 from ..models import Attempt, Score
 
 
@@ -25,6 +26,7 @@ class TestDeleteAttemptEndpoint:
         """
         Test that admin can delete an attempt and score is adjusted
         """
+        team_with_member.set_start_timestamp(utc_now())
         attempt = Attempt.create_attempt(
             user_id=user.id,
             team_id=team_with_member.id,
@@ -64,6 +66,7 @@ class TestDeleteAttemptEndpoint:
         """
         Test that non admin user cannot delete attempts
         """
+        team_with_member.set_start_timestamp(utc_now())
         attempt = Attempt.create_attempt(
             user_id=user.id,
             team_id=team_with_member.id,
