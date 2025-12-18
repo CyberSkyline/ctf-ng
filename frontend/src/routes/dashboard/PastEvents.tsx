@@ -24,7 +24,7 @@ export default function PastEvents() {
   return (
     <>
       <Heading size="6">Your Past Events</Heading>
-      <EventGrid events={pastEvents || []} />
+      <EventGrid events={pastEvents || []} group />
     </>
   );
 }
