@@ -6,10 +6,10 @@ import { Spinner } from '@radix-ui/themes';
 import type { ColDef } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import { ErrorCallout } from 'components/Callouts';
+import DeleteAttemptModal from 'components/DeleteAttemptModal';
 import Entity from 'components/Entity';
 import TeamActivityTypeBadge from 'components/TeamActivityTypeBadge';
 import { useMemo } from 'react';
-import DeleteAttemptModal from '../../../components/DeleteAttemptModal';
 
 const colDefs: ColDef<Attempt | HintRedemption | ManualPointAward>[] = [
   {
