@@ -95,7 +95,7 @@ class FileList(Resource):
             503: 'Service Unavailable - S3 storage not configured'
         }
     )
-    def get(self, current_user: User, **kwargs):
+    def get(self, **kwargs):
         """List files in a public folder
 
         Retrieve a list of all files in the specified public folder.
