@@ -1,9 +1,11 @@
 from flask_restx import Namespace, Resource
 
-from ...core.utils import success_response
+from ...core.utils import success_response, error_response
 from ...core.middleware import (
     admin_endpoint,
 )
+from ...permissions.models.enums import RoleEnum
+from ...permissions.controllers.get_user_roles import get_user_roles
 
 from ...core.middleware.loaders import (
     LoaderType,
@@ -240,6 +242,9 @@ class UserBan(Resource):
         """
         Ban a user
         """
+        if RoleEnum.ADMIN in get_user_roles(target_user.id):
+            return error_response("Cannot ban an admin user", "ban", 403)
+
         ban_user(target_user)
         return success_response()
 

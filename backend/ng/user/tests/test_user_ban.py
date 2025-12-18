@@ -93,3 +93,29 @@ def test_non_admin_cannot_ban_user(logged_in_client, user_factory):
     )
 
     assert response.status_code == 403
+
+def test_cannot_ban_admin_users(admin_client, user_factory):
+    """
+    Test that an admin user cannot be banned
+    """
+    admin_user = user_factory(
+        name = "admin_user_test",
+        email = "admin@admin.com",
+        admin = True
+    )
+
+    response = admin_client.post(
+        f"/ng/admin/users/{admin_user.id}/ban",
+        json = {}
+    )
+
+    assert response.status_code == 403
+
+def test_cannot_ban_self(admin_client, user_factory):
+
+    response = admin_client.post(
+        "/ng/admin/users/1/ban",
+        json = {}
+    )
+
+    assert response.status_code == 403
