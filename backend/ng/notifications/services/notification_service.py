@@ -301,7 +301,7 @@ class NotificationService:
             message=f"You have been removed from team '{team_name}' in event '{event_name}'",
             recipient_id=kicked_user_id,
             sender_id=kicked_by_id,
-            team_id=team_id,
+            team_id=None,
             event_id=event_id,
         )
 

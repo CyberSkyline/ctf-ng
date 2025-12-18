@@ -1,7 +1,17 @@
+import {
+  COLOR_INFO,
+  COLOR_NEGATIVE,
+  COLOR_POSITIVE,
+  COLOR_WARNING,
+} from '@/constants';
 import { Callout } from '@radix-ui/themes';
 import type { ReactNode } from 'react';
-import { TbAlertTriangle, TbCancel, TbInfoCircle } from 'react-icons/tb';
-import { COLOR_INFO, COLOR_NEGATIVE, COLOR_WARNING } from '@/constants';
+import {
+  TbAlertTriangle,
+  TbCancel,
+  TbCheck,
+  TbInfoCircle,
+} from 'react-icons/tb';
 
 export function ErrorCallout({ children, className }: {children: ReactNode, className?: string}) {
   return (
@@ -28,11 +38,25 @@ export function WarningCallout({ children, className }: {children: ReactNode, cl
     </Callout.Root>
   );
 }
+
 export function InfoCallout({ children, className }: {children: ReactNode, className?: string}) {
   return (
     <Callout.Root variant="surface" color={COLOR_INFO} className={className}>
       <Callout.Icon>
         <TbInfoCircle aria-label="Info" />
+      </Callout.Icon>
+      <Callout.Text className="whitespace-pre-wrap">
+        {children}
+      </Callout.Text>
+    </Callout.Root>
+  );
+}
+
+export function SuccessCallout({ children, className }: {children: ReactNode, className?: string}) {
+  return (
+    <Callout.Root variant="surface" color={COLOR_POSITIVE} className={className}>
+      <Callout.Icon>
+        <TbCheck aria-label="Success" />
       </Callout.Icon>
       <Callout.Text className="whitespace-pre-wrap">
         {children}

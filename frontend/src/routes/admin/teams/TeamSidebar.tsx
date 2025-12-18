@@ -6,14 +6,14 @@ import {
 } from '@/constants';
 import { useTeamMembers } from '@/hooks/team';
 import type { Team } from '@/types';
-import { Flex, Table } from '@radix-ui/themes';
-import AdminDataList from 'components/AdminDataList';
+import { Flex, Grid, Table } from '@radix-ui/themes';
 import AdminLink from 'components/AdminLink';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import RoleBadge from 'components/RoleBadge';
+import Statistic from 'components/Statistic';
 import { useId } from 'react';
 import EditTeamModal from './EditTeamModal';
 import KickUserModal from './KickUserModal';
@@ -45,7 +45,47 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
         />
         <EditTeamModal teamToUpdate={entity} />
       </AdminSidebarHeader>
-      <AdminDataList data={{ ...entity }} />
+
+      <Grid columns="2" gap="4" align="center" justify="between">
+        <Statistic
+          label="Name"
+          value={entity.name}
+          size="5"
+        />
+        <Statistic
+          label="ID"
+          value={entity.id}
+          size="5"
+        />
+
+        <Statistic
+          label="Event"
+          value={entity.event_name || 'Unknown'}
+          size="5"
+        />
+        <Statistic
+          label="Invite Code"
+          value={entity.invite_code || 'None'}
+          size="5"
+        />
+
+        <Statistic
+          label="Start Time"
+          value={entity.start_timestamp?.toLocaleString() || 'None'}
+          size="5"
+        />
+        <Statistic
+          label="End Time"
+          value={entity.end_time?.toLocaleString() || 'None'}
+          size="5"
+        />
+
+        <Statistic
+          label="Ranked"
+          value={entity.ranked ? 'Yes' : 'No'}
+          size="5"
+        />
+      </Grid>
 
       <AdminSidebarHeader title="Members" />
       {membersError && <ErrorCallout>{membersError.message}</ErrorCallout> }

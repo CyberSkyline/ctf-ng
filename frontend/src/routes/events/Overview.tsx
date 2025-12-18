@@ -1,15 +1,22 @@
-import { Container, Link as RadixLink, Tabs } from '@radix-ui/themes';
+import {
+  Button,
+  Container,
+  Link as RadixLink,
+  Tabs,
+} from '@radix-ui/themes';
 
-import { TbStar } from 'react-icons/tb';
+import { TbArrowRight, TbMessageCircle, TbStar } from 'react-icons/tb';
 import { Link, useParams, useSearchParams } from 'react-router';
 
 import { ChallengeIcon, TeamIcon } from '@/constants';
 import { useEvent } from '@/hooks/events';
+import { useMyEventFeedback } from '@/hooks/feedback';
 import { useAuth, useRegistration } from '@/hooks/users';
 import { ErrorCallout, InfoCallout } from 'components/Callouts';
 import EventHeader from 'components/EventHeader';
 import HeaderContainer from 'components/HeaderContainer';
 import ChallengesTab from './OverviewTabs/ChallengesTab';
+import FeedbackTab from './OverviewTabs/FeedbackTab';
 import LeaderboardTab from './OverviewTabs/LeaderboardTab';
 import TeamTab from './OverviewTabs/TeamTab';
 import RegistrationCard from './RegistrationCard';
@@ -17,13 +24,19 @@ import RegistrationCard from './RegistrationCard';
 export default function Overview() {
   const [ searchParams, setSearchParams ] = useSearchParams();
   const { idEvent } = useParams();
+  const eventId = Number(idEvent);
 
-  const { data, error } = useEvent(Number(idEvent));
+  const { data, error } = useEvent(eventId);
   const { isAuthenticated, isUnauthenticated } = useAuth();
-  const { isRegistered, isUnregistered } = useRegistration(Number(idEvent));
+  const {
+    isRegistered, isUnregistered, isStarted, isFinished, team,
+  } = useRegistration(eventId);
 
   const challengesTabAvailable = isRegistered;
   const teamTabAvailable = isRegistered && data && data.max_team_size > 1;
+  const feedbackAvailable = isRegistered && (isFinished || (isStarted && !team!.end_time));
+
+  const { data : feedback } = useMyEventFeedback(feedbackAvailable ? eventId : null);
 
   let currentTab = searchParams.get('tab') ?? undefined;
   if (!currentTab) {
@@ -52,6 +65,18 @@ export default function Overview() {
           >
             {isAuthenticated && data && (
               <RegistrationCard event={data} />
+            )}
+            {isFinished && feedback === null && (
+              <InfoCallout className="max-w-128">
+                Please take a moment to provide feedback on your experience to help us improve future events.
+                <br />
+                <Button variant="soft" mt="3">
+                  <Link to={`/events/${data.id}?tab=feedback`}>
+                    Give Feedback
+                    <TbArrowRight className="inline ms-1" />
+                  </Link>
+                </Button>
+              </InfoCallout>
             )}
             {isUnauthenticated && (
               <InfoCallout>
@@ -98,6 +123,12 @@ export default function Overview() {
                 Team
               </Tabs.Trigger>
             )}
+            {feedbackAvailable && (
+              <Tabs.Trigger value="feedback">
+                <TbMessageCircle className="mr-1" />
+                Feedback
+              </Tabs.Trigger>
+            )}
           </Tabs.List>
         </Container>
 
@@ -114,6 +145,12 @@ export default function Overview() {
         {teamTabAvailable && (
           <Tabs.Content value="team">
             <TeamTab />
+          </Tabs.Content>
+        )}
+
+        {feedbackAvailable && (
+          <Tabs.Content value="feedback">
+            <FeedbackTab />
           </Tabs.Content>
         )}
       </Tabs.Root>
