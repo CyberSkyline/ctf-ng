@@ -48,7 +48,22 @@ PUBLIC_FILE_AUTO_NUMBER_MAX_ATTEMPTS = 999
 
 # S3 URL expiration configuration
 S3_UPLOAD_URL_EXPIRATION = 3600
+
+# Redis connection pool configuration
+REDIS_SOCKET_CONNECT_TIMEOUT = 5
+REDIS_SOCKET_TIMEOUT = 5
+REDIS_SOCKET_KEEPALIVE = True
+REDIS_MAX_CONNECTIONS = 20
+REDIS_RETRY_ON_TIMEOUT = True
+
+# Redis retry configuration
+REDIS_MAX_RETRIES = 3
+REDIS_RETRY_DELAY = 0.1
 S3_DOWNLOAD_URL_EXPIRATION = 600
+
+# Cache TTL buffer settings (in seconds)
+URL_CACHE_MIN_TTL = 300  # Minimum cache time (5min)
+URL_CACHE_BUFFER_TIME = 300  # Buffer time to subtract from expiration (5min)
 
 # Scoring Cache Config & Model Length Limits
 LEADERBOARD_CACHE_TIMEOUT = 60  # Seconds

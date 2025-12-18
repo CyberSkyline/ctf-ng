@@ -2,9 +2,11 @@ import boto3
 from botocore.exceptions import ClientError
 from typing import Any
 import logging
+import hashlib
 from werkzeug.datastructures import FileStorage
 
 from ... import config
+from ..utils.redis_cache import RedisCache
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +52,44 @@ class S3Service:
     def is_configured(self) -> bool:
         """Check if S3 service is properly configured"""
         return self._is_configured and self.s3_client is not None
+    def _generate_cache_key(self, operation: str, object_key: str, expires_in: int, content_type: str = None) -> str:
+        """Generate a unique cache key for the presigned URL"""
+        key_data = f"{self.bucket_name}:{operation}:{object_key}:{expires_in}"
+        if content_type:
+            key_data += f":{content_type}"
+        key_hash = hashlib.md5(key_data.encode()).hexdigest()
+        return f"s3_presigned:{key_hash}"
+
+    def _get_cache_ttl(self, expires_in: int) -> int:
+        """Get the appropriate cache TTL based on URL expiration"""
+        return max(config.URL_CACHE_MIN_TTL, expires_in - config.URL_CACHE_BUFFER_TIME)
+
+    def _get_cached_url(self, operation: str, object_key: str, expires_in: int, content_type: str = None) -> str:
+        """Try to get a cached presigned URL"""
+        cache_key = self._generate_cache_key(operation, object_key, expires_in, content_type)
+        cached_data = RedisCache.get(cache_key)
+
+        if cached_data and isinstance(cached_data, dict):
+            logger.debug(f"Using cached {operation} URL for {object_key}")
+            return cached_data.get('url')
+
+    def _cache_url(self, operation: str, object_key: str, url: str, expires_in: int, content_type: str = None):
+        """Cache a presigned URL"""
+        cache_key = self._generate_cache_key(operation, object_key, expires_in, content_type)
+        cache_data = {
+            'url': url,
+            'object_key': object_key,
+            'operation': operation,
+            'expires_in': expires_in
+        }
+        if content_type:
+            cache_data['content_type'] = content_type
+
+        cache_ttl = self._get_cache_ttl(expires_in)
+        success = RedisCache.set(cache_key, cache_data, ttl=cache_ttl)
+
+        if success:
+            logger.debug(f"Cached {operation} URL for {object_key} (TTL: {cache_ttl}s)")
 
     def generate_upload_url(self, folder: str, filename: str,
                           content_type: str = 'application/octet-stream') -> dict[str, Any]:
@@ -58,6 +98,16 @@ class S3Service:
             raise Exception("S3 service not configured")
 
         object_key = f"{folder}/{filename}"
+
+        cached_url = self._get_cached_url('upload', object_key, config.S3_UPLOAD_URL_EXPIRATION, content_type)
+        if cached_url:
+            logger.info(f"Using cached upload URL for {object_key}")
+            return {
+                'presigned_url': cached_url,
+                'filename': filename,
+                'object_key': object_key,
+                'content_type': content_type
+            }
 
         try:
             presigned_url = self.s3_client.generate_presigned_url(
@@ -70,6 +120,9 @@ class S3Service:
                 ExpiresIn=config.S3_UPLOAD_URL_EXPIRATION,
                 HttpMethod='PUT'
             )
+
+            # Cache the URL
+            self._cache_url('upload', object_key, presigned_url, config.S3_UPLOAD_URL_EXPIRATION, content_type)
 
             logger.info(f"Generated upload URL for {object_key}")
 
@@ -89,6 +142,11 @@ class S3Service:
         if not self.is_configured():
             raise Exception("S3 service not configured")
 
+        cached_url = self._get_cached_url('download', object_key, expires_in)
+        if cached_url:
+            logger.info(f"Using cached download URL for {object_key}")
+            return cached_url
+
         try:
             url = self.s3_client.generate_presigned_url(
                 'get_object',
@@ -98,6 +156,10 @@ class S3Service:
                 },
                 ExpiresIn=expires_in
             )
+
+            # Cache the URL
+            self._cache_url('download', object_key, url, expires_in)
+
             logger.info(f"Generated download URL for {object_key}")
             return url
         except ClientError as e:
@@ -205,6 +267,8 @@ class S3Service:
             return True
         except ClientError:
             return False
+
+
 
 # Global instance management
 def init_s3_service() -> 'S3Service':
