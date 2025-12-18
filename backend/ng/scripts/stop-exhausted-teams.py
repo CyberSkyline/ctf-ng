@@ -25,7 +25,7 @@ delta = timedelta(days=args.days)
 query_end_date_start = now - delta
 
 with app.app_context():
-    res = Team.query.filter(Team.end_time >= query_end_date_start).all()
+    res = Team.query.filter(Team.end_time >= query_end_date_start, Team.end_time < now).all()
     for team in res:
         challenges = Challenge.query.filter(Challenge.event == team.event).all()
         for challenge in challenges:

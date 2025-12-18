@@ -3,6 +3,7 @@ import { recycleDeployment } from '@/hooks/container';
 import { Button, Text } from '@radix-ui/themes';
 import Modal from 'components/Modal';
 import { TbRecycle } from 'react-icons/tb';
+import { WarningCallout } from 'components/Callouts'
 
 export default function RecycleDeploymentModal({ challengeId, teamId }: {challengeId: number, teamId : number}) {
   return (
@@ -14,7 +15,7 @@ export default function RecycleDeploymentModal({ challengeId, teamId }: {challen
       onSubmit={async () => recycleDeployment(challengeId, teamId)}
       trigger={(
         <Button
-          variant="ghost"
+          variant="soft"
           color={COLOR_NEGATIVE}
         >
           <TbRecycle />
@@ -22,6 +23,9 @@ export default function RecycleDeploymentModal({ challengeId, teamId }: {challen
         </Button>
       )}
     >
+      <WarningCallout>
+        This will result in lost data
+      </WarningCallout>
       <Text color="gray">
         The whole deployment will be deleted and recreated from scratch. This will remove all ephemeral data stored in the container.
       </Text>

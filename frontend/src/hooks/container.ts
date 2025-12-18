@@ -85,5 +85,6 @@ export function deleteDeployment(challengeId: number, teamId: number) {
     method : 'POST',
   }).then(() => {
     mutate(`/admin/container/challenge/${challengeId}/team/${teamId}/services`);
+    mutate('/admin/container/');
   });
 }

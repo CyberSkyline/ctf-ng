@@ -3,6 +3,7 @@ import { deleteDeployment } from '@/hooks/container';
 import { Button, Text } from '@radix-ui/themes';
 import Modal from 'components/Modal';
 import { TbTrash } from 'react-icons/tb';
+import { WarningCallout } from 'components/Callouts'
 
 export default function DeleteDeploymentModal({ challengeId, teamId }: {challengeId: number, teamId : number}) {
   return (
@@ -14,7 +15,7 @@ export default function DeleteDeploymentModal({ challengeId, teamId }: {challeng
       onSubmit={async () => deleteDeployment(challengeId, teamId)}
       trigger={(
         <Button
-          variant="ghost"
+          variant="soft"
           color={COLOR_NEGATIVE}
         >
           <TbTrash />
@@ -22,6 +23,9 @@ export default function DeleteDeploymentModal({ challengeId, teamId }: {challeng
         </Button>
       )}
     >
+      <WarningCallout>
+        This will result in lost data
+      </WarningCallout>
       <Text color="gray">
         The whole deployment will be deleted, containers and associated database records, will be permently gone.
       </Text>
