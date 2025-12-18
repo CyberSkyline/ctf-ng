@@ -20,6 +20,9 @@ from ...core.utils.cache import (
     memoize,
 )
 from ...core.utils.validator import BaseValidator
+from ...core.utils.validator import BaseValidator
+from ...core.middleware.cache_decorators import cache_with_args
+from ...core.utils.redis_cache import RedisCache
 from ...team.models.TeamMember import TeamMember
 
 
@@ -216,7 +219,7 @@ class Score(db.Model):
         Score.clear_leaderboard_cache(event_id=self.event_id)
 
     @classmethod
-    @memoize(timeout=config.LEADERBOARD_CACHE_TIMEOUT if hasattr(config, "LEADERBOARD_CACHE_TIMEOUT") else 60)
+    @cache_with_args("leaderboard:{}:{}", ttl=config.LEADERBOARD_CACHE_TIMEOUT if hasattr(config, "LEADERBOARD_CACHE_TIMEOUT") else 60)
     def get_leaderboard(cls, event_id: int, limit: int | None = None) -> list[SerializedScore]:
         """Get the leaderboard for an event, sorted by points descending
 
@@ -339,9 +342,16 @@ class Score(db.Model):
         Clear leaderboard cache for specific event or all events
         """
         if event_id is None:
-            clear_cache_for_function("get_leaderboard")
+            # Clear all leaderboard caches - this is harder with Redis pattern matching
+            # For now, we'll clear specific common limits
+            for limit in [None, 10, 25, 50, 100, 250, 500]:
+                cache_key = f"leaderboard:{event_id}:{limit}"
+                RedisCache.delete(cache_key)
         else:
-            clear_cache_for_function_with_prefix("get_leaderboard", f"({event_id},")
+            # Clear caches for this specific event with common limits
+            for limit in [None, 10, 25, 50, 100, 250, 500]:
+                cache_key = f"leaderboard:{event_id}:{limit}"
+                RedisCache.delete(cache_key)
 
 
     def delete(self, commit: bool = True) -> None:
