@@ -10,7 +10,7 @@ from ...core.utils import utc_now
 
 class TestUserFeedbackEndpoints:
     """
-    Tests for user feedback API endpoints
+    Test for user feedback API endpoints
     """
     def test_submit_event_feedback_new(self, logged_in_client, user, event):
         """
