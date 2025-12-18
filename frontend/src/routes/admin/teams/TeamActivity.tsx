@@ -9,6 +9,7 @@ import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import TeamActivityTypeBadge from 'components/TeamActivityTypeBadge';
 import { useMemo } from 'react';
+import DeleteAttemptModal from '../../../components/DeleteAttemptModal';
 
 const colDefs: ColDef<Attempt | HintRedemption | ManualPointAward>[] = [
   {
@@ -111,6 +112,26 @@ const colDefs: ColDef<Attempt | HintRedemption | ManualPointAward>[] = [
     field : 'reason',
     filter : true,
     floatingFilter : true,
+  },
+  {
+    headerName : 'Actions',
+    type : 'rightAligned',
+    pinned : 'right',
+    width : 100,
+    cellRendererSelector : ({ data }) => {
+      if (!data) return undefined;
+
+      if ('is_correct' in data) {
+        return {
+          component : DeleteAttemptModal,
+          params : {
+            attempt : data,
+          },
+        };
+      }
+
+      return undefined;
+    },
   },
 ];
 

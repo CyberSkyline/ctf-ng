@@ -5,6 +5,7 @@ import type { Attempt } from '@/types';
 import { Spinner } from '@radix-ui/themes';
 import { AgGridReact, type CustomCellRendererProps } from 'ag-grid-react';
 import { ErrorCallout } from 'components/Callouts';
+import DeleteAttemptModal from 'components/DeleteAttemptModal';
 import Entity from 'components/Entity';
 
 export default function ChallengeAttemptsTab({ challengeId }: {challengeId: number}) {
@@ -61,6 +62,14 @@ export default function ChallengeAttemptsTab({ challengeId }: {challengeId: numb
         },
         {
           field : 'is_correct', headerName : 'Correct', width : 100, sortable : true, filter : true,
+        },
+        {
+          headerName : 'Actions',
+          type : 'rightAligned',
+          pinned : 'right',
+          width : 100,
+          cellRenderer : DeleteAttemptModal,
+          cellRendererParams : ({ data }: {data: Attempt}) => ({ attempt : data }),
         },
       ]}
       rowData={attempts || []}
