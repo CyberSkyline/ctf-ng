@@ -83,6 +83,15 @@ class TestUserScoringEndpoints:
         assert data["success"] is True
         assert len(data["data"]) == 5
 
+    def test_admin_can_see_hidden_leaderboard(self, admin_client, event, multiple_teams_with_scores):
+        """Test that admin can see leaderboard even when hidden"""
+        event.show_leaderboard = False
+        response = admin_client.get(f"/ng/events/{event.id}/leaderboard")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert len(data["data"]) == 5
+
 
     def test_get_my_team_score_basic(
         self,

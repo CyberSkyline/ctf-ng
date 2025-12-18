@@ -11,30 +11,27 @@ from ...core.middleware.loaders import (
     load_ticket,
     load_ticket_tag,
     load_user,
-    load_attachment,
 )
-from ...core.utils import success_response
+from ...core.utils import error_response, success_response
 from ...user.models import User
-
 from ..controllers import (
-    create_tag,
-    update_tag,
-    list_tags,
-    set_ticket_tags,
     assign_ticket,
-    unassign_ticket,
-    update_ticket_status,
-    update_ticket_mute,
-    set_ticket_event,
+    create_tag,
+    create_ticket_message,
+    get_ticket,
+    list_tags,
+    list_tickets,
+    remove_ticket_challenge,
     remove_ticket_event,
     set_ticket_challenge,
-    remove_ticket_challenge,
-    list_tickets,
-    get_ticket,
-    create_ticket_message,
-    download_attachment,
+    set_ticket_event,
+    set_ticket_tags,
+    unassign_ticket,
+    update_tag,
+    update_ticket_mute,
+    update_ticket_status,
+    upload_attachment,
 )
-
 
 support_admin_namespace = Namespace(
     "admin/support", description="Admin Support ticket operations"
@@ -632,37 +629,6 @@ class AdminTag(Resource):
         )
         return success_response(updated_tag)
 
-
-@support_admin_namespace.route("/attachments/<int:attachment_id>")
-class AdminAttachmentDownload(Resource):
-    @admin_endpoint()
-    @load_attachment(LoaderType.PARAM)
-    @support_admin_namespace.doc(
-        description="Download any support ticket attachment via presigned S3 URL redirect (Admin privilege required)",
-        params={
-            "attachment_id": {
-                "description": "ID of the attachment to download",
-                "required": True,
-                "type": "integer",
-                "in": "path",
-                "example": 123
-            }
-        },
-        responses={
-            302: "Success - Redirect to presigned S3 URL for secure download (1 hour expiration)",
-            403: "Forbidden - Admin access required",
-            404: "Not found - Attachment does not exist or file missing in S3 storage",
-            500: "Internal Server Error - Failed to generate presigned URL",
-            503: "Service Unavailable - S3 storage not configured",
-        }
-    )
-    def get(self, attachment_id: int, attachment, current_user: User, **kwargs):
-        """
-        Download any attachment via presigned URL redirect (admin access)
-        """
-        return download_attachment(attachment=attachment)
-
-
 @support_admin_namespace.route("/tickets/<int:ticket_id>/upload")
 class AdminAttachmentUpload(Resource):
     @admin_endpoint(json_required=False)
@@ -685,22 +651,30 @@ class AdminAttachmentUpload(Resource):
             }
         },
         responses={
-            201: "Created - File uploaded successfully with admin privileges",
-            400: "Bad request - No file provided or invalid file type",
-            403: "Forbidden - Admin access required",
+            200: "Success - Image uploaded and attachment created",
+            400: "Bad request - No file provided, invalid format, or file too large",
+            401: "Unauthorized - Authentication required",
+            403: "Forbidden - You can only upload to your own tickets",
             404: "Not found - Ticket does not exist",
             500: "Internal Server Error - Upload failed",
-            503: "Service Unavailable - S3 storage not configured",
         }
     )
     def post(self, ticket_id: int, ticket, current_user: User, **kwargs):
         """
-        Direct ticket attachment upload (admin with access to all tickets)
+        Upload image to ticket
         """
-        from ..controllers.all_actions.upload_attachment import UploadAttachment
+        if 'file' not in request.files:
+            return error_response("No file provided", "file", 400)
 
-        controller = UploadAttachment()
-        return controller.handle_direct_upload(ticket_id, current_user.id, ticket)
+        file = request.files['file']
+
+        attachment = upload_attachment(
+            file=file,
+            ticket=ticket,
+            uploaded_by=current_user.id,
+        )
+
+        return success_response(attachment)
 
 
 

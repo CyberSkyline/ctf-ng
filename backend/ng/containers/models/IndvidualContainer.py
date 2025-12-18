@@ -2,7 +2,7 @@ from CTFd.models import db
 from CTFd.utils import get_app_config
 import docker
 from typing import TypedDict
-from ..constants import DOCKER_RUNNING, DOCKER_BRIDGE
+from ..constants import DOCKER_RUNNING, DOCKER_BRIDGE, DOCKER_MEM_REGEX
 from ..utils.get_client import get_client
 from .ContainerInstance import ContainerInstance
 
@@ -25,6 +25,10 @@ class IndvidualContainer(db.Model):
     @classmethod
     def get_user_indvidual_container(cls, user_id: int):
         return cls.query.filter_by(user=user_id).first()
+
+    @classmethod
+    def get_indvidual_container_by_dockerid(cls, docker_id: str):
+        return cls.query.filter_by(dockerid=docker_id).first()
 
     @classmethod
     def create_indvidual_container(cls, user_id: int, commit: bool = True):
@@ -80,6 +84,14 @@ class IndvidualContainer(db.Model):
 
         NOVNC_RAM = get_app_config("NOVNC_RAM", "4g")
 
+        parsed_ram = DOCKER_MEM_REGEX.match(NOVNC_RAM)
+        ram_number = int(parsed_ram.group(1))
+        ram_postfix = parsed_ram.group(2)
+
+        swap_mem = f"{round(ram_number * 1.5)}{ram_postfix}"
+        mem_resv = f"{round(ram_number * 0.8)}{ram_postfix}"
+
+
         ulimit = docker.types.Ulimit(name="nofile", soft=10000, hard=20000)
 
         net = client.get_network_by_name(container_name)
@@ -88,6 +100,9 @@ class IndvidualContainer(db.Model):
             net = client.networks.create(name=container_name, driver="bridge")
 
 
+        # I am not setting a kernel memory limit
+        # As you it is deprecated
+        # See https://github.com/torvalds/linux/commit/0158115f702b0ba208ab0b5adf44cae99b3ebcc7
         return client.containers.run(
             NOVNC_CONTAINER,
             name=container_name,
@@ -98,6 +113,8 @@ class IndvidualContainer(db.Model):
                 "SYS_PTRACE",
             ],
             mem_limit=NOVNC_RAM,
+            mem_reservation=mem_resv,
+            memswap_limit=swap_mem,
             cpu_period=200000,
             cpu_quota=100000,
             pids_limit=2000,

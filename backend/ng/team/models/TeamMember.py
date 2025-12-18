@@ -46,6 +46,8 @@ class TeamMember(db.Model):
     team = db.relationship("Team", back_populates="members")
     event = db.relationship("Event")
 
+    sponsor = db.relationship("Sponsor", secondary="ng_users", primaryjoin="TeamMember.user_id==User.id", secondaryjoin="User.sponsor_id==Sponsor.id", viewonly=True,uselist=False)
+
     def __repr__(self):
         return f"<TeamMember user={self.user_id} team={self.team_id} event={self.event_id}>"
 

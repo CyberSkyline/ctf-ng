@@ -1,6 +1,5 @@
 import { useChallenge } from '@/hooks/challenge';
 import { useEvent, useMyTeam } from '@/hooks/events';
-import { useEventPermission } from '@/hooks/permissions';
 import {
   Box,
   Button,
@@ -16,14 +15,18 @@ import ChallengeIcon from 'components/ChallengeIcon';
 import RadixMarkdown from 'components/RadixMarkdown';
 import Timer from 'components/Timer';
 import { groupBy } from 'lodash';
+import { useState } from 'react';
 import { TbArrowLeft } from 'react-icons/tb';
 import { Link, useParams } from 'react-router';
 import { mutate } from 'swr';
 import ChallengeHeader from './ChallengeHeader';
 import ChallengeQuestion from './ChallengeQuestion';
 import ConnectModal from './ConnectModal';
+import FeedbackModal from './FeedbackModal';
+import FeedbackPrompt from './FeedbackPrompt';
 import HintsModal from './HintsModal';
 import HistoryModal from './HistoryModal';
+import NotConnectedWarning from './NotConnectedWarning';
 
 export default function ChallengeSidebar() {
   const { idEvent, idChallenge } = useParams();
@@ -35,11 +38,11 @@ export default function ChallengeSidebar() {
     Number(idChallenge),
   );
 
+  const [ provisioningError, setProvisioningError ] = useState<Error | undefined>();
+
   const {
     challenge, questions, hints, attempts,
   } = data || {};
-
-  const { granted } = useEventPermission('CAN_PLAY_CHALLENGES', Number(idEvent));
 
   const groupedAttempts = groupBy(attempts || [], 'question_id');
 
@@ -98,18 +101,30 @@ export default function ChallengeSidebar() {
               </Box>
             )}
 
-            {challenge && event && granted && (
-              <Flex direction="row" gap="2" mt="3" align="center" justify="between">
-                <ConnectModal eventId={event.id} challengeId={challenge.id} isTeam={event.max_team_size > 1} />
-                <Box flexShrink="0">
-                  {hints && hints.length > 0 && <HintsModal eventId={Number(idEvent)} challengeId={Number(idChallenge)} />}
-                  {event && attempts && <HistoryModal isTeam={event.max_team_size > 1} attempts={attempts} />}
-                </Box>
-              </Flex>
+            {challenge && event && (
+              <>
+                {provisioningError && <ErrorCallout className="mt-3">{provisioningError.message}</ErrorCallout>}
+                <Flex direction="row" gap="2" mt="3" align="center" justify="between">
+                  <ConnectModal
+                    eventId={event.id}
+                    challengeId={challenge.id}
+                    isTeam={event.max_team_size > 1}
+                    onError={setProvisioningError}
+                  />
+                  <Box flexShrink="0">
+                    {hints && hints.length > 0 && <HintsModal eventId={event.id} challengeId={challenge.id} />}
+                    {attempts && <HistoryModal isTeam={event.max_team_size > 1} attempts={attempts} />}
+                    <FeedbackModal eventId={event.id} challengeId={challenge.id} />
+                  </Box>
+                </Flex>
+              </>
             )}
           </ChallengeHeader>
         </Inset>
       </Card>
+
+      {challenge && <FeedbackPrompt eventId={challenge.event_id} challengeId={challenge.id} /> }
+      {challenge && <NotConnectedWarning challenge={challenge} /> }
 
       <Card className="!flex flex-col">
         <Inset side="all" className="shrink !overflow-y-auto">

@@ -2,32 +2,33 @@
 User API routes for scoring
 """
 
+from CTFd.utils.user import get_current_user
 from flask import request
 from flask_restx import Namespace, Resource
 
-from ...core.middleware import user_endpoint, public_endpoint
+from ... import config
+from ...core.exceptions import ValidationError
+from ...core.middleware import public_endpoint, user_endpoint
 from ...core.middleware.loaders import (
     LoaderType,
-    load_event,
     load_challenge,
-    load_question,
+    load_event,
     load_hint,
-    load_team_by_user_and_event,
+    load_question,
     load_score_by_team_and_event,
+    load_team_by_user_and_event,
 )
 from ...core.middleware.permission_middleware import check_permissions
-from ...permissions.models.enums import PermissionEnum
-from ... import config
 from ...core.utils import success_response
-from ...core.exceptions import ValidationError
-
+from ...core.utils.rate_limit import limiter
+from ...permissions.controllers.get_user_roles import get_user_roles
+from ...permissions.models.enums import PermissionEnum, RoleEnum
 from ...user.models import User
-
 from ..controllers import (
     get_leaderboard,
     get_team_score,
-    submit_answer,
     redeem_hint,
+    submit_answer,
 )
 
 scoring_user_namespace = Namespace("scoring", description="Scoring operations for users")
@@ -59,7 +60,8 @@ class EventLeaderboard(Resource):
         """
         Get event leaderboard
         """
-        if event.show_leaderboard is False:
+        current_user = get_current_user()
+        if not event.show_leaderboard and not (current_user and RoleEnum.ADMIN in get_user_roles(current_user.id)):
             raise ValidationError("Leaderboard is not available for this event.")
         limit = request.args.get("limit", config.DEFAULT_LEADERBOARD_LIMIT, type=int)
         if limit < 1 or limit > config.MAX_LEADERBOARD_LIMIT:
@@ -99,6 +101,7 @@ class SubmitAnswer(Resource):
     @load_challenge(LoaderType.PARAM)
     @load_question(LoaderType.PARAM)
     @load_team_by_user_and_event()
+    @limiter.limit("1 per 1 seconds")
     @check_permissions(PermissionEnum.CAN_PLAY_CHALLENGES, "You do not have permission to play challenges.")
     @scoring_user_namespace.doc(
         description="Submit an answer to a challenge question for scoring",

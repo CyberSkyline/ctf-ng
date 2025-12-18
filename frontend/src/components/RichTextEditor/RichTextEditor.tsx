@@ -35,7 +35,7 @@ function CrepeEditor({
 
   const featureConfigs = {
     placeholder : {
-      text : 'Type here...',
+      text : `Type here... `,
       mode : 'doc' as const,
     },
   };

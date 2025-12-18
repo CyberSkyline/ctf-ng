@@ -3,7 +3,7 @@ import type { ContainerInstance, ContainerStatus, Deployment } from '@/types';
 import useSWR, { mutate } from 'swr';
 
 export function useCurrentChallengeId() {
-  return useSWR<number | null>('/container/me/current_challenge');
+  return useSWR<number | null, Error>('/container/me/current_challenge');
 }
 
 export function connectWorkspace(eventId: number, challengeId: number) {
@@ -11,7 +11,7 @@ export function connectWorkspace(eventId: number, challengeId: number) {
     method : 'POST',
   }).then(() => {
     // refresh the current challenge ID after connecting workspace
-    mutate('/container/me/current_challenge');
+    mutate('/container/me/current_challenge', challengeId);
   });
 }
 

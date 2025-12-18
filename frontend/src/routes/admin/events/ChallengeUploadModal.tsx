@@ -1,9 +1,8 @@
 import { COLOR_POSITIVE } from '@/constants';
 import { createChallenge } from '@/hooks/challenge';
 import { Button } from '@radix-ui/themes';
+import ChallengeForm from 'components/ChallengeForm';
 import Modal from 'components/Modal';
-import YamlEditor from 'components/YamlEditor';
-import { Controller } from 'react-hook-form';
 import { TbPlus } from 'react-icons/tb';
 
 export default function ChallengeUploadModal({ eventId }: { eventId: number }) {
@@ -24,20 +23,8 @@ export default function ChallengeUploadModal({ eventId }: { eventId: number }) {
       }}
       className="!max-w-[80ch]"
     >
-      {({ control }) => (
-        <Controller
-          control={control}
-          name="yaml"
-          render={
-            ({ field }) => (
-              <YamlEditor
-                value={field.value}
-                onChange={field.onChange}
-                ref={field.ref}
-              />
-            )
-          }
-        />
+      {(rhf) => (
+        <ChallengeForm rhf={rhf} />
       )}
     </Modal>
   );

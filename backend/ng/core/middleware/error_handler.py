@@ -8,6 +8,7 @@ from functools import wraps
 
 from CTFd.models import db
 from flask import current_app as app, request, session
+from flask_limiter.errors import RateLimitExceeded
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from ..exceptions import APIException
@@ -97,6 +98,10 @@ def handle_exceptions(f):
                 "database_error",
                 500,
             )
+
+        except RateLimitExceeded: # 4. Rate limiting errors
+            db.session.remove()
+            return error_response("Rate limit reached for this operation", "rate_limit", 429)
 
         except Exception as e:
             db.session.remove()

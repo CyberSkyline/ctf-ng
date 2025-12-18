@@ -135,7 +135,7 @@ class TestKickedPlayerEmailNotification:
             ).first()
 
             assert notification is not None
-            assert notification.team_id == team.id
+            assert notification.team_id is None
             assert notification.event_id == event.id
             assert notification.sender_id == captain.ctfd_user.id
             assert "Removed from Team" in notification.title

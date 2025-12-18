@@ -9,7 +9,7 @@ from datetime import datetime
 
 from CTFd.models import db
 from sqlalchemy import func
-
+from sqlalchemy.orm import joinedload
 from ... import config
 from ...core.utils import utc_now
 from ...core.exceptions import NotFoundError
@@ -19,6 +19,7 @@ from ...core.utils.cache import (
     clear_cache_for_function,
     clear_cache_for_function_with_prefix,
 )
+from ...team.models.TeamMember import TeamMember
 
 
 class SerializedScore(TypedDict):
@@ -202,14 +203,32 @@ class Score(db.Model):
                 Team.ranked.is_(True),
                 Team.start_timestamp.isnot(None),
             )
+            .options(
+                joinedload(Score.team)
+                .joinedload(Team.members)
+                .joinedload(TeamMember.sponsor)
+            )
             .order_by(cls.points.desc(), cls.last_update.asc())
         )
-
         if limit:
             query = query.limit(limit)
 
         scores = query.all()
-        return [score.serialize() for score in scores]
+        leaderboard_data = []
+        for score in scores:
+            # Deduplicate sponsors
+            sponsors_by_id = {
+                member.sponsor.id: member.sponsor.serialize()
+                for member in score.team.members
+                if member.sponsor is not None
+            }
+
+            serialized_score = score.serialize()
+            serialized_score["sponsors"] = list(sponsors_by_id.values())
+            leaderboard_data.append(serialized_score)
+
+
+        return leaderboard_data
 
     @classmethod
     def get_team_rank(cls, team_id: int) -> int | None:

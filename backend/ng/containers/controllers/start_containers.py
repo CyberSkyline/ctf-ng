@@ -1,21 +1,11 @@
-from ...team.models.Team import Team
 from ...user.models.User import User
 from ..models.ContainerInstance import ContainerInstance
 from ..models.IndvidualContainer import IndvidualContainer
-from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 from ..constants import CHALLENGER_NET_NAME
 from ...core import BusinessLogicError
 
 def start_containers(challenge_id: int, team_id: int, current_user: User) -> bool:
-    blueprints = ContainerBlueprint.query.filter_by(challenge_id=challenge_id).all()
-    team = Team.query.filter_by(id=team_id).first()
-
-    ctrs = []
-    networks = []
-    for blueprint in blueprints:
-        ctrs.append(ContainerInstance.create_container_instance(blueprint.id, team))
-        if blueprint.networks:
-            networks.extend(blueprint.networks)
+    networks = ContainerInstance.start_instance_group(challenge_id, team_id)
 
     indvidual_ctr = IndvidualContainer.create_indvidual_container(current_user.id)
     indvidual_ctr.disconnect_from_networks()

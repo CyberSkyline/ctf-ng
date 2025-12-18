@@ -238,6 +238,18 @@ export interface Ticket {
   message_count: number;
 }
 
+export interface TicketAttachment {
+  id: number;
+  ticket_id: number;
+  uploaded_at: Date;
+  uploaded_by: number;
+  content_type: string;
+  download_url: string;
+  file_size: number;
+  file_upload_id: number;
+  filename: string;
+}
+
 export interface TicketTag {
   id: number;
   name: string;
@@ -308,4 +320,22 @@ export interface ChallengeVariable {
   name: string;
   default: string;
   template: string;
+}
+
+export interface LintItem {
+  message: string;
+  field: string;
+}
+
+export type LintResult = null | {warnings: LintItem[]} | {errors: LintItem[]};
+
+export interface Feedback {
+  id: number;
+  user_id: number;
+  user_name: string;
+  event_id: number;
+  challenge_id: number;
+  feedback_data: Record<string, unknown>;
+  created_at: Date;
+  updated_at: Date;
 }

@@ -2,23 +2,24 @@
 User Routes for Event Operations
 """
 
+from CTFd.models import db
 from flask_restx import Namespace, Resource
 
-from CTFd.models import db
-from ...core.utils import utc_now
+from ...challenge.models.Challenge import Challenge
+from ...containers.controllers.recycle_containers import recycle_containers
+from ...containers.controllers.start_containers import start_containers
+from ...core.exceptions import ValidationError
 from ...core.middleware import (
-    user_endpoint,
     public_endpoint,
+    user_endpoint,
 )
 from ...core.middleware.loaders import (
-    load_user,
     LoaderType,
-    load_event,
     load_challenge,
+    load_event,
     load_team_by_user_and_event,
+    load_user,
 )
-from ...core.exceptions import ValidationError
-from ...core.utils.validator import BaseValidator
 from ...core.middleware.permission_middleware import (
     check_permissions,
     event_only_public,
@@ -26,24 +27,21 @@ from ...core.middleware.permission_middleware import (
 from ...core.utils import (
     error_response,
     success_response,
+    utc_now,
 )
+from ...core.utils.rate_limit import limiter
+from ...core.utils.validator import BaseValidator
+from ...event.models.Demographic import Demographic
+from ...event.models.Event import Event
+from ...notifications.services.notification_service import NotificationService
+from ...permissions.models.enums import PermissionEnum
+from ...team.controllers.remove_member import remove_member
+from ...team.models.Team import Team
+from ...user.models.User import User
 from ..controllers import (
     get_challenge_progress,
     join_event_controller,
 )
-from ...team.controllers.remove_member import remove_member
-
-from ...containers.controllers.start_containers import start_containers
-from ...containers.controllers.recycle_containers import recycle_containers
-
-from ...user.models.User import User
-from ...team.models.Team import Team
-from ...event.models.Event import Event
-from ...event.models.Demographic import Demographic
-from ...challenge.models.Challenge import Challenge
-from ...permissions.models.enums import PermissionEnum
-from ...notifications.services.notification_service import NotificationService
-
 
 events_user_namespace = Namespace(
     "/events",
@@ -522,9 +520,7 @@ class EventChallengeStatuses(Resource):
         return success_response(results)
 
 
-@events_user_namespace.route(
-    "/<int:event_id>/challenge/<int:challenge_id>/containers"
-)
+@events_user_namespace.route("/<int:event_id>/challenge/<int:challenge_id>/containers")
 class EventChallengeStartContainers(Resource):
     @user_endpoint()
     @load_event(source = LoaderType.PARAM)
@@ -547,6 +543,10 @@ class EventChallengeStartContainers(Resource):
 
 @events_user_namespace.route("/<int:event_id>/challenge/<int:challenge_id>/containers/recycle")
 class EventChallengeRecycleContainers(Resource):
+    @user_endpoint()
+    @load_event(source=LoaderType.PARAM)
+    @load_team_by_user_and_event()
+    @limiter.limit("1 per 5 minutes") # Note - this is per-user, not per-team
     @events_user_namespace.doc(
         description="Recycle a challenges containers",
         params={
@@ -558,10 +558,6 @@ class EventChallengeRecycleContainers(Resource):
             400: "Bad request",
         },
     )
-    @user_endpoint()
-    @load_event(source=LoaderType.PARAM)
-    @load_team_by_user_and_event()
-    def post(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event):
-        started = recycle_containers(challenge_id, team.id, current_user)
+    def post(self, team: Team, challenge_id: int, event_id: int, event: Event, **kwargs):
+        started = recycle_containers(challenge_id, team.id)
         return success_response(started)
-
