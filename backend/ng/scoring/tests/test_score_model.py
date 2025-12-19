@@ -236,6 +236,7 @@ class TestScoreRecalculate:
 class TestGetLeaderboard:
     """Test the get_leaderboard class method"""
 
+    @pytest.mark.cache
     def test_get_leaderboard_empty(self, db_session, event):
         """Test leaderboard for event with no scores"""
         leaderboard = Score.get_leaderboard(event.id)
@@ -379,6 +380,7 @@ class TestGetTeamRank:
         rank = Score.get_team_rank(999999)
         assert rank is None
 
+    @pytest.mark.cache
     def test_get_team_rank_uses_cache(self, db_session, event, score):
         """Test that get_team_rank uses cached leaderboard"""
         # Populate cache

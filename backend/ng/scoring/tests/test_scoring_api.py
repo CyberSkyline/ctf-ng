@@ -13,6 +13,7 @@ from ..models import ScoreEvent
 
 class TestUserScoringEndpoints:
     """Tests for user scoring API endpoints"""
+    @pytest.mark.cache
     def test_get_leaderboard_basic(
         self,
         logged_in_client,
@@ -32,6 +33,7 @@ class TestUserScoringEndpoints:
         points = [team["points"] for team in data["data"]]
         assert points == sorted(points, reverse = True)
 
+    @pytest.mark.cache
     def test_get_leaderboard_with_limit(
         self,
         logged_in_client,
@@ -77,6 +79,7 @@ class TestUserScoringEndpoints:
         data = response.get_json()
         assert data["success"] is False
 
+    @pytest.mark.cache
     def test_public_access_leaderboard(self, public_client, event, multiple_teams_with_scores):
         """Test that public client can access leaderboard"""
         event.show_leaderboard = True
@@ -86,6 +89,7 @@ class TestUserScoringEndpoints:
         assert data["success"] is True
         assert len(data["data"]) == 5
 
+    @pytest.mark.cache
     def test_admin_can_see_hidden_leaderboard(self, admin_client, event, multiple_teams_with_scores):
         """Test that admin can see leaderboard even when hidden"""
         event.show_leaderboard = False
