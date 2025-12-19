@@ -36,16 +36,14 @@ from ..models import (
 )
 
 
-
-# Ensure Redis or cache is cleared before each test
-import pytest
-from CTFd.cache import cache
-
 @pytest.fixture(autouse=True)
-def clear_redis_cache():
-    cache.clear()
+def clear_score_cache():
+    """Clear the memoize cache before each test"""
+    from ...core.utils.cache import _cache
+
+    _cache.clear()
     yield
-    cache.clear()
+    _cache.clear()
 
 
 class TestSubmitAnswer:
@@ -224,12 +222,12 @@ class TestRedeemHint:
         assert redemption.points == 0  # No deduction for free hint
 
 
+
 class TestGetLeaderboard:
     """Test the get_leaderboard controller"""
 
     @pytest.mark.cache
     def test_get_leaderboard_empty(self, db_session, event):
-        cache.clear()
         """Test getting leaderboard for event with no teams"""
         result = get_leaderboard(event.id)
 
@@ -237,7 +235,6 @@ class TestGetLeaderboard:
 
     @pytest.mark.cache
     def test_get_leaderboard_with_teams(self, db_session, event, multiple_teams_with_scores):
-        cache.clear()
         """Test getting leaderboard with multiple teams"""
         result = get_leaderboard(event.id)
 
@@ -248,7 +245,6 @@ class TestGetLeaderboard:
 
     @pytest.mark.cache
     def test_get_leaderboard_with_limit(self, db_session, event, multiple_teams_with_scores):
-        cache.clear()
         """Test getting leaderboard with limit"""
         result = get_leaderboard(event.id, limit=3)
 
@@ -260,7 +256,6 @@ class TestGetLeaderboard:
     # TODO - implement
     @pytest.mark.cache
     def test_get_leaderboard_tiebreak(self, db_session, event, challenge, question, multiple_teams_with_scores):
-        cache.clear()
         now = utc_now()
 
         # Set team 1 and team 2 to have the same points, break tie for team 2 for having the earlier correct submission
@@ -309,7 +304,6 @@ class TestGetLeaderboard:
 
     @pytest.mark.cache
     def test_get_leaderboard_default_limit(self, db_session, event, multiple_teams_with_scores):
-        cache.clear()
         """Test getting leaderboard with default limit"""
         result = get_leaderboard(event.id)
 
@@ -318,7 +312,6 @@ class TestGetLeaderboard:
 
     @pytest.mark.cache
     def test_get_leaderboard_has_sponsor_data(self, db_session, event_factory, sponsor_factory,user_factory,team_factory, score_factory):
-        cache.clear()
         """Test that leaderboard includes sponsor data"""
         sponsor = sponsor_factory()
         user = user_factory(sponsor=sponsor)
@@ -333,7 +326,6 @@ class TestGetLeaderboard:
 
     @pytest.mark.cache
     def test_get_leaderboard_team_has_multiple_sponsors(self, db_session, event_factory, sponsor_factory,user_factory,team_factory, score_factory):
-        cache.clear()
         """Test that leaderboard includes multiple sponsors for a team"""
         sponsor1 = sponsor_factory(name="Sponsor One")
         sponsor2 = sponsor_factory(name="Sponsor Two")
@@ -353,7 +345,6 @@ class TestGetLeaderboard:
 
     @pytest.mark.cache
     def test_get_leaderboard_many_teams_sponsors(self, db_session, sponsor_factory,event_factory, team_factory, user_factory, score_factory):
-        cache.clear()
         """Test leaderboard with many teams to check performance and correctness"""
         event = event_factory()
         sponsor = sponsor_factory(name="Bulk Sponsor")
