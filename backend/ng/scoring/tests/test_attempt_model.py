@@ -26,11 +26,12 @@ from ..models import (
 
 @pytest.fixture(autouse=True)
 def clear_score_cache():
-    """Clear the Redis leaderboard cache before each test"""
-    from ..models import Score
-    Score.clear_leaderboard_cache()
+    """Clear the memoize cache before each test"""
+    from ...core.utils.cache import _cache
+
+    _cache.clear()
     yield
-    Score.clear_leaderboard_cache()
+    _cache.clear()
 
 
 class TestAttemptRepr:

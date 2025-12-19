@@ -9,15 +9,17 @@ import pytest
 from CTFd.cache import cache
 
 from ...core.utils import utc_now
-from ..models import Score
+from ..models import Score, ScoreEvent
 
 
 @pytest.fixture(autouse=True)
 def clear_score_cache():
-    """Clear the Redis leaderboard cache before each test"""
-    Score.clear_leaderboard_cache()
+    """Clear the memoize cache before each test"""
+    from ...core.utils.cache import _cache
+
+    _cache.clear()
     yield
-    Score.clear_leaderboard_cache()
+    _cache.clear()
 
 
 class TestScoreRepr:
@@ -304,9 +306,12 @@ class TestGetLeaderboard:
         leaderboard2 = Score.get_leaderboard(fresh_event.id)
         assert len(leaderboard2) == 1  # Still cached
 
-        # Clear both CTFd cache and Redis leaderboard cache and get again
+        # Clear both CTFd cache and memoize cache and get again
         cache.clear()
-        Score.clear_leaderboard_cache(event_id=fresh_event.id)
+        from ...core.utils.cache import _cache as memoize_cache
+
+        memoize_cache.clear()
+
         leaderboard3 = Score.get_leaderboard(fresh_event.id)
         assert len(leaderboard3) == 2  # Now shows both teams
 
