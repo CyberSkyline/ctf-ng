@@ -49,7 +49,7 @@ jobs:
         working-directory: backend/ng
         run: make test-leaderboard
 
-            - name: Run Middleware Test Suite (even if main fails)
+      - name: Run Middleware Test Suite (even if main fails)
         if: always()
         working-directory: backend/ng
         run: make test-middleware
