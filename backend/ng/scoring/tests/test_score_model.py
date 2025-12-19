@@ -236,12 +236,14 @@ class TestScoreRecalculate:
 class TestGetLeaderboard:
     """Test the get_leaderboard class method"""
 
+    @pytest.mark.cache
     def test_get_leaderboard_empty(self, db_session, event):
         """Test leaderboard for event with no scores"""
         leaderboard = Score.get_leaderboard(event.id)
 
         assert leaderboard == []
 
+    @pytest.mark.cache
     def test_get_leaderboard_ordering(self, db_session, event_factory, team_factory, user_factory):
         """Test leaderboard returns teams in descending score order"""
         cache.clear()
@@ -275,6 +277,7 @@ class TestGetLeaderboard:
         assert leaderboard[1]["points"] == 200
         assert leaderboard[2]["points"] == 100
 
+    @pytest.mark.cache
     def test_get_leaderboard_caching(self, db_session, event_factory, team_factory, user_factory):
         """Test that leaderboard is cached"""
 
@@ -315,6 +318,7 @@ class TestGetLeaderboard:
         leaderboard3 = Score.get_leaderboard(fresh_event.id)
         assert len(leaderboard3) == 2  # Now shows both teams
 
+    @pytest.mark.cache
     def test_get_leaderboard_with_tied_scores(self, db_session, event_factory, team_factory, user_factory):
         """Test leaderboard handles tied scores correctly"""
         cache.clear()
@@ -376,6 +380,7 @@ class TestGetTeamRank:
         rank = Score.get_team_rank(999999)
         assert rank is None
 
+    @pytest.mark.cache
     def test_get_team_rank_uses_cache(self, db_session, event, score):
         """Test that get_team_rank uses cached leaderboard"""
         # Populate cache

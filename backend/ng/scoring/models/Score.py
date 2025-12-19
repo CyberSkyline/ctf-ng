@@ -14,12 +14,10 @@ from sqlalchemy.orm import joinedload
 from ... import config
 from ...core.exceptions import NotFoundError
 from ...core.utils import utc_now
-from ...core.utils.cache import (
-    clear_cache_for_function,
-    clear_cache_for_function_with_prefix,
-    memoize,
-)
+
 from ...core.utils.validator import BaseValidator
+from ...core.utils.cache_decorators import cache_with_args
+from ...core.utils.redis_cache import RedisCache
 from ...team.models.TeamMember import TeamMember
 
 
@@ -36,6 +34,7 @@ class SerializedScore(TypedDict):
 
 class Score(db.Model):
     __tablename__ = "ng_scores"
+
 
     id = db.Column(db.Integer, primary_key=True)
     team_id = db.Column(db.Integer, db.ForeignKey("ng_teams.id"), nullable=False, index=True)
@@ -216,8 +215,8 @@ class Score(db.Model):
         Score.clear_leaderboard_cache(event_id=self.event_id)
 
     @classmethod
-    @memoize(timeout=config.LEADERBOARD_CACHE_TIMEOUT if hasattr(config, "LEADERBOARD_CACHE_TIMEOUT") else 60)
-    def get_leaderboard(cls, event_id: int, limit: int | None = None) -> list[SerializedScore]:
+    @cache_with_args(ttl=config.LEADERBOARD_CACHE_TIMEOUT)
+    def get_leaderboard(cls, event_id: int, limit: int | None = None, cache_key: str = None) -> list[SerializedScore]:
         """Get the leaderboard for an event, sorted by points descending
 
         Args:
@@ -229,6 +228,8 @@ class Score(db.Model):
         """
         # LAZY-IMPORT
         from ...team.models.Team import Team
+        if cache_key is None:
+            cache_key = f"leaderboard:{event_id}:{limit if limit is not None else 'all'}"
         query = (
             cls.query
             .join(cls.team)
@@ -338,10 +339,23 @@ class Score(db.Model):
         """
         Clear leaderboard cache for specific event or all events
         """
+
+        def _delete_pattern(client, pattern):
+            try:
+                keys = client.keys(pattern)
+                if keys:
+                    for k in keys:
+                        client.delete(k)
+                return True
+            except Exception:
+                return False
+
         if event_id is None:
-            clear_cache_for_function("get_leaderboard")
+            # Clear all leaderboard caches
+            RedisCache._execute_with_retry(lambda client: _delete_pattern(client, "leaderboard:*"))
         else:
-            clear_cache_for_function_with_prefix("get_leaderboard", f"({event_id},")
+            # Clear caches for this specific event
+            RedisCache._execute_with_retry(lambda client: _delete_pattern(client, f"leaderboard:{event_id}:*"))
 
 
     def delete(self, commit: bool = True) -> None:
