@@ -6,6 +6,7 @@ import { Spinner } from '@radix-ui/themes';
 import type { ColDef } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import { ErrorCallout } from 'components/Callouts';
+import DeleteAttemptModal from 'components/DeleteAttemptModal';
 import Entity from 'components/Entity';
 import TeamActivityTypeBadge from 'components/TeamActivityTypeBadge';
 import { useMemo } from 'react';
@@ -111,6 +112,26 @@ const colDefs: ColDef<Attempt | HintRedemption | ManualPointAward>[] = [
     field : 'reason',
     filter : true,
     floatingFilter : true,
+  },
+  {
+    headerName : 'Actions',
+    type : 'rightAligned',
+    pinned : 'right',
+    width : 100,
+    cellRendererSelector : ({ data }) => {
+      if (!data) return undefined;
+
+      if ('is_correct' in data) {
+        return {
+          component : DeleteAttemptModal,
+          params : {
+            attempt : data,
+          },
+        };
+      }
+
+      return undefined;
+    },
   },
 ];
 

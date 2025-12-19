@@ -47,3 +47,12 @@ export function adjustPoints(eventId: number, teamId: number, points: number, re
     mutate(`/admin/scoring/events/${eventId}/teams/${teamId}/manual_awards`);
   });
 }
+
+export function deleteAttempt(attemptId: number, eventId: number, challengeId: number, teamId: number) {
+  return apiMutation(`/admin/scoring/attempts/${attemptId}`, undefined, {
+    method : 'DELETE',
+  }).then(() => {
+    mutate(`/admin/scoring/events/${eventId}/teams/${teamId}/attempts`);
+    mutate(`/admin/challenges/${challengeId}/attempts`);
+  });
+}
