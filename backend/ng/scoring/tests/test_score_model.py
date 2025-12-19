@@ -6,19 +6,20 @@ from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import pytest
-from ...core.utils.redis_cache import RedisCache
+from CTFd.cache import cache
 
 from ...core.utils import utc_now
 from ..models import Score, ScoreEvent
 
 
 @pytest.fixture(autouse=True)
-@pytest.mark.cache
-def clear_redis_cache():
-    """Clear the Redis cache before each test"""
-    RedisCache._execute_with_retry(lambda client: client.flushdb())
+def clear_score_cache():
+    """Clear the memoize cache before each test"""
+    from ...core.utils.cache import _cache
+
+    _cache.clear()
     yield
-    RedisCache._execute_with_retry(lambda client: client.flushdb())
+    _cache.clear()
 
 
 class TestScoreRepr:
@@ -307,9 +308,11 @@ class TestGetLeaderboard:
         leaderboard2 = Score.get_leaderboard(fresh_event.id)
         assert len(leaderboard2) == 1  # Still cached
 
-
-        # Clear Redis cache and get again
+        # Clear both CTFd cache and memoize cache and get again
         cache.clear()
+        from ...core.utils.cache import _cache as memoize_cache
+
+        memoize_cache.clear()
 
         leaderboard3 = Score.get_leaderboard(fresh_event.id)
         assert len(leaderboard3) == 2  # Now shows both teams
