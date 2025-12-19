@@ -3,11 +3,13 @@ Centralized error handling for the entire Flask application.
 Provides a unified decorator and a global registration function.
 """
 
+import sys
 import traceback
 from functools import wraps
 
 from CTFd.models import db
-from flask import current_app as app, request, session
+from flask import current_app as app
+from flask import request, session
 from flask_limiter.errors import RateLimitExceeded
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
@@ -16,6 +18,18 @@ from ..utils import error_response
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+def _get_small_traceback(limit = 3) -> str:
+    exc_type, exc, tb = sys.exc_info()
+    if tb is None:
+        return ""
+
+    frames = traceback.extract_tb(tb)
+
+    # Most recent call first, limit frames
+    frames = frames[-limit:][::-1]
+
+    return ''.join(traceback.format_list(frames))
 
 
 def _get_request_context() -> dict:
@@ -71,7 +85,8 @@ def handle_exceptions(f):
                     "context": {
                         "error": str(e.orig) if hasattr(e, "orig") else str(e),
                         **_get_request_context(),
-                    }
+                    },
+                    "trace": _get_small_traceback()
                 },
             )
             return error_response(
@@ -89,7 +104,8 @@ def handle_exceptions(f):
                     "context": {
                         "error_type": type(e).__name__,
                         **_get_request_context(),
-                    }
+                    },
+                    "trace": _get_small_traceback()
                 },
                 exc_info=True,
             )
@@ -109,6 +125,7 @@ def handle_exceptions(f):
                 f"Unexpected error: {type(e).__name__}: {str(e)}",
                 extra={
                     "context": _get_request_context(),
+                    "trace": _get_small_traceback(),
                 },
                 exc_info=True,
             )

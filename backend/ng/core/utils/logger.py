@@ -2,11 +2,11 @@
 Configures a JSON logger for machine readable app logging.
 """
 
-import os
 import json
 import logging
+import os
 import sys
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 
 def utc_now() -> datetime:
@@ -30,6 +30,9 @@ class JSONFormatter(logging.Formatter):
 
         if hasattr(record, "context") and record.context:
             log_entry["context"] = record.context
+
+        if hasattr(record, "trace") and record.trace:
+            log_entry["trace"] = record.trace
 
         return json.dumps(log_entry)
 
