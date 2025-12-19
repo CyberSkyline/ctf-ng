@@ -16,7 +16,6 @@ from ...core.exceptions import NotFoundError
 from ...core.utils import utc_now
 
 from ...core.utils.validator import BaseValidator
-from ...core.utils.validator import BaseValidator
 from ...core.middleware.cache_decorators import cache_with_args
 from ...core.utils.redis_cache import RedisCache
 from ...team.models.TeamMember import TeamMember
