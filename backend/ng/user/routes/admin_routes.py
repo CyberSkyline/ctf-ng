@@ -224,6 +224,20 @@ class UserIndvidualContainerRecycle(Resource):
         res = indvidual_container.serialize()
         return success_response(res)
 
+@users_admin_namespace.route("/<int:user_id>/container/delete")
+class UserIndvidualContainerDelete(Resource):
+    @admin_endpoint()
+    @users_admin_namespace.doc(
+        description="Delete a user's indvidual container as well as the db object",
+        responses={
+            200: "Sucess",
+            400: "Bad request"
+        }
+    )
+    @load_indvidual_container_by_user()
+    def post(self, user_id, indvidual_container, **kwargs):
+        indvidual_container.delete()
+        return success_response(True)
 
 @users_admin_namespace.route("/<int:user_id>/ban")
 class UserBan(Resource):

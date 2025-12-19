@@ -377,6 +377,25 @@ class ContainerInstance(db.Model):
         else:
             raise BusinessLogicError("Challenge is already being started/reset")
 
+    @classmethod
+    def stop_instance_group(cls, challenge_id: int, team_id: int):
+        instances = cls.get_instance_group(challenge_id, team_id)
+        for instance in instances:
+            instance.stop()
+
+    @classmethod
+    def delete_instance_group(cls, challenge_id: int, team_id: int):
+        instances = cls.get_instance_group(challenge_id, team_id)
+        try:
+            cls.remove_instance_group(challenge_id, team_id)
+
+            for instance in instances:
+                instance.delete(commit=False, remove_docker_ctr=False)
+
+        except Exception:
+            db.session.rollback()
+        db.session.commit()
+
     def logs(self, tail: int = 200) -> str:
         DOCKER_HOST = get_app_config("DOCKER_HOST")
         client = get_client(DOCKER_HOST)
@@ -452,8 +471,31 @@ class ContainerInstance(db.Model):
 
             self.dockerid = new_ctr.id
             db.session.commit()
+
     def remove(self):
         client = get_client(self.hostip)
 
-        ctr = client.containers.get(self.dockerid)
-        ctr.remove(force=True)
+        try:
+            ctr = client.containers.get(self.dockerid)
+            ctr.remove(force=True)
+        except docker.errors.NotFound:
+            pass
+
+    def stop(self):
+        client = get_client(self.hostip)
+        try:
+            ctr = client.containers.get(self.dockerid)
+            ctr.stop(timeout=5)
+        except docker.errors.NotFound:
+            pass
+
+    def delete(self, remove_docker_ctr=True, commit=True):
+        if remove_docker_ctr:
+            self.remove()
+
+        db.session.delete(self)
+
+        if commit:
+            db.session.commit()
+
+

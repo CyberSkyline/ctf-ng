@@ -14,6 +14,8 @@ import { ErrorCallout, InfoCallout } from 'components/Callouts';
 import { useId } from 'react';
 import { TbVariable } from 'react-icons/tb';
 import ServiceCard from './ServiceCard';
+import RecycleDeploymentModal from './RecycleDeploymentModal';
+import DeleteDeploymentModal from './DeleteDeploymentModal';
 
 export default function DeploymentSidebar({ entity }: {entity: Deployment}) {
   const { data : serviceData, error } = useDeploymentServices(entity.challenge_id, entity.team_id);
@@ -48,6 +50,8 @@ export default function DeploymentSidebar({ entity }: {entity: Deployment}) {
       </AdminSidebarHeader>
 
       <AdminSidebarHeader title="Services" />
+      <RecycleDeploymentModal challengeId={entity.challenge_id} teamId={entity.team_id} />
+      <DeleteDeploymentModal challengeId={entity.challenge_id} teamId={entity.team_id} />
       {error && <ErrorCallout>{error.message}</ErrorCallout>}
       <Skeleton loading={!serviceData}>
         <Grid columns="2" gap="2">

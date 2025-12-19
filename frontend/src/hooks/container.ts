@@ -71,3 +71,20 @@ export function recycleContainer(containerId: number) {
     mutate(`/admin/container/${containerId}/status`);
   });
 }
+
+export function recycleDeployment(challengeId: number, teamId: number) {
+  return apiMutation(`/admin/container/challenge/${challengeId}/team/${teamId}/recycle`, undefined, {
+    method : 'POST',
+  }).then(() => {
+    mutate(`/admin/container/challenge/${challengeId}/team/${teamId}/services`);
+  });
+}
+
+export function deleteDeployment(challengeId: number, teamId: number) {
+  return apiMutation(`/admin/container/challenge/${challengeId}/team/${teamId}/delete`, undefined, {
+    method : 'POST',
+  }).then(() => {
+    mutate(`/admin/container/challenge/${challengeId}/team/${teamId}/services`);
+    mutate('/admin/container/');
+  });
+}

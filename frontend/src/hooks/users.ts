@@ -177,6 +177,12 @@ export function recycleWorkspace(userId : number) {
   });
 }
 
+export function deleteWorkspace(userId : number) {
+  return apiMutation(`/admin/users/${userId}/container/delete`, undefined, {
+    method : 'POST',
+  }).then(() => mutate(`/admin/users/${userId}/container/status`));
+}
+
 export function impersonateUser(userId: number) {
   return apiMutation('/admin/impersonate', { user_id : userId }, {
     method : 'POST',
