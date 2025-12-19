@@ -14,11 +14,7 @@ from sqlalchemy.orm import joinedload
 from ... import config
 from ...core.exceptions import NotFoundError
 from ...core.utils import utc_now
-from ...core.utils.cache import (
-    clear_cache_for_function,
-    clear_cache_for_function_with_prefix,
-    memoize,
-)
+
 from ...core.utils.validator import BaseValidator
 from ...core.utils.validator import BaseValidator
 from ...core.middleware.cache_decorators import cache_with_args
@@ -341,17 +337,23 @@ class Score(db.Model):
         """
         Clear leaderboard cache for specific event or all events
         """
+
+        def _delete_pattern(client, pattern):
+            try:
+                keys = client.keys(pattern)
+                if keys:
+                    for k in keys:
+                        client.delete(k)
+                return True
+            except Exception:
+                return False
+
         if event_id is None:
-            # Clear all leaderboard caches - this is harder with Redis pattern matching
-            # For now, we'll clear specific common limits
-            for limit in [None, 10, 25, 50, 100, 250, 500]:
-                cache_key = f"leaderboard:{event_id}:{limit}"
-                RedisCache.delete(cache_key)
+            # Clear all leaderboard caches
+            RedisCache._execute_with_retry(lambda client: _delete_pattern(client, "leaderboard:*"))
         else:
-            # Clear caches for this specific event with common limits
-            for limit in [None, 10, 25, 50, 100, 250, 500]:
-                cache_key = f"leaderboard:{event_id}:{limit}"
-                RedisCache.delete(cache_key)
+            # Clear caches for this specific event
+            RedisCache._execute_with_retry(lambda client: _delete_pattern(client, f"leaderboard:{event_id}:*"))
 
 
     def delete(self, commit: bool = True) -> None:

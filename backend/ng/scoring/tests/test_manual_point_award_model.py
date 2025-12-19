@@ -19,12 +19,11 @@ from ..models import (
 
 @pytest.fixture(autouse=True)
 def clear_score_cache():
-    """Clear the memoize cache before each test"""
-    from ...core.utils.cache import _cache
-
-    _cache.clear()
+    """Clear the Redis leaderboard cache before each test"""
+    from ..models import Score
+    Score.clear_leaderboard_cache()
     yield
-    _cache.clear()
+    Score.clear_leaderboard_cache()
 
 
 class TestManualPointAwardRepr:
