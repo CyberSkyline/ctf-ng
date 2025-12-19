@@ -14,8 +14,8 @@ import { ErrorCallout, InfoCallout } from 'components/Callouts';
 import { useId } from 'react';
 import { TbVariable } from 'react-icons/tb';
 import ServiceCard from './ServiceCard';
-import RecycleDeploymentModal from './RecycleDeploymentModal'
-import DeleteDeploymentModal from './DeleteDeploymentModal'
+import RecycleDeploymentModal from './RecycleDeploymentModal';
+import DeleteDeploymentModal from './DeleteDeploymentModal';
 
 export default function DeploymentSidebar({ entity }: {entity: Deployment}) {
   const { data : serviceData, error } = useDeploymentServices(entity.challenge_id, entity.team_id);

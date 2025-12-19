@@ -3,7 +3,7 @@ import { deleteDeployment } from '@/hooks/container';
 import { Button, Text } from '@radix-ui/themes';
 import Modal from 'components/Modal';
 import { TbTrash } from 'react-icons/tb';
-import { WarningCallout } from 'components/Callouts'
+import { WarningCallout } from 'components/Callouts';
 
 export default function DeleteDeploymentModal({ challengeId, teamId }: {challengeId: number, teamId : number}) {
   return (

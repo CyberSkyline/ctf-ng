@@ -3,7 +3,7 @@ import { deleteWorkspace } from '@/hooks/users';
 import { Button, Text } from '@radix-ui/themes';
 import Modal from 'components/Modal';
 import { TbTrash } from 'react-icons/tb';
-import { WarningCallout } from 'components/Callouts'
+import { WarningCallout } from 'components/Callouts';
 
 export default function DeleteWorkspaceModal({ userId }: {userId: number}) {
   return (

@@ -238,8 +238,6 @@ class UserIndvidualContainerDelete(Resource):
     def post(self, user_id, indvidual_container, **kwargs):
         indvidual_container.delete()
         return success_response(True)
- 
-
 
 @users_admin_namespace.route("/<int:user_id>/ban")
 class UserBan(Resource):

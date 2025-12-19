@@ -3,7 +3,7 @@ import { recycleDeployment } from '@/hooks/container';
 import { Button, Text } from '@radix-ui/themes';
 import Modal from 'components/Modal';
 import { TbRecycle } from 'react-icons/tb';
-import { WarningCallout } from 'components/Callouts'
+import { WarningCallout } from 'components/Callouts';
 
 export default function RecycleDeploymentModal({ challengeId, teamId }: {challengeId: number, teamId : number}) {
   return (
