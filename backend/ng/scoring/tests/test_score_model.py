@@ -242,6 +242,7 @@ class TestGetLeaderboard:
 
         assert leaderboard == []
 
+    @pytest.mark.cache
     def test_get_leaderboard_ordering(self, db_session, event_factory, team_factory, user_factory):
         """Test leaderboard returns teams in descending score order"""
         cache.clear()
@@ -275,6 +276,7 @@ class TestGetLeaderboard:
         assert leaderboard[1]["points"] == 200
         assert leaderboard[2]["points"] == 100
 
+    @pytest.mark.cache
     def test_get_leaderboard_caching(self, db_session, event_factory, team_factory, user_factory):
         """Test that leaderboard is cached"""
 
@@ -315,6 +317,7 @@ class TestGetLeaderboard:
         leaderboard3 = Score.get_leaderboard(fresh_event.id)
         assert len(leaderboard3) == 2  # Now shows both teams
 
+    @pytest.mark.cache
     def test_get_leaderboard_with_tied_scores(self, db_session, event_factory, team_factory, user_factory):
         """Test leaderboard handles tied scores correctly"""
         cache.clear()

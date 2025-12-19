@@ -35,6 +35,7 @@ class SerializedScore(TypedDict):
 class Score(db.Model):
     __tablename__ = "ng_scores"
 
+
     id = db.Column(db.Integer, primary_key=True)
     team_id = db.Column(db.Integer, db.ForeignKey("ng_teams.id"), nullable=False, index=True)
     event_id = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)

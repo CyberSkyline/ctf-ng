@@ -36,14 +36,16 @@ from ..models import (
 )
 
 
-@pytest.fixture(autouse=True)
-def clear_score_cache():
-    """Clear the memoize cache before each test"""
-    from ...core.utils.cache import _cache
 
-    _cache.clear()
+# Ensure Redis or cache is cleared before each test
+import pytest
+from CTFd.cache import cache
+
+@pytest.fixture(autouse=True)
+def clear_redis_cache():
+    cache.clear()
     yield
-    _cache.clear()
+    cache.clear()
 
 
 class TestSubmitAnswer:
@@ -225,13 +227,17 @@ class TestRedeemHint:
 class TestGetLeaderboard:
     """Test the get_leaderboard controller"""
 
+    @pytest.mark.cache
     def test_get_leaderboard_empty(self, db_session, event):
+        cache.clear()
         """Test getting leaderboard for event with no teams"""
         result = get_leaderboard(event.id)
 
         assert result == []
 
+    @pytest.mark.cache
     def test_get_leaderboard_with_teams(self, db_session, event, multiple_teams_with_scores):
+        cache.clear()
         """Test getting leaderboard with multiple teams"""
         result = get_leaderboard(event.id)
 
@@ -240,7 +246,9 @@ class TestGetLeaderboard:
         assert result[0]["points"] >= result[1]["points"]
         assert result[1]["points"] >= result[2]["points"]
 
+    @pytest.mark.cache
     def test_get_leaderboard_with_limit(self, db_session, event, multiple_teams_with_scores):
+        cache.clear()
         """Test getting leaderboard with limit"""
         result = get_leaderboard(event.id, limit=3)
 
@@ -250,7 +258,9 @@ class TestGetLeaderboard:
         assert result[1]["points"] >= result[2]["points"]
 
     # TODO - implement
+    @pytest.mark.cache
     def test_get_leaderboard_tiebreak(self, db_session, event, challenge, question, multiple_teams_with_scores):
+        cache.clear()
         now = utc_now()
 
         # Set team 1 and team 2 to have the same points, break tie for team 2 for having the earlier correct submission
@@ -297,14 +307,18 @@ class TestGetLeaderboard:
         assert result[4]["team_id"] == score5.team_id
 
 
+    @pytest.mark.cache
     def test_get_leaderboard_default_limit(self, db_session, event, multiple_teams_with_scores):
+        cache.clear()
         """Test getting leaderboard with default limit"""
         result = get_leaderboard(event.id)
 
         # Should return all teams (5 in this case)
         assert len(result) == 5
 
+    @pytest.mark.cache
     def test_get_leaderboard_has_sponsor_data(self, db_session, event_factory, sponsor_factory,user_factory,team_factory, score_factory):
+        cache.clear()
         """Test that leaderboard includes sponsor data"""
         sponsor = sponsor_factory()
         user = user_factory(sponsor=sponsor)
@@ -317,7 +331,9 @@ class TestGetLeaderboard:
         assert len(result) == 1
         assert "sponsors" in result[0]
 
+    @pytest.mark.cache
     def test_get_leaderboard_team_has_multiple_sponsors(self, db_session, event_factory, sponsor_factory,user_factory,team_factory, score_factory):
+        cache.clear()
         """Test that leaderboard includes multiple sponsors for a team"""
         sponsor1 = sponsor_factory(name="Sponsor One")
         sponsor2 = sponsor_factory(name="Sponsor Two")
@@ -335,7 +351,9 @@ class TestGetLeaderboard:
         assert "Sponsor One" in sponsor_names
         assert "Sponsor Two" in sponsor_names
 
+    @pytest.mark.cache
     def test_get_leaderboard_many_teams_sponsors(self, db_session, sponsor_factory,event_factory, team_factory, user_factory, score_factory):
+        cache.clear()
         """Test leaderboard with many teams to check performance and correctness"""
         event = event_factory()
         sponsor = sponsor_factory(name="Bulk Sponsor")
@@ -561,6 +579,7 @@ class TestRecalculateScore:
 class TestControllerIntegration:
     """Integration tests for multiple controllers working together"""
 
+    @pytest.mark.cache
     def test_complete_scoring_flow(
         self, db_session, user, team_with_member, event, challenge, question, hint, admin, score
     ):

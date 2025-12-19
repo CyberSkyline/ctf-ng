@@ -25,6 +25,7 @@ from ..models import (
 
 
 @pytest.fixture(autouse=True)
+@pytest.mark.cache
 def clear_score_cache():
     """Clear the memoize cache before each test"""
     from ...core.utils.cache import _cache

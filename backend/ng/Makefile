@@ -22,8 +22,14 @@ test-aws-upload:
 
 
 # All tests
+
+# All tests except cache-marked
 test-all:
-	$(PYTHON_EXEC) -m pytest -m "not middleware" --ignore-glob="**/*e2e*" -v
+	$(PYTHON_EXEC) -m pytest -m "not middleware and not cache" --ignore-glob="**/*e2e*" -v
+
+# All tests including cache-marked (sets CI=true)
+test-all-ci:
+	CI=true $(PYTHON_EXEC) -m pytest -m "not middleware" --ignore-glob="**/*e2e*" -v
 
 test-validation:
 	$(PYTHON_EXEC) -m pytest -v $(shell find . -name "test_*_validation.py")
@@ -80,9 +86,8 @@ test-sponsors:
 test-fileuploads:
 	$(PYTHON_EXEC) -m pytest fileuploads/tests -v
 
-# S3 Integration Tests (separate from main suite)
-	$(PYTHON_EXEC) -m pytest -m s3 -v
-
+test-leaderboard:
+	$(PYTHON_EXEC) -m pytest -m "not cache" ./scoring/tests/ -v
 		
 test-middleware:
 	$(PYTHON_EXEC) -m pytest -m middleware . -v
