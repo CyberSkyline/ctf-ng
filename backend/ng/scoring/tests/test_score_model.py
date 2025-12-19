@@ -9,13 +9,12 @@ import pytest
 from CTFd.cache import cache
 
 from ...core.utils import utc_now
-from ..models import Score, ScoreEvent
+from ..models import Score
 
 
 @pytest.fixture(autouse=True)
 def clear_score_cache():
     """Clear the Redis leaderboard cache before each test"""
-    from ..models import Score
     Score.clear_leaderboard_cache()
     yield
     Score.clear_leaderboard_cache()
@@ -307,7 +306,6 @@ class TestGetLeaderboard:
 
         # Clear both CTFd cache and Redis leaderboard cache and get again
         cache.clear()
-        from ..models import Score
         Score.clear_leaderboard_cache(event_id=fresh_event.id)
         leaderboard3 = Score.get_leaderboard(fresh_event.id)
         assert len(leaderboard3) == 2  # Now shows both teams
