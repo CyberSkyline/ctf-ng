@@ -16,7 +16,7 @@ from ...core.exceptions import NotFoundError
 from ...core.utils import utc_now
 
 from ...core.utils.validator import BaseValidator
-from ...core.middleware.cache_decorators import cache_with_args
+from ...core.utils.cache_decorators import cache_with_args
 from ...core.utils.redis_cache import RedisCache
 from ...team.models.TeamMember import TeamMember
 
@@ -215,8 +215,8 @@ class Score(db.Model):
         Score.clear_leaderboard_cache(event_id=self.event_id)
 
     @classmethod
-    @cache_with_args("leaderboard:{}:{}", ttl=config.LEADERBOARD_CACHE_TIMEOUT if hasattr(config, "LEADERBOARD_CACHE_TIMEOUT") else 60)
-    def get_leaderboard(cls, event_id: int, limit: int | None = None) -> list[SerializedScore]:
+    @cache_with_args(ttl=config.LEADERBOARD_CACHE_TIMEOUT)
+    def get_leaderboard(cls, event_id: int, limit: int | None = None, cache_key: str = None) -> list[SerializedScore]:
         """Get the leaderboard for an event, sorted by points descending
 
         Args:
@@ -228,6 +228,8 @@ class Score(db.Model):
         """
         # LAZY-IMPORT
         from ...team.models.Team import Team
+        if cache_key is None:
+            cache_key = f"leaderboard:{event_id}:{limit if limit is not None else 'all'}"
         query = (
             cls.query
             .join(cls.team)
