@@ -22,17 +22,15 @@ from ..models import (
     Score,
     ScoreEvent,
 )
-
+from ...core.utils.redis_cache import RedisCache
 
 @pytest.fixture(autouse=True)
 @pytest.mark.cache
-def clear_score_cache():
-    """Clear the memoize cache before each test"""
-    from ...core.utils.cache import _cache
-
-    _cache.clear()
+def clear_redis_cache():
+    """Clear the Redis cache before each test"""
+    RedisCache._execute_with_retry(lambda client: client.flushdb())
     yield
-    _cache.clear()
+    RedisCache._execute_with_retry(lambda client: client.flushdb())
 
 
 class TestAttemptRepr:
