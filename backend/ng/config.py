@@ -98,3 +98,11 @@ CONTAINER_REGISTRY_PASSWORD = ""
 # Email notification URL paths - Frontend routes
 TICKET_URL_PATH = "/support"
 ADMIN_TICKET_URL_PATH = "/admin/tickets"
+
+# Feedback Model Field Length Limits
+FEEDBACK_MAX_KEYS = 50
+FEEDBACK_MAX_DATA_SIZE = 50000  # 50KB max for entire serialized feedback_data object
+
+# Global request size limit (Flask MAX_CONTENT_LENGTH)
+# Limits POST body size before parsing to prevent DoS from large payloads
+MAX_REQUEST_SIZE = 16 * 1024 * 1024  # 16MB

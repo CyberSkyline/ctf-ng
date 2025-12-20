@@ -12,6 +12,7 @@ from sqlalchemy import JSON
 from ...core.utils import utc_now
 from ...core.exceptions import ValidationError
 from ...core.utils.validator import BaseValidator
+from ... import config
 
 
 
@@ -93,6 +94,27 @@ class Feedback(db.Model):
         }
 
     @classmethod
+    def _validate_feedback_data(cls, feedback_data: dict[str, Any]) -> None:
+        """
+        Validate the dynamic feedback_data JSON object.
+        Enforces limits on number of keys and total serialized size.
+        """
+        import json
+
+        if len(feedback_data) > config.FEEDBACK_MAX_KEYS:
+            raise ValidationError(
+                f"Feedback data cannot have more than {config.FEEDBACK_MAX_KEYS} fields",
+                errors={"feedback_data": f"Too many fields (max {config.FEEDBACK_MAX_KEYS})"}
+            )
+
+        serialized_size = len(json.dumps(feedback_data))
+        if serialized_size > config.FEEDBACK_MAX_DATA_SIZE:
+            raise ValidationError(
+                f"Feedback data exceeds maximum size of {config.FEEDBACK_MAX_DATA_SIZE} characters",
+                errors={"feedback_data": f"Data too large (max {config.FEEDBACK_MAX_DATA_SIZE} characters)"}
+            )
+
+    @classmethod
     def validate(cls, data: dict[str, Any]) -> dict[str, Any]:
         """
         Validate feedback data
@@ -114,6 +136,8 @@ class Feedback(db.Model):
                              ] = "Feedback data must be a valid object"
 
         validated_data = validator.validate()
+
+        cls._validate_feedback_data(data.get("feedback_data", {}))
         validated_data["feedback_data"] = data.get("feedback_data", {})
 
         return validated_data
@@ -162,6 +186,8 @@ class Feedback(db.Model):
     ) -> None:
         if not isinstance(feedback_data, dict):
             raise ValidationError("Feedback data must be a dictionary")
+
+        self._validate_feedback_data(feedback_data)
 
         self.feedback_data = feedback_data
         self.updated_at = utc_now()

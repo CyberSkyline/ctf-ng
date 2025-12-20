@@ -10,7 +10,7 @@ from ...core.utils import utc_now
 
 class TestUserFeedbackEndpoints:
     """
-    Tests for user feedback API endpoints
+    Test for user feedback API endpoints
     """
     def test_submit_event_feedback_new(self, logged_in_client, user, event, team_with_member: Team):
         """
@@ -703,3 +703,55 @@ class TestUserFeedbackEndpoints:
         assert data["data"][0]["user_id"] == user3.id
         assert data["data"][1]["user_id"] == user2.id
         assert data["data"][2]["user_id"] == user1.id
+
+    def test_submit_feedback_data_too_large(self, logged_in_client, event, team_with_member: Team):
+        """
+        Test that submitting feedback exceeding max serialized size fails
+        """
+        team_with_member.start_timestamp = utc_now() - timedelta(hours = 1)
+        team_with_member.end_timestamp = utc_now() - timedelta(minutes = 30)
+
+        long_string = "A" * 50001
+
+        response = logged_in_client.post(
+            f"/ng/events/{event.id}/feedback",
+            json = {"feedback_data": {"comments": long_string}},
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        assert "50000" in str(data["errors"])
+
+    def test_update_feedback_data_too_large(
+        self,
+        logged_in_client,
+        user,
+        event,
+        team_with_member: Team,
+        feedback_factory
+    ):
+        """
+        Test that updating feedback exceeding max serialized size fails
+        """
+        team_with_member.start_timestamp = utc_now() - timedelta(hours = 1)
+        team_with_member.end_timestamp = utc_now() - timedelta(minutes = 30)
+
+        feedback_factory(
+            user_id = user.id,
+            event_id = event.id,
+            challenge_id = None,
+            feedback_data = {"rating": 3},
+        )
+
+        long_string = "A" * 50001
+
+        response = logged_in_client.post(
+            f"/ng/events/{event.id}/feedback",
+            json = {"feedback_data": {"comments": long_string}},
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+        assert "50000" in str(data["errors"])

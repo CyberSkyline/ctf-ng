@@ -5,6 +5,7 @@ from typing import Any
 from CTFd.models import db
 from flask_socketio import SocketIO
 
+from . import config
 from .announcements.models.Announcement import Announcement  # noqa: F401
 from .challenge.models.Challenge import Challenge  # noqa: F401
 from .challenge.models.ChallengeTag import ChallengeTag  # noqa: F401
@@ -52,6 +53,8 @@ def load(app: Any) -> None:
         remove_registered_errorhandlers(app)
 
         logger.info("Loading plugin", extra={"context": {"stage": "initialization"}})
+
+        app.config['MAX_CONTENT_LENGTH'] = config.MAX_REQUEST_SIZE
 
         db.create_all()
 
