@@ -22,6 +22,7 @@ from sqlalchemy.orm import Mapped
 
 from ... import config
 from ...core.exceptions import (
+    BusinessLogicError,
     ConflictError,
     ValidationError,
 )
@@ -331,6 +332,9 @@ class Team(db.Model):
             raise ConflictError(
                 f"Cannot add member: team '{self.name}' is full ({self.member_count}/{event.max_team_size})"
             )
+
+        if self.end_time is not None:
+            raise BusinessLogicError("Cannot join a team that has already finished the event")
 
         member = TeamMember.create_team_member(
             user_id=user_id,

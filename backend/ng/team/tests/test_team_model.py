@@ -2,7 +2,7 @@ import pytest
 # from unittest.mock import patch
 # from sqlalchemy.exc import IntegrityError
 
-from ...core.exceptions import ValidationError
+from ...core.exceptions import ValidationError, BusinessLogicError
 from datetime import datetime
 from ..models.Team import Team
 from ..models.TeamMember import TeamMember
@@ -274,4 +274,22 @@ class Test_Setting_Team_End_Time:
 
         assert refreshed_team.end_time is not None
         assert str(refreshed_team.end_time) == "2024-12-31 23:59:59"
+
+
+class Test_Join_Finished_Team:
+    def test_cannot_join_team_that_has_finished(self, team_factory, user_factory):
+        """
+        Test that joining a team with end_time set raises BusinessLogicError
+        """
+        user1 = user_factory(name="Captain", email="captain@test.com")
+        team = team_factory(members=[user1])
+
+        team.set_end_time(end_time=datetime(2024, 12, 31, 23, 59, 59))
+
+        user2 = user_factory(name="New User", email="newuser@test.com")
+
+        with pytest.raises(BusinessLogicError) as exc_info:
+            team.add_member(user2.id)
+
+        assert "finished" in str(exc_info.value).lower()
 
