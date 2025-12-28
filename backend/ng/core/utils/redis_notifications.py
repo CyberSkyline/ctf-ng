@@ -3,7 +3,6 @@ Redis pub/sub system for inter-server notification communication
 """
 
 import json
-import threading
 import time
 import redis
 from flask import current_app
