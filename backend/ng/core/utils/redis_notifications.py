@@ -103,11 +103,7 @@ class RedisNotificationManager:
             )
             return
 
-        self.subscriber_thread = threading.Thread(
-            target = self._subscriber_worker,
-            daemon = True
-        )
-        self.subscriber_thread.start()
+        self.socketio.start_background_task(self._subscriber_worker)
         logger.info("Redis notification subscriber started")
 
     def _subscriber_worker(self):
