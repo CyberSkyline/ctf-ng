@@ -333,7 +333,7 @@ class Team(db.Model):
                 f"Cannot add member: team '{self.name}' is full ({self.member_count}/{event.max_team_size})"
             )
 
-        if self.end_time is not None:
+        if self.end_time is not None and datetime.utcnow() > self.end_time:
             raise BusinessLogicError("Cannot join a team that has already finished the event")
 
         member = TeamMember.create_team_member(
