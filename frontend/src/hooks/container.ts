@@ -88,3 +88,9 @@ export function deleteDeployment(challengeId: number, teamId: number) {
     mutate('/admin/container/');
   });
 }
+
+export function connectDeployment(challengeId: number, teamId: number) {
+  return apiMutation(`/admin/container/challenge/${challengeId}/team/${teamId}/connect`, undefined, {
+    method : 'POST',
+  });
+}
