@@ -8,6 +8,7 @@ import {
 } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
 import { useEffect, useState } from 'react';
+import { Group, Panel, Separator } from 'react-resizable-panels';
 import ChallengeSidebar from './ChallengeSidebar';
 
 export default function Challenge() {
@@ -54,41 +55,49 @@ export default function Challenge() {
         md : 'absolute',
       }}
       inset="2"
+      className="!flex-1"
     >
-      <ChallengeSidebar />
+      <Group orientation="horizontal" className="!flex-1">
+        <Panel defaultSize="25%" minSize="15%" maxSize="50%">
+          <ChallengeSidebar />
+        </Panel>
 
-      <Card
-        className="grow basis-128 !flex flex-col items-stretch justify-center"
-      >
-        {workspaceUp ? (
-          <Inset
-            side="all"
-            className="grow shrink"
-          >
-            <iframe
-              title="VNC session"
-              className="w-full h-full"
-              src={`${PUBLIC_BASE}/novnc/vnc.html?autoconnect=true&path=${APIPREFIX}/vnc/access/websockify&resize=remote&reconnect=true`}
-            />
-          </Inset>
-        ) : (
-          <Flex
-            direction="column"
-            align="center"
-            justify="center"
-          >
-            {workspaceError
-              ? (<ErrorCallout>Unable to connect to your workspace. Please try reloading the page, or contact support if the issue persists.</ErrorCallout>)
-              : (
-                <>
-                  <Heading>Connecting to workspace...</Heading>
-                  <Spinner className="mt-4" />
-                </>
-              )}
-          </Flex>
-        )}
-      </Card>
+        <Separator className="w-2 hover:bg-gray-300 cursor-col-resize transition-colors" />
 
+        <Panel defaultSize="75%" minSize="50%">
+          <Card
+            className="grow basis-128 !flex flex-col items-stretch justify-center h-full"
+          >
+            {workspaceUp ? (
+              <Inset
+                side="all"
+                className="grow shrink"
+              >
+                <iframe
+                  title="VNC session"
+                  className="w-full h-full"
+                  src={`${PUBLIC_BASE}/novnc/vnc.html?autoconnect=true&path=${APIPREFIX}/vnc/access/websockify&resize=remote&reconnect=true`}
+                />
+              </Inset>
+            ) : (
+              <Flex
+                direction="column"
+                align="center"
+                justify="center"
+              >
+                {workspaceError
+                  ? (<ErrorCallout>Unable to connect to your workspace. Please try reloading the page, or contact support if the issue persists.</ErrorCallout>)
+                  : (
+                    <>
+                      <Heading>Connecting to workspace...</Heading>
+                      <Spinner className="mt-4" />
+                    </>
+                  )}
+              </Flex>
+            )}
+          </Card>
+        </Panel>
+      </Group>
     </Flex>
   );
 }
