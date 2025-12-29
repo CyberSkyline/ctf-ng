@@ -1,5 +1,5 @@
 from flask_restx import Namespace, Resource
-from flask import request
+from flask import request, send_file
 from ...challenge.utils import generate_seed
 from ...challenge.models import Challenge
 from ..controllers.get_stats import get_stats
@@ -213,6 +213,30 @@ class InstanceLogs(Resource):
     def get(self, container_instance, **kwargs):
         res = container_instance.logs()
         return success_response(res)
+
+@admin_container_namespace.route("/<int:container_instance_id>/logs/download")
+class DownloadInstanceLogs(Resource):
+    @admin_container_namespace.doc(
+        description="Download the instance logs",
+        params={
+            "container_instance_id": "Id of instance",
+        },
+        responses={
+            200: "Success",
+            400: "Bad request"
+        },
+    )
+    @admin_endpoint()
+    @load_container_instance(source=LoaderType.PARAM)
+    def get(self, container_instance, **kwargs):
+        res = container_instance.raw_logs()
+        return send_file(
+            res,
+            as_attachment=True,
+            download_name=f"{container_instance.id}-logs.txt",
+            mimetype="text/plain"
+        )
+
 
 @admin_container_namespace.route("/execforward")
 class InstanceExec(Resource):

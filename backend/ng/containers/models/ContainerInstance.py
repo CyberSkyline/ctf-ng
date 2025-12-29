@@ -1,5 +1,6 @@
 from CTFd.models import db
 import docker
+import io
 import re
 import redis_lock
 from sqlalchemy import func, select
@@ -419,6 +420,15 @@ class ContainerInstance(db.Model):
         try:
             ctr = client.containers.get(self.dockerid)
             return ctr.logs(tail=tail).decode('utf-8')
+        except docker.errors.NotFound as exc:
+            raise ValueError("Container not found, please recycle") from exc
+
+    def raw_logs(self) -> str:
+        DOCKER_HOST = get_app_config("DOCKER_HOST")
+        client = get_client(DOCKER_HOST)
+        try:
+            ctr = client.containers.get(self.dockerid)
+            return io.BytesIO(ctr.logs())
         except docker.errors.NotFound as exc:
             raise ValueError("Container not found, please recycle") from exc
 

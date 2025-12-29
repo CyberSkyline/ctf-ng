@@ -4,7 +4,7 @@ import { Button, Code, Skeleton } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
 import Modal from 'components/Modal';
 import { useEffect, useRef } from 'react';
-import { TbScript } from 'react-icons/tb';
+import { TbScript, TbDownload } from 'react-icons/tb';
 
 function ContainerLog({ containerId }: { containerId: number }) {
   const { data, error } = useContainerLogs(containerId);
@@ -45,6 +45,15 @@ export default function ContainerLogsModal({ containerId }: { containerId: numbe
       className="!max-w-fit"
     >
       <ContainerLog containerId={containerId} />
+      <Button
+        variant="ghost"
+        asChild
+      >
+        <a href={`${BASE_PATH}/ng/admin/container/${containerId}/logs/download`}>
+          <TbDownload />
+          Download Full Log
+        </a>
+      </Button>
     </Modal>
   );
 }
