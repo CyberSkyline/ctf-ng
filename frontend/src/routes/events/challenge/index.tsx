@@ -58,7 +58,7 @@ export default function Challenge() {
       className="!flex-1"
     >
       <Group orientation="horizontal" className="!flex-1">
-        <Panel defaultSize="25%" minSize="15%" maxSize="50%">
+        <Panel defaultSize="25%" minSize="15%" maxSize="50%" className="overflow-auto">
           <ChallengeSidebar />
         </Panel>
 
