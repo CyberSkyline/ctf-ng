@@ -8,6 +8,7 @@ from ..controllers.pull_vnc import pull_vnc
 from ..controllers.recycle_containers import recycle_containers
 from ..controllers.vnc import forward_vnc
 from ..models.ContainerInstance import ContainerInstance
+from ..models.IndvidualContainer import IndvidualContainer
 
 from ...core.middleware import (
     admin_endpoint,
@@ -168,6 +169,32 @@ class DeploymentRecycle(Resource):
     def post(self, challenge_id, team_id, **kwargs):
         res = recycle_containers(challenge_id, team_id)
         return success_response(res)
+
+@admin_container_namespace.route("/challenge/<int:challenge_id>/team/<int:team_id>/connect")
+class DeploymentConnect(Resource):
+    @admin_container_namespace.doc(
+        description="Connect an admin's workspace to a deployment network",
+        params={
+            "challenge_id": "Id of the challenge",
+            "team_id": "Id of the team to recycle",
+        },
+        responses={
+            200: "Success",
+            400: "Bad request"
+        },
+    )
+    @admin_endpoint()
+    def post(self, challenge_id, team_id, current_user, **kwargs):
+        networks = ContainerInstance.get_instance_group_networks(challenge_id, team_id)
+
+        indv_ctr = IndvidualContainer.get_user_indvidual_container(current_user.id)
+
+        indv_ctr.disconnect_from_networks()
+
+        for network in networks:
+            indv_ctr.connect_to_network(network)
+
+        return success_response(True)
 
 @admin_container_namespace.route("/<int:container_instance_id>/logs")
 class InstanceLogs(Resource):

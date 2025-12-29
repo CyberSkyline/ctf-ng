@@ -396,6 +396,23 @@ class ContainerInstance(db.Model):
             db.session.rollback()
         db.session.commit()
 
+    @classmethod
+    def get_instance_group_networks(cls, challenge_id: int, team_id: int) -> list[str]:
+        from ...challenge.models.ContainerBlueprint import ContainerBlueprint
+
+        blueprints = ContainerBlueprint.query.filter_by(challenge_id=challenge_id).all()
+
+        networks = []
+        for blueprint in blueprints:
+            if blueprint.networks:
+                networks.extend(blueprint.networks)
+        net_names = []
+        for net in set(networks):
+            net_names.append(cls.render_network_name(team_id, net, challenge_id))
+
+        return net_names
+
+
     def logs(self, tail: int = 200) -> str:
         DOCKER_HOST = get_app_config("DOCKER_HOST")
         client = get_client(DOCKER_HOST)
