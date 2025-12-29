@@ -414,7 +414,7 @@ class ContainerInstance(db.Model):
         return net_names
 
 
-    def logs(self, tail: int = 200) -> str:
+    def logs(self, tail: int = 1000) -> str:
         DOCKER_HOST = get_app_config("DOCKER_HOST")
         client = get_client(DOCKER_HOST)
         try:
