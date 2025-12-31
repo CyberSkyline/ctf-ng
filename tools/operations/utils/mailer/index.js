@@ -42,6 +42,11 @@ export const templates = {
     subject: `President’s Cup 7 Registration is NOW OPEN! Are You Returning?`,
     file: '2025.12.08.pc7-registration-open.mjml',
   }),
+  'pc7-registration-reminder1' : new Template({
+    name: 'pc7-registration-reminder1',
+    subject: `REMINDER: President’s Cup 7 Registration is OPEN!`,
+    file: '2025.12.30.pc7-registration-reminder1.mjml',
+  }),
 };
 
 export async function sendEmail(template, recipient, opts, progressBar) {
