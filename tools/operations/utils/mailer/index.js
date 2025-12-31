@@ -22,10 +22,30 @@ const mailTransportConfig = {
 const mailer = nodemailer.createTransport(mailTransportConfig);
 
 export const templates = {
+  'nov-2025-game-of-the-month' : new Template({ 
+    name : 'nov-2025-game-of-the-month',
+    subject : `The President's Cup Challenges You - Play November's Game of the Month!`,
+    file : '2025.11.18.game-of-the-month.mjml',
+  }),
   'pc7-registration-announcement': new Template({
     name: 'pc7-registration-announcement',
     subject: `President's Cup 7 Registration is Coming! Will You Return?`,
-    file: '2025.11.17.pc7-registration-announcement.mjml',
+    file: '2025.11.20.pc7-registration-announcement.mjml',
+  }),
+  'dec-2025-game-of-the-month' : new Template({ 
+    name : 'dec-2025-game-of-the-month',
+    subject : `The President's Cup Challenges You - Play December's Game of the Month!`,
+    file : '2025.12.03.game-of-the-month.mjml',
+  }),
+  'pc7-registration-open' : new Template({
+    name: 'pc7-registration-open',
+    subject: `President’s Cup 7 Registration is NOW OPEN! Are You Returning?`,
+    file: '2025.12.08.pc7-registration-open.mjml',
+  }),
+  'pc7-registration-reminder1' : new Template({
+    name: 'pc7-registration-reminder1',
+    subject: `REMINDER: President’s Cup 7 Registration is OPEN!`,
+    file: '2025.12.30.pc7-registration-reminder1.mjml',
   }),
 };
 
