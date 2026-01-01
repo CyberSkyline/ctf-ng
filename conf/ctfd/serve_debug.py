@@ -22,6 +22,17 @@ if args.disable_gevent:
 # Import not at top of file to allow gevent to monkey patch uninterrupted
 from CTFd import create_app # noqa
 
+# Add sentry logging
+import os
+import sentry_sdk
+SENTRY_DSN = os.environ.get("SENTRY_DSN")
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        traces_sample_rate=1.0,
+        enable_logs=True
+    )
+
 app = create_app()
 
 if args.profile:

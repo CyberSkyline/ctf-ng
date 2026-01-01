@@ -7,6 +7,7 @@ import sys
 import traceback
 from functools import wraps
 
+import sentry_sdk
 from CTFd.models import db
 from flask import current_app as app
 from flask import request, session
@@ -79,6 +80,7 @@ def handle_exceptions(f):
         except IntegrityError as e:
             db.session.rollback()
             db.session.remove()
+            sentry_sdk.capture_exception(e)
             logger.error(
                 "Database integrity error",
                 extra={
@@ -98,6 +100,7 @@ def handle_exceptions(f):
         except SQLAlchemyError as e:
             db.session.rollback()
             db.session.remove()
+            sentry_sdk.capture_exception(e)
             logger.error(
                 "Database error occurred",
                 extra={
@@ -121,6 +124,7 @@ def handle_exceptions(f):
 
         except Exception as e:
             db.session.remove()
+            sentry_sdk.capture_exception(e)
             logger.error(
                 f"Unexpected error: {type(e).__name__}: {str(e)}",
                 extra={
@@ -155,6 +159,7 @@ def register_error_handlers(app):
     def handle_integrity_error(error):
         db.session.rollback()
         db.session.remove()
+        sentry_sdk.capture_exception(error)
         logger.error("Database integrity error", extra={"context": _get_request_context()})
         return error_response("A resource with this name or value already exists.", "database", 409)
 
@@ -162,6 +167,7 @@ def register_error_handlers(app):
     def handle_sqlalchemy_error(error):
         db.session.rollback()
         db.session.remove()
+        sentry_sdk.capture_exception(error)
         logger.error("SQLAlchemy error", extra={"context": _get_request_context()}, exc_info=True)
         return error_response(
             "A database error occurred. Please contact an administrator.",
@@ -178,6 +184,7 @@ def register_error_handlers(app):
     @app.errorhandler(Exception)
     def handle_generic_exception(error):
         db.session.remove()
+        sentry_sdk.capture_exception(error)
         logger.error(
             f"Unexpected error: {type(error).__name__}",
             extra={"context": _get_request_context()},
