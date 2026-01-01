@@ -67,8 +67,6 @@ class EventLeaderboard(Resource):
         if limit < 1 or limit > config.MAX_LEADERBOARD_LIMIT:
             raise ValidationError(f"Limit must be between 1 and {config.MAX_LEADERBOARD_LIMIT}")
         cache_key = request.args.get("cache_key")
-        if not cache_key:
-            raise ValidationError("cache_key query parameter is required.")
         leaderboard_data = get_leaderboard(event_id=event_id, limit=limit, cache_key=cache_key)
         return success_response(leaderboard_data)
 

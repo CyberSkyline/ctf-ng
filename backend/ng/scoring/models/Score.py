@@ -14,10 +14,9 @@ from sqlalchemy.orm import joinedload
 from ... import config
 from ...core.exceptions import NotFoundError
 from ...core.utils import utc_now
-
-from ...core.utils.validator import BaseValidator
 from ...core.utils.cache_decorators import cache_with_args
 from ...core.utils.redis_cache import RedisCache
+from ...core.utils.validator import BaseValidator
 from ...team.models.TeamMember import TeamMember
 
 
@@ -216,7 +215,7 @@ class Score(db.Model):
 
     @classmethod
     @cache_with_args(ttl=config.LEADERBOARD_CACHE_TIMEOUT)
-    def get_leaderboard(cls, event_id: int, limit: int | None = None, cache_key: str = None) -> list[SerializedScore]:
+    def get_leaderboard(cls, event_id: int, cache_key: str, limit: int | None = None) -> list[SerializedScore]:
         """Get the leaderboard for an event, sorted by points descending
 
         Args:
@@ -228,8 +227,6 @@ class Score(db.Model):
         """
         # LAZY-IMPORT
         from ...team.models.Team import Team
-        if cache_key is None:
-            cache_key = f"leaderboard:{event_id}:{limit if limit is not None else 'all'}"
         query = (
             cls.query
             .join(cls.team)
