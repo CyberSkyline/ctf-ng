@@ -1,4 +1,5 @@
 from gevent import monkey
+
 print("patching gevent")
 monkey.patch_all()
 
@@ -9,17 +10,9 @@ import time
 import weakref
 from distutils.version import StrictVersion
 
-import jinja2
-from flask import Flask, Request
-from flask_babel import Babel
-from flask_migrate import upgrade
-from jinja2 import FileSystemLoader
-from jinja2.sandbox import SandboxedEnvironment
-from werkzeug.middleware.proxy_fix import ProxyFix
-from werkzeug.utils import safe_join
-from werkzeug.wsgi import get_host
-
 import CTFd.utils.config
+import jinja2
+import sentry_sdk
 from CTFd import utils
 from CTFd.constants.themes import ADMIN_THEME, DEFAULT_THEME
 from CTFd.plugins import init_plugins
@@ -36,6 +29,14 @@ from CTFd.utils.migrations import create_database, migrations, stamp_latest_revi
 from CTFd.utils.sessions import CachingSessionInterface
 from CTFd.utils.updates import update_check
 from CTFd.utils.user import get_locale
+from flask import Flask, Request
+from flask_babel import Babel
+from flask_migrate import upgrade
+from jinja2 import FileSystemLoader
+from jinja2.sandbox import SandboxedEnvironment
+from werkzeug.middleware.proxy_fix import ProxyFix
+from werkzeug.utils import safe_join
+from werkzeug.wsgi import get_host
 
 __version__ = "3.8.0"
 __channel__ = "oss"
@@ -189,6 +190,14 @@ def run_upgrade():
 
 
 def create_app(config="CTFd.config.Config"):
+    SENTRY_DSN = os.environ.get("SENTRY_DSN")
+
+    if SENTRY_DSN:
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            traces_sample_rate=1.0,
+            enable_logs=True
+        )
     app = CTFdFlask(__name__)
     with app.app_context():
         app.config.from_object(config)
