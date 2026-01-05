@@ -192,7 +192,7 @@ def run_upgrade():
 def create_app(config="CTFd.config.Config"):
     SENTRY_DSN = os.environ.get("SENTRY_DSN")
 
-    if SENTRY_DSN:
+    if SENTRY_DSN and SENTRY_DSN != "-":
         sentry_sdk.init(
             dsn=SENTRY_DSN,
             traces_sample_rate=1.0,
