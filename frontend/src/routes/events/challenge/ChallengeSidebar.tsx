@@ -47,7 +47,7 @@ export default function ChallengeSidebar() {
   const groupedAttempts = groupBy(attempts || [], 'question_id');
 
   return (
-    <Flex direction="column" gap="3" className="shrink-0 grow-0 lg:basis-128">
+    <Flex direction="column" gap="3" className="shrink-0 grow-0 lg:basis-128 h-full">
       <title>{`${challenge?.name || 'Challenge'}`}</title>
       <Card className="shrink-0">
         <Inset side="all" className="shrink-0">
