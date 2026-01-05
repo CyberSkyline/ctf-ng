@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 /**
  * Formats a Date object for use with a datetime-local input field.
  * @param date Date object to format
@@ -89,3 +91,20 @@ export const compressImageFile = async (file : File) => new Promise<File>((resol
 
   img.src = URL.createObjectURL(file);
 });
+
+export function useBreakpoint(minWidth: string) {
+  const [ matches, setMatches ] = useState(() => window.matchMedia(`(min-width: ${minWidth})`).matches);
+
+  useEffect(() => {
+    const query = window.matchMedia(`(min-width: ${minWidth})`);
+    const listener = (event: MediaQueryListEvent) => setMatches(event.matches);
+
+    query.addEventListener('change', listener);
+
+    return () => {
+      query.removeEventListener('change', listener);
+    };
+  }, [ minWidth ]);
+
+  return matches;
+}

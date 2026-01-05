@@ -1,4 +1,5 @@
 import { APIPREFIX } from '@/constants';
+import { useBreakpoint } from '@/util';
 import {
   Card,
   Flex,
@@ -9,11 +10,14 @@ import {
 import { ErrorCallout } from 'components/Callouts';
 import { useEffect, useState } from 'react';
 import { Group, Panel, Separator } from 'react-resizable-panels';
+import { twMerge } from 'tailwind-merge';
 import ChallengeSidebar from './ChallengeSidebar';
 
 export default function Challenge() {
   const [ workspaceUp, setWorkspaceUp ] = useState(false);
   const [ workspaceError, setWorkspaceError ] = useState(false);
+
+  const isHorizontal = useBreakpoint('1280px');
 
   // Polling logic to gracefully wait for the workspace to be ready.
   // NoVNC will give up instantly if the workspace isn't ready yet, so we need to
@@ -48,56 +52,52 @@ export default function Challenge() {
   }, []);
 
   return (
-    <Flex
-      direction={{ initial : 'column-reverse', md : 'row' }}
-      gap="2"
-      position={{
-        md : 'absolute',
-      }}
-      inset="2"
-      className="!flex-1"
-    >
-      <Group orientation="horizontal" className="!flex-1">
-        <Panel defaultSize="25%" minSize="15%" maxSize="50%" className="overflow-auto">
-          <ChallengeSidebar />
-        </Panel>
+    <Group orientation={isHorizontal ? 'horizontal' : 'vertical'} className="absolute inset-2 !flex-col-reverse xl:!flex-row">
+      <Panel defaultSize="512px" minSize="512px" maxSize="50%">
+        <ChallengeSidebar />
+      </Panel>
 
-        <Separator className="w-2 hover:bg-gray-300 cursor-col-resize transition-colors" />
+      <Separator
+        className={twMerge(
+          'hover:bg-(--accent-6) focus:bg-(--accent-9) focus:outline-0 p-1 bg-clip-content box-content transition-colors',
+          isHorizontal && 'w-0.5',
+          !isHorizontal && 'h-0.5',
+        )}
+      />
 
-        <Panel defaultSize="75%" minSize="50%">
-          <Card
-            className="grow basis-128 !flex flex-col items-stretch justify-center h-full"
-          >
-            {workspaceUp ? (
-              <Inset
-                side="all"
-                className="grow shrink"
-              >
-                <iframe
-                  title="VNC session"
-                  className="w-full h-full"
-                  src={`${PUBLIC_BASE}/novnc/vnc.html?autoconnect=true&path=${APIPREFIX}/vnc/access/websockify&resize=remote&reconnect=true`}
-                />
-              </Inset>
-            ) : (
-              <Flex
-                direction="column"
-                align="center"
-                justify="center"
-              >
-                {workspaceError
-                  ? (<ErrorCallout>Unable to connect to your workspace. Please try reloading the page, or contact support if the issue persists.</ErrorCallout>)
-                  : (
-                    <>
-                      <Heading>Connecting to workspace...</Heading>
-                      <Spinner className="mt-4" />
-                    </>
-                  )}
-              </Flex>
-            )}
-          </Card>
-        </Panel>
-      </Group>
-    </Flex>
+      <Panel defaultSize="75%" minSize="50%">
+        <Card
+          className="grow basis-128 !flex flex-col items-stretch justify-center h-full"
+        >
+          {workspaceUp ? (
+            <Inset
+              side="all"
+              className="grow shrink"
+            >
+              <iframe
+                title="VNC session"
+                className="w-full h-full"
+                src={`${PUBLIC_BASE}/novnc/vnc.html?autoconnect=true&path=${APIPREFIX}/vnc/access/websockify&resize=remote&reconnect=true`}
+              />
+            </Inset>
+          ) : (
+            <Flex
+              direction="column"
+              align="center"
+              justify="center"
+            >
+              {workspaceError
+                ? (<ErrorCallout>Unable to connect to your workspace. Please try reloading the page, or contact support if the issue persists.</ErrorCallout>)
+                : (
+                  <>
+                    <Heading>Connecting to workspace...</Heading>
+                    <Spinner className="mt-4" />
+                  </>
+                )}
+            </Flex>
+          )}
+        </Card>
+      </Panel>
+    </Group>
   );
 }
