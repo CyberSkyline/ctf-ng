@@ -26,7 +26,7 @@ from CTFd import create_app # noqa
 import os
 import sentry_sdk
 SENTRY_DSN = os.environ.get("SENTRY_DSN")
-if SENTRY_DSN:
+if SENTRY_DSN and SENTRY_DSN != "-":
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         traces_sample_rate=1.0,
