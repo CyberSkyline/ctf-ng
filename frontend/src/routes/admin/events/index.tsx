@@ -5,7 +5,7 @@ import type { ColDef } from 'ag-grid-community';
 import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
 import EventCreationModal from './EventCreationModal';
-import EventSidebar from './EventSidebar';
+import EventSidebar from './SidebarTabs';
 
 const colDefs: ColDef<Event>[] = [
   {

@@ -6,12 +6,12 @@ import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { useId } from 'react';
 import { useSearchParams } from 'react-router';
-import EventModal from './EventModal';
-import EventChallengesTab from './SidebarTabs/EventChallengesTab';
-import EventDetailsTab from './SidebarTabs/EventDetailsTab';
-import EventFeedbackTab from './SidebarTabs/EventFeedbackTab';
-import EventGameplayTab from './SidebarTabs/EventGameplayTab';
-import EventRegistrationTab from './SidebarTabs/EventRegistrationTab';
+import EventModal from '../EventModal';
+import EventChallengesTab from './EventChallengesTab';
+import EventDetailsTab from './EventDetailsTab';
+import EventFeedbackTab from './EventFeedbackTab';
+import EventGameplayTab from './EventGameplayTab';
+import EventRegistrationTab from './EventRegistrationTab';
 
 export default function EventSidebar({ entity }: { entity: Event }) {
   const [ searchParams, setSearchParams ] = useSearchParams();
