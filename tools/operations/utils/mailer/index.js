@@ -52,6 +52,11 @@ export const templates = {
     subject : `The President's Cup Challenges You - Play January's Game of the Month!`,
     file : '2026.01.05.game-of-the-month.mjml',
   }),
+  'pc7-round-1-individual-start' : new Template({
+    name : 'pc7-round-1-individual-start',
+    subject : `REMINDER: President's Cup 7 Individuals Round 1 is OPEN!`,
+    file : '2026.01.06.pc7-round1-individual-start.mjml',
+  }),
 };
 
 export async function sendEmail(template, recipient, opts, progressBar) {
