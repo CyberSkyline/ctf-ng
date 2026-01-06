@@ -18,7 +18,7 @@ from CTFd.models import db
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import Mapped, joinedload, selectinload
 
 from ... import config
 from ...core.exceptions import (
@@ -355,7 +355,14 @@ class Team(db.Model):
         Returns:
             list[Team]: List of all team objects
         """
-        return cls.query.order_by(cls.id).all()
+        return (cls.query
+            .order_by(cls.id)
+            .options(
+                joinedload(cls.event),
+                selectinload(cls.members)
+            )
+            .all()
+        )
 
     @classmethod
     def find_by_id(cls, team_id: int) -> Team | None:
@@ -411,7 +418,7 @@ class Team(db.Model):
         Returns:
             list[Team]: List of teams in the event
         """
-        return cls.query.filter_by(event_id=event_id).all()
+        return cls.query.filter_by(event_id=event_id).options(joinedload(cls.event)).all()
 
     @classmethod
     def count_by_event(cls, event_id: int) -> int:

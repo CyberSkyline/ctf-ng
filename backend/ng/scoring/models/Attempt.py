@@ -12,6 +12,7 @@ from typing import (
 )
 
 from CTFd.models import db
+from sqlalchemy.orm import joinedload
 
 from ... import config
 from ...core.exceptions import (
@@ -296,7 +297,16 @@ class Attempt(db.Model):
         if is_correct is not None:
             query = query.filter_by(is_correct=is_correct)
 
-        return query.order_by(cls.timestamp.desc()).all()  # type: ignore[no-any-return]
+        return (query
+            .order_by(cls.timestamp.desc())
+            .options(
+                joinedload(cls.user),
+                joinedload(cls.team),
+                joinedload(cls.challenge),
+                joinedload(cls.question),
+            )
+            .all()
+        )
 
     def delete_attempt(self, commit: bool = True) -> None:
         """

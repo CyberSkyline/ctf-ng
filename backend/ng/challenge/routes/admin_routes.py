@@ -1,13 +1,15 @@
 import base64
-from flask_restx import Namespace, Resource
 
-from ..controllers.admin import import_challenge_from_yaml, update_challenge_from_yaml, lint_challenge
-from ..models import Challenge, ContainerBlueprint
-from ...core.middleware.loaders import load_event, load_challenge
-from ...core.middleware.loaders._util import LoaderType
+from flask_restx import Namespace, Resource
+from sqlalchemy.orm import joinedload
+
 from ...core.middleware.auth import admin_endpoint
+from ...core.middleware.loaders import load_challenge, load_event
+from ...core.middleware.loaders._util import LoaderType
 from ...core.utils.api import success_response
 from ...event.models import Event
+from ..controllers.admin import import_challenge_from_yaml, lint_challenge, update_challenge_from_yaml
+from ..models import Challenge, ContainerBlueprint
 
 challenge_admin_namespace = Namespace("/admin/challenges", description="challenge management")
 
@@ -160,7 +162,16 @@ class ChallengeAttempts(Resource):
         """
         from ...scoring.models import Attempt
 
-        attempts = Attempt.query.filter_by(challenge_id=challenge.id).all()
+        attempts = (Attempt.query
+            .filter_by(challenge_id=challenge.id)
+            .options(
+                joinedload(Attempt.user),
+                joinedload(Attempt.team),
+                joinedload(Attempt.challenge),
+                joinedload(Attempt.question),
+            )
+            .all()
+        )
 
         return success_response(attempts)
 

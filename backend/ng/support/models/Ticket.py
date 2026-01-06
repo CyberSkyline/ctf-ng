@@ -3,16 +3,17 @@ Defines the Ticket database model for support ticket metadata.
 """
 
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING, TypedDict, NotRequired
-from sqlalchemy.ext.hybrid import hybrid_property
 
-from CTFd.models import db, Users
+from typing import TYPE_CHECKING, Any, NotRequired, TypedDict
+
+from CTFd.models import Users, db
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import joinedload
 
 from ... import config
+from ...core.exceptions import BusinessLogicError, NotFoundError
 from ...core.utils import utc_now
 from ...core.utils.validator import BaseValidator
-from ...core.exceptions import NotFoundError, BusinessLogicError
-
 
 if TYPE_CHECKING:
     from .TicketMessage import TicketMessage
@@ -420,7 +421,18 @@ class Ticket(db.Model):
             if team_id is not None:
                 query = query.filter_by(team_id=team_id)
 
-        return query.order_by(cls.last_updated.desc()).all()
+        return (
+            query
+                .order_by(cls.last_updated.desc())
+                .options(
+                    joinedload(cls.author),
+                    joinedload(cls.assigned_user),
+                    joinedload(cls.event),
+                    joinedload(cls.team),
+                    joinedload(cls.challenge)
+                )
+                .all()
+        )
 
     def add_message(self, text: str, author_id: int, is_admin: bool = False, commit: bool = True) -> None:
         """

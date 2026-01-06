@@ -7,16 +7,17 @@ from __future__ import annotations
 from enum import Enum
 from typing import (
     Any,
-    TypedDict,
     NotRequired,
+    TypedDict,
 )
 
 from CTFd.models import db
+from sqlalchemy.orm import joinedload
 
 from ... import config
 from ...core.utils import utc_now
-from ...core.utils.validator import BaseValidator
 from ...core.utils.sqlalchemy_types import EnumWithUnknown
+from ...core.utils.validator import BaseValidator
 
 
 class NotificationType(str, Enum):
@@ -405,7 +406,18 @@ class Notification(db.Model):
                 (cls.expires_at.is_(None)) | (cls.expires_at > utc_now())
             )
 
-        return query.order_by(cls.created_at.desc()).all()
+        return (query
+            .order_by(cls.created_at.desc())
+            .options(
+                joinedload(cls.recipient),
+                joinedload(cls.sender),
+                joinedload(cls.ticket),
+                joinedload(cls.team),
+                joinedload(cls.event),
+                joinedload(cls.challenge)
+            )
+            .all()
+        )
 
     @classmethod
     def get_unread_count(cls, recipient_id: int) -> int:

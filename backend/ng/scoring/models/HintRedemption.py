@@ -3,21 +3,22 @@ Defines the HintRedemption model for tracking hint usage.
 """
 
 from __future__ import annotations
-from typing import (
-    Any,
-    TypedDict,
-    NotRequired,
-)
 
 from datetime import datetime
+from typing import (
+    Any,
+    NotRequired,
+    TypedDict,
+)
 
 from CTFd.models import db
+from sqlalchemy.orm import joinedload
 
-from ...core.utils import utc_now
 from ...core.exceptions import (
-    ValidationError,
     BusinessLogicError,
+    ValidationError,
 )
+from ...core.utils import utc_now
 from ...core.utils.validator import BaseValidator
 
 
@@ -116,8 +117,8 @@ class HintRedemption(db.Model):
         """
         # LAZY-IMPORT: Tagging all necessary lazy imports for easy searchability & visibility.
         from ...challenge.models.Hint import Hint
-        from ...team.models.TeamMember import TeamMember
         from ...event.models.Event import Event
+        from ...team.models.TeamMember import TeamMember
 
         # TODO: Move most logic to permission check system
         member = TeamMember.find_by_user_and_team(user_id, team_id)
@@ -243,6 +244,7 @@ class HintRedemption(db.Model):
         Find hint redemptions based on filters
         """
         # LAZY-IMPORT
+        from ...challenge.models.Challenge import Challenge
         from ...challenge.models.Hint import Hint
 
         query = cls.query
@@ -256,7 +258,19 @@ class HintRedemption(db.Model):
         if challenge_id is not None:
             query = query.join(Hint).filter(Hint.challenge_id == challenge_id)
 
-        return query.order_by(cls.timestamp.desc()).all()  # type: ignore[no-any-return]
+        return (query
+            .order_by(cls.timestamp.desc())
+            .options(
+                joinedload(cls.user),
+                joinedload(cls.team),
+                joinedload(cls.hint
+                    .joinedload(Hint.challenge
+                        .joinedload(Challenge.event)
+                    )
+                ),
+            )
+            .all()
+        )
 
     @classmethod
     def find_by_team_and_event(cls, team_id: int, event_id: int) -> list[HintRedemption]:
@@ -271,8 +285,8 @@ class HintRedemption(db.Model):
             List of hint redemptions for the team in the event
         """
         # LAZY-IMPORT
-        from ...challenge.models.Hint import Hint
         from ...challenge.models.Challenge import Challenge
+        from ...challenge.models.Hint import Hint
 
         return (
             cls.query
