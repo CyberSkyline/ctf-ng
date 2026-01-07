@@ -17,7 +17,7 @@ export default function AdminReports() {
           <iframe
             title="Grafana"
             className="w-full h-full"
-            src={`/reports/dashboards?theme=${resolvedTheme}`}
+            src={`/admin/grafana/dashboards?theme=${resolvedTheme}`}
           />
         </Inset>
       </Card>
