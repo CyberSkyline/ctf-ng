@@ -182,3 +182,18 @@ class AdminStopImpersonating(Resource):
         session["nonce"] = generate_nonce()
 
         return success_response(impersonated_id)
+
+@admin_namespace.route("/reports-auth")
+class AdminReportsAuth(Resource):
+    @admin_endpoint()
+    @admin_namespace.doc(
+        description="Auth request endpoint to determine whether reports can be accessed",
+        responses={
+            200: "Success",
+            403: "Forbidden",
+        },
+    )
+    def get(self, **kwargs):
+        """Get reports authentication details"""
+        # return a 200 since the user is admin. if they aren't, they get a 403 via middleware
+        return success_response()

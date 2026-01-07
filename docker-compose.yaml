@@ -85,6 +85,22 @@ services:
       - ./frontend:/app/frontend
       - ./node_modules:/app/node_modules
 
+  grafana:
+    image: grafana/grafana:12.3.1
+    container_name: ng-grafana
+    restart: always
+    user: "0"
+    ports:
+      - "3000:3000"
+    volumes:
+      - .data/grafana:/var/lib/grafana
+    environment:
+      - GF_SERVER_ROOT_URL=/reports/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_PANELS_DISABLE_SANITIZE_HTML=true
+
 networks:
   default:
     driver: overlay

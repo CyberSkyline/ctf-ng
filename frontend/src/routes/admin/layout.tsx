@@ -13,10 +13,11 @@ import { NavigationMenu } from 'radix-ui';
 import type { IconType } from 'react-icons';
 import {
   TbBraces,
+  TbChartPie,
+  TbHeartHandshake,
   TbLayoutDashboard,
   TbMessage,
   TbTags,
-  TbHeartHandshake,
 } from 'react-icons/tb';
 import { NavLink, Outlet } from 'react-router';
 
@@ -75,6 +76,7 @@ export default function AdminLayout() {
               <NavigationMenu.Root orientation="vertical" aria-label="Sidebar" className="h-full overflow-y-auto">
                 <NavigationMenu.List>
                   <NavItem to="/admin" label="Dashboard" icon={TbLayoutDashboard} />
+                  <NavItem to="/admin/reports" label="Reports" icon={TbChartPie} />
                   <NavItem to="/admin/sponsors" label="Sponsors" icon={TbHeartHandshake} />
                   <NavItem to="/admin/events" label="Events" icon={EventIcon} />
                   <NavItem to="/admin/users" label="Users" icon={UserIcon} />

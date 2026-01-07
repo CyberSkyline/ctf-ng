@@ -30,6 +30,7 @@ import AdminDashboard from 'routes/admin/dashboard';
 import AdminDeployments from 'routes/admin/deployments';
 import AdminEvents from 'routes/admin/events';
 import AdminLayout from 'routes/admin/layout';
+import AdminReports from 'routes/admin/reports';
 import AdminSponsors from 'routes/admin/sponsors';
 import AdminTags from 'routes/admin/tags';
 import AdminTeams from 'routes/admin/teams';
@@ -75,6 +76,7 @@ function Routes() {
       children : [
         { path : '*', element : <NotFound /> }, // Catch-all for admin routes
         { index : true, element : <AdminDashboard /> },
+        { path : 'reports', element : <AdminReports /> },
         { path : 'sponsors', element : <AdminSponsors /> },
         { path : 'events', element : <AdminEvents /> },
         { path : 'users', element : <AdminUsers /> },
