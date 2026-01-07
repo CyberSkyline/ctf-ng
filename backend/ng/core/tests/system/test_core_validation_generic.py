@@ -11,6 +11,7 @@ from CTFd.models import Users
 from ...exceptions import ValidationError
 from ...utils import utc_now
 from ...utils.validator import BaseValidator
+from ng.permissions.models.UserRole import UserRole
 
 class TestBaseValidator:
     """Test the base validator functionality."""
@@ -395,7 +396,7 @@ class TestAdminIdValidation:
         parsed_data = validator.validate()
         assert parsed_data["admin_id"] == admin.id
 
-        db_admin.type = "user"
+        UserRole.update_user_roles(admin.id, {"roles": []})
         db_session.commit()
 
         validator = BaseValidator()
