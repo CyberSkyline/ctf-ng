@@ -1,7 +1,7 @@
 import type { Event } from '@/types';
 import { adjustDateForInput } from '@/util';
 import { COLOR_POSITIVE } from '@/constants';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form'
 import { omit } from 'lodash'
 import Dropzone from 'react-dropzone';
@@ -14,8 +14,10 @@ import FormDropdown from 'components/SelectDropdown';
 import { ErrorCallout } from 'components/Callouts';
 import ActionButtonsGroup from './ActionButtonsGroup';
 import { directUpload, useFileList, useFileUrl } from '@/hooks/fileuploads';
+import { updateEvent } from '@/hooks/events';
 
 export default function EventDetailsTab({ event }: { event: Event }) {
+
   const {
     control,
     register,
@@ -29,10 +31,6 @@ export default function EventDetailsTab({ event }: { event: Event }) {
   } = useForm<Event>({
     defaultValues: {
       ...omit(event, 'id'),
-      registration_start_date: adjustDateForInput(event?.registration_start_date || null) as unknown as Date,
-      registration_end_date: adjustDateForInput(event?.registration_end_date || null) as unknown as Date,
-      start_time: adjustDateForInput(event?.start_time || null) as unknown as Date,
-      end_time: adjustDateForInput(event?.end_time || null) as unknown as Date,
       image: event?.image || 'None',
     }
   })
@@ -42,11 +40,28 @@ export default function EventDetailsTab({ event }: { event: Event }) {
   const { data: fileUrl, error: fileUrlError } = useFileUrl('event-cards', currentImage === 'None' ? '' : currentImage || '');
 
   const [uploading, setUploading] = useState(false);
-  const [isEditing, setIsEditing] = useState<boolean>(true)
+  const [isEditing, setIsEditing] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [updateError, setUpdateError] = useState<string| null>(null)
 
   const update = async (data: Event) => {
-    // This is going to end up being a PUT
-    console.log('update', data)
+    setLoading(true)
+    setUpdateError(null)
+
+    const updatingEvent = data;
+    
+    if (updatingEvent.image === 'None') {
+      updatingEvent.image = null;
+    }
+
+    updateEvent(event.id, updatingEvent).then(() => {
+      setIsEditing(false)
+      reset(data)
+    }).catch((err) => {
+      setUpdateError(err.message)
+    }).finally(() => {
+      setLoading(false)
+    })
   }
 
   const onDrop = async (acceptedFiles: File[]) => {
@@ -68,7 +83,10 @@ export default function EventDetailsTab({ event }: { event: Event }) {
       <ActionButtonsGroup
         isEditing={isEditing}
         setIsEditing={setIsEditing}
-        reset={reset}
+        reset={() => {
+          reset()
+          setUpdateError(null)
+        }}
         cancelOnly={true}
       />
 
@@ -149,10 +167,15 @@ export default function EventDetailsTab({ event }: { event: Event }) {
           {fileUrl && <img src={fileUrl?.download_url} alt="Selected Event" className="max-h-48 object-contain bg-(--gray-1) rounded" />}
           {fileUrlError && (<ErrorCallout>{fileUrlError.message}</ErrorCallout>)}
 
+          {updateError && (<ErrorCallout>{updateError}</ErrorCallout>)}
           <ActionButtonsGroup
             isEditing={isEditing}
             setIsEditing={setIsEditing}
-            reset={reset}
+            reset={() => {
+              reset()
+              setUpdateError(null)
+            }}
+            loading={loading}
           />
         </form>
       ) : (

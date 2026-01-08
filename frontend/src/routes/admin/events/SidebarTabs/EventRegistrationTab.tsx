@@ -7,9 +7,13 @@ import ActionButtonsGroup from './ActionButtonsGroup';
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import FormField from 'components/FormField';
+import { updateEvent } from '@/hooks/events';
+import { ErrorCallout } from 'components/Callouts';
 
 export default function EventRegistrationTab({ event }: { event: Event }) {
   const [isEditing, setIsEditing] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
 
   const {
     control,
@@ -22,15 +26,21 @@ export default function EventRegistrationTab({ event }: { event: Event }) {
       ...omit(event, 'id'),
       registration_start_date: adjustDateForInput(event?.registration_start_date || null) as unknown as Date,
       registration_end_date: adjustDateForInput(event?.registration_end_date || null) as unknown as Date,
-      start_time: adjustDateForInput(event?.start_time || null) as unknown as Date,
-      end_time: adjustDateForInput(event?.end_time || null) as unknown as Date,
-      image: event?.image || 'None',
     }
   })
 
   const update = async (data: Event) => {
-    // This is going to end up being a PUT
-    console.log('update', data)
+    setLoading(true)
+    setError(null)
+
+    updateEvent(event.id, data).then(() => {
+      setIsEditing(false)
+      reset(data)
+    }).catch((err) => {
+      setError(err.message)
+    }).finally(() => {
+      setLoading(false)
+    })
   }
 
   return (
@@ -38,7 +48,10 @@ export default function EventRegistrationTab({ event }: { event: Event }) {
       <ActionButtonsGroup
         isEditing={isEditing}
         setIsEditing={setIsEditing}
-        reset={reset}
+        reset={() => {
+          reset()
+          setError(null)
+        }}
         cancelOnly={true}
       />
       {isEditing ? (
@@ -146,10 +159,16 @@ export default function EventRegistrationTab({ event }: { event: Event }) {
             )}
           </FormField>
 
+          {error && <ErrorCallout>{error}</ErrorCallout>}
+
           <ActionButtonsGroup
             isEditing={isEditing}
             setIsEditing={setIsEditing}
-            reset={reset}
+            reset={() => {
+              reset()
+              setError(null)
+            }}
+            loading={loading}
           />
         </form>
       ) : (

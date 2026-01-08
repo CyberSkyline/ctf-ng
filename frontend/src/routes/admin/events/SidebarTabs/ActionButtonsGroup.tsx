@@ -8,12 +8,14 @@ export default function ActionButtonsGroup<TFieldValues extends FieldValues>({
   isEditing,
   setIsEditing,
   reset,
-  cancelOnly = false
+  cancelOnly = false,
+  loading,
 }: {
   isEditing: boolean,
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>,
   reset: UseFormReset<TFieldValues>
   cancelOnly?: boolean,
+  loading?: boolean,
 }) {
   return (
     <Flex direction="row-reverse" justify="start" align="center" gap="2">
@@ -22,6 +24,8 @@ export default function ActionButtonsGroup<TFieldValues extends FieldValues>({
           type="submit"
           color={COLOR_WARNING}
           variant='soft'
+          loading={loading}
+          disabled={loading}
         >
           <TbDeviceFloppy />
           Save
