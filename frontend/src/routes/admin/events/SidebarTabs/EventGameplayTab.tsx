@@ -1,78 +1,83 @@
 import type { Event } from '@/types';
 import { adjustDateForInput } from '@/util';
-import { omit } from 'lodash'
-import { Box, Flex, TextField, Switch } from '@radix-ui/themes';
+import { omit } from 'lodash';
+import {
+  Box,
+  Flex,
+  TextField,
+  Switch,
+} from '@radix-ui/themes';
 import Statistic from 'components/Statistic';
-import ActionButtonsGroup from './ActionButtonsGroup';
-import { useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import FormField from 'components/FormField';
 import { ErrorCallout } from 'components/Callouts';
 import { updateEvent } from '@/hooks/events';
+import ActionButtonsGroup from './ActionButtonsGroup';
 
 export default function EventGameplayTab({ event }: { event: Event }) {
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false)
-  const [error, setError] = useState<string| null>(null)
+  const [ isEditing, setIsEditing ] = useState<boolean>(false);
+  const [ loading, setLoading ] = useState<boolean>(false);
+  const [ error, setError ] = useState<string| null>(null);
 
   const {
     control,
     register,
     handleSubmit,
-    formState: { errors },
+    formState : { errors },
     reset,
   } = useForm<Event>({
-    defaultValues: {
+    defaultValues : {
       ...omit(event, 'id'),
-      start_time: adjustDateForInput(event?.start_time || null) as unknown as Date,
-      end_time: adjustDateForInput(event?.end_time || null) as unknown as Date,
-    }
-  })
+      start_time : adjustDateForInput(event?.start_time || null) as unknown as Date,
+      end_time : adjustDateForInput(event?.end_time || null) as unknown as Date,
+    },
+  });
 
   const update = async (data: Event) => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     updateEvent(event.id, data).then(() => {
-      setIsEditing(false)
-      reset(data)
+      setIsEditing(false);
+      reset(data);
     }).catch((err) => {
-      setError(err.message)
+      setError(err.message);
     }).finally(() => {
-      setLoading(false)
-    })
-  }
+      setLoading(false);
+    });
+  };
 
   return (
-    <Flex direction="column" gap="3" className='mb-4'>
+    <Flex direction="column" gap="3" className="mb-4">
       <ActionButtonsGroup
         isEditing={isEditing}
         setIsEditing={setIsEditing}
         reset={() => {
-          reset()
-          setError(null)
+          reset();
+          setError(null);
         }}
-        cancelOnly={true}
+        cancelOnly
       />
       {isEditing ? (
         <form
           onSubmit={handleSubmit(update)}
-          className='space-y-4'
+          className="space-y-4"
         >
           <FormField label="Max Team Size" error={errors.max_team_size}>
             {(injected) => (
               <TextField.Root
                 type="number"
                 {...register('max_team_size', {
-                  required: 'Max team size is required',
-                  valueAsNumber: true,
-                  min: {
-                    value: 1,
-                    message: 'Max team size must be at least 1',
+                  required : 'Max team size is required',
+                  valueAsNumber : true,
+                  min : {
+                    value : 1,
+                    message : 'Max team size must be at least 1',
                   },
-                  max: {
-                    value: 8,
-                    message: 'Max team size cannot exceed 8',
+                  max : {
+                    value : 8,
+                    message : 'Max team size cannot exceed 8',
                   },
                 })}
                 {...injected}
@@ -84,7 +89,7 @@ export default function EventGameplayTab({ event }: { event: Event }) {
               <TextField.Root
                 type="datetime-local"
                 {...register('start_time', {
-                  valueAsDate: true,
+                  valueAsDate : true,
                 })}
                 {...injected}
               />
@@ -95,7 +100,7 @@ export default function EventGameplayTab({ event }: { event: Event }) {
               <TextField.Root
                 type="datetime-local"
                 {...register('end_time', {
-                  valueAsDate: true,
+                  valueAsDate : true,
                 })}
                 {...injected}
               />
@@ -108,10 +113,10 @@ export default function EventGameplayTab({ event }: { event: Event }) {
                 placeholder="No time limit"
                 step={1}
                 {...register('time_limit_minutes', {
-                  valueAsNumber: true,
-                  min: {
-                    value: 1,
-                    message: 'Time limit must be at least 1 minute',
+                  valueAsNumber : true,
+                  min : {
+                    value : 1,
+                    message : 'Time limit must be at least 1 minute',
                   },
                 })}
                 {...injected}
@@ -173,8 +178,8 @@ export default function EventGameplayTab({ event }: { event: Event }) {
             isEditing={isEditing}
             setIsEditing={setIsEditing}
             reset={() => {
-              reset()
-              setError(null)
+              reset();
+              setError(null);
             }}
             loading={loading}
           />

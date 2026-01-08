@@ -1,68 +1,72 @@
 import type { Event } from '@/types';
-import { adjustDateForInput } from '@/util';
 import { COLOR_POSITIVE } from '@/constants';
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form'
-import { omit } from 'lodash'
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { omit } from 'lodash';
 import Dropzone from 'react-dropzone';
 import { TbUpload } from 'react-icons/tb';
-import { Button, Flex, TextField, TextArea, DataList } from '@radix-ui/themes';
+import {
+  Button,
+  Flex,
+  TextField,
+  TextArea,
+  DataList,
+} from '@radix-ui/themes';
 import EventGraphic from 'components/EventGraphic';
 import RadixMarkdown from 'components/RadixMarkdown';
 import FormField from 'components/FormField';
 import FormDropdown from 'components/SelectDropdown';
 import { ErrorCallout } from 'components/Callouts';
-import ActionButtonsGroup from './ActionButtonsGroup';
 import { directUpload, useFileList, useFileUrl } from '@/hooks/fileuploads';
 import { updateEvent } from '@/hooks/events';
+import ActionButtonsGroup from './ActionButtonsGroup';
 
 export default function EventDetailsTab({ event }: { event: Event }) {
-
   const {
     control,
     register,
     handleSubmit,
-    formState: { errors },
+    formState : { errors },
     watch,
     setValue,
     setError,
     clearErrors,
     reset,
   } = useForm<Event>({
-    defaultValues: {
+    defaultValues : {
       ...omit(event, 'id'),
-      image: event?.image || 'None',
-    }
-  })
+      image : event?.image || 'None',
+    },
+  });
 
   const currentImage = watch('image');
-  const { data: gameCards, error: gameCardsError, isLoading: gameCardsLoading } = useFileList('event-cards');
-  const { data: fileUrl, error: fileUrlError } = useFileUrl('event-cards', currentImage === 'None' ? '' : currentImage || '');
+  const { data : gameCards, error : gameCardsError, isLoading : gameCardsLoading } = useFileList('event-cards');
+  const { data : fileUrl, error : fileUrlError } = useFileUrl('event-cards', currentImage === 'None' ? '' : currentImage || '');
 
-  const [uploading, setUploading] = useState(false);
-  const [isEditing, setIsEditing] = useState<boolean>(false)
-  const [loading, setLoading] = useState<boolean>(false)
-  const [updateError, setUpdateError] = useState<string| null>(null)
+  const [ uploading, setUploading ] = useState(false);
+  const [ isEditing, setIsEditing ] = useState<boolean>(false);
+  const [ loading, setLoading ] = useState<boolean>(false);
+  const [ updateError, setUpdateError ] = useState<string| null>(null);
 
   const update = async (data: Event) => {
-    setLoading(true)
-    setUpdateError(null)
+    setLoading(true);
+    setUpdateError(null);
 
     const updatingEvent = data;
-    
+
     if (updatingEvent.image === 'None') {
       updatingEvent.image = null;
     }
 
     updateEvent(event.id, updatingEvent).then(() => {
-      setIsEditing(false)
-      reset(data)
+      setIsEditing(false);
+      reset(data);
     }).catch((err) => {
-      setUpdateError(err.message)
+      setUpdateError(err.message);
     }).finally(() => {
-      setLoading(false)
-    })
-  }
+      setLoading(false);
+    });
+  };
 
   const onDrop = async (acceptedFiles: File[]) => {
     const formData = new FormData();
@@ -74,33 +78,33 @@ export default function EventDetailsTab({ event }: { event: Event }) {
     clearErrors('image');
     directUpload(formData).then((data) => {
       setValue('image', data.filename);
-    }).catch((err) => setError('image', { message: err.message }))
+    }).catch((err) => setError('image', { message : err.message }))
       .finally(() => setUploading(false));
   };
 
   return (
-    <Flex direction="column" gap="3" className='mb-4'>
+    <Flex direction="column" gap="3" className="mb-4">
       <ActionButtonsGroup
         isEditing={isEditing}
         setIsEditing={setIsEditing}
         reset={() => {
-          reset()
-          setUpdateError(null)
+          reset();
+          setUpdateError(null);
         }}
-        cancelOnly={true}
+        cancelOnly
       />
 
       {isEditing ? (
         <form
           onSubmit={handleSubmit(update)}
-          className='space-y-4'
+          className="space-y-4"
         >
           <FormField label="Name" error={errors.name}>
             {(injected) => (
               <TextField.Root
                 placeholder="Event Name"
                 {...register('name', {
-                  required: 'Event name is required',
+                  required : 'Event name is required',
                 })}
                 {...injected}
               />
@@ -124,13 +128,13 @@ export default function EventDetailsTab({ event }: { event: Event }) {
               name="image"
               label="Image"
               options={gameCards ? gameCards.files.filter((file) => file.filename.length > 0).map((file) => ({
-                name: file.filename,
-                value: file.filename,
+                name : file.filename,
+                value : file.filename,
               })) : []}
               disabled={gameCardsLoading || !!gameCardsError}
               error={errors.image}
               rules={{
-                required: 'Image is required',
+                required : 'Image is required',
               }}
               control={control}
             />
@@ -138,8 +142,8 @@ export default function EventDetailsTab({ event }: { event: Event }) {
               {() => (
                 <Dropzone
                   accept={{
-                    'image/png': ['.png'],
-                    'image/jpeg': ['.jpeg'],
+                    'image/png' : [ '.png' ],
+                    'image/jpeg' : [ '.jpeg' ],
                   }}
                   multiple={false}
                   onDrop={onDrop}
@@ -172,8 +176,8 @@ export default function EventDetailsTab({ event }: { event: Event }) {
             isEditing={isEditing}
             setIsEditing={setIsEditing}
             reset={() => {
-              reset()
-              setUpdateError(null)
+              reset();
+              setUpdateError(null);
             }}
             loading={loading}
           />

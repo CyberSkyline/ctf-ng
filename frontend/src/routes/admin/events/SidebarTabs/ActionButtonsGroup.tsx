@@ -1,4 +1,3 @@
-
 import { TbDeviceFloppy, TbPencil, TbX } from 'react-icons/tb';
 import { COLOR_WARNING, COLOR_NEGATIVE } from '@/constants';
 import { Button, Flex } from '@radix-ui/themes';
@@ -23,7 +22,7 @@ export default function ActionButtonsGroup<TFieldValues extends FieldValues>({
         <Button
           type="submit"
           color={COLOR_WARNING}
-          variant='soft'
+          variant="soft"
           loading={loading}
           disabled={loading}
         >
@@ -31,13 +30,13 @@ export default function ActionButtonsGroup<TFieldValues extends FieldValues>({
           Save
         </Button>
       )}
-      
+
       <Button
         variant="soft"
         color={isEditing ? COLOR_NEGATIVE : COLOR_WARNING}
         onClick={() => {
-          setIsEditing(!isEditing)
-          reset()
+          setIsEditing(!isEditing);
+          reset();
         }}
       >
         {
@@ -55,5 +54,5 @@ export default function ActionButtonsGroup<TFieldValues extends FieldValues>({
         }
       </Button>
     </Flex>
-  )
+  );
 }
