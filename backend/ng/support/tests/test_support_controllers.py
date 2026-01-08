@@ -19,6 +19,7 @@ from ..controllers import (
     create_ticket_message,
     get_ticket,
     list_tickets,
+    upload_attachment,
     # Admin actions
     create_tag,
     update_tag,
@@ -135,6 +136,24 @@ class TestCreateTicketMessage:
 
         assert ticket.first_admin_response_timestamp is not None
 
+
+class TestUploadAttachment:
+    """Test the upload_attachment controller"""
+
+    def test_upload_to_closed_ticket_raises_validation_error(self, user, closed_ticket):
+        """Test uploading to a closed ticket raises ValidationError"""
+        from unittest.mock import Mock
+
+        file = Mock(filename='test.png')
+
+        with pytest.raises(ValidationError) as exc_info:
+            upload_attachment(
+                file=file,
+                ticket=closed_ticket,
+                uploaded_by=user.id,
+            )
+
+        assert exc_info.value.errors == {"ticket": "Ticket is closed"}
 
 
 class TestGetTicket:
