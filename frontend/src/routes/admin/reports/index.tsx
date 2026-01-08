@@ -4,7 +4,9 @@ import { useEffect } from 'react';
 
 export default function AdminReports() {
   useEffect(() => {
-    localStorage.setItem('grafana.navigation.docked', 'false');
+    if (localStorage.getItem('grafana.navigation.docked') === null) {
+      localStorage.setItem('grafana.navigation.docked', 'false');
+    }
   }, []);
 
   const { resolvedTheme } = useTheme();
