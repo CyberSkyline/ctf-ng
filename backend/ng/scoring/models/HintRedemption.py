@@ -263,11 +263,9 @@ class HintRedemption(db.Model):
             .options(
                 joinedload(cls.user),
                 joinedload(cls.team),
-                joinedload(cls.hint
-                    .joinedload(Hint.challenge
+                joinedload(cls.hint)
+                    .joinedload(Hint.challenge)
                         .joinedload(Challenge.event)
-                    )
-                ),
             )
             .all()
         )
