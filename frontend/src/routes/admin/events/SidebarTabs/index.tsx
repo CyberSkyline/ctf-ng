@@ -6,7 +6,6 @@ import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { useId } from 'react';
 import { useSearchParams } from 'react-router';
-import EventModal from '../EventModal';
 import EventChallengesTab from './EventChallengesTab';
 import EventDetailsTab from './EventDetailsTab';
 import EventFeedbackTab from './EventFeedbackTab';
@@ -32,7 +31,6 @@ export default function EventSidebar({ entity }: { entity: Event }) {
           icon={TeamIcon}
           label="Teams"
         />
-        <EventModal eventToUpdate={entity} />
       </AdminSidebarHeader>
 
       <Tabs.Root
