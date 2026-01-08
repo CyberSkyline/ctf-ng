@@ -1,5 +1,9 @@
 name: backend-linter
-on: [ pull_request ]
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-linter.yml'
 jobs:
   ruff:
     runs-on: ubuntu-latest
