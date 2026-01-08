@@ -4,9 +4,7 @@ Tests for the ManualPointAward model
 
 import pytest
 from unittest.mock import patch
-from datetime import datetime, timezone, UTC
-
-from CTFd.models import Users
+from datetime import datetime, UTC
 
 from ...core.exceptions import ValidationError
 
@@ -275,13 +273,10 @@ class TestFindFilteredAwards:
         assert len(awards) == 1
         assert awards[0].team_id == team_with_member.id
 
-    def test_find_by_admin_id(self, db_session, admin, user, team_with_member, event):
+    def test_find_by_admin_id(self, db_session, admin, user, user_factory, team_with_member, event):
         """Test filtering awards by admin_id"""
         # Create another admin
-        other_admin = Users(name="admin2", email="admin2@example.com", password="password", type="admin")
-        other_admin.verified = True
-        db_session.add(other_admin)
-        db_session.commit()
+        other_admin = user_factory(name="admin2", email="admin2@example.com", admin=True)
 
         # Create awards by different admins
         ManualPointAward.create_award(admin_id=admin.id, team_id=team_with_member.id, points=100, reason="Award 1")

@@ -264,6 +264,10 @@ class BaseValidator:
         """
         Validate that a user ID belongs to an admin user
         """
+        # local imports needed here to avoid module dependency cycle
+        from ...permissions.controllers.get_user_roles import get_user_roles
+        from ...permissions.models.enums import RoleEnum
+
         try:
             user_id = int(value)
         except (ValueError, TypeError):
@@ -276,7 +280,7 @@ class BaseValidator:
             self.errors[field] = f"{friendly_name} with ID {user_id} does not exist"
             return
 
-        if user.type != "admin":
+        if RoleEnum.ADMIN not in get_user_roles(user_id):
             self.errors[field] = "User must be an admin to perform this action"
             return
 
