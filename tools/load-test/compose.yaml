@@ -1,11 +1,14 @@
-services: 
+services:
   load-test:
     network_mode: "host"
     environment:
-      BASE_URL: "http://localhost"
-      STAGE_ONE_VUS: 2
-      STAGE_TWO_VUS: 5
-      STAGE_THREE_VUS: 2
+      BASE_URL: "https://10.51.3.9/ctf"
+      STAGE_ONE_DURATION: "1m"
+      STAGE_TWO_DURATION: "3m"
+      STAGE_THREE_DURATION: "1m"
+      STAGE_ONE_VUS: 30
+      STAGE_TWO_VUS: 75
+      STAGE_THREE_VUS: 30
       K6_WEB_DASHBOARD: "true"
       K6_LOG_OUTPUT: "file=output/logging.txt,level=trace"
 
