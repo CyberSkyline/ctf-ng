@@ -117,7 +117,7 @@ class IndvidualContainer(db.Model):
             memswap_limit=swap_mem,
             cpu_period=200000,
             cpu_quota=100000,
-            pids_limit=2000,
+            pids_limit=5000,
             ulimits=[ulimit],
             network=net.name,
         )
