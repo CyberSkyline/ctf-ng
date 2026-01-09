@@ -24,17 +24,47 @@ jobs:
         run: |
           set -euo pipefail
           base="${{ github.event.pull_request.base.ref }}"
+          head="${{ github.event.pull_request.head.ref }}"
           case "$base" in
-            development) prefix="dev-" ;;
-            staging) prefix="stg-" ;;
-            production) prefix="prod-" ;;
-            *) echo "Unsupported base branch: $base" >&2; exit 1 ;;
+            development) base_prefix="dev-" ;;
+            staging) base_prefix="stg-" ;;
+            production) base_prefix="prod-" ;;
           esac
           echo "base=${base}" >> "$GITHUB_OUTPUT"
-          echo "prefix=${prefix}" >> "$GITHUB_OUTPUT"
+          echo "head=${head}" >> "$GITHUB_OUTPUT"
+          echo "base_prefix=${base_prefix}" >> "$GITHUB_OUTPUT"
+          
+          # Check if this is a cascade merge
+          if [[ "$base" == "staging" && "$head" == "development" ]] || [[ "$base" == "production" && "$head" == "staging" ]]; then
+            echo "is_cascade=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_cascade=false" >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: Determine bump from labels
+      - name: Get source branch version (for cascade merges)
+        id: source_version
+        if: steps.branch.outputs.is_cascade == 'true'
+        run: |
+          set -euo pipefail
+          head="${{ steps.branch.outputs.head }}"
+          # Determine source prefix
+          if [[ "$head" == "development" ]]; then
+            source_prefix="dev-"
+          elif [[ "$head" == "staging" ]]; then
+            source_prefix="stg-"
+          fi
+          # Get latest tag from source branch
+          latest=$(git tag --list "${source_prefix}v*" --sort=-v:refname | head -n1 || true)
+          if [ -z "$latest" ]; then
+            version="v0.0.0"
+          else
+            version="${latest#${source_prefix}}"
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Determine bump from labels (for non-cascade merges)
         id: bump_level
+        if: steps.branch.outputs.is_cascade == 'false'
         uses: actions/github-script@v7
         with:
           script: |
@@ -50,9 +80,10 @@ jobs:
 
       - name: Get latest tag for branch (defaults to v0.0.0)
         id: latest_tag
+        if: steps.branch.outputs.is_cascade == 'false'
         run: |
           set -euo pipefail
-          prefix="${{ steps.branch.outputs.prefix }}"
+          prefix="${{ steps.branch.outputs.base_prefix }}"
           latest=$(git tag --list "${prefix}v*" --sort=-v:refname | head -n1 || true)
           if [ -z "$latest" ]; then
             current="v0.0.0"
@@ -61,25 +92,45 @@ jobs:
           fi
           echo "tag=${current}" >> "$GITHUB_OUTPUT"
 
-      - name: Calculate next version
+      - name: Calculate next version (for non-cascade merges)
         id: bump
+        if: steps.branch.outputs.is_cascade == 'false'
         uses: actions-ecosystem/action-bump-semver@v1
         with:
           current_version: ${{ steps.latest_tag.outputs.tag }}
           level: ${{ steps.bump_level.outputs.level }}
+
+      - name: Resolve version for cascade
+        id: version
+        run: |
+          set -euo pipefail
+          if [[ "${{ steps.branch.outputs.is_cascade }}" == "true" ]]; then
+            version="${{ steps.source_version.outputs.version }}"
+          else
+            version="v${{ steps.bump.outputs.new_version }}"
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
 
       - name: Create tag
         run: |
           set -euo pipefail
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          prefix="${{ steps.branch.outputs.prefix }}"
-          new_tag="${prefix}v${{ steps.bump.outputs.new_version }}"
+          base_prefix="${{ steps.branch.outputs.base_prefix }}"
+          version="${{ steps.version.outputs.version }}"
+          new_tag="${base_prefix}${version}"
           if git rev-parse "${new_tag}" >/dev/null 2>&1; then
             echo "Tag ${new_tag} already exists. Skipping."
             exit 0
           fi
-          git tag -a "${new_tag}" -m "Release ${new_tag} from PR #${{ github.event.pull_request.number }} into ${{ steps.branch.outputs.base }}"
+          is_cascade="${{ steps.branch.outputs.is_cascade }}"
+          if [[ "$is_cascade" == "true" ]]; then
+            source_branch="${{ steps.branch.outputs.head }}"
+            msg="Release ${new_tag} (cascaded from $source_branch) from PR #${{ github.event.pull_request.number }}"
+          else
+            msg="Release ${new_tag} from PR #${{ github.event.pull_request.number }} into ${{ steps.branch.outputs.base }}"
+          fi
+          git tag -a "${new_tag}" -m "$msg"
           git push origin "${new_tag}"
 
     env:
