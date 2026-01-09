@@ -20,7 +20,7 @@ from ..utils.redis import get_redis_client
 logger = logging.getLogger(__name__)
 
 NET_ERR_REGEX = re.compile("(?:endpoint.*already exists in)|(?:already attached to network)")
-LOCK_EXPIRE = 5*60
+LOCK_EXPIRE_SECONDS = 5*60
 
 class SerializedInstanceStats(TypedDict):
     id: int
@@ -298,7 +298,7 @@ class ContainerInstance(db.Model):
         from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 
         redis_client = get_redis_client(3)
-        lock = redis_lock.Lock(redis_client, cls.render_lock_key(team_id, challenge_id), expire=LOCK_EXPIRE)
+        lock = redis_lock.Lock(redis_client, cls.render_lock_key(team_id, challenge_id), expire=LOCK_EXPIRE_SECONDS)
 
         if lock.acquire(blocking=False):
             instances = cls.get_instance_group(challenge_id, team_id)
@@ -338,7 +338,7 @@ class ContainerInstance(db.Model):
         from ...team.models.Team import Team
 
         redis_client = get_redis_client(3)
-        lock = redis_lock.Lock(redis_client, cls.render_lock_key(team_id, challenge_id), expire=LOCK_EXPIRE)
+        lock = redis_lock.Lock(redis_client, cls.render_lock_key(team_id, challenge_id), expire=LOCK_EXPIRE_SECONDS)
 
         if lock.acquire(blocking=False):
             blueprints = ContainerBlueprint.query.filter_by(challenge_id=challenge_id).all()
