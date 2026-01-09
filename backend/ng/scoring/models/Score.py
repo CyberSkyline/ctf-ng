@@ -227,8 +227,7 @@ class Score(db.Model):
         """
         # LAZY-IMPORT
         from ...team.models.Team import Team
-        query = (
-            cls.query
+        query = (cls.query
             .join(cls.team)
             .filter(cls.event_id == event_id)
             .filter(
@@ -236,9 +235,10 @@ class Score(db.Model):
                 Team.start_timestamp.isnot(None),
             )
             .options(
-                joinedload(Score.team)
-                .joinedload(Team.members)
-                .joinedload(TeamMember.sponsor)
+                joinedload(cls.event),
+                joinedload(cls.team)
+                    .joinedload(Team.members)
+                    .joinedload(TeamMember.sponsor)
             )
             .order_by(cls.points.desc(), cls.last_correct_offset.asc())
         )
@@ -329,7 +329,7 @@ class Score(db.Model):
 
         if limit is not None:
             query = query.limit(limit)
-        return query.all()  # type: ignore[no-any-return]
+        return query.options(joinedload(cls.event)).all()
 
     @classmethod
     def clear_leaderboard_cache(cls, event_id: int | None = None) -> None:

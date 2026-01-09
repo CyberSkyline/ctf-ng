@@ -8,12 +8,12 @@ from typing import Any, TypedDict
 
 from CTFd.models import db
 from sqlalchemy import JSON
+from sqlalchemy.orm import joinedload
 
-from ...core.utils import utc_now
-from ...core.exceptions import ValidationError
-from ...core.utils.validator import BaseValidator
 from ... import config
-
+from ...core.exceptions import ValidationError
+from ...core.utils import utc_now
+from ...core.utils.validator import BaseValidator
 
 
 class SerializedFeedback(TypedDict):
@@ -214,4 +214,10 @@ class Feedback(db.Model):
         if challenge_id is not None:
             query = query.filter_by(challenge_id = challenge_id)
 
-        return query.order_by(cls.updated_at.desc()).all()
+        return (query
+            .order_by(cls.updated_at.desc())
+            .options(
+                joinedload(cls.user)
+            )
+            .all()
+        )

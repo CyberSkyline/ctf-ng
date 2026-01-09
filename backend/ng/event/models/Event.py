@@ -8,13 +8,13 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from CTFd.models import db
-from sqlalchemy import CheckConstraint, func, JSON
-from sqlalchemy.orm import Mapped
+from sqlalchemy import JSON, CheckConstraint, func
+from sqlalchemy.orm import Mapped, joinedload
 
 from ... import config
+from ...core import BusinessLogicError
 from ...core.utils.validator import BaseValidator
 from ...event.models.Demographic import Demographic
-from ...core import BusinessLogicError
 
 
 class Event(db.Model):
@@ -280,12 +280,12 @@ class Event(db.Model):
     def get_all_teams(self):
         from ...team.models.Team import Team
 
-        return Team.query.filter_by(event_id=self.id).all()
+        return Team.query.filter_by(event_id=self.id).options(joinedload(Team.event)).all()
 
     def get_all_challenges(self):
         from ...challenge.models.Challenge import Challenge
 
-        return Challenge.query.filter_by(event_id=self.id).all()
+        return Challenge.query.filter_by(event_id=self.id).options(joinedload(Challenge.event)).all()
 
     @classmethod
     def find_by_id(cls, event_id: int):
@@ -335,7 +335,7 @@ class Event(db.Model):
         from ...team.models.Team import Team
         from ...team.models.TeamMember import TeamMember
 
-        teams_in_event = Team.query.filter_by(event_id=self.id).all()
+        teams_in_event = Team.query.filter_by(event_id=self.id).options(joinedload(Team.event)).all()
 
         self.team_count = len(teams_in_event)
         self.total_members = TeamMember.query.filter_by(event_id=self.id).count()

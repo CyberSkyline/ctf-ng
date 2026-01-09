@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from typing import Any, TypedDict, NotRequired, TYPE_CHECKING
-from sqlalchemy.orm import Mapped
+from typing import TYPE_CHECKING, Any, NotRequired, TypedDict
 
 from CTFd.models import db
+from sqlalchemy.orm import Mapped, joinedload, selectinload
 
-from ...event.models import Event
 from ...core.utils.validator import BaseValidator
+from ...event.models import Event
 
 if TYPE_CHECKING:
-    from ..models import ChallengeTag, ChallengeVariable, ContainerBlueprint, Hint, Question, ChallengeYaml
+    from ..models import ChallengeTag, ChallengeVariable, ChallengeYaml, ContainerBlueprint, Hint, Question
 
 MAX_CHALLENGE_NAME_LENGTH = 128
 MAX_CHALLENGE_DESCRIPTION_LENGTH = 4096
@@ -158,7 +158,15 @@ class Challenge(db.Model):
 
     @classmethod
     def get_all_challenges(cls) -> list[Challenge]:
-        return cls.query.all()
+        return (
+            cls
+            .query
+            .options(
+                joinedload(cls.event),
+                selectinload(cls.questions),
+            )
+            .all()
+        )
 
     def render(self, team):
         """
@@ -166,20 +174,28 @@ class Challenge(db.Model):
         :param team: The team to render the challenge for.
         :return: A dictionary representation of the challenge for the team.
         """
+        from ...scoring.models import Attempt
         from .Hint import Hint
         from .Question import Question
-        from ...scoring.models import Attempt
 
-        hints = Hint.query.filter_by(challenge_id=self.id).all()
+        hints = Hint.query.filter_by(challenge_id=self.id).options(joinedload(Hint.challenge)).all()
 
         data = {
             "challenge": self.serialize(),
             "questions": Question.query.filter_by(challenge_id=self.id).all(),
             "hints": [hint.serialize(team=team) for hint in hints] if self.event.hints_enabled else [],
-            "attempts": Attempt.query.filter_by(
-                team_id=team.id,
-                challenge_id=self.id
-            ).all(),
+            "attempts": Attempt.query
+                .filter_by(
+                    team_id=team.id,
+                    challenge_id=self.id
+                )
+                .options(
+                    joinedload(Attempt.user),
+                    joinedload(Attempt.team),
+                    joinedload(Attempt.challenge),
+                    joinedload(Attempt.question),
+                )
+                .all()
         }
 
         return data

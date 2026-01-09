@@ -8,6 +8,7 @@ from typing import Any, TypedDict
 
 from CTFd.models import db
 from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.orm import joinedload, selectinload
 
 from ...core.utils.validator import BaseValidator
 from ...permissions.models.UserRole import UserRole
@@ -122,7 +123,15 @@ class User(db.Model):
         from ...team.models.TeamMember import TeamMember
 
         # Get all teams the user is a member of
-        team_members = TeamMember.query.filter_by(user_id=self.id).all()
+        team_members = (TeamMember.query
+            .filter_by(user_id=self.id)
+            .options(
+                joinedload(TeamMember.user),
+                joinedload(TeamMember.team),
+                joinedload(TeamMember.event)
+            )
+            .all()
+        )
         event_ids = [tm.event_id for tm in team_members]
 
         # Get all events for those teams
@@ -149,7 +158,13 @@ class User(db.Model):
         Returns:
             User or None: The user instance if found, None otherwise
         """
-        return cls.query.get(user_id)
+        return (cls.query
+            .options(
+                joinedload(cls.ctfd_user),
+                selectinload(cls.user_roles)
+            )
+            .get(user_id)
+        )
 
     @classmethod
     def find_or_create_by_ctfd_id(cls, ctfd_user_id: int, commit: bool = True) -> User:
@@ -162,7 +177,15 @@ class User(db.Model):
         Returns:
             User: The found or created user instance
         """
-        user = cls.query.get(ctfd_user_id)
+        user = (cls.query
+            .options(
+                joinedload(cls.affiliation),
+                joinedload(cls.ctfd_user),
+                selectinload(cls.user_roles)
+            )
+            .get(ctfd_user_id)
+        )
+
         if not user:
             user = cls.create_user(ctfd_user_id, commit=commit)
         return user
@@ -171,7 +194,14 @@ class User(db.Model):
     def get_all_users(cls):
         """Gets all users with their basic details."""
 
-        return cls.query.all()
+        return (cls.query
+            .options(
+                joinedload(cls.affiliation),
+                joinedload(cls.ctfd_user),
+                selectinload(cls.user_roles)
+            )
+            .all()
+        )
 
     @classmethod
     def check_can_join_team_in_event(cls, user_id: int, event_id: int) -> bool:

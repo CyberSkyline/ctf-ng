@@ -7,16 +7,17 @@ from __future__ import annotations
 from enum import Enum
 from typing import (
     Any,
-    TypedDict,
     NotRequired,
+    TypedDict,
 )
 
 from CTFd.models import db
+from sqlalchemy.orm import joinedload
 
 from ... import config
 from ...core.utils import utc_now
-from ...core.utils.validator import BaseValidator
 from ...core.utils.sqlalchemy_types import EnumWithUnknown
+from ...core.utils.validator import BaseValidator
 from ...notifications.models import Notification
 
 
@@ -257,7 +258,14 @@ class Announcement(db.Model):
         """
         Get all announcements ordered by newest first
         """
-        return cls.query.order_by(cls.created_at.desc()).all()
+        return (cls.query
+            .order_by(cls.created_at.desc())
+            .options(
+                joinedload(cls.sender),
+                joinedload(cls.event)
+            )
+            .all()
+        )
 
     @classmethod
     def get_active_announcements(
