@@ -94,7 +94,8 @@ class TicketAttachment(db.Model):
         if not self.file_upload:
             raise ValueError("FileUpload not loaded for TicketAttachment")
 
-        download_path = f"{current_app.config.get('ROUTE_PREFIX')}{config.TICKET_ATTACHMENT_DOWNLOAD_PATH}"
+        route_prefix = current_app.config.get('ROUTE_PREFIX') or ''
+        download_path = f"{route_prefix}{config.TICKET_ATTACHMENT_DOWNLOAD_PATH}"
 
         data = {
             "id": self.id,

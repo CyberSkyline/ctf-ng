@@ -34,6 +34,9 @@ class UploadAttachment(Resource):
             if not ticket:
                 return {"error": "Ticket not found"}, 404
 
+        if ticket.status == "closed":
+            return {"error": "Ticket is closed"}, 400
+
         service = SupportS3Service()
         return self._handle_direct_upload(ticket_id, user_id, service)
 
@@ -89,6 +92,12 @@ def upload_attachment(file: FileStorage, ticket: Ticket, uploaded_by: int) -> Ti
 
     if not file or not file.filename:
         raise ValidationError("No file provided")
+
+    if ticket.status == "closed":
+        raise ValidationError(
+            "Ticket is closed",
+            errors={"ticket": "Ticket is closed"},
+        )
 
     file_size = get_file_size(file)
 
