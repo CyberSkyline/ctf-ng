@@ -1618,8 +1618,7 @@ class Test_Event_Admin_Create:
 
     def test_admin_create_event_with_missing_fields(self, admin_client):
         new_event_data = {
-            "name": "Incomplete Event",
-            # Missing description and public fields
+            # Missing name, which is the only required field for creation
         }
 
         response = admin_client.post(
