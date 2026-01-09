@@ -201,10 +201,11 @@ export class DefaultHttpUserScenario {
         this.register_event();
         this.start_event();
         this.start_basic_challenge();
-        for (let i = 0; i < 10; i++) {
-            this.reset_basic_challenge();
-            sleep(1);
-        }
+        this.reset_basic_challenge();
+//        for (let i = 0; i < 10; i++) {
+//            this.reset_basic_challenge();
+//            sleep(1);
+//        }
 
         // await this.answer_basic_challenge(false);
         // sleep(1);
