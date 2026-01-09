@@ -1,0 +1,16 @@
+apiVersion: 1
+
+datasources:
+  - name: ctfng-db
+    type: mysql
+    url: ${SQL_HOST}
+    user: ${SQL_USER}
+    isDefault: true
+    jsonData:
+      database: ${SQL_DB}
+      maxOpenConns: 100
+      maxIdleConns: 100
+      maxIdleConnsAuto: true
+      connMaxLifetime: 14400
+    secureJsonData:
+      password: ${SQL_PASSWORD}

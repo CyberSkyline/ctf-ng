@@ -1,0 +1,635 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "mysql",
+        "uid": "PC4AF0AAB7519420B"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 5,
+        "x": 0,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "ctfd",
+          "datasource": {
+            "type": "mysql",
+            "uid": "PC4AF0AAB7519420B"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) FROM ctfd.ng_feedback WHERE challenge_id = $challenge ",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "name": "COUNT",
+                "parameters": [
+                  {
+                    "name": "*",
+                    "type": "functionParameter"
+                  }
+                ],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50,
+            "whereJsonTree": {
+              "children1": [
+                {
+                  "id": "a98abab8-cdef-4012-b456-719b9500b784",
+                  "properties": {
+                    "field": "challenge_id",
+                    "fieldSrc": "field",
+                    "operator": "equal",
+                    "value": [2],
+                    "valueError": [null],
+                    "valueSrc": ["value"],
+                    "valueType": ["number"]
+                  },
+                  "type": "rule"
+                }
+              ],
+              "id": "8aaaa8bb-0123-4456-b89a-b19b94f5ee1b",
+              "type": "group"
+            },
+            "whereString": "challenge_id = 2"
+          },
+          "table": "ng_feedback"
+        }
+      ],
+      "title": "Feedback Count",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "mysql",
+        "uid": "PC4AF0AAB7519420B"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "neutral": 50
+          },
+          "mappings": [],
+          "max": 10,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "blue",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 5,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 0,
+        "orientation": "vertical",
+        "reduceOptions": {
+          "calcs": ["mean"],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "ctfd",
+          "datasource": {
+            "type": "mysql",
+            "uid": "PC4AF0AAB7519420B"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT * FROM ctfd.ng_feedback WHERE challenge_id = $challenge ",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "name": "COUNT",
+                "parameters": [
+                  {
+                    "name": "*",
+                    "type": "functionParameter"
+                  }
+                ],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50,
+            "whereJsonTree": {
+              "children1": [
+                {
+                  "id": "a98abab8-cdef-4012-b456-719b9500b784",
+                  "properties": {
+                    "field": "challenge_id",
+                    "fieldSrc": "field",
+                    "operator": "equal",
+                    "value": [2],
+                    "valueError": [null],
+                    "valueSrc": ["value"],
+                    "valueType": ["number"]
+                  },
+                  "type": "rule"
+                }
+              ],
+              "id": "8aaaa8bb-0123-4456-b89a-b19b94f5ee1b",
+              "type": "group"
+            },
+            "whereString": "challenge_id = 2"
+          },
+          "table": "ng_feedback"
+        }
+      ],
+      "title": "Feedback Metrics",
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "delimiter": ",",
+            "format": "auto",
+            "jsonPaths": [
+              {
+                "alias": "Quality",
+                "path": "quality"
+              },
+              {
+                "alias": "Difficulty",
+                "path": "difficulty"
+              }
+            ],
+            "replace": true,
+            "source": "feedback_data"
+          }
+        }
+      ],
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "mysql",
+        "uid": "PC4AF0AAB7519420B"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "stepAfter",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "total"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "correct"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 11,
+        "x": 13,
+        "y": 0
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "ctfd",
+          "datasource": {
+            "type": "mysql",
+            "uid": "PC4AF0AAB7519420B"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH \r\n-- 1. Total of all submissions BEFORE the dashboard start time\r\nstarting_balance AS (\r\n    SELECT COUNT(*) as base_count\r\n    FROM ng_attempts\r\n    WHERE timestamp < $__timeFrom() and challenge_id = $challenge \r\n),\r\n-- 2. New submissions within the dashboard window\r\ndaily_buckets AS (\r\n    SELECT \r\n        $__timeGroup(timestamp, $__interval) AS time_bucket,\r\n        COUNT(*) AS bucket_count\r\n    FROM ng_attempts\r\n    WHERE $__timeFilter(timestamp) and challenge_id = $challenge\r\n    GROUP BY 1\r\n),\r\n-- 3. Calculate running total starting from the base count\r\nrunning_total_series AS (\r\n    SELECT \r\n        FROM_UNIXTIME(time_bucket) AS time,\r\n        (SELECT base_count FROM starting_balance) + \r\n         SUM(bucket_count) OVER (ORDER BY time_bucket ROWS UNBOUNDED PRECEDING) AS total\r\n    FROM daily_buckets\r\n)\r\n-- 4. Combine: Start Point + Main Series + End Point\r\nSELECT $__timeFrom() AS time, (SELECT base_count FROM starting_balance) AS total\r\nUNION ALL\r\nSELECT time, total FROM running_total_series\r\nUNION ALL\r\nSELECT \r\n    $__timeTo() AS time, \r\n    COALESCE(MAX(total), (SELECT base_count FROM starting_balance)) AS total \r\nFROM running_total_series\r\nORDER BY time",
+          "refId": "total",
+          "sql": {
+            "columns": [
+              {
+                "name": "$__timeGroup",
+                "parameters": [
+                  {
+                    "name": "timestamp",
+                    "type": "functionParameter"
+                  },
+                  {
+                    "name": "$__interval",
+                    "type": "functionParameter"
+                  },
+                  {
+                    "name": "0",
+                    "type": "functionParameter"
+                  }
+                ],
+                "type": "function"
+              },
+              {
+                "name": "COUNT",
+                "parameters": [
+                  {
+                    "name": "timestamp",
+                    "type": "functionParameter"
+                  }
+                ],
+                "type": "function"
+              }
+            ],
+            "groupBy": [],
+            "limit": 50,
+            "whereJsonTree": {
+              "children1": [
+                {
+                  "id": "bba98ba9-cdef-4012-b456-719b8fedef88",
+                  "properties": {
+                    "fieldSrc": "field",
+                    "value": [],
+                    "valueSrc": []
+                  },
+                  "type": "rule"
+                }
+              ],
+              "id": "b8b88aa9-0123-4456-b89a-b19b8fe5dd5f",
+              "type": "group"
+            }
+          },
+          "table": "ng_attempts"
+        },
+        {
+          "dataset": "ctfd",
+          "datasource": {
+            "type": "mysql",
+            "uid": "PC4AF0AAB7519420B"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "hide": false,
+          "rawQuery": true,
+          "rawSql": "WITH \r\n-- 1. Total of all submissions BEFORE the dashboard start time\r\nstarting_balance AS (\r\n    SELECT COUNT(*) as base_count\r\n    FROM ng_attempts\r\n    WHERE is_correct = 1 and challenge_id = $challenge\r\n    AND timestamp < $__timeFrom()\r\n),\r\n-- 2. New submissions within the dashboard window\r\ndaily_buckets AS (\r\n    SELECT \r\n        $__timeGroup(timestamp, $__interval) AS time_bucket,\r\n        COUNT(*) AS bucket_count\r\n    FROM ng_attempts\r\n    WHERE is_correct = 1 and challenge_id = $challenge and  $__timeFilter(timestamp)\r\n    GROUP BY 1\r\n),\r\n-- 3. Calculate running total starting from the base count\r\nrunning_total_series AS (\r\n    SELECT \r\n        FROM_UNIXTIME(time_bucket) AS time,\r\n        (SELECT base_count FROM starting_balance) + \r\n         SUM(bucket_count) OVER (ORDER BY time_bucket ROWS UNBOUNDED PRECEDING) AS correct\r\n    FROM daily_buckets\r\n)\r\n-- 4. Combine: Start Point + Main Series + End Point\r\nSELECT $__timeFrom() AS time, (SELECT base_count FROM starting_balance) AS correct\r\nUNION ALL\r\nSELECT time, correct FROM running_total_series\r\nUNION ALL\r\nSELECT \r\n    $__timeTo() AS time, \r\n    COALESCE(MAX(correct), (SELECT base_count FROM starting_balance)) AS correct \r\nFROM running_total_series\r\nORDER BY time",
+          "refId": "correct",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "attempts",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "mysql",
+        "uid": "PC4AF0AAB7519420B"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false,
+            "wrapText": false
+          },
+          "fieldMinMax": false,
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "yellow",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 20
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byType",
+              "options": "number"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "gauge",
+                  "valueDisplayMode": "text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 2,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "ctfd",
+          "datasource": {
+            "type": "mysql",
+            "uid": "PC4AF0AAB7519420B"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n  name AS user,\r\n  JSON_EXTRACT(feedback_data, \"$.difficulty\") AS difficulty,\r\n  JSON_EXTRACT(feedback_data, \"$.quality\") AS quality,\r\n  JSON_UNQUOTE(JSON_EXTRACT(feedback_data, \"$.what_liked\")) AS liked,\r\n  JSON_UNQUOTE(JSON_EXTRACT(feedback_data, \"$.how_to_improve\")) AS improve,\r\n  updated_at\r\nFROM\r\n  ng_feedback\r\n  LEFT JOIN users ON ng_feedback.user_id = users.id\r\nWHERE\r\n  challenge_id = $challenge",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [
+                  {
+                    "name": "*",
+                    "type": "functionParameter"
+                  }
+                ],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          },
+          "table": "ng_feedback"
+        }
+      ],
+      "title": "Feedback for $challenge",
+      "type": "table"
+    }
+  ],
+  "preload": false,
+  "schemaVersion": 42,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": "",
+          "value": "1"
+        },
+        "definition": "SELECT id AS __value, name AS __text FROM ng_events",
+        "description": "The event to pick a challenge from",
+        "label": "Event",
+        "name": "event",
+        "options": [],
+        "query": "SELECT id AS __value, name AS __text FROM ng_events",
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "allowCustomValue": false,
+        "current": {
+          "text": "",
+          "value": "1"
+        },
+        "definition": "SELECT id AS __value,name AS __text FROM ng_challenges WHERE event_id=$event",
+        "description": "The challenge to look at",
+        "label": "Challenge",
+        "name": "challenge",
+        "options": [],
+        "query": "SELECT id AS __value,name AS __text FROM ng_challenges WHERE event_id=$event",
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Challenge",
+  "uid": "admszws",
+  "version": 3
+}

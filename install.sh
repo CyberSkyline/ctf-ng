@@ -34,6 +34,11 @@ if [ ! -f ".env.prod" ]; then
   cp ./conf/ctfd/.env.default.prod .env.prod
 fi
 
+# Set up default grafana .env
+if [ ! -f "./conf/grafana/.env" ]; then
+  cp ./conf/grafana/.env.default ./conf/grafana/.env
+fi
+
 # Docker
 if ! command -v docker &> /dev/null; then
   echo "Docker is not installed."
