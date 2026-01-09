@@ -1,5 +1,9 @@
 name: services-linter
-on: [ pull_request ]
+on:
+  pull_request:
+    paths:
+      - 'services/**'
+      - '.github/workflows/services-linter.yml'
 jobs:
  linter-test:
     name: Linter Test

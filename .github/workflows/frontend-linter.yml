@@ -1,5 +1,9 @@
 name: frontend-linter
-on: [ pull_request ]
+on:
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-linter.yml'
 jobs:
  linter-test:
     name: Linter Test
