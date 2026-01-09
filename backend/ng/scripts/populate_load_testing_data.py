@@ -44,7 +44,7 @@ with redirect_stdout(sys.stderr):
             "event_id": event.id,
             "challenge_id": challenge.id,
             "question_id": challenge.questions[0].id if challenge.questions else None,
-            "users": [], 
+            "users": [],
             "admins": []
         }
 
