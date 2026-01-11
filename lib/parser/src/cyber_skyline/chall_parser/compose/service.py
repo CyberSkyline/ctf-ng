@@ -122,7 +122,10 @@ class Service:
     # Resource constraints - important for preventing resource abuse
     mem_limit: int | str | None = field(default=None)  # Memory limit (e.g., "512m", "1g")
     memswap_limit: int | str | None = field(default=None)  # Memory + swap limit
-    cpus: float | str | None = field(default=None)  # CPU limit (e.g., 0.5, "1.5")
+    cpus: float | str | None = field(default=None, 
+                                     converter=lambda x: float(x) if x is not None else None
+                                     )  # CPU limit (e.g., 0.5 for half a CPU)
+        
 
     # User and permissions
     user: str | None = field(default=None)  # User to run the container as (e.g., "1000:1000", "nobody")

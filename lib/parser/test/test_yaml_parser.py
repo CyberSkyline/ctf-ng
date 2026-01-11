@@ -464,7 +464,7 @@ services:
         assert web_service.hostname == "web-server"
         assert web_service.networks == ["competitor_net"]
         assert web_service.mem_limit == "256m"
-        assert web_service.cpus == "0.5"
+        assert web_service.cpus == 0.5
         assert web_service.cap_add == ["NET_ADMIN"]
         
         # Web service environment
@@ -509,7 +509,7 @@ services:
         assert db_service.networks == ["competitor_net"]
         assert db_service.mem_limit == "512m"
         assert db_service.memswap_limit == "1g"
-        assert db_service.cpus == "1.0"
+        assert db_service.cpus == 0.25
         
         # Database service environment
         assert db_service.environment is not None

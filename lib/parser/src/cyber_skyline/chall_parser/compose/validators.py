@@ -223,3 +223,28 @@ def validate_regex(instance,attribute,value: str):
         re.compile(value)
     except re.error as e:
         raise ValueError(f"Invalid regex pattern for {attribute.name}: {value}") from e
+
+def validate_cpus(instance, attribute, value: Any):
+    """Validator for CPU limit values.
+    
+    Ensures that the provided CPU limit is a positive float or string
+    that can be converted to a positive float.
+    
+    Args:
+        instance: The instance being validated
+        attribute: The attribute being validated
+        value: The CPU limit to validate
+    Raises:
+        ValueError: If the CPU limit is larger than allowed
+    """
+    if value is None:
+        return  # Allow None values
+    
+    try:
+        cpu_value = float(value)
+        if cpu_value <= 0:
+            raise ValueError(f"CPU limit for {attribute.name} must be a positive number, got {value}")
+        if cpu_value > 0.5:
+            raise ValueError(f"CPU limit for {attribute.name} is too high ({value}), maximum allowed is 0.5")
+    except TypeError as e:
+        raise ValueError(f"CPU limit for {attribute.name} must be convertible to float, got {value}") from e
