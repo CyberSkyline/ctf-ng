@@ -115,7 +115,7 @@ class ComposeFile:
             if (w := _network_warnings(net_name, net)) is not None
         ]
         if network_warnings:
-            yield Warnings("network warnings", None, network_warnings)
+            yield Warnings("networks", None, network_warnings)
 
 
         def _service_warnings(name: str, serv: Service | None) -> Warnings | None:
@@ -136,10 +136,10 @@ class ComposeFile:
             if (w := _service_warnings(serv_name, serv)) is not None
         ]
         if service_warnings:
-            yield Warnings("service warnings", None, service_warnings)
+            yield Warnings("services", None, service_warnings)
 
-    def warnings(self) -> Warnings:
-        warning =  Warnings("ComposeFile", self._warnings(), self._field_warnings())
+    def warnings(self) -> Warnings | None:
+        warning =  Warnings("root", self._warnings(), self._field_warnings())
         if warning.self_warnings or warning.field_warnings:
             return warning
         return None
