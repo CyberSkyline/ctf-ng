@@ -25,6 +25,7 @@ for CTF challenge deployment. It enforces security constraints and validation wh
 supporting the x-challenge extension for CTF-specific metadata.
 """
 
+from functools import reduce
 from typing import Iterator, NewType, Dict
 import attrs.validators as v
 from attrs import define, field
@@ -57,7 +58,7 @@ class ComposeFile:
     # Core Docker Compose sections with security constraints
     services: ServicesDict = field(
         default=None, 
-        validator=v.optional(validate_compose_name_pattern)
+        validator=v.deep_mapping(validate_compose_name_pattern, v.instance_of(Service), v.instance_of(dict))
     )
     # Container services that make up the challenge infrastructure
     # - Names must follow Docker naming conventions
@@ -66,12 +67,28 @@ class ComposeFile:
 
     networks: NetworksDict | None = field(
         default=None,
-        validator=v.optional(v.and_(validate_compose_name_pattern, contains("competitor_net")))
+        validator=v.optional(
+            v.and_(
+                v.deep_mapping(validate_compose_name_pattern, v.optional(v.instance_of(Network)), v.instance_of(dict)), 
+                contains("competitor_net")
+            )
+        )
     )
     # Network definitions for service communication
     # - All networks are internal-only for security
     # - Names must follow Docker naming conventions
     # - Optional since simple challenges might not need custom networking
+
+    def __attrs_post_init__(self) -> None:
+        # Ensure That All Networks Are Used by Services
+        if self.networks is not None and self.services is not None:
+            used_networks: set[ComposeResourceName] = set()
+            used_networks = reduce(lambda a, b: a.union(b),
+                                   (serv.network_names() for serv in self.services.values()), used_networks)
+            network_names = set(self.networks.keys())
+            unused_networks = network_names - used_networks
+            if unused_networks:
+                raise ValueError(f"Unused networks defined: {', '.join(unused_networks)}")
     
     def _warnings(self) -> Iterator[str]:
         if self.services is None or len(self.services) == 0:

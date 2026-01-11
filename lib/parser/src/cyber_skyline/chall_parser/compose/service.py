@@ -28,6 +28,7 @@ needed for challenge infrastructure while ignoring complex orchestration feature
 from typing import Iterator, Literal, Any
 from attrs import define, field
 import attrs.validators as v
+from cyber_skyline.chall_parser.compose import ComposeResourceName
 from cyber_skyline.chall_parser.template import Template
 from cyber_skyline.chall_parser.compose.validators import is_ipv4
 
@@ -75,7 +76,7 @@ class Service:
     entrypoint: str | list[str] | None = field(default=None)  # Override the default entrypoint
 
     # Environment and configuration
-    environment: dict[str, Template | str] | list[str] | None = field(
+    environment: dict[str, Template | str] | list[str | dict[str, Template | str]] | None = field(
         default=None)
     # Environment variables for the container
     # - dict form: {"VAR": "value"} or {"VAR": Template("fake.name()")}
@@ -83,10 +84,18 @@ class Service:
     # Template support allows dynamic variable generation for each challenge instance
     
     # Networking configuration
-    networks: list[str] | dict[str, ServiceNetwork | None] | None = field(default=None)
+    networks: list[ComposeResourceName] | dict[ComposeResourceName, ServiceNetwork | None] | None = field(default=None)
     # Network connections for the service
     # - list form: ["network1", "network2"] - simple network attachment
     # - dict form: {"network1": None} - allows for future network-specific configuration
+
+    def network_names(self) -> set[ComposeResourceName]:
+        """Helper to get the list of network names the service is attached to."""
+        if self.networks is None:
+            return set()
+        if isinstance(self.networks, list):
+            return set(self.networks)
+        return set(self.networks.keys())
 
     
     # Security and capabilities

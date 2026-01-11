@@ -120,7 +120,7 @@ networks:
         assert web_service.hostname == "web-server"
         assert web_service.networks is not None and isinstance(web_service.networks, dict)
         assert "competitor_net" in web_service.networks
-        competitor_net = web_service.networks["competitor_net"]
+        competitor_net = web_service.networks[ComposeResourceName("competitor_net")]
         assert competitor_net is not None
         assert competitor_net.ipv4_address == "172.16.238.10"
         assert compose.networks is not None and isinstance(compose.networks, dict)
@@ -915,6 +915,7 @@ networks:
         # returned for external networks.
         compose = parse_compose_string(yaml_content)
         w = compose.warnings()
+        assert w is not None
         # Field warnings yield Warnings objects per resource; find the network warning
         rendered = w.render()
         # There should be a warning for the external network 'competitor_net'
@@ -1040,3 +1041,49 @@ networks:
         chall = parse_compose_string(yaml_content)
         assert chall.challenge is not None
         assert chall.challenge.questions is not None
+
+
+    def test_error_on_array_of_mappings_in_environment(self):
+        """
+        Test that we get an error when we pass a array of mappings for the environment variables in a service.
+        """
+
+        yaml_content = """
+x-challenge:
+  name: Basic Challenge
+  description: A simple challenge to test parsing
+  summary: A simple challenge to test parsing
+  icon: TbPuzzle
+  templates:
+    flag-template: &flag_tmpl "fake.bothify('CTF{????-####}', letters='ABCDEF')"
+  variables:
+    db_password:
+      template: "fake.password(length=12)"
+      default: &db_pass "SecureP4ss!"
+    session_id:
+      template: "fake.uuid4()"
+      default: &session_id "123e4567-e89b-12d3-a456-426614174000"
+  questions:
+    - name: Q1
+      body: What is the flag?
+      points: 100
+      answer: CTF{test_flag}
+      max_attempts: 3
+  hints:
+    - name: check-logs
+      body: Check the logs
+      preview: Log hint
+      deduction: 10
+  tags:
+    - test
+    - beginner
+services:
+  app:
+    image: test:latest
+    hostname: test-host
+    environment:
+      - VAR1: value1
+      - VAR2: value2
+"""
+        with pytest.raises(Exception):
+            parse_compose_string(yaml_content)

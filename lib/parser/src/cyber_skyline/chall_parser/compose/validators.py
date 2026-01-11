@@ -29,6 +29,7 @@ import re
 import ipaddress
 from typing import Any
 from cyber_skyline.chall_parser.compose.answer import Answer, AnswerTestCase
+from cyber_skyline.chall_parser.compose import ComposeResourceName
 from cyber_skyline.chall_parser.template import Template
 from collections.abc import Callable, Container
 
@@ -130,7 +131,7 @@ def validate_tabler_icon(instance, attribute, value):
     if not value.startswith("Tb"):
         raise ValueError(f"Icon name '{value}' must start with 'Tb' prefix")
 
-def validate_compose_name_pattern(instance, attribute, value):
+def validate_compose_name_pattern(instance, attribute, value: ComposeResourceName):
     """Validator for compose resource names that must match ^[a-zA-Z0-9._-]+$.
     
     This enforces the Docker Compose specification for valid resource names,
@@ -138,9 +139,8 @@ def validate_compose_name_pattern(instance, attribute, value):
     """
     if value is not None:
         pattern = re.compile(r'^[a-zA-Z0-9._-]+$')
-        for key in value.keys():
-            if not pattern.match(key):
-                raise ValueError(f"Invalid {attribute.name} key '{key}': must match pattern ^[a-zA-Z0-9._-]+$")
+        if not pattern.match(value):
+            raise ValueError(f"Invalid {attribute.name} compose resource name '{value}': must match pattern ^[a-zA-Z0-9._-]+$")
 
 # TODO: Add more validators as needed:
 # - validate_challenge_difficulty (easy, medium, hard)
