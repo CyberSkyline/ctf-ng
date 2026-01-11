@@ -32,7 +32,7 @@ from cyber_skyline.chall_parser.template import Template
 
 logger = logging.getLogger(__name__)
             
-yaml.add_constructor('!template', Template.from_yaml)
+yaml.add_constructor('!template', Template.from_yaml, Loader=yaml.SafeLoader)
 yaml.add_representer(Template, Template.to_yaml)
 
 def is_dict_list_union(tp):
@@ -118,7 +118,7 @@ class ComposeYamlParser:
         logger.debug("Starting YAML parsing with template rewriting")
         
         # Step 1: Create a YAML loader for rewriting the stream
-        loader = yaml.BaseLoader(yaml_content)
+        loader = yaml.SafeLoader(yaml_content)
         
         try:
             # Step 2: Rewrite aliases/templates
@@ -131,7 +131,7 @@ class ComposeYamlParser:
             rewritten_yaml = yaml.emit(events)
             logger.debug(f"Rewritten YAML:\n{rewritten_yaml}")
             # Step 4: Parse the rewritten YAML into a dictionary
-            parsed_data = yaml.load(rewritten_yaml, Loader=yaml.Loader)
+            parsed_data = yaml.load(rewritten_yaml, Loader=yaml.SafeLoader)
             
             # Step 5: Structure into ComposeFile using cattrs
             logger.debug("Structuring data into ComposeFile")
