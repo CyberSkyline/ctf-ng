@@ -29,9 +29,9 @@ import re
 import ipaddress
 from typing import Any
 from cyber_skyline.chall_parser.compose.answer import Answer, AnswerTestCase
-from cyber_skyline.chall_parser.compose import ComposeResourceName
 from cyber_skyline.chall_parser.template import Template
 from collections.abc import Callable, Container
+from cyber_skyline.chall_parser.compose.types import ComposeResourceName
 
 
 logger = logging.getLogger(__name__)

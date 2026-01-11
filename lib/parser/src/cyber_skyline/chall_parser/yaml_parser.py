@@ -93,6 +93,16 @@ class ComposeYamlParser:
         converter.register_structure_hook(Template, template_struct_hook)
         converter.register_unstructure_hook(Template, template_unstruct_hook)
 
+        # Register structure hooks to disable coercion
+        def no_coercion(value, tp):
+            if isinstance(value, tp):
+                return value
+            raise ValueError(f"Expected {tp}, got {value!r}")
+        converter.register_structure_hook(int, no_coercion)
+        converter.register_structure_hook(str, no_coercion)
+        converter.register_structure_hook(bool, no_coercion)
+        converter.register_structure_hook(float, no_coercion)
+
         converter.register_structure_hook_func(is_dict_list_union, dict_list_union_hook_gen(converter))
         
         return converter
@@ -125,6 +135,7 @@ class ComposeYamlParser:
             logger.debug("Rewriting aliases and templates")
             # Use the Rewriter to process the YAML content
             events = list(Rewriter(loader).rewrite())
+            logger.debug(f"Rewritten events: {events}")
             
             # Step 3: Reconstruct YAML from events
             logger.debug("Reconstructing YAML from rewritten events")
@@ -132,10 +143,12 @@ class ComposeYamlParser:
             logger.debug(f"Rewritten YAML:\n{rewritten_yaml}")
             # Step 4: Parse the rewritten YAML into a dictionary
             parsed_data = yaml.load(rewritten_yaml, Loader=yaml.SafeLoader)
+            logger.debug(f"Parsed YAML data: {parsed_data}")
             
             # Step 5: Structure into ComposeFile using cattrs
             logger.debug("Structuring data into ComposeFile")
             compose_file = self.converter.structure(parsed_data, ComposeFile)
+            logger.debug(f"Structured ComposeFile: {compose_file}")
             
             logger.info("Successfully parsed compose file")
             return compose_file
@@ -149,6 +162,7 @@ class ComposeYamlParser:
         """Convert a ComposeFile back to YAML string."""
         # Unstructure the compose file to a dictionary
         data = self.converter.unstructure(compose_file)
+        logger.debug(f"Unstructured compose file data: {data}")
         
         # Convert to YAML
         return yaml.dump(data, default_flow_style=False, sort_keys=False)

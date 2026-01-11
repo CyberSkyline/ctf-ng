@@ -18,9 +18,10 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
 # IN THE SOFTWARE.
 from typing import cast
+from cyber_skyline.chall_parser.compose.types import ComposeResourceName
 import pytest
 from cyber_skyline.chall_parser.compose import (
-    ComposeFile, Network, ComposeResourceName, ServicesDict, NetworksDict, Service, ChallengeInfo
+    ComposeFile, Network, ServicesDict, NetworksDict, Service, ChallengeInfo
     
 )
 from cyber_skyline.chall_parser.compose.validators import validate_compose_name_pattern
@@ -37,11 +38,12 @@ class TestComposeFile:
         challenge = ChallengeInfo(
             name="Test Challenge",
             description="A test challenge",
-            questions=[]
+            questions=[],
         )
-        compose = ComposeFile(challenge=challenge)
+        services = {}
+        compose = ComposeFile(challenge=challenge, services=services, networks=None)
         assert compose.challenge.name == "Test Challenge"
-        assert compose.services is None
+        assert compose.services == {}
         assert compose.networks is None
 
     def test_compose_file_with_all_sections(self):
@@ -53,8 +55,8 @@ class TestComposeFile:
         )
         
         services = {
-            ComposeResourceName("web"): Service(image="nginx", hostname="web"),
-            ComposeResourceName("db"): Service(image="postgres", hostname="db")
+            ComposeResourceName("web"): Service(image="nginx", hostname="web", networks=[ComposeResourceName("frontend"), ComposeResourceName("competitor_net")]),
+            ComposeResourceName("db"): Service(image="postgres", hostname="db", networks=[ComposeResourceName("backend"), ComposeResourceName("competitor_net")])
         }
         
         networks = {
@@ -77,25 +79,24 @@ class TestComposeFile:
 class TestComposeNameValidation:
     def test_compose_name_pattern_validator_edge_cases(self):
         """Test edge cases for compose name pattern validation."""
-        # Test with empty dict
-        validate_compose_name_pattern(None, type('obj', (), {'name': 'test'})(), {})
         
         # Test with valid patterns
         valid_names = {
-            "a": "value",
-            "1": "value", 
-            "a-b": "value",
-            "a_b": "value",
-            "a.b": "value",
-            "a1b2c3": "value"
+            ComposeResourceName("a"): "value",
+            ComposeResourceName("1"): "value", 
+            ComposeResourceName("a-b"): "value",
+            ComposeResourceName("a_b"): "value",
+            ComposeResourceName("a.b"): "value",
+            ComposeResourceName("a1b2c3"): "value"
         }
-        validate_compose_name_pattern(None, type('obj', (), {'name': 'test'})(), valid_names)
+        for name in valid_names.keys():
+            validate_compose_name_pattern(None, type('obj', (), {'name': 'test'})(), name)
 
     def test_invalid_compose_names(self):
         """Test that invalid compose names are rejected."""
         invalid_dict = {
-            "service with spaces": "value",
-            "service@special": "value"
+            ComposeResourceName("service with spaces"): "value",
+            ComposeResourceName("service@special"): "value"
         }
         
         class MockInstance:
@@ -104,5 +105,6 @@ class TestComposeNameValidation:
         class MockAttribute:
             name = "services"
         
-        with pytest.raises(ValueError, match="must match pattern"):
-            validate_compose_name_pattern(MockInstance(), MockAttribute(), invalid_dict)
+        for key in invalid_dict.keys():
+            with pytest.raises(ValueError, match="must match pattern"):
+                validate_compose_name_pattern(MockInstance(), MockAttribute(), key)

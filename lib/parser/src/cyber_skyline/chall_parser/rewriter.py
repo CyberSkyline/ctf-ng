@@ -46,17 +46,25 @@ class Rewriter:
 
     def _rewrite_variable(self, variable_name: str, events: Generator[Event, None, None]) -> Generator[Event, None, None]:
         logger.debug("Entering rewrite_variable")
-        events_mapping: dict[str, tuple[ScalarEvent, ScalarEvent | AliasEvent]] = {}
+        events_mapping: dict[str, tuple[ScalarEvent, list[Event]]] = {}
         final_event: Event | None = None
         try:
             while (key_event := next(events)) and isinstance(key_event, ScalarEvent):
                 logger.debug(f"Key event value: {key_event.value}")
                 value_event = next(events)
-                if not isinstance(value_event, ScalarEvent | AliasEvent):
-                    raise ValueError("Variable values can only be resolved from scalar or alias events")
-                logger.debug(f"Value event type: {type(value_event)}, value: {getattr(value_event, 'value', None)}")
-                events_mapping[key_event.value] = (key_event, value_event)
+                value_events = [value_event]
+                unmatched_starts = 1 if isinstance(value_event, MappingStartEvent) else 0
+                while unmatched_starts > 0:
+                    next_event = next(events)
+                    if isinstance(next_event, MappingStartEvent):
+                        unmatched_starts += 1
+                    elif isinstance(next_event, MappingEndEvent):
+                        unmatched_starts -= 1
+
+                    value_events.append(next_event)
+                events_mapping[key_event.value] = (key_event, value_events)
             else:
+                logger.debug(f"No more key events, storing final event: {key_event}")
                 final_event = key_event
         except StopIteration:
             pass
@@ -66,6 +74,9 @@ class Rewriter:
             raise ValueError(f"Variable '{variable_name}' must have a 'template' key")
         
         template_key, template_value = events_mapping.pop('template')
+        if len(template_value) > 1 or not isinstance(template_value[0], ScalarEvent | AliasEvent):
+            raise ValueError(f"Variable '{variable_name}' template value must be a single scalar or alias event")
+        template_value = template_value[0]
         logger.debug(f"Template key: {template_key}, value: {template_value}")
 
         if 'default' not in events_mapping:
@@ -73,6 +84,9 @@ class Rewriter:
             raise ValueError(f"Variable '{variable_name}' must have a 'default' key")
         
         default_key, default_value = events_mapping.pop('default')
+        if len(default_value) > 1 or not isinstance(default_value[0], ScalarEvent | AliasEvent):
+            raise ValueError(f"Variable '{variable_name}' default value must be a single scalar or alias event")
+        default_value = default_value[0]
         logger.debug(f"Default key: {default_key}, value: {default_value}")
 
         if default_value.anchor is None:
@@ -93,19 +107,25 @@ class Rewriter:
         yield ScalarEvent(value="eval", anchor=None, tag=None, implicit=(True, False))
         yield ScalarEvent(value=template_value.value, anchor=None, tag=None, implicit=(True, False))
         yield MappingEndEvent()
+        logger.debug("Finished template mapping")
 
+        logger.debug("Yielding default key and value with cleared anchor")
         default_value.anchor = None
         yield from (default_key, default_value)
+
 
         for (key_event, value_event) in events_mapping.values():
             yield key_event
             if isinstance(value_event, AliasEvent):
                 yield self._resolve_alias(value_event)
             else:
-                yield value_event
+                yield from value_event
 
         if final_event is not None:
+            logger.debug("Yielding final event after variable mapping")
             yield final_event
+        else:
+            logger.debug("No final event to yield after variable mapping")
 
     def _rewrite_variables(self, events: Generator[Event, None, None]) -> Generator[Event, None, None]:
         logger.debug("Entering rewrite_variables")
@@ -117,11 +137,15 @@ class Rewriter:
                 break
             
             yield event
+        else:
+            logger.debug("No 'variables' section found in events")
+            return
         
         event = next(events)
         yield event
         if not isinstance(event, MappingStartEvent):
-            logger.debug("`variables` following events do not start with MappingStartEvent")
+            logger.debug("yaml events following `variables` do not start with MappingStartEvent")
+            yield from events
             return
         
         try:
@@ -129,13 +153,16 @@ class Rewriter:
                 if isinstance(event, ScalarEvent):
                     logger.debug(f"Processing variable key: {event.value}")
                     yield event
-                    if not isinstance(next(events), MappingStartEvent):
+                    mapping_event = next(events)
+                    if not isinstance(mapping_event, MappingStartEvent):
                         logger.debug("No MappingStartEvent after variable key")
                         raise ValueError("variable must be followed by a mapping")
+                    yield mapping_event
                     yield from self._rewrite_variable(event.value, events)
                 elif isinstance(event, MappingEndEvent):
                     logger.debug("Reached end of variables mapping")
                     yield event
+                    yield from events
                     return
                 else:
                     raise ValueError("Unexpected event type in variables mapping")
@@ -143,14 +170,20 @@ class Rewriter:
         except StopIteration:
             return
 
+    def _log_events(self, events: Generator[Event, None, None], context: str) -> Generator[Event, None, None]:
+        """Generator to log events from the loader for debugging purposes."""
+        for event in events:
+            logger.debug(f"{context} event: {event}")
+            yield event
+
     def _loader_events(self) -> Generator[Event, None, None]:
         logger.debug("Entering loader_events")
         while True:
             if self._loader.check_event():
-                yield self._loader.get_event()
+                event = self._loader.get_event()
+                yield event
             else:
-                logger.debug("No more events in loader_events")
-                break
+                return
 
     def persist_anchored_scalar(self, event: Event) -> Event:
         """Store a scalar event in the anchors dictionary if it has an anchor."""
@@ -176,8 +209,10 @@ class Rewriter:
     def rewrite(self) -> Generator[Event, None, None]:
         logger.debug("Entering rewrite_aliases")
         pipeline = self._loader_events()
+        pipeline = self._log_events(pipeline, "loader")
         pipeline = self._persist_anchored_scalars(pipeline)
         pipeline = self._rewrite_variables(pipeline)
-        pipeline = self._resolve_alias_events(pipeline)
+        # pipeline = self._resolve_alias_events(pipeline)
+        pipeline = self._log_events(pipeline, "final")
         yield from pipeline
 

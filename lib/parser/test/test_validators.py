@@ -21,6 +21,7 @@ import pytest
 from attrs import define, field
 from cyber_skyline.chall_parser.compose.validators import validate_tabler_icon, validate_compose_name_pattern, validate_template_evals
 from cyber_skyline.chall_parser.template import Template
+from cyber_skyline.chall_parser.compose.types import ComposeResourceName
 
 @define
 class MockChallengeWithIcon:
@@ -90,12 +91,12 @@ class TestTablerIconValidator:
 class TestComposeNameValidator:
     def test_valid_compose_names(self):
         """Test that valid compose resource names pass validation."""
-        valid_dict = {
-            "web-service": "value",
-            "db_service": "value", 
-            "service123": "value",
-            "my.service": "value",
-            "a": "value",
+        valid_dict: dict[ComposeResourceName, str] = {
+            ComposeResourceName("web-service"): "value",
+            ComposeResourceName("db_service"): "value", 
+            ComposeResourceName("service123"): "value",
+            ComposeResourceName("my.service"): "value",
+            ComposeResourceName("a"): "value",
         }
         
         class MockInstance:
@@ -104,15 +105,16 @@ class TestComposeNameValidator:
         class MockAttribute:
             name = "test_field"
         
-        validate_compose_name_pattern(MockInstance(), MockAttribute(), valid_dict)
+        for key in valid_dict.keys():
+            validate_compose_name_pattern(MockInstance(), MockAttribute(), key)
 
     def test_invalid_compose_names(self):
         """Test that invalid compose resource names are rejected."""
         invalid_cases = [
-            {"service with spaces": "value"},
-            {"service@special": "value"},
-            {"service/slash": "value"},
-            {"": "value"},
+            {ComposeResourceName("service with spaces"): "value"},
+            {ComposeResourceName("service@special"): "value"},
+            {ComposeResourceName("service/slash"): "value"},
+            {ComposeResourceName(""): "value"},
         ]
         
         class MockInstance:
@@ -122,18 +124,9 @@ class TestComposeNameValidator:
             name = "test_field"
         
         for invalid_dict in invalid_cases:
-            with pytest.raises(ValueError, match="must match pattern"):
-                validate_compose_name_pattern(MockInstance(), MockAttribute(), invalid_dict)
-
-    def test_none_value_allowed(self):
-        """Test that None values are allowed."""
-        class MockInstance:
-            pass
-        
-        class MockAttribute:
-            name = "test_field"
-        
-        validate_compose_name_pattern(MockInstance(), MockAttribute(), None)
+            for key in invalid_dict.keys():
+                with pytest.raises(ValueError, match="must match pattern"):
+                    validate_compose_name_pattern(MockInstance(), MockAttribute(), key)
 
 class TestTemplateValidator:
     def test_valid_template(self):
@@ -146,11 +139,6 @@ class TestTemplateValidator:
         """Test that non-Template objects are rejected."""
         with pytest.raises(ValueError, match="Expected Template object"):
             MockVariableWithTemplate(template="not a template") # type: ignore
-
-    def test_none_template(self):
-        """Test that None templates are allowed."""
-        # This test would need a different mock class that allows None
-        pass
 
     def test_template_eval_error(self):
         """Test that templates with evaluation errors are caught."""

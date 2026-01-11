@@ -26,19 +26,19 @@ supporting the x-challenge extension for CTF-specific metadata.
 """
 
 from functools import reduce
-from typing import Iterator, NewType, Dict
+from typing import Iterator, Dict
 import attrs.validators as v
 from attrs import define, field
 
 from cyber_skyline.chall_parser.compose.service import Service
 from cyber_skyline.chall_parser.compose.network import Network
 from cyber_skyline.chall_parser.compose.challenge_info import ChallengeInfo
+from cyber_skyline.chall_parser.compose.types import ComposeResourceName
 from cyber_skyline.chall_parser.compose.validators import validate_compose_name_pattern, contains
 from cyber_skyline.chall_parser.warnings import Warnings    
 
 # Custom types for pattern-validated dictionaries
 # These provide type safety while enforcing naming constraints
-ComposeResourceName = NewType('ComposeResourceName', str)
 ServicesDict = Dict[ComposeResourceName, Service]
 NetworksDict = Dict[ComposeResourceName, Network | None]
 
@@ -56,8 +56,7 @@ class ComposeFile:
     # specifically for CTF challenge deployment, not general Docker orchestration
     
     # Core Docker Compose sections with security constraints
-    services: ServicesDict = field(
-        default=None, 
+    services: ServicesDict = field( 
         validator=v.deep_mapping(validate_compose_name_pattern, v.instance_of(Service), v.instance_of(dict))
     )
     # Container services that make up the challenge infrastructure

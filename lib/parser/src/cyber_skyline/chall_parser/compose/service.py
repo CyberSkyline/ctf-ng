@@ -28,9 +28,9 @@ needed for challenge infrastructure while ignoring complex orchestration feature
 from typing import Iterator, Literal, Any
 from attrs import define, field
 import attrs.validators as v
-from cyber_skyline.chall_parser.compose import ComposeResourceName
 from cyber_skyline.chall_parser.template import Template
-from cyber_skyline.chall_parser.compose.validators import is_ipv4
+from cyber_skyline.chall_parser.compose.validators import is_ipv4, or_
+from cyber_skyline.chall_parser.compose.types import ComposeResourceName
 
 type CapAdd = Literal['NET_ADMIN', 'SYS_PTRACE']
 
@@ -76,8 +76,22 @@ class Service:
     entrypoint: str | list[str] | None = field(default=None)  # Override the default entrypoint
 
     # Environment and configuration
-    environment: dict[str, Template | str] | list[str | dict[str, Template | str]] | None = field(
-        default=None)
+    environment: dict[str, Template | str] | list[str] | None = field(
+        default=None,
+        validator=v.optional(
+            or_(
+                v.deep_mapping(
+                    v.instance_of(str), 
+                    or_(v.instance_of(str), v.instance_of(Template)),
+                    v.instance_of(dict)
+                ),
+                v.deep_iterable(
+                    v.instance_of(str), 
+                    v.instance_of(list)
+                )
+            )
+        )
+    )
     # Environment variables for the container
     # - dict form: {"VAR": "value"} or {"VAR": Template("fake.name()")}
     # - list form: ["VAR=value", "OTHER_VAR=other_value"]

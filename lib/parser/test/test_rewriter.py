@@ -20,7 +20,7 @@
 import pytest
 import yaml
 import io
-from yaml import BaseLoader
+from yaml import SafeLoader
 from cyber_skyline.chall_parser.rewriter import Rewriter
 from cyber_skyline.chall_parser.template import Template
 
@@ -28,10 +28,10 @@ class TestRewriter:
     def test_rewriter_initialization(self):
         """Test that Rewriter initializes correctly."""
         yaml_content = "test: value"
-        loader = BaseLoader(yaml_content)
+        loader = SafeLoader(yaml_content)
         rewriter = Rewriter(loader)
-        assert rewriter.loader == loader
-        assert rewriter.anchors == {}
+        assert rewriter._loader == loader
+        assert rewriter._anchors == {}
 
     def test_rewrite_variable_no_anchor_in_default(self):
         """Test that rewriter fails when default has no anchor."""
@@ -41,7 +41,7 @@ variables:
     template: "fake.word()"
     default: "no_anchor_value"  # missing anchor
 """
-        loader = BaseLoader(yaml_content)
+        loader = SafeLoader(yaml_content)
         rewriter = Rewriter(loader)
         
         # This should raise an error because anchor is required for rewriting
@@ -55,7 +55,7 @@ services:
   web:
     image: nginx
 """
-        loader = BaseLoader(yaml_content)
+        loader = SafeLoader(yaml_content)
         rewriter = Rewriter(loader)
         events = list(rewriter.rewrite())
         # Should pass through all events unchanged
@@ -69,7 +69,7 @@ services:
   web:
     image: nginx
 """
-        loader = BaseLoader(yaml_content)
+        loader = SafeLoader(yaml_content)
         rewriter = Rewriter(loader)
         events = list(rewriter.rewrite())
         # Should handle empty variables section
@@ -78,29 +78,29 @@ services:
     def test_resolve_alias_not_found(self):
         """Test alias resolution when anchor is not found."""
         yaml_content = "test: value"
-        loader = BaseLoader(yaml_content)
+        loader = SafeLoader(yaml_content)
         rewriter = Rewriter(loader)
         
         # Create a mock alias event
         from yaml import AliasEvent
         alias = AliasEvent(anchor="unknown")
-        result = rewriter.resolve_alias(alias)
+        result = rewriter._resolve_alias(alias)
         assert result == alias
 
     def test_resolve_alias_invalid_type(self):
         """Test alias resolution when anchor points to non-scalar."""
         yaml_content = "test: value"
-        loader = BaseLoader(yaml_content)
+        loader = SafeLoader(yaml_content)
         rewriter = Rewriter(loader)
         
         # Mock an anchor that points to something other than ScalarEvent
         from yaml import MappingStartEvent, AliasEvent
         non_scalar_event = MappingStartEvent(anchor=None, tag=None, implicit=True)
-        rewriter.anchors["bad_anchor"] = non_scalar_event # type: ignore
+        rewriter._anchors["bad_anchor"] = non_scalar_event # type: ignore
         
         alias = AliasEvent(anchor="bad_anchor")
         with pytest.raises(ValueError, match="does not point to a valid scalar event"):
-            rewriter.resolve_alias(alias)
+            rewriter._resolve_alias(alias)
 
 class TestTemplate:
     def test_template_initialization(self):
@@ -218,7 +218,7 @@ services:
     environment:
       FLAG: *flag_var
 """
-        loader = BaseLoader(yaml_content)
+        loader = SafeLoader(yaml_content)
         rewriter = Rewriter(loader)
         
         events = list(rewriter.rewrite())

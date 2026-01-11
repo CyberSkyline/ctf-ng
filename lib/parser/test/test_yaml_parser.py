@@ -22,13 +22,14 @@ import pathlib
 import re
 from cattrs import ClassValidationError
 from cyber_skyline.chall_parser.compose.answer import Answer
+from cyber_skyline.chall_parser.compose.types import ComposeResourceName
 import pytest
 import tempfile
 from pathlib import Path
 from cyber_skyline.chall_parser.compose.challenge_info import ChallengeInfo, TextBody
 from cyber_skyline.chall_parser.template import Template
 from cyber_skyline.chall_parser.yaml_parser import ComposeYamlParser, parse_compose_string, parse_compose_file
-from cyber_skyline.chall_parser.compose import ComposeFile, ComposeResourceName
+from cyber_skyline.chall_parser.compose import ComposeFile
 from cyber_skyline.chall_parser.compose.service import Service
 
 class TestComposeYamlParser:
@@ -299,10 +300,12 @@ services:
         with pytest.raises(Exception):  # Could be various YAML parsing exceptions
             parse_compose_string(invalid_yaml)
 
-    def test_complex_challenge(self):
+    def test_complex_challenge(self, caplog):
         """Test parsing a complex challenge with multiple services and networks."""
+        caplog.set_level("DEBUG")
         chall_file = pathlib.Path(__file__).parent.resolve() / "../../../examples/complex_chall.yml"
         compose = parse_compose_file(chall_file)
+
         
         # Validate challenge metadata
         assert compose.challenge is not None
@@ -669,8 +672,9 @@ services:
         compose = parser.parse_stream(stream)
         assert compose.challenge.name == "Stream Test"
 
-    def test_to_yaml_roundtrip(self):
+    def test_to_yaml_roundtrip(self, caplog):
         """Test that YAML output can be parsed back."""
+        caplog.set_level("DEBUG")
         original_yaml = """
 x-challenge:
   name: Roundtrip Test
@@ -687,6 +691,9 @@ services:
         # Convert to YAML
         parser = ComposeYamlParser()
         yaml_output = parser.to_yaml(compose)
+        logger = logging.getLogger(__name__)
+        logger.debug("YAML Output:\n%s", yaml_output)
+
         
         # Parse the output
         compose2 = parse_compose_string(yaml_output)
@@ -1043,11 +1050,11 @@ networks:
         assert chall.challenge.questions is not None
 
 
-    def test_error_on_array_of_mappings_in_environment(self):
+    def test_error_on_array_of_mappings_in_environment(self, caplog):
         """
         Test that we get an error when we pass a array of mappings for the environment variables in a service.
         """
-
+        caplog.set_level("DEBUG")
         yaml_content = """
 x-challenge:
   name: Basic Challenge
@@ -1082,8 +1089,8 @@ services:
     image: test:latest
     hostname: test-host
     environment:
-      - VAR1: value1
-      - VAR2: value2
+      - VAR1: *db_pass
+      - VAR2: *db_pass
 """
         with pytest.raises(Exception):
             parse_compose_string(yaml_content)
