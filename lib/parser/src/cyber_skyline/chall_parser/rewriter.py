@@ -195,15 +195,6 @@ class Rewriter:
     def _persist_anchored_scalars(self, events: Generator[Event, None, None]) -> Generator[Event, None, None]:
         """Store an scalars events in the anchors dictionary if it has an anchor."""
         yield from (self.persist_anchored_scalar(event) for event in events)
-    
-    def _resolve_alias_events(self, events: Generator[Event, None, None]) -> Generator[Event, None, None]:
-        """Helper function to process alias events in a generator."""
-        for event in events:
-            if isinstance(event, AliasEvent):
-                logger.debug(f"Processing AliasEvent: {event.anchor}")
-                yield self._resolve_alias(event)
-            else:
-                yield event
 
     # TODO: Refactor this to utilize a pipeline type architecture instead
     def rewrite(self) -> Generator[Event, None, None]:
@@ -212,7 +203,6 @@ class Rewriter:
         pipeline = self._log_events(pipeline, "loader")
         pipeline = self._persist_anchored_scalars(pipeline)
         pipeline = self._rewrite_variables(pipeline)
-        # pipeline = self._resolve_alias_events(pipeline)
         pipeline = self._log_events(pipeline, "final")
         yield from pipeline
 
