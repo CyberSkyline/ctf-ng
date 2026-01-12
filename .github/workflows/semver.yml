@@ -107,7 +107,7 @@ jobs:
           if [[ "${{ steps.branch.outputs.is_cascade }}" == "true" ]]; then
             version="${{ steps.source_version.outputs.version }}"
           else
-            version="v${{ steps.bump.outputs.new_version }}"
+            version="${{ steps.bump.outputs.new_version }}"
           fi
           echo "version=${version}" >> "$GITHUB_OUTPUT"
 
