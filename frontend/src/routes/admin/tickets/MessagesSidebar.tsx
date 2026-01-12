@@ -298,21 +298,32 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
           <DataList.Value className="whitespace-pre-wrap">
             <Flex gap="2" direction="row">
               {map(tags, ({ id, name, color }) => (
-                <Button
+                <Badge
                   key={id}
-                  asChild
-                  onClick={() => updateTags(id)}
+                  className="!p-0"
                 >
-                  <Badge key={id}>
+                  <Flex
+                    align="center"
+                    gap="2"
+                    pl="3"
+                    py="2"
+                  >
                     <Box
                       width="12px"
                       height="12px"
                       style={{ backgroundColor : color }}
                     />
-                    {name}
+                    <span>{name}</span>
+                  </Flex>
+                  <button
+                    type="button"
+                    onClick={() => updateTags(id)}
+                    aria-label={`Remove ${name}`}
+                    className="self-stretch px-2 border-l border-[var(--accent-6)]"
+                  >
                     <TbX />
-                  </Badge>
-                </Button>
+                  </button>
+                </Badge>
               ))}
               <Select.Root
                 value={selectedTag}
