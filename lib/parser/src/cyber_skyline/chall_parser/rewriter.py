@@ -185,7 +185,7 @@ class Rewriter:
             else:
                 return
 
-    def persist_anchored_scalar(self, event: Event) -> Event:
+    def _persist_anchored_scalar(self, event: Event) -> Event:
         """Store a scalar event in the anchors dictionary if it has an anchor."""
         if isinstance(event, ScalarEvent) and event.anchor is not None:
             logger.debug(f"Persisting anchored event: {event.anchor}")
@@ -194,7 +194,7 @@ class Rewriter:
 
     def _persist_anchored_scalars(self, events: Generator[Event, None, None]) -> Generator[Event, None, None]:
         """Store an scalars events in the anchors dictionary if it has an anchor."""
-        yield from (self.persist_anchored_scalar(event) for event in events)
+        yield from (self._persist_anchored_scalar(event) for event in events)
 
     # TODO: Refactor this to utilize a pipeline type architecture instead
     def rewrite(self) -> Generator[Event, None, None]:
