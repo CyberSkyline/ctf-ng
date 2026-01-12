@@ -162,6 +162,7 @@ export interface Score {
    points: number;
    last_update: Date;
    team_name: string | null;
+   last_correct_offset: number;
 }
 
 export interface ScoreEvent {

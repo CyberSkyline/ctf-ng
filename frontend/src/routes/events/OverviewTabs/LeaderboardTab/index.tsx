@@ -13,6 +13,7 @@ import { map, keyBy } from 'lodash';
 import type { UploadedFile, Score, Sponsor } from '@/types';
 import { useFileList } from '@/hooks/fileuploads';
 import { TbInfoCircle } from 'react-icons/tb';
+import { ModuleRegistry, TooltipModule } from 'ag-grid-community';
 import TeamPerformance from './TeamPerformance';
 
 function SponsorCell({ sponsors, lookup }: {sponsors: Sponsor[], lookup: Record<string, UploadedFile>}) {
@@ -35,6 +36,10 @@ function SponsorCell({ sponsors, lookup }: {sponsors: Sponsor[], lookup: Record<
     </Flex>
   );
 }
+
+ModuleRegistry.registerModules([
+  TooltipModule,
+]);
 
 export default function LeaderboardTab() {
   const { idEvent } = useParams();
@@ -73,7 +78,7 @@ export default function LeaderboardTab() {
                 flex : 1,
                 cellRenderer : SponsorCell,
                 cellRendererParams : (params: CustomCellRendererProps<Score>) => ({
-                  sponsors : params.data.sponsors,
+                  sponsors : params.data?.sponsors,
                   lookup,
                 }),
               },
@@ -83,9 +88,14 @@ export default function LeaderboardTab() {
                 cellClass : 'tabular-nums',
               },
               {
-                headerName : 'Last Updated',
-                field : 'last_update',
-                valueFormatter : ({ value }) => value.toLocaleString(),
+                headerName : 'Offset of Submission',
+                headerTooltip : 'The time lapse between starting the competition and the last correct submission.',
+                field : 'last_correct_offset',
+                valueFormatter : ({ value }) => new Intl.DurationFormat('en', { style : 'narrow' }).format({
+                  hours : Math.floor(value / 3600000),
+                  minutes : Math.floor((value % 3600000) / 60000),
+                  seconds : Math.floor((value % 60000) / 1000),
+                }),
               },
             ]}
             theme={radixTheme}
@@ -100,6 +110,7 @@ export default function LeaderboardTab() {
             loadingOverlayComponent={Spinner}
             suppressCellFocus
             suppressHeaderFocus
+            tooltipShowDelay={500}
           />
         )}
       </Flex>

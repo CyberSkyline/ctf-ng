@@ -2,6 +2,7 @@ import { apiMutation } from '@/fetchers';
 import type {
   Event,
   Score,
+  Sponsor,
   Team,
   TeamMember,
 } from '@/types';
@@ -187,7 +188,7 @@ export function useMyEvents() {
 }
 
 export function useLeaderboard(eventId: number) {
-  return useSWR<Score[], Error>(eventId ? `/events/${eventId}/leaderboard` : null);
+  return useSWR<(Score & {sponsors: Sponsor[]})[], Error>(eventId ? `/events/${eventId}/leaderboard` : null);
 }
 
 /* ADMIN ENDPOINTS */
