@@ -7,6 +7,8 @@ from collections.abc import Callable
 from unittest.mock import Mock
 
 import pytest
+import boto3
+from moto import mock_aws
 from CTFd.cache import cache
 from CTFd.models import Configs, Users, db, Admins
 from CTFd.utils.security.csrf import generate_nonce
@@ -406,6 +408,85 @@ def sponsor_factory(db_session):
 
     return _factory
 
+
+@pytest.fixture
+def mock_s3():
+    """Mocked S3 environment using moto"""
+    with mock_aws():
+        yield
+
+
+@pytest.fixture
+def s3_client(mock_s3):
+    """Boto3 S3 client for mocked S3"""
+    client = boto3.client(
+        's3',
+        region_name='us-east-1',
+        aws_access_key_id='testing',
+        aws_secret_access_key='testing',
+    )
+    return client
+
+
+@pytest.fixture
+def s3_bucket(s3_client):
+    """Test S3 bucket (returns bucket name)"""
+    bucket_name = 'test-ctf-bucket'
+    s3_client.create_bucket(Bucket=bucket_name)
+    return bucket_name
+
+
+@pytest.fixture
+def s3_service(app, s3_bucket, s3_client):
+    """Configured S3Service instance with mocked S3"""
+    from .core.services.s3_service import S3Service
+    import ng.core.services.s3_service as s3_module
+
+    # Configure app with test S3 settings
+    app.config['AWS_S3_BUCKET_NAME'] = s3_bucket
+    app.config['AWS_REGION'] = 'us-east-1'
+    app.config['AWS_ACCESS_KEY_ID'] = 'testing'
+    app.config['AWS_SECRET_ACCESS_KEY'] = 'testing'
+
+    # Create and initialize service
+    service = S3Service()
+    service.init_app(app)
+    
+    # Set as global instance so get_s3_service() returns it
+    s3_module._s3_service_instance = service
+
+    yield service
+
+    # Cleanup global instance
+    s3_module._s3_service_instance = None
+
+
+@pytest.fixture
+def s3_with_files(s3_client, s3_bucket):
+    """S3 bucket pre-populated with test files"""
+    # Create sample files
+    test_files = {
+        'sponsor-logos/company1.png': b'fake-png-data',
+        'sponsor-logos/company2.jpg': b'fake-jpg-data',
+        'event-cards/event1.webp': b'fake-webp-data',
+        'favicons/icon.ico': b'fake-ico-data',
+        'support-tickets/1/attachment1.pdf': b'fake-pdf-data',
+        'support-tickets/1/attachment2.jpg': b'fake-jpg-data',
+        'support-tickets/2/image.png': b'fake-png-data',
+    }
+
+    for key, data in test_files.items():
+        s3_client.put_object(
+            Bucket=s3_bucket,
+            Key=key,
+            Body=data,
+            ContentType='application/octet-stream'
+        )
+
+    return {
+        'bucket': s3_bucket,
+        'files': test_files
+    }
 
 
 
