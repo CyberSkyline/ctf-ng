@@ -70,7 +70,7 @@ class Template:
 
 
     @classmethod
-    def from_yaml(cls, loader: yaml.Loader | yaml.FullLoader | yaml.UnsafeLoader | None, node: yaml.nodes.Node) -> 'Template':
+    def from_yaml(cls, loader: yaml.SafeLoader | None, node: yaml.nodes.Node) -> 'Template':
         logger.debug(f"Creating Template from YAML node: {node}")
         if not isinstance(node, yaml.nodes.MappingNode):
             raise yaml.YAMLError("Template must be a mapping")

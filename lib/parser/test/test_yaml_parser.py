@@ -22,13 +22,14 @@ import pathlib
 import re
 from cattrs import ClassValidationError
 from cyber_skyline.chall_parser.compose.answer import Answer
+from cyber_skyline.chall_parser.compose.types import ComposeResourceName
 import pytest
 import tempfile
 from pathlib import Path
 from cyber_skyline.chall_parser.compose.challenge_info import ChallengeInfo, TextBody
 from cyber_skyline.chall_parser.template import Template
 from cyber_skyline.chall_parser.yaml_parser import ComposeYamlParser, parse_compose_string, parse_compose_file
-from cyber_skyline.chall_parser.compose import ComposeFile, ComposeResourceName
+from cyber_skyline.chall_parser.compose import ComposeFile
 from cyber_skyline.chall_parser.compose.service import Service
 
 class TestComposeYamlParser:
@@ -120,7 +121,7 @@ networks:
         assert web_service.hostname == "web-server"
         assert web_service.networks is not None and isinstance(web_service.networks, dict)
         assert "competitor_net" in web_service.networks
-        competitor_net = web_service.networks["competitor_net"]
+        competitor_net = web_service.networks[ComposeResourceName("competitor_net")]
         assert competitor_net is not None
         assert competitor_net.ipv4_address == "172.16.238.10"
         assert compose.networks is not None and isinstance(compose.networks, dict)
@@ -299,10 +300,12 @@ services:
         with pytest.raises(Exception):  # Could be various YAML parsing exceptions
             parse_compose_string(invalid_yaml)
 
-    def test_complex_challenge(self):
+    def test_complex_challenge(self, caplog):
         """Test parsing a complex challenge with multiple services and networks."""
+        caplog.set_level("DEBUG")
         chall_file = pathlib.Path(__file__).parent.resolve() / "../../../examples/complex_chall.yml"
         compose = parse_compose_file(chall_file)
+
         
         # Validate challenge metadata
         assert compose.challenge is not None
@@ -461,7 +464,7 @@ services:
         assert web_service.hostname == "web-server"
         assert web_service.networks == ["competitor_net"]
         assert web_service.mem_limit == "256m"
-        assert web_service.cpus == "0.5"
+        assert web_service.cpus == 0.5
         assert web_service.cap_add == ["NET_ADMIN"]
         
         # Web service environment
@@ -506,7 +509,7 @@ services:
         assert db_service.networks == ["competitor_net"]
         assert db_service.mem_limit == "512m"
         assert db_service.memswap_limit == "1g"
-        assert db_service.cpus == "1.0"
+        assert db_service.cpus == 0.25
         
         # Database service environment
         assert db_service.environment is not None
@@ -669,8 +672,9 @@ services:
         compose = parser.parse_stream(stream)
         assert compose.challenge.name == "Stream Test"
 
-    def test_to_yaml_roundtrip(self):
+    def test_to_yaml_roundtrip(self, caplog):
         """Test that YAML output can be parsed back."""
+        caplog.set_level("DEBUG")
         original_yaml = """
 x-challenge:
   name: Roundtrip Test
@@ -687,6 +691,9 @@ services:
         # Convert to YAML
         parser = ComposeYamlParser()
         yaml_output = parser.to_yaml(compose)
+        logger = logging.getLogger(__name__)
+        logger.debug("YAML Output:\n%s", yaml_output)
+
         
         # Parse the output
         compose2 = parse_compose_string(yaml_output)
@@ -915,6 +922,7 @@ networks:
         # returned for external networks.
         compose = parse_compose_string(yaml_content)
         w = compose.warnings()
+        assert w is not None
         # Field warnings yield Warnings objects per resource; find the network warning
         rendered = w.render()
         # There should be a warning for the external network 'competitor_net'
@@ -1040,3 +1048,49 @@ networks:
         chall = parse_compose_string(yaml_content)
         assert chall.challenge is not None
         assert chall.challenge.questions is not None
+
+
+    def test_error_on_array_of_mappings_in_environment(self, caplog):
+        """
+        Test that we get an error when we pass a array of mappings for the environment variables in a service.
+        """
+        caplog.set_level("DEBUG")
+        yaml_content = """
+x-challenge:
+  name: Basic Challenge
+  description: A simple challenge to test parsing
+  summary: A simple challenge to test parsing
+  icon: TbPuzzle
+  templates:
+    flag-template: &flag_tmpl "fake.bothify('CTF{????-####}', letters='ABCDEF')"
+  variables:
+    db_password:
+      template: "fake.password(length=12)"
+      default: &db_pass "SecureP4ss!"
+    session_id:
+      template: "fake.uuid4()"
+      default: &session_id "123e4567-e89b-12d3-a456-426614174000"
+  questions:
+    - name: Q1
+      body: What is the flag?
+      points: 100
+      answer: CTF{test_flag}
+      max_attempts: 3
+  hints:
+    - name: check-logs
+      body: Check the logs
+      preview: Log hint
+      deduction: 10
+  tags:
+    - test
+    - beginner
+services:
+  app:
+    image: test:latest
+    hostname: test-host
+    environment:
+      - VAR1: *db_pass
+      - VAR2: *db_pass
+"""
+        with pytest.raises(Exception):
+            parse_compose_string(yaml_content)

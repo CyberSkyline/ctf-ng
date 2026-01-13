@@ -31,6 +31,7 @@ from typing import Any
 from cyber_skyline.chall_parser.compose.answer import Answer, AnswerTestCase
 from cyber_skyline.chall_parser.template import Template
 from collections.abc import Callable, Container
+from cyber_skyline.chall_parser.compose.types import ComposeResourceName
 
 
 logger = logging.getLogger(__name__)
@@ -130,7 +131,7 @@ def validate_tabler_icon(instance, attribute, value):
     if not value.startswith("Tb"):
         raise ValueError(f"Icon name '{value}' must start with 'Tb' prefix")
 
-def validate_compose_name_pattern(instance, attribute, value):
+def validate_compose_name_pattern(instance, attribute, value: ComposeResourceName):
     """Validator for compose resource names that must match ^[a-zA-Z0-9._-]+$.
     
     This enforces the Docker Compose specification for valid resource names,
@@ -138,9 +139,8 @@ def validate_compose_name_pattern(instance, attribute, value):
     """
     if value is not None:
         pattern = re.compile(r'^[a-zA-Z0-9._-]+$')
-        for key in value.keys():
-            if not pattern.match(key):
-                raise ValueError(f"Invalid {attribute.name} key '{key}': must match pattern ^[a-zA-Z0-9._-]+$")
+        if not pattern.match(value):
+            raise ValueError(f"Invalid {attribute.name} compose resource name '{value}': must match pattern ^[a-zA-Z0-9._-]+$")
 
 # TODO: Add more validators as needed:
 # - validate_challenge_difficulty (easy, medium, hard)
@@ -223,3 +223,28 @@ def validate_regex(instance,attribute,value: str):
         re.compile(value)
     except re.error as e:
         raise ValueError(f"Invalid regex pattern for {attribute.name}: {value}") from e
+
+def validate_cpus(instance, attribute, value: Any):
+    """Validator for CPU limit values.
+    
+    Ensures that the provided CPU limit is a positive float or string
+    that can be converted to a positive float.
+    
+    Args:
+        instance: The instance being validated
+        attribute: The attribute being validated
+        value: The CPU limit to validate
+    Raises:
+        ValueError: If the CPU limit is larger than allowed
+    """
+    if value is None:
+        return  # Allow None values
+    
+    try:
+        cpu_value = float(value)
+        if cpu_value <= 0:
+            raise ValueError(f"CPU limit for {attribute.name} must be a positive number, got {value}")
+        if cpu_value > 0.5:
+            raise ValueError(f"CPU limit for {attribute.name} is too high ({value}), maximum allowed is 0.5")
+    except TypeError as e:
+        raise ValueError(f"CPU limit for {attribute.name} must be convertible to float, got {value}") from e

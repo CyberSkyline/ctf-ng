@@ -29,7 +29,8 @@ from typing import Iterator, Literal, Any
 from attrs import define, field
 import attrs.validators as v
 from cyber_skyline.chall_parser.template import Template
-from cyber_skyline.chall_parser.compose.validators import is_ipv4
+from cyber_skyline.chall_parser.compose.validators import is_ipv4, or_
+from cyber_skyline.chall_parser.compose.types import ComposeResourceName
 
 type CapAdd = Literal['NET_ADMIN', 'SYS_PTRACE']
 
@@ -76,17 +77,39 @@ class Service:
 
     # Environment and configuration
     environment: dict[str, Template | str] | list[str] | None = field(
-        default=None)
+        default=None,
+        validator=v.optional(
+            or_(
+                v.deep_mapping(
+                    v.instance_of(str), 
+                    or_(v.instance_of(str), v.instance_of(Template)),
+                    v.instance_of(dict)
+                ),
+                v.deep_iterable(
+                    v.instance_of(str), 
+                    v.instance_of(list)
+                )
+            )
+        )
+    )
     # Environment variables for the container
     # - dict form: {"VAR": "value"} or {"VAR": Template("fake.name()")}
     # - list form: ["VAR=value", "OTHER_VAR=other_value"]
     # Template support allows dynamic variable generation for each challenge instance
     
     # Networking configuration
-    networks: list[str] | dict[str, ServiceNetwork | None] | None = field(default=None)
+    networks: list[ComposeResourceName] | dict[ComposeResourceName, ServiceNetwork | None] | None = field(default=None)
     # Network connections for the service
     # - list form: ["network1", "network2"] - simple network attachment
     # - dict form: {"network1": None} - allows for future network-specific configuration
+
+    def network_names(self) -> set[ComposeResourceName]:
+        """Helper to get the list of network names the service is attached to."""
+        if self.networks is None:
+            return set()
+        if isinstance(self.networks, list):
+            return set(self.networks)
+        return set(self.networks.keys())
 
     
     # Security and capabilities
@@ -99,7 +122,10 @@ class Service:
     # Resource constraints - important for preventing resource abuse
     mem_limit: int | str | None = field(default=None)  # Memory limit (e.g., "512m", "1g")
     memswap_limit: int | str | None = field(default=None)  # Memory + swap limit
-    cpus: float | str | None = field(default=None)  # CPU limit (e.g., 0.5, "1.5")
+    cpus: float | str | None = field(default=None, 
+                                     converter=lambda x: float(x) if x is not None else None
+                                     )  # CPU limit (e.g., 0.5 for half a CPU)
+        
 
     # User and permissions
     user: str | None = field(default=None)  # User to run the container as (e.g., "1000:1000", "nobody")

@@ -18,6 +18,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
 # IN THE SOFTWARE.
 from cyber_skyline.chall_parser.compose.service import Service
+from cyber_skyline.chall_parser.compose.types import ComposeResourceName
 from cyber_skyline.chall_parser.template import Template
 
 class TestService:
@@ -37,11 +38,11 @@ class TestService:
             hostname="test-server",
             mem_limit="1g",
             memswap_limit="2g", 
-            cpus="1.5"
+            cpus="0.5"
         )
         assert service.mem_limit == "1g"
         assert service.memswap_limit == "2g"
-        assert service.cpus == "1.5"
+        assert service.cpus == 0.5
 
     def test_service_with_capabilities(self):
         """Test service with Linux capabilities."""
@@ -121,19 +122,19 @@ class TestService:
         service1 = Service(
             image="app:latest",
             hostname="test-server",
-            networks=["frontend", "backend"]
+            networks=[ComposeResourceName("frontend"), ComposeResourceName("backend")]
         )
-        assert service1.networks == ["frontend", "backend"]
+        assert service1.networks == [ComposeResourceName("frontend"), ComposeResourceName("backend")]
 
         # Test dict form
         service2 = Service(
             image="app:latest",
             hostname="test-server",
-            networks={"frontend": None, "backend": None}
+            networks={ComposeResourceName("frontend"): None, ComposeResourceName("backend"): None}
         )
         assert isinstance(service2.networks, dict)
-        assert "frontend" in service2.networks
-        assert "backend" in service2.networks
+        assert ComposeResourceName("frontend") in service2.networks
+        assert ComposeResourceName("backend") in service2.networks
 
     def test_service_command_and_entrypoint(self):
         """Test command and entrypoint configuration."""
