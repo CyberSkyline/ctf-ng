@@ -58,7 +58,8 @@ export default function ChallengeQuestion({
   let status: 'unanswered' | 'correct' | 'incorrect' = 'unanswered';
   let color: AccentColor | undefined;
 
-  if (attempts.find((attempt) => attempt.is_correct)) {
+  const correctAttempt = attempts.find((attempt) => attempt.is_correct);
+  if (correctAttempt) {
     status = 'correct';
     color = COLOR_POSITIVE;
   } else if (attempts.length > 0) {
@@ -105,7 +106,9 @@ export default function ChallengeQuestion({
                 placeholder={placeholder}
                 required
                 autoComplete="off"
-                disabled={status === 'correct' || attemptsRemaining <= 0 || denied}
+                disabled={status !== 'correct' && (attemptsRemaining <= 0 || denied)}
+                readOnly={status === 'correct'}
+                defaultValue={correctAttempt?.submission}
               >
                 <TextField.Slot>
                   <TbFlag2 className={twMerge(status !== 'unanswered' && 'text-(--accent-10)')} />
