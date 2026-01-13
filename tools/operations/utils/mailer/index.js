@@ -57,6 +57,11 @@ export const templates = {
     subject : `REMINDER: President's Cup 7 Individuals Round 1 is OPEN!`,
     file : '2026.01.06.pc7-round1-individual-start.mjml',
   }),
+  'pc7-registration-reminder2' : new Template({
+    name : 'pc7-registration-reminder2',
+    subject : `REMINDER: President's Cup 7 Individuals Round 1 closes tomorrow!`,
+    file : '2026.01.12.pc7-registration-reminder.mjml',
+  }),
 };
 
 export async function sendEmail(template, recipient, opts, progressBar) {
