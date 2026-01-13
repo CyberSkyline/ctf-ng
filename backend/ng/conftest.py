@@ -489,6 +489,12 @@ def s3_with_files(s3_client, s3_bucket):
     }
 
 
+@pytest.fixture
+def request_context(app):
+    """Provides Flask request context for testing controllers"""
+    with app.test_request_context():
+        yield
+
 
 @pytest.fixture
 def team_with_member(db_session, event, user):
