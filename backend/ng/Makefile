@@ -103,4 +103,4 @@ test-utils:
 	$(PYTHON_EXEC) -m pytest ./core/tests/system/ -v
 
 
-.PHONY: check fix format test-all test-routes test-models test-validation test-controllers test-api test-team test-event test-admin test-user test-support test-utils test-fast test-middleware test-event-registration test-scoring find-TODO test-img-upload test-email-send test-fileuploads test-s3 test-s3-fileuploads test-s3-support test-s3-all test-s3-tester
+.PHONY: check fix format test-all test-routes test-models test-validation test-controllers test-api test-team test-event test-admin test-user test-support test-utils test-fast test-middleware test-event-registration test-scoring find-TODO test-img-upload test-email-send test-fileuploads test-s3 test-s3-fileuploads test-s3-support test-s3-all
