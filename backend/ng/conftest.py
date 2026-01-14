@@ -451,7 +451,7 @@ def s3_service(app, s3_bucket, s3_client):
     # Create and initialize service
     service = S3Service()
     service.init_app(app)
-    
+
     # Set as global instance so get_s3_service() returns it
     s3_module._s3_service_instance = service
 
