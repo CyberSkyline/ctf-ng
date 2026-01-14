@@ -4,8 +4,8 @@ import { Flex } from '@radix-ui/themes';
 import type { ColDef } from 'ag-grid-community';
 import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
-import EventModal from './EventModal';
-import EventSidebar from './EventSidebar';
+import EventCreationModal from './EventCreationModal';
+import EventSidebar from './SidebarTabs';
 
 const colDefs: ColDef<Event>[] = [
   {
@@ -105,7 +105,7 @@ export default function AdminEvents() {
         sidebarComponent={EventSidebar}
         toolbar={(
           <Flex direction="row" justify="start">
-            <EventModal />
+            <EventCreationModal />
           </Flex>
         )}
       />
