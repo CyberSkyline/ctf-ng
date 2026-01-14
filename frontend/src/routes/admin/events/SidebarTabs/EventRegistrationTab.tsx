@@ -160,7 +160,7 @@ export default function EventRegistrationTab({ event }: { event: Event }) {
             )}
           </FormField>
 
-          <FormField label="Registration Closes" error={errors.registration_end_date}>
+          <FormField label="Registration Ends" error={errors.registration_end_date}>
             {(injected) => (
               <TextField.Root
                 type="datetime-local"
@@ -186,7 +186,7 @@ export default function EventRegistrationTab({ event }: { event: Event }) {
         </form>
       ) : (
         <>
-          <Statistic label="Visibility" value={event.public ? 'Public' : 'Private'} />
+          <Statistic label="Public" value={event.public ? 'Yes' : 'No'} />
           <Statistic label="Teams Locked" value={event.locked ? 'Yes' : 'No'} />
           <Statistic label="Registration Open" value={event.registration_open ? 'Yes' : 'No'} />
           <Statistic label="Registration Starts" value={event.registration_start_date?.toLocaleString() || 'N/A'} />

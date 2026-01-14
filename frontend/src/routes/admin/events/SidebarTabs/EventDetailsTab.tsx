@@ -206,7 +206,7 @@ export default function EventDetailsTab({ event }: { event: Event }) {
           </DataList.Item>
 
           <DataList.Item>
-            <DataList.Label>Logo</DataList.Label>
+            <DataList.Label>Image</DataList.Label>
             <DataList.Value>
               <EventGraphic event={event} className="w-64 rounded-lg shadow-lg" />
             </DataList.Value>

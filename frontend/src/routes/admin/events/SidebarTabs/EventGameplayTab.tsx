@@ -199,7 +199,7 @@ export default function EventGameplayTab({ event }: { event: Event }) {
           <Statistic label="Event Ends" value={event.end_time?.toLocaleString() || 'N/A'} />
           <Statistic label="Time Limit" value={event.time_limit_minutes ? `${event.time_limit_minutes} minutes` : 'N/A'} />
           <Statistic label="Hints Enabled" value={event.hints_enabled ? 'Yes' : 'No'} />
-          <Statistic label="Leaderboard Visible" value={event.show_leaderboard ? 'Yes' : 'No'} />
+          <Statistic label="Show Leaderboard" value={event.show_leaderboard ? 'Yes' : 'No'} />
         </>
       )}
     </Flex>
