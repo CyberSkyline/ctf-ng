@@ -1,19 +1,19 @@
 import { radixTheme } from '@/grid';
-import { useLeaderboard } from '@/hooks/events';
+import { useEvent, useLeaderboard } from '@/hooks/events';
+import { useFileList } from '@/hooks/fileuploads';
+import type { Score, Sponsor, UploadedFile } from '@/types';
 import {
   Container,
   Flex,
   Spinner,
   Tooltip,
 } from '@radix-ui/themes';
+import { ModuleRegistry, TooltipModule } from 'ag-grid-community';
 import { AgGridReact, type CustomCellRendererProps } from 'ag-grid-react';
 import { ErrorCallout, WarningCallout } from 'components/Callouts';
-import { useParams } from 'react-router';
-import { map, keyBy } from 'lodash';
-import type { UploadedFile, Score, Sponsor } from '@/types';
-import { useFileList } from '@/hooks/fileuploads';
+import { keyBy, map } from 'lodash';
 import { TbInfoCircle } from 'react-icons/tb';
-import { ModuleRegistry, TooltipModule } from 'ag-grid-community';
+import { useParams } from 'react-router';
 import TeamPerformance from './TeamPerformance';
 
 function SponsorCell({ sponsors, lookup }: {sponsors: Sponsor[], lookup: Record<string, UploadedFile>}) {
@@ -43,10 +43,17 @@ ModuleRegistry.registerModules([
 
 export default function LeaderboardTab() {
   const { idEvent } = useParams();
+  const { data : event, error : eventError } = useEvent(Number(idEvent));
   const { data : leaderboard, error : leaderboardError } = useLeaderboard(Number(idEvent));
   const { data : logoList } = useFileList('sponsor-logos', true);
   const files = logoList?.files ?? [];
   const lookup = keyBy(files.filter((f: UploadedFile) => f.filename), 'filename');
+
+  const isIndividual = event?.max_team_size === 1;
+
+  if (eventError) {
+    return <ErrorCallout>{eventError.message}</ErrorCallout>;
+  }
 
   return (
     <Container size="4">
@@ -59,7 +66,7 @@ export default function LeaderboardTab() {
             : <ErrorCallout>{leaderboardError.message}</ErrorCallout>
           )}
 
-        {!leaderboardError && (
+        {!leaderboardError && event && (
           <AgGridReact
             rowData={leaderboard}
             columnDefs={[
@@ -69,7 +76,7 @@ export default function LeaderboardTab() {
                 width : 80,
               },
               {
-                headerName : 'Team',
+                headerName : isIndividual ? 'Name' : 'Team',
                 field : 'team_name',
                 flex : 1,
               },
