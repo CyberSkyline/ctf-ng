@@ -81,6 +81,15 @@ test-fileuploads:
 test-s3:
 	$(PYTHON_EXEC) -m pytest core/tests/test_s3_service.py -v
 
+test-s3-fileuploads:
+	$(PYTHON_EXEC) -m pytest fileuploads/tests/test_public_files_controllers.py -v
+
+test-s3-support:
+	$(PYTHON_EXEC) -m pytest support/tests/test_support_attachments_controllers.py -v
+
+test-s3-all:
+	$(PYTHON_EXEC) -m pytest core/tests/test_s3_service.py fileuploads/tests/test_public_files_controllers.py support/tests/test_support_attachments_controllers.py -v
+
 test-leaderboard:
 	$(PYTHON_EXEC) -m pytest -m "not cache" ./scoring/tests/ -v
 
@@ -94,4 +103,4 @@ test-utils:
 	$(PYTHON_EXEC) -m pytest ./core/tests/system/ -v
 
 
-.PHONY: check fix format test-all test-routes test-models test-validation test-controllers test-api test-team test-event test-admin test-user test-support test-utils test-fast test-middleware test-event-registration test-scoring find-TODO test-img-upload test-email-send test-fileuploads test-s3
+.PHONY: check fix format test-all test-routes test-models test-validation test-controllers test-api test-team test-event test-admin test-user test-support test-utils test-fast test-middleware test-event-registration test-scoring find-TODO test-img-upload test-email-send test-fileuploads test-s3 test-s3-fileuploads test-s3-support test-s3-all test-s3-tester

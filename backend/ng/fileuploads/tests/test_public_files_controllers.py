@@ -1,8 +1,10 @@
 import pytest
 from io import BytesIO
 from flask import json
+from werkzeug.datastructures import FileStorage
+from unittest.mock import patch, MagicMock
 
-from ng.fileuploads.controllers.public_files import generate_unique_filename, generate_upload_url, get_public_file, list_public_files, search_public_files
+from ng.fileuploads.controllers.public_files import generate_unique_filename, generate_upload_url, get_public_file, list_public_files, search_public_files, direct_upload_file
 
 
 @pytest.mark.db
@@ -204,3 +206,120 @@ class TestSearchPublicFiles:
         data = result[0]
         assert data['success'] is False
         assert result[1] == 400
+
+
+@pytest.mark.db
+class TestDirectUploadFile:
+    def test_direct_upload_file_success(self, request_context, db_session, s3_service):
+        file_data = b'\x89PNG\r\n\x1a\n' + b'\x00' * 100
+        file = FileStorage(
+            stream=BytesIO(file_data),
+            filename='upload.png',
+            content_type='image/png'
+        )
+
+        with patch('ng.fileuploads.controllers.public_files.requests.put') as mock_put:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_put.return_value = mock_response
+
+            result = direct_upload_file({
+                'folder': 'sponsor-logos',
+                'file': file
+            })
+
+        data = result[0]
+        assert data['success'] is True
+        assert data['data']['filename'] == 'upload.png'
+        assert data['data']['folder'] == 'sponsor-logos'
+
+    def test_direct_upload_file_invalid_folder(self, request_context, db_session, s3_service):
+        file = FileStorage(
+            stream=BytesIO(b'data'),
+            filename='test.png',
+            content_type='image/png'
+        )
+
+        result = direct_upload_file({
+            'folder': 'invalid-folder',
+            'file': file
+        })
+
+        data = result[0]
+        assert data['success'] is False
+        assert result[1] == 400
+
+    def test_direct_upload_file_no_file(self, request_context, db_session, s3_service):
+        result = direct_upload_file({
+            'folder': 'sponsor-logos',
+            'file': None
+        })
+
+        data = result[0]
+        assert data['success'] is False
+        assert result[1] == 400
+
+    def test_direct_upload_file_invalid_content_type(self, request_context, db_session, s3_service):
+        file = FileStorage(
+            stream=BytesIO(b'text content'),
+            filename='test.txt',
+            content_type='text/plain'
+        )
+
+        result = direct_upload_file({
+            'folder': 'sponsor-logos',
+            'file': file
+        })
+
+        data = result[0]
+        assert data['success'] is False
+        assert result[1] == 400
+
+    def test_direct_upload_file_with_include_urls(self, request_context, db_session, s3_service):
+        file_data = b'\x89PNG\r\n\x1a\n' + b'\x00' * 100
+        file = FileStorage(
+            stream=BytesIO(file_data),
+            filename='logo.png',
+            content_type='image/png'
+        )
+
+        with patch('ng.fileuploads.controllers.public_files.requests.put') as mock_put:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_put.return_value = mock_response
+
+            result = direct_upload_file({
+                'folder': 'sponsor-logos',
+                'file': file,
+                'include_urls': True
+            })
+
+        data = result[0]
+        assert data['success'] is True
+        assert 'download_url' in data['data']
+        assert data['data']['download_url'] is not None
+
+    def test_direct_upload_file_with_allow_overwrite(self, request_context, db_session, s3_service, s3_client, s3_bucket):
+        s3_client.put_object(Bucket=s3_bucket, Key='sponsor-logos/existing.png', Body=b'old data')
+
+        file_data = b'\x89PNG\r\n\x1a\n' + b'\x00' * 100
+        file = FileStorage(
+            stream=BytesIO(file_data),
+            filename='existing.png',
+            content_type='image/png'
+        )
+
+        with patch('ng.fileuploads.controllers.public_files.requests.put') as mock_put:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_put.return_value = mock_response
+
+            result = direct_upload_file({
+                'folder': 'sponsor-logos',
+                'file': file,
+                'allow_overwrite': True
+            })
+
+        data = result[0]
+        assert data['success'] is True
+        assert data['data']['filename'] == 'existing.png'
