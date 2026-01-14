@@ -8,7 +8,7 @@ import {
   Switch,
 } from '@radix-ui/themes';
 import Statistic from 'components/Statistic';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import FormField from 'components/FormField';
 import { updateEvent } from '@/hooks/events';
@@ -33,6 +33,14 @@ export default function EventRegistrationTab({ event }: { event: Event }) {
       registration_end_date : adjustDateForInput(event?.registration_end_date || null) as unknown as Date,
     },
   });
+
+  useEffect(() => {
+    reset({
+      ...omit(event, 'id'),
+      registration_start_date : adjustDateForInput(event?.registration_start_date || null) as unknown as Date,
+      registration_end_date : adjustDateForInput(event?.registration_end_date || null) as unknown as Date,
+    });
+  }, [ event, reset ]);
 
   const update = async (data: Event) => {
     setLoading(true);

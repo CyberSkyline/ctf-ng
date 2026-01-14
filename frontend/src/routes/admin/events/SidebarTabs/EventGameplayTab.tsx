@@ -8,7 +8,7 @@ import {
   Switch,
 } from '@radix-ui/themes';
 import Statistic from 'components/Statistic';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import FormField from 'components/FormField';
 import { ErrorCallout } from 'components/Callouts';
@@ -33,6 +33,14 @@ export default function EventGameplayTab({ event }: { event: Event }) {
       end_time : adjustDateForInput(event?.end_time || null) as unknown as Date,
     },
   });
+
+  useEffect(() => {
+    reset({
+      ...omit(event, 'id'),
+      start_time : adjustDateForInput(event?.start_time || null) as unknown as Date,
+      end_time : adjustDateForInput(event?.end_time || null) as unknown as Date,
+    });
+  }, [ event, reset ]);
 
   const update = async (data: Event) => {
     setLoading(true);

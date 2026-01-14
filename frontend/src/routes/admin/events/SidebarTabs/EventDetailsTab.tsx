@@ -1,6 +1,6 @@
 import type { Event } from '@/types';
 import { COLOR_POSITIVE } from '@/constants';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { omit } from 'lodash';
 import Dropzone from 'react-dropzone';
@@ -38,6 +38,13 @@ export default function EventDetailsTab({ event }: { event: Event }) {
       image : event?.image || 'None',
     },
   });
+
+  useEffect(() => {
+    reset({
+      ...omit(event, 'id'),
+      image : event?.image || 'None',
+    });
+  }, [ event, reset ]);
 
   const currentImage = watch('image');
   const { data : gameCards, error : gameCardsError, isLoading : gameCardsLoading } = useFileList('event-cards');
