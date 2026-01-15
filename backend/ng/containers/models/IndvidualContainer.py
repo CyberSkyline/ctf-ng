@@ -55,7 +55,7 @@ class IndvidualContainer(db.Model):
                     db.session.commit()
                     lock.release()
                 else:
-                     raise BusinessLogicError("Workspace is already being started/reset")
+                     raise BusinessLogicError("Workspace is already being started/reset") from None
 
             return db_exists
 
@@ -88,7 +88,7 @@ class IndvidualContainer(db.Model):
                     db.session.commit()
                 lock.release()
             else:
-                 raise BusinessLogicError("Workspace is already being started/reset")
+                 raise BusinessLogicError("Workspace is already being started/reset") from None
 
             return indvidual_container
 
