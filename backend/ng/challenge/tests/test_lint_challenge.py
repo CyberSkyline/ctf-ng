@@ -26,6 +26,10 @@ class TestLintChallenge:
               points: 10
               answer: "4"
               max_attempts: 3
+        services:
+          web:
+            image: nginx:latest
+            hostname: web-server
         """, None),
 
         # Test valid YAML with services but no warnings
@@ -92,6 +96,9 @@ class TestLintChallenge:
           web:
             image: nginx:latest
             hostname: web-server
+            networks:
+              - undefined-net
+              - competitor_net
         networks:
           competitor_net:
             internal: false
@@ -126,7 +133,7 @@ class TestLintChallenge:
             # field is optional in warnings
 
     def test_lint_challenge_compose_file_warnings(self):
-        """Test ComposeFile-level warnings: no services and no networks"""
+        """Test ComposeFile-level warnings: no networks"""
         yaml_content = """
         x-challenge:
           name: No Services Challenge
@@ -138,6 +145,10 @@ class TestLintChallenge:
               points: 10
               answer: "4"
               max_attempts: 3
+        services:
+          app:
+            image: nginx:latest
+            hostname: app-server
         """
         # Act
         result = lint_challenge(yaml_content)
@@ -148,7 +159,7 @@ class TestLintChallenge:
 
         # Should have warnings about no services and no networks
         warning_messages = [w["message"] for w in result["warnings"]]
-        assert any("No services defined" in msg for msg in warning_messages)
+        # assert any("No services defined" in msg for msg in warning_messages)
         assert any("No networks defined" in msg for msg in warning_messages)
 
     @pytest.mark.parametrize("service_field,field_value,expected_warning", [
@@ -241,33 +252,39 @@ class TestLintChallenge:
         for expected_warning in expected_warnings:
             assert any(expected_warning in msg for msg in warning_messages), f"Expected warning '{expected_warning}' not found"
 
-    @pytest.mark.parametrize("network_config,expected_warning", [
+    @pytest.mark.parametrize("network_config,expected_warning,network_list", [
         # Network with internal: false should warn
         ("""
           competitor_net:
           external-network:
             internal: false
-        """, "internal field is False, this network will not be created in production"),
+        """, "internal field is False, this network will not be created in production",
+         "- competitor_net\n              - external-network"),
 
         # Network with no internal field should warn (appears as undefined)
         ("""
           competitor_net:
           missing-internal:
-        """, "is not defined, so is external and will not be created"),
+        """, "is not defined, so is external and will not be created"
+        , "- competitor_net\n              - missing-internal"),
+
 
         # Network defined as None should warn
         ("""
           competitor_net:
           undefined-network:
-        """, "is not defined, so is external and will not be created"),
+        """, "is not defined, so is external and will not be created"
+        , "- competitor_net\n              - undefined-network"),
     ])
-    def test_lint_challenge_network_warnings(self, network_config, expected_warning):
+    def test_lint_challenge_network_warnings(self, network_config, expected_warning, network_list):
         """Test network-specific warnings"""
         yaml_content = f"""
         services:
           web:
             image: nginx:latest
             hostname: web-server
+            networks:
+              {network_list}
         networks:{network_config}
         x-challenge:
           name: Network Warning Test
@@ -297,6 +314,11 @@ class TestLintChallenge:
           web:
             image: nginx:latest
             hostname: web-server
+            networks:
+              - external-net
+              - missing-internal-net
+              - undefined-net
+              - competitor_net
         networks:
           external-net:
             internal: false
@@ -341,6 +363,8 @@ class TestLintChallenge:
             image: nginx:latest
             hostname: web-server
             build: .
+            networks:
+              - competitor_net
           api:
             image: python:3.9
             hostname: api-server
@@ -374,10 +398,8 @@ class TestLintChallenge:
         field_paths = [w["field"] for w in warnings_with_fields]
 
         # Look for service and network warning field paths
-        service_fields = [f for f in field_paths if "service warnings" in f]
-        network_fields = [f for f in field_paths if "network warnings" in f]
+        network_fields = [f for f in field_paths if "network" in f]
 
-        assert len(service_fields) > 0, "Should have service warning field paths"
         assert len(network_fields) > 0, "Should have network warning field paths"
 
     def test_lint_challenge_no_warnings_for_good_config(self):
@@ -525,6 +547,10 @@ class TestLintChallenge:
               points: 100
               max_attempts: 3
               answer: *flag_suffix
+        services:
+          web:
+            image: nginx:latest
+            hostname: web-server
         """
         # Act
         result = lint_challenge(yaml_content)

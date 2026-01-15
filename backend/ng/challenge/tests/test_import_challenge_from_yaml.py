@@ -52,6 +52,10 @@ class TestImportChallengeFromYaml:
               points: 10
               answer: "4"
               max_attempts: 3
+        services:
+          app:
+            image: nginx:latest
+            hostname: app-server
         """
 
         # Act
@@ -95,6 +99,11 @@ class TestImportChallengeFromYaml:
               body: This is the second hint
               preview: Second hint preview
               deduction: 15
+
+        services:
+          app:
+            image: nginx:latest
+            hostname: app-server
         """
 
         # Act
@@ -126,6 +135,10 @@ class TestImportChallengeFromYaml:
               answer: "4"
               max_attempts: 3
           tags: ["web", "beginner", "sql"]
+        services:
+          app:
+            image: nginx:latest
+            hostname: app-server
         """
 
         # Act
@@ -158,6 +171,10 @@ class TestImportChallengeFromYaml:
               placeholder: "flag{{...}}"
               max_attempts: 3
               answer: "{answer_data}"
+        services:
+          app:
+            image: nginx:latest
+            hostname: app-server
         """
 
         # Act
@@ -196,6 +213,10 @@ class TestImportChallengeFromYaml:
               placeholder: "flag{...}"
               max_attempts: 3
               answer: *flag_suffix
+        services:
+          app:
+            image: nginx:latest
+            hostname: app-server
         """
 
         # Act

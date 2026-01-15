@@ -41,7 +41,7 @@ class TestUpdateChallengeFromYaml:
         # Add YAML
         yaml_content = """
         version: "3"
-        challenge:
+        x-challenge:
           name: Original Challenge
           description: Original description
         """
@@ -80,6 +80,10 @@ class TestUpdateChallengeFromYaml:
               points: 10
               answer: "4"
               max_attempts: 3
+        services:
+          web:
+            image: nginx:latest
+            hostname: web-server
         """
         # Act
         result = update_challenge_from_yaml(existing_challenge, yaml_content)
@@ -122,6 +126,10 @@ class TestUpdateChallengeFromYaml:
               answer: "4"
               max_attempts: 3
           hints: []
+        services:
+          web:
+            image: nginx:latest
+            hostname: web-server
         """
 
         with pytest.raises(ValidationError, match="Cannot remove existing hints"):
@@ -155,6 +163,10 @@ class TestUpdateChallengeFromYaml:
               points: 10
               answer: "4"
               max_attempts: 3
+        services:
+          web:
+            image: nginx:latest
+            hostname: web-server
         """
 
         with pytest.raises(ValidationError, match="Cannot remove existing questions"):
@@ -183,6 +195,10 @@ class TestUpdateChallengeFromYaml:
               points: 10
               answer: "4"
               max_attempts: 3
+        services:
+          zip:
+            image: nginx:latest
+            hostname: web-server
         """
 
         with pytest.raises(ValidationError, match="Cannot remove existing services"):
@@ -221,6 +237,10 @@ class TestUpdateChallengeFromYaml:
               answer: "4"
               max_attempts: 3
           tags: {tags_yaml}
+        services:
+          web:
+            image: nginx:latest
+            hostname: web-server
         """
 
         # Act
@@ -293,6 +313,10 @@ class TestUpdateChallengeFromYaml:
               points: 100
               max_attempts: 5
               answer: *flag_value
+        services:
+          web:
+            image: nginx:latest
+            hostname: web-server
         """
 
         # Act
