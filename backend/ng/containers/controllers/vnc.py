@@ -7,7 +7,7 @@ def forward_vnc(user_id: int) -> Response:
     host_port = indv_ctr.get_novnc_port()
 
     headers = {
-       "Cache-Control": "max-age=60",
+       "Cache-Control": "no-store",
        "Host-Ip": indv_ctr.hostip,
        "Host-Port": host_port
     }
