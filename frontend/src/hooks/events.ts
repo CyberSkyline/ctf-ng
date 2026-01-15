@@ -232,12 +232,14 @@ export function adminRegisterEventTeamJoin(eventId: number, userId: number, invi
  * Creates a new event.
  * @param event The event object to create
  */
-export function createEvent(event: Omit<Event, 'id'>) {
+export function createEvent(event: { name : string }) {
   return apiMutation('/admin/events', event, {
     method : 'POST',
-  }).then(() => {
-    mutate('/admin/events');
-  });
+  })
+    .then((data): Event => data.id)
+    .finally(() => {
+      mutate('/admin/events');
+    });
 }
 
 /**
