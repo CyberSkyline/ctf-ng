@@ -1,10 +1,15 @@
 from CTFd.models import db
 from CTFd.utils import get_app_config
 import docker
+import redis_lock
 from typing import TypedDict
 from ..constants import DOCKER_RUNNING, DOCKER_BRIDGE, DOCKER_MEM_REGEX
 from ..utils.get_client import get_client
+from ...core import BusinessLogicError
 from .ContainerInstance import ContainerInstance
+from ..utils.redis import get_redis_client
+
+LOCK_EXPIRE_SECONDS = 5*60
 
 class SerializedIndvidualContainerInfo(TypedDict):
     id: int
@@ -32,6 +37,8 @@ class IndvidualContainer(db.Model):
 
     @classmethod
     def create_indvidual_container(cls, user_id: int, commit: bool = True):
+        redis_client = get_redis_client(3)
+
         db_exists = cls.query.filter_by(user=user_id).first()
         DOCKER_HOST = get_app_config("DOCKER_HOST")
         client = get_client(DOCKER_HOST)
@@ -41,9 +48,14 @@ class IndvidualContainer(db.Model):
             try:
                 ctr = client.get_running(db_exists.dockerid)
             except docker.errors.NotFound:
-                ctr = cls.run_container(client, container_name)
-                db_exists.dockerid = ctr.id
-                db.session.commit()
+                lock = redis_lock.Lock(redis_client, cls.render_lock_key(user_id), expire=LOCK_EXPIRE_SECONDS)
+                if lock.acquire(blocking=False):
+                    ctr = cls.run_container(client, container_name)
+                    db_exists.dockerid = ctr.id
+                    db.session.commit()
+                    lock.release()
+                else:
+                     raise BusinessLogicError("Workspace is already being started/reset") from None
 
             return db_exists
 
@@ -61,17 +73,23 @@ class IndvidualContainer(db.Model):
             return indv
 
         except docker.errors.NotFound:
-            ctr = cls.run_container(client, container_name)
+            lock = redis_lock.Lock(redis_client, cls.render_lock_key(user_id), expire=LOCK_EXPIRE_SECONDS)
+            if lock.acquire(blocking=False):
+                ctr = cls.run_container(client, container_name)
 
-            indvidual_container = cls(
-                user=user_id,
-                hostip=DOCKER_HOST,
-                dockerid=ctr.id,
-            )
+                indvidual_container = cls(
+                    user=user_id,
+                    hostip=DOCKER_HOST,
+                    dockerid=ctr.id,
+                )
 
-            db.session.add(indvidual_container)
-            if commit:
-                db.session.commit()
+                db.session.add(indvidual_container)
+                if commit:
+                    db.session.commit()
+                lock.release()
+            else:
+                 raise BusinessLogicError("Workspace is already being started/reset") from None
+
             return indvidual_container
 
     @staticmethod
@@ -79,7 +97,11 @@ class IndvidualContainer(db.Model):
         return f"{user_id}-indv"
 
     @staticmethod
-    def run_container(client, container_name):
+    def render_lock_key(user_id) -> str:
+        return f"{user_id}-vnc-lock"
+
+    @staticmethod
+    def run_container(client, container_name, lock=None):
         NOVNC_CONTAINER = get_app_config("NOVNC_CONTAINER")
 
         NOVNC_RAM = get_app_config("NOVNC_RAM", "4g")
@@ -181,55 +203,80 @@ class IndvidualContainer(db.Model):
             return None
 
     def restart(self):
-        client = get_client(self.hostip)
-        try:
-            ctr = client.containers.get(self.dockerid)
-            ctr.restart()
-        except docker.errors.NotFound as exc:
-            raise ValueError("Container not found please recycle") from exc
+        redis_client = get_redis_client(3)
+        lock = redis_lock.Lock(redis_client, self.render_lock_key(self.user), expire=LOCK_EXPIRE_SECONDS)
+        if lock.acquire(blocking=False):
+            client = get_client(self.hostip)
+            try:
+                ctr = client.containers.get(self.dockerid)
+                ctr.restart()
+            except docker.errors.NotFound as exc:
+                raise ValueError("Container not found please recycle") from exc
+            finally:
+                lock.release()
+        else:
+            raise BusinessLogicError("Workspace is already being started/reset")
 
     def recycle(self):
-        client = get_client(self.hostip)
-        try:
-            ctr = client.containers.get(self.dockerid)
-            if ctr.status == DOCKER_RUNNING:
-                ctr.kill()
-
-            ctr.remove()
-
-        except docker.errors.NotFound:
-            pass
-
-        finally:
-            container_name = self.render_container_name(self.user)
-            new_ctr = self.run_container(client, container_name)
-
-            self.dockerid = new_ctr.id
-            db.session.commit()
-
-    def stop(self):
-        client = get_client(self.hostip)
-        try:
-            ctr = client.containers.get(self.dockerid)
-            if ctr.status == DOCKER_RUNNING:
-                ctr.stop(timeout=5)
-        except docker.errors.NotFound:
-            pass
-
-    def delete(self, commit=True):
-        client = get_client(self.hostip)
-        try:
-            ctr = client.containers.get(self.dockerid)
-            ctr.remove(force=True)
-        except docker.errors.NotFound:
+        redis_client = get_redis_client(3)
+        lock = redis_lock.Lock(redis_client, self.render_lock_key(self.user), expire=LOCK_EXPIRE_SECONDS)
+        if lock.acquire(blocking=False):
+            client = get_client(self.hostip)
             try:
-                ctr = client.containers.get(self.render_container_name(self.user))
-                ctr.remove(force=True)
+                ctr = client.containers.get(self.dockerid)
+                if ctr.status == DOCKER_RUNNING:
+                    ctr.kill()
+
+                ctr.remove()
+
             except docker.errors.NotFound:
                 pass
-        db.session.delete(self)
-        if commit:
-            db.session.commit()
+
+            finally:
+                container_name = self.render_container_name(self.user)
+                new_ctr = self.run_container(client, container_name)
+
+                self.dockerid = new_ctr.id
+                db.session.commit()
+                lock.release()
+        else:
+            raise BusinessLogicError("Workspace is already being started/reset")
+
+    def stop(self):
+        redis_client = get_redis_client(3)
+        lock = redis_lock.Lock(redis_client, self.render_lock_key(self.user), expire=LOCK_EXPIRE_SECONDS)
+        if lock.acquire(blocking=False):
+            client = get_client(self.hostip)
+            try:
+                ctr = client.containers.get(self.dockerid)
+                if ctr.status == DOCKER_RUNNING:
+                    ctr.stop(timeout=5)
+            except docker.errors.NotFound:
+                pass
+            lock.release()
+        else:
+            raise BusinessLogicError("Workspace is already being started/reset")
+
+    def delete(self, commit=True):
+        redis_client = get_redis_client(3)
+        lock = redis_lock.Lock(redis_client, self.render_lock_key(self.user), expire=LOCK_EXPIRE_SECONDS)
+        if lock.acquire(blocking=False):
+            client = get_client(self.hostip)
+            try:
+                ctr = client.containers.get(self.dockerid)
+                ctr.remove(force=True)
+            except docker.errors.NotFound:
+                try:
+                    ctr = client.containers.get(self.render_container_name(self.user))
+                    ctr.remove(force=True)
+                except docker.errors.NotFound:
+                    pass
+            db.session.delete(self)
+            if commit:
+                db.session.commit()
+            lock.release()
+        else:
+            raise BusinessLogicError("Workspace is already being started/reset")
 
     def get_status(self) -> str:
         client = get_client(self.hostip)

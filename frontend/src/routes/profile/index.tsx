@@ -18,6 +18,7 @@ import {
 } from 'lodash';
 import { useState } from 'react';
 import SponsorImageCard from './SponsorImageCard';
+import WorkspaceRestartModal from './WorkspaceRestartModal';
 
 export default function Profile() {
   const [ isEditing, setIsEditing ] = useState<boolean>(false);
@@ -84,6 +85,9 @@ export default function Profile() {
             </>
           )
         )}
+
+        <Heading size="4" as="h2" className="pt-4">Workspace</Heading>
+        <WorkspaceRestartModal />
       </Container>
     </>
   );

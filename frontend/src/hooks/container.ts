@@ -94,3 +94,9 @@ export function connectDeployment(challengeId: number, teamId: number) {
     method : 'POST',
   });
 }
+
+export function restartWorkspace() {
+  return apiMutation('/container/me/restart', undefined, {
+    method : 'POST',
+  });
+}
