@@ -39,39 +39,42 @@ class IndvidualContainer(db.Model):
     def create_indvidual_container(cls, user_id: int, commit: bool = True):
         redis_client = get_redis_client(3)
 
-        lock = redis_lock.Lock(redis_client, cls.render_lock_key(user_id), expire=LOCK_EXPIRE_SECONDS)
-        if lock.acquire(blocking=False):
-            db_exists = cls.query.filter_by(user=user_id).first()
-            DOCKER_HOST = get_app_config("DOCKER_HOST")
-            client = get_client(DOCKER_HOST)
-            container_name = cls.render_container_name(user_id)
+        db_exists = cls.query.filter_by(user=user_id).first()
+        DOCKER_HOST = get_app_config("DOCKER_HOST")
+        client = get_client(DOCKER_HOST)
+        container_name = cls.render_container_name(user_id)
 
-            if db_exists:
-                try:
-                    ctr = client.get_running(db_exists.dockerid)
-                except docker.errors.NotFound:
+        if db_exists:
+            try:
+                ctr = client.get_running(db_exists.dockerid)
+            except docker.errors.NotFound:
+                lock = redis_lock.Lock(redis_client, cls.render_lock_key(user_id), expire=LOCK_EXPIRE_SECONDS)
+                if lock.acquire(blocking=False):
                     ctr = cls.run_container(client, container_name)
                     db_exists.dockerid = ctr.id
                     db.session.commit()
+                    lock.release()
+                else:
+                     raise BusinessLogicError("Workspace is already being started/reset")
 
-                lock.release()
-                return db_exists
+            return db_exists
 
-            try:
-                exists = client.get_running(container_name)
+        try:
+            exists = client.get_running(container_name)
 
-                indv = cls(
-                    user=user_id,
-                    hostip=DOCKER_HOST,
-                    dockerid=exists.id,
-                )
-                db.session.add(indv)
-                if commit:
-                    db.session.commit()
-                lock.release()
-                return indv
+            indv = cls(
+                user=user_id,
+                hostip=DOCKER_HOST,
+                dockerid=exists.id,
+            )
+            db.session.add(indv)
+            if commit:
+                db.session.commit()
+            return indv
 
-            except docker.errors.NotFound:
+        except docker.errors.NotFound:
+            lock = redis_lock.Lock(redis_client, cls.render_lock_key(user_id), expire=LOCK_EXPIRE_SECONDS)
+            if lock.acquire(blocking=False):
                 ctr = cls.run_container(client, container_name)
 
                 indvidual_container = cls(
@@ -84,9 +87,10 @@ class IndvidualContainer(db.Model):
                 if commit:
                     db.session.commit()
                 lock.release()
-                return indvidual_container
-        else:
-            raise BusinessLogicError("Workspace is already being started/reset")
+            else:
+                 raise BusinessLogicError("Workspace is already being started/reset")
+
+            return indvidual_container
 
     @staticmethod
     def render_container_name(user_id) -> str:
@@ -97,7 +101,7 @@ class IndvidualContainer(db.Model):
         return f"{user_id}-vnc-lock"
 
     @staticmethod
-    def run_container(client, container_name):
+    def run_container(client, container_name, lock=None):
         NOVNC_CONTAINER = get_app_config("NOVNC_CONTAINER")
 
         NOVNC_RAM = get_app_config("NOVNC_RAM", "4g")
@@ -249,6 +253,7 @@ class IndvidualContainer(db.Model):
                     ctr.stop(timeout=5)
             except docker.errors.NotFound:
                 pass
+            lock.release()
         else:
             raise BusinessLogicError("Workspace is already being started/reset")
 
@@ -269,6 +274,7 @@ class IndvidualContainer(db.Model):
             db.session.delete(self)
             if commit:
                 db.session.commit()
+            lock.release()
         else:
             raise BusinessLogicError("Workspace is already being started/reset")
 
