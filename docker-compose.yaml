@@ -85,6 +85,18 @@ services:
       - ./frontend:/app/frontend
       - ./node_modules:/app/node_modules
 
+  grafana:
+    image: grafana/grafana:12.3.1
+    container_name: ng-grafana
+    restart: always
+    user: "0"
+    ports:
+      - "3000:3000"
+    volumes:
+      - .data/grafana:/var/lib/grafana
+      - ./conf/grafana:/etc/grafana:ro
+    env_file: ./conf/grafana/.env
+
 networks:
   default:
     driver: overlay
