@@ -1,3 +1,4 @@
+import { ROUTEPREFIX } from '@/constants';
 import { Card, Inset } from '@radix-ui/themes';
 import { useTheme } from 'next-themes';
 import { useEffect } from 'react';
@@ -19,7 +20,7 @@ export default function AdminReports() {
           <iframe
             title="Grafana"
             className="w-full h-full"
-            src={`/admin/grafana/dashboards?theme=${resolvedTheme}`}
+            src={`${ROUTEPREFIX}/admin/grafana/dashboards?theme=${resolvedTheme}`}
           />
         </Inset>
       </Card>
