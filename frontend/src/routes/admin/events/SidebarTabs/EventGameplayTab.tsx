@@ -56,19 +56,26 @@ export default function EventGameplayTab({ event }: { event: Event }) {
     });
   };
 
+  const buttonControls = () => (
+    <ActionButtonsGroup
+      isEditing={isEditing}
+      setIsEditing={setIsEditing}
+      reset={() => {
+        reset();
+        setError(null);
+      }}
+      loading={loading}
+      formId="eventRegistrationForm"
+    />
+  );
+
   return (
     <Flex direction="column" gap="3" className="mb-4">
-      <ActionButtonsGroup
-        isEditing={isEditing}
-        setIsEditing={setIsEditing}
-        reset={() => {
-          reset();
-          setError(null);
-        }}
-        cancelOnly
-      />
+      {buttonControls()}
+
       {isEditing ? (
         <form
+          id="eventRegistrationForm"
           onSubmit={handleSubmit(update)}
           className="space-y-4"
         >
@@ -181,16 +188,7 @@ export default function EventGameplayTab({ event }: { event: Event }) {
           </FormField>
 
           {error && <ErrorCallout>{error}</ErrorCallout>}
-
-          <ActionButtonsGroup
-            isEditing={isEditing}
-            setIsEditing={setIsEditing}
-            reset={() => {
-              reset();
-              setError(null);
-            }}
-            loading={loading}
-          />
+          {buttonControls()}
         </form>
       ) : (
         <>
