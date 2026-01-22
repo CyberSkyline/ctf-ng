@@ -196,7 +196,7 @@ export default function EventDetailsTab({ event }: { event: Event }) {
 
           <DataList.Item>
             <DataList.Label>Description</DataList.Label>
-            <DataList.Value className="flex-col">
+            <DataList.Value className="flex-col before:hidden">
               <RadixMarkdown>
                 {event.description || ''}
               </RadixMarkdown>
