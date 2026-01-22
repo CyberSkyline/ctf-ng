@@ -7,19 +7,21 @@ export default function ActionButtonsGroup<TFieldValues extends FieldValues>({
   isEditing,
   setIsEditing,
   reset,
-  cancelOnly = false,
   loading,
+  formId,
 }: {
   isEditing: boolean,
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>,
   reset: UseFormReset<TFieldValues>
-  cancelOnly?: boolean,
   loading?: boolean,
+  formId: string,
 }) {
   return (
     <Flex direction="row-reverse" justify="start" align="center" gap="2">
-      {!cancelOnly && (
+
+      {isEditing && (
         <Button
+          form={formId}
           type="submit"
           color={COLOR_WARNING}
           variant="soft"

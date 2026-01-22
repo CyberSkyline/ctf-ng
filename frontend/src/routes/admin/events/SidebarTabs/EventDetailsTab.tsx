@@ -89,20 +89,26 @@ export default function EventDetailsTab({ event }: { event: Event }) {
       .finally(() => setUploading(false));
   };
 
+  const buttonControls = () => (
+    <ActionButtonsGroup
+      isEditing={isEditing}
+      setIsEditing={setIsEditing}
+      reset={() => {
+        reset();
+        setUpdateError(null);
+      }}
+      loading={loading}
+      formId="eventDetailsForm"
+    />
+  );
+
   return (
     <Flex direction="column" gap="3" className="mb-4">
-      <ActionButtonsGroup
-        isEditing={isEditing}
-        setIsEditing={setIsEditing}
-        reset={() => {
-          reset();
-          setUpdateError(null);
-        }}
-        cancelOnly
-      />
+      {buttonControls()}
 
       {isEditing ? (
         <form
+          id="eventDetailsForm"
           onSubmit={handleSubmit(update)}
           className="space-y-4"
         >
@@ -179,15 +185,7 @@ export default function EventDetailsTab({ event }: { event: Event }) {
           {fileUrlError && (<ErrorCallout>{fileUrlError.message}</ErrorCallout>)}
 
           {updateError && (<ErrorCallout>{updateError}</ErrorCallout>)}
-          <ActionButtonsGroup
-            isEditing={isEditing}
-            setIsEditing={setIsEditing}
-            reset={() => {
-              reset();
-              setUpdateError(null);
-            }}
-            loading={loading}
-          />
+          {buttonControls()}
         </form>
       ) : (
         <DataList.Root>
@@ -198,7 +196,7 @@ export default function EventDetailsTab({ event }: { event: Event }) {
 
           <DataList.Item>
             <DataList.Label>Description</DataList.Label>
-            <DataList.Value>
+            <DataList.Value className="flex-col before:hidden">
               <RadixMarkdown>
                 {event.description || ''}
               </RadixMarkdown>
