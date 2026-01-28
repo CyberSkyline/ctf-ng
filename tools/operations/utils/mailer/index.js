@@ -62,6 +62,31 @@ export const templates = {
     subject : `REMINDER: President's Cup 7 Individuals Round 1 closes tomorrow!`,
     file : '2026.01.12.pc7-registration-reminder.mjml',
   }),
+  'pc7-round1-defensive-advancement' : new Template({
+    name : 'pc7-round1-defensive-advancement',
+    subject : `Congratulations! You Have Qualified for Individuals Defensive Track Round 2 of President's Cup 7!`,
+    file : '2026.01.14.pc7-round1-defensive-advancement.mjml'
+  }),
+  'pc7-round1-offensive-advancement' : new Template({
+    name : 'pc7-round1-offensive-advancement',
+    subject : `Congratulations! You Have Qualified for Individuals Offensive Track Round 2 of President's Cup 7!`,
+    file : '2026.01.14.pc7-round1-offensive-advancement.mjml'
+  }),
+  'pc7-round1-team-start' : new Template({
+    name : 'pc7-round1-team-start',
+    subject : `REMINDER: President's Cup 7 Teams Round 1 is OPEN!`,
+    file : '2026.01.20.pc7-round1-teams-start.mjml',
+  }),
+  'pc7-round1-teams-reminder': new Template({
+    name : 'pc7-round1-teams-reminder',
+    subject : `President's Cup 7 Teams Round 1 Closes Tomorrow`,
+    file : '2026.01.26.pc7-round1-teams-reminder.mjml',
+  }),
+  'pc7-round1-teams-advancement' : new Template({
+    name : 'pc7-round1-teams-advancement',
+    subject : `You Have Progressed to Round 2`,
+    file : '2026.01.28.pc7-round1-teams-advancement.mjml',
+  }),
 };
 
 export async function sendEmail(template, recipient, opts, progressBar) {
@@ -75,7 +100,7 @@ export async function sendEmail(template, recipient, opts, progressBar) {
     try {
       progressBar.interrupt(`Attempting to send email to ${recipient}`);
 
-      const { html, text } = template.render({ });
+      const { html, text } = template.render(opts);
       const mailOpts = { to : recipient, from : AWS_SES_EMAIL_ADDRESS, subject : template.subject, html, text };
       await mailer.sendMail(mailOpts);
       success = true;

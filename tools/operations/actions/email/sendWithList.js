@@ -62,7 +62,7 @@ export async function action(opts, commander) {
     if (checkpoint.check(email)) return;
 
     // await bluebird.delay(3000);
-    await mailer.sendEmail(template, email, { }, progressBar);
+    await mailer.sendEmail(template, email, { name }, progressBar);
 
     if (write) checkpoint.update(email);
   });
