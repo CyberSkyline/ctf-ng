@@ -1,9 +1,9 @@
-import type { Sponsor } from "@/types"
-import { Tooltip } from "@radix-ui/themes";
-import { TbInfoCircle } from "react-icons/tb";
-import { useFileUrl } from "@/hooks/fileuploads";
+import type { Sponsor } from '@/types';
+import { Tooltip } from '@radix-ui/themes';
+import { TbInfoCircle } from 'react-icons/tb';
+import { useFileUrl } from '@/hooks/fileuploads';
 
-export default function SponsorBadge({sponsor}: {sponsor: Sponsor}){
+export default function SponsorBadge({ sponsor }: {sponsor: Sponsor}) {
   const { id, logo, name } = sponsor;
 
   const { data } = useFileUrl('sponsor-logos', logo);
