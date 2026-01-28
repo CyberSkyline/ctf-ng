@@ -20,6 +20,7 @@ import KickUserModal from './KickUserModal';
 import PromoteUserModal from './PromoteUserModal';
 import ScoreAdjustModal from './ScoreAdjustModal';
 import TeamActivity from './TeamActivity';
+import SponsorBadge from './SponsorBadge';
 
 export default function TeamSidebar({ entity }: { entity: Team }) {
   const { data : members, error : membersError } = useTeamMembers(entity.id);
@@ -94,6 +95,7 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
           <Table.Header>
             <Table.Row>
               <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell>Sponsor</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Role</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Joined</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell />
@@ -109,6 +111,7 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
                     icon={UserIcon}
                   />
                 </Table.Cell>
+                <Table.Cell><SponsorBadge sponsor={member.sponsor} /></Table.Cell>
                 <Table.Cell><RoleBadge value={member.role} /></Table.Cell>
                 <Table.Cell>{member.joined_at.toLocaleString()}</Table.Cell>
                 <Table.Cell>

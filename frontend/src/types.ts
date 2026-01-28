@@ -62,6 +62,7 @@ export interface TeamMember {
   event_id: number;
   joined_at: Date;
   role: 'member' | 'captain';
+  sponsor?: Sponsor;
 }
 
 export interface Challenge {

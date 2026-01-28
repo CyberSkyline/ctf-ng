@@ -75,6 +75,7 @@ class TeamMember(db.Model):
             "event_id": self.event_id,
             "joined_at": self.joined_at.isoformat() + "Z" if self.joined_at else None,
             "role": self.role.value,
+            "sponsor": self.sponsor,
         }
 
         if self.team:
