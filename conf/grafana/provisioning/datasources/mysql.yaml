@@ -8,8 +8,8 @@ datasources:
     isDefault: true
     jsonData:
       database: ${SQL_DB}
-      maxOpenConns: 100
-      maxIdleConns: 100
+      maxOpenConns: 5
+      maxIdleConns: 5
       maxIdleConnsAuto: true
       connMaxLifetime: 14400
     secureJsonData:
