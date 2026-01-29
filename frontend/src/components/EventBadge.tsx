@@ -32,11 +32,6 @@ const EVENT_STATES: {
     label : 'Registration Open',
     icon : TbArrowRight,
   },
-  available : {
-    color : COLOR_INFO,
-    label : 'Available',
-    icon : TbArrowRight,
-  },
   registered : {
     color : COLOR_POSITIVE,
     label : 'Registered',
@@ -94,12 +89,17 @@ export default function EventBadge({ eventId, size, className }: { eventId: numb
     return <Skeleton><Badge size={size} className={className}>Loading...</Badge></Skeleton>;
   }
 
+  if (event?.practice) {
+    // don't display status badges for practice events
+    return null;
+  }
+
   if (isOngoing) {
     state = 'live';
   }
 
   if (isRegistrationOpen) {
-    state = event?.practice ? 'available' : 'registration_open';
+    state = 'registration_open';
   }
 
   if (isRegistered) {
