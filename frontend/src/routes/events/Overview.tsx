@@ -20,6 +20,7 @@ import FeedbackTab from './OverviewTabs/FeedbackTab';
 import LeaderboardTab from './OverviewTabs/LeaderboardTab';
 import TeamTab from './OverviewTabs/TeamTab';
 import RegistrationCard from './RegistrationCard';
+import PracticeRegistration from './PracticeRegistration';
 
 export default function Overview() {
   const [ searchParams, setSearchParams ] = useSearchParams();
@@ -65,7 +66,9 @@ export default function Overview() {
             event={data}
           >
             {isAuthenticated && data && (
-              <RegistrationCard event={data} />
+              data.practice
+                ? <PracticeRegistration event={data} />
+                : <RegistrationCard event={data} />
             )}
             {isFinished && feedback === null && (
               <InfoCallout className="max-w-128">
