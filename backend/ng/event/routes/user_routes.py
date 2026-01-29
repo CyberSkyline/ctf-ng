@@ -3,6 +3,7 @@ User Routes for Event Operations
 """
 
 from CTFd.models import db
+from flask import request
 from flask_restx import Namespace, Resource
 
 from ...challenge.models.Challenge import Challenge
@@ -64,7 +65,17 @@ class EventList(Resource):
         """
         Get all public events
         """
-        results = Event.get_all_events(public_only = True)
+        practice_param = request.args.get("practice")
+        if practice_param is None:
+            practice = None
+        elif practice_param.lower() == "true":
+            practice = True
+        elif practice_param.lower() == "false":
+            practice = False
+        else:
+            raise ValidationError("Invalid value for practice parameter. If present, it must be 'true' or 'false'.")
+
+        results = Event.get_all_events(public_only = True, practice = practice)
         return success_response(results)
 
 
@@ -145,9 +156,13 @@ class EventRegistration(Resource):
         has_invite = "invite_code" in json_data
         has_name = "team_name" in json_data
 
-        if (not has_invite) and (not has_name):
+        if (not has_invite) and (not has_name) and (not event.practice):
             raise ValidationError(
                 "Either invite_code or team_name must be provided."
+            )
+        if event.practice and (has_invite or has_name):
+            raise ValidationError(
+                "Cannot provide invite_code or team_name for practice events."
             )
         if has_invite and has_name:
             raise ValidationError(

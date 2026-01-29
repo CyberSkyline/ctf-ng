@@ -213,7 +213,15 @@ export default function EventRegistrationTab({ event }: { event: Event }) {
           <Statistic label="Registration Open" value={event.registration_open ? 'Yes' : 'No'} />
           <Statistic label="Registration Starts" value={event.registration_start_date?.toLocaleString() || 'N/A'} />
           <Statistic label="Registration Ends" value={event.registration_end_date?.toLocaleString() || 'N/A'} />
-          <Statistic label="Practice" value={event.practice ? 'Yes' : 'No'} />
+          <Statistic
+            label="Practice"
+            value={event.practice ? 'Yes' : 'No'}
+            description={`
+              Mark this event as practice.
+              It will be available from the Practice page instead of the Events page.
+              Registration will occur automatically for users accessing the event for the first time.
+            `}
+          />
         </>
       )}
     </Flex>

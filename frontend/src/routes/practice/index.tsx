@@ -1,3 +1,4 @@
+import { usePracticeEvents } from '@/hooks/events';
 import {
   Button,
   Card,
@@ -10,6 +11,10 @@ import { TbExternalLink } from 'react-icons/tb';
 import { Link } from 'react-router';
 
 export default function Practice() {
+  const { data } = usePracticeEvents();
+  const practiceEvent = data?.[0];
+  const practiceBtnText = 'Go to PC7 Practice Area';
+
   return (
     <Container size="2" align="center" className="mt-12">
       <title>Practice</title>
@@ -44,10 +49,10 @@ For additional resources, visit the [prescup-challenges GitHub](https://github.c
             </RadixMarkdown>
           </Flex>
           <Flex justify="between" className="border-t border-[var(--gray-7)]" pt="4">
-            <Button>
-              <Link to="/events/7">
-                Go to PC7 Practice Area
-              </Link>
+            <Button disabled={!practiceEvent}>
+              {practiceEvent
+                ? <Link to={`/events/${practiceEvent.id}`}>{practiceBtnText}</Link>
+                : practiceBtnText}
             </Button>
             <Button>
               <a href="https://pccc.cisa.gov/gb">Go to External Practice Area</a>

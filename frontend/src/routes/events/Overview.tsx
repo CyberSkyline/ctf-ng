@@ -33,8 +33,9 @@ export default function Overview() {
   } = useRegistration(eventId);
 
   const challengesTabAvailable = isRegistered;
+  const leaderboardAvailable = !data?.practice;
   const teamTabAvailable = isRegistered && data && data.max_team_size > 1;
-  const feedbackAvailable = isRegistered && (isFinished || (isStarted && !team!.end_time));
+  const feedbackAvailable = isRegistered && (isFinished || (isStarted && !team!.end_time)) && !data?.practice;
 
   const { data : feedback } = useMyEventFeedback(feedbackAvailable ? eventId : null);
 
@@ -113,10 +114,12 @@ export default function Overview() {
                 Challenges
               </Tabs.Trigger>
             )}
-            <Tabs.Trigger value="leaderboard">
-              <TbStar className="mr-1" />
-              Leaderboard
-            </Tabs.Trigger>
+            {leaderboardAvailable && (
+              <Tabs.Trigger value="leaderboard">
+                <TbStar className="mr-1" />
+                Leaderboard
+              </Tabs.Trigger>
+            )}
             {teamTabAvailable && (
               <Tabs.Trigger value="team">
                 <TeamIcon className="mr-1" />
@@ -138,9 +141,11 @@ export default function Overview() {
           </Tabs.Content>
         )}
 
-        <Tabs.Content value="leaderboard">
-          <LeaderboardTab />
-        </Tabs.Content>
+        {leaderboardAvailable && (
+          <Tabs.Content value="leaderboard">
+            <LeaderboardTab />
+          </Tabs.Content>
+        )}
 
         {teamTabAvailable && (
           <Tabs.Content value="team">

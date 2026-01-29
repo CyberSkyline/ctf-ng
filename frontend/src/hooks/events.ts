@@ -9,10 +9,17 @@ import type {
 import useSWR, { mutate } from 'swr';
 
 /**
- * Retrieves a list of all public and registerable events.
+ * Retrieves a list of all public and registerable competition events
  */
-export function useEvents() {
-  return useSWR<Event[], Error>('/events');
+export function useCompetitionEvents() {
+  return useSWR<Event[], Error>('/events?practice=false');
+}
+
+/**
+ * Retrieves a list of all public and registerable practice events
+ */
+export function usePracticeEvents() {
+  return useSWR<Event[], Error>('/events?practice=true');
 }
 
 /**

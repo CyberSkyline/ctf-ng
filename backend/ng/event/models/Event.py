@@ -322,16 +322,20 @@ class Event(db.Model):
         return cls.query.filter_by(name=name).first()
 
     @classmethod
-    def get_all_events(cls, public_only=True) -> list[Event]:
+    def get_all_events(cls, public_only=True, practice=None) -> list[Event]:
         """Gets all events
 
         Returns:
             list: List of all <Event> objects in the database.
         """
-
+        query = cls.query
         if public_only:
-            return cls.query.filter_by(public=True).all()
-        return cls.query.all()
+            query = query.filter_by(public=True)
+
+        if practice is not None:
+            query = query.filter_by(practice=practice)
+
+        return query.all()
 
     def get_event_details_with_teams(self) -> dict[str, Any]:
         """
