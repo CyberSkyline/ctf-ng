@@ -178,6 +178,31 @@ export default function EventRegistrationTab({ event }: { event: Event }) {
             )}
           </FormField>
 
+          <FormField label="Practice" error={errors.practice}>
+            {(injected) => (
+              <Controller
+                control={control}
+                name="practice"
+                defaultValue
+                rules={{}}
+                render={({ field }) => (
+                  <Box>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                      }}
+                      name={field.name}
+                      ref={field.ref}
+                      size="3"
+                      {...injected}
+                    />
+                  </Box>
+                )}
+              />
+            )}
+          </FormField>
+
           {error && <ErrorCallout>{error}</ErrorCallout>}
           {buttonControls()}
         </form>
@@ -188,6 +213,7 @@ export default function EventRegistrationTab({ event }: { event: Event }) {
           <Statistic label="Registration Open" value={event.registration_open ? 'Yes' : 'No'} />
           <Statistic label="Registration Starts" value={event.registration_start_date?.toLocaleString() || 'N/A'} />
           <Statistic label="Registration Ends" value={event.registration_end_date?.toLocaleString() || 'N/A'} />
+          <Statistic label="Practice" value={event.practice ? 'Yes' : 'No'} />
         </>
       )}
     </Flex>

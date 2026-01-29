@@ -37,6 +37,7 @@ class Event(db.Model):
     allowed_domains: Mapped[list[str]] = db.Column(JSON, nullable=False, default=[])
     blocked_domains: Mapped[list[str]] = db.Column(JSON, nullable=False, default=[])
     show_leaderboard = db.Column(db.Boolean, default=False, nullable=False)
+    practice = db.Column(db.Boolean, default=False, nullable=False)
 
     __table_args__ = (
         CheckConstraint(
@@ -97,6 +98,7 @@ class Event(db.Model):
             "allowed_domains": self.allowed_domains,
             "blocked_domains": self.blocked_domains,
             "show_leaderboard": self.show_leaderboard,
+            "practice": self.practice,
         }
 
         return data
@@ -191,6 +193,12 @@ class Event(db.Model):
             required=False,
             friendly_name="Show leaderboard",
         )
+        validator.validate_boolean(
+            data,
+            "practice",
+            required=False,
+            friendly_name="Practice mode",
+        )
 
         return validator.validate()
 
@@ -213,6 +221,7 @@ class Event(db.Model):
         allowed_domains: list[str] | None = None,
         blocked_domains: list[str] | None = None,
         show_leaderboard: bool = False,
+        practice: bool = False,
         commit: bool = True,
     ):
         """Create and persist a new event to the database.
@@ -250,6 +259,7 @@ class Event(db.Model):
             allowed_domains=allowed_domains,
             blocked_domains=blocked_domains,
             show_leaderboard=show_leaderboard,
+            practice=practice,
         )
 
         db.session.add(event)
