@@ -83,6 +83,22 @@ export function registerMyEventTeamJoin(eventId: number, inviteCode: string) {
   });
 }
 
+/**
+ * Registers user for practice event
+ * @param event_id The event id
+ */
+export function registerMyPracticeEvent(eventId: number) {
+  return apiMutation(`/events/${eventId}/me/register`, {}, {
+    method : 'POST',
+  }).then(() => mutate(`/permissions/${eventId}/me`).then(() => Promise.all([
+    mutate('/users/me/events'),
+    mutate('/users/me/teams'),
+    mutate(`/events/${eventId}/me/team`),
+  ])).then(() => {
+    mutate(`/events/${eventId}/me/eligibility`);
+  }));
+}
+
 export function useTeamNameFromCode(eventId: number, inviteCode?: string) {
   return useSWR(
     inviteCode ? `/events/${eventId}/team/${inviteCode}` : null,
