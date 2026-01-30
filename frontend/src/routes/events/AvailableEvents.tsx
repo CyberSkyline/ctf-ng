@@ -1,11 +1,11 @@
-import { useEvents } from '@/hooks/events';
+import { useCompetitionEvents } from '@/hooks/events';
 import { Container, Heading } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
 import EventGrid from 'components/EventGrid';
 import HeaderContainer from 'components/HeaderContainer';
 
 export default function AvailableEvents() {
-  const { data : events, error, isLoading } = useEvents();
+  const { data : events, error, isLoading } = useCompetitionEvents();
 
   return (
     <>

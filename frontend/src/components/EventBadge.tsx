@@ -89,6 +89,11 @@ export default function EventBadge({ eventId, size, className }: { eventId: numb
     return <Skeleton><Badge size={size} className={className}>Loading...</Badge></Skeleton>;
   }
 
+  if (event?.practice) {
+    // don't display status badges for practice events
+    return null;
+  }
+
   if (isOngoing) {
     state = 'live';
   }

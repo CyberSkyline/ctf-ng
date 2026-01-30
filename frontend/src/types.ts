@@ -14,6 +14,7 @@ export interface Event {
   hints_enabled: boolean;
   time_limit_minutes: number | null;
   show_leaderboard: boolean;
+  practice: boolean;
 }
 
 export interface Sponsor {

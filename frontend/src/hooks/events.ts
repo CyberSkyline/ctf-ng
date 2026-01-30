@@ -9,10 +9,17 @@ import type {
 import useSWR, { mutate } from 'swr';
 
 /**
- * Retrieves a list of all public and registerable events.
+ * Retrieves a list of all public and registerable competition events
  */
-export function useEvents() {
-  return useSWR<Event[], Error>('/events');
+export function useCompetitionEvents() {
+  return useSWR<Event[], Error>('/events?practice=false');
+}
+
+/**
+ * Retrieves a list of all public and registerable practice events
+ */
+export function usePracticeEvents() {
+  return useSWR<Event[], Error>('/events?practice=true');
 }
 
 /**
@@ -74,6 +81,22 @@ export function registerMyEventTeamJoin(eventId: number, inviteCode: string) {
   ])).then(() => {
     mutate(`/events/${eventId}/me/eligibility`);
   });
+}
+
+/**
+ * Registers user for practice event
+ * @param event_id The event id
+ */
+export function registerMyPracticeEvent(eventId: number) {
+  return apiMutation(`/events/${eventId}/me/register`, {}, {
+    method : 'POST',
+  }).then(() => mutate(`/permissions/${eventId}/me`).then(() => Promise.all([
+    mutate('/users/me/events'),
+    mutate('/users/me/teams'),
+    mutate(`/events/${eventId}/me/team`),
+  ])).then(() => {
+    mutate(`/events/${eventId}/me/eligibility`);
+  }));
 }
 
 export function useTeamNameFromCode(eventId: number, inviteCode?: string) {
