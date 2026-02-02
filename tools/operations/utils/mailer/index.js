@@ -87,6 +87,11 @@ export const templates = {
     subject : `You Have Progressed to Round 2`,
     file : '2026.01.28.pc7-round1-teams-advancement.mjml',
   }),
+  'pc7-continuation' : new Template({
+    name : 'pc7-continuation',
+    subject : `Updates to President's Cup 7 Competition Amid Lapse in Funding`,
+    file : '2026.02.02.pc7-continuation.mjml',
+  }),
 };
 
 export async function sendEmail(template, recipient, opts, progressBar) {
