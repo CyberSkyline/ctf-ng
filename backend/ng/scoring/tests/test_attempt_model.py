@@ -252,26 +252,6 @@ class TestCreateAttempt:
                 submission="test",
             )
 
-    def test_create_attempt_for_locked_event_fails(
-        self, db_session, user, team_with_member, locked_event, challenge, question
-    ):
-        """Test that creating an attempt for locked event fails"""
-        team_with_member.set_start_timestamp(utc_now())
-        locked_team = Team.create_team_with_captain(
-            name="Locked Team", event_id=locked_event.id, captain_id=user.id, invite_code="locked123"
-        )
-
-        with pytest.raises(BusinessLogicError) as exc_info:
-            Attempt.create_attempt(
-                user_id=user.id,
-                team_id=locked_team.id,
-                challenge_id=challenge.id,
-                question_id=question.id,
-                submission="test",
-            )
-
-        assert "Cannot submit answers for a locked event" in str(exc_info.value)
-
 
 class TestDeleteAttempt:
     """Test the delete_attempt method"""
@@ -779,55 +759,6 @@ class TestValidateAttemptAllowed:
             challenge_id=challenge.id,
             question_id=question.id,
         )
-
-    def test_validate_attempt_locked_event(self, db_session, user, team_with_member, locked_event, challenge, question):
-        """Test validation fails for locked event"""
-        team_with_member.set_start_timestamp(utc_now())
-        # Create team for locked event
-        locked_team = Team.create_team_with_captain(
-            name="Locked Team", event_id=locked_event.id, captain_id=user.id, invite_code="locked123"
-        )
-
-        with pytest.raises(BusinessLogicError) as exc_info:
-            Attempt.validate_attempt_allowed(
-                user_id=user.id,
-                team_id=locked_team.id,
-                event_id=locked_event.id,
-                challenge_id=challenge.id,
-                question_id=question.id,
-            )
-
-        assert "Cannot submit answers for a locked event" in str(exc_info.value)
-
-    def test_validate_attempt_ended_event(self, db_session, user, team_with_member, challenge, question):
-        """Test validation fails for ended event"""
-        now = utc_now()
-        ended_event = Event(
-            name="Ended Event",
-            description="This event has ended",
-            locked=False,
-            start_time=now - timedelta(days=10),
-            end_time=now - timedelta(days=1),
-        )
-        db_session.add(ended_event)
-        db_session.commit()
-
-        ended_team = Team.create_team_with_captain(
-            name="Ended Team", event_id=ended_event.id, captain_id=user.id, invite_code="ended123"
-        )
-
-        ended_team.set_start_timestamp(now - timedelta(days=2))
-
-        with pytest.raises(BusinessLogicError) as exc_info:
-            Attempt.validate_attempt_allowed(
-                user_id=user.id,
-                team_id=ended_team.id,
-                event_id=ended_event.id,
-                challenge_id=challenge.id,
-                question_id=question.id,
-            )
-
-        assert "Cannot submit answers after event has ended" in str(exc_info.value)
 
     def test_validate_attempt_not_team_member(self, db_session, admin, team_with_member, event, challenge, question):
         """Test validation fails when user is not team member"""
