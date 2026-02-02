@@ -132,16 +132,7 @@ class Attempt(db.Model):
 
         # LAZY-IMPORT
         from ...challenge.models.Question import Question
-        from ...event.models.Event import Event
         from ...team.models.TeamMember import TeamMember
-
-        # TODO: Move logic to Daniel's permission check system in the future
-        event = Event.find_by_id(event_id)
-        if event and event.locked:
-            raise BusinessLogicError("Cannot submit answers for a locked event")
-
-        if event and event.end_time and event.end_time < utc_now().replace(tzinfo=None):
-            raise BusinessLogicError("Cannot submit answers after event has ended")
 
         member = TeamMember.find_by_user_and_team(user_id, team_id)
         if not member:
