@@ -92,6 +92,11 @@ export const templates = {
     subject : `Updates to President's Cup 7 Competition Amid Lapse in Funding`,
     file : '2026.02.02.pc7-continuation.mjml',
   }),
+  'pc7-round2-individual-start' : new Template({
+    name : 'pc7-round2-individual-start',
+    subject : `REMINDER: President's Cup 7 Individuals Round 2 is OPEN!`,
+    file : '2026.02.03.pc7-round2-individual-start.mjml',
+  }),
 };
 
 export async function sendEmail(template, recipient, opts, progressBar) {
