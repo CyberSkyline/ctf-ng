@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, NotRequired, TypedDict
 
 from CTFd.models import Users, db
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from ... import config
 from ...core.exceptions import BusinessLogicError, NotFoundError
@@ -403,15 +403,17 @@ class Ticket(db.Model):
         """
         query = cls.query
 
-        if not is_admin and user_id:
-            query = query.filter_by(author_id=user_id)
-        elif user_id and is_admin:
+        if user_id is not None:
             query = query.filter_by(author_id=user_id)
 
+        # Status filtering
         if status == "open":
             query = query.filter(cls.closed_timestamp.is_(None))
         elif status == "closed":
             query = query.filter(cls.closed_timestamp.isnot(None))
+        elif status == "muted":
+            query = query.filter_by(muted=True)
+
         # Additional filters (admin only)
         if is_admin:
             if assigned_to is not None:
@@ -421,18 +423,18 @@ class Ticket(db.Model):
             if team_id is not None:
                 query = query.filter_by(team_id=team_id)
 
-        return (
-            query
-                .order_by(cls.last_updated.desc())
-                .options(
-                    joinedload(cls.author),
-                    joinedload(cls.assigned_user),
-                    joinedload(cls.event),
-                    joinedload(cls.team),
-                    joinedload(cls.challenge)
-                )
-                .all()
-        )
+        # Optimized eager loading with selectinload for collections
+        query = query.options(
+            joinedload(cls.author),
+            joinedload(cls.assigned_user),
+            joinedload(cls.event),
+            joinedload(cls.team),
+            joinedload(cls.challenge),
+            selectinload(cls.messages),
+            selectinload(cls.tags)
+        ).order_by(cls.last_updated.desc())
+
+        return query.all()
 
     def add_message(self, text: str, author_id: int, is_admin: bool = False, commit: bool = True) -> None:
         """
