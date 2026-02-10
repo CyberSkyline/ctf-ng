@@ -10,7 +10,6 @@ RUN apt-get update \
   libffi-dev \
   libssl-dev \
   git
-RUN rm -rf /var/lib/apt/lists/*
 
 # Create virtual environment
 RUN python -m venv /opt/venv
@@ -50,7 +49,6 @@ RUN apt-get update \
   net-tools \
   curl \
   supervisor
-RUN rm -rf /var/lib/apt/lists/*
 
 # Create ctfd user
 RUN useradd \
