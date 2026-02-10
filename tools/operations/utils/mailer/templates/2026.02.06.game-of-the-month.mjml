@@ -1,0 +1,97 @@
+<mjml>
+  <mj-head>
+    <mj-font name="Source Sans Pro" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,700&display=swap" />
+
+    <!-- defines the style for different tags -->
+    <mj-style inline="inline">
+      a {
+        color: #fbc926; /* Make links this color */
+      }
+      p {
+        margin: 0.2em 0; /* Adjusts vertical spacing */
+      }
+      h2 {
+        text-decoration: underline; /* Adds underline */ margin-bottom: 0.1em; /* Adjust margin below */ color: #ffffff
+      }
+    </mj-style>
+  </mj-head>
+
+  <!-- defines the color of the background that the column of content sits on top of -->
+  <mj-body background-color="#222">
+    <!-- add an empty section for padding at the top of the email -->
+    <mj-section> </mj-section>
+
+    <!--  defines the background color behind the text -->
+    <mj-section padding="0" background-color="#000000">
+      <mj-column>
+        <!-- insert a banner image -->
+        <mj-image padding="0" width="600px" src="https://static.presidentscup.us/2025.11.18.game-of-the-month-banner.png" alt="2026 President's Cup Competition Banner. #PRESCUP" />
+
+        <!-- defines the text style (font and color) -->
+        <mj-text font-family="Source Sans Pro, sans-serif" padding-top="20px" font-size="16px" color="#ffffff" line-height="1.3">
+          <!-- insert email content here -->
+          <p>
+            <span>Hello,</span>
+          </p>
+          </br>
+
+          <p>
+            <span>The President's Cup Cybersecurity Competition team challenges you to strengthen your exploitation and cyberspace operations skills in this month's </span>
+            <span><a href="https://presidentscup.cisa.gov/game-of-the-month/">Game of the Month</a><b>: "Finding the HOIC"</b> (PC5, R2)!</span>
+            <span>In this challenge you will help prevent a cyber attack. Gather account and website intel from a known malicious forum, use it to locate and log into the site. Find the High Orbit Ion Canon (HOIC) tool and use it to predict the actor's next move.</span>
+          </p>
+          <br />
+
+          <p>
+            <span>📌 <b><a href="https://niccs.cisa.gov/tools/nice-framework">NICE Work Roles</a>: </b></span><br />
+            <ul>
+              <li>Cyber Operations</li>
+              <li>Exploitation Analyst</li>
+            </ul>
+            <span>Based on 2017 NICE Framework</span>
+            <br /><br />
+            <span>📌 <b>NICE Framework Tasks Covered: </b></span><br />
+            <ul>
+              <li><b>T0028</b>: Conduct and/or support authorized penetration testing on enterprise network assets.</li>
+              <li><b>T0570</b>: Apply and utilize authorized cyber capabilities to enable access to targeted networks.</li>
+              <li><b>T0591</b>: Perform analysis for target infrastructure exploitation activities.</li>
+            </ul>
+            <span>🔗 <b>Gameboard Link:</b> [<a href="https://pccc.cisa.gov/gb/practice/50e2c6b3b86b4ce185f6105877dc05e0/finding-the-hoic?practiceSearchTerm=cyberspace-operations">Practice - Finding the HOIC</a>] 
+          </p>
+          <br />
+
+          <p>
+            <span><b>Why Participate?</b></span><br />
+            <ul>
+              <li><b>Develop Key Cybersecurity Skills</b> - Practice real-world exploitation techniques, container breakout, and privilege escalation.</li>
+              <li><b>Boost Your Career </b> - Strengthen skills aligned with Cyber Operator and Exploitation Analyst roles.</li>
+              <li><b>Challenge Yourself </b> - Navigate a compromised ship, break into restricted services, and recover mission-critical data.</li>
+            </ul>
+          </p>
+          <br />
+
+          <p>
+            <span>🔹 <b>Competition Stats:</b></span><br />
+            <span>✅ <b>Solvability Rate</b>: Full: 17% / Partial: 17%</span><br />
+          </p>
+          <br />
+
+          <p>
+            <span>Join the challenge today and put your expertise to the test! </span>
+            <span>If you have any questions about the Game of the Month Challenge, please email the <a href="mailto:PresidentsCup <presidentscup@cisa.dhs.gov>">President's Cup Team</a>.</h3>
+          </p>
+          <br />
+
+          <p>
+            <span>Federal employees looking to enhance their cyber skills can visit the <a href="https://pccc.cisa.gov/gb/practice">Practice Area</a> to tackle past PC challenges and earn completion certificates for continuing education credits.</span>
+            <span>The <a href="https://github.com/cisagov/prescup-challenges">President's Cup GitHub</a> is another great way to access artifacts, solution guides, and additional resources from previous competitions.</span>
+          </p>
+
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- add an empty section for padding at the bottom of the email -->
+    <mj-section> </mj-section>
+  </mj-body>
+</mjml>

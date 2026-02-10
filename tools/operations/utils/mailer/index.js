@@ -97,6 +97,16 @@ export const templates = {
     subject : `REMINDER: President's Cup 7 Individuals Round 2 is OPEN!`,
     file : '2026.02.03.pc7-round2-individual-start.mjml',
   }),
+  'feb-2026-game-of-the-month' : new Template({
+    name : 'feb-2026-game-of-the-month',
+    subject : `The President's Cup Challenges You - Play February's Game of the Month!`,
+    file : '2026.02.06.game-of-the-month.mjml',
+  }),
+  'pc7-round2-individual-reminder' : new Template({
+    name : 'pc7-round2-individual-reminder',
+    subject : `President's Cup 7 Individuals Round 2 Closes Tomorrow`,
+    file : '2026.02.09.pc7-round1-individual-reminder.mjml',
+  }),
 };
 
 export async function sendEmail(template, recipient, opts, progressBar) {
