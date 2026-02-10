@@ -43,6 +43,10 @@ WORKDIR /opt/CTFd
 # Install only runtime dependencies
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
+  build-essential \
+  libffi-dev \
+  libssl-dev \
+  git \
   libffi8 \
   libssl3 \
   procps \
