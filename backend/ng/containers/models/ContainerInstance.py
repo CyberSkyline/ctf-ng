@@ -169,6 +169,11 @@ class ContainerInstance(db.Model):
         swap_mem = f"{round(ram_number * 1.5)}{ram_postfix}"
         mem_resv = f"{round(ram_number * 0.8)}{ram_postfix}"
 
+        cap_adds = []
+        if (blueprint_obj.cap_add):
+            cap_adds = blueprint_obj.cap_add
+
+
         # I am not setting a kernel memory limit
         # As you it is deprecated
         # See https://github.com/torvalds/linux/commit/0158115f702b0ba208ab0b5adf44cae99b3ebcc7
@@ -180,6 +185,7 @@ class ContainerInstance(db.Model):
             # Default period of o .1 second
             cpu_period=100000,
             cpu_quota=round(cpus * DOCKER_QUOTA_CONST),
+            cap_add=cap_adds,
             pids_limit=512,
             mem_limit=mem_limit,
             mem_reservation=mem_resv,
