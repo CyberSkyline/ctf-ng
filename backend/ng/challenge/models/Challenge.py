@@ -33,9 +33,9 @@ class Challenge(db.Model):
 
     id: Mapped[int] = db.Column(db.Integer, primary_key=True)
     name: Mapped[str] = db.Column(db.String(MAX_CHALLENGE_NAME_LENGTH), nullable=False)
-    description: Mapped[str] = db.Column(db.String(MAX_CHALLENGE_DESCRIPTION_LENGTH), nullable=True)
+    description: Mapped[str] = db.Column(db.Text, nullable=True)
     icon: Mapped[str] = db.Column(db.String(MAX_CHALLENGE_ICON_LENGTH), nullable=True)
-    summary: Mapped[str] = db.Column(db.String(MAX_CHALLENGE_SUMMARY_LENGTH), nullable=True)
+    summary: Mapped[str] = db.Column(db.Text, nullable=True)
     event_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey("ng_events.id"), nullable=False, index=True)
 
     event: Mapped[Event] = db.relationship("Event", back_populates="challenges")
