@@ -82,13 +82,6 @@ MAX_HINT_NAME_LENGTH = 128
 NOTIFICATIONS_TITLE_MAX_LENGTH = 200
 NOTIFICATIONS_MESSAGE_MAX_LENGTH = 1000
 
-# Docker host config
-# This will eventually be an array but just single host for mvp
-DOCKER_HOST = "172.17.0.1"
-
-# This is a place holder vnc image
-NOVNC_CONTAINER = "consol/debian-xfce-vnc"
-NOVNC_PORT = 8080
 # For Testing
 CTFD_BASE_URL = "http://localhost:8001"
 
