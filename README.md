@@ -56,8 +56,15 @@ And then you can copy the following into the override file
 
 ```
 [Service]
-ExecStart=
 ExecStart=/usr/bin/dockerd
 User=root
 Group=root
 ```
+
+If the systemd does not recognize the service override you can edit the unit file directly.
+`/usr/lib/systemd/system/docker.service` is the path on ubuntu lts.
+
+Change `ExecStart` to `ExecStart=/usr/bin/dockerd`
+
+Next run `systemctl daemon-reload` this will cause systemd to recognize the changed unit file.
+Then run `systemctl restart docker`
