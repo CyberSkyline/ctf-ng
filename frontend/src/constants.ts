@@ -13,7 +13,7 @@ import {
   TbUsersGroup,
 } from 'react-icons/tb';
 
-import { showPractice, showLoginSplash, welcomeSplashPage } from '../config.json';
+import { showPractice, showLoginSplash, welcomeSplashPage } from '../config.json'; // eslint-disable-line import/no-unresolved
 
 export type AccentColor = (typeof accentColors)[number];
 
