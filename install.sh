@@ -189,7 +189,7 @@ if ! compgen -G "$HOME/.docker/*.pem" > /dev/null; then
   if prompt_user "Would you like to generate tls certs for docker? You will be prompted"; then
     mkdir ssl
     cd ssl
-    read -p "Please enter the ip of your dev instance: " machineip
+    read -p "Please enter the ip of your dev instance (If you are unsure run 'ip link | grep en' and then 'ip link show <interface from the previous command>'): " machineip
     openssl genrsa -aes256 -out ca-key.pem 4096
     openssl req -new -x509 -days 365 -key ca-key.pem -sha256 -out ca.pem
     openssl genrsa -out server-key.pem 4096
@@ -230,6 +230,7 @@ if ! compgen -G "$HOME/.docker/*.pem" > /dev/null; then
     sudo cp daemon.json /etc/docker/
     rm daemon.json
     echo "Please restart your docker daemon. You may have to start it manually from the cli calling dockerd"
+    echo "Please follow the instructions in the README.md to edit the docker systemd service"
     echo "Add the following to your zshrc/bashrc/fishrc."
     printf '%s\n' \
       'export DOCKER_HOST="127.0.0.1:2376"' \
