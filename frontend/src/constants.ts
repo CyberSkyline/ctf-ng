@@ -13,6 +13,8 @@ import {
   TbUsersGroup,
 } from 'react-icons/tb';
 
+import { showPractice, showLoginSplash, welcomeSplashPage } from '../config.json';
+
 export type AccentColor = (typeof accentColors)[number];
 
 export const ROUTEPREFIX: string = BASE_PATH;
@@ -78,4 +80,12 @@ export const NOTIF_TYPE = {
     'ticket_status_change',
     'ticket_assigned',
   ],
+};
+
+export const SHOW_PRACTICE: boolean = showPractice;
+export const SHOW_LOGIN_SPLASH: boolean = showLoginSplash;
+
+export const WELCOME_PAGE = {
+  NAME : welcomeSplashPage.siteName,
+  LINK : welcomeSplashPage.link,
 };

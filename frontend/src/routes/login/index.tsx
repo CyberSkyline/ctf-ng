@@ -1,4 +1,4 @@
-import { SSOPATH } from '@/constants';
+import { SSOPATH, SHOW_LOGIN_SPLASH } from '@/constants';
 import {
   Box,
   Button,
@@ -14,7 +14,7 @@ import ExpoLoginForm from './ExpoLoginForm';
 import GovernmentNotice from './GovernmentNotice';
 
 export default function Login() {
-  const [ hasAcceptedNotice, setHasAcceptedNotice ] = useState<boolean>(false);
+  const [ hasAcceptedNotice, setHasAcceptedNotice ] = useState<boolean>(false || !SHOW_LOGIN_SPLASH);
 
   return (
     <Flex

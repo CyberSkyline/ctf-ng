@@ -1,4 +1,4 @@
-import { COLOR_HINT, ImpersonateIcon, ROUTEPREFIX } from '@/constants';
+import { COLOR_HINT, ImpersonateIcon, ROUTEPREFIX, SHOW_PRACTICE } from '@/constants';
 import { apiMutation } from '@/fetchers';
 import { useGlobalPermission } from '@/hooks/permissions';
 import { stopImpersonation, useAuth } from '@/hooks/users';
@@ -97,11 +97,13 @@ export default function NavBar() {
               Events
             </NavigationMenu.Item>
           </NavLink>
-          <NavLink to="/practice" className={location.pathname === '/practice' ? activeLinkClass : defaultLinkClass}>
-            <NavigationMenu.Item>
-              Practice
-            </NavigationMenu.Item>
-          </NavLink>
+          {SHOW_PRACTICE && (
+            <NavLink to="/practice" className={location.pathname === '/practice' ? activeLinkClass : defaultLinkClass}>
+              <NavigationMenu.Item>
+                Practice
+              </NavigationMenu.Item>
+            </NavLink>
+          )}
         </div>
         <div className="flex ml-auto">
 

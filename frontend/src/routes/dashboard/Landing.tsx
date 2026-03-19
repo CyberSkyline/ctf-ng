@@ -6,6 +6,8 @@ import {
   Link as RadixLink,
   Text,
 } from '@radix-ui/themes';
+
+import { WELCOME_PAGE } from '@/constants';
 import { TbArrowRight, TbUserCircle } from 'react-icons/tb';
 import { Link } from 'react-router';
 
@@ -13,7 +15,7 @@ export default function Landing() {
   return (
     <Flex className="absolute inset-0 overflow-hidden bg-dots-1" align="center" justify="center" direction="column" gap="3" p="3">
       <title>Home</title>
-      <Heading size="8">Welcome to President&apos;s Cup</Heading>
+      <Heading size="8">{`Welcome to ${WELCOME_PAGE.NAME}`}</Heading>
       <Card size="3" className="max-w-172" role="main">
         <Flex direction="row" gap="8">
           <Flex direction="column" gap="2" flexGrow="1" flexBasis="0">
@@ -23,9 +25,9 @@ export default function Landing() {
             <Text color="gray">
               See
               {' '}
-              <RadixLink href="https://presidentscup.cisa.gov">presidentscup.cisa.gov</RadixLink>
+              <RadixLink href={`https://${WELCOME_PAGE.LINK}`}>{WELCOME_PAGE.LINK}</RadixLink>
               {' '}
-              for more information about the President&apos;s Cup Cybersecurity Competition.
+              {`for more information about the ${WELCOME_PAGE.NAME} Cybersecurity Competition.`}
             </Text>
           </Flex>
           <Flex direction="column" gap="2" flexGrow="1" flexBasis="0">
