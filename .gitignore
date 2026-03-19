@@ -44,3 +44,6 @@ node_modules/
 privatesslkey.pem
 sslpublickey.pem
 ssl/
+
+# Frontend config
+frontend/config.json
