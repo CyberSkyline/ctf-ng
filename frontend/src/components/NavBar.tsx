@@ -1,4 +1,10 @@
-import { COLOR_HINT, ImpersonateIcon, ROUTEPREFIX, SHOW_PRACTICE } from '@/constants';
+import {
+  COLOR_HINT,
+  ImpersonateIcon,
+  ROUTEPREFIX,
+  SHOW_PRACTICE,
+} from '@/constants';
+
 import { apiMutation } from '@/fetchers';
 import { useGlobalPermission } from '@/hooks/permissions';
 import { stopImpersonation, useAuth } from '@/hooks/users';
