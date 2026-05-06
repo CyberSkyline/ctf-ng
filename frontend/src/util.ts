@@ -1,3 +1,4 @@
+import { OTHER_TAXONOMY } from '@/constants';
 import { useEffect, useState } from 'react';
 
 /**
@@ -110,12 +111,15 @@ export function useBreakpoint(minWidth: string) {
 }
 
 export function prettyPrintTag(tag: string) {
+  // Extract the tag itself, dropping any taxonomy prefix.
+  // We don't do any additional formatting here to prevent different tags being normalized
+  // to the same thing visually while still showing separately, which could cause confusion.
+  // Capitalization, spacing, etc. are all governed by what the challenge creator inputs.
   const parts = tag.split(':');
-  return parts[parts.length - 1]
-    .replace(/[-_]+/g, ' ') // kebab/snake → spaces
-    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2') // split acronym before capitalized word
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2') // split camelCase (lower/num → upper)
-    .trim()
-    .replace(/\s+/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase()); // capitalize each word
+  return parts[parts.length - 1].trim();
+}
+
+export function getTaxonomy(tag: string) {
+  const parts = tag.split(':');
+  return parts.length > 1 ? parts.slice(0, -1).join(':') : OTHER_TAXONOMY;
 }

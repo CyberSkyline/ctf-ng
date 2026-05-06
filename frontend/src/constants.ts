@@ -79,3 +79,5 @@ export const NOTIF_TYPE = {
     'ticket_assigned',
   ],
 };
+
+export const OTHER_TAXONOMY = 'Tags';
