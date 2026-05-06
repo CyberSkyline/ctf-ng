@@ -108,3 +108,14 @@ export function useBreakpoint(minWidth: string) {
 
   return matches;
 }
+
+export function prettyPrintTag(tag: string) {
+  const parts = tag.split(':');
+  return parts[parts.length - 1]
+    .replace(/[-_]+/g, ' ') // kebab/snake → spaces
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2') // split acronym before capitalized word
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2') // split camelCase (lower/num → upper)
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase()); // capitalize each word
+}
