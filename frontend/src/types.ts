@@ -76,6 +76,7 @@ export interface Challenge {
   num_questions: number;
   total_points: number;
   event_name?: string;
+  tags: string[];
 }
 
 export interface MeChallenge {
