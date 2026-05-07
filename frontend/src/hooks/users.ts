@@ -1,5 +1,6 @@
 import { ROUTEPREFIX } from '@/constants';
 import { apiMutation } from '@/fetchers';
+import { useMyEvents } from '@/hooks/events';
 import type {
   AdminUser,
   Event,
@@ -7,6 +8,7 @@ import type {
   User,
   Workspace,
 } from '@/types';
+import { keyBy } from 'lodash';
 import useSWR, { mutate } from 'swr';
 
 /**
@@ -80,6 +82,29 @@ export function useMyTeams() {
   return useSWR<Team[], Error>(
     '/users/me/teams',
   );
+}
+
+/**
+ * Gets the most recent team/leaderboard name the user has been associated with.
+ * @param isTeamGame Whether to look for the last team event name (true) or individual event leaderboard name (false).
+ */
+export function usePreviousName(isTeamGame: boolean) {
+  // get both teams and events here to allow filtering by event properties
+  const { data : myTeams = [], isLoading : teamsLoading } = useMyTeams();
+  const { data : myEvents = [], isLoading : eventsLoading } = useMyEvents();
+
+  const eventsById = keyBy(myEvents, 'id');
+  const filteredTeams = myTeams
+    .filter((team) => {
+      const event = eventsById[team.event_id];
+
+      // we don't want to populate auto-generated names into the registration form, only past user-provided ones.
+      // also don't fill past team names for individual events and vice versa.
+      return !!event && !event.practice && (isTeamGame ? event.max_team_size > 1 : event.max_team_size === 1);
+    });
+
+  // last item in the list is the most recent team join, get the name associated with that or null if not present.
+  return { data : filteredTeams.at(-1)?.name || null, isLoading : teamsLoading || eventsLoading };
 }
 
 /* Get the user's sponsor/affiliation */
