@@ -1,6 +1,11 @@
 import { useAdminChallengeHints, useAdminChallengeQuestions, useAdminChallengeVariables } from '@/hooks/challenge';
 import type { Challenge } from '@/types';
-import { Code, Table } from '@radix-ui/themes';
+import {
+  Badge,
+  Code,
+  Flex,
+  Table,
+} from '@radix-ui/themes';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { ErrorCallout, InfoCallout } from 'components/Callouts';
 import RadixMarkdown from 'components/RadixMarkdown';
@@ -11,12 +16,38 @@ export default function ChallengeDetailsTab({ challenge }: {challenge: Challenge
   const { data : hints, error : hintsError } = useAdminChallengeHints(challenge.id);
   const { data : variables, error : varsError } = useAdminChallengeVariables(challenge.id);
 
+  const sortedTags = [ ...challenge.tags ].sort((a, b) => {
+    // sort tags alphabetically. tags without a taxonomy (:) should go last
+    const aHasTaxonomy = a.includes(':');
+    const bHasTaxonomy = b.includes(':');
+    if (aHasTaxonomy && !bHasTaxonomy) {
+      return -1;
+    }
+    if (!aHasTaxonomy && bHasTaxonomy) {
+      return 1;
+    }
+    return a.localeCompare(b);
+  });
+
   return (
     <>
       <AdminSidebarHeader title="Description" />
       <RadixMarkdown>
         {challenge.description}
       </RadixMarkdown>
+
+      <AdminSidebarHeader title="Tags" />
+      {sortedTags.length === 0
+        ? <InfoCallout>This challenge does not have any tags.</InfoCallout>
+        : (
+          <Flex direction="row" gap="1" wrap="wrap">
+            {sortedTags.map((tag) => (
+              <Badge key={tag} color="gray" radius="full">
+                {tag}
+              </Badge>
+            ))}
+          </Flex>
+        )}
 
       <AdminSidebarHeader title="Questions" />
       {questionsError && <ErrorCallout>{questionsError.message}</ErrorCallout> }
