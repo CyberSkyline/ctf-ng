@@ -123,3 +123,16 @@ export function getTaxonomy(tag: string) {
   const parts = tag.split(':');
   return parts.length > 1 ? parts.slice(0, -1).join(':') : OTHER_TAXONOMY;
 }
+
+export function tagComparator(a: string, b: string) {
+  // sort tags alphabetically. tags without a taxonomy (:) should go last
+  const aHasTaxonomy = a.includes(':');
+  const bHasTaxonomy = b.includes(':');
+  if (aHasTaxonomy && !bHasTaxonomy) {
+    return -1;
+  }
+  if (!aHasTaxonomy && bHasTaxonomy) {
+    return 1;
+  }
+  return a.localeCompare(b);
+}

@@ -1,5 +1,6 @@
 import { useAdminChallengeHints, useAdminChallengeQuestions, useAdminChallengeVariables } from '@/hooks/challenge';
 import type { Challenge } from '@/types';
+import { tagComparator } from '@/util';
 import {
   Badge,
   Code,
@@ -16,18 +17,7 @@ export default function ChallengeDetailsTab({ challenge }: {challenge: Challenge
   const { data : hints, error : hintsError } = useAdminChallengeHints(challenge.id);
   const { data : variables, error : varsError } = useAdminChallengeVariables(challenge.id);
 
-  const sortedTags = [ ...challenge.tags ].sort((a, b) => {
-    // sort tags alphabetically. tags without a taxonomy (:) should go last
-    const aHasTaxonomy = a.includes(':');
-    const bHasTaxonomy = b.includes(':');
-    if (aHasTaxonomy && !bHasTaxonomy) {
-      return -1;
-    }
-    if (!aHasTaxonomy && bHasTaxonomy) {
-      return 1;
-    }
-    return a.localeCompare(b);
-  });
+  const sortedTags = [ ...challenge.tags ].sort(tagComparator);
 
   return (
     <>

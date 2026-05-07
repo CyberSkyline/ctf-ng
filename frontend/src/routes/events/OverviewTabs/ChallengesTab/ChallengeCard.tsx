@@ -1,6 +1,6 @@
 import { COLOR_POSITIVE, COLOR_WARNING, type AccentColor } from '@/constants';
 import type { Challenge, MeChallenge } from '@/types';
-import { prettyPrintTag } from '@/util';
+import { prettyPrintTag, tagComparator } from '@/util';
 import {
   Badge,
   Box,
@@ -50,18 +50,7 @@ function ChallengeCard({
   const inProgress = progress && progress.num_attempts_made > 0 && !complete;
 
   const sortedTags = useMemo(
-    () => [ ...challenge.tags ].sort((a, b) => {
-      // sort tags alphabetically. tags without a taxonomy (:) should go last
-      const aHasTaxonomy = a.includes(':');
-      const bHasTaxonomy = b.includes(':');
-      if (aHasTaxonomy && !bHasTaxonomy) {
-        return -1;
-      }
-      if (!aHasTaxonomy && bHasTaxonomy) {
-        return 1;
-      }
-      return a.localeCompare(b);
-    }),
+    () => [ ...challenge.tags ].sort(tagComparator),
     [ challenge.tags ],
   );
 
