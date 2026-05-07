@@ -13,6 +13,7 @@ import {
 import ChallengeIcon from 'components/ChallengeIcon';
 import { memo, useMemo } from 'react';
 import * as tb from 'react-icons/tb';
+import { TbCircleCheckFilled, TbPercentage0 } from 'react-icons/tb';
 import { Link } from 'react-router';
 
 function getPercentageIcon(progress: number) {
@@ -35,7 +36,7 @@ function getPercentageIcon(progress: number) {
   }
 
   const iconName = `TbPercentage${percentage}`;
-  const Icon = tb[iconName as keyof typeof tb] || tb.TbPercentage0;
+  const Icon = tb[iconName as keyof typeof tb] || TbPercentage0;
   return <Icon />;
 }
 
@@ -75,7 +76,7 @@ function ChallengeCard({
               <Box flexGrow="1" />
               {complete && (
                 <Text size="2" color={color}>
-                  <tb.TbCircleCheckFilled />
+                  <TbCircleCheckFilled />
                 </Text>
               )}
               {inProgress && (
