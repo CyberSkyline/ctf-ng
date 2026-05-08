@@ -26,6 +26,7 @@ class SerializedChallenge(TypedDict):
     summary: str = ""
     num_questions: int = 0
     total_points: int = 0
+    tags: list[str] = []
 
 
 class Challenge(db.Model):
@@ -63,6 +64,7 @@ class Challenge(db.Model):
             "summary": self.summary or "",
             "num_questions": len(self.questions),
             "total_points": sum(q.points for q in self.questions),
+            "tags": [tag.name for tag in self.tags],
         }
 
         if self.event:
@@ -164,6 +166,7 @@ class Challenge(db.Model):
             .options(
                 joinedload(cls.event),
                 selectinload(cls.questions),
+                selectinload(cls.tags),
             )
             .all()
         )

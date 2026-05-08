@@ -23,6 +23,7 @@
     "ag-grid-community": "^33.3.2",
     "ag-grid-react": "^33.3.2",
     "lodash": "^4.17.21",
+    "minisearch": "^7.2.0",
     "radix-ui": "^1.4.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

@@ -1,3 +1,4 @@
+import { OTHER_TAXONOMY } from '@/constants';
 import { useEffect, useState } from 'react';
 
 /**
@@ -107,4 +108,31 @@ export function useBreakpoint(minWidth: string) {
   }, [ minWidth ]);
 
   return matches;
+}
+
+export function prettyPrintTag(tag: string) {
+  // Extract the tag itself, dropping any taxonomy prefix.
+  // We don't do any additional formatting here to prevent different tags being normalized
+  // to the same thing visually while still showing separately, which could cause confusion.
+  // Capitalization, spacing, etc. are all governed by what the challenge creator inputs.
+  const parts = tag.split(':');
+  return parts[parts.length - 1].trim();
+}
+
+export function getTaxonomy(tag: string) {
+  const parts = tag.split(':');
+  return parts.length > 1 ? parts.slice(0, -1).join(':') : OTHER_TAXONOMY;
+}
+
+export function tagComparator(a: string, b: string) {
+  // sort tags alphabetically. tags without a taxonomy (:) should go last
+  const aHasTaxonomy = a.includes(':');
+  const bHasTaxonomy = b.includes(':');
+  if (aHasTaxonomy && !bHasTaxonomy) {
+    return -1;
+  }
+  if (!aHasTaxonomy && bHasTaxonomy) {
+    return 1;
+  }
+  return a.localeCompare(b);
 }
