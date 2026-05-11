@@ -35,11 +35,11 @@ export default function Practice() {
 The Practice Area hosts President's Cup challenges from past competitions and is open to all. Participants can earn certificates of completion for
  each challenge, which may be used for PDU/CPE credits.
 
-**Access to PC6 and previous practice challenges is through the old competition platform using your original account credentials (not connected to 
-Login.gov).** If you’re new to the Practice Area, follow the registration prompts to create a login.
+**Please note that the legacy Practice Area will be decommissioned on May 22, 2026.**
+Our team is working to convert and transfer these challenges onto this platform.
 
-We are actively migrating older challenges to the new platform, which currently hosts only PC7 challenges. Updates will be provided as more 
-challenges become available.
+If you have any information or resources in the legacy Practice Area that you wish to keep, please be sure to download or save them prior to May 22, 2026.
+After this date, the legacy platform will no longer be accessible.
 
 For additional resources, visit the [prescup-challenges GitHub](https://github.com/cisagov/prescup-challenges) for solution guides,
  challenge code, virtual machine builds, and containers.
@@ -55,7 +55,7 @@ For additional resources, visit the [prescup-challenges GitHub](https://github.c
                 : practiceBtnText}
             </Button>
             <Button>
-              <a href="https://pccc.cisa.gov/gb">Go to External Practice Area</a>
+              <a href="https://pccc.cisa.gov/gb">Go to Legacy Practice Area</a>
               <TbExternalLink />
             </Button>
           </Flex>
