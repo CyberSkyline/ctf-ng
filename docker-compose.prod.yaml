@@ -18,11 +18,15 @@ services:
         delay: 5s
         max_attempts: 3
         window: 120s
-    env_file:
-      - ${ENV_FILE:-.env.prod}
     environment:
+      - FLASK_ENV=production
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_SECRET_NAME=${CTFD_SECRET_NAME:-ctf-ng/production}
       - WORKER_CLASS=geventwebsocket.gunicorn.workers.GeventWebSocketWorker
       - THREADS=100
+      - WORKERS=${WORKERS:-1}
+      - ACCESS_LOG=-
+      - ERROR_LOG=-
     volumes:
       - type: bind
         source: ./.data/CTFd/logs
@@ -33,6 +37,10 @@ services:
       - type: bind
         source: ./backend/ng
         target: /opt/CTFd/CTFd/plugins/ng/
+        read_only: true
+      - type: bind
+        source: ./.env.prod
+        target: /opt/CTFd/.env.prod
         read_only: true
       - type: bind
         source: /var/lib/certs/ssl/
@@ -46,7 +54,7 @@ services:
           - 'ctfng_app-{{.Task.Slot}}'
     tty: true
     entrypoint: /bin/bash
-    command: -c "/usr/bin/supervisord -c /etc/supervisor/supervisord.conf && supervisorctl tail -f ctfd"
+    command: -c "cd /opt/CTFd && /opt/CTFd/conf/ctfd/run_production.sh"
 
   nginx:
     image: nginx:1.29.3
@@ -54,23 +62,23 @@ services:
       replicas: 2
       restart_policy:
         condition: any
+    environment:
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_SECRET_NAME=${NGINX_SECRET_NAME:-ctf-ng/nginx-ssl}
+      - SSL_DIR=/etc/nginx/ssl
     volumes:
       - type: bind
         source: ./conf/nginx/http.prod.conf
         target: /etc/nginx/nginx.conf
         read_only: true
       - type: bind
-        source: ./conf/nginx/self.pem
-        target: /etc/nginx/self.pem
+        source: ./conf/nginx
+        target: /opt/nginx/conf
         read_only: true
-      - type: bind
-        source: ./sslpublickey.pem
-        target: /certificates/sslpublickey.pem
-        read_only: true
-      - type: bind
-        source: ./privatesslkey.pem
-        target: /certificates/privatesslkey.pem
-        read_only: true
+      - type: tmpfs
+        target: /etc/nginx/ssl
+        tmpfs:
+          size: 104857600
       - type: bind
         source: ./frontend/dist
         target: /var/www/vite-build
@@ -88,6 +96,8 @@ services:
         published: 443
     networks:
       - ctf-network
+    entrypoint: /bin/bash
+    command: -c "apt-get update -qq && apt-get install -y -qq awscli && /opt/nginx/conf/init_ssl.sh && nginx -g 'daemon off;'"
 
   cache:
     image: redis:7-alpine

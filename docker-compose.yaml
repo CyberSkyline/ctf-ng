@@ -12,6 +12,7 @@ services:
     env_file:
       - ${ENV_FILE:-.env.dev}
     environment:
+      - FLASK_ENV=development
       - WORKER_CLASS=geventwebsocket.gunicorn.workers.GeventWebSocketWorker
       - THREADS=100
     volumes:
