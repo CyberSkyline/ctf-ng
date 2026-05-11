@@ -24,9 +24,6 @@ services:
       - AWS_SECRET_NAME=${CTFD_SECRET_NAME:-ctf-ng/production}
       - WORKER_CLASS=geventwebsocket.gunicorn.workers.GeventWebSocketWorker
       - THREADS=100
-      - WORKERS=${WORKERS:-1}
-      - ACCESS_LOG=-
-      - ERROR_LOG=-
     volumes:
       - type: bind
         source: ./.data/CTFd/logs
@@ -78,7 +75,7 @@ services:
       - type: tmpfs
         target: /etc/nginx/ssl
         tmpfs:
-          size: 104857600
+          size: 1048576 #1MB
       - type: bind
         source: ./frontend/dist
         target: /var/www/vite-build
