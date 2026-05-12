@@ -105,8 +105,6 @@ class SecretsManager:
 
 
 if __name__ == "__main__":
-    # Print shell export statements for eval in run_production.sh:
-    #   eval "$(python3 init_secrets.py)"
     import shlex
     sm = SecretsManager()
     secrets = sm.load_secrets()
