@@ -3,6 +3,8 @@ set -euo pipefail
 
 export APP_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
+eval "$(python3 "$APP_ROOT/conf/ctfd/init_secrets.py")"
+
 WORKERS=${WORKERS:-1}
 WORKER_CLASS=${WORKER_CLASS:-gevent}
 ACCESS_LOG=${ACCESS_LOG:--}

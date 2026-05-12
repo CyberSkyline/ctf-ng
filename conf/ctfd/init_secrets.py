@@ -104,15 +104,11 @@ class SecretsManager:
 
 
 
-def init_secrets() -> None:
-    """
-    Initialize production environment from .env.prod and AWS Secrets Manager
-    
-    Should be called at application startup before Flask initialization.
-    """
-    logger.info("Initializing production configuration...")
-
+if __name__ == "__main__":
+    # Print shell export statements for eval in run_production.sh:
+    #   eval "$(python3 init_secrets.py)"
+    import shlex
     sm = SecretsManager()
     secrets = sm.load_secrets()
-    os.environ.update(secrets)
-    logger.info(f"Initialized {len(secrets)} environment variables")
+    for key, value in secrets.items():
+        print(f"export {key}={shlex.quote(str(value))}")
