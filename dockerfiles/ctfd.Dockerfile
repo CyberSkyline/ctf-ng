@@ -82,7 +82,6 @@ COPY ./conf/ctfd/config.ini /opt/CTFd/CTFd/config.ini
 COPY ./conf/ctfd/entrypoint.sh /opt/CTFd/entrypoint.sh
 COPY ./conf/ctfd/serve_debug.py /opt/CTFd/serve_debug.py
 COPY ./conf/ctfd/init_patch /opt/CTFd/init_patch
-COPY ./conf/ctfd/__init__.py /opt/CTFd/conf/ctfd/__init__.py
 COPY ./conf/ctfd/run_production.sh /opt/CTFd/conf/ctfd/run_production.sh
 
 RUN chown -R 1001:1001 /var/log/CTFd /var/uploads /opt/CTFd
