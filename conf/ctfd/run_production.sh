@@ -32,9 +32,11 @@ fi
 # Initialize database
 flask db upgrade
 
-# Start CTFd
+celery -A CTFd.plugins.ng.containers.tasks worker --loglevel=INFO &
+
+# Start CTFd (without exec so the shell stays as PID 1 and manages both processes)
 echo "Starting CTFd"
-exec gunicorn 'CTFd:create_app()' \
+gunicorn 'CTFd:create_app()' \
     --bind '0.0.0.0:8000' \
     --workers $WORKERS \
     --worker-tmp-dir "$WORKER_TEMP_DIR" \

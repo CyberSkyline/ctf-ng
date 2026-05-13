@@ -40,6 +40,10 @@ services:
         target: /opt/CTFd/.env.prod
         read_only: true
       - type: bind
+        source: ./conf/ctfd
+        target: /opt/CTFd/conf/ctfd
+        read_only: true
+      - type: bind
         source: /var/lib/certs/ssl/
         target: /var/lib/certs/ssl/
     networks:
