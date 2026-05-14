@@ -6,6 +6,7 @@ import Modal from 'components/Modal';
 import { isUndefined } from 'lodash';
 import { TbDoorEnter } from 'react-icons/tb';
 import { useNavigate, useParams } from 'react-router';
+import { usePreviousName } from '@/hooks/users';
 import RegistrationDataForm from './RegistrationDataForm';
 
 export default function RegistrationModal({ eventId, eventName, isTeamGame }: {eventId : Event['id'], eventName: string, isTeamGame: boolean}) {
@@ -13,6 +14,9 @@ export default function RegistrationModal({ eventId, eventName, isTeamGame }: {e
   const joinWithCode = !!(eventId === Number(idEvent) && !isUndefined(inviteCode));
 
   const navigate = useNavigate();
+
+  // capture loading state here to ensure modal can't be opened until defaults are set
+  const { data : prevName, isLoading : prevNameLoading } = usePreviousName(isTeamGame);
 
   const handleRegister = async (data: { leaderboardName: string; joinCode: string; termsConditions: boolean, selectedOption: string }) => {
     const { leaderboardName, selectedOption } = data;
@@ -36,7 +40,7 @@ export default function RegistrationModal({ eventId, eventName, isTeamGame }: {e
     <Modal
       title={`Register for ${eventName}`}
       trigger={(
-        <Button color={COLOR_POSITIVE}>
+        <Button color={COLOR_POSITIVE} loading={prevNameLoading}>
           <TbDoorEnter />
           Register
         </Button>
@@ -45,7 +49,7 @@ export default function RegistrationModal({ eventId, eventName, isTeamGame }: {e
       submitVerb="Register"
       defaultOpen={joinWithCode}
       defaultValues={{
-        leaderboardName : '',
+        leaderboardName : prevName || '',
         termsConditions : false,
         selectedOption : joinWithCode ? 'join-team' : 'create-team',
       }}
