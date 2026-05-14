@@ -69,8 +69,46 @@ class SecretsManager:
                     "No configuration found. Ensure either .env.prod exists or AWS secrets are accessible."
                 ) from e
 
-        logger.info(f"Loaded {len(config)} total environment variables")
+        # Swap env secret variants if ENVIRONMENT is set to staging
+        environment = config.get("ENVIRONMENT", "").lower()
+        if environment == "staging":
+            self._apply_staging_overrides(config)
+        else:
+            self._remove_staging_variants(config)
+
+        logger.info(f"Loaded {len(config)} total environment variables (environment={environment or 'production'})")
         return config
+
+    def _apply_staging_overrides(self, config: Dict[str, str]) -> None:
+        """Replace production secrets with staging variants if available"""
+        staging_overrides = [
+            ("DATABASE_URL", "DATABASE_URL_STAGING"),
+            ("OKTA_CLIENT_ID", "OKTA_CLIENT_ID_STAGING"),
+            ("OKTA_CLIENT_SECRET", "OKTA_CLIENT_SECRET_STAGING"),
+            ("SECRET_KEY", "SECRET_KEY_STAGING"),
+            ("SENTRY_DSN", "SENTRY_DSN_STAGING"),
+        ]
+        
+        for prod_key, staging_key in staging_overrides:
+            if staging_key in config:
+                config[prod_key] = config[staging_key]
+                logger.info(f"Using staging variant: {staging_key} → {prod_key}")
+                del config[staging_key]
+
+    def _remove_staging_variants(self, config: Dict[str, str]) -> None:
+        """Remove staging variant keys from memory in production mode"""
+        staging_keys = [
+            "DATABASE_URL_STAGING",
+            "OKTA_CLIENT_ID_STAGING",
+            "OKTA_CLIENT_SECRET_STAGING",
+            "SECRET_KEY_STAGING",
+            "SENTRY_DSN_STAGING",
+        ]
+        
+        for key in staging_keys:
+            if key in config:
+                del config[key]
+                logger.debug(f"Removed {key} from memory (production mode)")
 
     def _load_from_aws_secrets_manager(self, secret_name: Optional[str] = None) -> Dict[str, str]:
         """Fetch secrets from AWS Secrets Manager"""
@@ -106,7 +144,13 @@ class SecretsManager:
 
 if __name__ == "__main__":
     import shlex
+    import sys
     sm = SecretsManager()
     secrets = sm.load_secrets()
+    
+    # Print log messages to stderr so they're visible during deployment
+    environment = secrets.get("ENVIRONMENT", "").lower()
+    print(f"# Environment: {environment or 'production'}", file=sys.stderr)
+    
     for key, value in secrets.items():
         print(f"export {key}={shlex.quote(str(value))}")
