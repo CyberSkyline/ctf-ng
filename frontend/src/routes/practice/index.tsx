@@ -32,14 +32,10 @@ export default function Practice() {
           >
             <RadixMarkdown>
               {`
-The Practice Area hosts President's Cup challenges from past competitions and is open to all. Participants can earn certificates of completion for
+The Practice Area hosts President's Cup challenges and is open to all. Participants can earn certificates of completion for
  each challenge, which may be used for PDU/CPE credits.
 
-**Please note that the legacy Practice Area will be decommissioned on May 22, 2026.**
-Our team is working to convert and transfer these challenges onto this platform.
-
-If you have any information or resources in the legacy Practice Area that you wish to keep, please be sure to download or save them prior to May 22, 2026.
-After this date, the legacy platform will no longer be accessible.
+Our team is working to convert and transfer all legacy challenges onto this platform.
 
 For additional resources, visit the [prescup-challenges GitHub](https://github.com/cisagov/prescup-challenges) for solution guides,
  challenge code, virtual machine builds, and containers.
