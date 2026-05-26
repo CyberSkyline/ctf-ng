@@ -7,7 +7,6 @@ import {
   Heading,
 } from '@radix-ui/themes';
 import RadixMarkdown from 'components/RadixMarkdown';
-import { TbExternalLink } from 'react-icons/tb';
 import { Link } from 'react-router';
 
 export default function Practice() {
@@ -40,7 +39,7 @@ Our team is working to convert and transfer all legacy challenges onto this plat
 For additional resources, visit the [prescup-challenges GitHub](https://github.com/cisagov/prescup-challenges) for solution guides,
  challenge code, virtual machine builds, and containers.
 
-*For questions about access or eligibility, please [contact the President's Cup team](mailto:presidentscup@cisa.dhs.gov).*
+For questions about access or eligibility, please [contact the President's Cup team](mailto:presidentscup@cisa.dhs.gov).
               `}
             </RadixMarkdown>
           </Flex>
@@ -49,10 +48,6 @@ For additional resources, visit the [prescup-challenges GitHub](https://github.c
               {practiceEvent
                 ? <Link to={`/events/${practiceEvent.id}`}>{practiceBtnText}</Link>
                 : practiceBtnText}
-            </Button>
-            <Button>
-              <a href="https://pccc.cisa.gov/gb">Go to Legacy Practice Area</a>
-              <TbExternalLink />
             </Button>
           </Flex>
         </Flex>
