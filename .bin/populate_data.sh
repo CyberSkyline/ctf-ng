@@ -11,5 +11,5 @@ echo "Found CTFd container '$CTFD_CONTAINER'"
 highlight "THIS WILL DELETE THE EXISTING DATABASE AND INSERT SAMPLE DATA\n"
 
 prompt_user "Are you sure you want to continue?" && {
-  docker exec $CTFD_CONTAINER /bin/bash -c "PYTHONPATH=/opt/CTFd/ SCRIPT=true /opt/CTFd/CTFd/plugins/ng/scripts/populate_sample_data.py"
+  ctfd_exec $CTFD_CONTAINER "PYTHONPATH=/opt/CTFd/ SCRIPT=true /opt/CTFd/CTFd/plugins/ng/scripts/populate_sample_data.py"
 }

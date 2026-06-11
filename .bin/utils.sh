@@ -34,6 +34,12 @@ load_env() {
   source $ENV_PATH
 }
 
+ctfd_exec() {
+  local container="$1"
+  shift
+  docker exec "$container" /bin/bash -c "eval \"\$(python3 /opt/CTFd/conf/ctfd/init_secrets.py)\" && $*"
+}
+
 check_ctfd_running() {
   local container_name=$(docker ps --format '{{.Names}}' | grep -E 'ng-ctfd|ng_ctfd' | head -n 1)
   
