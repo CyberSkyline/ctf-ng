@@ -22,7 +22,7 @@
   "scripts": {
     "aws-login": ".bin/aws_login.sh $1",
     "sync-env": ".bin/sync_env.sh",
-    "create-admin-user": ".bin/create_admin_user.sh $1",
+    "create-user": ".bin/create_user.sh",
     "update-user-password": ".bin/update_user_password.sh $1",
     "setup-ctfd": ".bin/default_ctfd_setup.sh",
     "populate-data": ".bin/populate_data.sh",

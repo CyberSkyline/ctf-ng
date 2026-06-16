@@ -19,6 +19,7 @@ services:
       - .data/CTFd/logs:/var/log/CTFd
       - .data/CTFd/uploads:/var/uploads
       - ./backend/ng:/opt/CTFd/CTFd/plugins/ng/:ro
+      - ./input:/opt/CTFd/input:ro
       - /var/lib/certs/ssl/:/var/lib/certs/ssl/
     depends_on:
       - db
