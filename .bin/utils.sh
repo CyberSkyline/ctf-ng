@@ -37,7 +37,11 @@ load_env() {
 ctfd_exec() {
   local container="$1"
   shift
-  docker exec "$container" /bin/bash -c "eval \"\$(python3 /opt/CTFd/conf/ctfd/init_secrets.py)\" && $*"
+  if docker exec "$container" test -f /opt/CTFd/conf/ctfd/init_secrets.py; then # don't try to get secrets in dev
+    docker exec "$container" /bin/bash -c "eval \"\$(python3 /opt/CTFd/conf/ctfd/init_secrets.py)\" && $*"
+  else
+    docker exec "$container" /bin/bash -c "$*"
+  fi
 }
 
 check_ctfd_running() {
