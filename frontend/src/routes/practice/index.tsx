@@ -12,7 +12,7 @@ import { Link } from 'react-router';
 export default function Practice() {
   const { data } = usePracticeEvents();
   const practiceEvent = data?.[0];
-  const practiceBtnText = 'Go to PC7 Practice Area';
+  const practiceBtnText = 'Go to Practice Area';
 
   return (
     <Container size="2" align="center" className="mt-12">
