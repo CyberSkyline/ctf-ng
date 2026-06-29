@@ -27,6 +27,11 @@ def get_challenge_progress(event_id: int, team_id: int) -> list[dict[str, Any]]:
 
         unique_questions_attempted = len({a.question_id for a in attempts})
 
+        # a challenge with no questions is not complete, otherwise it reports a completion with no completion time
+        is_completed = len(challenge.questions) > 0 and unique_questions_solved == len(challenge.questions)
+        # the challenge is done when its final question is solved, so the latest correct attempt is the completion time
+        completed_at = max((a.timestamp for a in correct_attempts), default=None) if is_completed else None
+
         results.append({
             "challenge_id": challenge.id,
             "challenge_name": challenge.name,
@@ -37,7 +42,8 @@ def get_challenge_progress(event_id: int, team_id: int) -> list[dict[str, Any]]:
             "num_questions_available": len(challenge.questions),
             "num_attempts_made": len(attempts),
             "num_unique_questions_attempted": unique_questions_attempted,
-            "is_completed": unique_questions_solved == len(challenge.questions)
+            "is_completed": is_completed,
+            "completed_at": completed_at.isoformat() + "Z" if completed_at else None,
         })
 
     return results
