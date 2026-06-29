@@ -93,6 +93,7 @@ export interface MeChallenge {
   num_questions_solved: number;
   num_questions_available: number;
   num_attempts_made: number;
+  is_completed: boolean;
 }
 
 export interface Question {
