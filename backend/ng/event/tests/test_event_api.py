@@ -152,7 +152,7 @@ class Test_Private_Event_Detail:
         data = response.get_json()
 
         assert data["success"] is True
-        assert data["data"] == event.serialize()
+        assert data["data"] == event.serialize(include_admin_fields=True)
 
     def test_get_private_event_details_as_non_admin(
         self,
@@ -1491,7 +1491,7 @@ def test_admin_get_private_event(admin_client, event_factory):
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"] is True
-    assert data["data"] == event.serialize()
+    assert data["data"] == event.serialize(include_admin_fields=True)
 
 
 class Test_Event_Admin_Get:
@@ -1506,7 +1506,7 @@ class Test_Event_Admin_Get:
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
-        assert data["data"] == event.serialize()
+        assert data["data"] == event.serialize(include_admin_fields=True)
 
     def test_non_admin_get_event_details(
         self,
@@ -2065,3 +2065,34 @@ class Test_Event_Challenge_Statuses:
         assert progress["num_attempts_made"] == 0
         assert progress["num_unique_questions_attempted"] == 0
         assert progress["is_completed"] is False
+
+    def test_challenge_progress_no_questions(
+        self,
+        logged_in_client,
+        db_session,
+        user,
+        event_factory,
+        team_factory
+    ):
+        """
+        A challenge with no questions must not report completion, it has no completion time
+        """
+        event = event_factory(name = "No Questions Test Event", public = True)
+        _team = team_factory(event = event, members = [user])
+        _team.set_start_timestamp(utc_now())
+        challenge = Challenge(
+            event_id = event.id,
+            name = "Empty Challenge",
+            description = "A challenge with no questions",
+            icon = "test-icon",
+            summary = "Test summary",
+        )
+        db_session.add(challenge)
+        db_session.commit()
+
+        response = logged_in_client.get(f"/ng/events/{event.id}/me/challenges")
+
+        assert response.status_code == 200
+        progress = response.get_json()["data"][0]
+        assert progress["is_completed"] is False
+        assert progress["completed_at"] is None
