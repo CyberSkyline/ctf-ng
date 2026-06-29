@@ -1,5 +1,6 @@
 import { apiMutation } from '@/fetchers';
 import type {
+  AdminEvent,
   Event,
   Score,
   Sponsor,
@@ -221,7 +222,7 @@ export function useLeaderboard(eventId: number) {
  * This is an admin-only endpoint.
  */
 export function useAllEvents() {
-  return useSWR<Event[], Error>('/admin/events');
+  return useSWR<AdminEvent[], Error>('/admin/events');
 }
 
 /**
@@ -230,7 +231,7 @@ export function useAllEvents() {
  * @param eventId The ID of the event to fetch
  */
 export function useAdminEvent(eventId: number | null) {
-  return useSWR<Event, Error>(eventId ? `/admin/events/${eventId}` : null);
+  return useSWR<AdminEvent, Error>(eventId ? `/admin/events/${eventId}` : null);
 }
 
 export function adminRegisterEvent(eventId: number, userId: number, teamName: string) {

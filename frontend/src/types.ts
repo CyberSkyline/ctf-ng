@@ -15,6 +15,11 @@ export interface Event {
   time_limit_minutes: number | null;
   show_leaderboard: boolean;
   practice: boolean;
+  has_certificate: boolean;
+}
+
+export interface AdminEvent extends Event {
+  certificate_file: string | null;
 }
 
 export interface Sponsor {
