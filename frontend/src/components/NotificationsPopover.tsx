@@ -1,4 +1,4 @@
-import { NOTIF_TYPE } from '@/constants';
+import { NOTIF_TYPE, COLOR_NEGATIVE } from '@/constants';
 import {
   markAllNotificationsRead,
   markNotificationRead,
@@ -86,7 +86,7 @@ export default function NotificationsPopover({ triggerClassName, contentClassNam
       >
         <TbBell aria-label="Notifications" />
         {unreadCount && unreadCount.count > 0
-          && <TbCircleDotFilled color="var(--accent-indicator)" className="absolute -mt-6 ml-2" aria-label="Unread" />}
+          && <TbCircleDotFilled color={COLOR_NEGATIVE} className="absolute -mt-6 ml-2 pulsate" aria-label="Unread" />}
       </NavigationMenu.Trigger>
       <NavigationMenu.Content
         className={twMerge(contentClassName, 'max-h-86 overflow-y-auto overflow-x-hidden')}
