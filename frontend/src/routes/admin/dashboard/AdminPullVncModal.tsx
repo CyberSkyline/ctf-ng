@@ -29,7 +29,7 @@ export default function AdminPullVncModal() {
     });
 
     return () => {
-      socket.off('pull-sccess');
+      socket.off('pull-success');
       socket.off('pull-fail');
     };
   }, []);
