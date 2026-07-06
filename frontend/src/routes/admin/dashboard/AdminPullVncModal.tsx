@@ -11,7 +11,7 @@ type Status = 'pulling' | 'success' | 'fail' | null;
 
 export default function AdminPullVncModal() {
   const [ pullState, setPullState ] = useState<Status>(null);
-  const [ pullError, setPullError ] = useState<string>();
+  const [ pullError, setPullError ] = useState<string | undefined>(undefined);
 
   const handlePull = async () => {
     setPullState('pulling');
@@ -27,9 +27,12 @@ export default function AdminPullVncModal() {
       setPullState('fail');
       setPullError(error);
     });
-  }, []);
 
-  const buttonMessage = pullState ? 'Image Pull Succes' : 'Pull Vnc Image';
+    return () => {
+      socket.off('pull-sccess');
+      socket.off('pull-fail');
+    };
+  }, []);
 
   if (pullError) {
     return (
@@ -52,7 +55,7 @@ export default function AdminPullVncModal() {
           loading={pullState === 'pulling'}
         >
           <TbDownload />
-          {buttonMessage}
+          {pullState ? 'Image Pull Succes' : 'Pull Vnc Image'}
         </Button>
       )}
     >
