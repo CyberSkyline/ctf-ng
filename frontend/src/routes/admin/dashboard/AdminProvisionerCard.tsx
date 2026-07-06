@@ -2,6 +2,7 @@ import { useProvisionerStats } from '@/hooks/container';
 import { Card, Flex, Heading } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
 import Statistic from 'components/Statistic';
+import AdminPullVncModal from './AdminPullVncModal';
 
 export default function AdminProvisionerCard() {
   const { data, error } = useProvisionerStats();
@@ -18,7 +19,12 @@ export default function AdminProvisionerCard() {
 
   return (
     <Card>
-      <Heading>Provisioner</Heading>
+      <Heading>
+        <Flex direction="row" align="center" justify="between">
+          Provisioner
+          <AdminPullVncModal />
+        </Flex>
+      </Heading>
       <Flex gap="4" mt="3">
         <Statistic
           label="Containers Running"

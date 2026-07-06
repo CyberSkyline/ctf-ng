@@ -100,3 +100,9 @@ export function restartWorkspace() {
     method : 'POST',
   });
 }
+
+export function pullVNCImage() {
+  return apiMutation('/admin/container/vnc/pull', undefined, {
+    method : 'POST',
+  });
+}
