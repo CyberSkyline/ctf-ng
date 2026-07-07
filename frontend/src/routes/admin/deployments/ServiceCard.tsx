@@ -22,7 +22,7 @@ import RestartContainerModal from './RestartContainerModal';
 export default function ServiceCard({ service }: { service: ContainerInstance }) {
   const { data : statusData, error } = useContainerStatus(service.id);
 
-  const { dockerid, hostip } = service;
+  const { dockerid, hostip, created_at : createdAt } = service;
   const {
     name, image, status, env,
   } = statusData || {};
@@ -48,6 +48,12 @@ export default function ServiceCard({ service }: { service: ContainerInstance })
             </Tooltip>
             <br />
             <Text color="gray">{hostip}</Text>
+            {createdAt && (
+              <>
+                <br />
+                <Text color="gray">{createdAt?.toLocaleString()}</Text>
+              </>
+            )}
           </Box>
         </Flex>
         <Skeleton loading={!statusData}>
