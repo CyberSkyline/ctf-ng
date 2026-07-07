@@ -214,6 +214,7 @@ export interface ContainerInstance {
   team_id: number;
   hostip: string;
   dockerid: string;
+  created_at?: Date;
 }
 
 export interface ContainerStatus {
