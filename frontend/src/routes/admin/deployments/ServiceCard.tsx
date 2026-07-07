@@ -48,12 +48,12 @@ export default function ServiceCard({ service }: { service: ContainerInstance })
             </Tooltip>
             <br />
             <Text color="gray">{hostip}</Text>
-            {createdAt ? (
+            {createdAt && (
               <>
                 <br />
                 <Text color="gray">{createdAt?.toLocaleString()}</Text>
               </>
-            ) : null}
+            )}
           </Box>
         </Flex>
         <Skeleton loading={!statusData}>
