@@ -9,7 +9,9 @@ import {
   Flex,
   Grid,
   Heading,
+  IconButton,
   Switch,
+  Text,
 } from '@radix-ui/themes';
 import { ErrorCallout, WarningCallout } from 'components/Callouts';
 import {
@@ -18,7 +20,9 @@ import {
   isUndefined,
   map,
 } from 'lodash';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { TbPlayerPlayFilled } from 'react-icons/tb';
+import ding from 'assets/audio/ding.mp3';
 import SponsorImageCard from './SponsorImageCard';
 import WorkspaceRestartModal from './WorkspaceRestartModal';
 
@@ -29,6 +33,7 @@ export default function Profile() {
   const { data : mySponsor, error : mySponsorError } = useMySponsor();
   const { data : image } = useFileUrl('sponsor-logos', mySponsor?.logo);
   const [ soundEnabled, setSoundEnabled ] = useNotificationSound();
+  const profileAudioRef = useRef<HTMLAudioElement>(new Audio(ding));
 
   const selectSponsor = (id: number) => {
     setNewSponsorError(null);
@@ -94,14 +99,30 @@ export default function Profile() {
 
         <Heading size="4" as="h2" className="pt-4">Notifications:</Heading>
         <Box>
-          <Switch
-            checked={soundEnabled}
-            onCheckedChange={(checked) => {
-              setSoundEnabled(checked);
-            }}
-            name="Notification Sound"
-            size="3"
-          />
+          <Flex align="center" gap="3">
+            <Switch
+              checked={soundEnabled}
+              onCheckedChange={(checked) => {
+                setSoundEnabled(checked);
+              }}
+              name="Notification Sound"
+              size="3"
+            />
+            <Text as="label">Sound</Text>
+            <IconButton
+              aria-label="Play Notification Sound"
+              radius="full"
+              variant="surface"
+              onClick={() => {
+                profileAudioRef.current.currentTime = 0;
+                profileAudioRef.current.play().catch(() => {
+                  // throw away the error intentionally
+                });
+              }}
+            >
+              <TbPlayerPlayFilled />
+            </IconButton>
+          </Flex>
         </Box>
       </Container>
     </>
