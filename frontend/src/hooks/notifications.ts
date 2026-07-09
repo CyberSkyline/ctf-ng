@@ -43,6 +43,9 @@ export function markAllNotificationsRead() {
 
 /**
  * Manages the local storage and state of the notification sound setting
+ *
+ * If we add additional settings, consider refactoring this into a userSetting db table and a swr hook
+ * to manage it. That way we can have a single source of truth for user settings across all tabs and devices.
  */
 const STORAGE_KEY = 'notificationSound';
 
