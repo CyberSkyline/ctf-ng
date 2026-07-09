@@ -46,12 +46,12 @@ export function markAllNotificationsRead() {
  */
 const STORAGE_KEY = 'notificationSound';
 
-export function useNotificationSound() {
-  const [ enabled, setEnabled ] = useState(() => localStorage.getItem(STORAGE_KEY) !== 'false');
+export function useNotificationSoundEnabled() {
+  const [ soundEnabled, setSoundEnabled ] = useState(() => localStorage.getItem(STORAGE_KEY) !== 'false');
 
   useEffect(() => {
     const handleStorageChange = () => {
-      setEnabled(localStorage.getItem(STORAGE_KEY) !== 'false');
+      setSoundEnabled(localStorage.getItem(STORAGE_KEY) !== 'false');
     };
 
     // storage - event is fired when localStorage is changed in another tab, but not in the same tab.
@@ -64,13 +64,13 @@ export function useNotificationSound() {
     };
   }, []);
 
-  const setNotificationSound = (value: boolean) => {
+  const setNotificationSoundEnabled = (value: boolean) => {
     localStorage.setItem(STORAGE_KEY, String(value));
-    setEnabled(value);
+    setSoundEnabled(value);
 
     // Needed because storage event does not fire in the same tab that made the change
     window.dispatchEvent(new Event('notificationSoundChange'));
   };
 
-  return [ enabled, setNotificationSound ] as const;
+  return [ soundEnabled, setNotificationSoundEnabled ] as const;
 }

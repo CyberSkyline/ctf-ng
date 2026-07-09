@@ -4,7 +4,7 @@ import {
   markNotificationRead,
   useMyNotifications,
   useUnreadCount,
-  useNotificationSound,
+  useNotificationSoundEnabled,
 } from '@/hooks/notifications';
 import type { Notification } from '@/types';
 import {
@@ -33,7 +33,7 @@ export default function NotificationsPopover({ triggerClassName, contentClassNam
   const { data : unreadCount } = useUnreadCount();
   const navigate = useNavigate();
   const [ readError, setReadError ] = useState(null);
-  const [ soundEnabled ] = useNotificationSound();
+  const [ soundEnabled ] = useNotificationSoundEnabled();
 
   const previousUnreadCount = useRef<number | undefined>(undefined);
   const audioRef = useRef<HTMLAudioElement>(new Audio(ding));

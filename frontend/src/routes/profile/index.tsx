@@ -1,7 +1,7 @@
 import { useFileUrl } from '@/hooks/fileuploads';
 import { useSponsors } from '@/hooks/sponsors';
 import { setMySponsor, useMySponsor } from '@/hooks/users';
-import { useNotificationSound } from '@/hooks/notifications';
+import { useNotificationSoundEnabled } from '@/hooks/notifications';
 import {
   Box,
   Button,
@@ -32,7 +32,7 @@ export default function Profile() {
   const { data : allSponsors, error } = useSponsors();
   const { data : mySponsor, error : mySponsorError } = useMySponsor();
   const { data : image } = useFileUrl('sponsor-logos', mySponsor?.logo);
-  const [ soundEnabled, setSoundEnabled ] = useNotificationSound();
+  const [ soundEnabled, setNotificationSoundEnabled ] = useNotificationSoundEnabled();
   const profileAudioRef = useRef<HTMLAudioElement>(new Audio(ding));
 
   const selectSponsor = (id: number) => {
@@ -99,16 +99,18 @@ export default function Profile() {
 
         <Heading size="4" as="h2" className="pt-4">Notifications:</Heading>
         <Box>
-          <Flex align="center" gap="3">
-            <Switch
-              checked={soundEnabled}
-              onCheckedChange={(checked) => {
-                setSoundEnabled(checked);
-              }}
-              name="Notification Sound"
-              size="3"
-            />
-            <Text as="label">Sound</Text>
+          <Flex align="center" gap="7">
+            <Flex align="center" gap="2">
+              <Switch
+                checked={soundEnabled}
+                onCheckedChange={(checked) => {
+                  setNotificationSoundEnabled(checked);
+                }}
+                name="Notification Sound"
+                size="3"
+              />
+              <Text as="label">Notification Sound</Text>
+            </Flex>
             <IconButton
               aria-label="Play Notification Sound"
               radius="full"
