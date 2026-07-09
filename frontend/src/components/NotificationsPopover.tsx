@@ -4,6 +4,7 @@ import {
   markNotificationRead,
   useMyNotifications,
   useUnreadCount,
+  useNotificationSound,
 } from '@/hooks/notifications';
 import type { Notification } from '@/types';
 import {
@@ -16,20 +17,43 @@ import { ErrorCallout } from 'components/Callouts';
 import {
   includes,
   isEmpty,
+  isNil,
   isUndefined,
   map,
 } from 'lodash';
 import { NavigationMenu } from 'radix-ui';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { TbBell, TbCircleDotFilled, TbNotification } from 'react-icons/tb';
 import { useNavigate } from 'react-router';
 import { twMerge } from 'tailwind-merge';
+import ding from 'assets/audio/ding.mp3';
 
 export default function NotificationsPopover({ triggerClassName, contentClassName }: { triggerClassName?: string, contentClassName?: string }) {
   const { data, error } = useMyNotifications();
   const { data : unreadCount } = useUnreadCount();
   const navigate = useNavigate();
   const [ readError, setReadError ] = useState(null);
+  const [ soundEnabled ] = useNotificationSound();
+
+  const previousUnreadCount = useRef<number | undefined>(undefined);
+  const audioRef = useRef<HTMLAudioElement>(new Audio(ding));
+
+  useEffect(() => {
+    const count = unreadCount?.count;
+
+    if (isNil(count)) return;
+
+    // Play the notification sound if the unread count has increased
+    // Only play the sound if the user localstorage setting for notification sound is enabled
+    if (!isUndefined(previousUnreadCount.current) && count > previousUnreadCount.current && soundEnabled === true) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {
+        // throw away the error intentionally
+      });
+    }
+
+    previousUnreadCount.current = count;
+  }, [ unreadCount, soundEnabled ]);
 
   const dateFormat: Intl.DateTimeFormatOptions = {
     month : 'numeric',

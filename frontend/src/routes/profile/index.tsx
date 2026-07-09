@@ -1,6 +1,7 @@
 import { useFileUrl } from '@/hooks/fileuploads';
 import { useSponsors } from '@/hooks/sponsors';
 import { setMySponsor, useMySponsor } from '@/hooks/users';
+import { useNotificationSound } from '@/hooks/notifications';
 import {
   Box,
   Button,
@@ -8,6 +9,7 @@ import {
   Flex,
   Grid,
   Heading,
+  Switch,
 } from '@radix-ui/themes';
 import { ErrorCallout, WarningCallout } from 'components/Callouts';
 import {
@@ -26,6 +28,7 @@ export default function Profile() {
   const { data : allSponsors, error } = useSponsors();
   const { data : mySponsor, error : mySponsorError } = useMySponsor();
   const { data : image } = useFileUrl('sponsor-logos', mySponsor?.logo);
+  const [ soundEnabled, setSoundEnabled ] = useNotificationSound();
 
   const selectSponsor = (id: number) => {
     setNewSponsorError(null);
@@ -86,8 +89,20 @@ export default function Profile() {
           )
         )}
 
-        <Heading size="4" as="h2" className="pt-4">Workspace</Heading>
+        <Heading size="4" as="h2" className="pt-4">Workspace:</Heading>
         <WorkspaceRestartModal />
+
+        <Heading size="4" as="h2" className="pt-4">Notifications:</Heading>
+        <Box>
+          <Switch
+            checked={soundEnabled}
+            onCheckedChange={(checked) => {
+              setSoundEnabled(checked);
+            }}
+            name="Notification Sound"
+            size="3"
+          />
+        </Box>
       </Container>
     </>
   );
