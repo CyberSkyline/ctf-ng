@@ -461,8 +461,7 @@ class ContainerInstance(db.Model):
 
 
     def logs(self, tail: int = 1000) -> str:
-        DOCKER_HOST = get_app_config("DOCKER_HOST")
-        client = get_client(DOCKER_HOST)
+        client = get_client(self.hostip)
         try:
             ctr = client.containers.get(self.dockerid)
             return ctr.logs(tail=tail).decode('utf-8')
@@ -470,8 +469,7 @@ class ContainerInstance(db.Model):
             raise ValueError("Container not found, please recycle") from exc
 
     def raw_logs(self) -> str:
-        DOCKER_HOST = get_app_config("DOCKER_HOST")
-        client = get_client(DOCKER_HOST)
+        client = get_client(self.hostip)
         try:
             ctr = client.containers.get(self.dockerid)
             return io.BytesIO(ctr.logs())
@@ -479,8 +477,7 @@ class ContainerInstance(db.Model):
             raise ValueError("Container not found, please recycle") from exc
 
     def status(self) -> SerializedInstanceStats:
-        DOCKER_HOST = get_app_config("DOCKER_HOST")
-        client = get_client(DOCKER_HOST)
+        client = get_client(self.hostip)
         ctr = client.containers.get(self.dockerid)
 
         image = "unknown"
@@ -514,8 +511,7 @@ class ContainerInstance(db.Model):
 
 
     def restart(self):
-        DOCKER_HOST = get_app_config("DOCKER_HOST")
-        client = get_client(DOCKER_HOST)
+        client = get_client(self.hostip)
         try:
             ctr = client.containers.get(self.dockerid)
             ctr.restart()
@@ -524,8 +520,7 @@ class ContainerInstance(db.Model):
 
     def recycle(self):
         blueprint_obj = ContainerBlueprint.query.filter_by(id=self.blueprint).first()
-        DOCKER_HOST = get_app_config("DOCKER_HOST")
-        client = get_client(DOCKER_HOST)
+        client = get_client(self.hostip)
 
         try:
             ctr = client.containers.get(self.dockerid)
