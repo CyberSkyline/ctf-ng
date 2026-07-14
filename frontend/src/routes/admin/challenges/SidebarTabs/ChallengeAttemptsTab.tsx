@@ -2,6 +2,7 @@ import { TeamIcon, UserIcon } from '@/constants';
 import { radixTheme } from '@/grid';
 import { useAdminChallengeAttempts } from '@/hooks/challenge';
 import type { Attempt } from '@/types';
+import { formatDate } from '@/util';
 import { Spinner } from '@radix-ui/themes';
 import { AgGridReact, type CustomCellRendererProps } from 'ag-grid-react';
 import { ErrorCallout } from 'components/Callouts';
@@ -22,11 +23,12 @@ export default function ChallengeAttemptsTab({ challengeId }: {challengeId: numb
           field : 'timestamp',
           headerName : 'Timestamp',
           minWidth : 180,
+          cellDataType : 'dateString',
           sortable : true,
           filter : true,
           pinned : 'left',
           sort : 'desc',
-          valueFormatter : (params) => params.value.toLocaleString(),
+          valueFormatter : (params) => formatDate(params.value),
         },
         {
           field : 'team_name',

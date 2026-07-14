@@ -2,6 +2,7 @@ import { ChallengeIcon, UserIcon } from '@/constants';
 import { radixTheme } from '@/grid';
 import { useTeamAttempts, useTeamHintRedemptions, useTeamManualAwards } from '@/hooks/scoring';
 import type { Attempt, HintRedemption, ManualPointAward } from '@/types';
+import { formatDate } from '@/util';
 import { Spinner } from '@radix-ui/themes';
 import type { ColDef } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
@@ -46,7 +47,8 @@ const colDefs: ColDef<Attempt | HintRedemption | ManualPointAward>[] = [
   },
   {
     field : 'timestamp',
-    valueFormatter : ({ value }) => value.toLocaleString(),
+    cellDataType : 'dateString',
+    valueFormatter : ({ value }) => formatDate(value),
     filter : true,
     floatingFilter : true,
     sort : 'desc',
@@ -143,7 +145,7 @@ export default function TeamActivity({ eventId, teamId }: { eventId: number, tea
   // memoize merging the arrays, sorting by timestamp (descending)
   const merged = useMemo(
     () => [ ...(attempts ?? []), ...(hintRedemptions ?? []), ...(manualAwards ?? []) ]
-      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()),
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
     [ attempts, hintRedemptions, manualAwards ],
   );
 

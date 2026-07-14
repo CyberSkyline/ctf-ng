@@ -35,13 +35,13 @@ export function useEventStatus(eventId: number | null) {
 
   return {
     isRegistrationOpen : !!(data && data.registration_open
-      && (!data.registration_start_date || data.registration_start_date <= new Date())
-      && (!data.registration_end_date || data.registration_end_date >= new Date())
+      && (!data.registration_start_date || new Date(data.registration_start_date) <= new Date())
+      && (!data.registration_end_date || new Date(data.registration_end_date) >= new Date())
     ),
     isOngoing : !!(data
-       && (!data.start_time || data.start_time <= new Date())
-       && (!data.end_time || data.end_time >= new Date())),
-    isConcluded : !!(data && data.end_time && data.end_time < new Date()),
+       && (!data.start_time || new Date(data.start_time) <= new Date())
+       && (!data.end_time || new Date(data.end_time) >= new Date())),
+    isConcluded : !!(data && data.end_time && new Date(data.end_time) < new Date()),
     isLoading,
     error,
     event : data,

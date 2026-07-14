@@ -1,5 +1,6 @@
 import { useAllEvents } from '@/hooks/events';
 import type { Event } from '@/types';
+import { formatDate } from '@/util';
 import { Flex } from '@radix-ui/themes';
 import type { ColDef } from 'ag-grid-community';
 import AdminGrid from 'components/AdminGrid';
@@ -31,28 +32,32 @@ const colDefs: ColDef<Event>[] = [
     field : 'start_time',
     headerName : 'Start Time',
     sort : 'desc',
-    valueFormatter : (params) => params.value && params.value.toLocaleString(),
+    cellDataType : 'dateString',
+    valueFormatter : ({ value }) => formatDate(value),
     filter : true,
     floatingFilter : true,
   },
   {
     field : 'end_time',
     headerName : 'End Time',
-    valueFormatter : (params) => params.value && params.value.toLocaleString(),
+    cellDataType : 'dateString',
+    valueFormatter : ({ value }) => formatDate(value),
     filter : true,
     floatingFilter : true,
   },
   {
     field : 'registration_start_date',
     headerName : 'Registration Start',
-    valueFormatter : (params) => params.value && params.value.toLocaleString(),
+    cellDataType : 'dateString',
+    valueFormatter : ({ value }) => formatDate(value),
     filter : true,
     floatingFilter : true,
   },
   {
     field : 'registration_end_date',
     headerName : 'Registration End',
-    valueFormatter : (params) => params.value && params.value.toLocaleString(),
+    cellDataType : 'dateString',
+    valueFormatter : ({ value }) => formatDate(value),
     filter : true,
     floatingFilter : true,
   },

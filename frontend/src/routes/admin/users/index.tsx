@@ -1,5 +1,6 @@
 import { useAllUsers } from '@/hooks/users';
 import type { AdminUser } from '@/types';
+import { formatDate } from '@/util';
 import type { ColDef } from 'ag-grid-community';
 import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
@@ -46,7 +47,8 @@ const colDefs: ColDef<AdminUser>[] = [
     field : 'registered_at',
     headerName : 'Registered At',
     width : 220,
-    valueFormatter : (params) => params.value && params.value.toLocaleString(),
+    cellDataType : 'dateString',
+    valueFormatter : ({ value }) => formatDate(value),
     filter : true,
     floatingFilter : true,
   },

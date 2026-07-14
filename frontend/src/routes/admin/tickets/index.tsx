@@ -6,6 +6,7 @@ import {
 } from '@/constants';
 import { useAdminAllTickets } from '@/hooks/support';
 import type { AdminTicket } from '@/types';
+import { formatDate } from '@/util';
 import type { ColDef } from 'ag-grid-community';
 import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
@@ -71,7 +72,8 @@ const colDefs: ColDef<AdminTicket>[] = [
   {
     field : 'last_updated',
     headerName : 'Updated Date',
-    valueFormatter : (params) => params.value && params.value.toLocaleString(),
+    cellDataType : 'dateString',
+    valueFormatter : ({ value }) => formatDate(value),
     filter : true,
     floatingFilter : true,
   },
@@ -117,7 +119,8 @@ const colDefs: ColDef<AdminTicket>[] = [
   {
     field : 'opened_timestamp',
     headerName : 'Created Date',
-    valueFormatter : (params) => params.value && params.value.toLocaleString(),
+    cellDataType : 'dateString',
+    valueFormatter : ({ value }) => formatDate(value),
     filter : true,
     floatingFilter : true,
   },

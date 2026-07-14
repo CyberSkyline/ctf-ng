@@ -1,5 +1,5 @@
 import type { Event } from '@/types';
-import { adjustDateForInput } from '@/util';
+import { adjustDateForInput, formatDate } from '@/util';
 import { omit } from 'lodash';
 import {
   Box,
@@ -29,16 +29,16 @@ export default function EventRegistrationTab({ event }: { event: Event }) {
   } = useForm<Event>({
     defaultValues : {
       ...omit(event, 'id'),
-      registration_start_date : adjustDateForInput(event?.registration_start_date || null) as unknown as Date,
-      registration_end_date : adjustDateForInput(event?.registration_end_date || null) as unknown as Date,
+      registration_start_date : adjustDateForInput(event?.registration_start_date || null),
+      registration_end_date : adjustDateForInput(event?.registration_end_date || null),
     },
   });
 
   useEffect(() => {
     reset({
       ...omit(event, 'id'),
-      registration_start_date : adjustDateForInput(event?.registration_start_date || null) as unknown as Date,
-      registration_end_date : adjustDateForInput(event?.registration_end_date || null) as unknown as Date,
+      registration_start_date : adjustDateForInput(event?.registration_start_date || null),
+      registration_end_date : adjustDateForInput(event?.registration_end_date || null),
     });
   }, [ event, reset ]);
 
@@ -211,8 +211,8 @@ export default function EventRegistrationTab({ event }: { event: Event }) {
           <Statistic label="Public" value={event.public ? 'Yes' : 'No'} />
           <Statistic label="Teams Locked" value={event.locked ? 'Yes' : 'No'} />
           <Statistic label="Registration Open" value={event.registration_open ? 'Yes' : 'No'} />
-          <Statistic label="Registration Starts" value={event.registration_start_date?.toLocaleString() || 'N/A'} />
-          <Statistic label="Registration Ends" value={event.registration_end_date?.toLocaleString() || 'N/A'} />
+          <Statistic label="Registration Starts" value={formatDate(event.registration_start_date) || 'N/A'} />
+          <Statistic label="Registration Ends" value={formatDate(event.registration_end_date) || 'N/A'} />
           <Statistic
             label="Practice"
             value={event.practice ? 'Yes' : 'No'}

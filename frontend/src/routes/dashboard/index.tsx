@@ -22,12 +22,12 @@ export default function Dashboard() {
 
   const liveEvents = data?.filter(
     (event) => {
-      if (event.start_time && new Date() < event.start_time) {
+      if (event.start_time && new Date() < new Date(event.start_time)) {
         // events that haven't started yet shouldn't be shown
         return false;
       }
 
-      if (event.end_time && new Date() > event.end_time) {
+      if (event.end_time && new Date() > new Date(event.end_time)) {
         // events that have ended shouldn't be shown
         return false;
       }

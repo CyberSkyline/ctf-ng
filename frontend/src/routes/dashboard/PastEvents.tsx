@@ -8,11 +8,11 @@ import EventCard from 'components/EventCard';
 
 export default function PastEvents() {
   const { data, error } = useMyEvents();
-  const pastEvents = data?.filter((event) => event.end_time && new Date() > event.end_time);
+  const pastEvents = data?.filter((event) => event.end_time && new Date() > new Date(event.end_time));
 
   const groupedEvents = useMemo(() => chain(pastEvents)
-    .sortBy((event) => event.start_time?.getTime() || 0)
-    .groupBy((event) => event.start_time?.getFullYear()?.toString() || 'Unknown')
+    .sortBy((event) => (event.start_time ? new Date(event.start_time).getTime() : 0))
+    .groupBy((event) => (event.start_time ? new Date(event.start_time).getFullYear().toString() : 'Unknown'))
     .toPairs()
     .reverse()
     .value(), [ pastEvents ]);
