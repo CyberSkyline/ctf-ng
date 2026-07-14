@@ -16,8 +16,7 @@ function Root({
         overflow-hidden
         rounded-[var(--radius-3)]
         border
-        border-[var(--gray-a6)]
-        bg-[var(--color-panel-solid)]`,
+        border-[var(--gray-a6)]`,
         className,
       )}
       {...props}
