@@ -1,7 +1,7 @@
 import { radixTheme } from '@/grid';
 import { useEvent, useLeaderboard } from '@/hooks/events';
 import { useFileList } from '@/hooks/fileuploads';
-import type { Score, Sponsor, UploadedFile } from '@/types';
+import type { Sponsor, UploadedFile } from '@/types';
 import {
   Container,
   Flex,
@@ -72,7 +72,7 @@ export default function LeaderboardTab() {
             columnDefs={[
               {
                 headerName : '#',
-                valueGetter : (params: CustomCellRendererProps<Score>) => (params.node?.rowIndex != null ? params.node.rowIndex + 1 : ''),
+                valueGetter : ({ node }) => (node?.rowIndex != null ? node.rowIndex + 1 : ''),
                 width : 80,
               },
               {
@@ -84,7 +84,7 @@ export default function LeaderboardTab() {
                 headerName : 'Sponsors',
                 flex : 1,
                 cellRenderer : SponsorCell,
-                cellRendererParams : (params: CustomCellRendererProps<Score>) => ({
+                cellRendererParams : (params: CustomCellRendererProps<NonNullable<typeof leaderboard>[number]>) => ({
                   sponsors : params.data?.sponsors,
                   lookup,
                 }),

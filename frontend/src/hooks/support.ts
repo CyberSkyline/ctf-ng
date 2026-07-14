@@ -22,7 +22,7 @@ export function createTicket(formData: {
     method : 'POST',
   }).then(
     // This is for doing the navigation. Can only have one .then
-    (data): Ticket => data.id,
+    (data) => (data as Ticket).id,
   ).finally(() => {
     mutate('/support/me/tickets');
   });

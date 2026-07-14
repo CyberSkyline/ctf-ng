@@ -53,7 +53,6 @@ export default function StartModal({ event }: {event: Event}) {
   });
 
   const formattedTimeLimit = availableMinutes
-    // @ts-expect-error - Intl.DurationFormat is not yet in the TypeScript lib, but is browser baseline.
     ? new Intl.DurationFormat('en', { style : 'long' })
       .format({
         hours : Math.floor(availableMinutes / 60),

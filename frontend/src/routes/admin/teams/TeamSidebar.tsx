@@ -111,7 +111,7 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
                     icon={UserIcon}
                   />
                 </Table.Cell>
-                <Table.Cell><SponsorBadge sponsor={member.sponsor} /></Table.Cell>
+                <Table.Cell>{member.sponsor && <SponsorBadge sponsor={member.sponsor} />}</Table.Cell>
                 <Table.Cell><RoleBadge value={member.role} /></Table.Cell>
                 <Table.Cell>{member.joined_at.toLocaleString()}</Table.Cell>
                 <Table.Cell>
