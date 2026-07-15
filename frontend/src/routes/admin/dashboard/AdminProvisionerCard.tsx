@@ -19,12 +19,12 @@ export default function AdminProvisionerCard() {
 
   return (
     <Card>
-      <Heading>
-        <Flex direction="row" align="center" justify="between">
+      <Flex direction="row" align="center" justify="between">
+        <Heading>
           Provisioner
-          <AdminPullVncModal />
-        </Flex>
-      </Heading>
+        </Heading>
+        <AdminPullVncModal />
+      </Flex>
       <Flex gap="4" mt="3">
         <Statistic
           label="Containers Running"
