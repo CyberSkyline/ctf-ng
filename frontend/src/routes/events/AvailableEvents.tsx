@@ -2,6 +2,7 @@ import { useCompetitionEvents } from '@/hooks/events';
 import {
   Box,
   Container,
+  Flex,
   Grid,
   Heading,
   Skeleton,
@@ -10,37 +11,12 @@ import {
 import { InfoCallout, ErrorCallout, WarningCallout } from 'components/Callouts';
 import HeaderContainer from 'components/HeaderContainer';
 import Accordion from 'components/Accordion';
-import { useMemo, useState } from 'react';
+import EventSection from 'components/EventSection';
+import { Fragment, useMemo, useState } from 'react';
 import { chain } from 'lodash';
-import EventCard from 'routes/dashboard/EventCard';
 import { useAuth } from '@/hooks/users';
 import { Link } from 'react-router';
 import SearchField from './SearchField';
-
-function EventSection({ year, eventsInYear }: { year?: string, eventsInYear: Event[]}) {
-  return (
-    <section key={year}>
-      {year !== 'Unknown' && (
-        <Heading className="!mb-3" size="4">
-          {year}
-        </Heading>
-      )}
-      <Grid
-        columns={{
-          initial : '1', xs : '1', sm : '2', lg : '3',
-        }}
-        gap="3"
-      >
-        {eventsInYear.map((event) => (
-          <EventCard
-            key={event.id}
-            event={event}
-          />
-        ))}
-      </Grid>
-    </section>
-  );
-}
 
 function LoadingBox() {
   return (
@@ -171,11 +147,11 @@ export default function AvailableEvents() {
 
               <Accordion.Content>
                 {groupedPastEvents.slice(0, 1).map(([ year, eventsInYear ]) => (
-                  <EventSection
-                    key={year}
-                    year={year}
-                    eventsInYear={eventsInYear}
-                  />
+                  <Fragment key={year}>
+                    <EventSection
+                      eventsInYear={eventsInYear}
+                    />
+                  </Fragment>
                 ))}
               </Accordion.Content>
             </Accordion.Item>
@@ -189,13 +165,16 @@ export default function AvailableEvents() {
                 </Accordion.Header>
 
                 <Accordion.Content>
-                  {groupedPastEvents.slice(1).map(([ year, eventsInYear ]) => (
-                    <EventSection
-                      key={year}
-                      year={year}
-                      eventsInYear={eventsInYear}
-                    />
-                  ))}
+                  <Flex gap="3" direction="column">
+                    {groupedPastEvents.slice(1).map(([ year, eventsInYear ]) => (
+                      <Fragment key={year}>
+                        <EventSection
+                          year={year}
+                          eventsInYear={eventsInYear}
+                        />
+                      </Fragment>
+                    ))}
+                  </Flex>
                 </Accordion.Content>
               </Accordion.Item>
             )}
@@ -203,7 +182,7 @@ export default function AvailableEvents() {
         )}
 
         {!isLoading && groupedPastEvents.length > 0 && search !== '' && (
-          <>
+          <Flex gap="3" direction="column">
             {groupedPastEvents.map(([ year, eventsInYear ]) => (
               <EventSection
                 key={year}
@@ -211,7 +190,7 @@ export default function AvailableEvents() {
                 eventsInYear={eventsInYear}
               />
             ))}
-          </>
+          </Flex>
         )}
       </Container>
     </>
