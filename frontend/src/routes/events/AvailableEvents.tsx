@@ -180,23 +180,25 @@ export default function AvailableEvents() {
               </Accordion.Content>
             </Accordion.Item>
 
-            <Accordion.Item value="archive">
-              <Accordion.Header>
-                <Accordion.Trigger>
-                  Archived Events
-                </Accordion.Trigger>
-              </Accordion.Header>
+            {groupedPastEvents.length > 1 && (
+              <Accordion.Item value="archive">
+                <Accordion.Header>
+                  <Accordion.Trigger>
+                    Archived Events
+                  </Accordion.Trigger>
+                </Accordion.Header>
 
-              <Accordion.Content>
-                {groupedPastEvents.slice(1).map(([ year, eventsInYear ]) => (
-                  <EventSection
-                    key={year}
-                    year={year}
-                    eventsInYear={eventsInYear}
-                  />
-                ))}
-              </Accordion.Content>
-            </Accordion.Item>
+                <Accordion.Content>
+                  {groupedPastEvents.slice(1).map(([ year, eventsInYear ]) => (
+                    <EventSection
+                      key={year}
+                      year={year}
+                      eventsInYear={eventsInYear}
+                    />
+                  ))}
+                </Accordion.Content>
+              </Accordion.Item>
+            )}
           </Accordion.Root>
         )}
 
