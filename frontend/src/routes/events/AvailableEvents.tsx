@@ -112,7 +112,7 @@ export default function AvailableEvents() {
         {error && (<ErrorCallout className="mb-3">{error.message}</ErrorCallout>)}
 
         {isUnauthenticated && (
-          <InfoCallout>
+          <InfoCallout className="mb-3">
             To participate in events, please
             {' '}
             <RadixLink asChild>
