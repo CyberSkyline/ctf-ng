@@ -62,21 +62,26 @@ def pull_image_celery(host, image, user_id, blueprint_id, auth_conf=None):
             status = event.get("status")
 
             if layer_id and detail and detail.get("total"):
-                # store layer progress as we receive status updates.
-                # total is doubled to account for both download and extract phases, since both must finish for the layer to be at 100%.
+                # track download/extract percentages separately since they're based on different denominators
+                # use download size as a stable value to weight the average by
                 if status == "Downloading":
-                    # download phase, (current/total) runs 0 -> 0.5
-                    layers[layer_id] = { "total": detail["total"] * 2, "current": detail["current"] }
+                    layers[layer_id] = {
+                        "size": detail["total"],
+                        "download": detail["current"] / detail["total"],
+                        "extract": 0.0,
+                    }
                 elif status == "Extracting" and layer_id in layers:
-                    # extract phase, (current/total) runs 0.5 -> 1
-                    layers[layer_id]["progress"] = detail["total"] + detail["current"]
+                    layers[layer_id]["extract"] = detail["current"] / detail["total"]
 
             # throttle socket notifications since the generator is noisy
             now = time.monotonic()
             if layers and now - last_emit > 1:
-                current_sum = sum(layer["current"] for layer in layers.values())
-                total_sum = sum(layer["total"] for layer in layers.values())
-                percent = round(current_sum / total_sum * 100, 1)
+                total_size = sum(layer["size"] for layer in layers.values())
+                weighted_progress = sum(
+                    layer["size"] * (layer["download"] + layer["extract"]) / 2
+                    for layer in layers.values()
+                )
+                percent = round(weighted_progress / total_size * 100, 1)
 
                 message = {
                     "user_ids": [user_id],
