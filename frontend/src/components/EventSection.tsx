@@ -1,4 +1,4 @@
-import EventCard from 'routes/dashboard/EventCard';
+import EventCard from './EventCard';
 import { Grid, Heading } from '@radix-ui/themes';
 import type { Event } from '@/types';
 
