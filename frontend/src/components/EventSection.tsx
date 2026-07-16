@@ -1,6 +1,6 @@
-import EventCard from 'routes/dashboard/EventCard';
 import { Grid, Heading } from '@radix-ui/themes';
 import type { Event } from '@/types';
+import EventCard from './EventCard';
 
 export default function EventSection({ year, eventsInYear }: { year?: string, eventsInYear: Event[]}) {
   return (

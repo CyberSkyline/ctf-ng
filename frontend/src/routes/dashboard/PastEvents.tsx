@@ -4,7 +4,7 @@ import { ErrorCallout } from 'components/Callouts';
 import Accordion from 'components/Accordion';
 import { useMemo } from 'react';
 import { chain } from 'lodash';
-import EventCard from './EventCard';
+import EventCard from 'components/EventCard';
 
 export default function PastEvents() {
   const { data, error } = useMyEvents();

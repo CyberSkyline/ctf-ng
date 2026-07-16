@@ -14,7 +14,7 @@ import HeaderContainer from 'components/HeaderContainer';
 import { isEmpty, map } from 'lodash';
 import PastEvents from 'routes/dashboard/PastEvents';
 import UpcomingEvents from 'routes/dashboard/UpcomingEvents';
-import EventCard from './EventCard';
+import EventCard from 'components/EventCard';
 
 export default function Dashboard() {
   const { data, error } = useMyEvents();
