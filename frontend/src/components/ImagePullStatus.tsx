@@ -8,7 +8,7 @@ import {
   Skeleton,
   Text,
 } from '@radix-ui/themes';
-import { TbCheck, TbInfoCircle } from 'react-icons/tb';
+import { TbCancel, TbCheck } from 'react-icons/tb';
 
 export default function ImagePullStatus({ id } : { id: string | number }) {
   const { data : pull } = useImagePullStatus(id);
@@ -37,21 +37,19 @@ export default function ImagePullStatus({ id } : { id: string | number }) {
 
   if (pull?.status === 'fail') {
     return (
-      <Flex direction="row" align="center" gap="1">
-        <Text color={COLOR_NEGATIVE}>Error</Text>
-        <HoverCard.Root>
-          <HoverCard.Trigger>
-            <button type="button">
-              <Text color={COLOR_NEGATIVE}>
-                <TbInfoCircle aria-label="More info" />
-              </Text>
-            </button>
-          </HoverCard.Trigger>
-          <HoverCard.Content>
-            <Code color="gray" className="block whitespace-pre-wrap">{pull.error}</Code>
-          </HoverCard.Content>
-        </HoverCard.Root>
-      </Flex>
+      <HoverCard.Root>
+        <HoverCard.Trigger>
+          <button type="button" aria-label="Show error details">
+            <Text color={COLOR_NEGATIVE} className="underline decoration-dashed">
+              <TbCancel className="inline me-1" />
+              Error
+            </Text>
+          </button>
+        </HoverCard.Trigger>
+        <HoverCard.Content>
+          <Code color="gray" className="block whitespace-pre-wrap">{pull.error}</Code>
+        </HoverCard.Content>
+      </HoverCard.Root>
     );
   }
 

@@ -8,8 +8,6 @@ import { TbDownload } from 'react-icons/tb';
 export default function AdminPullVncModal() {
   const { data : pull } = useImagePullStatus('VNC');
 
-  const handlePull = () => pullVNCImage();
-
   return (
     <Flex direction="row-reverse" gap="2" align="center">
       <Modal
@@ -17,7 +15,7 @@ export default function AdminPullVncModal() {
         description="This will pull the VNC container image."
         submitVerb="Pull"
         submitColor={COLOR_POSITIVE}
-        onSubmit={handlePull}
+        onSubmit={pullVNCImage}
         trigger={(
           <Button color={COLOR_POSITIVE} loading={pull?.status === 'pulling'}>
             <TbDownload />
