@@ -35,7 +35,14 @@ jobs:
         cd frontend
         pnpm install --ignore-scripts
 
-    - name: Test
+    - name: Type Check
+      run: |
+        cd frontend
+        pnpm run type-check
+      env:
+        CI: true
+
+    - name: Lint
       run: |
         cd frontend
         pnpm run lint

@@ -259,7 +259,7 @@ export function createEvent(event: { name : string }) {
   return apiMutation('/admin/events', event, {
     method : 'POST',
   })
-    .then((data): Event => data.id)
+    .then((data) => (data as Event).id)
     .finally(() => {
       mutate('/admin/events');
     });

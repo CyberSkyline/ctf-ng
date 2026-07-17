@@ -59,7 +59,6 @@ export default function EventCard({ event }: { event: Event }) {
                   <TbClock className="inline" aria-label="Event time limit" />
                   {' '}
                   {
-                    // @ts-expect-error - Intl.DurationFormat is baseline-supported, but TS doesn't like it
                     new Intl.DurationFormat('en')
                       .format({
                         hours : Math.floor(event.time_limit_minutes / 60),

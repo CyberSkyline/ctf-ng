@@ -1,4 +1,5 @@
 import { useCompetitionEvents } from '@/hooks/events';
+import type { Event } from '@/types';
 import {
   Box,
   Container,

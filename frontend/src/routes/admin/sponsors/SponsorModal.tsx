@@ -3,7 +3,7 @@ import { COLOR_POSITIVE, COLOR_WARNING } from '@/constants';
 import { Button } from '@radix-ui/themes';
 import { createSponsor, editSponsor } from '@/hooks/sponsors';
 import type { Sponsor } from '@/types';
-import { isUndefined } from 'lodash';
+import { isUndefined, omit } from 'lodash';
 import SponsorDataForm from './SponsorDataForm';
 
 export default function SponsorModal({ sponsor }: {sponsor?: Sponsor}) {
@@ -31,7 +31,7 @@ export default function SponsorModal({ sponsor }: {sponsor?: Sponsor}) {
           {isEditing ? 'Edit Sponsor' : 'Add Sponsor'}
         </Button>
       )}
-      defaultValues={sponsor}
+      defaultValues={omit(sponsor, 'id')}
     >
       {(rhf) => <SponsorDataForm rhf={rhf} />}
     </Modal>
