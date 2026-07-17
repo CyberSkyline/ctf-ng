@@ -1,6 +1,5 @@
 import { useAllEvents } from '@/hooks/events';
 import type { Event } from '@/types';
-import { formatDate } from '@/util';
 import { Flex } from '@radix-ui/themes';
 import type { ColDef } from 'ag-grid-community';
 import AdminGrid from 'components/AdminGrid';
@@ -33,7 +32,6 @@ const colDefs: ColDef<Event>[] = [
     headerName : 'Start Time',
     sort : 'desc',
     cellDataType : 'dateString',
-    valueFormatter : ({ value }) => formatDate(value),
     filter : true,
     floatingFilter : true,
   },
@@ -41,7 +39,6 @@ const colDefs: ColDef<Event>[] = [
     field : 'end_time',
     headerName : 'End Time',
     cellDataType : 'dateString',
-    valueFormatter : ({ value }) => formatDate(value),
     filter : true,
     floatingFilter : true,
   },
@@ -49,7 +46,6 @@ const colDefs: ColDef<Event>[] = [
     field : 'registration_start_date',
     headerName : 'Registration Start',
     cellDataType : 'dateString',
-    valueFormatter : ({ value }) => formatDate(value),
     filter : true,
     floatingFilter : true,
   },
@@ -57,7 +53,6 @@ const colDefs: ColDef<Event>[] = [
     field : 'registration_end_date',
     headerName : 'Registration End',
     cellDataType : 'dateString',
-    valueFormatter : ({ value }) => formatDate(value),
     filter : true,
     floatingFilter : true,
   },

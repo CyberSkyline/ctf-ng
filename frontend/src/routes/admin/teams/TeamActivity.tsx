@@ -2,7 +2,6 @@ import { ChallengeIcon, UserIcon } from '@/constants';
 import { radixTheme } from '@/grid';
 import { useTeamAttempts, useTeamHintRedemptions, useTeamManualAwards } from '@/hooks/scoring';
 import type { Attempt, HintRedemption, ManualPointAward } from '@/types';
-import { formatDate } from '@/util';
 import { Spinner } from '@radix-ui/themes';
 import type { ColDef } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
@@ -48,7 +47,6 @@ const colDefs: ColDef<Attempt | HintRedemption | ManualPointAward>[] = [
   {
     field : 'timestamp',
     cellDataType : 'dateString',
-    valueFormatter : ({ value }) => formatDate(value),
     filter : true,
     floatingFilter : true,
     sort : 'desc',

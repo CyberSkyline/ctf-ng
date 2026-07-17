@@ -10,7 +10,6 @@ import Entity from 'components/Entity';
 import { UserIcon, COLOR_NEGATIVE } from '@/constants';
 import type { ColDef, ICellRendererParams } from 'ag-grid-community';
 import type { Announcement } from '@/types';
-import { formatDate } from '@/util';
 import { AgGridReact, type CustomCellRendererProps } from 'ag-grid-react';
 import { radixTheme } from '@/grid';
 import { useCallback, useMemo, useState } from 'react';
@@ -63,12 +62,10 @@ export default function AdminAnnouncements() {
       field : 'created_at',
       headerName : 'Created Date',
       cellDataType : 'dateString',
-      valueFormatter : (params) => formatDate(params.value),
     }, {
       field : 'expires_at',
       headerName : 'Expiration Date',
       cellDataType : 'dateString',
-      valueFormatter : (params) => formatDate(params.value),
     }, {
       field : 'type',
       headerName : 'type',

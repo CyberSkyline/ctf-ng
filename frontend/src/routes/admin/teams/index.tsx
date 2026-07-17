@@ -1,7 +1,6 @@
 import { EventIcon } from '@/constants';
 import { useAllTeams } from '@/hooks/team';
 import type { Team } from '@/types';
-import { formatDate } from '@/util';
 import type { ColDef } from 'ag-grid-community';
 import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
@@ -51,7 +50,6 @@ const colDefs: ColDef<Team>[] = [
     cellDataType : 'dateString',
     filter : 'agDateColumnFilter',
     floatingFilter : true,
-    valueFormatter : ({ value }) => formatDate(value),
   },
   {
     field : 'end_time',
@@ -60,7 +58,6 @@ const colDefs: ColDef<Team>[] = [
     cellDataType : 'dateString',
     filter : 'agDateColumnFilter',
     floatingFilter : true,
-    valueFormatter : ({ value }) => formatDate(value),
   },
   {
     field : 'ranked',

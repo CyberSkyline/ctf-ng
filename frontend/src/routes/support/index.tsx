@@ -12,7 +12,6 @@ import { StatusBadgeCell } from 'components/StatusBadge';
 import { radixTheme } from '@/grid';
 import { useMyTickets } from '@/hooks/support';
 import type { Ticket } from '@/types';
-import { formatDate } from '@/util';
 import { isUndefined } from 'lodash';
 import { ErrorCallout } from 'components/Callouts';
 
@@ -29,13 +28,11 @@ export default function Support() {
       field : 'opened_timestamp',
       headerName : 'Created Date',
       cellDataType : 'dateString',
-      valueFormatter : ({ value }) => formatDate(value),
     },
     {
       field : 'last_updated',
       headerName : 'Last Updated Date',
       cellDataType : 'dateString',
-      valueFormatter : ({ value }) => formatDate(value),
     },
   ];
 

@@ -1,7 +1,6 @@
 import { COLOR_INFO } from '@/constants';
 import { radixTheme } from '@/grid';
 import type { Attempt } from '@/types';
-import { formatDate } from '@/util';
 import { Button } from '@radix-ui/themes';
 import type { ColDef } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
@@ -29,7 +28,6 @@ const colDefs: ColDef<Attempt>[] = [
     headerName : 'Date',
     width : 200,
     cellDataType : 'dateString',
-    valueFormatter : (params) => formatDate(params.value),
     sort : 'desc',
     filter : true,
     floatingFilter : true,
