@@ -58,7 +58,7 @@ export default function AvailableEvents() {
     const past: Event[] = [];
 
     filteredEvents.forEach((event) => {
-      if (!event.end_time || event.end_time > now) {
+      if (!event.end_time || new Date(event.end_time) > now) {
         upcoming.push(event);
       } else {
         past.push(event);
@@ -68,9 +68,9 @@ export default function AvailableEvents() {
     return {
       upcomingEvents : upcoming,
       groupedPastEvents : chain(past)
-        .sortBy((event) => event.start_time?.getTime() ?? 0)
+        .sortBy((event) => (event.start_time ? new Date(event.start_time).getTime() : 0))
         .groupBy(
-          (event) => event.start_time?.getFullYear().toString() ?? 'Unknown',
+          (event) => (event.start_time ? new Date(event.start_time).getFullYear().toString() : 'Unknown'),
         )
         .toPairs()
         .reverse()
