@@ -1,5 +1,6 @@
 import os
 import json
+import time
 import docker
 import redis
 
@@ -35,10 +36,61 @@ def pull_image_celery(host, image, user_id, blueprint_id, auth_conf=None):
     tls_config = docker.tls.TLSConfig(client_cert=("/var/lib/certs/ssl/cert.pem", "/var/lib/certs/ssl/key.pem"))
     client = docker.DockerClient(base_url=f"https://{host}:2376/", tls=tls_config)
     try:
+        pull_kwargs = {"stream": True, "decode": True}
         if auth_conf:
-            client.images.pull(image, auth_config=auth_conf)
-        else:
-            client.images.pull(image)
+            pull_kwargs["auth_config"] = auth_conf
+
+        # keep track of layer sizes and progress for weighted average
+        layers = {}
+
+        # send initial 0 progress notification so the client knows the pull has started
+        # otherwise, there may be a bit of a delay while docker thinks
+        message = {
+            "user_ids": [user_id],
+            "event_name": "pull-progress",
+            "data": { "id": blueprint_id, "image": image, "percent": 0 }
+        }
+
+        redis_client.publish("ctf_notifications", json.dumps(message))
+        last_emit = time.monotonic()
+
+        # pull the image and loop over the generator of per-layer progress events
+        for event in client.api.pull(image, **pull_kwargs):
+            # runs for each layer status update
+            layer_id = event.get("id")
+            detail = event.get("progressDetail")
+            status = event.get("status")
+
+            if layer_id and detail and detail.get("total"):
+                # track download/extract percentages separately since they're based on different denominators
+                # use download size as a stable value to weight the average by
+                if status == "Downloading":
+                    layers[layer_id] = {
+                        "size": detail["total"],
+                        "download": detail["current"] / detail["total"],
+                        "extract": 0.0,
+                    }
+                elif status == "Extracting" and layer_id in layers:
+                    layers[layer_id]["extract"] = detail["current"] / detail["total"]
+
+            # throttle socket notifications since the generator is noisy
+            now = time.monotonic()
+            if layers and now - last_emit > 1:
+                total_size = sum(layer["size"] for layer in layers.values())
+                weighted_progress = sum(
+                    layer["size"] * (layer["download"] + layer["extract"]) / 2
+                    for layer in layers.values()
+                )
+                percent = round(weighted_progress / total_size * 100, 1)
+
+                message = {
+                    "user_ids": [user_id],
+                    "event_name": "pull-progress",
+                    "data": { "id": blueprint_id, "image": image, "percent": percent }
+                }
+
+                redis_client.publish("ctf_notifications", json.dumps(message))
+                last_emit = now
 
         # Similar to above this is what emit_notification is doing
         # these will send a notifcation when the image is done pulling

@@ -106,3 +106,14 @@ export function pullVNCImage() {
     method : 'POST',
   });
 }
+
+/**
+ * Gets image pull status based on a blueprint ID.
+ * data is undefined if no pull was requested.
+ * @param id blueprint ID, or "VNC" for the VNC image.
+ */
+export function useImagePullStatus(id: string | number) {
+  return useSWR<
+    { status: 'pulling', percent: number } | { status: 'success' } | { status: 'fail', error: string }
+  >([ 'pull-status', id ], null);
+}
