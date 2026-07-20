@@ -184,7 +184,7 @@ export function createUser(user: Pick<User, 'name' | 'email'> & { password: stri
   });
 }
 
-export function adminUpdateUser(userId: number, user: Pick<User, 'name' | 'email'>) {
+export function adminUpdateUser(userId: number, user: Pick<User, 'name' | 'email'> & { password?: string }) {
   return apiMutation(`/admin/users/${userId}`, user, {
     method : 'PUT',
   }).then(() => {

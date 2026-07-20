@@ -10,6 +10,7 @@ from CTFd.models import db
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import joinedload, selectinload
 
+from ...core.exceptions import BusinessLogicError
 from ...core.utils.validator import BaseValidator
 from ...permissions.models.UserRole import UserRole
 
@@ -75,6 +76,7 @@ class User(db.Model):
                 "registered_at": self.ctfd_user.created.isoformat() + "Z",
                 "affiliation": self.affiliation.serialize(include_admin_fields=True) if self.affiliation else None,
                 "banned": self.ctfd_user.banned,
+                "is_sso": self.oauth_id is not None,
             }
         return {
             "id": self.id,
@@ -92,7 +94,8 @@ class User(db.Model):
             validator.validate_string(data, "name", 128, required=True, friendly_name="Username")
         if "email" in data:
             validator.validate_string(data, "email", 128, required=True, friendly_name="Email")
-
+        if "password" in data:
+            validator.validate_string(data, "password", 128, required=True, friendly_name="Password", trim_whitespace=False)
 
         return validator.validate()
 
@@ -291,6 +294,10 @@ class User(db.Model):
         Args:
             **kwargs: Fields to update
         """
+        # make sure we can't create expo account backdoors on an SSO user
+        if "password" in kwargs and self.oauth_id is not None:
+            raise BusinessLogicError("Cannot set a password for an SSO user", "password")
+
         for key, value in kwargs.items():
             if hasattr(self.ctfd_user, key):
                 setattr(self.ctfd_user, key, value)
