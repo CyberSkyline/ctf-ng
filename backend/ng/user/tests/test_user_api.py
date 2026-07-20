@@ -388,3 +388,89 @@ def test_update_user_sponsor_no_data(client_factory,user_factory):
     assert data["success"] is False
     assert "sponsor" in data["errors"]
 
+
+
+def test_admin_create_user(admin_client):
+    """
+    Test creating a new user as an admin
+    """
+    from CTFd.models import Users
+    from CTFd.utils.crypto import verify_password
+
+    password = "  hunter2  "
+
+    response = admin_client.post(
+        "/ng/admin/users",
+        json={
+            "name": "createduser",
+            "email": "createduser@example.com",
+            "password": password,
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["data"]["name"] == "createduser"
+    assert data["data"]["email"] == "createduser@example.com"
+
+    # the created user should be retrievable
+    user_id = data["data"]["id"]
+    verify = admin_client.get(f"/ng/admin/users/{user_id}")
+    assert verify.status_code == 200
+
+    assert verify_password(password, Users.query.filter_by(id=user_id).first().password)
+
+
+def test_admin_create_user_missing_password(admin_client):
+    """
+    Test that creating a user without a password fails validation
+    """
+    response = admin_client.post(
+        "/ng/admin/users",
+        json={
+            "name": "nopassword",
+            "email": "nopassword@example.com",
+        },
+    )
+
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data["success"] is False
+    assert "password" in data["errors"]
+
+
+def test_admin_create_user_duplicate(admin_client, user_factory):
+    """
+    Test that creating a user with an existing email conflicts
+    """
+    user_factory(name="existing", email="existing@example.com")
+
+    response = admin_client.post(
+        "/ng/admin/users",
+        json={
+            "name": "existing",
+            "email": "existing@example.com",
+            "password": "hunter2",
+        },
+    )
+
+    assert response.status_code == 409
+    data = response.get_json()
+    assert data["success"] is False
+
+
+def test_non_admin_create_user(logged_in_client):
+    """
+    Test that non-admins cannot create users
+    """
+    response = logged_in_client.post(
+        "/ng/admin/users",
+        json={
+            "name": "shouldfail",
+            "email": "shouldfail@example.com",
+            "password": "hunter2",
+        },
+    )
+
+    assert response.status_code == 403

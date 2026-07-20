@@ -97,6 +97,16 @@ class User(db.Model):
         return validator.validate()
 
     @classmethod
+    def validate_creation(cls, data: dict[str, Any]) -> dict[str, Any]:
+        """Validate the data required to create a new user."""
+        validator = BaseValidator()
+        validator.validate_string(data, "name", 128, required=True, friendly_name="Username")
+        validator.validate_string(data, "email", 128, required=True, friendly_name="Email")
+        validator.validate_string(data, "password", 128, required=True, friendly_name="Password", trim_whitespace=False)
+
+        return validator.validate()
+
+    @classmethod
     def create_user(cls, user_id, commit=True):
         """Create and persist a new user extension to the database.
 

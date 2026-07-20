@@ -175,6 +175,15 @@ export function useWorkspaceStatus(userId : number) {
   });
 }
 
+export function createUser(user: Pick<User, 'name' | 'email'> & { password: string }) {
+  return apiMutation('/admin/users', user, {
+    method : 'POST',
+  }).then((data) => {
+    mutate('/admin/users');
+    return data as AdminUser;
+  });
+}
+
 export function adminUpdateUser(userId: number, user: Pick<User, 'name' | 'email'>) {
   return apiMutation(`/admin/users/${userId}`, user, {
     method : 'PUT',
