@@ -58,6 +58,13 @@ const colDefs: ColDef<AdminUser>[] = [
     width : 200,
   },
   {
+    field : 'is_sso',
+    headerName : 'SSO',
+    width : 100,
+    filter : true,
+    floatingFilter : true,
+  },
+  {
     field : 'banned',
     width : 100,
     filter : true,
