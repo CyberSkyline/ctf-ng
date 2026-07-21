@@ -5,7 +5,9 @@ import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
 import RoleBadge from 'components/RoleBadge';
 import { Fragment } from 'react/jsx-runtime';
+import { Flex } from '@radix-ui/themes';
 import UserSidebar from './UserSidebar';
+import CreateUserModal from './CreateUserModal';
 
 const colDefs: ColDef<AdminUser>[] = [
   {
@@ -56,6 +58,13 @@ const colDefs: ColDef<AdminUser>[] = [
     width : 200,
   },
   {
+    field : 'is_sso',
+    headerName : 'SSO',
+    width : 100,
+    filter : true,
+    floatingFilter : true,
+  },
+  {
     field : 'banned',
     width : 100,
     filter : true,
@@ -85,6 +94,11 @@ export default function AdminUsers() {
         loading={isLoading}
         getRowId={(params) => params.data.id.toString()}
         sidebarComponent={UserSidebar}
+        toolbar={(
+          <Flex direction="row" justify="start">
+            <CreateUserModal />
+          </Flex>
+        )}
       />
     </>
   );

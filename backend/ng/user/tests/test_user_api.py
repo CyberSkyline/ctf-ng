@@ -388,3 +388,143 @@ def test_update_user_sponsor_no_data(client_factory,user_factory):
     assert data["success"] is False
     assert "sponsor" in data["errors"]
 
+
+
+def test_admin_create_user(admin_client):
+    """
+    Test creating a new user as an admin
+    """
+    from CTFd.models import Users
+    from CTFd.utils.crypto import verify_password
+
+    password = "  hunter2  "
+
+    response = admin_client.post(
+        "/ng/admin/users",
+        json={
+            "name": "createduser",
+            "email": "createduser@example.com",
+            "password": password,
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["data"]["name"] == "createduser"
+    assert data["data"]["email"] == "createduser@example.com"
+
+    # the created user should be retrievable
+    user_id = data["data"]["id"]
+    verify = admin_client.get(f"/ng/admin/users/{user_id}")
+    assert verify.status_code == 200
+
+    assert verify_password(password, Users.query.filter_by(id=user_id).first().password)
+
+
+def test_admin_create_user_missing_password(admin_client):
+    """
+    Test that creating a user without a password fails validation
+    """
+    response = admin_client.post(
+        "/ng/admin/users",
+        json={
+            "name": "nopassword",
+            "email": "nopassword@example.com",
+        },
+    )
+
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data["success"] is False
+    assert "password" in data["errors"]
+
+
+def test_admin_create_user_duplicate(admin_client, user_factory):
+    """
+    Test that creating a user with an existing email conflicts
+    """
+    user_factory(name="existing", email="existing@example.com")
+
+    response = admin_client.post(
+        "/ng/admin/users",
+        json={
+            "name": "existing",
+            "email": "existing@example.com",
+            "password": "hunter2",
+        },
+    )
+
+    assert response.status_code == 409
+    data = response.get_json()
+    assert data["success"] is False
+
+
+def test_non_admin_create_user(logged_in_client):
+    """
+    Test that non-admins cannot create users
+    """
+    response = logged_in_client.post(
+        "/ng/admin/users",
+        json={
+            "name": "shouldfail",
+            "email": "shouldfail@example.com",
+            "password": "hunter2",
+        },
+    )
+
+    assert response.status_code == 403
+
+
+def test_user_put_password(admin_client, user, db_session):
+    """
+    Test that an admin can change an expo user's password
+    """
+    from CTFd.utils.crypto import verify_password
+
+    response = admin_client.put(f"/ng/admin/users/{user.id}", json={"password": "newpassword123"})
+
+    assert response.status_code == 200
+    assert response.get_json()["success"] is True
+
+    db_session.refresh(user)
+    assert verify_password("newpassword123", user.password)
+
+
+def test_user_put_password_sso_rejected(admin_client, user_factory, db_session):
+    """
+    Test that an admin cannot set a password for an SSO user
+    """
+    from CTFd.models import Users
+    from CTFd.utils.crypto import verify_password
+
+    ng_user = user_factory(name="ssouser", email="sso@example.com", password="password")
+    ng_user.oauth_id = "okta|123"
+    db_session.commit()
+    user_id = ng_user.id
+
+    response = admin_client.put(f"/ng/admin/users/{user_id}", json={"password": "newpassword123"})
+
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data["success"] is False
+    assert "password" in data["errors"]
+
+    # the password must be left untouched
+    assert verify_password("password", Users.query.filter_by(id=user_id).first().password)
+
+
+def test_user_serialize_is_sso(admin_client, user_factory, db_session):
+    """
+    Test that the admin serializer reports SSO status
+    """
+    expo = user_factory(name="expouser", email="expo@example.com")
+    sso = user_factory(name="ssouser2", email="sso2@example.com")
+    sso.oauth_id = "okta|456"
+    db_session.commit()
+
+    expo_res = admin_client.get(f"/ng/admin/users/{expo.id}")
+    assert expo_res.get_json()["data"]["is_sso"] is False
+
+    sso_res = admin_client.get(f"/ng/admin/users/{sso.id}")
+    assert sso_res.get_json()["data"]["is_sso"] is True

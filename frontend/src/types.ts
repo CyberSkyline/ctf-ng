@@ -41,6 +41,7 @@ export interface User {
 
 export interface AdminUser extends User {
   banned: boolean;
+  is_sso: boolean;
 }
 
 export interface Team {
