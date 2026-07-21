@@ -71,8 +71,16 @@ class Team(db.Model):
 
     # Avoids a separate query for every team's member count
     @hybrid_property
-    def member_count(self):
+    def member_count(self): # pyright: ignore[reportRedeclaration]
         return len(self.members)
+
+    # Required SQLAlchemy pattern: the expression must be named *same* the property.
+    @member_count.expression
+    def member_count(cls):  # noqa: F811, N805  # hybrid expression: must be same name as getter (F811), arg is the class not self (N805)
+        # LAZY-IMPORT: Tagging all necessary lazy imports for easy searchability & visibility.
+        from .TeamMember import TeamMember
+
+        return select(func.count(TeamMember.id)).where(TeamMember.team_id == cls.id).scalar_subquery()
 
     @hybrid_property
     def can_manage_team(self):
@@ -85,14 +93,7 @@ class Team(db.Model):
             return False
         return True
 
-    # Required SQLAlchemy pattern: the expression must be named after the property.
-    @member_count.expression  # type: ignore[misc]
-    @classmethod
-    def _member_count_expression(cls):
-        # LAZY-IMPORT: Tagging all necessary lazy imports for easy searchability & visibility.
-        from .TeamMember import TeamMember
 
-        return select(func.count(TeamMember.id)).where(TeamMember.team_id == cls.id).scalar_subquery()
 
     def serialize(self, include_admin_fields: bool = False) -> SerializedTeam:
         """Serialize team for API response.
