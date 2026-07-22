@@ -2,6 +2,7 @@
 Test helper functions for setting up the plugin's test environment.
 """
 
+from flask import g
 from tests.helpers import (
     create_ctfd as create_ctfd_original,
 )
@@ -37,6 +38,12 @@ def create_ctfd():
 
     with app.app_context():
         plugin_load(app)
+
+    # the fixtures hold one app context across many requests, so g would otherwise outlive a request
+    @app.before_request
+    def clear_ng_request_memos():
+        g.pop("_ng_current_user", None)
+        g.pop("_ng_user_by_ctfd_id", None)
 
     app = setup_ctfd(
         app,

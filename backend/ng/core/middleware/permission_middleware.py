@@ -1,5 +1,5 @@
 from functools import wraps
-from CTFd.utils.user import get_current_user
+from ..utils.current_user import get_current_user
 from ..utils.api import error_response
 from ..utils.logger import get_logger
 from ...permissions.controllers.get_team_management_permissions import get_team_management_permissions
