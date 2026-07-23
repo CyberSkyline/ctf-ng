@@ -1,3 +1,6 @@
+import base64
+import json
+
 import pytest
 from datetime import datetime
 
@@ -9,10 +12,11 @@ def test_teamlist(admin_client, event, team_factory,user):
         response = admin_client.get("/ng/admin/teams")
         assert response.status_code == 200
         data = response.get_json()
-        assert len(data['data']) == 1
-        assert data['data'][0]["id"] == team.id
-        assert data['data'][0]["name"] == team.name
-        assert data['data'][0]["invite_code"] == team.invite_code
+        assert len(data['data']['rows']) == 1
+        assert data['data']['lastRow'] == 1
+        assert data['data']['rows'][0]["id"] == team.id
+        assert data['data']['rows'][0]["name"] == team.name
+        assert data['data']['rows'][0]["invite_code"] == team.invite_code
 
 
 def test_teamdetail(admin_client, event, team_factory,user):
@@ -221,7 +225,7 @@ def test_admin_teams_list_include_name_enrichment(admin_client, event_factory, t
     assert data["success"] is True
 
     team_data = None
-    for t in data["data"]:
+    for t in data["data"]["rows"]:
         if t["id"] == team.id:
             team_data = t
             break
@@ -235,3 +239,37 @@ def test_admin_teams_list_include_name_enrichment(admin_client, event_factory, t
     # Verify IDs are still present
     assert team_data["event_id"] == event.id
     assert team_data["name"] == "Red Team Alpha"
+
+
+def test_teamlist_sort_and_filter_model(admin_client, event, team_factory, user_factory):
+    """Test that sortModel/filterModel query params reach find_paginated."""
+    team_factory(event=event, name="Bravo", members=[user_factory(name="UB", email="ub@example.com")])
+    team_factory(event=event, name="Alpha", members=[user_factory(name="UA", email="ua@example.com")])
+    sort_model = json.dumps([{"colId": "name", "sort": "asc"}])
+    filter_model = {"name": {"filterType": "text", "type": "notEqual", "filter": "Bravo"}}
+    encoded_filter = base64.b64encode(json.dumps(filter_model).encode()).decode()
+
+    response = admin_client.get(f"/ng/admin/teams?sortModel={sort_model}&filterModel={encoded_filter}")
+
+    assert response.status_code == 200
+    assert [t["name"] for t in response.get_json()["data"]["rows"]] == ["Alpha"]
+
+
+def test_teamlist_invalid_sort_model(admin_client, event, team_factory, user):
+    """Test that a malformed sortModel is rejected."""
+    team_factory(event=event, members=[user])
+
+    response = admin_client.get("/ng/admin/teams?sortModel=not-json")
+
+    assert response.status_code == 400
+    assert response.get_json()["errors"]["validation"] == "Invalid sort model"
+
+
+def test_teamlist_invalid_filter_model(admin_client, event, team_factory, user):
+    """Test that a malformed filterModel is rejected."""
+    team_factory(event=event, members=[user])
+
+    response = admin_client.get("/ng/admin/teams?filterModel=invalid")
+
+    assert response.status_code == 400
+    assert response.get_json()["errors"]["validation"] == "Invalid filter model"

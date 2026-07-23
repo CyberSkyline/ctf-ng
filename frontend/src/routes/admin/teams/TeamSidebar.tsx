@@ -4,8 +4,7 @@ import {
   TeamIcon,
   UserIcon,
 } from '@/constants';
-import { useTeamMembers } from '@/hooks/team';
-import type { Team } from '@/types';
+import { useTeam, useTeamMembers } from '@/hooks/team';
 import { formatDate } from '@/util';
 import { Flex, Grid, Table } from '@radix-ui/themes';
 import AdminLink from 'components/AdminLink';
@@ -23,68 +22,72 @@ import ScoreAdjustModal from './ScoreAdjustModal';
 import TeamActivity from './TeamActivity';
 import SponsorBadge from './SponsorBadge';
 
-export default function TeamSidebar({ entity }: { entity: Team }) {
-  const { data : members, error : membersError } = useTeamMembers(entity.id);
+export default function TeamSidebar({ selectedId }: { selectedId: number }) {
+  const { data : team, error } = useTeam(selectedId);
+  const { data : members, error : membersError } = useTeamMembers(selectedId);
   const headerId = useId();
+
+  if (error) return <ErrorCallout>{error.message}</ErrorCallout>;
+  if (!team) return null;
 
   return (
     <AdminSidebar labelId={headerId}>
-      <AdminSidebarHeader title={entity.name} icon={<TeamIcon />} id={headerId}>
+      <AdminSidebarHeader title={team.name} icon={<TeamIcon />} id={headerId}>
         <AdminLink
           to="/admin/deployments"
           filter={{
-            team_name : { filterType : 'text', type : 'equals', filter : entity.name },
-            event_name : { filterType : 'text', type : 'equals', filter : entity.event_name },
+            team_name : { filterType : 'text', type : 'equals', filter : team.name },
+            event_name : { filterType : 'text', type : 'equals', filter : team.event_name },
           }}
           icon={DeploymentIcon}
           label="Deployments"
         />
         <AdminLink
           to="/admin/events"
-          id={entity.event_id}
+          id={team.event_id}
           icon={EventIcon}
           label="Event"
         />
-        <EditTeamModal teamToUpdate={entity} />
+        <EditTeamModal teamToUpdate={team} />
       </AdminSidebarHeader>
 
       <Grid columns="2" gap="4" align="center" justify="between">
         <Statistic
           label="Name"
-          value={entity.name}
+          value={team.name}
           size="5"
         />
         <Statistic
           label="ID"
-          value={entity.id}
+          value={team.id}
           size="5"
         />
 
         <Statistic
           label="Event"
-          value={entity.event_name || 'Unknown'}
+          value={team.event_name || 'Unknown'}
           size="5"
         />
         <Statistic
           label="Invite Code"
-          value={entity.invite_code || 'None'}
+          value={team.invite_code || 'None'}
           size="5"
         />
 
         <Statistic
           label="Start Time"
-          value={formatDate(entity.start_timestamp) || 'None'}
+          value={formatDate(team.start_timestamp) || 'None'}
           size="5"
         />
         <Statistic
           label="End Time"
-          value={formatDate(entity.end_time) || 'None'}
+          value={formatDate(team.end_time) || 'None'}
           size="5"
         />
 
         <Statistic
           label="Ranked"
-          value={entity.ranked ? 'Yes' : 'No'}
+          value={team.ranked ? 'Yes' : 'No'}
           size="5"
         />
       </Grid>
@@ -128,9 +131,9 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
       )}
 
       <AdminSidebarHeader title="Activity">
-        <ScoreAdjustModal team={entity} />
+        <ScoreAdjustModal team={team} />
       </AdminSidebarHeader>
-      <TeamActivity eventId={entity.event_id} teamId={entity.id} />
+      <TeamActivity eventId={team.event_id} teamId={team.id} />
     </AdminSidebar>
   );
 }

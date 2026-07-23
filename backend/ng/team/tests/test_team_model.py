@@ -276,6 +276,31 @@ class Test_Setting_Team_End_Time:
         assert str(refreshed_team.end_time) == "2024-12-31 23:59:59"
 
 
+class Test_Find_Paginated:
+    def test_filters_by_event_name_via_join(self, event_factory, team_factory, user_factory):
+        event_a = event_factory(name="Alpha Event")
+        event_b = event_factory(name="Bravo Event")
+        team_factory(event=event_a, name="Team A", members=[user_factory(name="UA", email="ua@example.com")])
+        team_factory(event=event_b, name="Team B", members=[user_factory(name="UB", email="ub@example.com")])
+
+        fm = {"event_name": {"filterType": "text", "type": "equals", "filter": "Bravo Event"}}
+        teams, total = Team.find_paginated([], fm, 0, 100)
+
+        assert total == 1
+        assert teams[0].name == "Team B"
+
+    def test_sorts_and_paginates(self, event, team_factory, user_factory):
+        team_factory(event=event, name="Charlie", members=[user_factory(name="UC", email="uc@example.com")])
+        team_factory(event=event, name="Alpha", members=[user_factory(name="UA2", email="ua2@example.com")])
+        team_factory(event=event, name="Bravo", members=[user_factory(name="UB2", email="ub2@example.com")])
+
+        sm = [{"colId": "name", "sort": "asc"}]
+        teams, total = Team.find_paginated(sm, {}, 0, 2)
+
+        assert total == 3
+        assert [t.name for t in teams] == ["Alpha", "Bravo"]
+
+
 class Test_Join_Finished_Team:
     def test_cannot_join_team_with_past_end_time(self, team_factory, user_factory):
         """
