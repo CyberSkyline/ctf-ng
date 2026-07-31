@@ -1780,6 +1780,13 @@ class Test_Event_Challenge_Render:
         assert isinstance(render_data["hints"], list)
         assert isinstance(render_data["attempts"], list)
 
+    def test_challenge_from_another_event_not_found(self, started_player_client, challenge_factory, event_factory):
+        challenge = challenge_factory(event=event_factory(), name="Other Event Challenge")
+
+        response = started_player_client.get(self.get_endpoint(1, challenge.id))
+
+        assert response.status_code == 404
+
 
 class Test_Event_Challenge_Statuses:
     def get_endpoint(self, event_id: int) -> str:

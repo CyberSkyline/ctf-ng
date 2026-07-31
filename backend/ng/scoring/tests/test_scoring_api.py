@@ -177,6 +177,18 @@ class TestUserScoringEndpoints:
         assert data["data"]["is_correct"] is True
         assert data["data"]["points"] == question.points
 
+    def test_submit_answer_question_from_another_challenge(self, started_player_client, challenge_factory, question_factory):
+        """A question outside the challenge in the path must not be submittable against it"""
+        challenge = challenge_factory(event_id=1)
+        question = question_factory(challenge_id=challenge_factory(event_id=1).id)
+
+        response = started_player_client.post(
+            f"/ng/events/{challenge.event_id}/challenges/{challenge.id}/questions/{question.id}/submit",
+            json={"submission": question.answer},
+        )
+
+        assert response.status_code == 404
+
     def test_submit_answer_incorrect(self, started_player_client, challenge_factory, question_factory):
         """Test submitting incorrect answer"""
         challenge = challenge_factory(event_id=1)
@@ -426,8 +438,8 @@ class TestUserScoringEndpoints:
         user,
         team_with_member,
         locked_event,
-        challenge,
-        hint
+        challenge_factory,
+        hint_factory
     ):
         """Test redeeming hint for locked event"""
         # Create team in locked event
@@ -439,6 +451,10 @@ class TestUserScoringEndpoints:
             captain_id = user.id,
             invite_code = "locked123"
         )
+
+        # the challenge must live in the locked event, otherwise the request is a cross-event 404
+        challenge = challenge_factory(event=locked_event)
+        hint = hint_factory(challenge_id=challenge.id)
 
         with logged_in_client.session_transaction() as sess:
             nonce = sess.get("nonce")
