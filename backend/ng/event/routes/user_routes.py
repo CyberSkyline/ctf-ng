@@ -601,7 +601,11 @@ class EventCertificate(Resource):
     )
     def get(self, event: Event, team: Team, current_user: User, **kwargs):
         pdf = CertificateService.render_certificate(current_user, team, event, tz=request.args.get("tz"))
-        return send_file(io.BytesIO(pdf), mimetype="application/pdf", as_attachment=True, download_name=f"Certificate - {event.name}.pdf")
+        response = send_file(io.BytesIO(pdf), mimetype="application/pdf", as_attachment=True, download_name=f"Certificate - {event.name}.pdf")
+        response.cache_control.no_cache = None
+        response.cache_control.private = True
+        response.cache_control.max_age = 86400
+        return response
 
 @events_user_namespace.route("/<int:event_id>/challenges/<int:challenge_id>/certificate")
 class EventChallengeCertificate(Resource):
@@ -626,4 +630,8 @@ class EventChallengeCertificate(Resource):
     )
     def get(self, event: Event, challenge: Challenge, team: Team, current_user: User, **kwargs):
         pdf = CertificateService.render_certificate(current_user, team, event, challenge, tz=request.args.get("tz"))
-        return send_file(io.BytesIO(pdf), mimetype="application/pdf", as_attachment=True, download_name=f"Certificate - {challenge.name}.pdf")
+        response = send_file(io.BytesIO(pdf), mimetype="application/pdf", as_attachment=True, download_name=f"Certificate - {challenge.name}.pdf")
+        response.cache_control.no_cache = None
+        response.cache_control.private = True
+        response.cache_control.max_age = 86400
+        return response

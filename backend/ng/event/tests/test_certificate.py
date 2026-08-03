@@ -79,6 +79,7 @@ class Test_Event_Certificate_Render:
         response = started_player_client.get(f"/ng/events/{event.id}/certificate")
         assert response.status_code == 200
         assert response.data.startswith(b"%PDF-")
+        assert response.headers["Cache-Control"] == "private, max-age=86400"
 
     def test_bad_timezone_param_still_renders(self, started_player_client, team_with_members):
         event = Event.find_by_id(team_with_members.event_id)
@@ -168,3 +169,4 @@ class Test_Event_Certificate_Render:
         response = started_player_client.get(f"/ng/events/{event.id}/challenges/{challenge.id}/certificate")
         assert response.status_code == 200
         assert response.data.startswith(b"%PDF-")
+        assert response.headers["Cache-Control"] == "private, max-age=86400"
