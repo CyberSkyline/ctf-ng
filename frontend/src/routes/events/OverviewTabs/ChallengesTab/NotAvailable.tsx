@@ -27,9 +27,7 @@ export default function NotAvailable() {
             <Text size="3" color="gray">
               The event will start on
               {' '}
-              {formatDate(event.start_time, { year : 'numeric', month : 'numeric', day : 'numeric' })}
-              {' at '}
-              {formatDate(event.start_time, { hour : 'numeric', minute : 'numeric' })}
+              {formatDate(event.start_time, { dateStyle : 'long', timeStyle : 'short' })}
               .
             </Text>
           )}
