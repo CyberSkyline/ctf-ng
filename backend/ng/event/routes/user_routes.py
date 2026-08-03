@@ -539,6 +539,7 @@ class EventChallengeStatuses(Resource):
 class EventChallengeStartContainers(Resource):
     @user_endpoint()
     @load_event(source = LoaderType.PARAM)
+    @load_challenge(source = LoaderType.PARAM)
     @load_team_by_user_and_event()
     @check_permissions(PermissionEnum.CAN_PLAY_CHALLENGES, "You do not have permission to play challenges.")
     @events_user_namespace.doc(
@@ -552,15 +553,17 @@ class EventChallengeStartContainers(Resource):
             400: "Bad request",
         },
     )
-    def post(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event, permissions):
-        started = start_containers(challenge_id, team.id, current_user)
+    def post(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event, challenge: Challenge, permissions):
+        started = start_containers(challenge.id, team.id, current_user)
         return success_response(started)
 
 @events_user_namespace.route("/<int:event_id>/challenge/<int:challenge_id>/containers/recycle")
 class EventChallengeRecycleContainers(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
+    @load_challenge(source=LoaderType.PARAM)
     @load_team_by_user_and_event()
+    @check_permissions(PermissionEnum.CAN_PLAY_CHALLENGES, "You do not have permission to play challenges.")
     @limiter.limit("1 per 5 minutes") # Note - this is per-user, not per-team
     @events_user_namespace.doc(
         description="Recycle a challenges containers",
@@ -573,6 +576,6 @@ class EventChallengeRecycleContainers(Resource):
             400: "Bad request",
         },
     )
-    def post(self, team: Team, challenge_id: int, event_id: int, event: Event, **kwargs):
-        started = recycle_containers(challenge_id, team.id)
+    def post(self, team: Team, challenge_id: int, event_id: int, event: Event, challenge: Challenge, **kwargs):
+        started = recycle_containers(challenge.id, team.id)
         return success_response(started)

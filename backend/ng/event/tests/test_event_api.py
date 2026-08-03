@@ -1788,6 +1788,25 @@ class Test_Event_Challenge_Render:
         assert response.status_code == 404
 
 
+class Test_Event_Challenge_Containers:
+    def get_endpoint(self, event_id: int, challenge_id: int) -> str:
+        return f"/ng/events/{event_id}/challenge/{challenge_id}/containers"
+
+    def test_start_containers_challenge_from_another_event(self, started_player_client, challenge_factory, event_factory):
+        challenge = challenge_factory(event=event_factory())
+
+        response = started_player_client.post(self.get_endpoint(1, challenge.id), json={})
+
+        assert response.status_code == 404
+
+    def test_recycle_containers_challenge_from_another_event(self, started_player_client, challenge_factory, event_factory):
+        challenge = challenge_factory(event=event_factory())
+
+        response = started_player_client.post(f"{self.get_endpoint(1, challenge.id)}/recycle", json={})
+
+        assert response.status_code == 404
+
+
 class Test_Event_Challenge_Statuses:
     def get_endpoint(self, event_id: int) -> str:
         return f"/ng/events/{event_id}/me/challenges"
