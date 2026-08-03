@@ -27,7 +27,7 @@ class Test_Event_Certificate_Update:
 
         update = admin_client.put(
             f"/ng/admin/events/{event.id}",
-            json={"name": event.name, "certificate_file": "evergreen/evergreen.typ"},
+            json={"name": event.name, "certificate_template": "evergreen/evergreen.typ"},
         )
         assert update.status_code == 200
 
@@ -38,18 +38,18 @@ class Test_Event_Certificate_Update:
         event = event_factory()
         admin_client.put(
             f"/ng/admin/events/{event.id}",
-            json={"name": event.name, "certificate_file": "evergreen/evergreen.typ"},
+            json={"name": event.name, "certificate_template": "evergreen/evergreen.typ"},
         )
 
         response = logged_in_client.get(f"/ng/events/{event.id}")
-        assert "certificate_file" not in response.json["data"]
+        assert "certificate_template" not in response.json["data"]
 
     def test_rejects_path_outside_templates(self, admin_client, event_factory):
         event = event_factory()
 
         response = admin_client.put(
             f"/ng/admin/events/{event.id}",
-            json={"name": event.name, "certificate_file": "../../config.py"},
+            json={"name": event.name, "certificate_template": "../../config.py"},
         )
         assert response.status_code == 400
 
@@ -58,7 +58,7 @@ class Test_Event_Certificate_Update:
 
         response = admin_client.put(
             f"/ng/admin/events/{event.id}",
-            json={"name": event.name, "certificate_file": "cisa.svg"},
+            json={"name": event.name, "certificate_template": "cisa.svg"},
         )
         assert response.status_code == 400
 
@@ -73,7 +73,7 @@ def _end_event(team, event, offset):
 class Test_Event_Certificate_Render:
     def test_event_certificate_renders_after_event_ends(self, started_player_client, team_with_members):
         event = Event.find_by_id(team_with_members.event_id)
-        event.update_event(certificate_file="evergreen/evergreen.typ")
+        event.update_event(certificate_template="evergreen/evergreen.typ")
         _end_event(team_with_members, event, -timedelta(hours=1))
 
         response = started_player_client.get(f"/ng/events/{event.id}/certificate")
@@ -82,7 +82,7 @@ class Test_Event_Certificate_Render:
 
     def test_bad_timezone_param_still_renders(self, started_player_client, team_with_members):
         event = Event.find_by_id(team_with_members.event_id)
-        event.update_event(certificate_file="evergreen/evergreen.typ")
+        event.update_event(certificate_template="evergreen/evergreen.typ")
         _end_event(team_with_members, event, -timedelta(hours=1))
 
         response = started_player_client.get(f"/ng/events/{event.id}/certificate?tz=Not/AZone")
@@ -95,7 +95,7 @@ class Test_Event_Certificate_Render:
 
     def test_event_not_over_returns_400(self, started_player_client, team_with_members):
         event = Event.find_by_id(team_with_members.event_id)
-        event.update_event(certificate_file="evergreen/evergreen.typ")
+        event.update_event(certificate_template="evergreen/evergreen.typ")
         _end_event(team_with_members, event, timedelta(days=1))
 
         response = started_player_client.get(f"/ng/events/{event.id}/certificate")
@@ -104,14 +104,14 @@ class Test_Event_Certificate_Render:
     def test_team_never_started_returns_400(self, team_member_client, team_with_members):
         # a team that never played did not participate, so it gets no certificate
         event = Event.find_by_id(team_with_members.event_id)
-        event.update_event(certificate_file="evergreen/evergreen.typ")
+        event.update_event(certificate_template="evergreen/evergreen.typ")
         _end_event(team_with_members, event, -timedelta(hours=1))
 
         response = team_member_client.get(f"/ng/events/{event.id}/certificate")
         assert response.status_code == 400
 
     def test_event_without_deadline_returns_400(self, started_player_client, team_with_members):
-        Event.find_by_id(team_with_members.event_id).update_event(certificate_file="evergreen/evergreen.typ")
+        Event.find_by_id(team_with_members.event_id).update_event(certificate_template="evergreen/evergreen.typ")
 
         response = started_player_client.get(f"/ng/events/{team_with_members.event_id}/certificate")
         assert response.status_code == 400
@@ -121,7 +121,7 @@ class Test_Event_Certificate_Render:
         now = utc_now().replace(tzinfo=None)
         event = Event.find_by_id(team_with_members.event_id)
         event.update_event(
-            certificate_file="evergreen/evergreen.typ",
+            certificate_template="evergreen/evergreen.typ",
             start_time=now - timedelta(days=1),
             end_time=now - timedelta(hours=1),
         )
@@ -131,14 +131,14 @@ class Test_Event_Certificate_Render:
 
     def test_practice_event_blocks_event_certificate(self, started_player_client, team_with_members):
         event_id = team_with_members.event_id
-        Event.find_by_id(event_id).update_event(certificate_file="evergreen/evergreen.typ", practice=True)
+        Event.find_by_id(event_id).update_event(certificate_template="evergreen/evergreen.typ", practice=True)
 
         response = started_player_client.get(f"/ng/events/{event_id}/certificate")
         assert response.status_code == 404
 
     def test_non_practice_event_blocks_challenge_certificate(self, started_player_client, team_with_members, challenge_factory):
         event = Event.find_by_id(team_with_members.event_id)
-        event.update_event(certificate_file="evergreen/evergreen.typ")
+        event.update_event(certificate_template="evergreen/evergreen.typ")
         challenge = challenge_factory(event=event)
 
         response = started_player_client.get(f"/ng/events/{event.id}/challenges/{challenge.id}/certificate")
@@ -146,7 +146,7 @@ class Test_Event_Certificate_Render:
 
     def test_incomplete_challenge_returns_400(self, started_player_client, team_with_members, challenge_factory):
         event = Event.find_by_id(team_with_members.event_id)
-        event.update_event(certificate_file="evergreen/evergreen.typ", practice=True)
+        event.update_event(certificate_template="evergreen/evergreen.typ", practice=True)
         challenge = challenge_factory(event=event)
 
         response = started_player_client.get(f"/ng/events/{event.id}/challenges/{challenge.id}/certificate")
@@ -154,7 +154,7 @@ class Test_Event_Certificate_Render:
 
     def test_completed_challenge_renders_pdf(self, started_player_client, team_with_members, challenge_factory, attempt_factory):
         event = Event.find_by_id(team_with_members.event_id)
-        event.update_event(certificate_file="evergreen/evergreen.typ", practice=True)
+        event.update_event(certificate_template="evergreen/evergreen.typ", practice=True)
         challenge = challenge_factory(event=event)
         for question in challenge.questions:
             attempt_factory(

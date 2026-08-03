@@ -19,7 +19,7 @@ export interface Event {
 }
 
 export interface AdminEvent extends Event {
-  certificate_file: string | null;
+  certificate_template: string | null;
 }
 
 export interface Sponsor {

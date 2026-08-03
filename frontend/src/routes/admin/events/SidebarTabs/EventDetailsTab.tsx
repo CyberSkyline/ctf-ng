@@ -37,7 +37,7 @@ export default function EventDetailsTab({ event }: { event: AdminEvent }) {
     defaultValues : {
       ...omit(event, 'id'),
       image : event?.image || 'None',
-      certificate_file : event?.certificate_file || 'None',
+      certificate_template : event?.certificate_template || 'None',
     },
   });
 
@@ -45,7 +45,7 @@ export default function EventDetailsTab({ event }: { event: AdminEvent }) {
     reset({
       ...omit(event, 'id'),
       image : event?.image || 'None',
-      certificate_file : event?.certificate_file || 'None',
+      certificate_template : event?.certificate_template || 'None',
     });
   }, [ event, reset ]);
 
@@ -69,8 +69,8 @@ export default function EventDetailsTab({ event }: { event: AdminEvent }) {
       updatingEvent.image = null;
     }
 
-    if (updatingEvent.certificate_file === 'None') {
-      updatingEvent.certificate_file = null;
+    if (updatingEvent.certificate_template === 'None') {
+      updatingEvent.certificate_template = null;
     }
 
     updateEvent(event.id, updatingEvent).then(() => {
@@ -193,14 +193,14 @@ export default function EventDetailsTab({ event }: { event: AdminEvent }) {
           {fileUrlError && (<ErrorCallout>{fileUrlError.message}</ErrorCallout>)}
 
           <FormDropdown
-            name="certificate_file"
+            name="certificate_template"
             label="Certificate"
             options={certificateTemplates ? certificateTemplates.files.map((file) => ({
               name : file,
               value : file,
             })) : []}
             disabled={certificateTemplatesLoading || !!certificateTemplatesError}
-            error={errors.certificate_file}
+            error={errors.certificate_template}
             control={control}
           />
 
@@ -232,7 +232,7 @@ export default function EventDetailsTab({ event }: { event: AdminEvent }) {
 
           <DataList.Item>
             <DataList.Label>Certificate</DataList.Label>
-            <DataList.Value>{event.certificate_file || 'None'}</DataList.Value>
+            <DataList.Value>{event.certificate_template || 'None'}</DataList.Value>
           </DataList.Item>
         </DataList.Root>
       )}

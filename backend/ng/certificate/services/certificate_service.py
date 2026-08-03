@@ -48,7 +48,7 @@ class CertificateService:
     @staticmethod
     def render_certificate(user: User, team: Team, event: Event, challenge: Challenge | None = None, tz: str | None = None) -> bytes:
         # error if no certificate configured for the event
-        if not event.certificate_file:
+        if not event.certificate_template:
             raise NotFoundError("This event does not have a certificate.")
 
         if event.practice and challenge is None:
@@ -94,7 +94,7 @@ class CertificateService:
         # if the compile fails, will emit a 500 to the user and log to sentry via global error handling.
         # error message will be masked in prod.
         pdf = compiler.compile(
-          os.path.join(CERTIFICATES_DIR, event.certificate_file),
+          os.path.join(CERTIFICATES_DIR, event.certificate_template),
           # validate against PDF/UA-1. (https://en.wikipedia.org/wiki/PDF/UA)
           # a document that does not meet accessibility standards will fail to compile.
           pdf_standards=["ua-1"],
@@ -104,7 +104,7 @@ class CertificateService:
 
         logger.info(
             "Compiled certificate %s for user %s in %.1fms",
-            event.certificate_file, user.id, (time.perf_counter() - start) * 1000
+            event.certificate_template, user.id, (time.perf_counter() - start) * 1000
         )
 
         return cast(bytes, pdf)

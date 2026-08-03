@@ -39,7 +39,7 @@ class Event(db.Model):
     blocked_domains: Mapped[list[str]] = db.Column(JSON, nullable=False, default=[])
     show_leaderboard = db.Column(db.Boolean, default=False, nullable=False)
     practice = db.Column(db.Boolean, default=False, nullable=False)
-    certificate_file = db.Column(db.String(255), nullable=True)
+    certificate_template = db.Column(db.String(255), nullable=True)
 
     __table_args__ = (
         CheckConstraint(
@@ -101,11 +101,11 @@ class Event(db.Model):
             "blocked_domains": self.blocked_domains,
             "show_leaderboard": self.show_leaderboard,
             "practice": self.practice,
-            "has_certificate": bool(self.certificate_file)
+            "has_certificate": bool(self.certificate_template)
         }
 
         if include_admin_fields:
-            data["certificate_file"] = self.certificate_file
+            data["certificate_template"] = self.certificate_template
 
         return data
 
@@ -136,7 +136,7 @@ class Event(db.Model):
         )
         validator.validate_choice(
             data,
-            "certificate_file",
+            "certificate_template",
             list_certificate_templates(),
             required=False,
             friendly_name="Event certificate",
@@ -235,7 +235,7 @@ class Event(db.Model):
         blocked_domains: list[str] | None = None,
         show_leaderboard: bool = False,
         practice: bool = False,
-        certificate_file: str | None = None,
+        certificate_template: str | None = None,
         commit: bool = True,
     ):
         """Create and persist a new event to the database.
@@ -251,7 +251,7 @@ class Event(db.Model):
             registration_open (bool, optional): Whether registration is open
             registration_start_date (datetime, optional): Registration start date
             registration_end_date (datetime, optional): Registration end date
-            certificate_file (str, optional): Certificate template filename
+            certificate_template (str, optional): Certificate template filename
 
         Returns:
             Event: The created event instance
@@ -275,7 +275,7 @@ class Event(db.Model):
             blocked_domains=blocked_domains,
             show_leaderboard=show_leaderboard,
             practice=practice,
-            certificate_file=certificate_file,
+            certificate_template=certificate_template,
         )
 
         db.session.add(event)
