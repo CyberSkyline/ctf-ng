@@ -1,6 +1,7 @@
 import { COLOR_NEGATIVE, COLOR_POSITIVE } from '@/constants';
 import { useContainerStatus } from '@/hooks/container';
 import type { ContainerInstance } from '@/types';
+import { formatDate } from '@/util';
 import {
   Badge,
   Box,
@@ -51,7 +52,7 @@ export default function ServiceCard({ service }: { service: ContainerInstance })
             {createdAt && (
               <>
                 <br />
-                <Text color="gray">{createdAt?.toLocaleString()}</Text>
+                <Text color="gray">{formatDate(createdAt)}</Text>
               </>
             )}
           </Box>

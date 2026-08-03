@@ -67,7 +67,7 @@ export default function ChallengeSidebar() {
 
               {team && team.end_time && (
                 <Timer
-                  target={team.end_time}
+                  target={new Date(team.end_time)}
                   size="3"
                   onEnd={() => {
                     // Refresh SWR state on timer end

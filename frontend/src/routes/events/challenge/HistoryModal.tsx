@@ -27,7 +27,7 @@ const colDefs: ColDef<Attempt>[] = [
     field : 'timestamp',
     headerName : 'Date',
     width : 200,
-    valueFormatter : (params) => params.value.toLocaleString(),
+    cellDataType : 'dateString',
     sort : 'desc',
     filter : true,
     floatingFilter : true,

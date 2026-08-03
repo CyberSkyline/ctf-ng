@@ -1,5 +1,6 @@
 import { TeamIcon, UserIcon } from '@/constants';
 import type { Event } from '@/types';
+import { formatDate } from '@/util';
 import {
   Box,
   Card,
@@ -48,7 +49,7 @@ export default function EventCard({ event }: { event: Event }) {
                 <Text size="2" color="gray">
                   <TbCalendarEvent className="inline" aria-label="Event start time" />
                   {' '}
-                  {event.start_time?.toLocaleString([], {
+                  {formatDate(event.start_time, {
                     year : 'numeric', month : 'numeric', day : 'numeric', hour : '2-digit', minute : '2-digit',
                   })}
                 </Text>

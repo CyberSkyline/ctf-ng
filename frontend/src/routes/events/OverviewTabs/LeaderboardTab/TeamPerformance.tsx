@@ -1,5 +1,6 @@
 import { useMyTeamScore } from '@/hooks/scoring';
 import { useRegistration } from '@/hooks/users';
+import { formatDate } from '@/util';
 import { Flex } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
 import Statistic from 'components/Statistic';
@@ -19,7 +20,7 @@ export default function TeamPerformance({ eventId }: {eventId: number}) {
       <>
         {scoreError && <ErrorCallout>{scoreError.message}</ErrorCallout>}
         <Flex direction="row" gap="3">
-          <Statistic value={score?.points ?? ''} label="Your Score" description={`Last updated ${score?.last_update.toLocaleString()}`} />
+          <Statistic value={score?.points ?? ''} label="Your Score" description={`Last updated ${formatDate(score?.last_update)}`} />
         </Flex>
       </>
     );

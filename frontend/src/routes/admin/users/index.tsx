@@ -46,7 +46,7 @@ const colDefs: ColDef<AdminUser>[] = [
     field : 'registered_at',
     headerName : 'Registered At',
     width : 220,
-    valueFormatter : (params) => params.value && params.value.toLocaleString(),
+    cellDataType : 'dateString',
     filter : true,
     floatingFilter : true,
   },

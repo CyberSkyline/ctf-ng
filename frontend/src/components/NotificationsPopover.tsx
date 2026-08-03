@@ -7,6 +7,7 @@ import {
   useNotificationSoundEnabled,
 } from '@/hooks/notifications';
 import type { Notification } from '@/types';
+import { formatDate } from '@/util';
 import {
   Button,
   Card,
@@ -94,7 +95,7 @@ export default function NotificationsPopover({ triggerClassName, contentClassNam
       >
         <Flex direction="column">
           <Text weight={notif.read_at ? 'regular' : 'bold'}>{notif.title}</Text>
-          <Text size="1">{notif.created_at.toLocaleDateString('en-US', dateFormat)}</Text>
+          <Text size="1">{formatDate(notif.created_at, dateFormat)}</Text>
           <Text size="2" wrap="pretty" className="pt-2">{notif.message}</Text>
         </Flex>
       </Card>
