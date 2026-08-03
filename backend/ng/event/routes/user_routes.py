@@ -586,7 +586,7 @@ class EventCertificate(Resource):
     @load_event(source=LoaderType.PARAM)
     @load_team_by_user_and_event()
     @check_permissions(PermissionEnum.CAN_VIEW_CHALLENGES, "You do not have permission to view challenges.")
-    @limiter.limit("1 per 1 seconds")
+    @limiter.limit("1 per 5 seconds")
     @events_user_namespace.doc(
         description="Render a certificate for this event",
         params={
@@ -614,7 +614,7 @@ class EventChallengeCertificate(Resource):
     @load_challenge(source=LoaderType.PARAM)
     @load_team_by_user_and_event()
     @check_permissions(PermissionEnum.CAN_VIEW_CHALLENGES, "You do not have permission to view challenges.")
-    @limiter.limit("1 per 1 seconds")
+    @limiter.limit("1 per 5 seconds")
     @events_user_namespace.doc(
         description="Render a certificate for a specific challenge in this event",
         params={
