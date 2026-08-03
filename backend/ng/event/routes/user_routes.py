@@ -246,7 +246,7 @@ class EventTeamCode(Resource):
         if not invite_code:
             return error_response("Invite code is required.", "validation", 400)
         team = Team.find_by_invite_code(invite_code)
-        if not team:
+        if not team or team.event_id != event_id:
             return error_response("Invalid invite code.", "not_found", 404)
         return success_response(team)
 

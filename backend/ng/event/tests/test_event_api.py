@@ -408,6 +408,33 @@ class Test_Event_Registration:
         ).first()
         assert team_member is not None
 
+    def test_register_with_invite_code_from_another_event(
+        self,
+        client_factory,
+        user_factory,
+        event_factory,
+        team_factory,
+        sponsor_factory,
+    ):
+        event = event_factory(name = "Event for Cross Event Registration", public = True)
+        sponsor = sponsor_factory()
+
+        captain = user_factory(name = "captain", email = "captain@example.com", sponsor = sponsor)
+        other_team = team_factory(
+            event = event_factory(name = "Event That Owns The Team", public = True),
+            members = [captain],
+        )
+
+        user = user_factory(name = "outsider", email = "outsider@example.com", sponsor = sponsor)
+        client = client_factory(user = user)
+
+        response = client.post(
+            self.get_endpoint(event.id),
+            json = {"invite_code": other_team.invite_code},
+        )
+
+        assert response.status_code == 404
+
     def test_register_member_name_cannot_be_in_team_name(
         self,
         logged_in_client,
@@ -840,6 +867,25 @@ class Test_Event_Team_Lookup:
         data = response.get_json()
         assert data["success"] is True
         assert data["data"] == team.serialize()
+
+    def test_get_team_by_invite_code_from_another_event(
+        self,
+        logged_in_client,
+        user,
+        event_factory,
+        team_factory
+    ):
+        event = event_factory(name = "Event for Cross Event Invite Code", public = True)
+        other_team = team_factory(
+            event = event_factory(name = "Event That Owns The Team"),
+            members = [user],
+        )
+
+        response = logged_in_client.get(
+            f"/ng/events/{event.id}/team/{other_team.invite_code}",
+        )
+
+        assert response.status_code == 404
 
     def test_get_team_by_invalid_invite_code(
         self,
