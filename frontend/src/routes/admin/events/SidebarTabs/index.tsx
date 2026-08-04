@@ -1,5 +1,5 @@
 import { DeploymentIcon, EventIcon, TeamIcon } from '@/constants';
-import type { Event } from '@/types';
+import type { AdminEvent } from '@/types';
 import { Tabs } from '@radix-ui/themes';
 import AdminLink from 'components/AdminLink';
 import AdminSidebar from 'components/AdminSidebar';
@@ -12,7 +12,7 @@ import EventFeedbackTab from './EventFeedbackTab';
 import EventGameplayTab from './EventGameplayTab';
 import EventRegistrationTab from './EventRegistrationTab';
 
-export default function EventSidebar({ entity }: { entity: Event }) {
+export default function EventSidebar({ entity }: { entity: AdminEvent }) {
   const [ searchParams, setSearchParams ] = useSearchParams();
   const headerId = useId();
 

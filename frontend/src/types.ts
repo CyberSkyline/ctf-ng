@@ -15,6 +15,11 @@ export interface Event {
   time_limit_minutes: number | null;
   show_leaderboard: boolean;
   practice: boolean;
+  has_certificate: boolean;
+}
+
+export interface AdminEvent extends Event {
+  certificate_template: string | null;
 }
 
 export interface Sponsor {
@@ -88,6 +93,7 @@ export interface MeChallenge {
   num_questions_solved: number;
   num_questions_available: number;
   num_attempts_made: number;
+  is_completed: boolean;
 }
 
 export interface Question {

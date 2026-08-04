@@ -13,6 +13,7 @@ import { useEvent } from '@/hooks/events';
 import { useMyEventFeedback } from '@/hooks/feedback';
 import { useAuth, useRegistration } from '@/hooks/users';
 import { ErrorCallout, InfoCallout } from 'components/Callouts';
+import CertificateCallout from 'components/CertificateCallout';
 import EventHeader from 'components/EventHeader';
 import HeaderContainer from 'components/HeaderContainer';
 import ChallengesTab from './OverviewTabs/ChallengesTab';
@@ -74,14 +75,15 @@ export default function Overview() {
               <InfoCallout className="max-w-128">
                 Please take a moment to provide feedback on your experience to help us improve future events.
                 <br />
-                <Button variant="soft" mt="3">
+                <Button variant="soft" size="1" mt="3" asChild>
                   <Link to={`/events/${data.id}?tab=feedback`}>
                     Give Feedback
-                    <TbArrowRight className="inline ms-1" />
+                    <TbArrowRight />
                   </Link>
                 </Button>
               </InfoCallout>
             )}
+            <CertificateCallout eventId={eventId} />
             {isUnauthenticated && (
               <InfoCallout>
                 To participate in this event, please
