@@ -1,4 +1,4 @@
-import { apiMutation } from '@/fetchers';
+import { useAdminOverrideSWR, apiMutation } from '@/fetchers';
 import type {
   AdminEvent,
   Event,
@@ -212,7 +212,7 @@ export function useMyEvents() {
 }
 
 export function useLeaderboard(eventId: number) {
-  return useSWR<(Score & {sponsors: Sponsor[]})[], Error>(eventId ? `/events/${eventId}/leaderboard` : null);
+  return useAdminOverrideSWR<(Score & {sponsors: Sponsor[]})[], Error>(eventId ? `/events/${eventId}/leaderboard` : null);
 }
 
 /* ADMIN ENDPOINTS */
