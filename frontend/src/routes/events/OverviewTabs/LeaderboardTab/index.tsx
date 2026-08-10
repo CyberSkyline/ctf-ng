@@ -60,7 +60,7 @@ export default function LeaderboardTab() {
     <Container size="4">
       <Flex direction="column" gap="3">
         {leaderboardAdmin
-          && <AdminOverride type="badge">ADMIN VIEW</AdminOverride>}
+          && <AdminOverride type="badge" />}
         <TeamPerformance eventId={Number(idEvent)} />
 
         {leaderboardError

@@ -23,7 +23,7 @@ export default function AdminOverride(props: Props) {
         </Callout.Icon>
 
         <Callout.Text className="whitespace-pre-wrap">
-          {children}
+          {children || 'ADMIN VIEW'}
         </Callout.Text>
       </Callout.Root>
     );
@@ -39,7 +39,7 @@ export default function AdminOverride(props: Props) {
         radius="full"
         {...badgeProps}
       >
-        {children}
+        {children || 'ADMIN VIEW'}
       </Badge>
     </Box>
   );
