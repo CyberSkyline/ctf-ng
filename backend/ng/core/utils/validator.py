@@ -463,6 +463,37 @@ class BaseValidator:
             return
 
     @validation_field
+    def validate_choice(
+        self,
+        data: dict[str, Any],
+        field: str,
+        choices: list[str],
+        required: bool = False,
+        friendly_name: str | None = None,
+        value: Any = None,  # Injected by decorator
+    ) -> None:
+        """
+        Validate that a field is one of choices. An empty value clears the field.
+        """
+        if not isinstance(value, str):
+            self.errors[field] = ValidationErrorMessages.FIELD_MUST_BE_STRING.format(field=friendly_name)
+            return
+
+        stripped_value = value.strip()
+        if not stripped_value:
+            if required:
+                self.errors[field] = ValidationErrorMessages.FIELD_EMPTY.format(field=friendly_name)
+            else:
+                self._add_parsed_data(field, None)
+            return
+
+        if stripped_value not in choices:
+            self.errors[field] = f"{friendly_name} must be one of: {', '.join(choices)}"
+            return
+
+        self._add_parsed_data(field, stripped_value)
+
+    @validation_field
     def validate_url(
         self,
         data: dict[str, Any],

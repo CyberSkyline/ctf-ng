@@ -7,19 +7,19 @@ import {
   Skeleton,
 } from '@radix-ui/themes';
 import { groupBy } from 'lodash';
-import { useMemo } from 'react';
-import EventCard from 'routes/dashboard/EventCard';
+import { Fragment, useMemo } from 'react';
+import EventSection from './EventSection';
 
 export default function EventGrid({ events, loading = false, group = false } : { events: Event[], loading?: boolean, group?: boolean }) {
   const sortedEvents = useMemo(() => events.slice().sort((a, b) => {
-    const dateA = a.start_time?.getTime() || 0;
-    const dateB = b.start_time?.getTime() || 0;
+    const dateA = a.start_time ? new Date(a.start_time).getTime() : 0;
+    const dateB = b.start_time ? new Date(b.start_time).getTime() : 0;
     return dateA - dateB;
   }), [ events ]);
 
   const groupedEvents = useMemo(() => {
     if (!group) return { Unknown : sortedEvents };
-    return groupBy(sortedEvents, (event) => event.start_time?.getFullYear()?.toString() || 'Unknown');
+    return groupBy(sortedEvents, (event) => (event.start_time ? new Date(event.start_time).getFullYear().toString() : 'Unknown'));
   }, [ sortedEvents, group ]);
 
   return (
@@ -42,26 +42,11 @@ export default function EventGrid({ events, loading = false, group = false } : {
       {[ ...Object.entries(groupedEvents) ]
         .reverse()
         .map(([ year, eventsInYear ]) => (
-          <section key={year}>
-            {year !== 'Unknown' && (
-              <Heading className="!mb-3" size="4">
-                {year}
-              </Heading>
-            )}
-            <Grid
-              columns={{
-                initial : '1', xs : '1', sm : '2', lg : '3',
-              }}
-              gap="3"
-            >
-              {eventsInYear.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                />
-              ))}
-            </Grid>
-          </section>
+          <Fragment key={year}>
+            <EventSection
+              eventsInYear={eventsInYear}
+            />
+          </Fragment>
         ))}
     </Flex>
   );

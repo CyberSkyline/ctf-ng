@@ -71,7 +71,7 @@ const colDefs: ColDef<AdminTicket>[] = [
   {
     field : 'last_updated',
     headerName : 'Updated Date',
-    valueFormatter : (params) => params.value && params.value.toLocaleString(),
+    cellDataType : 'dateString',
     filter : true,
     floatingFilter : true,
   },
@@ -117,7 +117,7 @@ const colDefs: ColDef<AdminTicket>[] = [
   {
     field : 'opened_timestamp',
     headerName : 'Created Date',
-    valueFormatter : (params) => params.value && params.value.toLocaleString(),
+    cellDataType : 'dateString',
     filter : true,
     floatingFilter : true,
   },

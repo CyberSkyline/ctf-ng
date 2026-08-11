@@ -3,7 +3,9 @@ User Routes for Event Operations
 """
 
 from CTFd.models import db
-from flask import request
+import io
+
+from flask import request, send_file
 from flask_restx import Namespace, Resource
 
 from ...challenge.models.Challenge import Challenge
@@ -34,6 +36,7 @@ from ...core.utils.rate_limit import limiter
 from ...core.utils.validator import BaseValidator
 from ...event.models.Demographic import Demographic
 from ...event.models.Event import Event
+from ...certificate.services.certificate_service import CertificateService
 from ...notifications.services.notification_service import NotificationService
 from ...permissions.models.enums import PermissionEnum
 from ...team.controllers.remove_member import remove_member
@@ -246,7 +249,7 @@ class EventTeamCode(Resource):
         if not invite_code:
             return error_response("Invite code is required.", "validation", 400)
         team = Team.find_by_invite_code(invite_code)
-        if not team:
+        if not team or team.event_id != event_id:
             return error_response("Invalid invite code.", "not_found", 404)
         return success_response(team)
 
@@ -539,6 +542,7 @@ class EventChallengeStatuses(Resource):
 class EventChallengeStartContainers(Resource):
     @user_endpoint()
     @load_event(source = LoaderType.PARAM)
+    @load_challenge(source = LoaderType.PARAM)
     @load_team_by_user_and_event()
     @check_permissions(PermissionEnum.CAN_PLAY_CHALLENGES, "You do not have permission to play challenges.")
     @events_user_namespace.doc(
@@ -552,15 +556,17 @@ class EventChallengeStartContainers(Resource):
             400: "Bad request",
         },
     )
-    def post(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event, permissions):
-        started = start_containers(challenge_id, team.id, current_user)
+    def post(self, team: Team, current_user: User, challenge_id: int, event_id: int, event: Event, challenge: Challenge, permissions):
+        started = start_containers(challenge.id, team.id, current_user)
         return success_response(started)
 
 @events_user_namespace.route("/<int:event_id>/challenge/<int:challenge_id>/containers/recycle")
 class EventChallengeRecycleContainers(Resource):
     @user_endpoint()
     @load_event(source=LoaderType.PARAM)
+    @load_challenge(source=LoaderType.PARAM)
     @load_team_by_user_and_event()
+    @check_permissions(PermissionEnum.CAN_PLAY_CHALLENGES, "You do not have permission to play challenges.")
     @limiter.limit("1 per 5 minutes") # Note - this is per-user, not per-team
     @events_user_namespace.doc(
         description="Recycle a challenges containers",
@@ -573,6 +579,62 @@ class EventChallengeRecycleContainers(Resource):
             400: "Bad request",
         },
     )
-    def post(self, team: Team, challenge_id: int, event_id: int, event: Event, **kwargs):
-        started = recycle_containers(challenge_id, team.id)
+    def post(self, team: Team, challenge_id: int, event_id: int, event: Event, challenge: Challenge, **kwargs):
+        started = recycle_containers(challenge.id, team.id)
         return success_response(started)
+
+@events_user_namespace.route("/<int:event_id>/certificate")
+class EventCertificate(Resource):
+    @user_endpoint()
+    @load_event(source=LoaderType.PARAM)
+    @load_team_by_user_and_event()
+    @check_permissions(PermissionEnum.CAN_VIEW_CHALLENGES, "You do not have permission to view challenges.")
+    @limiter.limit("1 per 5 seconds")
+    @events_user_namespace.doc(
+        description="Render a certificate for this event",
+        params={
+            "event_id": "Event to render the certificate for",
+        },
+        responses={
+            200: "Success - Returns the certificate PDF",
+            400: "Certificate is not yet available",
+            403: "Forbidden - Authentication required",
+            404: "Event has no certificate, or does not issue this certificate type",
+        },
+    )
+    def get(self, event: Event, team: Team, current_user: User, **kwargs):
+        pdf = CertificateService.render_certificate(current_user, team, event, tz=request.args.get("tz"))
+        response = send_file(io.BytesIO(pdf), mimetype="application/pdf", as_attachment=True, download_name=f"Certificate - {event.name}.pdf")
+        response.cache_control.no_cache = None
+        response.cache_control.private = True
+        response.cache_control.max_age = 86400
+        return response
+
+@events_user_namespace.route("/<int:event_id>/challenges/<int:challenge_id>/certificate")
+class EventChallengeCertificate(Resource):
+    @user_endpoint()
+    @load_event(source=LoaderType.PARAM)
+    @load_challenge(source=LoaderType.PARAM)
+    @load_team_by_user_and_event()
+    @check_permissions(PermissionEnum.CAN_VIEW_CHALLENGES, "You do not have permission to view challenges.")
+    @limiter.limit("1 per 5 seconds")
+    @events_user_namespace.doc(
+        description="Render a certificate for a specific challenge in this event",
+        params={
+            "event_id": "Event to render the certificate for",
+            "challenge_id": "Challenge to render the certificate for",
+        },
+        responses={
+            200: "Success - Returns the certificate PDF",
+            400: "Certificate is not yet available",
+            403: "Forbidden - Authentication required",
+            404: "Event has no certificate, or does not issue this certificate type",
+        },
+    )
+    def get(self, event: Event, challenge: Challenge, team: Team, current_user: User, **kwargs):
+        pdf = CertificateService.render_certificate(current_user, team, event, challenge, tz=request.args.get("tz"))
+        response = send_file(io.BytesIO(pdf), mimetype="application/pdf", as_attachment=True, download_name=f"Certificate - {challenge.name}.pdf")
+        response.cache_control.no_cache = None
+        response.cache_control.private = True
+        response.cache_control.max_age = 86400
+        return response

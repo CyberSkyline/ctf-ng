@@ -22,11 +22,11 @@ export default function ChallengeAttemptsTab({ challengeId }: {challengeId: numb
           field : 'timestamp',
           headerName : 'Timestamp',
           minWidth : 180,
+          cellDataType : 'dateString',
           sortable : true,
           filter : true,
           pinned : 'left',
           sort : 'desc',
-          valueFormatter : (params) => params.value.toLocaleString(),
         },
         {
           field : 'team_name',

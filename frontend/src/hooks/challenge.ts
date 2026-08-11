@@ -95,6 +95,8 @@ export function submitFlag(
       },
       false,
     );
+    // refresh per-challenge completion so dependent UI (e.g. the certificate callout) updates
+    mutate(`/events/${eventId}/me/challenges`);
   });
 }
 

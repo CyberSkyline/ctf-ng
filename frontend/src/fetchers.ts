@@ -12,19 +12,8 @@ async function parseResponseData(res: Response) {
   let parsedData: unknown;
 
   try {
-    // Attempt to parse the response as JSON
-    parsedData = JSON.parse(data, (_key, value) => {
-      // if the value is an ISO date, parse it into a Date object
-      if (
-        typeof value === 'string'
-        && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/.test(value)
-      ) {
-        return new Date(value);
-      }
-
-      // otherwise, return the value as is
-      return value;
-    });
+    // Date fields are kept as raw ISO strings; convert to Date at the point of use.
+    parsedData = JSON.parse(data);
   } catch {
     throw new Error(`Failed to parse API response. (${res.status})`);
   }

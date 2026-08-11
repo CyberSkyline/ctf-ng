@@ -11,6 +11,7 @@ import {
   Text,
 } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
+import CertificateCallout from 'components/CertificateCallout';
 import ChallengeIcon from 'components/ChallengeIcon';
 import RadixMarkdown from 'components/RadixMarkdown';
 import Timer from 'components/Timer';
@@ -67,7 +68,7 @@ export default function ChallengeSidebar() {
 
               {team && team.end_time && (
                 <Timer
-                  target={team.end_time}
+                  target={new Date(team.end_time)}
                   size="3"
                   onEnd={() => {
                     // Refresh SWR state on timer end
@@ -157,6 +158,8 @@ export default function ChallengeSidebar() {
           </Flex>
         </Inset>
       </Card>
+
+      {challenge && <CertificateCallout eventId={challenge.event_id} challengeId={challenge.id} />}
     </Flex>
   );
 }

@@ -14,7 +14,7 @@ import HeaderContainer from 'components/HeaderContainer';
 import { isEmpty, map } from 'lodash';
 import PastEvents from 'routes/dashboard/PastEvents';
 import UpcomingEvents from 'routes/dashboard/UpcomingEvents';
-import EventCard from './EventCard';
+import EventCard from 'components/EventCard';
 
 export default function Dashboard() {
   const { data, error } = useMyEvents();
@@ -22,12 +22,12 @@ export default function Dashboard() {
 
   const liveEvents = data?.filter(
     (event) => {
-      if (event.start_time && new Date() < event.start_time) {
+      if (event.start_time && new Date() < new Date(event.start_time)) {
         // events that haven't started yet shouldn't be shown
         return false;
       }
 
-      if (event.end_time && new Date() > event.end_time) {
+      if (event.end_time && new Date() > new Date(event.end_time)) {
         // events that have ended shouldn't be shown
         return false;
       }

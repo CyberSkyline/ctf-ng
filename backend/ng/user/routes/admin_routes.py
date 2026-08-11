@@ -18,6 +18,7 @@ from ..controllers.ban_user import (
     ban_user,
     unban_user,
 )
+from ..controllers.create_user import create_user
 
 
 users_admin_namespace = Namespace("/admin/users", description="user endpoints for admins")
@@ -36,6 +37,34 @@ class UsersAdminResource(Resource):
     def get(self, **kwargs):
         """Get all users on the system"""
         return success_response(User.get_all_users())
+
+    @admin_endpoint(json_required=True, validation_func=User.validate_creation)
+    @users_admin_namespace.doc(
+        description="Create a new user",
+        params={
+            "json_data": {
+                "description": "User data in JSON format",
+                "in": "body",
+                "required": True,
+                "example": {
+                    "name": "new_username",
+                    "email": "new_email@example.com",
+                    "password": "hunter2",
+                }
+            }
+        },
+        responses={
+            200: "User created successfully",
+            400: "Invalid input",
+            403: "Forbidden - Admin access required",
+            409: "A user with this name or email already exists",
+            500: "Internal server error",
+        },
+    )
+    def post(self, validated_data, **kwargs):
+        """Create a new user"""
+        user = create_user(**validated_data)
+        return success_response(user)
 
 @users_admin_namespace.route("/<int:user_id>")
 class UserAdminResource(Resource):

@@ -1,5 +1,5 @@
 import type { Event } from '@/types';
-import { adjustDateForInput } from '@/util';
+import { adjustDateForInput, formatDate } from '@/util';
 import { omit } from 'lodash';
 import {
   Box,
@@ -29,16 +29,16 @@ export default function EventGameplayTab({ event }: { event: Event }) {
   } = useForm<Event>({
     defaultValues : {
       ...omit(event, 'id'),
-      start_time : adjustDateForInput(event?.start_time || null) as unknown as Date,
-      end_time : adjustDateForInput(event?.end_time || null) as unknown as Date,
+      start_time : adjustDateForInput(event?.start_time || null),
+      end_time : adjustDateForInput(event?.end_time || null),
     },
   });
 
   useEffect(() => {
     reset({
       ...omit(event, 'id'),
-      start_time : adjustDateForInput(event?.start_time || null) as unknown as Date,
-      end_time : adjustDateForInput(event?.end_time || null) as unknown as Date,
+      start_time : adjustDateForInput(event?.start_time || null),
+      end_time : adjustDateForInput(event?.end_time || null),
     });
   }, [ event, reset ]);
 
@@ -193,8 +193,8 @@ export default function EventGameplayTab({ event }: { event: Event }) {
       ) : (
         <>
           <Statistic label="Max Team Size" value={event.max_team_size} />
-          <Statistic label="Event Starts" value={event.start_time?.toLocaleString() || 'N/A'} />
-          <Statistic label="Event Ends" value={event.end_time?.toLocaleString() || 'N/A'} />
+          <Statistic label="Event Starts" value={formatDate(event.start_time) || 'N/A'} />
+          <Statistic label="Event Ends" value={formatDate(event.end_time) || 'N/A'} />
           <Statistic label="Time Limit" value={event.time_limit_minutes ? `${event.time_limit_minutes} minutes` : 'N/A'} />
           <Statistic label="Hints Enabled" value={event.hints_enabled ? 'Yes' : 'No'} />
           <Statistic label="Show Leaderboard" value={event.show_leaderboard ? 'Yes' : 'No'} />

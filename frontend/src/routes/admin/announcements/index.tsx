@@ -61,11 +61,11 @@ export default function AdminAnnouncements() {
     }, {
       field : 'created_at',
       headerName : 'Created Date',
-      valueFormatter : (params) => params.value?.toLocaleString(),
+      cellDataType : 'dateString',
     }, {
       field : 'expires_at',
       headerName : 'Expiration Date',
-      valueFormatter : (params) => params.value?.toLocaleString(),
+      cellDataType : 'dateString',
     }, {
       field : 'type',
       headerName : 'type',

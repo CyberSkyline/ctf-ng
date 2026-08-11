@@ -68,7 +68,7 @@ export function useRegistration(eventId: number | null) {
     isRegistered : !!myTeam,
     isUnregistered : !myTeam && !isLoading && !error,
     isStarted : !!myTeam?.start_timestamp,
-    isFinished : !!(myTeam?.end_time && myTeam.end_time < new Date()),
+    isFinished : !!(myTeam?.end_time && new Date(myTeam.end_time) < new Date()),
     team : myTeam,
     error,
     isLoading,
@@ -175,7 +175,16 @@ export function useWorkspaceStatus(userId : number) {
   });
 }
 
-export function adminUpdateUser(userId: number, user: Pick<User, 'name' | 'email'>) {
+export function createUser(user: Pick<User, 'name' | 'email'> & { password: string }) {
+  return apiMutation('/admin/users', user, {
+    method : 'POST',
+  }).then((data) => {
+    mutate('/admin/users');
+    return data as AdminUser;
+  });
+}
+
+export function adminUpdateUser(userId: number, user: Pick<User, 'name' | 'email'> & { password?: string }) {
   return apiMutation(`/admin/users/${userId}`, user, {
     method : 'PUT',
   }).then(() => {

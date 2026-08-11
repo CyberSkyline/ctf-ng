@@ -152,7 +152,7 @@ class Test_Private_Event_Detail:
         data = response.get_json()
 
         assert data["success"] is True
-        assert data["data"] == event.serialize()
+        assert data["data"] == event.serialize(include_admin_fields=True)
 
     def test_get_private_event_details_as_non_admin(
         self,
@@ -407,6 +407,33 @@ class Test_Event_Registration:
             team_id = team.id
         ).first()
         assert team_member is not None
+
+    def test_register_with_invite_code_from_another_event(
+        self,
+        client_factory,
+        user_factory,
+        event_factory,
+        team_factory,
+        sponsor_factory,
+    ):
+        event = event_factory(name = "Event for Cross Event Registration", public = True)
+        sponsor = sponsor_factory()
+
+        captain = user_factory(name = "captain", email = "captain@example.com", sponsor = sponsor)
+        other_team = team_factory(
+            event = event_factory(name = "Event That Owns The Team", public = True),
+            members = [captain],
+        )
+
+        user = user_factory(name = "outsider", email = "outsider@example.com", sponsor = sponsor)
+        client = client_factory(user = user)
+
+        response = client.post(
+            self.get_endpoint(event.id),
+            json = {"invite_code": other_team.invite_code},
+        )
+
+        assert response.status_code == 404
 
     def test_register_member_name_cannot_be_in_team_name(
         self,
@@ -840,6 +867,25 @@ class Test_Event_Team_Lookup:
         data = response.get_json()
         assert data["success"] is True
         assert data["data"] == team.serialize()
+
+    def test_get_team_by_invite_code_from_another_event(
+        self,
+        logged_in_client,
+        user,
+        event_factory,
+        team_factory
+    ):
+        event = event_factory(name = "Event for Cross Event Invite Code", public = True)
+        other_team = team_factory(
+            event = event_factory(name = "Event That Owns The Team"),
+            members = [user],
+        )
+
+        response = logged_in_client.get(
+            f"/ng/events/{event.id}/team/{other_team.invite_code}",
+        )
+
+        assert response.status_code == 404
 
     def test_get_team_by_invalid_invite_code(
         self,
@@ -1491,7 +1537,7 @@ def test_admin_get_private_event(admin_client, event_factory):
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"] is True
-    assert data["data"] == event.serialize()
+    assert data["data"] == event.serialize(include_admin_fields=True)
 
 
 class Test_Event_Admin_Get:
@@ -1506,7 +1552,7 @@ class Test_Event_Admin_Get:
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
-        assert data["data"] == event.serialize()
+        assert data["data"] == event.serialize(include_admin_fields=True)
 
     def test_non_admin_get_event_details(
         self,
@@ -1779,6 +1825,32 @@ class Test_Event_Challenge_Render:
         # Verify hints and attempts are present
         assert isinstance(render_data["hints"], list)
         assert isinstance(render_data["attempts"], list)
+
+    def test_challenge_from_another_event_not_found(self, started_player_client, challenge_factory, event_factory):
+        challenge = challenge_factory(event=event_factory(), name="Other Event Challenge")
+
+        response = started_player_client.get(self.get_endpoint(1, challenge.id))
+
+        assert response.status_code == 404
+
+
+class Test_Event_Challenge_Containers:
+    def get_endpoint(self, event_id: int, challenge_id: int) -> str:
+        return f"/ng/events/{event_id}/challenge/{challenge_id}/containers"
+
+    def test_start_containers_challenge_from_another_event(self, started_player_client, challenge_factory, event_factory):
+        challenge = challenge_factory(event=event_factory())
+
+        response = started_player_client.post(self.get_endpoint(1, challenge.id), json={})
+
+        assert response.status_code == 404
+
+    def test_recycle_containers_challenge_from_another_event(self, started_player_client, challenge_factory, event_factory):
+        challenge = challenge_factory(event=event_factory())
+
+        response = started_player_client.post(f"{self.get_endpoint(1, challenge.id)}/recycle", json={})
+
+        assert response.status_code == 404
 
 
 class Test_Event_Challenge_Statuses:
@@ -2065,3 +2137,34 @@ class Test_Event_Challenge_Statuses:
         assert progress["num_attempts_made"] == 0
         assert progress["num_unique_questions_attempted"] == 0
         assert progress["is_completed"] is False
+
+    def test_challenge_progress_no_questions(
+        self,
+        logged_in_client,
+        db_session,
+        user,
+        event_factory,
+        team_factory
+    ):
+        """
+        A challenge with no questions must not report completion, it has no completion time
+        """
+        event = event_factory(name = "No Questions Test Event", public = True)
+        _team = team_factory(event = event, members = [user])
+        _team.set_start_timestamp(utc_now())
+        challenge = Challenge(
+            event_id = event.id,
+            name = "Empty Challenge",
+            description = "A challenge with no questions",
+            icon = "test-icon",
+            summary = "Test summary",
+        )
+        db_session.add(challenge)
+        db_session.commit()
+
+        response = logged_in_client.get(f"/ng/events/{event.id}/me/challenges")
+
+        assert response.status_code == 200
+        progress = response.get_json()["data"][0]
+        assert progress["is_completed"] is False
+        assert progress["completed_at"] is None
