@@ -35,7 +35,7 @@ export default function StartModal({ event }: {event: Event}) {
         avail = event.time_limit_minutes;
 
         if (event.end_time) {
-          const minutesUntilEnd = Math.round((new Date(event.end_time).getTime() - Date.now()) / 60000);
+          const minutesUntilEnd = Math.round((event.end_time.getTime() - Date.now()) / 60000);
           if (minutesUntilEnd < avail) {
             // the event will end before the full time limit elapses - truncate the calculated available time to match backend
             // clamp to 0 if negative, just in case
@@ -53,6 +53,7 @@ export default function StartModal({ event }: {event: Event}) {
   });
 
   const formattedTimeLimit = availableMinutes
+    // @ts-expect-error - Intl.DurationFormat is not yet in the TypeScript lib, but is browser baseline.
     ? new Intl.DurationFormat('en', { style : 'long' })
       .format({
         hours : Math.floor(availableMinutes / 60),

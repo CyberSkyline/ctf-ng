@@ -1,25 +1,69 @@
-import { COLOR_WARNING } from '@/constants';
+import { COLOR_NEGATIVE, COLOR_POSITIVE, COLOR_WARNING } from '@/constants';
 import { apiMutation } from '@/fetchers';
 import { useAdminChallengeBlueprints } from '@/hooks/challenge';
+import socket from '@/socket';
 import {
   Button,
   Card,
   Code,
   DataList,
   Grid,
+  Spinner,
+  Text,
 } from '@radix-ui/themes';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import { ErrorCallout, WarningCallout } from 'components/Callouts';
-import ImagePullStatus from 'components/ImagePullStatus';
 import Modal from 'components/Modal';
-import { TbDownload, TbPackage } from 'react-icons/tb';
+import { useEffect, useState } from 'react';
+import {
+  TbCancel,
+  TbCheck,
+  TbDownload,
+  TbPackage,
+} from 'react-icons/tb';
 
 export default function ChallengeBlueprintTab({ challengeId }: {challengeId: number}) {
   const { data : blueprints, error } = useAdminChallengeBlueprints(challengeId);
 
-  const handlePull = () => apiMutation(`/admin/challenges/${challengeId}/pull`, {}, {
-    method : 'POST',
-  });
+  const [ pullStates, setPullStates ] = useState<{[key: number]:'pulling' | 'success' | 'fail'}>({});
+  const [ pullErrors, setPullErrors ] = useState<string[]>([]);
+
+  const handlePull = async () => {
+    setPullStates((prev) => {
+      const current = { ...prev };
+      (blueprints || []).forEach((bp) => {
+        current[bp.id] = 'pulling';
+      });
+      return current;
+    });
+    setPullErrors([]);
+
+    return apiMutation(`/admin/challenges/${challengeId}/pull`, {}, {
+      method : 'POST',
+    });
+  };
+
+  useEffect(() => {
+    socket.on('pull-success', ({ id }: {id: number}) => {
+      setPullStates((prev) => ({
+        ...prev,
+        [id] : 'success',
+      }));
+    });
+
+    socket.on('pull-fail', ({ error : pullError, id }: {error: string, id: number}) => {
+      setPullErrors((prev) => ([ ...prev, pullError ]));
+      setPullStates((prev) => ({
+        ...prev,
+        [id] : 'fail',
+      }));
+    });
+
+    return () => {
+      socket.off('pull-success');
+      socket.off('pull-fail');
+    };
+  }, []);
 
   if (error) {
     return <ErrorCallout>{error.message}</ErrorCallout>;
@@ -48,11 +92,27 @@ export default function ChallengeBlueprintTab({ challengeId }: {challengeId: num
         </Modal>
       </AdminSidebarHeader>
 
+      {pullErrors.map((err) => (
+        <ErrorCallout key={err} className="mt-2">{err}</ErrorCallout>
+      ))}
+
       <Grid columns="2" gap="2" mt="2">
         {blueprints?.map((blueprint) => (
           <Card key={blueprint.id} className="mb-3">
             <AdminSidebarHeader title={blueprint.name} icon={<TbPackage />}>
-              <ImagePullStatus id={blueprint.id} />
+              {pullStates[blueprint.id] === 'pulling' && (<Spinner />)}
+              {pullStates[blueprint.id] === 'success' && (
+                <Text color={COLOR_POSITIVE}>
+                  <TbCheck className="inline me-1" />
+                  Pulled
+                </Text>
+              )}
+              {pullStates[blueprint.id] === 'fail' && (
+                <Text color={COLOR_NEGATIVE}>
+                  <TbCancel className="inline me-1" />
+                  Error
+                </Text>
+              )}
             </AdminSidebarHeader>
             <DataList.Root className="!gap-1 !mt-3">
               <DataList.Item>

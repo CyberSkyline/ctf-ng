@@ -6,7 +6,6 @@ import {
 } from '@/constants';
 import { useTeamMembers } from '@/hooks/team';
 import type { Team } from '@/types';
-import { formatDate } from '@/util';
 import { Flex, Grid, Table } from '@radix-ui/themes';
 import AdminLink from 'components/AdminLink';
 import AdminSidebar from 'components/AdminSidebar';
@@ -73,12 +72,12 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
 
         <Statistic
           label="Start Time"
-          value={formatDate(entity.start_timestamp) || 'None'}
+          value={entity.start_timestamp?.toLocaleString() || 'None'}
           size="5"
         />
         <Statistic
           label="End Time"
-          value={formatDate(entity.end_time) || 'None'}
+          value={entity.end_time?.toLocaleString() || 'None'}
           size="5"
         />
 
@@ -112,9 +111,9 @@ export default function TeamSidebar({ entity }: { entity: Team }) {
                     icon={UserIcon}
                   />
                 </Table.Cell>
-                <Table.Cell>{member.sponsor && <SponsorBadge sponsor={member.sponsor} />}</Table.Cell>
+                <Table.Cell><SponsorBadge sponsor={member.sponsor} /></Table.Cell>
                 <Table.Cell><RoleBadge value={member.role} /></Table.Cell>
-                <Table.Cell>{formatDate(member.joined_at)}</Table.Cell>
+                <Table.Cell>{member.joined_at.toLocaleString()}</Table.Cell>
                 <Table.Cell>
                   <Flex direction="row" align="center" gap="4" justify="end">
                     <KickUserModal member={member} solo={members.length === 1} />

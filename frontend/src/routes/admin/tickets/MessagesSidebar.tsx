@@ -22,7 +22,6 @@ import {
 } from '@/hooks/support';
 import { useCurrentUser, useUserEvents } from '@/hooks/users';
 import type { AdminTicket, TicketAttachment } from '@/types';
-import { formatDate } from '@/util';
 import {
   Badge,
   Box,
@@ -365,19 +364,19 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
         <DataList.Item>
           <DataList.Label>Opened Date</DataList.Label>
           <DataList.Value className="whitespace-pre-wrap">
-            {formatDate(openedTimestamp)}
+            {openedTimestamp && openedTimestamp.toLocaleString()}
           </DataList.Value>
         </DataList.Item>
         <DataList.Item>
           <DataList.Label>Closed Date</DataList.Label>
           <DataList.Value className="whitespace-pre-wrap">
-            {formatDate(closedTimestamp)}
+            {closedTimestamp && closedTimestamp.toLocaleString()}
           </DataList.Value>
         </DataList.Item>
         <DataList.Item>
           <DataList.Label>Last Updated</DataList.Label>
           <DataList.Value className="whitespace-pre-wrap">
-            {formatDate(lastUpdated)}
+            {lastUpdated && lastUpdated.toLocaleString()}
           </DataList.Value>
         </DataList.Item>
         <DataList.Item>

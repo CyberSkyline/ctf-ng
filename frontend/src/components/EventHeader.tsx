@@ -1,5 +1,4 @@
 import type { Event } from '@/types';
-import { formatDate } from '@/util';
 import {
   Box,
   Flex,
@@ -29,7 +28,7 @@ export default function EventHeader({
     max_team_size : maxTeamSize,
   } = event;
 
-  const dateRange = (!isNull(startTime) && !isNull(endTime)) && `${formatDate(startTime)} - ${formatDate(endTime)}`;
+  const dateRange = (!isNull(startTime) && !isNull(endTime)) && `${startTime?.toLocaleString()} - ${endTime?.toLocaleString()}`;
 
   return (
     <Flex direction="row" gap="6" align="start">

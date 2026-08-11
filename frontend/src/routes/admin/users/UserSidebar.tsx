@@ -8,7 +8,7 @@ import {
 import { useTeamMembers } from '@/hooks/team';
 import { useUserTeams, useUserWorkspace, useWorkspaceStatus } from '@/hooks/users';
 import type { AdminUser, Team } from '@/types';
-import { formatDate, utf8ToBase64 } from '@/util';
+import { utf8ToBase64 } from '@/util';
 import {
   Badge,
   Box,
@@ -67,7 +67,7 @@ function RegistrationRow({ userId, team }: { userId: number, team: Team }) {
         <RoleBadge value={membership.role} />
       </Table.Cell>
       <Table.Cell>
-        {formatDate(membership?.joined_at)}
+        {membership?.joined_at.toLocaleString()}
       </Table.Cell>
     </Table.Row>
   );
@@ -114,7 +114,7 @@ export default function UserSidebar({ entity }: { entity: AdminUser }) {
         />
         <Statistic
           label="Registered At"
-          value={formatDate(entity.registered_at)}
+          value={entity.registered_at.toLocaleString()}
           size="5"
         />
         <Box>

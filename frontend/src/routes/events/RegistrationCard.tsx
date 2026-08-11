@@ -57,7 +57,7 @@ export default function RegistrationCard({ event }: {event: Event}) {
             <Box>
               <Text color="gray" size="2">Time remaining:</Text>
               <Timer
-                target={new Date(team.end_time)}
+                target={team.end_time}
                 onEnd={() => {
                   // Refresh SWR state on timer end
                   mutate(`/permissions/${event.id}/me`);

@@ -1,13 +1,11 @@
-import { NOTIF_TYPE, COLOR_NEGATIVE } from '@/constants';
+import { NOTIF_TYPE } from '@/constants';
 import {
   markAllNotificationsRead,
   markNotificationRead,
   useMyNotifications,
   useUnreadCount,
-  useNotificationSoundEnabled,
 } from '@/hooks/notifications';
 import type { Notification } from '@/types';
-import { formatDate } from '@/util';
 import {
   Button,
   Card,
@@ -18,43 +16,20 @@ import { ErrorCallout } from 'components/Callouts';
 import {
   includes,
   isEmpty,
-  isNil,
   isUndefined,
   map,
 } from 'lodash';
 import { NavigationMenu } from 'radix-ui';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { TbBell, TbCircleDotFilled, TbNotification } from 'react-icons/tb';
 import { useNavigate } from 'react-router';
 import { twMerge } from 'tailwind-merge';
-import ding from 'assets/audio/ding.mp3';
 
 export default function NotificationsPopover({ triggerClassName, contentClassName }: { triggerClassName?: string, contentClassName?: string }) {
   const { data, error } = useMyNotifications();
   const { data : unreadCount } = useUnreadCount();
   const navigate = useNavigate();
   const [ readError, setReadError ] = useState(null);
-  const [ soundEnabled ] = useNotificationSoundEnabled();
-
-  const previousUnreadCount = useRef<number | undefined>(undefined);
-  const audioRef = useRef<HTMLAudioElement>(new Audio(ding));
-
-  useEffect(() => {
-    const count = unreadCount?.count;
-
-    if (isNil(count)) return;
-
-    // Play the notification sound if the unread count has increased
-    // Only play the sound if the user localstorage setting for notification sound is enabled
-    if (!isUndefined(previousUnreadCount.current) && count > previousUnreadCount.current && soundEnabled === true) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {
-        // throw away the error intentionally
-      });
-    }
-
-    previousUnreadCount.current = count;
-  }, [ unreadCount, soundEnabled ]);
 
   const dateFormat: Intl.DateTimeFormatOptions = {
     month : 'numeric',
@@ -95,7 +70,7 @@ export default function NotificationsPopover({ triggerClassName, contentClassNam
       >
         <Flex direction="column">
           <Text weight={notif.read_at ? 'regular' : 'bold'}>{notif.title}</Text>
-          <Text size="1">{formatDate(notif.created_at, dateFormat)}</Text>
+          <Text size="1">{notif.created_at.toLocaleDateString('en-US', dateFormat)}</Text>
           <Text size="2" wrap="pretty" className="pt-2">{notif.message}</Text>
         </Flex>
       </Card>
@@ -111,7 +86,7 @@ export default function NotificationsPopover({ triggerClassName, contentClassNam
       >
         <TbBell aria-label="Notifications" />
         {unreadCount && unreadCount.count > 0
-          && <TbCircleDotFilled color={COLOR_NEGATIVE} className="absolute -mt-6 ml-2 pulsate" aria-label="Unread" />}
+          && <TbCircleDotFilled color="var(--accent-indicator)" className="absolute -mt-6 ml-2" aria-label="Unread" />}
       </NavigationMenu.Trigger>
       <NavigationMenu.Content
         className={twMerge(contentClassName, 'max-h-86 overflow-y-auto overflow-x-hidden')}

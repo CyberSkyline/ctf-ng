@@ -1,5 +1,5 @@
 import { useAllEvents } from '@/hooks/events';
-import type { AdminEvent } from '@/types';
+import type { Event } from '@/types';
 import { Flex } from '@radix-ui/themes';
 import type { ColDef } from 'ag-grid-community';
 import AdminGrid from 'components/AdminGrid';
@@ -7,7 +7,7 @@ import { ErrorCallout } from 'components/Callouts';
 import EventCreationModal from './EventCreationModal';
 import EventSidebar from './SidebarTabs';
 
-const colDefs: ColDef<AdminEvent>[] = [
+const colDefs: ColDef<Event>[] = [
   {
     field : 'id',
     width : 100,
@@ -31,28 +31,28 @@ const colDefs: ColDef<AdminEvent>[] = [
     field : 'start_time',
     headerName : 'Start Time',
     sort : 'desc',
-    cellDataType : 'dateString',
+    valueFormatter : (params) => params.value && params.value.toLocaleString(),
     filter : true,
     floatingFilter : true,
   },
   {
     field : 'end_time',
     headerName : 'End Time',
-    cellDataType : 'dateString',
+    valueFormatter : (params) => params.value && params.value.toLocaleString(),
     filter : true,
     floatingFilter : true,
   },
   {
     field : 'registration_start_date',
     headerName : 'Registration Start',
-    cellDataType : 'dateString',
+    valueFormatter : (params) => params.value && params.value.toLocaleString(),
     filter : true,
     floatingFilter : true,
   },
   {
     field : 'registration_end_date',
     headerName : 'Registration End',
-    cellDataType : 'dateString',
+    valueFormatter : (params) => params.value && params.value.toLocaleString(),
     filter : true,
     floatingFilter : true,
   },

@@ -12,7 +12,6 @@ from ...core.utils import (
     error_response,
     success_response,
 )
-from ...core.utils.rate_limit import limiter
 from ...core.middleware import (
     user_endpoint,
     public_endpoint,
@@ -131,7 +130,6 @@ class UserSponsor(Resource):
 @users_user_namespace.route("/login")
 class UserLogin(Resource):
     @public_endpoint(json_required=True)
-    @limiter.limit("5 per minute; 20 per hour")
     @users_user_namespace.doc(
         description="User login endpoint",
         responses={
@@ -159,10 +157,6 @@ class UserLogin(Resource):
                 return error_response("Your account has been banned.", "authentication", 403)
 
             if user.password is None:
-                return error_response("Invalid username or password", "authentication", 401)
-
-            if user.ng_users and user.ng_users.oauth_id is not None:
-                # block expo login for oauth accounts
                 return error_response("Invalid username or password", "authentication", 401)
 
             if verify_password(password, user.password):

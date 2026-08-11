@@ -2,28 +2,17 @@ import { OTHER_TAXONOMY } from '@/constants';
 import { useEffect, useState } from 'react';
 
 /**
- * Formats a date for use with a datetime-local input field.
- * @param date Date (or ISO string) to format
+ * Formats a Date object for use with a datetime-local input field.
+ * @param date Date object to format
  * @returns String compatible with datetime-local input
  */
-export function adjustDateForInput(date: Date | string | null): string | null {
+export function adjustDateForInput(date: Date | null): string | null {
   // Adjust the date to be in the format required by datetime-local input
   if (date === null) return null;
   const dateObj = new Date(date);
   const offset = dateObj.getTimezoneOffset();
   const localDate = new Date(dateObj.getTime() - (offset * 60 * 1000));
   return localDate.toISOString().slice(0, 16);
-}
-
-/**
- * Formats a date for display, in the user's locale.
- *
- * @param date Date or ISO date string to format.
- * @param options Intl.DateTimeFormat options, e.g. to format only the date or time portion.
- * @returns Locale-formatted date string, or an empty string if no date was given.
- */
-export function formatDate(date?: Date | string | null, options?: Intl.DateTimeFormatOptions): string {
-  return date ? new Date(date).toLocaleString(undefined, options) : '';
 }
 
 /**

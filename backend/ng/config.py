@@ -2,8 +2,6 @@
 Defines static, system wide config values and constants
 """
 
-import os
-
 # Team Model Field Length Limits
 MAX_TEAM_SIZE = 8
 TEAM_NAME_MAX_LENGTH = 128
@@ -108,6 +106,3 @@ FEEDBACK_MAX_DATA_SIZE = 50000  # 50KB max for entire serialized feedback_data o
 # Global request size limit (Flask MAX_CONTENT_LENGTH)
 # Limits POST body size before parsing to prevent DoS from large payloads
 MAX_REQUEST_SIZE = 16 * 1024 * 1024  # 16MB
-
-# Certificate template storage location. Compute relative to this file to be environment-agnostic.
-CERTIFICATES_DIR = os.path.join(os.path.dirname(__file__), "certificate", "templates")

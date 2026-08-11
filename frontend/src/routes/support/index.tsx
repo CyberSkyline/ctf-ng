@@ -24,16 +24,8 @@ export default function Support() {
     { field : 'subject', headerName : 'Subject' },
     { field : 'event_name', headerName : 'Event Name' },
     { field : 'status', headerName : 'Status', cellRenderer : StatusBadgeCell },
-    {
-      field : 'opened_timestamp',
-      headerName : 'Created Date',
-      cellDataType : 'dateString',
-    },
-    {
-      field : 'last_updated',
-      headerName : 'Last Updated Date',
-      cellDataType : 'dateString',
-    },
+    { field : 'opened_timestamp', headerName : 'Created Date', valueFormatter : (params) => params.value.toLocaleString() },
+    { field : 'last_updated', headerName : 'Last Updated Date', valueFormatter : (params) => params.value.toLocaleString() },
   ];
 
   return (
@@ -58,7 +50,7 @@ export default function Support() {
               domLayout="autoHeight"
               onRowClicked={(e) => navigate(`/support/${e.data?.id}`)}
               onCellKeyDown={(e) => {
-                if ((e.event as KeyboardEvent | null)?.code === 'Space') {
+                if (e.event?.code === 'Space') {
                   navigate(`/support/${e.data?.id}`);
                 }
               }}

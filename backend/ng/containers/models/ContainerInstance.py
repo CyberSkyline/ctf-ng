@@ -15,7 +15,6 @@ from .. constants import DOCKER_RUNNING, DOCKER_BRIDGE, DOCKER_MEM_REGEX, DOCKER
 from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 from ...team.models.Team import Team
 from ...core import BusinessLogicError
-from ...core.utils import utc_now
 from ..utils.redis import get_redis_client
 
 logger = logging.getLogger(__name__)
@@ -36,7 +35,6 @@ class SerializedContainerInstance(TypedDict):
     team_id: int
     hostip: str
     dockerid: str
-    created_at: str | None
 
 class ContainerInstance(db.Model):
     __tablename__ = "ng_container_instances"
@@ -45,8 +43,7 @@ class ContainerInstance(db.Model):
     team_id = db.Column(db.Integer, db.ForeignKey("ng_teams.id"), nullable=False)
     hostip = db.Column(db.String(255), nullable=False)
     dockerid: Mapped[str] = db.Column(db.String(255), nullable=False)
-    # Allow nullabe for old containers that don't have a start time
-    created_at = db.Column(db.DateTime, nullable=True, default=utc_now)
+
     team = db.relationship("Team")
 
     def __repr__(self):
@@ -473,7 +470,6 @@ class ContainerInstance(db.Model):
             team_id=self.team_id,
             hostip=self.hostip,
             dockerid=self.dockerid,
-            created_at=self.created_at,
        )
 
 

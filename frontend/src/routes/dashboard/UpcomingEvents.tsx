@@ -6,7 +6,7 @@ import { Link } from 'react-router';
 
 export default function UpcomingEvents() {
   const { data, error, isLoading } = useMyEvents();
-  const upcomingEvents = data?.filter((event) => !event.start_time || new Date() < new Date(event.start_time));
+  const upcomingEvents = data?.filter((event) => !event.start_time || new Date() < event.start_time);
 
   if (error) {
     return (

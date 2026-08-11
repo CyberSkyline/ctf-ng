@@ -46,7 +46,7 @@ const colDefs: ColDef<Attempt | HintRedemption | ManualPointAward>[] = [
   },
   {
     field : 'timestamp',
-    cellDataType : 'dateString',
+    valueFormatter : ({ value }) => value.toLocaleString(),
     filter : true,
     floatingFilter : true,
     sort : 'desc',
@@ -143,7 +143,7 @@ export default function TeamActivity({ eventId, teamId }: { eventId: number, tea
   // memoize merging the arrays, sorting by timestamp (descending)
   const merged = useMemo(
     () => [ ...(attempts ?? []), ...(hintRedemptions ?? []), ...(manualAwards ?? []) ]
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()),
     [ attempts, hintRedemptions, manualAwards ],
   );
 

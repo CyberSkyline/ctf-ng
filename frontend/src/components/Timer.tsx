@@ -22,7 +22,7 @@ export default function Timer(
   const [ hidden, setHidden ] = useState(false);
 
   useEffect(() => {
-    let interval: number | undefined;
+    let interval: NodeJS.Timeout | undefined;
 
     const updateTimer = () => {
       if (!target) {

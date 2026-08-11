@@ -1,5 +1,4 @@
 import type { TicketMessage } from '@/types';
-import { formatDate } from '@/util';
 import {
   Card,
   Flex,
@@ -34,7 +33,7 @@ export default function TicketMessagesCard({
         >
           <Flex justify="between">
             <Text weight="bold" size="2">{message.author_name}</Text>
-            <Text weight="bold" size="2">{formatDate(message.created_at)}</Text>
+            <Text weight="bold" size="2">{message.created_at.toLocaleString()}</Text>
           </Flex>
           <Separator size="4" className="mb-1" />
           <RadixMarkdown>

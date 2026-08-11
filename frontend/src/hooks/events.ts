@@ -1,6 +1,5 @@
 import { apiMutation } from '@/fetchers';
 import type {
-  AdminEvent,
   Event,
   Score,
   Sponsor,
@@ -36,13 +35,13 @@ export function useEventStatus(eventId: number | null) {
 
   return {
     isRegistrationOpen : !!(data && data.registration_open
-      && (!data.registration_start_date || new Date(data.registration_start_date) <= new Date())
-      && (!data.registration_end_date || new Date(data.registration_end_date) >= new Date())
+      && (!data.registration_start_date || data.registration_start_date <= new Date())
+      && (!data.registration_end_date || data.registration_end_date >= new Date())
     ),
     isOngoing : !!(data
-       && (!data.start_time || new Date(data.start_time) <= new Date())
-       && (!data.end_time || new Date(data.end_time) >= new Date())),
-    isConcluded : !!(data && data.end_time && new Date(data.end_time) < new Date()),
+       && (!data.start_time || data.start_time <= new Date())
+       && (!data.end_time || data.end_time >= new Date())),
+    isConcluded : !!(data && data.end_time && data.end_time < new Date()),
     isLoading,
     error,
     event : data,
@@ -222,7 +221,7 @@ export function useLeaderboard(eventId: number) {
  * This is an admin-only endpoint.
  */
 export function useAllEvents() {
-  return useSWR<AdminEvent[], Error>('/admin/events');
+  return useSWR<Event[], Error>('/admin/events');
 }
 
 /**
@@ -231,7 +230,7 @@ export function useAllEvents() {
  * @param eventId The ID of the event to fetch
  */
 export function useAdminEvent(eventId: number | null) {
-  return useSWR<AdminEvent, Error>(eventId ? `/admin/events/${eventId}` : null);
+  return useSWR<Event, Error>(eventId ? `/admin/events/${eventId}` : null);
 }
 
 export function adminRegisterEvent(eventId: number, userId: number, teamName: string) {
@@ -260,7 +259,7 @@ export function createEvent(event: { name : string }) {
   return apiMutation('/admin/events', event, {
     method : 'POST',
   })
-    .then((data) => (data as Event).id)
+    .then((data): Event => data.id)
     .finally(() => {
       mutate('/admin/events');
     });

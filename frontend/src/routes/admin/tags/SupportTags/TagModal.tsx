@@ -52,7 +52,7 @@ export default function CreateTagModal(
               {(injected) => (
                 <input
                   type="color"
-                  className="rounded focus:outline-none focus:ring-2 focus:ring-[var(--focus-8)]"
+                  className="rounded"
                   {...register('color', {
                     required : 'Please enter a color.',
                   })}

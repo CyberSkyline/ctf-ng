@@ -4,22 +4,17 @@ export interface Event {
   description?: string | null;
   image?: string | null;
   max_team_size: number;
-  start_time: string | null;
-  end_time: string | null;
+  start_time?: Date;
+  end_time?: Date;
   locked: boolean;
   public: boolean;
   registration_open: boolean;
-  registration_start_date: string | null;
-  registration_end_date: string | null;
+  registration_start_date?: Date;
+  registration_end_date?: Date;
   hints_enabled: boolean;
   time_limit_minutes: number | null;
   show_leaderboard: boolean;
   practice: boolean;
-  has_certificate: boolean;
-}
-
-export interface AdminEvent extends Event {
-  certificate_template: string | null;
 }
 
 export interface Sponsor {
@@ -31,7 +26,7 @@ export interface Sponsor {
 export interface UploadedFile {
   filename: string,
   folder: string,
-  last_modified?: string,
+  last_modified?: Date,
   download_url?: string,
 }
 
@@ -40,13 +35,12 @@ export interface User {
   name: string;
   email: string;
   roles: string[];
-  registered_at: string;
+  registered_at: Date;
   affiliation: Sponsor | null;
 }
 
 export interface AdminUser extends User {
   banned: boolean;
-  is_sso: boolean;
 }
 
 export interface Team {
@@ -57,8 +51,8 @@ export interface Team {
   member_count: number;
   ranked: boolean;
   invite_code?: string;
-  start_timestamp: string | null;
-  end_time: string | null;
+  start_timestamp: Date | null;
+  end_time: Date | null;
 }
 
 export interface TeamMember {
@@ -67,7 +61,7 @@ export interface TeamMember {
   user_name: string;
   team_id: number;
   event_id: number;
-  joined_at: string;
+  joined_at: Date;
   role: 'member' | 'captain';
   sponsor?: Sponsor;
 }
@@ -93,7 +87,6 @@ export interface MeChallenge {
   num_questions_solved: number;
   num_questions_available: number;
   num_attempts_made: number;
-  is_completed: boolean;
 }
 
 export interface Question {
@@ -127,7 +120,7 @@ export interface Attempt {
   challenge_id: number;
   question_id: number;
   score_event_id?: number;
-  timestamp: string;
+  timestamp: Date;
   points: number;
   submission: string;
   is_correct: boolean;
@@ -142,7 +135,7 @@ export interface HintRedemption {
   user_id: number;
   team_id: number;
   score_event_id?: number;
-  timestamp: string;
+  timestamp: Date;
   points: number;
   user_name?: string;
   team_name?: string;
@@ -158,7 +151,7 @@ export interface ManualPointAward {
   admin_id: number;
   team_id: number;
   score_event_id: number;
-  timestamp: string;
+  timestamp: Date;
   points: number;
   reason: string;
   admin_name?: string;
@@ -170,7 +163,7 @@ export interface Score {
    team_id: number;
    event_id: number;
    points: number;
-   last_update: string;
+   last_update: Date;
    team_name: string | null;
    last_correct_offset: number;
 }
@@ -181,7 +174,7 @@ export interface ScoreEvent {
   team_id: number;
   team_name: string;
   points: number;
-  timestamp: string;
+  timestamp: Date;
 }
 
 export interface Deployment {
@@ -221,7 +214,6 @@ export interface ContainerInstance {
   team_id: number;
   hostip: string;
   dockerid: string;
-  created_at: string | null;
 }
 
 export interface ContainerStatus {
@@ -239,8 +231,8 @@ export interface Ticket {
   author_id: number;
   author_name: string;
   status: string;
-  opened_timestamp: string;
-  last_updated: string;
+  opened_timestamp: Date;
+  last_updated: Date;
   event_id?: number;
   event_name?: string;
   team_id?: number;
@@ -253,7 +245,7 @@ export interface Ticket {
 export interface TicketAttachment {
   id: number;
   ticket_id: number;
-  uploaded_at: string;
+  uploaded_at: Date;
   uploaded_by: number;
   content_type: string;
   download_url: string;
@@ -274,7 +266,7 @@ export interface AdminTicket extends Ticket {
   assigned_to?: number;
   assigned_to_name?: string;
   muted: boolean;
-  closed_timestamp: string | null;
+  closed_timestamp?: Date;
   tags: TicketTag[];
 }
 
@@ -282,7 +274,7 @@ export interface TicketMessage {
   author_id: number;
   author_name: string;
   author_type: string;
-  created_at: string;
+  created_at: Date;
   id: number;
   text: string;
   ticket_id: number
@@ -294,10 +286,10 @@ export interface Notification {
   title: string;
   message: string;
   recipient_id: number;
-  created_at: string;
+  created_at: Date;
   sender_id?: number;
-  read_at: string | null;
-  expires_at: string | null;
+  read_at?: Date;
+  expires_at?: Date;
   ticket_id?: number;
   team_id?: number;
   event_id?: number;
@@ -313,8 +305,8 @@ export interface Announcement {
   id: number;
   title: string;
   message: string;
-  created_at: string;
-  expires_at: string;
+  created_at: Date;
+  expires_at: Date;
   sender_id: number;
   sender_name: string;
   type: string;
@@ -348,6 +340,6 @@ export interface Feedback {
   event_id: number;
   challenge_id: number;
   feedback_data: Record<string, unknown>;
-  created_at: string;
-  updated_at: string;
+  created_at: Date;
+  updated_at: Date;
 }
