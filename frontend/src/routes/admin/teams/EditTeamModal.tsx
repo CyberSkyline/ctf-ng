@@ -21,12 +21,12 @@ export default function EditTeamModal({
 }) {
   const handleSubmit = async (data: Pick<Team, 'name' | 'ranked' | 'start_timestamp' | 'end_time'>) => adminUpdateTeam(teamToUpdate.id, data);
 
-  // Default values must be converted to datetime-local string format.
-  // valueAsDate (below) only applies to entered values, not default values.
+  // Default value Dates must be converted to datetime-local string format, even though the value is typed as Date.
+  // This is because valueAsDate only applies to entered values, not default values.
   const defaultValues: DefaultValues<Pick<Team, 'name' | 'ranked' | 'start_timestamp' | 'end_time'>> = {
     ...pick(teamToUpdate, [ 'name', 'ranked' ]),
-    start_timestamp : adjustDateForInput(teamToUpdate.start_timestamp || null),
-    end_time : adjustDateForInput(teamToUpdate.end_time || null),
+    start_timestamp : adjustDateForInput(teamToUpdate.start_timestamp || null) as unknown as Date,
+    end_time : adjustDateForInput(teamToUpdate.end_time || null) as unknown as Date,
   };
 
   return (

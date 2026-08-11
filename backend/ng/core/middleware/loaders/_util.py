@@ -61,13 +61,6 @@ def generate_loader_decorator(source: LoaderType, model_name: str, input_key: st
             instance = model_class.find_by_id(model_id)
             if not instance:
                 raise NotFoundError(f"{model_name} with ID {model_id} not found")
-
-            # a nested route names its parents in the path (e.g. the event a challenge is in),
-            # so an instance under a different parent reads as missing rather than loading
-            for key, value in (request.view_args or {}).items():
-                if key != input_key and key.endswith("_id") and getattr(instance, key, value) != value:
-                    raise NotFoundError(f"{model_name} with ID {model_id} not found")
-
             kwargs[output_key] = instance
             return f(*args, **kwargs)
 

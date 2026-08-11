@@ -14,8 +14,6 @@ install_plugin_deps() {
 }
 
 start_dev() {
-  # kill any orphaned celery workers to prevent OOM
-  pkill -f 'celery.*worker' || true
   celery -A CTFd.plugins.ng.containers.tasks worker --loglevel=INFO &
   python serve_debug.py
 }
@@ -48,8 +46,6 @@ start_prod() {
   # Initialize database
   flask db upgrade
 
-  # kill any orphaned celery workers to prevent OOM
-  pkill -f 'celery.*worker' || true
   celery -A CTFd.plugins.ng.containers.tasks worker --loglevel=INFO &
 
   mv init_patch CTFd/__init__.py

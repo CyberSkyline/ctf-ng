@@ -34,7 +34,6 @@ from ...announcements.routes import (
     announcements_user_namespace,
     announcements_admin_namespace,
 )
-from ...certificate.routes import certificates_admin_namespace
 
 
 api_blueprint = Blueprint("plugin_api", __name__)
@@ -184,4 +183,3 @@ api_v1.add_namespace(admin_container_namespace, path="/admin/container")
 api_v1.add_namespace(announcements_admin_namespace, path="/admin/announcements")
 api_v1.add_namespace(sponsors_admin_namespace, path="/admin/sponsors")
 api_v1.add_namespace(feedback_admin_namespace, path="/admin/events")
-api_v1.add_namespace(certificates_admin_namespace, path="/admin/certificates")

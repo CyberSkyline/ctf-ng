@@ -1,5 +1,0 @@
-# IMPORTANT: non-OFL fonts cannot be stored in a public git repo
-# Make sure to restart the backend after adding fonts to this directory.
-*.ttf
-*.otf
-*.TTF

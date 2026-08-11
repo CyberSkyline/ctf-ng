@@ -1,7 +1,6 @@
 import { COLOR_NEGATIVE, COLOR_POSITIVE } from '@/constants';
 import { useContainerStatus } from '@/hooks/container';
 import type { ContainerInstance } from '@/types';
-import { formatDate } from '@/util';
 import {
   Badge,
   Box,
@@ -23,7 +22,7 @@ import RestartContainerModal from './RestartContainerModal';
 export default function ServiceCard({ service }: { service: ContainerInstance }) {
   const { data : statusData, error } = useContainerStatus(service.id);
 
-  const { dockerid, hostip, created_at : createdAt } = service;
+  const { dockerid, hostip } = service;
   const {
     name, image, status, env,
   } = statusData || {};
@@ -49,12 +48,6 @@ export default function ServiceCard({ service }: { service: ContainerInstance })
             </Tooltip>
             <br />
             <Text color="gray">{hostip}</Text>
-            {createdAt && (
-              <>
-                <br />
-                <Text color="gray">{formatDate(createdAt)}</Text>
-              </>
-            )}
           </Box>
         </Flex>
         <Skeleton loading={!statusData}>

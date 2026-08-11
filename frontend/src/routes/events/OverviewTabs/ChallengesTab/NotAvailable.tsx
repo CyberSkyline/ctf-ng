@@ -1,5 +1,4 @@
 import { useEvent, useEventStatus } from '@/hooks/events';
-import { formatDate } from '@/util';
 import {
   Box,
   Container,
@@ -27,7 +26,9 @@ export default function NotAvailable() {
             <Text size="3" color="gray">
               The event will start on
               {' '}
-              {formatDate(event.start_time, { dateStyle : 'long', timeStyle : 'short' })}
+              {event.start_time.toLocaleDateString()}
+              {' at '}
+              {event.start_time.toLocaleTimeString()}
               .
             </Text>
           )}

@@ -1,4 +1,4 @@
-import type { AdminEvent } from '@/types';
+import type { Event } from '@/types';
 import { COLOR_POSITIVE } from '@/constants';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -18,11 +18,10 @@ import FormField from 'components/FormField';
 import FormDropdown from 'components/SelectDropdown';
 import { ErrorCallout } from 'components/Callouts';
 import { directUpload, useFileList, useFileUrl } from '@/hooks/fileuploads';
-import { useCertificateTemplates } from '@/hooks/certificates';
 import { updateEvent } from '@/hooks/events';
 import ActionButtonsGroup from './ActionButtonsGroup';
 
-export default function EventDetailsTab({ event }: { event: AdminEvent }) {
+export default function EventDetailsTab({ event }: { event: Event }) {
   const {
     control,
     register,
@@ -33,11 +32,10 @@ export default function EventDetailsTab({ event }: { event: AdminEvent }) {
     setError,
     clearErrors,
     reset,
-  } = useForm<AdminEvent>({
+  } = useForm<Event>({
     defaultValues : {
       ...omit(event, 'id'),
       image : event?.image || 'None',
-      certificate_template : event?.certificate_template || 'None',
     },
   });
 
@@ -45,21 +43,19 @@ export default function EventDetailsTab({ event }: { event: AdminEvent }) {
     reset({
       ...omit(event, 'id'),
       image : event?.image || 'None',
-      certificate_template : event?.certificate_template || 'None',
     });
   }, [ event, reset ]);
 
   const currentImage = watch('image');
   const { data : gameCards, error : gameCardsError, isLoading : gameCardsLoading } = useFileList('event-cards');
   const { data : fileUrl, error : fileUrlError } = useFileUrl('event-cards', currentImage === 'None' ? '' : currentImage || '');
-  const { data : certificateTemplates, error : certificateTemplatesError, isLoading : certificateTemplatesLoading } = useCertificateTemplates();
 
   const [ uploading, setUploading ] = useState(false);
   const [ isEditing, setIsEditing ] = useState<boolean>(false);
   const [ loading, setLoading ] = useState<boolean>(false);
   const [ updateError, setUpdateError ] = useState<string| null>(null);
 
-  const update = async (data: AdminEvent) => {
+  const update = async (data: Event) => {
     setLoading(true);
     setUpdateError(null);
 
@@ -67,10 +63,6 @@ export default function EventDetailsTab({ event }: { event: AdminEvent }) {
 
     if (updatingEvent.image === 'None') {
       updatingEvent.image = null;
-    }
-
-    if (updatingEvent.certificate_template === 'None') {
-      updatingEvent.certificate_template = null;
     }
 
     updateEvent(event.id, updatingEvent).then(() => {
@@ -192,18 +184,6 @@ export default function EventDetailsTab({ event }: { event: AdminEvent }) {
           {fileUrl && <img src={fileUrl?.download_url} alt="Selected Event" className="max-h-48 object-contain bg-(--gray-1) rounded" />}
           {fileUrlError && (<ErrorCallout>{fileUrlError.message}</ErrorCallout>)}
 
-          <FormDropdown
-            name="certificate_template"
-            label="Certificate"
-            options={certificateTemplates ? certificateTemplates.files.map((file) => ({
-              name : file,
-              value : file,
-            })) : []}
-            disabled={certificateTemplatesLoading || !!certificateTemplatesError}
-            error={errors.certificate_template}
-            control={control}
-          />
-
           {updateError && (<ErrorCallout>{updateError}</ErrorCallout>)}
           {buttonControls()}
         </form>
@@ -228,11 +208,6 @@ export default function EventDetailsTab({ event }: { event: AdminEvent }) {
             <DataList.Value>
               <EventGraphic event={event} className="w-64 rounded-lg shadow-lg" />
             </DataList.Value>
-          </DataList.Item>
-
-          <DataList.Item>
-            <DataList.Label>Certificate</DataList.Label>
-            <DataList.Value>{event.certificate_template || 'None'}</DataList.Value>
           </DataList.Item>
         </DataList.Root>
       )}

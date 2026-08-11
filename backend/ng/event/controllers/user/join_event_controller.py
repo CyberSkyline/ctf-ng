@@ -25,7 +25,7 @@ def join_event_controller(event: Event, user : User, invite_code : str = "", tea
         Demographic.create_demographic(user_id=user.id, event_id=event.id, commit=False)
         if invite_code:
             team = Team.find_by_invite_code(invite_code)
-            if not team or team.event_id != event.id:
+            if not team:
                 raise NotFoundError(f"Team with invite code {invite_code} not found")
 
             team.add_member(user.id, commit=False)

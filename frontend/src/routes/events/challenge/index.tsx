@@ -52,12 +52,7 @@ export default function Challenge() {
   }, []);
 
   return (
-    <Group
-      orientation={isHorizontal ? 'horizontal' : 'vertical'}
-      className="absolute inset-2 !flex-col-reverse xl:!flex-row"
-      // override the inline 100% width/height from react-resizable-panels, which over-constrains the absolute inset
-      style={{ width : 'auto', height : 'auto' }}
-    >
+    <Group orientation={isHorizontal ? 'horizontal' : 'vertical'} className="absolute inset-2 !flex-col-reverse xl:!flex-row">
       <Panel defaultSize="512px" minSize="512px" maxSize="50%">
         <ChallengeSidebar />
       </Panel>

@@ -1,6 +1,5 @@
 import { DeploymentIcon, EventIcon, TeamIcon } from '@/constants';
-import { TbStar } from 'react-icons/tb';
-import type { AdminEvent } from '@/types';
+import type { Event } from '@/types';
 import { Tabs } from '@radix-ui/themes';
 import AdminLink from 'components/AdminLink';
 import AdminSidebar from 'components/AdminSidebar';
@@ -13,18 +12,13 @@ import EventFeedbackTab from './EventFeedbackTab';
 import EventGameplayTab from './EventGameplayTab';
 import EventRegistrationTab from './EventRegistrationTab';
 
-export default function EventSidebar({ entity }: { entity: AdminEvent }) {
+export default function EventSidebar({ entity }: { entity: Event }) {
   const [ searchParams, setSearchParams ] = useSearchParams();
   const headerId = useId();
 
   return (
     <AdminSidebar labelId={headerId}>
       <AdminSidebarHeader title={entity.name} icon={<EventIcon />} id={headerId}>
-        <AdminLink
-          to={`/events/${entity.id}?tab=leaderboard`}
-          icon={TbStar}
-          label="Leaderboard"
-        />
         <AdminLink
           to="/admin/deployments"
           filter={{ event_name : { filterType : 'text', type : 'equals', filter : entity.name } }}

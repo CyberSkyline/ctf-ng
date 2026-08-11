@@ -17,13 +17,9 @@ def load_team_by_invite_code(source : LoaderType = LoaderType.BODY, input_key="i
             else:
                 raise ValueError(f"Invalid loader type: {source}")
 
-            event = kwargs.get("event")
-            if not event:
-                raise ValueError("Event must be loaded first")
-
             team = Team.find_by_invite_code(invite_code)
 
-            if not team or team.event_id != event.id:
+            if not team:
                 raise NotFoundError(f"Invalid invite code: {invite_code}")
 
             kwargs[output_key] = team
