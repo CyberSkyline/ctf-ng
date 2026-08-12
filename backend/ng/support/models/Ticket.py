@@ -8,12 +8,16 @@ from typing import TYPE_CHECKING, Any, NotRequired, TypedDict
 
 from CTFd.models import Users, db
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import contains_eager, joinedload, selectinload
 
 from ... import config
+from ...challenge.models.Challenge import Challenge
 from ...core.exceptions import BusinessLogicError, NotFoundError
 from ...core.utils import utc_now
+from ...core.utils.ag_grid import apply_filter_model, apply_sort_model, paginate
 from ...core.utils.validator import BaseValidator
+from ...event.models.Event import Event
+from ...team.models.Team import Team
 
 if TYPE_CHECKING:
     from .TicketMessage import TicketMessage
@@ -376,6 +380,42 @@ class Ticket(db.Model):
         Find a ticket by ID.
         """
         return cls.query.get(ticket_id)
+
+    @classmethod
+    def find_paginated(cls, sort_model, filter_model, start_row, end_row) -> tuple[list[Ticket], int]:
+        """Fetch a page of tickets for the admin grid's server-side row model.
+
+        Returns (tickets, total_count) with the ag-grid sort/filter model applied.
+        """
+        column_map = {
+            "id": cls.id,
+            "status": cls.status,
+            "subject": cls.subject,
+            "author_name": Users.name,
+            "last_updated": cls.last_updated,
+            "event_name": Event.name,
+            "team_name": Team.name,
+            "challenge_name": Challenge.name,
+            "opened_timestamp": cls.opened_timestamp,
+        }
+        query = (cls.query
+            .outerjoin(Users, cls.author_id == Users.id)
+            .outerjoin(Event, cls.event_id == Event.id)
+            .outerjoin(Team, cls.team_id == Team.id)
+            .outerjoin(Challenge, cls.challenge_id == Challenge.id)
+            .options(
+                contains_eager(cls.author),
+                contains_eager(cls.event),
+                contains_eager(cls.team),
+                contains_eager(cls.challenge),
+                joinedload(cls.assigned_user),
+                selectinload(cls.tags),
+                selectinload(cls.messages),
+            )
+        )
+        query = apply_filter_model(query, filter_model, column_map)
+        query = apply_sort_model(query, sort_model, column_map, cls.id)
+        return paginate(query, start_row, end_row)
 
     @classmethod
     def find_filtered_tickets(

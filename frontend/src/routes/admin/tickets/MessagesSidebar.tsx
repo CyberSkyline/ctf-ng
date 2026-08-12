@@ -21,7 +21,7 @@ import {
   useSupportTags,
 } from '@/hooks/support';
 import { useCurrentUser, useUserEvents } from '@/hooks/users';
-import type { AdminTicket, TicketAttachment } from '@/types';
+import type { TicketAttachment } from '@/types';
 import { formatDate } from '@/util';
 import {
   Badge,
@@ -51,21 +51,23 @@ import {
 import { useEffect, useId, useState } from 'react';
 import { TbMessage, TbX } from 'react-icons/tb';
 
-export default function MessagesSidebar({ entity : selectedRow }: { entity: AdminTicket }) {
+export default function MessagesSidebar({ selectedId }: { selectedId: number }) {
+  const { data, error } = useAdminTicketMessages(selectedId);
+
   // Dropdowns
   const [ actionError, setActionError ] = useState<string | null>(null);
   const [ actionLoading, setActionLoading ] = useState<boolean>(false);
-  const [ assignedUser, setAssignedUser ] = useState<string>(selectedRow.assigned_to ? String(selectedRow.assigned_to) : '');
-  const [ selectedEvent, setSelectedEvent ] = useState<string | undefined>(selectedRow.event_id ? String(selectedRow.event_id) : '');
-  const [ selectedChallenge, setSelectedChallenge ] = useState<string | undefined>(selectedRow.challenge_id ? String(selectedRow.challenge_id) : '');
+  const [ assignedUser, setAssignedUser ] = useState<string>(data?.ticket?.assigned_to ? String(data.ticket?.assigned_to) : '');
+  const [ selectedEvent, setSelectedEvent ] = useState<string | undefined>(data?.ticket?.event_id ? String(data.ticket?.event_id) : '');
+  const [ selectedChallenge, setSelectedChallenge ] = useState<string | undefined>(data?.ticket?.challenge_id ? String(data.ticket?.challenge_id) : '');
   const [ selectedTag, setSelectedTag ] = useState<string | undefined>('');
 
   useEffect(() => {
-    setAssignedUser(selectedRow.assigned_to ? String(selectedRow.assigned_to) : '');
-    setSelectedEvent(selectedRow.event_id ? String(selectedRow.event_id) : '');
-    setSelectedChallenge(selectedRow.challenge_id ? String(selectedRow.challenge_id) : '');
+    setAssignedUser(data?.ticket?.assigned_to ? String(data.ticket?.assigned_to) : '');
+    setSelectedEvent(data?.ticket?.event_id ? String(data.ticket?.event_id) : '');
+    setSelectedChallenge(data?.ticket?.challenge_id ? String(data.ticket?.challenge_id) : '');
     setSelectedTag('');
-  }, [ selectedRow.id, selectedRow.assigned_to, selectedRow.event_id, selectedRow.challenge_id ]);
+  }, [ data?.ticket?.id, data?.ticket?.assigned_to, data?.ticket?.event_id, data?.ticket?.challenge_id ]);
 
   // Rich Text Reply Messages
   const [ version, setVersion ] = useState<number>(0); // To reinit the RichTextEditor
@@ -78,21 +80,16 @@ export default function MessagesSidebar({ entity : selectedRow }: { entity: Admi
   const { data : assignableSupportUsers } = useSupportRoles();
   const { data : allTags } = useSupportTags();
 
-  const { data, error } = useAdminTicketMessages(selectedRow.id);
-  const { data : userEvents } = useUserEvents(data?.ticket.author_id);
-  const { data : userChallenges } = useEventChallenges(data?.ticket.event_id || null);
+  const { data : userEvents } = useUserEvents(data?.ticket?.author_id);
+  const { data : userChallenges } = useEventChallenges(data?.ticket?.event_id || null);
 
   const headerId = useId();
 
-  if (isNil(data) || error) {
-    return (
-      <ErrorCallout>
-        {isUndefined(error)
-          ? 'The data for this ticket could not be found'
-          : error.message}
-      </ErrorCallout>
-    );
-  }
+  if (error) return <ErrorCallout>{error.message}</ErrorCallout>;
+  // data is momentarily the bare grid row (heated by AdminGrid on selection) until
+  // the by-id fetch resolves the {ticket, messages, attachments} envelope -- treat
+  // that the same as still-loading, not an error.
+  if (isNil(data) || isNil(data.ticket)) return null;
   const { ticket, messages, attachments } = data;
   const {
     id : ticketId,
