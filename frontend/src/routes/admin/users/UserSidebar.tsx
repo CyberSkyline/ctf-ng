@@ -6,8 +6,13 @@ import {
   UserIcon,
 } from '@/constants';
 import { useTeamMembers } from '@/hooks/team';
-import { useUserTeams, useUserWorkspace, useWorkspaceStatus } from '@/hooks/users';
-import type { AdminUser, Team } from '@/types';
+import {
+  useUser,
+  useUserTeams,
+  useUserWorkspace,
+  useWorkspaceStatus,
+} from '@/hooks/users';
+import type { Team } from '@/types';
 import { formatDate, utf8ToBase64 } from '@/util';
 import {
   Badge,
@@ -73,55 +78,59 @@ function RegistrationRow({ userId, team }: { userId: number, team: Team }) {
   );
 }
 
-export default function UserSidebar({ entity }: { entity: AdminUser }) {
-  const { data : teamsData, error : teamsError } = useUserTeams(entity.id);
-  const { data : workspaceData, error : workspaceError } = useUserWorkspace(entity.id);
-  const { data : workspaceStatus, error : workspaceStatusError } = useWorkspaceStatus(entity.id);
+export default function UserSidebar({ selectedId }: { selectedId: number }) {
+  const { data : user, error : userError } = useUser(selectedId);
+  const { data : teamsData, error : teamsError } = useUserTeams(selectedId);
+  const { data : workspaceData, error : workspaceError } = useUserWorkspace(selectedId);
+  const { data : workspaceStatus, error : workspaceStatusError } = useWorkspaceStatus(selectedId);
 
   const headerId = useId();
 
+  if (userError) return <ErrorCallout>{userError.message}</ErrorCallout>;
+  if (!user) return null;
+
   return (
     <AdminSidebar labelId={headerId}>
-      <AdminSidebarHeader title={entity.name} icon={<UserIcon />} id={headerId}>
-        <ImpersonateUserButton user={entity} />
-        <BanUserModal user={entity} />
-        <AdminUpdateUserModal user={entity} />
+      <AdminSidebarHeader title={user.name} icon={<UserIcon />} id={headerId}>
+        <ImpersonateUserButton user={user} />
+        <BanUserModal user={user} />
+        <AdminUpdateUserModal user={user} />
       </AdminSidebarHeader>
 
-      {entity.banned && (<WarningCallout>This user is banned.</WarningCallout>)}
+      {user.banned && (<WarningCallout>This user is banned.</WarningCallout>)}
 
       <Grid columns="2" gap="4" align="center" justify="between">
         <Statistic
           label="Name"
-          value={entity.name}
+          value={user.name}
           size="5"
         />
         <Statistic
           label="ID"
-          value={entity.id}
+          value={user.id}
           size="5"
         />
 
         <Statistic
           label="Email"
-          value={entity.email}
+          value={user.email}
           size="5"
         />
         <Statistic
           label="Sponsor"
-          value={entity.affiliation?.name || 'N/A'}
+          value={user.affiliation?.name || 'N/A'}
           size="5"
         />
         <Statistic
           label="Registered At"
-          value={formatDate(entity.registered_at)}
+          value={formatDate(user.registered_at)}
           size="5"
         />
         <Box>
           <Text size="2" color="gray">Roles</Text>
           <Flex direction="row" wrap="wrap">
-            {entity.roles.length === 0 && <Heading asChild size="5" weight="bold"><span>None</span></Heading>}
-            {entity.roles.map((role) => (
+            {user.roles.length === 0 && <Heading asChild size="5" weight="bold"><span>None</span></Heading>}
+            {user.roles.map((role) => (
               <RoleBadge key={role} value={role} size="2" />
             ))}
           </Flex>
@@ -130,7 +139,7 @@ export default function UserSidebar({ entity }: { entity: AdminUser }) {
       </Grid>
 
       <AdminSidebarHeader title="Registrations">
-        <AdminRegisterUserModal userId={entity.id} />
+        <AdminRegisterUserModal userId={user.id} />
       </AdminSidebarHeader>
       {teamsError && <ErrorCallout>{teamsError.message}</ErrorCallout> }
       {teamsData && (
@@ -147,7 +156,7 @@ export default function UserSidebar({ entity }: { entity: AdminUser }) {
             {teamsData.map((team) => (
               <RegistrationRow
                 key={team.id}
-                userId={entity.id}
+                userId={user.id}
                 team={team}
               />
             ))}
@@ -200,10 +209,10 @@ export default function UserSidebar({ entity }: { entity: AdminUser }) {
                 </Table.Cell>
                 <Table.Cell align="right">
                   <Flex direction="row" justify="end" gap="4">
-                    <UserVncModal userId={entity.id} />
-                    <RestartWorkspaceModal userId={entity.id} />
-                    <RecycleWorkspaceModal userId={entity.id} />
-                    <DeleteWorkspaceModal userId={entity.id} />
+                    <UserVncModal userId={user.id} />
+                    <RestartWorkspaceModal userId={user.id} />
+                    <RecycleWorkspaceModal userId={user.id} />
+                    <DeleteWorkspaceModal userId={user.id} />
                   </Flex>
                 </Table.Cell>
               </Table.Row>
