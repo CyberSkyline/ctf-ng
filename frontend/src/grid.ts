@@ -39,6 +39,6 @@ export const radixTheme = themeQuartz
       foregroundColor : 'var(--gray-12)',
       accentColor : 'var(--accent-9)',
       fontFamily : 'var(--default-font-family)',
-      browserColorScheme : 'light dark',
+      browserColorScheme : 'inherit',
     },
   );
