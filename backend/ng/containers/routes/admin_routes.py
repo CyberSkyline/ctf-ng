@@ -10,8 +10,10 @@ from ..controllers.vnc import forward_vnc
 from ..models.ContainerInstance import ContainerInstance
 from ..models.IndvidualContainer import IndvidualContainer
 
+from ...core.exceptions import NotFoundError
 from ...core.middleware import (
     admin_endpoint,
+    ag_grid_query,
 )
 
 from ...core.middleware.loaders import (
@@ -30,16 +32,37 @@ admin_container_namespace = Namespace("admin containers", description="admin con
 @admin_container_namespace.route("")
 class Containers(Resource):
     @admin_container_namespace.doc(
-        description="Get service groups by teams",
+        description="Get a page of deployments (ag-grid server-side row model)",
         responses={
             200: "Success",
             400: "Bad request"
         },
     )
     @admin_endpoint()
-    def get(self, **kwargs):
-        res = ContainerInstance.get_service_instances()
-        return success_response(res)
+    @ag_grid_query
+    def get(self, start_row, end_row, sort_model, filter_model, **kwargs):
+        rows, total = ContainerInstance.find_deployments_paginated(sort_model, filter_model, start_row, end_row)
+        return success_response({"rows": rows, "lastRow": total})
+
+
+@admin_container_namespace.route("/<int:instance_id>")
+class DeploymentDetail(Resource):
+    @admin_container_namespace.doc(
+        description="Get one deployment's summary by any instance id belonging to it",
+        params={
+            "instance_id": "Id of any container instance in the deployment",
+        },
+        responses={
+            200: "Success",
+            404: "Deployment not found"
+        },
+    )
+    @admin_endpoint()
+    def get(self, instance_id, **kwargs):
+        deployment = ContainerInstance.find_deployment(instance_id)
+        if deployment is None:
+            raise NotFoundError(f"Deployment not found for instance {instance_id}")
+        return success_response(deployment)
 
 
 @admin_container_namespace.route("/stats")

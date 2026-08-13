@@ -4,8 +4,7 @@ import {
   EventIcon,
   TeamIcon,
 } from '@/constants';
-import { useDeploymentServices, useDeploymentVariables } from '@/hooks/container';
-import type { Deployment } from '@/types';
+import { useDeployment, useDeploymentServices, useDeploymentVariables } from '@/hooks/container';
 import { Grid, Skeleton, Table } from '@radix-ui/themes';
 import AdminLink from 'components/AdminLink';
 import AdminSidebar from 'components/AdminSidebar';
@@ -18,42 +17,46 @@ import RecycleDeploymentModal from './RecycleDeploymentModal';
 import DeleteDeploymentModal from './DeleteDeploymentModal';
 import ConnectDeploymentModal from './ConnectDeploymentModal';
 
-export default function DeploymentSidebar({ entity }: {entity: Deployment}) {
-  const { data : serviceData, error } = useDeploymentServices(entity.challenge_id, entity.team_id);
-  const { data : variables, error : varsError } = useDeploymentVariables(entity.challenge_id, entity.team_id);
+export default function DeploymentSidebar({ selectedId }: { selectedId: number }) {
+  const { data : deployment, error : deploymentError } = useDeployment(selectedId);
+  const { data : serviceData, error } = useDeploymentServices(deployment?.challenge_id ?? null, deployment?.team_id ?? null);
+  const { data : variables, error : varsError } = useDeploymentVariables(deployment?.challenge_id ?? null, deployment?.team_id ?? null);
   const headerId = useId();
+
+  if (deploymentError) return <ErrorCallout>{deploymentError.message}</ErrorCallout>;
+  if (!deployment) return null;
 
   return (
     <AdminSidebar labelId={headerId}>
       <AdminSidebarHeader
-        title={`${entity.challenge_name} - ${entity.team_name}`}
+        title={`${deployment.challenge_name} - ${deployment.team_name}`}
         icon={<DeploymentIcon />}
         id={headerId}
       >
         <AdminLink
           to="/admin/challenges"
-          id={entity.challenge_id}
+          id={deployment.challenge_id}
           icon={ChallengeIcon}
           label="Challenge"
         />
         <AdminLink
           to="/admin/teams"
-          id={entity.team_id}
+          id={deployment.team_id}
           icon={TeamIcon}
           label="Team"
         />
         <AdminLink
           to="/admin/events"
-          id={entity.event_id}
+          id={deployment.event_id}
           icon={EventIcon}
           label="Event"
         />
       </AdminSidebarHeader>
 
       <AdminSidebarHeader title="Services" />
-      <RecycleDeploymentModal challengeId={entity.challenge_id} teamId={entity.team_id} />
-      <DeleteDeploymentModal challengeId={entity.challenge_id} teamId={entity.team_id} />
-      <ConnectDeploymentModal challengeId={entity.challenge_id} teamId={entity.team_id} />
+      <RecycleDeploymentModal challengeId={deployment.challenge_id} teamId={deployment.team_id} />
+      <DeleteDeploymentModal challengeId={deployment.challenge_id} teamId={deployment.team_id} />
+      <ConnectDeploymentModal challengeId={deployment.challenge_id} teamId={deployment.team_id} />
       {error && <ErrorCallout>{error.message}</ErrorCallout>}
       <Skeleton loading={!serviceData}>
         <Grid columns="2" gap="2">

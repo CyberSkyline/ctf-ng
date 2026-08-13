@@ -25,16 +25,20 @@ export function recycleChallengeContainers(eventId: number, challengeId: number)
 
 /* ADMIN ENDPOINTS */
 
-export function useAllDeployments() {
-  return useSWR<Deployment[], Error>('/admin/container');
+export function useDeployment(selectedId: number | null) {
+  return useSWR<Deployment, Error>(selectedId ? `/admin/container/${selectedId}` : null);
 }
 
-export function useDeploymentServices(challengeId: number, teamId: number) {
-  return useSWR<ContainerInstance[], Error>(`/admin/container/challenge/${challengeId}/team/${teamId}/services`);
+export function useDeploymentServices(challengeId: number | null, teamId: number | null) {
+  return useSWR<ContainerInstance[], Error>(
+    challengeId && teamId ? `/admin/container/challenge/${challengeId}/team/${teamId}/services` : null,
+  );
 }
 
-export function useDeploymentVariables(challengeId: number, teamId: number) {
-  return useSWR<Record<string, string>, Error>(`/admin/container/challenge/${challengeId}/team/${teamId}/variables`);
+export function useDeploymentVariables(challengeId: number | null, teamId: number | null) {
+  return useSWR<Record<string, string>, Error>(
+    challengeId && teamId ? `/admin/container/challenge/${challengeId}/team/${teamId}/variables` : null,
+  );
 }
 
 export function useContainerStatus(id: number) {
@@ -85,7 +89,7 @@ export function deleteDeployment(challengeId: number, teamId: number) {
     method : 'POST',
   }).then(() => {
     mutate(`/admin/container/challenge/${challengeId}/team/${teamId}/services`);
-    mutate('/admin/container/');
+    mutate('/admin/container');
   });
 }
 

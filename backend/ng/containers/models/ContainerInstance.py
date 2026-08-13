@@ -3,7 +3,7 @@ import docker
 import io
 import re
 import redis_lock
-from sqlalchemy import func, select
+from sqlalchemy import func, select, tuple_
 from sqlalchemy.orm import Mapped
 from typing import TypedDict
 import logging
@@ -16,6 +16,7 @@ from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 from ...team.models.Team import Team
 from ...core import BusinessLogicError
 from ...core.utils import utc_now
+from ...core.utils.ag_grid import apply_filter_model, apply_sort_model, paginate
 from ..utils.redis import get_redis_client
 
 logger = logging.getLogger(__name__)
@@ -245,12 +246,15 @@ class ContainerInstance(db.Model):
                             raise err
 
     @classmethod
-    def get_service_instances(cls):
+    def _deployment_rows_query(cls):
+        """Base query for one row per deployment. Groups containers by challenge and team.
+
+        Callers apply their own filter, sort, and pagination on top.
+        """
         from ...challenge.models.Challenge import Challenge
-        from ...team.models.Team import Team
         from ...event.models.Event import Event
 
-        qr = (db.session.query(
+        return (db.session.query(
                 cls.id,
                 cls.blueprint,
                 cls.team_id,
@@ -265,10 +269,42 @@ class ContainerInstance(db.Model):
             .outerjoin(Event, Team.event_id == Event.id)
             .outerjoin(ContainerBlueprint, cls.blueprint == ContainerBlueprint.id)
             .outerjoin(Challenge, ContainerBlueprint.challenge_id == Challenge.id)
-            .group_by(Challenge.id, cls.team_id)
-            .all())
+            .group_by(Challenge.id, cls.team_id))
 
-        return qr
+    @classmethod
+    def find_deployments_paginated(cls, sort_model, filter_model, start_row, end_row):
+        """Fetch a page of deployments for the admin grid's server-side row model.
+
+        Returns (rows, total_count) with the ag-grid sort/filter model applied.
+        """
+        from ...challenge.models.Challenge import Challenge
+        from ...event.models.Event import Event
+
+        column_map = {
+            "challenge_name": Challenge.name,
+            "team_name": Team.name,
+            "event_name": Event.name,
+            "containers": func.count(cls.id.distinct()),
+        }
+        query = apply_filter_model(cls._deployment_rows_query(), filter_model, column_map)
+        # Tiebreaker is the group key. No single column identifies a deployment.
+        query = apply_sort_model(query, sort_model, column_map, (Challenge.id, cls.team_id))
+        return paginate(query, start_row, end_row)
+
+    @classmethod
+    def find_deployment(cls, instance_id: int):
+        """Resolve a deployment from any instance id in it, since it has no single-column key."""
+        from ...challenge.models.Challenge import Challenge
+
+        target = (
+            db.session.query(cls.team_id, ContainerBlueprint.challenge_id)
+            .outerjoin(ContainerBlueprint, cls.blueprint == ContainerBlueprint.id)
+            .filter(cls.id == instance_id)
+        )
+
+        return (cls._deployment_rows_query()
+            .filter(tuple_(cls.team_id, Challenge.id).in_(target))
+            .first())
 
     @classmethod
     def get_service_group(cls, challenge_id: int, team_id: int) -> list[SerializedContainerInstance]:
@@ -535,5 +571,3 @@ class ContainerInstance(db.Model):
 
         if commit:
             db.session.commit()
-
-

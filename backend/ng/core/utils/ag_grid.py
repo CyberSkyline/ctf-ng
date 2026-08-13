@@ -101,7 +101,10 @@ def apply_filter_model(query, filter_model, column_map):
 
 
 def apply_sort_model(query, sort_model, column_map, tiebreaker):
-    """Sort ``query`` by an ag-grid sort model. Always ends on ``tiebreaker`` for deterministic paging."""
+    """Sort ``query`` by an ag-grid sort model. Always ends on ``tiebreaker`` for deterministic paging.
+
+    ``tiebreaker`` may be a single column or a tuple of columns.
+    """
     order = []
     for item in sort_model if isinstance(sort_model, list) else []:
         if not isinstance(item, dict):
@@ -109,7 +112,8 @@ def apply_sort_model(query, sort_model, column_map, tiebreaker):
         column = column_map.get(item.get("colId"))
         if column is not None:
             order.append(column.desc() if item.get("sort") == "desc" else column.asc())
-    order.append(tiebreaker.asc())
+    tiebreakers = tiebreaker if isinstance(tiebreaker, list | tuple) else (tiebreaker,)
+    order.extend(column.asc() for column in tiebreakers)
     return query.order_by(None).order_by(*order)
 
 
