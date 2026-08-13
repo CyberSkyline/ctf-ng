@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, NotRequired, TypedDict
 
 from CTFd.models import Users, db
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import contains_eager, joinedload, selectinload
+from sqlalchemy.orm import aliased, contains_eager, joinedload, selectinload
 
 from ... import config
 from ...challenge.models.Challenge import Challenge
@@ -387,11 +387,13 @@ class Ticket(db.Model):
 
         Returns (tickets, total_count) with the ag-grid sort/filter model applied.
         """
+        AssignedUser = aliased(Users)
         column_map = {
             "id": cls.id,
             "status": cls.status,
             "subject": cls.subject,
             "author_name": Users.name,
+            "assigned_to_name": AssignedUser.name,
             "last_updated": cls.last_updated,
             "event_name": Event.name,
             "team_name": Team.name,
@@ -400,15 +402,16 @@ class Ticket(db.Model):
         }
         query = (cls.query
             .outerjoin(Users, cls.author_id == Users.id)
+            .outerjoin(AssignedUser, cls.assigned_to == AssignedUser.id)
             .outerjoin(Event, cls.event_id == Event.id)
             .outerjoin(Team, cls.team_id == Team.id)
             .outerjoin(Challenge, cls.challenge_id == Challenge.id)
             .options(
                 contains_eager(cls.author),
+                contains_eager(cls.assigned_user, alias=AssignedUser),
                 contains_eager(cls.event),
                 contains_eager(cls.team),
                 contains_eager(cls.challenge),
-                joinedload(cls.assigned_user),
                 selectinload(cls.tags),
                 selectinload(cls.messages),
             )

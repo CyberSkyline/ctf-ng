@@ -69,6 +69,21 @@ const colDefs: ColDef<AdminTicket>[] = [
     floatingFilter : true,
   },
   {
+    field : 'assigned_to_name',
+    headerName : 'Assignee',
+    cellDataType : 'text',
+    cellRenderer : (params: ICellRendererParams<AdminTicket>) => params.data && (
+      <NameLinkCell
+        id={params.data.assigned_to}
+        name={params.data.assigned_to_name}
+        linkTo={`/admin/users?id=${params.data.assigned_to}`}
+        icon={UserIcon}
+      />
+    ),
+    filter : true,
+    floatingFilter : true,
+  },
+  {
     field : 'last_updated',
     headerName : 'Updated Date',
     cellDataType : 'dateString',
@@ -141,6 +156,7 @@ export default function AdminTickets() {
         sidebarComponent={MessagesSidebar}
         stopCellSelection={[
           'author_name',
+          'assigned_to_name',
           'event_name',
           'team_name',
           'challenge_name',
