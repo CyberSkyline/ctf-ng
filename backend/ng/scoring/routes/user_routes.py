@@ -2,7 +2,7 @@
 User API routes for scoring
 """
 
-from CTFd.utils.user import get_current_user
+from ...core.utils.current_user import get_current_user
 from flask import request
 from flask_restx import Namespace, Resource
 
