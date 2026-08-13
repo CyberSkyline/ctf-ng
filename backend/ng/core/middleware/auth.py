@@ -5,7 +5,7 @@ Resource loading and permissions are handled by separate decorators.
 
 from functools import wraps
 
-from CTFd.utils.user import get_current_user
+from ..utils.current_user import get_current_user
 from flask import request, abort
 
 from ...user.models.User import User

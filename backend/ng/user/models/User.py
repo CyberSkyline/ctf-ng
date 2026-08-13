@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Any, TypedDict
 
 from CTFd.models import db
+from flask import g, has_request_context
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -174,7 +175,7 @@ class User(db.Model):
         return (cls.query
             .options(
                 joinedload(cls.ctfd_user),
-                selectinload(cls.user_roles)
+                joinedload(cls.user_roles).joinedload(UserRole.role)
             )
             .get(user_id)
         )
@@ -190,18 +191,19 @@ class User(db.Model):
         Returns:
             User: The found or created user instance
         """
-        user = (cls.query
-            .options(
-                joinedload(cls.affiliation),
-                joinedload(cls.ctfd_user),
-                selectinload(cls.user_roles)
+        # Memoized per-request since the auth chain looks the same user up more than once
+        cache = g.setdefault("_ng_user_by_ctfd_id", {}) if has_request_context() else {}
+        if ctfd_user_id not in cache:
+            user = (cls.query
+                .options(
+                    joinedload(cls.affiliation),
+                    joinedload(cls.ctfd_user),
+                    joinedload(cls.user_roles).joinedload(UserRole.role)
+                )
+                .get(ctfd_user_id)
             )
-            .get(ctfd_user_id)
-        )
-
-        if not user:
-            user = cls.create_user(ctfd_user_id, commit=commit)
-        return user
+            cache[ctfd_user_id] = user or cls.create_user(ctfd_user_id, commit=commit)
+        return cache[ctfd_user_id]
 
     @classmethod
     def get_all_users(cls):
@@ -211,7 +213,7 @@ class User(db.Model):
             .options(
                 joinedload(cls.affiliation),
                 joinedload(cls.ctfd_user),
-                selectinload(cls.user_roles)
+                selectinload(cls.user_roles).joinedload(UserRole.role)
             )
             .all()
         )

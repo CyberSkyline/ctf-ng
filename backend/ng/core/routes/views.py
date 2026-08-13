@@ -5,7 +5,7 @@ All user-accessed URLs use the same view for the frontend application.
 from typing import Any
 
 from CTFd.utils import get_app_config
-from CTFd.utils.user import get_current_user
+from ..utils.current_user import get_current_user
 from flask import Blueprint, render_template
 from flask import current_app as app
 
