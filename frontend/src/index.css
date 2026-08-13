@@ -16,6 +16,15 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* sync native UI (scrollbars, form elements) with next-themes configuration */
+.dark {
+  color-scheme: dark;
+}
+
+.light {
+  color-scheme: light;
+}
+
 .radix-themes {
   --default-font-family: Inter, sans-serif;
   --em-font-family: Inter, sans-serif;
