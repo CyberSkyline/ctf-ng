@@ -6,6 +6,11 @@ SCRIPT_DIR=$(dirname $BASH_SOURCE)
 ENV_PATH=$(realpath "$SCRIPT_DIR/../.env")
 
 prompt_user() {
+  # Scripts can set ASSUME_YES=true (e.g. after parsing a --yes flag) to skip this prompt.
+  if [[ "${ASSUME_YES:-false}" == "true" ]]; then
+    return 0
+  fi
+
   local message="\033[1;33m$1\033[0m"
   echo -ne "$message"
   read -p " (y/n): " response
