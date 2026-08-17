@@ -1,0 +1,93 @@
+- name: iptables
+  hosts: dockerhostprod
+  become: true
+  remote_user: ubuntu
+  tasks:
+    - name: Setup allow list table
+      ansible.builtin.iptables:
+        chain: ALLOWLIST
+        chain_management: true
+    - name: Setup return for ALLOWLIST
+      ansible.builtin.iptables:
+        chain: ALLOWLIST
+        action: insert
+        jump: RETURN
+    - name: DOCKER-USER default drop
+      ansible.builtin.iptables:
+        action: insert
+        chain: DOCKER-USER
+        jump: DROP
+    - name: Allow 192.168.x.x
+      ansible.builtin.iptables:
+        action: insert
+        chain: DOCKER-USER
+        jump: ACCEPT
+        destination: 192.168.0.0/16
+    - name: Allow 172.16.x.x
+      ansible.builtin.iptables:
+        action: insert
+        chain: DOCKER-USER
+        jump: ACCEPT
+        destination: 172.16.0.0/12
+    - name: Allow 10.x.x.x
+      ansible.builtin.iptables:
+        action: insert
+        chain: DOCKER-USER
+        jump: ACCEPT
+        destination: 10.0.0.0/8
+    - name: Drop to our internal
+      ansible.builtin.iptables:
+        action: insert
+        chain: DOCKER-USER
+        jump: DROP
+        destination: 10.51.0.0/16
+    - name: Allow proxy traffic from 10.51.4.x
+      ansible.builtin.iptables:
+        action: insert
+        chain: DOCKER-USER
+        jump: ACCEPT
+        destination: 10.51.4.0/24
+        ctstate:
+          - ESTABLISHED
+          - RELATED
+    - name: Allow proxy traffic from 10.51.3.x
+      ansible.builtin.iptables:
+        action: insert
+        chain: DOCKER-USER
+        jump: ACCEPT
+        destination: 10.51.3.0/24
+        ctstate:
+          - ESTABLISHED
+          - RELATED
+    - name: Allow traffic to 8.8.8.8
+      ansible.builtin.iptables:
+        action: insert
+        chain: DOCKER-USER
+        jump: ACCEPT
+        destination: 8.8.8.8
+    - name: Allow traffic from 8.8.8.8
+      ansible.builtin.iptables:
+        action: insert
+        chain: DOCKER-USER
+        jump: ACCEPT
+        source: 8.8.8.8
+    - name: Send through allow list
+      ansible.builtin.iptables:
+        action: insert
+        chain: DOCKER-USER
+        jump: ALLOWLIST
+    - name: Disallow vnc workstation connections
+      ansible.builtin.iptables:
+        action: insert
+        chain: DOCKER-USER
+        jump: DROP
+        destination: 172.24.0.0/13
+        source: 172.24.0.0/13
+    - name: Ensure iptables persist
+      ansible.builtin.apt:
+        name: iptables-persistent
+        state: present
+    - name: Persist iptables
+      community.general.iptables_state:
+        state: saved
+        path: /etc/iptables/rules.v4
