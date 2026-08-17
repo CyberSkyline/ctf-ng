@@ -1,7 +1,7 @@
 - name: Sysctl config
   # Replace with inventory conf
   # for docker hosts
-  hosts: dockerhosts
+  hosts: challenge
   become: true
   # Replace with your remote user
   remote_user: user
@@ -19,3 +19,4 @@
         value: '256'
         state: present
 
+# TODO: this will become part of a larger playbook to provision new challenge hosts

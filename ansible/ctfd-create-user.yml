@@ -1,9 +1,9 @@
 - name: Create CTFd user
-  hosts: all
+  hosts: manager
   # Semaphore survey variables:
   #   ctfd_user_email    - email for the new user                (String, required)
   #   ctfd_user_password - password for the new user             (Secret, required)
-  #   ctfd_user_admin    - grant admin role                       (Boolean, optional)
+  #   ctfd_user_admin    - grant admin role                       (Boolean(enum), optional)
   #   ctfd_user_name     - display name                           (String, optional)
   tasks:
     - name: Run create_user.sh
