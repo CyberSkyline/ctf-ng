@@ -26,27 +26,31 @@ export default function AdminRegisterUserModal({ userId }: {userId: number}) {
 
   const lastEventRef = useRef('');
 
-  const handleSubmit = async ({ event, joinCode, teamName }: {event: string, joinCode: string, teamName: string}) => {
+  const handleSubmit = async ({ event, team }: {event: string, team: string}) => {
     const eventId = +event;
 
     if (!eventId) {
       throw new Error('No event selected');
     }
 
-    if (!joinCode) {
+    if (!team) {
       throw new Error('No team selected');
     }
 
-    if (joinCode === 'new') {
-      if (!teamName) {
+    // a new team's name is wrapped in quotes so it can't be mistaken for a real invite code
+    const newTeamMatch = team.match(/^"([\s\S]*)"$/);
+
+    if (newTeamMatch) {
+      const newTeamName = newTeamMatch[1];
+
+      if (!newTeamName) {
         throw new Error('No team name provided');
       }
 
-      return adminRegisterEvent(eventId, userId, teamName);
+      return adminRegisterEvent(eventId, userId, newTeamName);
     }
 
-    // selectedTeam is a join code
-    return adminRegisterEventTeamJoin(eventId, userId, joinCode);
+    return adminRegisterEventTeamJoin(eventId, userId, team);
   };
 
   return (
@@ -68,8 +72,7 @@ export default function AdminRegisterUserModal({ userId }: {userId: number}) {
       defaultValues={
         {
           event : '',
-          joinCode : '',
-          teamName : '',
+          team : '',
         }
       }
     >
@@ -77,13 +80,16 @@ export default function AdminRegisterUserModal({ userId }: {userId: number}) {
         control, watch, formState : { errors }, setValue,
       }) => {
         const currentEvent = watch('event');
+        const currentTeam = watch('team');
         const selectedEvent: Event | null = eventsMap[currentEvent] || null;
 
         if (currentEvent !== lastEventRef.current) {
-          // the previously selected team belongs to a different event
           lastEventRef.current = currentEvent;
-          setValue('joinCode', '');
-          setValue('teamName', '');
+
+          // a quoted new team name isn't tied to the previous event, so it's fine to keep
+          if (!currentTeam.startsWith('"')) {
+            setValue('team', '');
+          }
         }
 
         return (
@@ -114,7 +120,7 @@ export default function AdminRegisterUserModal({ userId }: {userId: number}) {
             />
             {selectedEvent && (
               <FormSearchField
-                name="joinCode"
+                name="team"
                 label="Team"
                 control={control}
                 datasource={teamsDatasource}
@@ -126,15 +132,12 @@ export default function AdminRegisterUserModal({ userId }: {userId: number}) {
                   // only teams with an open slot are joinable
                   member_count : { filterType : 'number', type : 'lessThan', filter : selectedEvent.max_team_size },
                 }}
-                createFreeformItem={(input) => {
-                  setValue('teamName', String(input));
-                  return { invite_code : 'new', name : String(input) };
-                }}
+                createFreeformItem={(input) => ({ invite_code : `"${input}"`, name : String(input) })}
                 placeholder="Search or create a team..."
                 rules={
                   { required : 'Team is required.' }
                 }
-                error={errors.joinCode}
+                error={errors.team}
               />
             )}
           </>
