@@ -182,7 +182,7 @@ class ContainerBlueprint(db.Model):
 
 
     def pull_image(self, user_id):
-        DOCKER_HOST = get_app_config("DOCKER_HOST")
-
-        client = get_client(DOCKER_HOST)
-        client.pull_image(self.image, user_id, self.id)
+        DOCKER_HOST = get_app_config("DOCKER_HOST").split(",")
+        for host in DOCKER_HOST:
+            client = get_client(host)
+            client.pull_image(self.image, user_id, self.id)

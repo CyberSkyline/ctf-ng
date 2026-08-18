@@ -54,7 +54,7 @@ export function useContainerLogs(containerId: number) {
 }
 
 export function useProvisionerStats() {
-  return useSWR<{ containers_running: number; os: string; cpus: number, memory: number }, Error>(
+  return useSWR<[ { containers_running: number; os: string; cpus: number, memory: number, ip : string } ], Error>(
     '/admin/container/stats',
     { refreshInterval : 30000 }, // Refresh metrics every 30 sec while they are on the page
   );

@@ -9,6 +9,7 @@ from typing import TypedDict
 import logging
 
 from ..utils.get_client import get_client
+from ..utils.scheduler import get_client_ip_round_robin
 from ..utils.Client import Client
 from CTFd.utils import get_app_config
 from .. constants import DOCKER_RUNNING, DOCKER_BRIDGE, DOCKER_MEM_REGEX, DOCKER_QUOTA_CONST
@@ -63,11 +64,13 @@ class ContainerInstance(db.Model):
 
         db_exists = cls.query.filter_by(blueprint=blueprint, team_id=team.id).first()
 
-        DOCKER_HOST = get_app_config("DOCKER_HOST")
+        # DOCKER_HOST = get_app_config("DOCKER_HOST")
+        DOCKER_HOST = get_client_ip_round_robin()
         client = get_client(DOCKER_HOST)
 
         if db_exists:
             try:
+                client = get_client(db_exists.hostip)
                 ctr = client.get_running(db_exists.dockerid)
 
             ## Container Needs created
@@ -348,8 +351,12 @@ class ContainerInstance(db.Model):
         if lock.acquire(blocking=False):
             instances = cls.get_instance_group(challenge_id, team_id)
 
-            DOCKER_HOST = get_app_config("DOCKER_HOST")
-            client = get_client(DOCKER_HOST)
+            # DOCKER_HOST = get_app_config("DOCKER_HOST")
+            # The bellow net detach code might not work with multi host
+            # We might need a util function that checks each node for the overlay net
+            # To disconnect any indv containers on those hosts
+            # jDOCKER_HOST = get_client_ip_round_robin()
+            #client = get_client(DOCKER_HOST)
             for instance in instances:
                 instance.remove()
 
@@ -357,21 +364,24 @@ class ContainerInstance(db.Model):
             indv_ctrs = []
             for blueprint in blueprints:
                 for net in blueprint.networks:
-                    net_obj = client.get_network_by_name(cls.render_network_name(team_id, net, challenge_id))
-                    if net_obj:
-                        try:
-                            # In the case of a team game there might be vnc containers
-                            # That are not the requesting user's
-                            connected_ctrs = client.api.inspect_network(net_obj.id)['Containers']
-                            for connected_ctr in connected_ctrs:
-                                # Internal swarm overlay container
-                                # We cannot disconnect ths
-                                if not connected_ctr == f"lb-{net_obj.name}":
-                                    indv_ctrs.append(connected_ctr)
-                                    net_obj.disconnect(connected_ctr)
-                            net_obj.remove()
-                        except Exception:
-                            pass
+                    DOCKER_HOST = get_app_config("DOCKER_HOST").split(",")
+                    for host in DOCKER_HOST:
+                        client = get_client(host)
+                        net_obj = client.get_network_by_name(cls.render_network_name(team_id, net, challenge_id))
+                        if net_obj:
+                            try:
+                                # In the case of a team game there might be vnc containers
+                                # That are not the requesting user's
+                                connected_ctrs = client.api.inspect_network(net_obj.id)['Containers']
+                                for connected_ctr in connected_ctrs:
+                                    # Internal swarm overlay container
+                                    # We cannot disconnect ths
+                                    if not connected_ctr == f"lb-{net_obj.name}":
+                                        indv_ctrs.append(connected_ctr)
+                                        net_obj.disconnect(connected_ctr)
+                                net_obj.remove()
+                            except Exception:
+                                pass
             lock.release()
             return indv_ctrs
         else:
@@ -400,7 +410,7 @@ class ContainerInstance(db.Model):
                     ctrs.append(cls.create_container_instance(blueprint.id, team, commit=False))
 
             except Exception as err:
-                DOCKER_HOST = get_app_config("DOCKER_HOST")
+                DOCKER_HOST = get_client_ip_round_robin()
                 client = get_client(DOCKER_HOST)
                 for ctr in ctrs:
                     ctr.remove()

@@ -56,7 +56,7 @@ class Client(docker.DockerClient):
 
     def pull_image(self, image, user_id, blueprint_id):
         auth_repo = get_app_config("CONTAINER_REGISTRY")
-        host = get_app_config("DOCKER_HOST")
+        hosts = get_app_config("DOCKER_HOST").split(",")
 
         #  Auth repo will default to blank str not none
         if auth_repo != "" and re.search(auth_repo, image):
@@ -71,7 +71,9 @@ class Client(docker.DockerClient):
                     "username": get_app_config("CONTAINER_REGISTRY_USER"),
                     "password": get_app_config("CONTAINER_REGISTRY_PASSWORD"),
                 }
-            host = get_app_config("DOCKER_HOST")
-            pull_image_celery.delay(host, image, user_id, blueprint_id, auth_conf=auth)
+            hosts = get_app_config("DOCKER_HOST").split(",")
+            for host in hosts:
+                pull_image_celery.delay(host, image, user_id, blueprint_id, auth_conf=auth)
         else:
-            pull_image_celery.delay(host, image, user_id, blueprint_id)
+            for host in hosts:
+                pull_image_celery.delay(host, image, user_id, blueprint_id)

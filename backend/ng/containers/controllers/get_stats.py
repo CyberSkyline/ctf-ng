@@ -7,16 +7,20 @@ class SeralizedDockerInfo(TypedDict):
     os: str
     cpus: int
     memory: int
+    ip: str
 
 def get_stats():
 
-    DOCKER_HOST = get_app_config("DOCKER_HOST")
-    client = get_client(DOCKER_HOST)
-    client_info = client.api.info()
+    DOCKER_HOST = get_app_config("DOCKER_HOST").split(",")
+    client_info = []
+    for host in DOCKER_HOST:
+        client = get_client(host)
+        client_info.append(client.api.info())
 
-    return SeralizedDockerInfo(
-        containers_running = client_info["ContainersRunning"],
-        os = client_info["OperatingSystem"],
-        cpus = client_info["NCPU"],
-        memory = client_info["MemTotal"],
-    )
+    return [  SeralizedDockerInfo(
+        containers_running = host["ContainersRunning"],
+        os = host["OperatingSystem"],
+        cpus = host["NCPU"],
+        memory = host["MemTotal"],
+        ip = host["Swarm"]["NodeAddr"],
+    ) for host in client_info]
