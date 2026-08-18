@@ -1,4 +1,4 @@
-import { SSOPATH } from '@/constants';
+import { SSO_LOGIN_PATH, SSO_REGISTRATION_PATH } from '@/constants';
 import {
   Box,
   Button,
@@ -35,8 +35,14 @@ export default function Login() {
             </Text>
 
             <Button asChild size="4" className="!w-full">
-              <Link to={SSOPATH} reloadDocument>
+              <Link to={SSO_LOGIN_PATH} reloadDocument>
                 Log in with SSO
+              </Link>
+            </Button>
+
+            <Button asChild size="4" variant="soft" className="!w-full">
+              <Link to={SSO_REGISTRATION_PATH} reloadDocument>
+                Create SSO Account
               </Link>
             </Button>
 
