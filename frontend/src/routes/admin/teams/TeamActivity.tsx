@@ -135,7 +135,7 @@ const colDefs: ColDef<Attempt | HintRedemption | ManualPointAward>[] = [
   },
 ];
 
-export default function TeamActivity({ eventId, teamId }: { eventId: number, teamId: number }) {
+export default function TeamActivity({ eventId, teamId }: { eventId: number | null, teamId: number | null }) {
   const { data : attempts, error : attemptsError, isLoading : attemptsLoading } = useTeamAttempts(eventId, teamId);
   const { data : hintRedemptions, error : hintsError, isLoading : hintsLoading } = useTeamHintRedemptions(eventId, teamId);
   const { data : manualAwards, error : manualAwardsError, isLoading : manualAwardsLoading } = useTeamManualAwards(eventId, teamId);
@@ -156,7 +156,7 @@ export default function TeamActivity({ eventId, teamId }: { eventId: number, tea
         columnDefs={colDefs}
         rowData={merged}
         theme={radixTheme}
-        loading={attemptsLoading || hintsLoading || manualAwardsLoading}
+        loading={!eventId || !teamId || attemptsLoading || hintsLoading || manualAwardsLoading}
         loadingOverlayComponent={Spinner}
         className="min-h-120"
       />

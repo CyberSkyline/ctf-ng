@@ -6,7 +6,12 @@ import {
 } from '@/constants';
 import { useTeam, useTeamMembers } from '@/hooks/team';
 import { formatDate } from '@/util';
-import { Flex, Grid, Table } from '@radix-ui/themes';
+import {
+  Flex,
+  Grid,
+  Skeleton,
+  Table,
+} from '@radix-ui/themes';
 import AdminLink from 'components/AdminLink';
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
@@ -23,77 +28,94 @@ import TeamActivity from './TeamActivity';
 import SponsorBadge from './SponsorBadge';
 
 export default function TeamSidebar({ selectedId }: { selectedId: number }) {
-  const { data : team, error } = useTeam(selectedId);
-  const { data : members, error : membersError } = useTeamMembers(selectedId);
+  const { data : team, error, isLoading : teamLoading } = useTeam(selectedId);
+  const { data : members, error : membersError, isLoading : membersLoading } = useTeamMembers(selectedId);
   const headerId = useId();
 
-  if (error) return <ErrorCallout>{error.message}</ErrorCallout>;
-  if (!team) return null;
+  if (error) {
+    return (
+      <AdminSidebar labelId={headerId}>
+        <ErrorCallout>{error.message}</ErrorCallout>
+      </AdminSidebar>
+    );
+  }
 
   return (
     <AdminSidebar labelId={headerId}>
-      <AdminSidebarHeader title={team.name} icon={<TeamIcon />} id={headerId}>
-        <AdminLink
-          to="/admin/deployments"
-          filter={{
-            team_name : { filterType : 'text', type : 'equals', filter : team.name },
-            event_name : { filterType : 'text', type : 'equals', filter : team.event_name },
-          }}
-          icon={DeploymentIcon}
-          label="Deployments"
-        />
-        <AdminLink
-          to="/admin/events"
-          id={team.event_id}
-          icon={EventIcon}
-          label="Event"
-        />
-        <EditTeamModal teamToUpdate={team} />
+      <AdminSidebarHeader
+        title={team?.name ?? 'Loading'}
+        icon={<TeamIcon />}
+        id={headerId}
+        loading={teamLoading}
+      >
+        {team && (
+          <>
+            <AdminLink
+              to="/admin/deployments"
+              filter={{
+                team_name : { filterType : 'text', type : 'equals', filter : team.name },
+                event_name : { filterType : 'text', type : 'equals', filter : team.event_name },
+              }}
+              icon={DeploymentIcon}
+              label="Deployments"
+            />
+            <AdminLink
+              to="/admin/events"
+              id={team.event_id}
+              icon={EventIcon}
+              label="Event"
+            />
+            <EditTeamModal teamToUpdate={team} />
+          </>
+        )}
       </AdminSidebarHeader>
 
-      <Grid columns="2" gap="4" align="center" justify="between">
-        <Statistic
-          label="Name"
-          value={team.name}
-          size="5"
-        />
-        <Statistic
-          label="ID"
-          value={team.id}
-          size="5"
-        />
+      <Skeleton loading={teamLoading}>
+        <Grid columns="2" gap="4" align="center" justify="between">
+          <Statistic
+            label="Name"
+            value={team?.name ?? ''}
+            size="5"
+          />
+          <Statistic
+            label="ID"
+            value={team?.id ?? ''}
+            size="5"
+          />
 
-        <Statistic
-          label="Event"
-          value={team.event_name || 'Unknown'}
-          size="5"
-        />
-        <Statistic
-          label="Invite Code"
-          value={team.invite_code || 'None'}
-          size="5"
-        />
+          <Statistic
+            label="Event"
+            value={team?.event_name ?? 'Unknown'}
+            size="5"
+          />
+          <Statistic
+            label="Invite Code"
+            value={team?.invite_code ?? 'None'}
+            size="5"
+          />
 
-        <Statistic
-          label="Start Time"
-          value={formatDate(team.start_timestamp) || 'None'}
-          size="5"
-        />
-        <Statistic
-          label="End Time"
-          value={formatDate(team.end_time) || 'None'}
-          size="5"
-        />
+          <Statistic
+            label="Start Time"
+            value={formatDate(team?.start_timestamp) || 'None'}
+            size="5"
+          />
+          <Statistic
+            label="End Time"
+            value={formatDate(team?.end_time) || 'None'}
+            size="5"
+          />
 
-        <Statistic
-          label="Ranked"
-          value={team.ranked ? 'Yes' : 'No'}
-          size="5"
-        />
-      </Grid>
+          <Statistic
+            label="Ranked"
+            value={team?.ranked ? 'Yes' : 'No'}
+            size="5"
+          />
+        </Grid>
+      </Skeleton>
 
       <AdminSidebarHeader title="Members" />
       {membersError && <ErrorCallout>{membersError.message}</ErrorCallout> }
+      {membersLoading && <Skeleton className="min-h-24" />}
       {members && (
         <Table.Root className="w-full">
           <Table.Header>
@@ -131,9 +153,9 @@ export default function TeamSidebar({ selectedId }: { selectedId: number }) {
       )}
 
       <AdminSidebarHeader title="Activity">
-        <ScoreAdjustModal team={team} />
+        {team && <ScoreAdjustModal team={team} />}
       </AdminSidebarHeader>
-      <TeamActivity eventId={team.event_id} teamId={team.id} />
+      <TeamActivity eventId={team?.event_id ?? null} teamId={team?.id ?? null} />
     </AdminSidebar>
   );
 }
