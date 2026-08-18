@@ -21,9 +21,12 @@ type AdminGridProps<T> = {
   gridOptions?: GridOptions;
   stopCellSelection?: string[]; // colIds of cells
 } & (
-  // client-side: rows supplied directly
+  // client-side: row data is supplied directly via rowData
+  // sidebar gets passed model objects directly
   | { rowData: T[]; collectionKey?: never; sidebarComponent?: React.ComponentType<{ entity: T }> }
-  // server-side: rows come from collectionKey
+  // server-side: grid fetches data by block.
+  // collectionKey defines the paginated endpoint to fetch from, and the grid will reload blocks on SWR mutations to that key.
+  // sidebar gets passed an ID to fetch via hook. grid warms the SWR cache with the selected model object if available.
   | { collectionKey: string; rowData?: never; sidebarComponent?: React.ComponentType<{ selectedId: number }> }
 );
 
