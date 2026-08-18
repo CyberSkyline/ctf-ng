@@ -20,6 +20,7 @@ import {
   Flex,
   Grid,
   Heading,
+  Skeleton,
   Table,
   Text,
   Tooltip,
@@ -79,69 +80,81 @@ function RegistrationRow({ userId, team }: { userId: number, team: Team }) {
 }
 
 export default function UserSidebar({ selectedId }: { selectedId: number }) {
-  const { data : user, error : userError } = useUser(selectedId);
-  const { data : teamsData, error : teamsError } = useUserTeams(selectedId);
-  const { data : workspaceData, error : workspaceError } = useUserWorkspace(selectedId);
+  const { data : user, error : userError, isLoading : userLoading } = useUser(selectedId);
+  const { data : teamsData, error : teamsError, isLoading : teamsLoading } = useUserTeams(selectedId);
+  const { data : workspaceData, error : workspaceError, isLoading : workspaceLoading } = useUserWorkspace(selectedId);
   const { data : workspaceStatus, error : workspaceStatusError } = useWorkspaceStatus(selectedId);
 
   const headerId = useId();
 
-  if (userError) return <ErrorCallout>{userError.message}</ErrorCallout>;
-  if (!user) return null;
+  if (userError) {
+    return (
+      <AdminSidebar labelId={headerId}>
+        <ErrorCallout>{userError.message}</ErrorCallout>
+      </AdminSidebar>
+    );
+  }
 
   return (
     <AdminSidebar labelId={headerId}>
-      <AdminSidebarHeader title={user.name} icon={<UserIcon />} id={headerId}>
-        <ImpersonateUserButton user={user} />
-        <BanUserModal user={user} />
-        <AdminUpdateUserModal user={user} />
+      <AdminSidebarHeader title={user?.name ?? 'Loading'} icon={<UserIcon />} id={headerId} loading={userLoading}>
+        {user && (
+          <>
+            <ImpersonateUserButton user={user} />
+            <BanUserModal user={user} />
+            <AdminUpdateUserModal user={user} />
+          </>
+        )}
       </AdminSidebarHeader>
 
-      {user.banned && (<WarningCallout>This user is banned.</WarningCallout>)}
+      {user?.banned && (<WarningCallout>This user is banned.</WarningCallout>)}
 
-      <Grid columns="2" gap="4" align="center" justify="between">
-        <Statistic
-          label="Name"
-          value={user.name}
-          size="5"
-        />
-        <Statistic
-          label="ID"
-          value={user.id}
-          size="5"
-        />
+      <Skeleton loading={userLoading}>
+        <Grid columns="2" gap="4" align="center" justify="between">
+          <Statistic
+            label="Name"
+            value={user?.name ?? ''}
+            size="5"
+          />
+          <Statistic
+            label="ID"
+            value={user?.id ?? ''}
+            size="5"
+          />
 
-        <Statistic
-          label="Email"
-          value={user.email}
-          size="5"
-        />
-        <Statistic
-          label="Sponsor"
-          value={user.affiliation?.name || 'N/A'}
-          size="5"
-        />
-        <Statistic
-          label="Registered At"
-          value={formatDate(user.registered_at)}
-          size="5"
-        />
-        <Box>
-          <Text size="2" color="gray">Roles</Text>
-          <Flex direction="row" wrap="wrap">
-            {user.roles.length === 0 && <Heading asChild size="5" weight="bold"><span>None</span></Heading>}
-            {user.roles.map((role) => (
-              <RoleBadge key={role} value={role} size="2" />
-            ))}
-          </Flex>
-        </Box>
+          <Statistic
+            label="Email"
+            value={user?.email ?? ''}
+            size="5"
+          />
+          <Statistic
+            label="Sponsor"
+            value={user?.affiliation?.name || 'N/A'}
+            size="5"
+          />
+          <Statistic
+            label="Registered At"
+            value={formatDate(user?.registered_at)}
+            size="5"
+          />
+          <Box>
+            <Text size="2" color="gray">Roles</Text>
+            <Flex direction="row" wrap="wrap">
+              {user?.roles.length === 0 && <Heading asChild size="5" weight="bold"><span>None</span></Heading>}
+              {user?.roles.map((role) => (
+                <RoleBadge key={role} value={role} size="2" />
+              ))}
+            </Flex>
+          </Box>
 
-      </Grid>
+        </Grid>
+      </Skeleton>
 
       <AdminSidebarHeader title="Registrations">
-        <AdminRegisterUserModal userId={user.id} />
+        {user && <AdminRegisterUserModal userId={user.id} />}
       </AdminSidebarHeader>
       {teamsError && <ErrorCallout>{teamsError.message}</ErrorCallout> }
+      {teamsLoading && <Skeleton className="min-h-24" />}
       {teamsData && (
         <Table.Root>
           <Table.Header>
@@ -156,7 +169,7 @@ export default function UserSidebar({ selectedId }: { selectedId: number }) {
             {teamsData.map((team) => (
               <RegistrationRow
                 key={team.id}
-                userId={user.id}
+                userId={selectedId}
                 team={team}
               />
             ))}
@@ -170,6 +183,7 @@ export default function UserSidebar({ selectedId }: { selectedId: number }) {
           ? <InfoCallout>This user does not have a workspace.</InfoCallout>
           : <ErrorCallout>{workspaceError.message}</ErrorCallout>
         ) }
+      {workspaceLoading && !workspaceError && <Skeleton className="min-h-24" />}
       {workspaceData && (
         <>
           { workspaceStatusError && (
@@ -209,10 +223,10 @@ export default function UserSidebar({ selectedId }: { selectedId: number }) {
                 </Table.Cell>
                 <Table.Cell align="right">
                   <Flex direction="row" justify="end" gap="4">
-                    <UserVncModal userId={user.id} />
-                    <RestartWorkspaceModal userId={user.id} />
-                    <RecycleWorkspaceModal userId={user.id} />
-                    <DeleteWorkspaceModal userId={user.id} />
+                    <UserVncModal userId={selectedId} />
+                    <RestartWorkspaceModal userId={selectedId} />
+                    <RecycleWorkspaceModal userId={selectedId} />
+                    <DeleteWorkspaceModal userId={selectedId} />
                   </Flex>
                 </Table.Cell>
               </Table.Row>
