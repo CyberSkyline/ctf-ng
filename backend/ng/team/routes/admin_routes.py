@@ -11,6 +11,7 @@ from ...core.utils import (
 )
 from ...core.middleware import (
     admin_endpoint,
+    ag_grid_query,
 )
 from ...core.middleware.loaders import (
     LoaderType,
@@ -34,21 +35,21 @@ teams_admin_namespace = Namespace(
 @teams_admin_namespace.route("")
 class TeamList(Resource):
     @admin_endpoint()
+    @ag_grid_query
     @teams_admin_namespace.doc(
-        description="Get all teams",
+        description="Get a page of teams (ag-grid server-side row model)",
         responses={
             200: "Success",
             403: "Forbidden - Admin access required",
-            404: "No teams found",
             500: "Internal Server Error",
         },
     )
-    def get(self, **kwargs):
+    def get(self, start_row, end_row, sort_model, filter_model, **kwargs):
         """
-        Get all teams
+        Get a page of teams for the admin grid
         """
-        teams = Team.get_all_teams()
-        return success_response(teams)
+        teams, total = Team.find_paginated(sort_model, filter_model, start_row, end_row)
+        return success_response({"rows": teams, "lastRow": total})
 
 
 @teams_admin_namespace.route("/<int:team_id>")
