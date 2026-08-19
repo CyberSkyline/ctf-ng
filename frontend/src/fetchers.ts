@@ -1,12 +1,24 @@
-import type { BareFetcher } from 'swr';
+import useSWR, { type BareFetcher, type Key, type SWRResponse } from 'swr';
 import { APIPREFIX } from './constants';
+
+type ApiResponse<T> = {
+  success: boolean;
+  data: T;
+  isAdminOverride: boolean;
+};
+
+type AdminOverrideSWRResponse<Data, Error> =
+  Omit<SWRResponse<ApiResponse<Data>, Error>, 'data'> & {
+    data: Data | undefined;
+    isAdminOverride: boolean;
+  };
 
 /**
  * Parses data and errors out of backend API responses.
  * @param res API response to parse.
  * @returns data field of the response if successful, or throws an error if the response indicates failure or cannot be parsed.
  */
-async function parseResponseData(res: Response) {
+async function parseResponseData<T>(res: Response): Promise<ApiResponse<T>> {
   const data = await res.text();
 
   let parsedData: unknown;
@@ -45,7 +57,7 @@ async function parseResponseData(res: Response) {
 
   // If the response indicates success, return the data.
   // This will end up in the data property when SWR hooks are used.
-  return (parsedData as { data: unknown }).data;
+  return parsedData as ApiResponse<T>;
 }
 
 /**
@@ -55,7 +67,21 @@ async function parseResponseData(res: Response) {
  * @returns the parsed response data
  * @throws Error if an error is returned or response cannot be parsed
  */
-export const apiFetcher: BareFetcher = (resource, init) => fetch(APIPREFIX + resource, init).then(parseResponseData);
+export const apiFetcher: BareFetcher = (resource, init) => fetch(APIPREFIX + resource, init)
+  .then(parseResponseData)
+  .then((parsedData) => (parsedData as { data: unknown }).data);
+
+/**
+ * Keeps extra metadata from the backend API response, such as isAdminOverride.
+ * @param resource the resource to fetch with isAdminOverride
+ * @param init additional options to pass to fetch
+ * @returns Error if an error is returned or response cannot be parsed
+ */
+export const apiMetadataFetcher = <T>(
+  resource: string,
+  init?: RequestInit,
+): Promise<ApiResponse<T>> => fetch(APIPREFIX + resource, init)
+    .then((res) => parseResponseData<T>(res));
 
 /**
  * Function used to perform API mutations.
@@ -77,7 +103,7 @@ export const apiMutation = async (resource: string, body: unknown, init?: Reques
     body : JSON.stringify(body),
   });
   const json = await parseResponseData(res);
-  return json;
+  return json.data;
 };
 
 /**
@@ -97,5 +123,27 @@ export const fileApiMutation = async (resource: string, formData: FormData, init
     body : formData,
   });
   const json = await parseResponseData(res);
-  return json;
+  return json.data;
 };
+
+/**
+ * This is a wrapper to replace the useSWR hook usage.
+ * By using this hook, you will automatically have access to the isAdminOverride property, which indicates whether the data was fetched with admin privileges.
+ * isAdminOverride defaults to false unless the backend explicitly returns it as true.
+ *
+ * EX: const { data, isLoading, isAdminOverride } = useAdminOverrideSWR(cacheKey);
+ */
+export function useAdminOverrideSWR<Data, Error = unknown>(
+  key: Key,
+): AdminOverrideSWRResponse<Data, Error> {
+  const res = useSWR<ApiResponse<Data>, Error>(
+    key,
+    apiMetadataFetcher,
+  );
+
+  return {
+    ...res,
+    data : res.data?.data,
+    isAdminOverride : res.data?.isAdminOverride ?? false,
+  };
+}

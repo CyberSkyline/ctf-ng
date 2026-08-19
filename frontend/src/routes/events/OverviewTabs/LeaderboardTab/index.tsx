@@ -14,6 +14,7 @@ import { ErrorCallout, WarningCallout } from 'components/Callouts';
 import { keyBy, map } from 'lodash';
 import { TbInfoCircle } from 'react-icons/tb';
 import { useParams } from 'react-router';
+import AdminOverride from 'components/AdminOverride';
 import TeamPerformance from './TeamPerformance';
 
 function SponsorCell({ sponsors, lookup }: {sponsors: Sponsor[], lookup: Record<string, UploadedFile>}) {
@@ -44,7 +45,7 @@ ModuleRegistry.registerModules([
 export default function LeaderboardTab() {
   const { idEvent } = useParams();
   const { data : event, error : eventError } = useEvent(Number(idEvent));
-  const { data : leaderboard, error : leaderboardError } = useLeaderboard(Number(idEvent));
+  const { data : leaderboard, error : leaderboardError, isAdminOverride : leaderboardAdmin } = useLeaderboard(Number(idEvent));
   const { data : logoList } = useFileList('sponsor-logos', true);
   const files = logoList?.files ?? [];
   const lookup = keyBy(files.filter((f: UploadedFile) => f.filename), 'filename');
@@ -58,6 +59,8 @@ export default function LeaderboardTab() {
   return (
     <Container size="4">
       <Flex direction="column" gap="3">
+        {leaderboardAdmin
+          && <AdminOverride type="badge" />}
         <TeamPerformance eventId={Number(idEvent)} />
 
         {leaderboardError
