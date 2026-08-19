@@ -1,3 +1,9 @@
+/** Envelope for a server-paginated admin collection (ag-grid infinite model). */
+export interface PaginatedResponse<T> {
+  rows: T[];
+  lastRow: number;
+}
+
 export interface Event {
   id: number;
   name: string;

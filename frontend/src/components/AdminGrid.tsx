@@ -1,6 +1,7 @@
+import useAdminGridDatasource from '@/hooks/grid';
 import { radixTheme } from '@/grid';
 import { base64ToUtf8, utf8ToBase64 } from '@/util';
-import { Flex, Spinner } from '@radix-ui/themes';
+import { Flex, Skeleton, Spinner } from '@radix-ui/themes';
 import type { ColDef, GridApi, GridOptions } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import {
@@ -10,33 +11,61 @@ import {
   type ReactNode,
 } from 'react';
 import { useSearchParams } from 'react-router';
+import useSWR, { mutate } from 'swr';
+
+type AdminGridProps<T> = {
+  columnDefs: ColDef<T>[];
+  loading?: boolean;
+  toolbar?: ReactNode;
+  getRowId: (params: { data: T }) => string;
+  gridOptions?: GridOptions;
+  stopCellSelection?: string[]; // colIds of cells
+} & (
+  // client-side: row data is supplied directly via rowData
+  // sidebar gets passed model objects directly
+  | { rowData: T[]; collectionKey?: never; sidebarComponent?: React.ComponentType<{ entity: T }> }
+  // server-side: grid fetches data by block.
+  // collectionKey defines the paginated endpoint to fetch from, and the grid will reload blocks on SWR mutations to that key.
+  // sidebar gets passed an ID to fetch via hook. grid warms the SWR cache with the selected model object if available.
+  | { collectionKey: string; rowData?: never; sidebarComponent?: React.ComponentType<{ selectedId: number }> }
+);
+
+/**
+ * Skeleton for AG grid cells that are still loading.
+ */
+function LoadingCell() {
+  return (
+    <Flex align="center" className="w-full h-full">
+      <Skeleton><div className="w-full" /></Skeleton>
+    </Flex>
+  );
+}
 
 /**
  * Wrapper around AgGridReact with common functionality for all admin grids.
  */
 export default function AdminGrid<T>({
   rowData,
+  collectionKey,
   columnDefs,
   loading = false,
-  sidebarComponent : Sidebar,
+  sidebarComponent,
   toolbar,
   getRowId,
   gridOptions,
   stopCellSelection,
-}: {
-  rowData: T[];
-  columnDefs: ColDef<T>[];
-  loading?: boolean;
-  sidebarComponent?: React.ComponentType<{entity: T}>;
-  toolbar?: ReactNode;
-  getRowId: (params: { data: T }) => string;
-  gridOptions?: GridOptions;
-  stopCellSelection?: string[]; // colIds of cells
-}) {
+}: AdminGridProps<T>) {
   const [ searchParams, setSearchParams ] = useSearchParams();
   const selectedId = searchParams.get('id');
 
   const [ gridApi, setGridApi ] = useState<GridApi<T> | null>(null);
+
+  const datasource = useAdminGridDatasource<T>(collectionKey);
+
+  // Refresh grid blocks when SWR mutation for the given key occurs
+  useSWR(collectionKey ?? null, () => true, {
+    onSuccess : () => gridApi?.refreshInfiniteCache(),
+  });
 
   const [ selectedData, setSelectedData ] = useState<T | null>(null);
 
@@ -91,6 +120,12 @@ export default function AdminGrid<T>({
     },
   };
 
+  const rowModelProps = collectionKey
+    ? { rowModelType : 'infinite' as const, datasource, cacheBlockSize : 100 }
+    : { rowData };
+
+  const Sidebar = sidebarComponent as React.ComponentType<{ entity?: T; selectedId?: number }> | undefined;
+
   return (
     <Flex direction="row" gap="3" className="w-full h-full">
       <Flex direction="column" gap="3" className="grow" role="main">
@@ -98,7 +133,7 @@ export default function AdminGrid<T>({
         <AgGridReact
           key="admin-grid"
           theme={radixTheme}
-          rowData={rowData}
+          {...rowModelProps}
           columnDefs={columnDefs}
           rowSelection={{
             mode : 'singleRow',
@@ -106,6 +141,10 @@ export default function AdminGrid<T>({
           }}
           loading={loading}
           loadingOverlayComponent={Spinner}
+          defaultColDef={{
+            // infinite-model rows render before their block loads (data == null) -> skeleton
+            cellRendererSelector : (p) => (p.data == null ? { component : LoadingCell } : undefined),
+          }}
           getRowId={getRowId}
           onCellClicked={(e) => {
             if (!stopCellSelection?.includes(e.column.getColId())) {
@@ -119,6 +158,10 @@ export default function AdminGrid<T>({
           }}
           onRowSelected={(event) => {
             if (event.node.isSelected() && event.node.id && event.node.id !== selectedId) {
+              // Heat the sidebar's cache so its by-id fetch resolves instantly.
+              if (collectionKey && event.node.data) {
+                mutate(`${collectionKey}/${event.node.id}`, event.node.data, { revalidate : false });
+              }
               setSearchParams((prev) => {
                 prev.set('id', event.node.id!);
                 return prev;
@@ -131,7 +174,8 @@ export default function AdminGrid<T>({
               });
             }
           }}
-          onRowDataUpdated={updateSelection} // ensure selection is accurate when grid rows load
+          onRowDataUpdated={updateSelection} // client model
+          onModelUpdated={updateSelection} // infinite model
           onGridReady={(params) => {
             setGridApi(params.api);
           }}
@@ -162,9 +206,13 @@ export default function AdminGrid<T>({
           gridOptions={gridOptions}
         />
       </Flex>
-      {Sidebar && selectedData && (
-        <Sidebar entity={selectedData} key={selectedId} />
-      )}
+      {Sidebar && (collectionKey
+        ? selectedId && (
+          <Sidebar selectedId={Number(selectedId)} key={selectedId} />
+        )
+        : selectedData && (
+          <Sidebar entity={selectedData} key={selectedId} />
+        ))}
     </Flex>
   );
 }
