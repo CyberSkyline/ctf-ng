@@ -61,10 +61,10 @@ class EventLeaderboard(Resource):
         Get event leaderboard
         """
         current_user = get_current_user()
-        isAdminOverride = False
+        is_admin_override = False
         if not event.show_leaderboard:
             if (current_user and RoleEnum.ADMIN in get_user_roles(current_user.id)):
-                isAdminOverride = True
+                is_admin_override = True
             else:
                 raise ValidationError("Leaderboard is not available for this event.")
         limit = request.args.get("limit", config.DEFAULT_LEADERBOARD_LIMIT, type=int)
@@ -72,7 +72,7 @@ class EventLeaderboard(Resource):
             raise ValidationError(f"Limit must be between 1 and {config.MAX_LEADERBOARD_LIMIT}")
         cache_key = request.args.get("cache_key")
         leaderboard_data = get_leaderboard(event_id=event_id, limit=limit, cache_key=cache_key)
-        return success_response(leaderboard_data, isAdminOverride=isAdminOverride)
+        return success_response(leaderboard_data, is_admin_override=is_admin_override)
 
 
 @scoring_user_namespace.route("/<int:event_id>/me/team/score")

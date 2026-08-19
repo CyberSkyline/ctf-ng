@@ -49,12 +49,12 @@ def serialize_model_for_api(obj: Any, is_admin_request: bool | None = False) -> 
 
 
 # Success | Error | Responses
-def success_response(data: Mapping[str, Any] | list[Any] | bool | None = None, status_code: int = 200, isAdminOverride = False) -> tuple[dict[str, Any], int]:
+def success_response(data: Mapping[str, Any] | list[Any] | bool | None = None, status_code: int = 200, is_admin_override = False) -> tuple[dict[str, Any], int]:
     from ...permissions.controllers.get_user_roles import get_user_roles
     from ...permissions.models.enums import RoleEnum
     serialized_data = serialize_model_for_api(data, is_admin_request=True if RoleEnum.ADMIN in get_user_roles() else False)
 
-    return {"success": True, "data": serialized_data, 'isAdminOverride' : isAdminOverride}, status_code
+    return {"success": True, "data": serialized_data, 'isAdminOverride' : is_admin_override}, status_code
 
 
 def error_response(error_message: str, field: str = "general", status_code: int = 400) -> tuple[dict[str, Any], int]:

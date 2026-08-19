@@ -103,7 +103,7 @@ export const apiMutation = async (resource: string, body: unknown, init?: Reques
     body : JSON.stringify(body),
   });
   const json = await parseResponseData(res);
-  return json;
+  return json.data;
 };
 
 /**
@@ -123,7 +123,7 @@ export const fileApiMutation = async (resource: string, formData: FormData, init
     body : formData,
   });
   const json = await parseResponseData(res);
-  return json;
+  return json.data;
 };
 
 /**
