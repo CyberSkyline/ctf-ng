@@ -1,5 +1,6 @@
 import { apiMutation } from '@/fetchers';
 import {
+  Box,
   Container,
   Flex,
   TextField,
@@ -9,6 +10,9 @@ import {
 } from '@radix-ui/themes';
 import { ErrorCallout, InfoCallout } from 'components/Callouts';
 import { useState } from 'react';
+import { Link } from 'react-router';
+import { COLOR_POSITIVE } from '@/constants';
+import { TbExternalLink } from 'react-icons/tb';
 
 /**
  * API test page for development.
@@ -23,6 +27,15 @@ export default function AdminApiTest() {
   return (
     <Container size="4">
       <Flex direction="column" gap="4">
+        <Box>
+          <Button color={COLOR_POSITIVE} asChild>
+            <Link to="/ng/docs" target="_blank">
+              API Documentation
+              <TbExternalLink />
+            </Link>
+          </Button>
+        </Box>
+
         <Flex direction="row" gap="4">
           <Select.Root
             onValueChange={(value) => {
