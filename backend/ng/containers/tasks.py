@@ -35,7 +35,7 @@ else:
 def pull_image_celery(host, image, user_id, blueprint_id, auth_conf=None):
     tls_config = docker.tls.TLSConfig(client_cert=("/var/lib/certs/ssl/cert.pem", "/var/lib/certs/ssl/key.pem"))
     client = docker.DockerClient(base_url=f"https://{host}:2376/", tls=tls_config)
-    print(host)
+
     try:
         pull_kwargs = {"stream": True, "decode": True}
         if auth_conf:
@@ -49,7 +49,7 @@ def pull_image_celery(host, image, user_id, blueprint_id, auth_conf=None):
         message = {
             "user_ids": [user_id],
             "event_name": "pull-progress",
-            "data": { "id": blueprint_id, "image": image, "percent": 0 }
+            "data": { "id": blueprint_id, "image": image, "percent": 0, "host": host }
         }
 
         redis_client.publish("ctf_notifications", json.dumps(message))
@@ -87,7 +87,7 @@ def pull_image_celery(host, image, user_id, blueprint_id, auth_conf=None):
                 message = {
                     "user_ids": [user_id],
                     "event_name": "pull-progress",
-                    "data": { "id": blueprint_id, "image": image, "percent": percent }
+                    "data": { "id": blueprint_id, "image": image, "percent": percent, "host": host }
                 }
 
                 redis_client.publish("ctf_notifications", json.dumps(message))
