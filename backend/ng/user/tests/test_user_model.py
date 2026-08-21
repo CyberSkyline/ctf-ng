@@ -115,19 +115,61 @@ class TestUser:
             User.find_or_create_by_ctfd_id(user.id, commit = False)
             mock_commit.assert_not_called()
 
-    def test_get_all_users(self, user_factory):
+    def test_find_paginated(self, db_session, user_factory, sponsor_factory):
         """
-        Test getting all users
+        Test the admin grid query: join-backed fields (affiliation, banned),
+        the is_sso boolean expression, and the roles correlated subquery.
         """
-        user1 = user_factory(name = "User 1", email = "user1@example.com")
-        user2 = user_factory(name = "User 2", email = "user2@example.com")
+        sponsor = sponsor_factory(name = "Acme")
+        admin = user_factory(name = "Admin User", email = "admin@example.com", admin = True, sponsor = sponsor)
+        plain = user_factory(name = "Plain User", email = "plain@example.com")
+        plain.oauth_id = "sso-123"
+        plain.ctfd_user.banned = True
+        db_session.commit()
 
-        all_users = User.get_all_users()
+        rows, total = User.find_paginated([], {}, 0, 100)
+        assert total >= 2
+        assert { admin.id, plain.id } <= { u.id for u in rows }
 
-        assert len(all_users) >= 2
-        user_ids = [u.id for u in all_users]
-        assert user1.id in user_ids
-        assert user2.id in user_ids
+        rows, _ = User.find_paginated([], { "is_sso": { "type": "true" } }, 0, 100)
+        assert [u.id for u in rows] == [plain.id]
+
+        rows, _ = User.find_paginated([], { "banned": { "type": "true" } }, 0, 100)
+        assert [u.id for u in rows] == [plain.id]
+
+        rows, _ = User.find_paginated(
+            [], { "roles": { "filterType": "text", "type": "contains", "filter": "admin" } }, 0, 100,
+        )
+        assert [u.id for u in rows] == [admin.id]
+
+        rows, _ = User.find_paginated(
+            [], { "affiliation.name": { "filterType": "text", "type": "equals", "filter": "Acme" } }, 0, 100,
+        )
+        assert [u.id for u in rows] == [admin.id]
+
+        rows, _ = User.find_paginated(
+            [], { "name": { "filterType": "text", "type": "equals", "filter": "Admin User" } }, 0, 100,
+        )
+        assert [u.id for u in rows] == [admin.id]
+
+        rows, _ = User.find_paginated(
+            [], { "email": { "filterType": "text", "type": "equals", "filter": "plain@example.com" } }, 0, 100,
+        )
+        assert [u.id for u in rows] == [plain.id]
+
+    def test_find_paginated_sorts_and_paginates(self, user_factory):
+        """
+        Test that sorting and pagination slice the results deterministically.
+        """
+        user_factory(name = "Charlie", email = "charlie@example.com")
+        user_factory(name = "Alpha", email = "alpha@example.com")
+        user_factory(name = "Bravo", email = "bravo@example.com")
+
+        sm = [{ "colId": "name", "sort": "asc" }]
+        rows, total = User.find_paginated(sm, {}, 0, 2)
+
+        assert total >= 3
+        assert [u.ctfd_user.name for u in rows] == ["Alpha", "Bravo"]
 
     def test_serialize_basic(self, user_factory):
         """

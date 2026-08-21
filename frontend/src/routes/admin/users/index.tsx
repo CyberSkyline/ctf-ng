@@ -1,38 +1,41 @@
-import { useAllUsers } from '@/hooks/users';
 import type { AdminUser } from '@/types';
 import type { ColDef } from 'ag-grid-community';
 import AdminGrid from 'components/AdminGrid';
-import { ErrorCallout } from 'components/Callouts';
 import RoleBadge from 'components/RoleBadge';
 import { Fragment } from 'react/jsx-runtime';
 import { Flex } from '@radix-ui/themes';
 import UserSidebar from './UserSidebar';
 import CreateUserModal from './CreateUserModal';
 
+// specify types explicitly since there's no rowData to infer from
 const colDefs: ColDef<AdminUser>[] = [
   {
     field : 'id',
     width : 100,
     headerName : 'ID',
+    cellDataType : 'number',
     filter : true,
     floatingFilter : true,
   },
   {
     field : 'name',
+    cellDataType : 'text',
     filter : true,
     floatingFilter : true,
     width : 200,
   },
   {
     field : 'email',
+    cellDataType : 'text',
     filter : true,
     floatingFilter : true,
     width : 250,
   },
   {
     field : 'roles',
-    valueFormatter : (params) => params.value.join(', '),
-    cellRenderer : ({ value }: {value: string[]}) => value.map((role) => (
+    cellDataType : 'text',
+    valueFormatter : (params) => (params.value ?? []).join(', '),
+    cellRenderer : ({ value }: {value: string[]}) => (value ?? []).map((role) => (
       <Fragment key={role}>
         <RoleBadge value={role} />
         &nbsp;
@@ -47,12 +50,13 @@ const colDefs: ColDef<AdminUser>[] = [
     headerName : 'Registered At',
     width : 220,
     cellDataType : 'dateString',
-    filter : true,
+    filter : 'agDateColumnFilter',
     floatingFilter : true,
   },
   {
     field : 'affiliation.name',
     headerName : 'Sponsor',
+    cellDataType : 'text',
     filter : true,
     floatingFilter : true,
     width : 200,
@@ -61,12 +65,14 @@ const colDefs: ColDef<AdminUser>[] = [
     field : 'is_sso',
     headerName : 'SSO',
     width : 100,
+    cellDataType : 'boolean',
     filter : true,
     floatingFilter : true,
   },
   {
     field : 'banned',
     width : 100,
+    cellDataType : 'boolean',
     filter : true,
     floatingFilter : true,
   },
@@ -76,22 +82,12 @@ const colDefs: ColDef<AdminUser>[] = [
  * User management page for admins.
  */
 export default function AdminUsers() {
-  const { data, error, isLoading } = useAllUsers();
-  const rowData = data ?? [];
-
-  if (error) {
-    return (
-      <ErrorCallout>{error.message}</ErrorCallout>
-    );
-  }
-
   return (
     <>
       <title>Admin Users</title>
       <AdminGrid
-        rowData={rowData}
+        collectionKey="/admin/users"
         columnDefs={colDefs}
-        loading={isLoading}
         getRowId={(params) => params.data.id.toString()}
         sidebarComponent={UserSidebar}
         toolbar={(

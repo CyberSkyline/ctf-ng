@@ -75,7 +75,7 @@ def test_get_user_teams(logged_in_client, user, event_factory, team_factory):
         assert team["member_count"] >= 1
 
 
-def test_admin_get_users(admin_client):
+def test_admin_get_users(admin_client, admin):
     """
     Test getting all users as an admin
     """
@@ -85,7 +85,8 @@ def test_admin_get_users(admin_client):
     data = response.get_json()
 
     assert data["success"] is True
-    assert data["data"] is not None
+    assert data["data"]["lastRow"] >= 1
+    assert admin.id in {row["id"] for row in data["data"]["rows"]}
 
 
 def test_non_admin_endpoints(logged_in_client, user):
