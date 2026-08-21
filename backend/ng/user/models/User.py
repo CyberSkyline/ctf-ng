@@ -6,14 +6,18 @@ from __future__ import annotations
 
 from typing import Any, TypedDict
 
+from CTFd.models import Users as CTFdUsers
 from CTFd.models import db
 from flask import g, has_request_context
+from sqlalchemy import func, select
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import contains_eager, joinedload, selectinload
 
 from ...core.exceptions import BusinessLogicError
+from ...core.utils.ag_grid import apply_filter_model, apply_sort_model, paginate
 from ...core.utils.validator import BaseValidator
 from ...permissions.models.UserRole import UserRole
+from ...sponsors.models.Sponsor import Sponsor
 
 
 class SerializedUser(TypedDict):
@@ -206,17 +210,44 @@ class User(db.Model):
         return cache[ctfd_user_id]
 
     @classmethod
-    def get_all_users(cls):
-        """Gets all users with their basic details."""
+    def find_paginated(cls, sort_model, filter_model, start_row, end_row) -> tuple[list[User], int]:
+        """Fetch a page of users for the admin grid's server-side row model.
 
-        return (cls.query
-            .options(
-                joinedload(cls.affiliation),
-                joinedload(cls.ctfd_user),
-                selectinload(cls.user_roles).joinedload(UserRole.role)
-            )
-            .all()
+        Returns (users, total_count) with the ag-grid sort/filter model applied.
+        """
+        from ...permissions.models.Role import Role
+
+        # Subquery to produce a comma-separated string of roles, consistent with previous client-side role filtering
+        roles_summary = (
+            select(func.group_concat(Role.name))
+            .select_from(UserRole)
+            .join(Role, UserRole.role_id == Role.id)
+            .where(UserRole.user_id == cls.id)
+            .scalar_subquery()
         )
+
+        column_map = {
+            "id": cls.id,
+            "name": CTFdUsers.name,
+            "email": CTFdUsers.email,
+            "roles": roles_summary,
+            "registered_at": CTFdUsers.created,
+            "affiliation.name": Sponsor.name,
+            "is_sso": cls.oauth_id.isnot(None),
+            "banned": CTFdUsers.banned,
+        }
+        query = (cls.query
+            .join(CTFdUsers, cls.id == CTFdUsers.id)
+            .outerjoin(Sponsor, cls.sponsor_id == Sponsor.id)
+            .options(
+                contains_eager(cls.ctfd_user),
+                contains_eager(cls.affiliation),
+                selectinload(cls.user_roles).joinedload(UserRole.role),
+            )
+        )
+        query = apply_filter_model(query, filter_model, column_map)
+        query = apply_sort_model(query, sort_model, column_map, cls.id)
+        return paginate(query, start_row, end_row)
 
     @classmethod
     def check_can_join_team_in_event(cls, user_id: int, event_id: int) -> bool:
