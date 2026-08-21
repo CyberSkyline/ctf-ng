@@ -5,16 +5,6 @@ import useSWR, { mutate } from 'swr';
 /* ADMIN ENDPOINTS */
 
 /**
- * Get a list of all teams across the system.
- * This is an admin-only endpoint.
- */
-export function useAllTeams() {
-  return useSWR<Team[], Error>(
-    '/admin/teams',
-  );
-}
-
-/**
  * Get information about a specific team by ID.
  * This is an admin-only endpoint.
  * @param teamId The ID of the team to fetch, or null if this should not be fetched.

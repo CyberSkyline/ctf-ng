@@ -18,7 +18,7 @@ from CTFd.models import db
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import Mapped, joinedload, selectinload
+from sqlalchemy.orm import Mapped, contains_eager, joinedload, selectinload
 
 from ... import config
 from ...core.exceptions import (
@@ -26,6 +26,7 @@ from ...core.exceptions import (
     ConflictError,
     ValidationError,
 )
+from ...core.utils.ag_grid import apply_filter_model, apply_sort_model, paginate
 from ...core.utils.validator import BaseValidator
 from ...event.models.Event import Event
 from ...scoring.models.Score import Score
@@ -71,8 +72,16 @@ class Team(db.Model):
 
     # Avoids a separate query for every team's member count
     @hybrid_property
-    def member_count(self):
+    def member_count(self): # pyright: ignore[reportRedeclaration]
         return len(self.members)
+
+    # Required SQLAlchemy pattern: the expression must be named *same* the property.
+    @member_count.expression
+    def member_count(cls):  # noqa: F811, N805  # hybrid expression: must be same name as getter (F811), arg is the class not self (N805)
+        # LAZY-IMPORT: Tagging all necessary lazy imports for easy searchability & visibility.
+        from .TeamMember import TeamMember
+
+        return select(func.count(TeamMember.id)).where(TeamMember.team_id == cls.id).scalar_subquery()
 
     @hybrid_property
     def can_manage_team(self):
@@ -85,14 +94,7 @@ class Team(db.Model):
             return False
         return True
 
-    # Required SQLAlchemy pattern: the expression must be named after the property.
-    @member_count.expression  # type: ignore[misc]
-    @classmethod
-    def _member_count_expression(cls):
-        # LAZY-IMPORT: Tagging all necessary lazy imports for easy searchability & visibility.
-        from .TeamMember import TeamMember
 
-        return select(func.count(TeamMember.id)).where(TeamMember.team_id == cls.id).scalar_subquery()
 
     def serialize(self, include_admin_fields: bool = False) -> SerializedTeam:
         """Serialize team for API response.
@@ -349,20 +351,29 @@ class Team(db.Model):
         return member
 
     @classmethod
-    def get_all_teams(cls) -> list[Team]:
-        """Gets all teams for admin purposes.
+    def find_paginated(cls, sort_model, filter_model, start_row, end_row) -> tuple[list[Team], int]:
+        """Fetch a page of teams for the admin grid's server-side row model.
 
-        Returns:
-            list[Team]: List of all team objects
+        Returns (teams, total_count) with the ag-grid sort/filter model applied.
         """
-        return (cls.query
-            .order_by(cls.id)
-            .options(
-                joinedload(cls.event),
-                selectinload(cls.members)
-            )
-            .all()
+        # Also the allowlist for filter/sort.
+        column_map = {
+            "id": cls.id,
+            "name": cls.name,
+            "event_name": Event.name,
+            "member_count": cls.member_count,
+            "start_timestamp": cls.start_timestamp,
+            "end_time": cls.end_time,
+            "ranked": cls.ranked,
+            "invite_code": cls.invite_code,
+        }
+        query = (cls.query
+            .join(Event, cls.event_id == Event.id)
+            .options(contains_eager(cls.event), selectinload(cls.members))
         )
+        query = apply_filter_model(query, filter_model, column_map)
+        query = apply_sort_model(query, sort_model, column_map, cls.id)
+        return paginate(query, start_row, end_row)
 
     @classmethod
     def find_by_id(cls, team_id: int) -> Team | None:

@@ -16,6 +16,8 @@ OKTA_CLIENT_ID = os.getenv("OKTA_CLIENT_ID")
 OKTA_CLIENT_SECRET = os.getenv("OKTA_CLIENT_SECRET")
 OKTA_DOMAIN = os.getenv("OKTA_DOMAIN")
 SERVER_DOMAIN = os.getenv("SERVER_DOMAIN")
+# External URL where users can register an SSO account.
+SSO_REGISTRATION_URL = os.getenv("SSO_REGISTRATION_URL")
 ROUTE_PREFIX = os.getenv("ROUTE_PREFIX")
 AUTHORIZATION_BASE_URL = f"{OKTA_DOMAIN}/oauth2/v1/authorize"
 TOKEN_URL = f"{OKTA_DOMAIN}/oauth2/v1/token"
@@ -41,6 +43,14 @@ def okta_login():
     session["oauth_state"] = state
 
     return redirect(authorization_url)
+
+def okta_register():
+    if not SSO_REGISTRATION_URL:
+        return {
+            "error": "SSO account registration is not configured."
+        }, 404
+
+    return redirect(SSO_REGISTRATION_URL)
 
 def okta_callback():
     email = None

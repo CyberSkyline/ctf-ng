@@ -2,7 +2,7 @@
 User API routes for scoring
 """
 
-from CTFd.utils.user import get_current_user
+from ...core.utils.current_user import get_current_user
 from flask import request
 from flask_restx import Namespace, Resource
 
@@ -61,14 +61,18 @@ class EventLeaderboard(Resource):
         Get event leaderboard
         """
         current_user = get_current_user()
-        if not event.show_leaderboard and not (current_user and RoleEnum.ADMIN in get_user_roles(current_user.id)):
-            raise ValidationError("Leaderboard is not available for this event.")
+        is_admin_override = False
+        if not event.show_leaderboard:
+            if (current_user and RoleEnum.ADMIN in get_user_roles(current_user.id)):
+                is_admin_override = True
+            else:
+                raise ValidationError("Leaderboard is not available for this event.")
         limit = request.args.get("limit", config.DEFAULT_LEADERBOARD_LIMIT, type=int)
         if limit < 1 or limit > config.MAX_LEADERBOARD_LIMIT:
             raise ValidationError(f"Limit must be between 1 and {config.MAX_LEADERBOARD_LIMIT}")
         cache_key = request.args.get("cache_key")
         leaderboard_data = get_leaderboard(event_id=event_id, limit=limit, cache_key=cache_key)
-        return success_response(leaderboard_data)
+        return success_response(leaderboard_data, is_admin_override=is_admin_override)
 
 
 @scoring_user_namespace.route("/<int:event_id>/me/team/score")
