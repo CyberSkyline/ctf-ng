@@ -12,8 +12,6 @@ RELEASE=$(get_current_commit)
 
 echo $S3_BUILD_BUCKET_NAME
 echo $RELEASE
-echo $AWS_ACCESS_KEY_ID
-echo $AWS_SECRET_ACCESS_KEY
 
 # Create the destination directory if it doesn't exist
 mkdir -p "$ROOT_DIR/frontend/dist/$RELEASE"
