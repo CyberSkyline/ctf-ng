@@ -19,7 +19,6 @@ def get_client_ip_round_robin():
     redis_client = get_redis_client(4)
 
 
-    logger.info('here')
     lock = redis_lock.Lock(redis_client, "ROUND_ROBIN__LOCK", expire=60)
 
     logger.info('here')

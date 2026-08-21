@@ -6,8 +6,7 @@ def pull_vnc(pulling_user: int) -> bool:
     vnc_image = get_app_config("NOVNC_CONTAINER")
 
 
-    for docker_host in docker_hosts:
-        client = get_client(docker_host)
-        client.pull_image(vnc_image, pulling_user, "VNC")
+    client = get_client(docker_hosts[0])
+    client.pull_image(vnc_image, pulling_user, "VNC")
 
     return True
