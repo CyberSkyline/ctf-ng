@@ -12,6 +12,7 @@ from ...support.controllers import (
     create_ticket,
     create_ticket_message,
 )
+from ..models.EmailPreference import EmailCategory, EmailPreference
 from ..services import get_email_service
 
 
@@ -123,6 +124,42 @@ class TestEmailSendingSmartRouting:
             call_args = mock_ses.send_email.call_args[1]
 
             assert call_args['Destination']['ToAddresses'] == [user.email]
+
+    def test_admin_reply_to_non_team_ticket_skips_opted_out_author(
+        self,
+        app,
+        db_session,
+        user,
+        admin,
+        ticket_factory,
+        email_config,
+        mock_ses
+    ):
+        """
+        Test that no email is sent when the ticket author opted out of
+        support emails
+        """
+        with app.app_context():
+            EmailPreference.set_preference(
+                user.id,
+                EmailCategory.SUPPORT_EMAILS,
+                enabled = False
+            )
+
+            ticket = ticket_factory(
+                subject = "Individual Issue",
+                author_id = user.id,
+                team_id = None
+            )
+
+            create_ticket_message(
+                text = "Let me look into this",
+                author_id = admin.id,
+                ticket = ticket,
+                is_admin = True
+            )
+
+            mock_ses.send_email.assert_not_called()
 
     def test_user_reply_to_assigned_ticket_notifies_assigned_admin(
         self,

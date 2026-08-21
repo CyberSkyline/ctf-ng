@@ -10,6 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from ...core.utils.logger import get_logger
 from ...support.models.Ticket import Ticket
+from ..models.EmailPreference import EmailCategory, EmailPreference
 from .email_sender import get_email_service
 from .email_templates import TeamKickedData, TicketEmailTemplates
 
@@ -34,6 +35,7 @@ class TicketEmailService:
         """
         admin_emails = current_app.config.get('ADMIN_SUPPORT_INBOX_EMAILS', '')
         if not admin_emails:
+            logger.warning("No admin support inbox configured")
             return []
 
         emails = [
@@ -88,10 +90,17 @@ class TicketEmailService:
 
             if is_admin_reply:
                 # Admin replying: notify just the ticket author
-                author_email = TicketEmailService._get_user_email(
-                    ticket.author_id
-                )
-                if author_email:
+                author_email = TicketEmailService._get_user_email(ticket.author_id)
+                if not author_email:
+                    logger.warning(
+                        "No email found for ticket %s author %s",
+                        ticket.id,
+                        ticket.author_id
+                    )
+                elif EmailPreference.is_enabled(
+                    ticket.author_id,
+                    EmailCategory.SUPPORT_EMAILS
+                ):
                     emails.add(author_email)
             else:
                 # User replying
@@ -100,7 +109,16 @@ class TicketEmailService:
                     assigned_email = TicketEmailService._get_user_email(
                         ticket.assigned_to
                     )
-                    if assigned_email:
+                    if not assigned_email:
+                        logger.warning(
+                            "No email found for ticket %s assignee %s",
+                            ticket.id,
+                            ticket.assigned_to
+                        )
+                    elif EmailPreference.is_enabled(
+                        ticket.assigned_to,
+                        EmailCategory.SUPPORT_EMAILS
+                    ):
                         emails.add(assigned_email)
                 else:
                     # Unassigned ticket, send to admin support inbox
@@ -127,10 +145,6 @@ class TicketEmailService:
         )
 
         if not recipient_emails:
-            logger.warning(
-                "No recipient emails found for new ticket %s",
-                ticket.id
-            )
             return
 
         try:
@@ -175,10 +189,6 @@ class TicketEmailService:
         )
 
         if not recipient_emails:
-            logger.warning(
-                "No recipient emails found for ticket %s reply",
-                ticket.id
-            )
             return
 
         try:
@@ -230,6 +240,9 @@ class TicketEmailService:
                 "No email found for kicked user %s",
                 kicked_user_id
             )
+            return
+
+        if not EmailPreference.is_enabled(kicked_user_id, EmailCategory.TEAM_EMAILS):
             return
 
         try:
