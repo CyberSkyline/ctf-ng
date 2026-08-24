@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   Flex,
   Heading,
@@ -47,36 +48,41 @@ export default function EmailPreferences() {
   };
 
   return (
-    <Flex direction="column" gap="2">
-      <Heading size="4" as="h2" className="pt-4">Email Preferences:</Heading>
+    <Flex direction="column" gap="4">
+      <Box>
+        <Heading as="h2">Email Preferences</Heading>
+        <Text color="gray" trim="end">Choose which email notifications you will receive.</Text>
+      </Box>
       {error && <ErrorCallout>{error.message}</ErrorCallout>}
       {saveError && <ErrorCallout>{saveError}</ErrorCallout>}
       <Skeleton loading={isLoading}>
         <form
           onSubmit={handleSubmit(saveEmailPrefs)}
         >
-          <Flex direction="column" align="start" gap="2">
-            {EMAIL_PREFERENCE_FIELDS.map(({ name, label }) => (
-              <Controller
-                key={name}
-                control={control}
-                name={name}
-                defaultValue={false}
-                render={({ field }) => (
-                  <Flex align="center" gap="2">
-                    <Switch
-                      id={`email-pref-${name}`}
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      name={field.name}
-                      ref={field.ref}
-                      size="3"
-                    />
-                    <Text as="label" htmlFor={`email-pref-${name}`}>{label}</Text>
-                  </Flex>
-                )}
-              />
-            ))}
+          <Flex direction="column" align="start" gap="4">
+            <Flex direction="column" gap="2">
+              {EMAIL_PREFERENCE_FIELDS.map(({ name, label }) => (
+                <Controller
+                  key={name}
+                  control={control}
+                  name={name}
+                  defaultValue={false}
+                  render={({ field }) => (
+                    <Flex align="center" gap="2">
+                      <Switch
+                        id={`email-pref-${name}`}
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        name={field.name}
+                        ref={field.ref}
+                        size="3"
+                      />
+                      <Text as="label" htmlFor={`email-pref-${name}`}>{label}</Text>
+                    </Flex>
+                  )}
+                />
+              ))}
+            </Flex>
             <Button
               type="submit"
               color={COLOR_POSITIVE}
