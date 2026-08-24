@@ -13,7 +13,7 @@ export default function LeaveTeamModal({ event }: { event: Event }) {
   const { data : members } = useMyTeamMembers(event.id);
   const { data : currentUser } = useCurrentUser();
   const isIndividual = event.max_team_size === 1;
-  const transferCaptain = !!members && !!currentUser && members.length > 1 && members.find((member) => member.id === currentUser.id)?.role === 'captain';
+  const transferCaptain = !!members && !!currentUser && members.length > 1 && members.find((member) => member.user_id === currentUser.id)?.role === 'captain';
 
   const leaveTeam = async () => {
     leaveMyTeam(event.id).then(() => {
