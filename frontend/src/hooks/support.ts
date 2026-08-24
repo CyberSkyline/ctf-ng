@@ -60,10 +60,6 @@ export function resolveMyTicket(ticketId: number) {
   ADMIN ROUTES
 */
 
-export function useAdminAllTickets() {
-  return useSWR<AdminTicket[], Error>('/admin/support/tickets');
-}
-
 /* Actions */
 export function assignTicket(ticketId: number, userId: number) {
   return apiMutation(`/admin/support/tickets/${ticketId}/assign`, { user_id : userId }, {

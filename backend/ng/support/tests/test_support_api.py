@@ -2,6 +2,7 @@
 Tests for support API endpoints
 """
 
+import base64
 import json
 from datetime import datetime
 from unittest.mock import MagicMock, patch
@@ -237,25 +238,26 @@ class TestAdminSupportEndpoints:
     """Tests for admin support API endpoints"""
 
     def test_get_all_tickets(self, admin_client, multiple_tickets):
-        """Test getting all tickets as admin"""
+        """Test getting all tickets as admin (ag-grid server-side row model)"""
         response = admin_client.get("/ng/admin/support/tickets")
 
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
-        assert len(data["data"]) >= 4
+        assert len(data["data"]["rows"]) >= 4
+        assert data["data"]["lastRow"] >= 4
 
-    def test_get_tickets_filtered(self, admin_client, multiple_tickets, admin):
-        """Test getting filtered tickets"""
-        # Filter by status
-        response = admin_client.get("/ng/admin/support/tickets?status=open")
-        data = response.get_json()
-        assert all(t["status"] == "open" for t in data["data"])
+    def test_get_tickets_filtered(self, admin_client, multiple_tickets):
+        """Test filtering tickets via the ag-grid filter model"""
+        filter_model = base64.b64encode(json.dumps(
+            {"status": {"filterType": "text", "type": "equals", "filter": "open"}}
+        ).encode()).decode()
 
-        # Filter by assigned user
-        response = admin_client.get(f"/ng/admin/support/tickets?assigned_to={admin.id}")
+        response = admin_client.get(f"/ng/admin/support/tickets?filterModel={filter_model}")
         data = response.get_json()
-        assert all(t["assigned_to"] == admin.id for t in data["data"])
+        rows = data["data"]["rows"]
+        assert rows
+        assert all(t["status"] == "open" for t in rows)
 
     def test_admin_tickets_include_author_and_assigned_names(self, admin_client, user, admin, event, challenge, team_factory, ticket_factory):
         """Test that admin ticket list includes author_name and assigned_to_name"""
@@ -279,7 +281,7 @@ class TestAdminSupportEndpoints:
         assert data["success"] is True
 
         # Find our test ticket
-        test_ticket = next(t for t in data["data"] if t["subject"] == "Test ticket with assignment")
+        test_ticket = next(t for t in data["data"]["rows"] if t["subject"] == "Test ticket with assignment")
 
         # Verify all name enrichments are present
         assert test_ticket["author_name"] == user.name

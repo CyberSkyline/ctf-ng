@@ -255,6 +255,87 @@ class TestTicketFinders:
         assert len(unassigned_tickets) >= 1
 
 
+class TestFindPaginated:
+    def test_filters_by_team_name(self, user, event, team_factory, ticket_factory):
+        """Test the admin grid query filters by team_name (outer-joined column)."""
+        team = team_factory(event=event, name="Team Alpha", members=[user])
+        ticket_factory(author_id=user.id, team_id=team.id, subject="Ticket A")
+        ticket_factory(author_id=user.id, subject="Ticket B")
+
+        fm = {"team_name": {"filterType": "text", "type": "equals", "filter": "Team Alpha"}}
+        tickets, total = Ticket.find_paginated([], fm, 0, 100)
+
+        assert total == 1
+        assert tickets[0].subject == "Ticket A"
+
+    def test_filters_by_assigned_to_name(self, user, admin, ticket_factory):
+        """Test filtering by assigned_to_name, backed by an aliased Users join."""
+        assigned = ticket_factory(author_id=user.id, subject="Assigned")
+        assigned.assign_to_user(admin.id)
+        ticket_factory(author_id=user.id, subject="Unassigned")
+
+        fm = {"assigned_to_name": {"filterType": "text", "type": "equals", "filter": admin.name}}
+        tickets, total = Ticket.find_paginated([], fm, 0, 100)
+
+        assert total == 1
+        assert tickets[0].subject == "Assigned"
+
+    def test_sorts_and_paginates(self, user, ticket_factory):
+        """Test that sorting and pagination slice the results deterministically."""
+        ticket_factory(author_id=user.id, subject="Charlie")
+        ticket_factory(author_id=user.id, subject="Alpha")
+        ticket_factory(author_id=user.id, subject="Bravo")
+
+        sm = [{"colId": "subject", "sort": "asc"}]
+        tickets, total = Ticket.find_paginated(sm, {}, 0, 2)
+
+        assert total == 3
+        assert [t.subject for t in tickets] == ["Alpha", "Bravo"]
+
+    def test_filters_by_status(self, user, ticket_factory, closed_ticket):
+        """Test filtering by status, a hybrid_property backed by a case() expression."""
+        ticket_factory(author_id=user.id, subject="Open Ticket")
+
+        fm = {"status": {"filterType": "text", "type": "equals", "filter": "closed"}}
+        tickets, total = Ticket.find_paginated([], fm, 0, 100)
+
+        assert total == 1
+        assert tickets[0].id == closed_ticket.id
+
+    def test_filters_by_event_name(self, user, event, ticket_factory):
+        """Test filtering by event_name (outer-joined column)."""
+        ticket_factory(author_id=user.id, event_id=event.id, subject="Ticket A")
+        ticket_factory(author_id=user.id, subject="Ticket B")
+
+        fm = {"event_name": {"filterType": "text", "type": "equals", "filter": event.name}}
+        tickets, total = Ticket.find_paginated([], fm, 0, 100)
+
+        assert total == 1
+        assert tickets[0].subject == "Ticket A"
+
+    def test_filters_by_challenge_name(self, user, challenge, ticket_factory):
+        """Test filtering by challenge_name (outer-joined column)."""
+        ticket_factory(author_id=user.id, challenge_id=challenge.id, subject="Ticket A")
+        ticket_factory(author_id=user.id, subject="Ticket B")
+
+        fm = {"challenge_name": {"filterType": "text", "type": "equals", "filter": challenge.name}}
+        tickets, total = Ticket.find_paginated([], fm, 0, 100)
+
+        assert total == 1
+        assert tickets[0].subject == "Ticket A"
+
+    def test_filters_by_author_name(self, user, admin, ticket_factory):
+        """Test filtering by author_name (outer-joined column)."""
+        ticket_factory(author_id=user.id, subject="User Ticket")
+        ticket_factory(author_id=admin.id, subject="Admin Ticket")
+
+        fm = {"author_name": {"filterType": "text", "type": "equals", "filter": admin.name}}
+        tickets, total = Ticket.find_paginated([], fm, 0, 100)
+
+        assert total == 1
+        assert tickets[0].subject == "Admin Ticket"
+
+
 class TestFindFilteredTickets:
     def test_find_filtered_tickets_user(self, multiple_tickets, user, admin):
         """Test filtered ticket search as regular user."""

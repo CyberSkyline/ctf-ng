@@ -4,14 +4,11 @@ import {
   TeamIcon,
   UserIcon,
 } from '@/constants';
-import { useAdminAllTickets } from '@/hooks/support';
 import type { AdminTicket } from '@/types';
-import type { ColDef } from 'ag-grid-community';
+import type { ColDef, ICellRendererParams } from 'ag-grid-community';
 import AdminGrid from 'components/AdminGrid';
-import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
 import { StatusBadgeCell } from 'components/StatusBadge';
-import { isNull, isUndefined } from 'lodash';
 import type { IconType } from 'react-icons';
 import MessagesSidebar from './MessagesSidebar';
 
@@ -22,49 +19,67 @@ function NameLinkCell(
     linkTo,
     icon,
   }: {
-    name: string,
-    id: number,
+    name?: string,
+    id?: number,
     linkTo: string,
     icon: IconType
   },
 ) {
-  if (!isNull(id) && !isUndefined(name)) {
-    return (
-      <Entity
-        to={linkTo}
-        label={name}
-        icon={icon}
-      />
-    );
-  }
+  if (id == null || name == null) return null;
 
-  return null;
+  return (
+    <Entity
+      to={linkTo}
+      label={name}
+      icon={icon}
+    />
+  );
 }
 
+// specify types explicitly since there's no rowData to infer from
 const colDefs: ColDef<AdminTicket>[] = [
   {
     field : 'status',
     headerName : 'Status',
-    cellRenderer : StatusBadgeCell,
+    cellDataType : 'text',
+    cellRenderer : (params: ICellRendererParams<AdminTicket>) => params.data && StatusBadgeCell(params),
     filter : true,
     floatingFilter : true,
   },
   {
     field : 'subject',
     headerName : 'Subject',
+    cellDataType : 'text',
     filter : true,
     floatingFilter : true,
   },
   {
     field : 'author_name',
     headerName : 'Author',
-    cellRenderer : NameLinkCell,
-    cellRendererParams : (params: { data: { author_id: number; author_name: string; }; }) => ({
-      id : params.data.author_id,
-      name : params.data.author_name,
-      linkTo : `/admin/users?id=${params.data.author_id}`,
-      icon : UserIcon,
-    }),
+    cellDataType : 'text',
+    cellRenderer : (params: ICellRendererParams<AdminTicket>) => params.data && (
+      <NameLinkCell
+        id={params.data.author_id}
+        name={params.data.author_name}
+        linkTo={`/admin/users?id=${params.data.author_id}`}
+        icon={UserIcon}
+      />
+    ),
+    filter : true,
+    floatingFilter : true,
+  },
+  {
+    field : 'assigned_to_name',
+    headerName : 'Assignee',
+    cellDataType : 'text',
+    cellRenderer : (params: ICellRendererParams<AdminTicket>) => params.data && (
+      <NameLinkCell
+        id={params.data.assigned_to}
+        name={params.data.assigned_to_name}
+        linkTo={`/admin/users?id=${params.data.assigned_to}`}
+        icon={UserIcon}
+      />
+    ),
     filter : true,
     floatingFilter : true,
   },
@@ -72,45 +87,52 @@ const colDefs: ColDef<AdminTicket>[] = [
     field : 'last_updated',
     headerName : 'Updated Date',
     cellDataType : 'dateString',
-    filter : true,
+    filter : 'agDateColumnFilter',
     floatingFilter : true,
+    sort : 'desc',
   },
   {
     field : 'event_name',
     headerName : 'Event',
-    cellRenderer : NameLinkCell,
-    cellRendererParams : (params: { data: { event_id: number; event_name: string; }; }) => ({
-      id : params.data.event_id,
-      name : params.data.event_name,
-      linkTo : `/admin/events?id=${params.data.event_id}`,
-      icon : EventIcon,
-    }),
+    cellDataType : 'text',
+    cellRenderer : (params: ICellRendererParams<AdminTicket>) => params.data && (
+      <NameLinkCell
+        id={params.data.event_id}
+        name={params.data.event_name}
+        linkTo={`/admin/events?id=${params.data.event_id}`}
+        icon={EventIcon}
+      />
+    ),
     filter : true,
     floatingFilter : true,
   },
   {
     field : 'team_name',
     headerName : 'Team',
-    cellRenderer : NameLinkCell,
-    cellRendererParams : (params: { data: { team_id: number; team_name: string; }; }) => ({
-      id : params.data.team_id,
-      name : params.data.team_name,
-      linkTo : `/admin/teams?id=${params.data.team_id}`,
-      icon : TeamIcon,
-    }),
+    cellDataType : 'text',
+    cellRenderer : (params: ICellRendererParams<AdminTicket>) => params.data && (
+      <NameLinkCell
+        id={params.data.team_id}
+        name={params.data.team_name}
+        linkTo={`/admin/teams?id=${params.data.team_id}`}
+        icon={TeamIcon}
+      />
+    ),
     filter : true,
     floatingFilter : true,
   },
   {
     field : 'challenge_name',
     headerName : 'Challenge',
-    cellRenderer : NameLinkCell,
-    cellRendererParams : (params: { data: { challenge_id: number; challenge_name: string; }; }) => ({
-      id : params.data.challenge_id,
-      name : params.data.challenge_name,
-      linkTo : `/admin/challenges?id=${params.data.challenge_id}`,
-      icon : ChallengeIcon,
-    }),
+    cellDataType : 'text',
+    cellRenderer : (params: ICellRendererParams<AdminTicket>) => params.data && (
+      <NameLinkCell
+        id={params.data.challenge_id}
+        name={params.data.challenge_name}
+        linkTo={`/admin/challenges?id=${params.data.challenge_id}`}
+        icon={ChallengeIcon}
+      />
+    ),
     filter : true,
     floatingFilter : true,
   },
@@ -118,26 +140,23 @@ const colDefs: ColDef<AdminTicket>[] = [
     field : 'opened_timestamp',
     headerName : 'Created Date',
     cellDataType : 'dateString',
-    filter : true,
+    filter : 'agDateColumnFilter',
     floatingFilter : true,
   },
 ];
 
 export default function AdminTickets() {
-  const { data, error, isLoading } = useAdminAllTickets();
-
   return (
     <>
       <title>Admin Tickets</title>
-      {error && <ErrorCallout>{error.message}</ErrorCallout>}
       <AdminGrid
-        rowData={data || []}
+        collectionKey="/admin/support/tickets"
         columnDefs={colDefs}
-        loading={isLoading}
         getRowId={(params) => params.data.id.toString()}
         sidebarComponent={MessagesSidebar}
         stopCellSelection={[
           'author_name',
+          'assigned_to_name',
           'event_name',
           'team_name',
           'challenge_name',
