@@ -29,8 +29,8 @@ from ...core.utils import (
 
 admin_container_namespace = Namespace("admin containers", description="admin containers")
 
-@admin_container_namespace.route("")
-class Containers(Resource):
+@admin_container_namespace.route("/deployment")
+class Deployments(Resource):
     @admin_container_namespace.doc(
         description="Get a page of deployments (ag-grid server-side row model)",
         responses={
@@ -45,7 +45,7 @@ class Containers(Resource):
         return success_response({"rows": rows, "lastRow": total})
 
 
-@admin_container_namespace.route("/<int:instance_id>")
+@admin_container_namespace.route("/deployment/<int:instance_id>")
 class DeploymentDetail(Resource):
     @admin_container_namespace.doc(
         description="Get one deployment's summary by any instance id belonging to it",

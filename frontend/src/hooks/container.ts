@@ -26,7 +26,7 @@ export function recycleChallengeContainers(eventId: number, challengeId: number)
 /* ADMIN ENDPOINTS */
 
 export function useDeployment(selectedId: number | null) {
-  return useSWR<Deployment, Error>(selectedId ? `/admin/container/${selectedId}` : null);
+  return useSWR<Deployment, Error>(selectedId ? `/admin/container/deployment/${selectedId}` : null);
 }
 
 export function useDeploymentServices(challengeId: number | null, teamId: number | null) {
@@ -89,7 +89,7 @@ export function deleteDeployment(challengeId: number, teamId: number) {
     method : 'POST',
   }).then(() => {
     mutate(`/admin/container/challenge/${challengeId}/team/${teamId}/services`);
-    mutate('/admin/container');
+    mutate('/admin/container/deployment');
   });
 }
 

@@ -4,7 +4,7 @@ import io
 import re
 import redis_lock
 from sqlalchemy import func, select, tuple_
-from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import Mapped, Query
 from typing import TypedDict
 import logging
 
@@ -246,7 +246,7 @@ class ContainerInstance(db.Model):
                             raise err
 
     @classmethod
-    def _deployment_rows_query(cls):
+    def _deployment_query_builder(cls) -> Query:
         """Base query for one row per deployment. Groups containers by challenge and team.
 
         Callers apply their own filter, sort, and pagination on top.
@@ -286,7 +286,7 @@ class ContainerInstance(db.Model):
             "event_name": Event.name,
             "containers": func.count(cls.id.distinct()),
         }
-        query = apply_filter_model(cls._deployment_rows_query(), filter_model, column_map)
+        query = apply_filter_model(cls._deployment_query_builder(), filter_model, column_map)
         # Tiebreaker is the group key. No single column identifies a deployment.
         query = apply_sort_model(query, sort_model, column_map, (Challenge.id, cls.team_id))
         return paginate(query, start_row, end_row)
@@ -302,7 +302,7 @@ class ContainerInstance(db.Model):
             .filter(cls.id == instance_id)
         )
 
-        return (cls._deployment_rows_query()
+        return (cls._deployment_query_builder()
             .filter(tuple_(cls.team_id, Challenge.id).in_(target))
             .first())
 

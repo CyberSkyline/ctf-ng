@@ -11,7 +11,7 @@ def test_deployment_detail_found(admin_client, db_session, challenge, team_facto
     blueprint = make_blueprint(challenge, db_session)
     instance = make_instance(blueprint, team, db_session)
 
-    response = admin_client.get(f"/ng/admin/container/{instance.id}")
+    response = admin_client.get(f"/ng/admin/container/deployment/{instance.id}")
 
     assert response.status_code == 200
     data = response.get_json()["data"]
@@ -21,6 +21,6 @@ def test_deployment_detail_found(admin_client, db_session, challenge, team_facto
 
 def test_deployment_detail_not_found(admin_client):
     """Test that DeploymentDetail 404s for an unknown instance id."""
-    response = admin_client.get("/ng/admin/container/999999")
+    response = admin_client.get("/ng/admin/container/deployment/999999")
 
     assert response.status_code == 404

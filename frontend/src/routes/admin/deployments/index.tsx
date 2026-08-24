@@ -46,7 +46,7 @@ export default function AdminDeployments() {
     <Flex direction="row" gap="4" className="h-full w-full">
       <title>Admin Deployments</title>
       <AdminGrid
-        collectionKey="/admin/container"
+        collectionKey="/admin/container/deployment"
         columnDefs={colDefs}
         getRowId={(params) => params.data.id.toString()}
         sidebarComponent={DeploymentSidebar}
