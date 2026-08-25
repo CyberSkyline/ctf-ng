@@ -3,10 +3,7 @@ version: '3.8'
 services:
   ctfd:
     hostname: 'ctfng_app-{{.Task.Slot}}'
-    image: ctfd-ng:latest
-    build:
-      context: ./
-      dockerfile: ./dockerfiles/ctfd.Dockerfile
+    image: ${ECR_REGISTRY}/ctf-ng/app/${CTFD_ENVIRONMENT}:latest
     user: root
     deploy:
       replicas: 5

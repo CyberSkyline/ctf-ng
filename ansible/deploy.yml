@@ -1,0 +1,31 @@
+- name: Deploy ctf-ng
+
+  hosts: manager
+  tasks:
+    - name: Checkout target ref
+      ansible.builtin.git:
+        repo: https://github.com/CyberSkyline/ctf-ng.git
+        dest: "{{ ctfd_repo_path }}"
+        version: "{{ ctfd_environment }}"
+
+    - name: Set static build path
+      ansible.builtin.command:
+        cmd: pnpm update-commit-env
+        chdir: "{{ ctfd_repo_path }}"
+
+    - name: Download frontend build
+      ansible.builtin.command:
+        cmd: pnpm download-frontend
+        chdir: "{{ ctfd_repo_path }}"
+
+    - name: Log in to ECR
+      ansible.builtin.shell: aws ecr get-login-password --region {{ aws_region }} | docker login --username AWS --password-stdin {{ ecr_registry }}
+      no_log: true
+
+    - name: Pull ctfd image
+      ansible.builtin.command: docker pull {{ ecr_registry }}/ctf-ng/app/{{ ctfd_environment }}:latest
+
+    - name: Deploy the stack
+      ansible.builtin.command:
+        cmd: docker stack deploy -c docker-compose.prod.yaml ctf-ng
+        chdir: "{{ ctfd_repo_path }}"

@@ -1,0 +1,74 @@
+name: Build and push images
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Which branch to build (always matches the ECR repo it pushes to)"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+  push:
+    branches:
+      - staging
+      - production
+    paths:
+      - "external/CTFd/**"
+      - "backend/views/**"
+      - "conf/ctfd/config.ini"
+      - "backend/ng/requirements.txt"
+      - "dockerfiles/ctfd.Dockerfile"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+          persist-credentials: false
+
+      - name: Resolve commit SHA
+        id: resolve
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve environment
+        id: env
+        run: echo "name=${{ inputs.ref || github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+      - name: Select push role
+        id: role
+        run: |
+          if [[ "${{ steps.env.outputs.name }}" == "production" ]]; then
+            echo "arn=${{ vars.AWS_ECR_PUSH_ROLE_ARN_PRODUCTION }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "arn=${{ vars.AWS_ECR_PUSH_ROLE_ARN_STAGING }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ steps.role.outputs.arn }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Log in to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push ctfd-ng
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          ENVIRONMENT: ${{ steps.env.outputs.name }}
+          SHA: ${{ steps.resolve.outputs.sha }}
+        run: |
+          IMAGE="$REGISTRY/ctf-ng/app/$ENVIRONMENT"
+          docker build -t "$IMAGE:$SHA" -t "$IMAGE:latest" -f ./dockerfiles/ctfd.Dockerfile .
+          docker push "$IMAGE:$SHA"
+          docker push "$IMAGE:latest"
