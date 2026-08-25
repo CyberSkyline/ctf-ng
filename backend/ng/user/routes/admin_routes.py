@@ -3,6 +3,7 @@ from flask_restx import Namespace, Resource
 from ...core.utils import success_response, error_response
 from ...core.middleware import (
     admin_endpoint,
+    ag_grid_query,
 )
 from ...permissions.models.enums import RoleEnum
 from ...permissions.controllers.get_user_roles import get_user_roles
@@ -26,17 +27,19 @@ users_admin_namespace = Namespace("/admin/users", description="user endpoints fo
 @users_admin_namespace.route("")
 class UsersAdminResource(Resource):
     @admin_endpoint()
+    @ag_grid_query
     @users_admin_namespace.doc(
-        description="Get all users",
+        description="Get a page of users (ag-grid server-side row model)",
         responses={
             200: "Success",
             403: "Forbidden - Admin access required",
             500: "Internal server error"
         },
     )
-    def get(self, **kwargs):
-        """Get all users on the system"""
-        return success_response(User.get_all_users())
+    def get(self, start_row, end_row, sort_model, filter_model, **kwargs):
+        """Get a page of users for the admin grid"""
+        users, total = User.find_paginated(sort_model, filter_model, start_row, end_row)
+        return success_response({"rows": users, "lastRow": total})
 
     @admin_endpoint(json_required=True, validation_func=User.validate_creation)
     @users_admin_namespace.doc(

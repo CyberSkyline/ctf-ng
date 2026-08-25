@@ -5,7 +5,7 @@ Admin API routes for support tickets
 from flask import request
 from flask_restx import Namespace, Resource
 
-from ...core.middleware import admin_endpoint
+from ...core.middleware import admin_endpoint, ag_grid_query
 from ...core.middleware.loaders import (
     LoaderType,
     load_ticket,
@@ -14,13 +14,13 @@ from ...core.middleware.loaders import (
 )
 from ...core.utils import error_response, success_response
 from ...user.models import User
+from ..models.Ticket import Ticket
 from ..controllers import (
     assign_ticket,
     create_tag,
     create_ticket_message,
     get_ticket,
     list_tags,
-    list_tickets,
     remove_ticket_challenge,
     remove_ticket_event,
     set_ticket_challenge,
@@ -43,67 +43,21 @@ support_admin_namespace = Namespace(
 @support_admin_namespace.route("/tickets")
 class AdminTickets(Resource):
     @admin_endpoint()
+    @ag_grid_query
     @support_admin_namespace.doc(
-        description="Get all support tickets with optional filters and enriched names (Admin only). Returns tickets with author_name, assigned_to_name, event_name, team_name, challenge_name, and full tag objects (with id, name, color).",
-        params={
-            "user_id": {
-                "description": "Filter by ticket author ID",
-                "required": False,
-                "type": "integer",
-                "example": 123
-            },
-            "status": {
-                "description": "Filter by ticket status. Options: 'all', 'open', 'closed'. Default: 'all'",
-                "required": False,
-                "type": "string",
-                "example": "open"
-            },
-            "assigned_to": {
-                "description": "Filter by assigned user ID",
-                "required": False,
-                "type": "integer",
-                "example": 456
-            },
-            "event_id": {
-                "description": "Filter by event ID",
-                "required": False,
-                "type": "integer",
-                "example": 1
-            },
-            "team_id": {
-                "description": "Filter by team ID",
-                "required": False,
-                "type": "integer",
-                "example": 42
-            }
-        },
+        description="Get a page of support tickets (ag-grid server-side row model, Admin only). Returns tickets with author_name, assigned_to_name, event_name, team_name, challenge_name, and full tag objects (with id, name, color).",
         returns={
-            200: "Success - Returns filtered list of tickets",
-            400: "Bad request - Invalid filter parameters",
+            200: "Success",
             403: "Forbidden - Admin access required",
             500: "Internal Server Error",
         },
     )
-    def get(self, current_user: User, **kwargs):
+    def get(self, start_row, end_row, sort_model, filter_model, **kwargs):
         """
-        Get all tickets with optional filters
+        Get a page of tickets for the admin grid
         """
-        user_id = request.args.get("user_id", type = int)
-        status = request.args.get("status", "all")
-        assigned_to = request.args.get("assigned_to", type = int)
-        event_id = request.args.get("event_id", type = int)
-        team_id = request.args.get("team_id", type = int)
-
-        tickets = list_tickets(
-            user_id = user_id,
-            status = status,
-            assigned_to = assigned_to,
-            event_id = event_id,
-            team_id = team_id,
-            is_admin = True,
-        )
-
-        return success_response(tickets)
+        tickets, total = Ticket.find_paginated(sort_model, filter_model, start_row, end_row)
+        return success_response({"rows": tickets, "lastRow": total})
 
 
 @support_admin_namespace.route("/tickets/<int:ticket_id>")

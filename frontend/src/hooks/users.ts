@@ -135,16 +135,6 @@ export function useUserTeams(userId: number | null) {
 }
 
 /**
- * Get a list of all users.
- * This is an admin-only endpoint.
- */
-export function useAllUsers() {
-  return useSWR<AdminUser[], Error>(
-    '/admin/users',
-  );
-}
-
-/**
  * Get information about a specific user.
  * This is an admin-only endpoint.
  * @param userId The ID of the user to fetch, or null if this should not be fetched.

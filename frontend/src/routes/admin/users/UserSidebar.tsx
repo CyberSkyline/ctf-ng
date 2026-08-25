@@ -6,8 +6,13 @@ import {
   UserIcon,
 } from '@/constants';
 import { useTeamMembers } from '@/hooks/team';
-import { useUserTeams, useUserWorkspace, useWorkspaceStatus } from '@/hooks/users';
-import type { AdminUser, Team } from '@/types';
+import {
+  useUser,
+  useUserTeams,
+  useUserWorkspace,
+  useWorkspaceStatus,
+} from '@/hooks/users';
+import type { Team } from '@/types';
 import { formatDate, utf8ToBase64 } from '@/util';
 import {
   Badge,
@@ -15,6 +20,7 @@ import {
   Flex,
   Grid,
   Heading,
+  Skeleton,
   Table,
   Text,
   Tooltip,
@@ -73,66 +79,82 @@ function RegistrationRow({ userId, team }: { userId: number, team: Team }) {
   );
 }
 
-export default function UserSidebar({ entity }: { entity: AdminUser }) {
-  const { data : teamsData, error : teamsError } = useUserTeams(entity.id);
-  const { data : workspaceData, error : workspaceError } = useUserWorkspace(entity.id);
-  const { data : workspaceStatus, error : workspaceStatusError } = useWorkspaceStatus(entity.id);
+export default function UserSidebar({ selectedId }: { selectedId: number }) {
+  const { data : user, error : userError, isLoading : userLoading } = useUser(selectedId);
+  const { data : teamsData, error : teamsError, isLoading : teamsLoading } = useUserTeams(selectedId);
+  const { data : workspaceData, error : workspaceError, isLoading : workspaceLoading } = useUserWorkspace(selectedId);
+  const { data : workspaceStatus, error : workspaceStatusError } = useWorkspaceStatus(selectedId);
 
   const headerId = useId();
 
+  if (userError) {
+    return (
+      <AdminSidebar labelId={headerId}>
+        <ErrorCallout>{userError.message}</ErrorCallout>
+      </AdminSidebar>
+    );
+  }
+
   return (
     <AdminSidebar labelId={headerId}>
-      <AdminSidebarHeader title={entity.name} icon={<UserIcon />} id={headerId}>
-        <ImpersonateUserButton user={entity} />
-        <BanUserModal user={entity} />
-        <AdminUpdateUserModal user={entity} />
+      <AdminSidebarHeader title={user?.name ?? 'Loading'} icon={<UserIcon />} id={headerId} loading={userLoading}>
+        {user && (
+          <>
+            <ImpersonateUserButton user={user} />
+            <BanUserModal user={user} />
+            <AdminUpdateUserModal user={user} />
+          </>
+        )}
       </AdminSidebarHeader>
 
-      {entity.banned && (<WarningCallout>This user is banned.</WarningCallout>)}
+      {user?.banned && (<WarningCallout>This user is banned.</WarningCallout>)}
 
-      <Grid columns="2" gap="4" align="center" justify="between">
-        <Statistic
-          label="Name"
-          value={entity.name}
-          size="5"
-        />
-        <Statistic
-          label="ID"
-          value={entity.id}
-          size="5"
-        />
+      <Skeleton loading={userLoading}>
+        <Grid columns="2" gap="4" align="center" justify="between">
+          <Statistic
+            label="Name"
+            value={user?.name ?? ''}
+            size="5"
+          />
+          <Statistic
+            label="ID"
+            value={user?.id ?? ''}
+            size="5"
+          />
 
-        <Statistic
-          label="Email"
-          value={entity.email}
-          size="5"
-        />
-        <Statistic
-          label="Sponsor"
-          value={entity.affiliation?.name || 'N/A'}
-          size="5"
-        />
-        <Statistic
-          label="Registered At"
-          value={formatDate(entity.registered_at)}
-          size="5"
-        />
-        <Box>
-          <Text size="2" color="gray">Roles</Text>
-          <Flex direction="row" wrap="wrap">
-            {entity.roles.length === 0 && <Heading asChild size="5" weight="bold"><span>None</span></Heading>}
-            {entity.roles.map((role) => (
-              <RoleBadge key={role} value={role} size="2" />
-            ))}
-          </Flex>
-        </Box>
+          <Statistic
+            label="Email"
+            value={user?.email ?? ''}
+            size="5"
+          />
+          <Statistic
+            label="Sponsor"
+            value={user?.affiliation?.name || 'N/A'}
+            size="5"
+          />
+          <Statistic
+            label="Registered At"
+            value={formatDate(user?.registered_at)}
+            size="5"
+          />
+          <Box>
+            <Text size="2" color="gray">Roles</Text>
+            <Flex direction="row" wrap="wrap">
+              {user?.roles.length === 0 && <Heading asChild size="5" weight="bold"><span>None</span></Heading>}
+              {user?.roles.map((role) => (
+                <RoleBadge key={role} value={role} size="2" />
+              ))}
+            </Flex>
+          </Box>
 
-      </Grid>
+        </Grid>
+      </Skeleton>
 
       <AdminSidebarHeader title="Registrations">
-        <AdminRegisterUserModal userId={entity.id} />
+        {user && <AdminRegisterUserModal userId={user.id} />}
       </AdminSidebarHeader>
       {teamsError && <ErrorCallout>{teamsError.message}</ErrorCallout> }
+      {teamsLoading && <Skeleton className="min-h-24" />}
       {teamsData && (
         <Table.Root>
           <Table.Header>
@@ -147,7 +169,7 @@ export default function UserSidebar({ entity }: { entity: AdminUser }) {
             {teamsData.map((team) => (
               <RegistrationRow
                 key={team.id}
-                userId={entity.id}
+                userId={selectedId}
                 team={team}
               />
             ))}
@@ -161,6 +183,7 @@ export default function UserSidebar({ entity }: { entity: AdminUser }) {
           ? <InfoCallout>This user does not have a workspace.</InfoCallout>
           : <ErrorCallout>{workspaceError.message}</ErrorCallout>
         ) }
+      {workspaceLoading && !workspaceError && <Skeleton className="min-h-24" />}
       {workspaceData && (
         <>
           { workspaceStatusError && (
@@ -200,10 +223,10 @@ export default function UserSidebar({ entity }: { entity: AdminUser }) {
                 </Table.Cell>
                 <Table.Cell align="right">
                   <Flex direction="row" justify="end" gap="4">
-                    <UserVncModal userId={entity.id} />
-                    <RestartWorkspaceModal userId={entity.id} />
-                    <RecycleWorkspaceModal userId={entity.id} />
-                    <DeleteWorkspaceModal userId={entity.id} />
+                    <UserVncModal userId={selectedId} />
+                    <RestartWorkspaceModal userId={selectedId} />
+                    <RecycleWorkspaceModal userId={selectedId} />
+                    <DeleteWorkspaceModal userId={selectedId} />
                   </Flex>
                 </Table.Cell>
               </Table.Row>
