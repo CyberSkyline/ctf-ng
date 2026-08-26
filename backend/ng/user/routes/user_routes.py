@@ -19,6 +19,7 @@ from ...core.middleware import (
 )
 from ...emails.models.EmailPreference import EmailPreference
 from ...sponsors.models.Sponsor import Sponsor
+from ..controllers.get_user_stats import get_user_stats
 
 users_user_namespace = Namespace("/users", description="user endpoints for users")
 
@@ -127,6 +128,21 @@ class UserSponsor(Resource):
 
         return success_response(sponsor)
 
+
+@users_user_namespace.route("/me/stats")
+class UserStats(Resource):
+    @user_endpoint()
+    @users_user_namespace.doc(
+        description="Get my platform-wide statistics",
+        responses={
+            200: "Success",
+            401: "Unauthorized - Authentication required",
+            500: "Internal server error",
+        },
+    )
+    def get(self, current_user, **kwargs):
+        """Get my platform-wide statistics"""
+        return success_response(get_user_stats(current_user))
 
 @users_user_namespace.route("/me/email-preferences")
 class UserEmailPreferences(Resource):

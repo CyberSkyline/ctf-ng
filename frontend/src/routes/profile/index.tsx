@@ -10,6 +10,7 @@ import HeaderContainer from 'components/HeaderContainer';
 import EmailPreferences from './EmailPreferences';
 import NotificationPreferences from './NotificationPreferences';
 import SponsorInfo from './SponsorInfo';
+import UserStats from './UserStats';
 import WorkspaceRestartModal from './WorkspaceRestartModal';
 
 export default function Profile() {
@@ -31,6 +32,7 @@ export default function Profile() {
 
       <Container size="2" my="8">
         <Flex direction="column" gap="8">
+          <UserStats />
           <EmailPreferences />
           <NotificationPreferences />
           <WorkspaceRestartModal />

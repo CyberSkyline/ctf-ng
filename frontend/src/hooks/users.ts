@@ -7,6 +7,7 @@ import type {
   Event,
   Team,
   User,
+  UserStatistics,
   Workspace,
 } from '@/types';
 import { keyBy } from 'lodash';
@@ -125,6 +126,11 @@ export function setMySponsor(id: number) {
 /* Get the user's email notification preferences */
 export function useMyEmailPreferences() {
   return useSWR<EmailPreferences, Error>('/users/me/email-preferences');
+}
+
+/* Get the user's platform-wide statistics */
+export function useMyStats() {
+  return useSWR<UserStatistics, Error>('/users/me/stats');
 }
 
 /* Set the user's email notification preferences (partial updates allowed) */
