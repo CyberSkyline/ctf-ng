@@ -48,7 +48,11 @@
     "swarm-remove": "docker stack rm ctf-ng",
     "swarm-restart": "pnpm swarm-remove && sleep 15 && pnpm swarm-deploy",
     "swarm-restart-novite": "pnpm swarm-remove && sleep 15 && pnpm swarm-start-novite",
-    "swarm-update": "pnpm build && pnpm swarm-build:all && docker service update --force ctf-ng_ctfd"
+    "swarm-update": "pnpm build && pnpm swarm-build:all && docker service update --force ctf-ng_ctfd",
+    "logs-nginx": "docker logs --tail=1000 ng-nginx -f",
+    "logs-ctfd": "docker logs --tail=1000 ng-ctfd -f",
+    "logs-vite": "docker logs --tail=1000 ng-vite -f",
+    "errors-ctfd": "docker exec -it ng-ctfd cat /var/log/supervisor/ctfd.error.log"
   },
   "packageManager": "pnpm@10.17.1"
 }
