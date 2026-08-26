@@ -17,6 +17,7 @@ from ...core.middleware import (
     user_endpoint,
     public_endpoint,
 )
+from ...emails.models.EmailPreference import EmailPreference
 from ...sponsors.models.Sponsor import Sponsor
 
 users_user_namespace = Namespace("/users", description="user endpoints for users")
@@ -125,6 +126,36 @@ class UserSponsor(Resource):
         current_user.set_sponsor(sponsor)
 
         return success_response(sponsor)
+
+
+@users_user_namespace.route("/me/email-preferences")
+class UserEmailPreferences(Resource):
+    @user_endpoint()
+    @users_user_namespace.doc(
+        description="Get my email preferences",
+        responses={
+            200: "Success",
+            401: "Unauthorized - Authentication required",
+            500: "Internal server error",
+        },
+    )
+    def get(self, current_user, **kwargs):
+        """Get my email preferences"""
+        return success_response(EmailPreference.get_all_for_user(current_user.id))
+
+    @user_endpoint(json_required=True)
+    @users_user_namespace.doc(
+        description="Update my email preferences",
+        responses={
+            200: "Email preferences updated successfully",
+            400: "Bad Request - Invalid input",
+            401: "Unauthorized - Authentication required",
+            500: "Internal server error",
+        },
+    )
+    def put(self, current_user, json_data, **kwargs):
+        """Update my email preferences"""
+        return success_response(EmailPreference.update_preferences(current_user.id, json_data))
 
 
 # The POST request for login must have a nonce attached to it or it will be blocked by CSRF protection in many cases

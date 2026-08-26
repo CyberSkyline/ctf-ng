@@ -50,6 +50,11 @@ export interface User {
   affiliation: Sponsor | null;
 }
 
+export interface EmailPreferences {
+  support_emails: boolean,
+  team_emails: boolean,
+}
+
 export interface AdminUser extends User {
   banned: boolean;
   is_sso: boolean;

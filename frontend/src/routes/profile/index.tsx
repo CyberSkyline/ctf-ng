@@ -23,6 +23,7 @@ import {
 import { useRef, useState } from 'react';
 import { TbPlayerPlayFilled } from 'react-icons/tb';
 import ding from 'assets/audio/ding.mp3';
+import EmailPreferences from './EmailPreferences';
 import SponsorImageCard from './SponsorImageCard';
 import WorkspaceRestartModal from './WorkspaceRestartModal';
 
@@ -126,6 +127,8 @@ export default function Profile() {
             </IconButton>
           </Flex>
         </Box>
+
+        <EmailPreferences />
       </Container>
     </>
   );

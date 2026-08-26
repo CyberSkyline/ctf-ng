@@ -3,6 +3,7 @@ import { apiMutation } from '@/fetchers';
 import { useMyEvents } from '@/hooks/events';
 import type {
   AdminUser,
+  EmailPreferences,
   Event,
   Team,
   User,
@@ -118,6 +119,20 @@ export function setMySponsor(id: number) {
     method : 'PUT',
   }).then(() => {
     mutate('/users/me/sponsor');
+  });
+}
+
+/* Get the user's email notification preferences */
+export function useMyEmailPreferences() {
+  return useSWR<EmailPreferences, Error>('/users/me/email-preferences');
+}
+
+/* Set the user's email notification preferences (partial updates allowed) */
+export function setMyEmailPreferences(prefs: Partial<EmailPreferences>) {
+  return apiMutation('/users/me/email-preferences', prefs, {
+    method : 'PUT',
+  }).then(() => {
+    mutate('/users/me/email-preferences');
   });
 }
 
