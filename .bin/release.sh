@@ -18,6 +18,12 @@ if [[ -z "${ECR_REGISTRY:-}" || "$ECR_REGISTRY" == "-" ]]; then
   exit 1
 fi
 
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo "Working tree has uncommitted or untracked changes and must be cleaned up before a release"
+  git status --short
+  exit 1
+fi
+
 RELEASE=$(get_current_commit)
 IMAGE="$ECR_REGISTRY/ctf-ng/app/$ENVIRONMENT:$RELEASE"
 
