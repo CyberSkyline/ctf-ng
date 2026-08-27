@@ -1314,6 +1314,7 @@ class Test_Event_Team_Start:
         assert data["data"]["start_timestamp"] is not None
 
     def test_start_event_for_team_not_privileged(self, team_member_client):
+        # non-captain members cannot start the event timer
         response = team_member_client.post(
             self.post_endpoint(1),
             json = {}
@@ -1416,6 +1417,34 @@ class Test_Event_Team_Start:
         team_end_time = datetime.fromisoformat(data["data"]["end_time"]).replace(tzinfo=None)
         assert team_end_time <= event.end_time
 
+    def test_start_event_timer_when_event_locked(
+        self,
+        client_factory,
+        user_factory,
+        event_factory,
+        team_factory
+    ):
+        """Test that starting an event when the event is locked still allows the team to start."""
+        time = utc_now()
+        event = event_factory(
+            name = "Locked Event Start Test",
+            public = True,
+            start_time = time - timedelta(hours = 1),
+            end_time = time + timedelta(hours = 1),
+            locked = True
+        )
+        user = user_factory(name = "user", email = "user@example.com")
+        user2 = user_factory(name = "user2", email = "user2@example.com")
+        team_factory(event = event, members = [user, user2])
+        client = client_factory(user = user)
+        response = client.post(
+            f"/ng/events/{event.id}/me/team/start",
+            json = {}
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
 
 
 class Test_Event_Admin_Register:
