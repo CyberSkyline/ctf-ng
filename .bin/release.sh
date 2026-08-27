@@ -38,14 +38,6 @@ docker build -t "$IMAGE" -f "$ROOT_DIR/dockerfiles/ctfd.Dockerfile" "$ROOT_DIR"
 docker push "$IMAGE"
 
 # Build and upload the frontend
-cd "$ROOT_DIR/frontend"
-pnpm vite build
-cd "$ROOT_DIR"
-
-AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY aws s3 sync "$ROOT_DIR/frontend/dist/$RELEASE" "s3://ctfng-builds/$RELEASE/" \
-  --exclude "*.map" \
-  --content-disposition "inline" \
-  --storage-class ONEZONE_IA \
-  --delete
+AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY "$DIR/build_and_upload_frontend.sh"
 
 echo "Released $RELEASE for $ENVIRONMENT"
