@@ -1,12 +1,32 @@
 - name: Deploy ctf-ng
 
+  # Optional survey var for released_sha (release commit hash)
+  # for quick and easy rollback/version pinning
+
   hosts: manager
   tasks:
-    - name: Checkout target ref
+    - name: Log in to ECR
+      ansible.builtin.shell: aws ecr get-login-password --region {{ aws_region }} | docker login --username AWS --password-stdin {{ ecr_registry }}
+      no_log: true
+
+    - name: Resolve most recently released commit
+      ansible.builtin.command: >-
+        aws ecr describe-images --repository-name ctf-ng/app/{{ ctfd_environment }}
+        --region {{ aws_region }}
+        --query "sort_by(imageDetails,&imagePushedAt)[-1].imageTags[0]" --output text
+      register: latest_sha
+      changed_when: false
+      when: rollback_sha is not defined or rollback_sha | length == 0
+
+    - name: Set target commit
+      ansible.builtin.set_fact:
+        released_sha: "{{ rollback_sha if (rollback_sha is defined and rollback_sha | length > 0) else latest_sha.stdout }}"
+
+    - name: Checkout released commit
       ansible.builtin.git:
         repo: https://github.com/CyberSkyline/ctf-ng.git
         dest: "{{ ctfd_repo_path }}"
-        version: "{{ ctfd_environment }}"
+        version: "{{ released_sha }}"
 
     - name: Set static build path
       ansible.builtin.command:
@@ -18,14 +38,24 @@
         cmd: pnpm download-frontend
         chdir: "{{ ctfd_repo_path }}"
 
-    - name: Log in to ECR
-      ansible.builtin.shell: aws ecr get-login-password --region {{ aws_region }} | docker login --username AWS --password-stdin {{ ecr_registry }}
-      no_log: true
-
     - name: Pull ctfd image
-      ansible.builtin.command: docker pull {{ ecr_registry }}/ctf-ng/app/{{ ctfd_environment }}:latest
+      ansible.builtin.command: docker pull {{ ecr_registry }}/ctf-ng/app/{{ ctfd_environment }}:{{ released_sha }}
+
+    - name: Persist release info
+      # Mostly useful for easy checks of the commit hash
+      # but this is also useful for kicking the stack without
+      # screwing up the targeted built image & assets folder
+      ansible.builtin.lineinfile:
+        path: "{{ ctfd_repo_path }}/.env"
+        regexp: "^CTFD_TAG="
+        line: "CTFD_TAG={{ released_sha }}"
+        create: true
 
     - name: Deploy the stack
       ansible.builtin.command:
         cmd: docker stack deploy -c docker-compose.prod.yaml ctf-ng
         chdir: "{{ ctfd_repo_path }}"
+      environment:
+        ECR_REGISTRY: "{{ ecr_registry }}"
+        CTFD_ENVIRONMENT: "{{ ctfd_environment }}"
+        CTFD_TAG: "{{ released_sha }}"
