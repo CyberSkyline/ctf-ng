@@ -55,6 +55,12 @@ export interface EmailPreferences {
   team_emails: boolean,
 }
 
+export interface UserStatistics {
+  total_correct_submissions: number;
+  events_participated: number;
+  practice_challenges_completed: number;
+}
+
 export interface AdminUser extends User {
   banned: boolean;
   is_sso: boolean;
