@@ -21,12 +21,12 @@ export default function AdminProvisionerCard() {
     <Card>
       <Heading>
         <Flex direction="row" align="center" justify="between">
-          {data?.length > 1 ? 'Provisioners' : 'Provisioner'}
+          {(data?.length ?? 0) > 1 ? 'Provisioners' : 'Provisioner'}
           <AdminPullVncModal />
         </Flex>
       </Heading>
-      { data?.map((host: { containers_running: number; os: string; cpus: number, memory: number }, index: number) => (
-        <Flex key={index} gap="4" mt="3">
+      { data?.map((host: { containers_running: number; os: string; cpus: number, memory: number, ip: string }) => (
+        <Flex key={host?.ip} gap="4" mt="3">
           <Statistic
             label="Host"
             value={host?.ip || ''}
