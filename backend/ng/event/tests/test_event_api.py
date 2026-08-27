@@ -1180,7 +1180,7 @@ class Test_Event_Team_Management:
         data = response.get_json()
         assert not data["success"]
         assert "errors" in data
-        assert "You do not have permission to leave your team.: EVENT_LOCKED" in data[
+        assert "You do not have permission to leave your team.: EVENT_ENDED" in data[
             "errors"]["forbidden"]
 
 
@@ -1334,7 +1334,7 @@ class Test_Event_Team_Start:
 
         assert not data["success"]
         assert "errors" in data
-        assert "EVENT_LOCKED" in data["errors"]["forbidden"]
+        assert "EVENT_ENDED" in data["errors"]["forbidden"]
 
     def test_start_event_for_team_already_started(self, team_captain_client):
         # Start the event first time
