@@ -3,7 +3,7 @@ version: '3.8'
 services:
   ctfd:
     hostname: 'ctfng_app-{{.Task.Slot}}'
-    image: ${ECR_REGISTRY}/ctf-ng/app/${CTFD_ENVIRONMENT}:latest
+    image: ${ECR_REGISTRY}/ctf-ng/app/${CTFD_ENVIRONMENT}:${CTFD_TAG}
     user: root
     deploy:
       replicas: 5
@@ -28,10 +28,6 @@ services:
       - type: bind
         source: ./.data/CTFd/uploads
         target: /var/uploads
-      - type: bind
-        source: ./backend/ng
-        target: /opt/CTFd/CTFd/plugins/ng/
-        read_only: true
       - type: bind
         source: ./.env.prod
         target: /opt/CTFd/.env.prod

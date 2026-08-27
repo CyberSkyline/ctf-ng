@@ -3,8 +3,6 @@ services:
     build:
       context: ../../../../..
       dockerfile: dockerfiles/ctfd.Dockerfile
-    volumes:
-      - ../../../../../backend/ng:/opt/CTFd/CTFd/plugins/ng:ro
     environment:
       DATABASE_URL: mysql+pymysql://test:test@test-db/test_ctfd
       REDIS_URL: redis://test-cache:6379
