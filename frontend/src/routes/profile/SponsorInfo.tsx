@@ -49,13 +49,15 @@ export default function SponsorInfo() {
             <TbInfoCircle size="48" className="shrink-0" />
           )}
           <Statistic label="Your Sponsor" value={mySponsor?.name ?? 'Loading'} size="4" />
-          <SponsorPickerModal
-            trigger={(
-              <IconButton size="1" ml="2" variant="ghost" aria-label="Change sponsor">
-                <TbPencil />
-              </IconButton>
-            )}
-          />
+          {!isLoading && (
+            <SponsorPickerModal
+              trigger={(
+                <IconButton size="1" ml="2" variant="ghost" aria-label="Change sponsor">
+                  <TbPencil />
+                </IconButton>
+              )}
+            />
+          )}
         </Flex>
       </Card>
     </Skeleton>

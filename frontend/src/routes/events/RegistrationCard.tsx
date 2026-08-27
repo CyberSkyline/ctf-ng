@@ -87,7 +87,7 @@ export default function RegistrationCard({ event }: {event: Event}) {
                   You must select a sponsor on the
                   {' '}
                   <RadixLink asChild>
-                    <Link to="/profile">profile page</Link>
+                    <Link to="/profile?sponsor=1">profile page</Link>
                   </RadixLink>
                   {' '}
                   prior to registering for events.

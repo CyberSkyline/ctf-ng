@@ -6,9 +6,10 @@ import { ErrorCallout } from 'components/Callouts';
 import FormSearchField from 'components/FormSearchField';
 import Modal from 'components/Modal';
 import { isNil, keyBy } from 'lodash';
-import { useCallback, type ReactNode } from 'react';
+import { useCallback, useEffect, type ReactNode } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 import { TbInfoCircle } from 'react-icons/tb';
+import { useSearchParams } from 'react-router';
 
 type SponsorPickerFields = { sponsorId: number | null };
 
@@ -57,6 +58,18 @@ export default function SponsorPickerModal({
 }: {
   trigger: ReactNode,
 }) {
+  const [ searchParams, setSearchParams ] = useSearchParams();
+  const defaultOpen = searchParams.get('sponsor') === '1';
+
+  useEffect(() => {
+    // Consume the auto-open flag immediately so remounting after submit doesn't reopen the modal.
+    if (defaultOpen) {
+      searchParams.delete('sponsor');
+      setSearchParams(searchParams, { replace : true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <Modal<SponsorPickerFields>
       title="Change Sponsor"
@@ -69,6 +82,7 @@ export default function SponsorPickerModal({
         }
       }}
       trigger={trigger}
+      defaultOpen={defaultOpen}
     >
       {(rhf) => <SponsorPickerForm rhf={rhf} />}
     </Modal>
