@@ -20,3 +20,9 @@ mkdir -p "$ROOT_DIR/frontend/dist/$RELEASE"
 AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY aws s3 sync "s3://$S3_BUILD_BUCKET_NAME/$RELEASE/" "$ROOT_DIR/frontend/dist/$RELEASE" \
   --exclude "*.map" \
   --delete
+
+# Catch nonexistant build
+if [[ -z "$(ls -A "$ROOT_DIR/frontend/dist/$RELEASE" 2>/dev/null)" ]]; then
+  echo "Error: no frontend build found in S3 for commit $RELEASE (s3://$S3_BUILD_BUCKET_NAME/$RELEASE/)"
+  exit 1
+fi
