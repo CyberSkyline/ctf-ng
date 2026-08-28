@@ -5,11 +5,12 @@ export default function FooterBar() {
     text-sm
     hover:text-(--gray-12)
     text-(--gray-a11)
-  `
+  `;
 
   return (
     <footer className="w-screen h-[var(--FooterBarHeight)] fixed bottom-0 flex shadow-inner p-1 justify-center gap-4 bg-black">
-      <NavLink className={itemClass}
+      <NavLink
+        className={itemClass}
         to="/faq"
       >
         FAQs
