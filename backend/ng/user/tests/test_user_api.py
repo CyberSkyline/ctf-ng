@@ -515,6 +515,51 @@ def test_user_put_password_sso_rejected(admin_client, user_factory, db_session):
     assert verify_password("password", Users.query.filter_by(id=user_id).first().password)
 
 
+def test_get_user_stats(logged_in_client, user, event_factory, team_factory, challenge_factory, attempt_factory):
+    """
+    Test getting the current user's platform-wide statistics
+    """
+    from datetime import datetime
+
+    live_event = event_factory(name="Live Event")
+    practice_event = event_factory(name="Practice Event", practice=True)
+
+    live_team = team_factory(event=live_event, members=[user])
+    live_team.set_start_timestamp(datetime.utcnow())
+    practice_team = team_factory(event=practice_event, members=[user])
+    practice_team.set_start_timestamp(datetime.utcnow())
+
+    # fully solved practice challenge, should count toward practice_challenges_completed
+    completed_challenge = challenge_factory(event=practice_event)
+    q1, q2 = completed_challenge.questions
+    attempt_factory(user_id=user.id, team_id=practice_team.id, event_id=practice_event.id,
+                     challenge_id=completed_challenge.id, question_id=q1.id, is_correct=True)
+    attempt_factory(user_id=user.id, team_id=practice_team.id, event_id=practice_event.id,
+                     challenge_id=completed_challenge.id, question_id=q2.id, is_correct=True)
+
+    # partially solved practice challenge, should not count as completed
+    partial_challenge = challenge_factory(event=practice_event)
+    pq1, pq2 = partial_challenge.questions
+    attempt_factory(user_id=user.id, team_id=practice_team.id, event_id=practice_event.id,
+                     challenge_id=partial_challenge.id, question_id=pq1.id, is_correct=True)
+    attempt_factory(user_id=user.id, team_id=practice_team.id, event_id=practice_event.id,
+                     challenge_id=partial_challenge.id, question_id=pq2.id, is_correct=False)
+
+    # correct submission on the live event, counts toward total_correct_submissions only
+    live_challenge = challenge_factory(event=live_event)
+    lq1 = live_challenge.questions[0]
+    attempt_factory(user_id=user.id, team_id=live_team.id, event_id=live_event.id,
+                     challenge_id=live_challenge.id, question_id=lq1.id, is_correct=True)
+
+    response = logged_in_client.get("/ng/users/me/stats")
+
+    assert response.status_code == 200
+    data = response.get_json()["data"]
+    assert data["total_correct_submissions"] == 4
+    assert data["events_participated"] == 1
+    assert data["practice_challenges_completed"] == 1
+
+
 def test_user_serialize_is_sso(admin_client, user_factory, db_session):
     """
     Test that the admin serializer reports SSO status
