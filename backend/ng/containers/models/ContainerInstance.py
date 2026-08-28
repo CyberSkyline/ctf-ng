@@ -351,12 +351,6 @@ class ContainerInstance(db.Model):
         if lock.acquire(blocking=False):
             instances = cls.get_instance_group(challenge_id, team_id)
 
-            # DOCKER_HOST = get_app_config("DOCKER_HOST")
-            # The bellow net detach code might not work with multi host
-            # We might need a util function that checks each node for the overlay net
-            # To disconnect any indv containers on those hosts
-            # jDOCKER_HOST = get_client_ip_round_robin()
-            #client = get_client(DOCKER_HOST)
             for instance in instances:
                 instance.remove()
 
