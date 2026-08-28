@@ -19,10 +19,6 @@ fi
 
 cd "$ROOT_DIR"
 
-# Log in to ECR
-AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \
-  aws ecr get-login-password | docker login --username AWS --password-stdin "$ECR_REGISTRY"
-
 # Optional arg for convenient rollbacks as necessary; can specify a commit hash and run deploy process with that image/frontend version instead
 RELEASED_SHA="${1:-}"
 if [[ -z "$RELEASED_SHA" ]]; then
