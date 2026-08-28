@@ -6,9 +6,9 @@ import { useGlobalPermission } from '@/hooks/permissions';
 
 export default function AdminFaqs() {
   const { isUnauthenticated } = useAuth();
-  const { denied } = useGlobalPermission('CAN_ACCESS_ADMIN_PANEL');
+  const { granted } = useGlobalPermission('CAN_ACCESS_ADMIN_PANEL');
 
-  if (isUnauthenticated || denied) {
+  if (isUnauthenticated || !granted) {
     return null;
   }
 
