@@ -20,7 +20,7 @@ export default function FAQPage() {
           <Accordion.Item value="0">
             <Accordion.Header>
               <Accordion.Trigger>
-                How do I sign in?
+                How do I log in?
               </Accordion.Trigger>
             </Accordion.Header>
             <Accordion.Content>
@@ -30,7 +30,7 @@ export default function FAQPage() {
                 <RadixLink asChild><Link to="/login">login page</Link></RadixLink>
                 {`
                 and acknowledge the
-                notice and competition rules. Login with your SSO credentials. If you have been
+                notice and competition rules. Log in with your SSO credentials. If you have been
                 given an expo account login, please click the "use an expo account" option to log in.
                 `}
               </Text>
@@ -56,7 +56,7 @@ export default function FAQPage() {
               <Text as="p">
                 To register for an event, first
                 {' '}
-                <RadixLink asChild><Link to="/login">login</Link></RadixLink>
+                <RadixLink asChild><Link to="/login">log in</Link></RadixLink>
                 {' '}
                 to the platform.
               </Text>
