@@ -17,7 +17,7 @@ echo $RELEASE
 mkdir -p "$ROOT_DIR/frontend/dist/$RELEASE"
 
 # Download files from S3 to local directory
-AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY aws s3 sync "s3://$S3_BUILD_BUCKET_NAME/$RELEASE/" "$ROOT_DIR/frontend/dist/$RELEASE" \
+with_aws_creds aws s3 sync "s3://$S3_BUILD_BUCKET_NAME/$RELEASE/" "$ROOT_DIR/frontend/dist/$RELEASE" \
   --exclude "*.map" \
   --delete
 

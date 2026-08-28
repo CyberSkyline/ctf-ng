@@ -29,12 +29,11 @@ IMAGE="$ECR_REGISTRY/ctf-ng/app/$ENVIRONMENT:$RELEASE"
 
 echo "Releasing $RELEASE for $ENVIRONMENT"
 
-
 # Build and push the ctfd image
 docker build -t "$IMAGE" -f "$ROOT_DIR/dockerfiles/ctfd.Dockerfile" "$ROOT_DIR"
 docker push "$IMAGE"
 
 # Build and upload the frontend
-AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY "$DIR/build_and_upload_frontend.sh"
+with_aws_creds "$DIR/build_and_upload_frontend.sh"
 
 echo "Released $RELEASE for $ENVIRONMENT"

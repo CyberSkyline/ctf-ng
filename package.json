@@ -34,7 +34,7 @@
     "upload-frontend": ".bin/upload_frontend.sh",
     "download-frontend": ".bin/download_frontend.sh",
     "release": ".bin/release.sh $1",
-    "deploy": ".bin/deploy.sh $1",
+    "swarm-deploy": ".bin/deploy.sh $1",
     "kick-stack": "set -a && . ./.env && set +a && docker stack deploy -c docker-compose.prod.yaml ctf-ng",
     "start": "ENV_FILE=.env.dev docker compose -f docker-compose.yaml up --build",
     "stop": "docker compose down",

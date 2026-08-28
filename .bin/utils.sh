@@ -58,6 +58,13 @@ check_ctfd_running() {
   fi
   echo "$container_name"
 }
+with_aws_creds() {
+  if [[ -n "${AWS_ACCESS_KEY_ID:-}" && "$AWS_ACCESS_KEY_ID" != "-" ]]; then
+    AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN= "$@"
+  else
+    "$@"
+  fi
+}
 
 get_current_commit() {
   git log --no-color -n 1 --pretty=format:%H | tr -d '[:space:]'

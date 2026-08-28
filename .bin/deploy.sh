@@ -19,15 +19,14 @@ fi
 
 cd "$ROOT_DIR"
 
-# Optional arg for convenient rollbacks as necessary; can specify a commit hash and run deploy process with that image/frontend version instead
 RELEASED_SHA="${1:-}"
 if [[ -z "$RELEASED_SHA" ]]; then
-  RELEASED_SHA=$(AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \
-    aws ecr describe-images --repository-name "ctf-ng/app/$CTFD_ENVIRONMENT" \
+  RELEASED_SHA=$(aws ecr describe-images --repository-name "ctf-ng/app/$CTFD_ENVIRONMENT" \
     --query "sort_by(imageDetails,&imagePushedAt)[-1].imageTags[0]" --output text)
 fi
 
 echo "Deploying $RELEASED_SHA for $CTFD_ENVIRONMENT"
+aws ecr get-login-password | docker login --username AWS --password-stdin "$ECR_REGISTRY"
 
 git fetch origin
 git checkout "$RELEASED_SHA"
