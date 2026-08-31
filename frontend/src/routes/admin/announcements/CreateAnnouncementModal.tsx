@@ -5,7 +5,6 @@ import {
   Button,
   Box,
   Switch,
-  TextArea,
   TextField,
   SegmentedControl,
 } from '@radix-ui/themes';
@@ -14,6 +13,7 @@ import { useAllEvents } from '@/hooks/events';
 import { TbPlus } from 'react-icons/tb';
 import { Controller } from 'react-hook-form';
 import { useState } from 'react';
+import RichTextEditor from 'components/RichTextEditor';
 import SelectDropdown from 'components/SelectDropdown';
 import { isNull, map } from 'lodash';
 import { ErrorCallout } from 'components/Callouts';
@@ -111,15 +111,14 @@ export default function CreateAnnoucementModal() {
             )}
           </FormField>
           <FormField label="Message" error={errors?.message}>
-            {(injected) => (
-              <TextArea
-                placeholder="Messsage"
-                rows={4}
-                resize="vertical"
-                {...register('message', {
-                  required : 'Message is required',
-                })}
-                {...injected}
+            {() => (
+              <Controller
+                control={control}
+                name="message"
+                rules={{ required : 'Message is required' }}
+                render={({ field }) => (
+                  <RichTextEditor initialValue={field.value} onChange={field.onChange} />
+                )}
               />
             )}
           </FormField>

@@ -10,6 +10,7 @@ import {
 import AdminSidebar from 'components/AdminSidebar';
 import AdminSidebarHeader from 'components/AdminSidebarHeader';
 import AnnouncementTypeBadge from 'components/AnnouncementTypeBadge';
+import RadixMarkdown from 'components/RadixMarkdown';
 import Statistic from 'components/Statistic';
 import { useId } from 'react';
 import DeleteAnnouncementModal from './DeleteAnnouncementModal';
@@ -49,7 +50,7 @@ export default function AnnouncementSidebar({ entity }: {entity: Announcement}) 
       </Grid>
 
       <AdminSidebarHeader title="Message" />
-      <Text className="whitespace-pre-wrap">{entity.message}</Text>
+      <RadixMarkdown>{entity.message}</RadixMarkdown>
     </AdminSidebar>
   );
 }

@@ -11,6 +11,7 @@ import {
 } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
 import HeaderContainer from 'components/HeaderContainer';
+import RadixMarkdown from 'components/RadixMarkdown';
 import { isEmpty, map } from 'lodash';
 import PastEvents from 'routes/dashboard/PastEvents';
 import UpcomingEvents from 'routes/dashboard/UpcomingEvents';
@@ -53,12 +54,10 @@ export default function Dashboard() {
                 <Callout.Icon>
                   <AnnouncementIcon aria-label="Warning" />
                 </Callout.Icon>
-                <Callout.Text className="whitespace-pre-wrap">
-                  <Flex direction="column" className="-mt-[2px]">
-                    <Text weight="bold" size="3">{title}</Text>
-                    <Text>{message}</Text>
-                  </Flex>
-                </Callout.Text>
+                <Flex direction="column" className="-mt-[2px]">
+                  <Text weight="bold" size="3">{title}</Text>
+                  <RadixMarkdown inheritColor>{message}</RadixMarkdown>
+                </Flex>
               </Callout.Root>
             ))
           }
