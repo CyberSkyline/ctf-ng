@@ -12,13 +12,17 @@ RELEASE=$(get_current_commit)
 
 echo $S3_BUILD_BUCKET_NAME
 echo $RELEASE
-echo $AWS_ACCESS_KEY_ID
-echo $AWS_SECRET_ACCESS_KEY
 
 # Create the destination directory if it doesn't exist
 mkdir -p "$ROOT_DIR/frontend/dist/$RELEASE"
 
 # Download files from S3 to local directory
-AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY aws s3 sync "s3://$S3_BUILD_BUCKET_NAME/$RELEASE/" "$ROOT_DIR/frontend/dist/$RELEASE" \
+with_aws_creds aws s3 sync "s3://$S3_BUILD_BUCKET_NAME/$RELEASE/" "$ROOT_DIR/frontend/dist/$RELEASE" \
   --exclude "*.map" \
   --delete
+
+# Catch nonexistant build
+if [[ -z "$(ls -A "$ROOT_DIR/frontend/dist/$RELEASE" 2>/dev/null)" ]]; then
+  echo "Error: no frontend build found in S3 for commit $RELEASE (s3://$S3_BUILD_BUCKET_NAME/$RELEASE/)"
+  exit 1
+fi
