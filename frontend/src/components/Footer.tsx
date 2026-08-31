@@ -9,9 +9,9 @@ export default function FooterBar() {
   `;
 
   return (
-    <Theme appearance='dark'>
+    <Theme appearance="dark">
       <footer className="w-screen h-[var(--FooterBarHeight)] fixed bottom-0 shadow-inner bg-black">
-        <Flex gap='4' justify='center' align='center' height='100%'>
+        <Flex gap="4" justify="center" align="center" height="100%">
           <NavLink
             className={itemClass}
             to="/faq"

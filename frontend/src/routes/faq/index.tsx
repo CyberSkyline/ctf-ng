@@ -128,12 +128,15 @@ export default function FAQPage() {
               </Accordion.Trigger>
             </Accordion.Header>
             <Accordion.Content>
-              <Text as="p">You can download your certificate from the event page.</Text>
+              <Heading>Practice Area:</Heading>
               <Text as="p">
-                For the practice area, challenge certificates are available when all questions in a challenge are answered correctly.
+                Certificates are available on the challenge page after all questions in a challenge are answered correctly.
               </Text>
+              <Heading className="pt-2">Events:</Heading>
               <Text as="p">
-                For events, event certificates are available after the event has ended.
+                {`
+                Certificates are available on the event's page after the event has ended.
+              `}
               </Text>
             </Accordion.Content>
           </Accordion.Item>
