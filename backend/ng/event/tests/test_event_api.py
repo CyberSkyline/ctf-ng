@@ -1445,6 +1445,7 @@ class Test_Event_Team_Start:
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
+        assert data["data"]["start_timestamp"] is not None
 
 
 class Test_Event_Admin_Register:
