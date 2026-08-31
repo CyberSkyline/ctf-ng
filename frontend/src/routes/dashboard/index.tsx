@@ -43,10 +43,10 @@ export default function Dashboard() {
   return (
     <>
       <title>Dashboard</title>
-      {announcementError && <ErrorCallout className="mb-4">{announcementError.message}</ErrorCallout>}
+      {announcementError && <ErrorCallout className="mb-3">{announcementError.message}</ErrorCallout>}
       <HeaderContainer>
         {!isEmpty(announcements) && (
-          <Flex direction="column" gap="1" className="mb-1">
+          <Flex direction="column" gap="3" className="mb-3">
             {
             map(announcements, ({ id, title, message }) => (
               <Callout.Root variant="surface" color={COLOR_WARNING} key={id}>
