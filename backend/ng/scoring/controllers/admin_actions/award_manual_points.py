@@ -26,7 +26,7 @@ def award_manual_points(
 
     # Notify all event participants to refetch leaderboard
     NotificationService._emit_refetch(
-        path=f"/ng/events/{event.id}/leaderboard",
+        path=f"/events/{event.id}/leaderboard",
         event_id=event.id
     )
 

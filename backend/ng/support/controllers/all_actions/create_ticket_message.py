@@ -18,7 +18,8 @@ def create_ticket_message(
     """
     Creates a new message in a ticket thread.
     """
-    if ticket.status == "closed" and is_admin:
+    reopened = ticket.status == "closed" and is_admin
+    if reopened:
         ticket.reopen_ticket(commit=False)
 
     ticket.add_message(
@@ -31,6 +32,16 @@ def create_ticket_message(
     # Implicit assignment: admin replies = admin takes ownership
     if is_admin and not ticket.assigned_to:
         ticket.assign_to_user(author_id, commit=True)
+
+    # Status is a grid column, so other admins need the list and the detail
+    if reopened:
+        NotificationService._emit_refetch(
+            path=f"/admin/support/tickets/{ticket.id}",
+        )
+
+        NotificationService._emit_refetch(
+            path="/admin/support/tickets",
+        )
 
     messages = ticket.get_messages()
     message = messages[-1]
