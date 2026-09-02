@@ -86,9 +86,15 @@ class NotificationService:
 
         NotificationService._emit_notification(notification)
 
+        path = (
+            f"/support/me/tickets/{ticket_id}" if is_admin_reply
+            else f"/admin/support/tickets/{ticket_id}"
+        )
+
+        # The replier's own client already mutates its keys
         NotificationService._emit_refetch(
-            path=f"/ng/support/tickets/{ticket_id}",
-            user_ids=[recipient_id, author_id]
+            path=path,
+            user_ids=[recipient_id]
         )
 
     @staticmethod
@@ -113,8 +119,17 @@ class NotificationService:
         NotificationService._emit_notification(notification)
 
         NotificationService._emit_refetch(
-            path=f"/ng/support/tickets/{ticket_id}",
+            path=f"/support/me/tickets/{ticket_id}",
             user_ids=[recipient_id]
+        )
+
+        # Status is a grid column, so every admin needs the list and the detail
+        NotificationService._emit_refetch(
+            path=f"/admin/support/tickets/{ticket_id}",
+        )
+
+        NotificationService._emit_refetch(
+            path="/admin/support/tickets",
         )
 
     @staticmethod
@@ -127,7 +142,7 @@ class NotificationService:
         Notify admins about a new support ticket (WebSocket refetch only, no DB notifications)
         """
         NotificationService._emit_refetch(
-            path="/ng/support/tickets",
+            path="/admin/support/tickets",
         )
 
     @staticmethod
@@ -156,7 +171,7 @@ class NotificationService:
         db.session.commit()
 
         NotificationService._emit_refetch(
-            path=f"/ng/support/tickets/{ticket_id}",
+            path=f"/admin/support/tickets/{ticket_id}",
         )
 
     @staticmethod
@@ -226,6 +241,15 @@ class NotificationService:
 
         NotificationService._emit_notification(notification)
 
+        # Assignee is a grid column, so every admin needs the list and the detail
+        NotificationService._emit_refetch(
+            path=f"/admin/support/tickets/{ticket_id}",
+        )
+
+        NotificationService._emit_refetch(
+            path="/admin/support/tickets",
+        )
+
     @staticmethod
     def broadcast_attempt_update(
         event_id: int,
@@ -237,12 +261,17 @@ class NotificationService:
         Broadcast attempt submission to team members and event leaderboard update
         """
         NotificationService._emit_refetch(
-            path=f"/ng/events/{event_id}/challenges/{challenge_id}",
+            path=f"/events/{event_id}/challenges/{challenge_id}",
             team_id=team_id
         )
 
         NotificationService._emit_refetch(
-            path=f"/ng/events/{event_id}/leaderboard",
+            path=f"/events/{event_id}/me/challenges",
+            team_id=team_id
+        )
+
+        NotificationService._emit_refetch(
+            path=f"/events/{event_id}/leaderboard",
             event_id=event_id
         )
 
@@ -256,20 +285,7 @@ class NotificationService:
         Broadcast hint redemption to team members
         """
         NotificationService._emit_refetch(
-            path=f"/ng/events/{event_id}/challenges/{challenge_id}",
-            team_id=team_id
-        )
-
-    @staticmethod
-    def broadcast_team_update(
-        team_id: int,
-        update_type: str,
-    ) -> None:
-        """
-        Broadcast team changes to team members
-        """
-        NotificationService._emit_refetch(
-            path=f"/ng/teams/{team_id}",
+            path=f"/events/{event_id}/challenges/{challenge_id}",
             team_id=team_id
         )
 
