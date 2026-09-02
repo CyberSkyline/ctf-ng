@@ -2,6 +2,9 @@
 Test helper functions for setting up the plugin's test environment.
 """
 
+from pathlib import Path
+
+import jinja2
 from flask import g
 from tests.helpers import (
     create_ctfd as create_ctfd_original,
@@ -28,10 +31,29 @@ def plugin_load(app):
         raise
 
 
+def register_frontend_templates(app):
+    """
+    Put the frontend entrypoint templates on the app's template path.
+
+    A deployed image copies `backend/views` into the active theme's template
+    directory (see `dockerfiles/ctfd.Dockerfile`), which is how the frontend
+    shell resolves at runtime. Tests run against the CTFd source tree, where
+    that copy never happened, so point Jinja straight at the directory.
+    """
+    views = Path(__file__).resolve().parents[3] / "views"
+
+    app.jinja_loader = jinja2.ChoiceLoader([
+        jinja2.FileSystemLoader(str(views)),
+        app.jinja_loader,
+    ])
+
+
 def create_ctfd():
     """Prepares the Flask app instance for the test session."""
 
     app = create_ctfd_original(enable_plugins=True, setup=False)
+
+    register_frontend_templates(app)
 
     # Disable rate limiters for testing
     app.config["RATELIMIT_ENABLED"] = False

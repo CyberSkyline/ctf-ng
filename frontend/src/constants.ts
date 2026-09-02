@@ -19,6 +19,7 @@ export const ROUTEPREFIX: string = BASE_PATH;
 export const APIPREFIX: string = `${ROUTEPREFIX}/ng`;
 export const SSO_LOGIN_PATH: string = `/ng/authenticate/okta/login`;
 export const SSO_REGISTRATION_PATH: string = `/ng/authenticate/okta/register`;
+export const SSO_CARD_REGISTRATION_PATH: string = `/ng/authenticate/okta/register/card`;
 
 // Semantic icons used throughout the UI, defined here for consistency
 export const EventIcon = TbCalendarEvent;

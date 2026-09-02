@@ -1,5 +1,7 @@
-import { useRoutes } from 'react-router';
+import { useState } from 'react';
+import { useLocation, useRoutes } from 'react-router';
 
+import ErrorPage from 'components/ErrorPage';
 import NotFound from 'components/NotFound';
 import Dashboard from 'routes/dashboard';
 import Landing from 'routes/dashboard/Landing';
@@ -98,9 +100,18 @@ function Routes() {
     },
   ]);
 
+  const location = useLocation();
+
+  // The server attaches errors to window.init for the one URL it rendered them
+  // for. Remember that URL so navigating away - via the error page's own
+  // actions or the nav bar - resumes normal routing instead of leaving the
+  // error on screen.
+  const [ errorPathname ] = useState(location.pathname);
+  const error = location.pathname === errorPathname ? window.init.error : null;
+
   return (
     <div className="p-3 min-h-[calc(100vh-var(--NavBarHeight)-var(--FooterBarHeight))] relative mb-[var(--FooterBarHeight)]">
-      {routes}
+      {error ? <ErrorPage error={error} /> : routes}
     </div>
   );
 }
