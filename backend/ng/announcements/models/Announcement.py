@@ -293,24 +293,29 @@ class Announcement(db.Model):
     @classmethod
     def delete_expired(cls) -> int:
         """
-        Delete all expired announcements
+        Delete all expired announcements and their notifications
         """
-        count = cls.query.filter(cls.expires_at <= utc_now()).delete()
+        # Foreign key blocks the announcement delete while a notification points at it
+        expired_ids = [
+            row.id for row in
+            cls.query.with_entities(cls.id).filter(cls.expires_at <= utc_now())
+        ]
+        if not expired_ids:
+            return 0
+
+        Notification.query.filter(
+            Notification.announcement_id.in_(expired_ids)
+        ).delete()
+        count = cls.query.filter(cls.id.in_(expired_ids)).delete()
 
         db.session.commit()
         return count
 
     def delete(self, commit: bool = True) -> None:
         """
-        Delete this announcement and cleanup associated notifications
+        Delete this announcement and its notifications
         """
-        Notification.query.filter_by(
-            event_id = self.event_id if self.event_id else None
-        ).filter(
-            Notification.created_at == self.created_at,
-            Notification.title == self.title,
-            Notification.message == self.message,
-        ).delete()
+        Notification.query.filter_by(announcement_id = self.id).delete()
 
         db.session.delete(self)
         if commit:

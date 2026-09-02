@@ -8,7 +8,7 @@ export default function DeleteAnnouncementModal({ id }: {id: number}) {
   return (
     <Modal
       title="Delete Announcement"
-      description="Are you sure you want to delete this announcement?"
+      description="Are you sure you want to delete this announcement and any associated notifications?"
       submitVerb="Delete"
       submitColor={COLOR_NEGATIVE}
       onSubmit={async () => deleteAnnouncement(id)}

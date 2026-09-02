@@ -319,6 +319,7 @@ export interface Notification {
   team_id?: number;
   event_id?: number;
   challenge_id?: number;
+  announcement_id?: number;
   recipient_name?: string;
   sender_name?: string;
   ticket_subject?: string;

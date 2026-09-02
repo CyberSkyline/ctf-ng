@@ -9,7 +9,7 @@ from datetime import (
     timedelta,
 )
 
-from CTFd.models import db
+from CTFd.models import Users, db
 from CTFd.cache import cache
 from CTFd.utils.security.csrf import generate_nonce
 
@@ -18,6 +18,7 @@ from ..models import (
     AnnouncementType,
 )
 from ..services import AnnouncementService
+from ...notifications.models import Notification
 
 
 class TestAnnouncementEndpoints:
@@ -527,3 +528,100 @@ class TestAnnouncementEndpoints:
         announcement_types = {a["id"]: a["type"] for a in data["data"]}
         assert announcement_types[valid_announcement.id] == "general"
         assert announcement_types[announcement_with_invalid_enum.id] == "unknown"
+
+
+class TestAnnouncementNotificationFanOut:
+    """
+    Tests for the notifications an announcement creates
+    """
+    def test_system_announcement_notifies_disconnected_users(
+        self,
+        admin_client,
+        admin,
+        user,
+        db_session
+    ):
+        """
+        Test a system announcement notifies users with no live socket
+        """
+        response = admin_client.post(
+            "/ng/admin/announcements/announce",
+            json = {
+                "title": "Scheduled Maintenance",
+                "message": "The platform restarts at 2 AM UTC",
+                "send_notification": True
+            }
+        )
+
+        assert response.status_code == 200
+        announcement_id = response.get_json()["data"]["id"]
+
+        recipient_ids = {
+            n.recipient_id for n in
+            Notification.query.filter_by(announcement_id = announcement_id)
+        }
+        assert recipient_ids == {
+            row.id for row in Users.query.with_entities(Users.id)
+        }
+
+    def test_system_announcement_skips_banned_users(
+        self,
+        admin_client,
+        admin,
+        user,
+        db_session
+    ):
+        """
+        Test a banned user gets no notification
+        """
+        user.banned = True
+        db_session.commit()
+
+        response = admin_client.post(
+            "/ng/admin/announcements/announce",
+            json = {
+                "title": "Scoreboard Frozen",
+                "message": "The scoreboard is frozen for the last hour",
+                "send_notification": True
+            }
+        )
+
+        assert response.status_code == 200
+        announcement_id = response.get_json()["data"]["id"]
+
+        recipient_ids = {
+            n.recipient_id for n in
+            Notification.query.filter_by(announcement_id = announcement_id)
+        }
+        assert recipient_ids == {admin.id}
+
+    def test_event_announcement_links_notifications(
+        self,
+        admin_client,
+        admin,
+        team_with_members,
+        db_session
+    ):
+        """
+        Test event announcement notifications carry the announcement id
+        """
+        event_id = team_with_members.event_id
+
+        response = admin_client.post(
+            f"/ng/admin/announcements/events/{event_id}/announce",
+            json = {
+                "title": "New Challenge Released",
+                "message": "Check out the new web challenge!",
+                "type": "event_update",
+                "send_notification": True
+            }
+        )
+
+        assert response.status_code == 200
+        announcement_id = response.get_json()["data"]["id"]
+
+        notifications = Notification.query.filter_by(event_id = event_id).all()
+        assert len(notifications) == len(team_with_members.members)
+        assert all(
+            n.announcement_id == announcement_id for n in notifications
+        )

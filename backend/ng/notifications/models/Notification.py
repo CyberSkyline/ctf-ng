@@ -46,6 +46,7 @@ class SerializedNotification(TypedDict):
     team_id: NotRequired[int | None]
     event_id: NotRequired[int | None]
     challenge_id: NotRequired[int | None]
+    announcement_id: NotRequired[int | None]
     # Name enrichment fields
     recipient_name: NotRequired[str]
     sender_name: NotRequired[str | None]
@@ -110,6 +111,11 @@ class Notification(db.Model):
     challenge_id = db.Column(
         db.Integer,
         db.ForeignKey("ng_challenges.id"),
+        nullable = True
+    )
+    announcement_id = db.Column(
+        db.Integer,
+        db.ForeignKey("ng_announcements.id"),
         nullable = True
     )
 
@@ -192,6 +198,8 @@ class Notification(db.Model):
             data["event_id"] = self.event_id
         if self.challenge_id:
             data["challenge_id"] = self.challenge_id
+        if self.announcement_id:
+            data["announcement_id"] = self.announcement_id
 
         if self.recipient:
             data["recipient_name"] = self.recipient.name
@@ -278,6 +286,12 @@ class Notification(db.Model):
             "Challenge",
             required = False
         )
+        validator.validate_model_id(
+            data,
+            "announcement_id",
+            "Announcement",
+            required = False
+        )
 
         validator.validate_datetime(
             data,
@@ -301,6 +315,7 @@ class Notification(db.Model):
         team_id: int | None = None,
         event_id: int | None = None,
         challenge_id: int | None = None,
+        announcement_id: int | None = None,
         expires_at: Any | None = None,
         commit: bool = True,
     ) -> Notification:
@@ -317,6 +332,7 @@ class Notification(db.Model):
             team_id: Related team ID
             event_id: Related event ID
             challenge_id: Related challenge ID
+            announcement_id: Related announcement ID
             expires_at: When notification expires
             commit: Whether to commit immediately
 
@@ -334,6 +350,7 @@ class Notification(db.Model):
                 "team_id": team_id,
                 "event_id": event_id,
                 "challenge_id": challenge_id,
+                "announcement_id": announcement_id,
                 "expires_at": expires_at,
             }
         )
@@ -348,6 +365,7 @@ class Notification(db.Model):
             team_id = validated_data.get("team_id"),
             event_id = validated_data.get("event_id"),
             challenge_id = validated_data.get("challenge_id"),
+            announcement_id = validated_data.get("announcement_id"),
             expires_at = validated_data.get("expires_at"),
             created_at = utc_now(),
         )
