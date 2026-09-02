@@ -2,6 +2,8 @@
 Admin announcement management
 """
 
+from typing import Any
+
 from ...core.exceptions import ValidationError
 
 from ..models import (
@@ -65,6 +67,16 @@ def get_all_announcements() -> list[Announcement]:
     Get all announcements (admin view).
     """
     return Announcement.get_all_announcements()
+
+
+def update_announcement(
+    announcement: Announcement,
+    data: dict[str, Any],
+) -> Announcement:
+    """
+    Update announcement and its notifications
+    """
+    return announcement.update(**data)
 
 
 def delete_announcement(announcement: Announcement) -> None:

@@ -7,7 +7,7 @@ import AnnouncementTypeBadge from 'components/AnnouncementTypeBadge';
 import { UserIcon } from '@/constants';
 import type { ColDef, ICellRendererParams } from 'ag-grid-community';
 import type { Announcement } from '@/types';
-import CreateAnnoucementModal from './CreateAnnouncementModal';
+import AnnouncementModal from './AnnouncementModal';
 import AnnouncementSidebar from './AnnouncementSidebar';
 
 const colDefs: ColDef<Announcement>[] = [
@@ -64,7 +64,7 @@ export default function AdminAnnouncements() {
         sidebarComponent={AnnouncementSidebar}
         toolbar={(
           <Flex direction="row" justify="start">
-            <CreateAnnoucementModal />
+            <AnnouncementModal />
           </Flex>
         )}
       />

@@ -34,9 +34,6 @@ const SANITIZE_SCHEMA = {
 
 /**
  * Mapping of html elements to their themed Radix UI counterparts to use when rendering markdown.
- * Color is applied directly on p/li instead of a wrapping element, so a colored container
- * (e.g. a Callout) can still contribute the last DOM child that RadixMarkdown's own
- * last:!mb-0 rule depends on.
  */
 const COMPONENTS: Components = {
   p : ({ children }) => <Text as="p" color="gray" className="!mb-2 last:!mb-0">{children}</Text>,
@@ -63,7 +60,7 @@ const COMPONENTS: Components = {
   td : ({ children }) => <Table.Cell>{children}</Table.Cell>,
 };
 
-// Only p/li set a color, so the inheriting variant overrides just those two
+// Suppress gray color to allow elements to inherit from parent in cases where that makes more sense (i.e. announcement callouts)
 const INHERIT_COLOR_COMPONENTS: Components = {
   ...COMPONENTS,
   p : ({ children }) => <Text as="p" className="!mb-2 last:!mb-0">{children}</Text>,

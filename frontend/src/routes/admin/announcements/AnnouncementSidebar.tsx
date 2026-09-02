@@ -13,6 +13,7 @@ import AnnouncementTypeBadge from 'components/AnnouncementTypeBadge';
 import RadixMarkdown from 'components/RadixMarkdown';
 import Statistic from 'components/Statistic';
 import { useId } from 'react';
+import AnnouncementModal from './AnnouncementModal';
 import DeleteAnnouncementModal from './DeleteAnnouncementModal';
 
 export default function AnnouncementSidebar({ entity }: {entity: Announcement}) {
@@ -21,6 +22,7 @@ export default function AnnouncementSidebar({ entity }: {entity: Announcement}) 
   return (
     <AdminSidebar labelId={headerId}>
       <AdminSidebarHeader title={entity.title} icon={<AnnouncementIcon />} id={headerId}>
+        <AnnouncementModal announcement={entity} />
         <DeleteAnnouncementModal id={entity.id} />
       </AdminSidebarHeader>
 

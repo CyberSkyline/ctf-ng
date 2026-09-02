@@ -11,10 +11,12 @@ from ...core.middleware.loaders import (
     load_announcement,
     load_event,
 )
+from ..models import Announcement
 from ..controllers import (
     send_announcement,
     send_event_announcement,
     get_all_announcements,
+    update_announcement,
     delete_announcement,
 )
 
@@ -174,7 +176,66 @@ class EventAnnouncement(Resource):
 
 
 @announcements_admin_namespace.route("/<int:announcement_id>")
-class AnnouncementDelete(Resource):
+class AnnouncementByID(Resource):
+    @admin_endpoint(
+        json_required = True,
+        validation_func = Announcement.validate
+    )
+    @load_announcement(source = LoaderType.PARAM)
+    @announcements_admin_namespace.doc(
+        description="Update an announcement and its related notifications (Admin only)",
+        params={
+            "announcement_id": {
+                "description": "Announcement ID to update",
+                "required": True,
+                "type": "integer",
+                "example": 1
+            },
+            "title": {
+                "description": "Announcement title",
+                "in": "body",
+                "required": True,
+                "type": "string",
+                "example": "System Maintenance"
+            },
+            "message": {
+                "description": "Announcement message content",
+                "in": "body",
+                "required": True,
+                "type": "string",
+                "example": "The system will be under maintenance from 2-4 PM UTC"
+            },
+            "type": {
+                "description": "Announcement type (general, event_update, event_start, event_end, leaderboard_update)",
+                "in": "body",
+                "required": True,
+                "type": "string",
+                "example": "general"
+            },
+            "expires_at": {
+                "description": "Expiration datetime in ISO format (UTC), or null to never expire",
+                "in": "body",
+                "required": False,
+                "type": "string",
+                "example": "2025-12-31T23:59:59Z"
+            }
+        },
+        responses={
+            200: "Success - Announcement updated with notification sync",
+            400: "Bad request - Invalid announcement data",
+            401: "Unauthorized - Authentication required",
+            403: "Forbidden - Admin access required",
+            404: "Not found - Announcement does not exist",
+            500: "Internal server error",
+        },
+    )
+    def put(self, announcement_id: int, announcement, validated_data, **kwargs):
+        """
+        Update announcement with notification sync
+        """
+        update_announcement(announcement = announcement, data = validated_data)
+        return success_response(announcement)
+
     @admin_endpoint()
     @load_announcement(source = LoaderType.PARAM)
     @announcements_admin_namespace.doc(

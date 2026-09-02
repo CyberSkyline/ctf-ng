@@ -311,6 +311,27 @@ class Announcement(db.Model):
         db.session.commit()
         return count
 
+    def update(self, commit: bool = True, **kwargs) -> Announcement:
+        """
+        Update this announcement and its notifications
+        """
+        # Only allow the following fields to be updated:
+        for key in ("type", "title", "message", "expires_at"):
+            if key in kwargs:
+                setattr(self, key, kwargs[key])
+
+        # Notifications hold copies of the title and message
+        Notification.query.filter_by(announcement_id = self.id).update(
+            {
+                "title": self.title,
+                "message": self.message,
+            }
+        )
+
+        if commit:
+            db.session.commit()
+        return self
+
     def delete(self, commit: bool = True) -> None:
         """
         Delete this announcement and its notifications

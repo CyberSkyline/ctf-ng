@@ -336,6 +336,7 @@ export interface Announcement {
   sender_id: number;
   sender_name: string;
   type: string;
+  event_id?: number;
 }
 
 export interface Workspace {
