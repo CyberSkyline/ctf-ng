@@ -14,6 +14,7 @@ import { TbArrowRight, TbPlus } from 'react-icons/tb';
 import { useTeamNameFromCode } from '@/hooks/events';
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router';
+import { PC_YEAR } from '@/constants';
 
 export default function RegistrationDataForm({
   rhf,
@@ -146,8 +147,8 @@ export default function RegistrationDataForm({
       <Box className="text-sm">
         <RadixMarkdown>
           {`I acknowledge that I have read and understand the
-          [eligibility criteria](https://presidentscup.cisa.gov/pc7/#eligibility)
-          and [contest rules](https://presidentscup.cisa.gov/pc7/#rules)
+          [eligibility criteria](https://presidentscup.cisa.gov/pc${PC_YEAR}/#eligibility)
+          and [contest rules](https://presidentscup.cisa.gov/pc${PC_YEAR}/#rules)
           for CISA's President's Cup Cybersecurity Competition. I agree to (1) comply with these criteria and rules and
           (2) accept all decisions made by CISA and the contest administrators regarding the competition.
           I will lodge all complaints or concerns I may have regarding the competition through my employer agency, which may submit them to CISA on my behalf.`}
