@@ -9,7 +9,6 @@ from .manage_announcements import (
     send_announcement,
     send_event_announcement,
     get_all_announcements,
-    update_announcement,
     delete_announcement,
 )
 
@@ -18,6 +17,5 @@ __all__ = [
     "send_announcement",
     "send_event_announcement",
     "get_all_announcements",
-    "update_announcement",
     "delete_announcement",
 ]

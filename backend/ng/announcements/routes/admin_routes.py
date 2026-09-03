@@ -16,7 +16,6 @@ from ..controllers import (
     send_announcement,
     send_event_announcement,
     get_all_announcements,
-    update_announcement,
     delete_announcement,
 )
 
@@ -233,7 +232,7 @@ class AnnouncementByID(Resource):
         """
         Update announcement with notification sync
         """
-        update_announcement(announcement = announcement, data = validated_data)
+        announcement.update(**validated_data)
         return success_response(announcement)
 
     @admin_endpoint()

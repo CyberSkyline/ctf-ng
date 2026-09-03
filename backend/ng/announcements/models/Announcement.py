@@ -291,9 +291,9 @@ class Announcement(db.Model):
         return query.order_by(cls.created_at.desc()).all()
 
     @classmethod
-    def delete_expired(cls) -> int:
+    def delete_expired(cls, include_notifs: bool = True) -> int:
         """
-        Delete all expired announcements and their notifications
+        Delete all expired announcements and optionally associated notifications
         """
         # Foreign key blocks the announcement delete while a notification points at it
         expired_ids = [
@@ -303,9 +303,14 @@ class Announcement(db.Model):
         if not expired_ids:
             return 0
 
-        Notification.query.filter(
+        notifs = Notification.query.filter(
             Notification.announcement_id.in_(expired_ids)
-        ).delete()
+        )
+        if include_notifs:
+            notifs.delete()
+        else:
+            # clear ID field to satisfy FK constraint
+            notifs.update({"announcement_id": None})
         count = cls.query.filter(cls.id.in_(expired_ids)).delete()
 
         db.session.commit()
@@ -315,28 +320,37 @@ class Announcement(db.Model):
         """
         Update this announcement and its notifications
         """
+        old_title = self.title
+        old_message = self.message
+
         # Only allow the following fields to be updated:
         for key in ("type", "title", "message", "expires_at"):
             if key in kwargs:
                 setattr(self, key, kwargs[key])
 
         # Notifications hold copies of the title and message
-        Notification.query.filter_by(announcement_id = self.id).update(
-            {
-                "title": self.title,
-                "message": self.message,
-            }
-        )
+        if self.title != old_title or self.message != old_message:
+            Notification.query.filter_by(announcement_id = self.id).update(
+                {
+                    "title": self.title,
+                    "message": self.message,
+                }
+            )
 
         if commit:
             db.session.commit()
         return self
 
-    def delete(self, commit: bool = True) -> None:
+    def delete(self, commit: bool = True, include_notifs: bool = True) -> None:
         """
-        Delete this announcement and its notifications
+        Delete this announcement and optionally associated notifications
         """
-        Notification.query.filter_by(announcement_id = self.id).delete()
+        notifs = Notification.query.filter_by(announcement_id = self.id)
+        if include_notifs:
+            notifs.delete()
+        else:
+            # clear ID field to satisfy FK constraint
+            notifs.update({"announcement_id": None})
 
         db.session.delete(self)
         if commit:
