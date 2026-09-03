@@ -1,11 +1,10 @@
 from .redis import get_redis_client
-
-from CTFd.utils import get_app_config
+from .get_docker_hosts import get_docker_hosts
 
 import redis_lock
 
 def get_client_ip_round_robin():
-    DOCKER_HOST = get_app_config("DOCKER_HOST").split(",")
+    DOCKER_HOST = get_docker_hosts()
 
     # Single host bypass round robin
     if len(DOCKER_HOST) == 1:

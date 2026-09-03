@@ -1,5 +1,5 @@
 from ..utils.get_client import get_client
-from CTFd.utils import get_app_config
+from ..utils.get_docker_hosts import get_docker_hosts
 from typing import TypedDict
 
 class SeralizedDockerInfo(TypedDict):
@@ -11,7 +11,7 @@ class SeralizedDockerInfo(TypedDict):
 
 def get_stats():
 
-    DOCKER_HOST = get_app_config("DOCKER_HOST").split(",")
+    DOCKER_HOST = get_docker_hosts()
     client_info = []
     for host in DOCKER_HOST:
         client = get_client(host)

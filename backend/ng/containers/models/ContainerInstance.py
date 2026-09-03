@@ -11,7 +11,7 @@ import logging
 from ..utils.get_client import get_client
 from ..utils.scheduler import get_client_ip_round_robin
 from ..utils.Client import Client
-from CTFd.utils import get_app_config
+from ..utils.get_docker_hosts import get_docker_hosts
 from .. constants import DOCKER_RUNNING, DOCKER_BRIDGE, DOCKER_MEM_REGEX, DOCKER_QUOTA_CONST
 from ...challenge.models.ContainerBlueprint import ContainerBlueprint
 from ...team.models.Team import Team
@@ -358,7 +358,7 @@ class ContainerInstance(db.Model):
             indv_ctrs = []
             for blueprint in blueprints:
                 for net in blueprint.networks:
-                    DOCKER_HOST = get_app_config("DOCKER_HOST").split(",")
+                    DOCKER_HOST = get_docker_hosts()
                     for host in DOCKER_HOST:
                         client = get_client(host)
                         net_obj = client.get_network_by_name(cls.render_network_name(team_id, net, challenge_id))

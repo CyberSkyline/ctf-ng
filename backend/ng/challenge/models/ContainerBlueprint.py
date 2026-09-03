@@ -1,7 +1,7 @@
 from typing import Any, Literal
 
 from CTFd.models import db
-from CTFd.utils import get_app_config
+from ...containers.utils.get_docker_hosts import get_docker_hosts
 
 from sqlalchemy.orm import Mapped
 
@@ -182,7 +182,7 @@ class ContainerBlueprint(db.Model):
 
 
     def pull_image(self, user_id):
-        DOCKER_HOST = get_app_config("DOCKER_HOST").split(",")
-        for host in DOCKER_HOST:
-            client = get_client(host)
-            client.pull_image(self.image, user_id, self.id)
+        DOCKER_HOST = get_docker_hosts()
+        host = DOCKER_HOST[0]
+        client = get_client(host)
+        client.pull_image(self.image, user_id, self.id)

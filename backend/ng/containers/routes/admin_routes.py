@@ -3,7 +3,7 @@ from flask import request, send_file
 from ...challenge.utils import generate_seed
 from ...challenge.models import Challenge
 from ..controllers.get_stats import get_stats
-from ..controllers.get_docker_hosts import get_docker_hosts
+from ..utils.get_docker_hosts import get_docker_hosts
 from ..controllers.admin_exec import admin_exec
 from ..controllers.pull_vnc import pull_vnc
 from ..controllers.recycle_containers import recycle_containers

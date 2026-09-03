@@ -4,6 +4,7 @@ import re
 import boto3
 import docker
 from CTFd.utils import get_app_config
+from .get_docker_hosts import get_docker_hosts
 from ..tasks import pull_image_celery
 
 from ..constants import DOCKER_RUNNING
@@ -56,7 +57,7 @@ class Client(docker.DockerClient):
 
     def pull_image(self, image, user_id, blueprint_id):
         auth_repo = get_app_config("CONTAINER_REGISTRY")
-        hosts = get_app_config("DOCKER_HOST").split(",")
+        hosts = get_docker_hosts()
 
         #  Auth repo will default to blank str not none
         if auth_repo != "" and re.search(auth_repo, image):
@@ -71,7 +72,7 @@ class Client(docker.DockerClient):
                     "username": get_app_config("CONTAINER_REGISTRY_USER"),
                     "password": get_app_config("CONTAINER_REGISTRY_PASSWORD"),
                 }
-            hosts = get_app_config("DOCKER_HOST").split(",")
+            hosts = get_docker_hosts()
             for host in hosts:
                 pull_image_celery.delay(host, image, user_id, blueprint_id, auth_conf=auth)
         else:

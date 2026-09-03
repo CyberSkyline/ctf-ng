@@ -1,8 +1,9 @@
 from ..utils.get_client import get_client
+from ..utils.get_docker_hosts import get_docker_hosts
 from CTFd.utils import get_app_config
 
 def pull_vnc(pulling_user: int) -> bool:
-    docker_hosts = get_app_config("DOCKER_HOST").split(",")
+    docker_hosts = get_docker_hosts()
     vnc_image = get_app_config("NOVNC_CONTAINER")
 
 
