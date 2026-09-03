@@ -4,11 +4,6 @@ from CTFd.utils import get_app_config
 
 import redis_lock
 
-import logging
-
-
-logger = logging.getLogger(__name__)
-
 def get_client_ip_round_robin():
     DOCKER_HOST = get_app_config("DOCKER_HOST").split(",")
 
@@ -21,7 +16,6 @@ def get_client_ip_round_robin():
 
     lock = redis_lock.Lock(redis_client, "ROUND_ROBIN__LOCK", expire=60)
 
-    logger.info('here')
     if lock.acquire(blocking=True):
         rr_count = redis_client.get("RR_COUNT")
 
@@ -33,7 +27,6 @@ def get_client_ip_round_robin():
         rr_count = (rr_count + 1) % len(DOCKER_HOST)
 
         ip = DOCKER_HOST[rr_count]
-        logger.info(f"theoretical ip: {ip}")
 
         redis_client.set("RR_COUNT", str(rr_count))
 
