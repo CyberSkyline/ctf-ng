@@ -23,6 +23,7 @@ import io
 from yaml import SafeLoader
 from cyber_skyline.chall_parser.rewriter import Rewriter
 from cyber_skyline.chall_parser.template import Template
+from cyber_skyline.chall_parser.safe_provider import AMBIGUOUS_LETTERS
 
 class TestRewriter:
     def test_rewriter_initialization(self):
@@ -121,6 +122,13 @@ class TestTemplate:
         template = Template("", "test_var")
         result = template.eval()
         assert result is None
+
+    def test_template_eval_bothify_safe(self):
+        """Test bothify_safe never picks a letter that looks like a 0 or a 1."""
+        template = Template("fake.bothify_safe('?' * 200)", "test_var")
+        result = template.eval()
+        assert len(result) == 200
+        assert not set(result) & set(AMBIGUOUS_LETTERS)
 
     def test_template_eval_invalid_syntax(self):
         """Test template evaluation with invalid Python syntax."""
