@@ -33,13 +33,11 @@
         cmd: pnpm update-commit-env
         chdir: "{{ ctfd_repo_path }}"
 
-    - name: Download frontend build
-      ansible.builtin.command:
-        cmd: pnpm download-frontend
-        chdir: "{{ ctfd_repo_path }}"
-
     - name: Pull ctfd image
       ansible.builtin.command: docker pull {{ ecr_registry }}/ctf-ng/app/{{ ctfd_environment }}:{{ released_sha }}
+
+    - name: Pull nginx image
+      ansible.builtin.command: docker pull {{ ecr_registry }}/ctf-ng/nginx/{{ ctfd_environment }}:{{ released_sha }}
 
     - name: Persist release info
       # Mostly useful for easy checks of the commit hash

@@ -32,9 +32,9 @@ git fetch origin
 git checkout "$RELEASED_SHA"
 
 pnpm update-commit-env
-pnpm download-frontend
 
 docker pull "$ECR_REGISTRY/ctf-ng/app/$CTFD_ENVIRONMENT:$RELEASED_SHA"
+docker pull "$ECR_REGISTRY/ctf-ng/nginx/$CTFD_ENVIRONMENT:$RELEASED_SHA"
 
 # Persisted for `pnpm kick-stack` (a plain restart, no new release lookup)
 sed -i "/^CTFD_TAG=/d" .env
