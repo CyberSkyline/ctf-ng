@@ -17,13 +17,13 @@ def close_my_ticket(
     """
     ticket.close_ticket(commit=True)
 
-    user_ids = [ticket.author_id]
-    if ticket.assigned_to and ticket.assigned_to != ticket.author_id:
-        user_ids.append(ticket.assigned_to)
+    # The closing author's own client already mutates its keys
+    NotificationService._emit_refetch(
+        path=f"/admin/support/tickets/{ticket.id}",
+    )
 
     NotificationService._emit_refetch(
-        path=f"/ng/support/tickets/{ticket.id}",
-        user_ids=user_ids
+        path="/admin/support/tickets",
     )
 
     return ticket

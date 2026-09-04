@@ -3,10 +3,7 @@ version: '3.8'
 services:
   ctfd:
     hostname: 'ctfng_app-{{.Task.Slot}}'
-    image: ctfd-ng:latest
-    build:
-      context: ./
-      dockerfile: ./dockerfiles/ctfd.Dockerfile
+    image: ${ECR_REGISTRY}/ctf-ng/app/${CTFD_ENVIRONMENT}:${CTFD_TAG}
     user: root
     deploy:
       replicas: 5
@@ -32,10 +29,6 @@ services:
         source: ./.data/CTFd/uploads
         target: /var/uploads
       - type: bind
-        source: ./backend/ng
-        target: /opt/CTFd/CTFd/plugins/ng/
-        read_only: true
-      - type: bind
         source: ./.env.prod
         target: /opt/CTFd/.env.prod
         read_only: true
@@ -58,7 +51,7 @@ services:
     command: -c "cd /opt/CTFd && /opt/CTFd/conf/ctfd/run_production.sh"
 
   nginx:
-    image: nginx-ng:latest
+    image: ${ECR_REGISTRY}/ctf-ng/nginx/${CTFD_ENVIRONMENT}:${CTFD_TAG}
     deploy:
       replicas: 2
       restart_policy:
@@ -68,22 +61,10 @@ services:
       - AWS_SECRET_NAME=${NGINX_SECRET_NAME:-ctf-ng/nginx-ssl}
       - SSL_DIR=/etc/nginx/ssl
     volumes:
-      - type: bind
-        source: ./conf/nginx/http.prod.conf
-        target: /etc/nginx/nginx.conf
-        read_only: true
-      - type: bind
-        source: ./conf/nginx
-        target: /opt/nginx/conf
-        read_only: true
       - type: tmpfs
         target: /etc/nginx/ssl
         tmpfs:
           size: 1048576 #1MB
-      - type: bind
-        source: ./frontend/dist
-        target: /var/www/vite-build
-        read_only: true
       - type: bind
         source: /mnt/prescup-web
         target: /usr/share/nginx/html

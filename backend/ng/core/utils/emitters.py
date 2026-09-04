@@ -88,8 +88,11 @@ def _get_admin_user_ids():
     Get user IDs for all admin users
     """
     try:
-        from CTFd.models import Users
-        admins = Users.query.filter_by(type = 'admin').all()
+        from ...permissions.models.Role import Role
+        from ...permissions.models.enums import RoleEnum
+
+        # Admin views gate on the ng role, not the CTFd user type
+        admins = Role.get_users_with_role(RoleEnum.ADMIN)
         return [admin.id for admin in admins]
     except Exception as e:
         logger.error("Error getting admin users: %s", e)

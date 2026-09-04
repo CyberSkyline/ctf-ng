@@ -22,6 +22,9 @@ import Challenge from 'routes/events/challenge';
 // Practice area
 import Practice from 'routes/practice';
 
+// FAQ
+import FAQPage from 'routes/faq';
+
 // Admin Section
 import AdminAnnouncements from 'routes/admin/announcements';
 import AdminApiTest from 'routes/admin/api-test';
@@ -69,6 +72,10 @@ function Routes() {
         { path : 'createTicket', element : <RequireUser><CreateTicket /></RequireUser> },
         { path : ':idTicket', element : <RequireUser><TicketDetail /></RequireUser> },
       ],
+    },
+    {
+      path : '/faq',
+      element : <FAQPage />,
     },
     {
       path : '/admin',

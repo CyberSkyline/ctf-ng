@@ -88,8 +88,6 @@ class Team(db.Model):
         if self.start_timestamp is not None:
             return False
         event = Event.find_by_id(self.event_id)
-        if event.locked:
-            return False
         if event.end_time < datetime.utcnow():
             return False
         return True

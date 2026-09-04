@@ -71,11 +71,6 @@ class AnnouncementService:
 
             db.session.commit()
 
-        NotificationService._emit_refetch(
-            path = f"/ng/events/{event_id}/announcements",
-            event_id = event_id
-        )
-
         return announcement
 
     @staticmethod
