@@ -1289,6 +1289,7 @@ def notification_factory(db_session):
             "team_id": kwargs.get("team_id", None),
             "event_id": kwargs.get("event_id", None),
             "challenge_id": kwargs.get("challenge_id", None),
+            "announcement_id": kwargs.get("announcement_id", None),
         }
 
         notification = Notification.create_notification(**defaults, commit=kwargs.get("commit", True))

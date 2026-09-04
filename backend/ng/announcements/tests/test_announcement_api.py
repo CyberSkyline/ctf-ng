@@ -9,7 +9,7 @@ from datetime import (
     timedelta,
 )
 
-from CTFd.models import db
+from CTFd.models import Users, db
 from CTFd.cache import cache
 from CTFd.utils.security.csrf import generate_nonce
 
@@ -18,6 +18,7 @@ from ..models import (
     AnnouncementType,
 )
 from ..services import AnnouncementService
+from ...notifications.models import Notification
 
 
 class TestAnnouncementEndpoints:
@@ -527,3 +528,322 @@ class TestAnnouncementEndpoints:
         announcement_types = {a["id"]: a["type"] for a in data["data"]}
         assert announcement_types[valid_announcement.id] == "general"
         assert announcement_types[announcement_with_invalid_enum.id] == "unknown"
+
+
+class TestAnnouncementNotificationFanOut:
+    """
+    Tests for the notifications an announcement creates
+    """
+    def test_system_announcement_notifies_disconnected_users(
+        self,
+        admin_client,
+        admin,
+        user,
+        db_session
+    ):
+        """
+        Test a system announcement notifies users with no live socket
+        """
+        response = admin_client.post(
+            "/ng/admin/announcements/announce",
+            json = {
+                "title": "Scheduled Maintenance",
+                "message": "The platform restarts at 2 AM UTC",
+                "send_notification": True
+            }
+        )
+
+        assert response.status_code == 200
+        announcement_id = response.get_json()["data"]["id"]
+
+        recipient_ids = {
+            n.recipient_id for n in
+            Notification.query.filter_by(announcement_id = announcement_id)
+        }
+        assert recipient_ids == {
+            row.id for row in Users.query.with_entities(Users.id)
+        }
+
+    def test_system_announcement_skips_banned_users(
+        self,
+        admin_client,
+        admin,
+        user,
+        db_session
+    ):
+        """
+        Test a banned user gets no notification
+        """
+        user.banned = True
+        db_session.commit()
+
+        response = admin_client.post(
+            "/ng/admin/announcements/announce",
+            json = {
+                "title": "Scoreboard Frozen",
+                "message": "The scoreboard is frozen for the last hour",
+                "send_notification": True
+            }
+        )
+
+        assert response.status_code == 200
+        announcement_id = response.get_json()["data"]["id"]
+
+        recipient_ids = {
+            n.recipient_id for n in
+            Notification.query.filter_by(announcement_id = announcement_id)
+        }
+        assert recipient_ids == {admin.id}
+
+    def test_event_announcement_links_notifications(
+        self,
+        admin_client,
+        admin,
+        team_with_members,
+        db_session
+    ):
+        """
+        Test event announcement notifications carry the announcement id
+        """
+        event_id = team_with_members.event_id
+
+        response = admin_client.post(
+            f"/ng/admin/announcements/events/{event_id}/announce",
+            json = {
+                "title": "New Challenge Released",
+                "message": "Check out the new web challenge!",
+                "type": "event_update",
+                "send_notification": True
+            }
+        )
+
+        assert response.status_code == 200
+        announcement_id = response.get_json()["data"]["id"]
+
+        notifications = Notification.query.filter_by(event_id = event_id).all()
+        assert len(notifications) == len(team_with_members.members)
+        assert all(
+            n.announcement_id == announcement_id for n in notifications
+        )
+
+
+class TestAnnouncementUpdate:
+    """
+    Tests for updating an announcement
+    """
+    def test_update_announcement_fields(
+        self,
+        admin_client,
+        announcement_factory
+    ):
+        """
+        Test updating title, message, type and expiration
+        """
+        announcement = announcement_factory(
+            title = "Old title",
+            message = "Old message",
+            expires_at = None
+        )
+        expires_at = datetime.now(UTC) + timedelta(days = 1)
+
+        response = admin_client.put(
+            f"/ng/admin/announcements/{announcement.id}",
+            json = {
+                "title": "New title",
+                "message": "New message",
+                "type": "event_update",
+                "expires_at": expires_at.isoformat().replace("+00:00", "Z")
+            }
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["title"] == "New title"
+        assert data["data"]["message"] == "New message"
+        assert data["data"]["type"] == "event_update"
+
+        db.session.refresh(announcement)
+        assert announcement.title == "New title"
+        assert announcement.type == AnnouncementType.EVENT_UPDATE
+        assert announcement.expires_at == expires_at.replace(tzinfo = None)
+
+    def test_update_announcement_syncs_notifications(
+        self,
+        admin_client,
+        admin,
+        user,
+        db_session
+    ):
+        """
+        Test the update rewrites the title and message of every notification
+        """
+        create_response = admin_client.post(
+            "/ng/admin/announcements/announce",
+            json = {
+                "title": "Typo in title",
+                "message": "Typo in message",
+                "send_notification": True
+            }
+        )
+        announcement_id = create_response.get_json()["data"]["id"]
+
+        response = admin_client.put(
+            f"/ng/admin/announcements/{announcement_id}",
+            json = {
+                "title": "Corrected title",
+                "message": "Corrected message",
+                "type": "general"
+            }
+        )
+
+        assert response.status_code == 200
+
+        notifications = Notification.query.filter_by(
+            announcement_id = announcement_id
+        ).all()
+        assert len(notifications) > 0
+        assert all(n.title == "Corrected title" for n in notifications)
+        assert all(n.message == "Corrected message" for n in notifications)
+
+    def test_update_announcement_clears_expiration(
+        self,
+        admin_client,
+        announcement_factory
+    ):
+        """
+        Test an explicit null expiration makes the announcement permanent
+        """
+        announcement = announcement_factory(
+            expires_at = datetime.now(UTC) + timedelta(hours = 1)
+        )
+
+        response = admin_client.put(
+            f"/ng/admin/announcements/{announcement.id}",
+            json = {
+                "title": "Permanent",
+                "message": "This never expires",
+                "type": "general",
+                "expires_at": None
+            }
+        )
+
+        assert response.status_code == 200
+        assert response.get_json()["data"]["expires_at"] is None
+
+        db.session.refresh(announcement)
+        assert announcement.expires_at is None
+
+    def test_update_announcement_keeps_sender_and_event(
+        self,
+        admin_client,
+        admin,
+        event,
+        announcement_factory
+    ):
+        """
+        Test an update leaves the sender and the event alone
+        """
+        announcement = announcement_factory(
+            sender_id = admin.id,
+            event_id = event.id,
+            type = AnnouncementType.EVENT_UPDATE
+        )
+
+        response = admin_client.put(
+            f"/ng/admin/announcements/{announcement.id}",
+            json = {
+                "title": "Updated",
+                "message": "Updated message",
+                "type": "event_end"
+            }
+        )
+
+        assert response.status_code == 200
+
+        db.session.refresh(announcement)
+        assert announcement.sender_id == admin.id
+        assert announcement.event_id == event.id
+
+    def test_update_announcement_missing_title(
+        self,
+        admin_client,
+        announcement_factory
+    ):
+        """
+        Test a missing title is rejected and the announcement is unchanged
+        """
+        announcement_id = announcement_factory(title = "Untouched").id
+
+        response = admin_client.put(
+            f"/ng/admin/announcements/{announcement_id}",
+            json = {
+                "message": "New message",
+                "type": "general"
+            }
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["success"] is False
+
+        assert Announcement.find_by_id(announcement_id).title == "Untouched"
+
+    def test_update_announcement_invalid_type(
+        self,
+        admin_client,
+        announcement_factory
+    ):
+        """
+        Test an unknown type is rejected
+        """
+        announcement = announcement_factory()
+
+        response = admin_client.put(
+            f"/ng/admin/announcements/{announcement.id}",
+            json = {
+                "title": "Title",
+                "message": "Message",
+                "type": "not_a_type"
+            }
+        )
+
+        assert response.status_code == 400
+        assert response.get_json()["success"] is False
+
+    def test_update_nonexistent_announcement(self, admin_client):
+        """
+        Test updating an announcement that does not exist
+        """
+        response = admin_client.put(
+            "/ng/admin/announcements/999999",
+            json = {
+                "title": "Title",
+                "message": "Message",
+                "type": "general"
+            }
+        )
+
+        assert response.status_code == 404
+        assert response.get_json()["success"] is False
+
+    def test_update_announcement_requires_admin(
+        self,
+        logged_in_client,
+        announcement_factory
+    ):
+        """
+        Test a non admin user cannot update an announcement
+        """
+        announcement = announcement_factory()
+
+        response = logged_in_client.put(
+            f"/ng/admin/announcements/{announcement.id}",
+            json = {
+                "title": "Title",
+                "message": "Message",
+                "type": "general"
+            }
+        )
+
+        assert response.status_code in [302, 403]

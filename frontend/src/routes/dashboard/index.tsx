@@ -11,6 +11,7 @@ import {
 } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
 import HeaderContainer from 'components/HeaderContainer';
+import RadixMarkdown from 'components/RadixMarkdown';
 import { isEmpty, map } from 'lodash';
 import PastEvents from 'routes/dashboard/PastEvents';
 import UpcomingEvents from 'routes/dashboard/UpcomingEvents';
@@ -43,22 +44,20 @@ export default function Dashboard() {
   return (
     <>
       <title>Dashboard</title>
-      {announcementError && <ErrorCallout className="mb-4">{announcementError.message}</ErrorCallout>}
+      {announcementError && <ErrorCallout className="mb-3">{announcementError.message}</ErrorCallout>}
       <HeaderContainer>
         {!isEmpty(announcements) && (
-          <Flex direction="column" gap="1" className="mb-1">
+          <Flex direction="column" gap="3" className="mb-3">
             {
             map(announcements, ({ id, title, message }) => (
               <Callout.Root variant="surface" color={COLOR_WARNING} key={id}>
                 <Callout.Icon>
                   <AnnouncementIcon aria-label="Warning" />
                 </Callout.Icon>
-                <Callout.Text className="whitespace-pre-wrap">
-                  <Flex direction="column" className="-mt-[2px]">
-                    <Text weight="bold" size="3">{title}</Text>
-                    <Text>{message}</Text>
-                  </Flex>
-                </Callout.Text>
+                <Flex direction="column" className="-mt-[2px]">
+                  <Text weight="bold" size="3">{title}</Text>
+                  <RadixMarkdown inheritColor>{message}</RadixMarkdown>
+                </Flex>
               </Callout.Root>
             ))
           }
