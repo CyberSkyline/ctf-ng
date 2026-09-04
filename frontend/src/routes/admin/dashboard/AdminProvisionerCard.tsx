@@ -19,29 +19,36 @@ export default function AdminProvisionerCard() {
 
   return (
     <Card>
-      <Flex direction="row" align="center" justify="between">
-        <Heading>
-          Provisioner
-        </Heading>
-        <AdminPullVncModal />
-      </Flex>
-      <Flex gap="4" mt="3">
-        <Statistic
-          label="Containers Running"
-          value={data?.containers_running || 0}
-          description="Total number of containers running."
-        />
-        <Statistic
-          label="CPUs"
-          value={data?.cpus || 0}
-          description="Total available logical processors."
-        />
-        <Statistic
-          label="Memory"
-          value={`${((data?.memory || 0) / (1024 * 1024 * 1024)).toFixed(2)}GiB`}
-          description="Total available memory."
-        />
-      </Flex>
+      <Heading>
+        <Flex direction="row" align="center" justify="between">
+          {(data?.length ?? 0) > 1 ? 'Provisioners' : 'Provisioner'}
+          <AdminPullVncModal />
+        </Flex>
+      </Heading>
+      { data?.map((host: { containers_running: number; os: string; cpus: number, memory: number, ip: string }) => (
+        <Flex key={host?.ip} gap="4" mt="3">
+          <Statistic
+            label="Host"
+            value={host?.ip || ''}
+            description="Host ip"
+          />
+          <Statistic
+            label="Containers Running"
+            value={host?.containers_running || 0}
+            description="Total number of containers running."
+          />
+          <Statistic
+            label="CPUs"
+            value={host?.cpus || 0}
+            description="Total available logical processors."
+          />
+          <Statistic
+            label="Memory"
+            value={`${((host?.memory || 0) / (1024 * 1024 * 1024)).toFixed(2)}GiB`}
+            description="Total available memory."
+          />
+        </Flex>
+      ))}
     </Card>
   );
 }
