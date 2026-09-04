@@ -3,7 +3,6 @@ Centralized error handling for the entire Flask application.
 Provides a unified decorator and a global registration function.
 """
 
-import sys
 import traceback
 from functools import wraps
 
@@ -16,21 +15,12 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from ..exceptions import APIException
 from ..utils import error_response
-from ..utils.logger import get_logger
+from ..utils.logger import TRACEBACK_FRAME_LIMIT, format_traceback, get_logger
 
 logger = get_logger(__name__)
 
-def _get_small_traceback(limit = 3) -> str:
-    exc_type, exc, tb = sys.exc_info()
-    if tb is None:
-        return ""
-
-    frames = traceback.extract_tb(tb)
-
-    # Most recent call first, limit frames
-    frames = frames[-limit:][::-1]
-
-    return ''.join(traceback.format_list(frames))
+def _get_small_traceback(limit: int = TRACEBACK_FRAME_LIMIT) -> str:
+    return format_traceback(limit=limit)
 
 
 def _get_request_context() -> dict:
