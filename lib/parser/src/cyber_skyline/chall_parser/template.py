@@ -26,6 +26,8 @@ from faker.providers import address, automotive, bank, barcode, \
                             isbn, job, lorem, misc, passport, person, \
                             phone_number, profile, python, sbn, ssn, user_agent
 
+from cyber_skyline.chall_parser.safe_provider import SafeProvider
+
 logger = logging.getLogger(__name__)
 
 fake = Faker()
@@ -41,6 +43,8 @@ all_providers = [
 # Register all Faker providers
 for provider in all_providers:
     fake.add_provider(provider)
+
+fake.add_provider(SafeProvider)
 
 class Template:
     def __init__(self, eval_str: str, parent_variable: str):
