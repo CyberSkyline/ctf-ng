@@ -82,3 +82,5 @@ export const NOTIF_TYPE = {
 };
 
 export const OTHER_TAXONOMY = 'Tags';
+
+export const PC_YEAR = '8'; // PC8

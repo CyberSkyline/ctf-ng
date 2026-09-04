@@ -7,6 +7,7 @@ import {
 } from '@radix-ui/themes';
 import { Link } from 'react-router';
 import Accordion from 'components/Accordion';
+import { PC_YEAR } from '@/constants';
 import AdminFaqs from './AdminFaqs';
 
 export default function FAQPage() {
@@ -37,7 +38,7 @@ export default function FAQPage() {
               <Text as="p">
                 For instructions on how to create an account, please visit
                 {' '}
-                <RadixLink href="https://presidentscup.cisa.gov/pc8/#registration">
+                <RadixLink href={`https://presidentscup.cisa.gov/pc${PC_YEAR}/#registration`} target="_blank">
                   {`President's Cup Website`}
                 </RadixLink>
                 {' '}
