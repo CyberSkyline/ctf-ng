@@ -49,7 +49,7 @@ with redirect_stdout(sys.stderr):
         }
 
         for i in range(0, 500):
-            app.logger.info(f"Creating load testing user {i}")
+            app.logger.info("Creating load testing user %s", i)
             name = f"Load Testing User {i}"
             email = f"{secrets.token_urlsafe(30)}@example.com"
             password = secrets.token_urlsafe(30)
@@ -62,7 +62,7 @@ with redirect_stdout(sys.stderr):
             NgUser.create_user(user_id=user.id, commit=True)
 
         for i in range(0, 5):
-            app.logger.info(f"Creating load testing admin {i}")
+            app.logger.info("Creating load testing admin %s", i)
             name = f"Load Testing Admin {i}"
             email = f"{secrets.token_urlsafe(30)}@example.com"
             password = secrets.token_urlsafe(30)

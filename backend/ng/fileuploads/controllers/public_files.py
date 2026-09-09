@@ -73,7 +73,7 @@ def generate_upload_url(args):
         try:
             final_filename = generate_unique_filename(s3_service, folder, filename, allow_overwrite)
         except ValueError as e:
-            logger.warning(f"Filename generation failed for '{filename}' in folder '{folder}': {e}")
+            logger.warning("Filename generation failed for '%s' in folder '%s': %s", filename, folder, e)
             return error_response(str(e), "filename_generation", 409)
 
         result = s3_service.generate_upload_url(folder, final_filename, content_type)
@@ -96,7 +96,7 @@ def generate_upload_url(args):
         return success_response(uploaded_file)
 
     except Exception as e:
-        logger.error(f"Upload URL generation error: {e}")
+        logger.error("Upload URL generation error: %s", e)
         return error_response("Internal server error", "upload", 500)
 
 def get_public_file(args):
@@ -122,7 +122,7 @@ def get_public_file(args):
 
         presigned_url = s3_service.generate_download_url(object_key, expires_in=config.S3_DOWNLOAD_URL_EXPIRATION)
 
-        logger.info(f"Generated download URL for {object_key}")
+        logger.info("Generated download URL for %s", object_key)
 
         return success_response({
             "download_url": presigned_url,
@@ -131,7 +131,7 @@ def get_public_file(args):
         })
 
     except Exception as e:
-        logger.error(f"Get public file error: {e}")
+        logger.error("Get public file error: %s", e)
         return error_response("File not found", "file", 404)
 
 def list_public_files(args):
@@ -166,7 +166,7 @@ def list_public_files(args):
                         presigned_url = s3_service.generate_download_url(obj['key'], expires_in=config.S3_DOWNLOAD_URL_EXPIRATION)
                         file_info['download_url'] = presigned_url
                     except Exception as e:
-                        logger.warning(f"Failed to generate download URL for {obj['key']}: {e}")
+                        logger.warning("Failed to generate download URL for %s: %s", obj['key'], e)
                         file_info['download_url'] = None
                 files.append(file_info)
 
@@ -175,7 +175,7 @@ def list_public_files(args):
         })
 
     except Exception as e:
-        logger.error(f"List public files error: {e}")
+        logger.error("List public files error: %s", e)
         return error_response("Internal server error", "list", 500)
 
 def search_public_files(args):
@@ -207,7 +207,7 @@ def search_public_files(args):
                         download_url = s3_service.generate_download_url(object_key, expires_in=config.S3_DOWNLOAD_URL_EXPIRATION)
                         file_info['download_url'] = download_url
                     except Exception as e:
-                        logger.warning(f"Failed to generate download URL for {object_key}: {e}")
+                        logger.warning("Failed to generate download URL for %s: %s", object_key, e)
                         file_info['download_url'] = None
 
                 return success_response({
@@ -241,7 +241,7 @@ def search_public_files(args):
                         download_url = s3_service.generate_download_url(obj['key'], expires_in=config.S3_DOWNLOAD_URL_EXPIRATION)
                         file_info['download_url'] = download_url
                     except Exception as e:
-                        logger.warning(f"Failed to generate download URL for {obj['key']}: {e}")
+                        logger.warning("Failed to generate download URL for %s: %s", obj['key'], e)
                         file_info['download_url'] = None
 
                 files.append(file_info)
@@ -251,7 +251,7 @@ def search_public_files(args):
         })
 
     except Exception as e:
-        logger.error(f"Search public files error: {e}")
+        logger.error("Search public files error: %s", e)
         return error_response("Internal server error", "search", 500)
 
 def direct_upload_file(args):
@@ -285,7 +285,7 @@ def direct_upload_file(args):
         try:
             final_filename = generate_unique_filename(s3_service, folder, original_filename, allow_overwrite)
         except ValueError as e:
-            logger.warning(f"Filename generation failed for '{original_filename}' in folder '{folder}': {e}")
+            logger.warning("Filename generation failed for '%s' in folder '%s': %s", original_filename, folder, e)
             return error_response(str(e), "filename_generation", 409)
 
         # Generate presigned URL for the actual upload
@@ -307,10 +307,10 @@ def direct_upload_file(args):
         )
 
         if upload_response.status_code not in [200, 204]:
-            logger.error(f"S3 upload failed: HTTP {upload_response.status_code}")
+            logger.error("S3 upload failed: HTTP %s", upload_response.status_code)
             return error_response("Failed to upload file to S3", "s3_upload", 500)
 
-        logger.info(f"Successfully uploaded file to S3: {object_key}")
+        logger.info("Successfully uploaded file to S3: %s", object_key)
 
         uploaded_file = {
             "filename": final_filename,
@@ -323,13 +323,13 @@ def direct_upload_file(args):
             try:
                 download_url = s3_service.generate_download_url(object_key, expires_in=config.S3_DOWNLOAD_URL_EXPIRATION)
                 uploaded_file["download_url"] = download_url
-                logger.info(f"Generated download URL for newly uploaded file: {object_key}")
+                logger.info("Generated download URL for newly uploaded file: %s", object_key)
             except Exception as e:
-                logger.error(f"Failed to generate download URL for {final_filename}: {e}")
+                logger.error("Failed to generate download URL for %s: %s", final_filename, e)
                 uploaded_file["download_url"] = None
 
         return success_response(uploaded_file)
 
     except Exception as e:
-        logger.error(f"Upload error: {e}")
+        logger.error("Upload error: %s", e)
         return error_response("Upload failed", "upload", 500)

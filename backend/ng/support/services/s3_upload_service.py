@@ -52,7 +52,7 @@ class SupportS3Service:
             )
 
             if response.status_code != 200:
-                current_app.logger.error(f"S3 upload failed: {response.status_code} - {response.text}")
+                current_app.logger.error("S3 upload failed: %s - %s", response.status_code, response.text)
                 return None
 
             attachment = TicketAttachment.create_attachment(
@@ -65,11 +65,11 @@ class SupportS3Service:
                 uploaded_by=uploaded_by,
             )
 
-            current_app.logger.info(f"Direct upload successful for ticket {ticket_id}, attachment {attachment.id}")
+            current_app.logger.info("Direct upload successful for ticket %s, attachment %s", ticket_id, attachment.id)
             return attachment
 
         except Exception as e:
-            current_app.logger.error(f"Direct upload failed: {e}")
+            current_app.logger.error("Direct upload failed: %s", e)
             return None
 
     def confirm_upload_and_create_attachment(
@@ -127,7 +127,7 @@ class SupportS3Service:
             uploaded_by=uploaded_by,
         )
 
-        current_app.logger.info(f"Confirmed upload and created attachment {attachment.id} for ticket {ticket_id}")
+        current_app.logger.info("Confirmed upload and created attachment %s for ticket %s", attachment.id, ticket_id)
         return attachment
 
     def download_ticket_attachment(self, s3_key: str) -> str | None:
@@ -144,7 +144,7 @@ class SupportS3Service:
             )
             return presigned_url
         except Exception as e:
-            current_app.logger.error(f"Failed to generate presigned URL for {s3_key}: {e}")
+            current_app.logger.error("Failed to generate presigned URL for %s: %s", s3_key, e)
             return None
 
     def _get_extension_from_content_type(self, content_type: str) -> str:
