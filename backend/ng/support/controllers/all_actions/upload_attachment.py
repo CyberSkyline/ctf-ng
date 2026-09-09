@@ -83,7 +83,7 @@ class UploadAttachment(Resource):
             }, status_code=201)
 
         except Exception as e:
-            current_app.logger.error(f"Direct upload failed: {e}")
+            current_app.logger.error("Direct upload failed: %s", e)
             return {"error": "Upload failed"}, 500
 
 
@@ -156,7 +156,7 @@ def upload_attachment(file: FileStorage, ticket: Ticket, uploaded_by: int) -> Ti
         )
 
         if upload_response.status_code not in [200, 204]:
-            current_app.logger.error(f"S3 upload failed: HTTP {upload_response.status_code}")
+            current_app.logger.error("S3 upload failed: HTTP %s", upload_response.status_code)
             raise ValidationError("Failed to upload file to S3", errors={})
 
         core_s3_service = s3_service._get_s3_service()
@@ -174,8 +174,8 @@ def upload_attachment(file: FileStorage, ticket: Ticket, uploaded_by: int) -> Ti
         return attachment
 
     except requests.RequestException as e:
-        current_app.logger.error(f"S3 upload request error: {e}")
+        current_app.logger.error("S3 upload request error: %s", e)
         raise ValidationError("Failed to upload file to S3", errors={}) from e
     except Exception as e:
-        current_app.logger.error(f"Ticket attachment upload error: {e}")
+        current_app.logger.error("Ticket attachment upload error: %s", e)
         raise ValidationError("Upload failed", errors={}) from e

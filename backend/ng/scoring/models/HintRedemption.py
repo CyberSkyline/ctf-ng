@@ -16,6 +16,7 @@ from sqlalchemy.orm import joinedload
 
 from ...core.exceptions import (
     BusinessLogicError,
+    ConflictError,
     ValidationError,
 )
 from ...core.utils import utc_now
@@ -143,7 +144,7 @@ class HintRedemption(db.Model):
             raise BusinessLogicError("This hint does not belong to the specified challenge.")
 
         if cls.query.filter_by(team_id=team_id, hint_id=hint_id).first():
-            raise BusinessLogicError("This hint has already been redeemed by your team.")
+            raise ConflictError("This hint has already been redeemed by your team.")
 
     @classmethod
     def create_redemption(

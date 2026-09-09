@@ -94,5 +94,5 @@ def search_public_files():
             }), 400
 
     except Exception as e:
-        current_app.logger.error(f"Search error: {e}")
+        current_app.logger.error("Search error: %s", e)
         return jsonify({"success": False, "error": "Internal server error"}), 500
