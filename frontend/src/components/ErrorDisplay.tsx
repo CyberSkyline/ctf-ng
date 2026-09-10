@@ -7,15 +7,13 @@ import {
   DataList,
   Flex,
   Heading,
-  IconButton,
   Text,
-  Tooltip,
 } from '@radix-ui/themes';
 import Accordion from 'components/Accordion';
+import CopyButton from 'components/CopyButton';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
 import type { IconType } from 'react-icons';
-import { TbAlertTriangle, TbCheck, TbCopy } from 'react-icons/tb';
+import { TbAlertTriangle } from 'react-icons/tb';
 
 interface ErrorDisplayProps {
   /** Short, plain-language summary of what went wrong. */
@@ -35,31 +33,6 @@ interface ErrorDisplayProps {
   reference?: string;
   /** Internal specifics. Only present when the backend runs in debug mode. */
   detail?: string;
-}
-
-function CopyButton({ value }: { value: string }) {
-  const [ copied, setCopied ] = useState(false);
-
-  const copy = () => {
-    navigator.clipboard.writeText(value).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    }, () => { /* clipboard unavailable - the value is selectable either way */ });
-  };
-
-  return (
-    <Tooltip content={copied ? 'Copied' : 'Copy'}>
-      <IconButton
-        size="1"
-        variant="ghost"
-        color="gray"
-        aria-label={`Copy ${value}`}
-        onClick={copy}
-      >
-        {copied ? <TbCheck aria-hidden /> : <TbCopy aria-hidden />}
-      </IconButton>
-    </Tooltip>
-  );
 }
 
 /**
@@ -96,13 +69,9 @@ export default function ErrorDisplay({
           <Flex
             align="center"
             justify="center"
-            className="size-16 shrink-0 rounded-full"
-            style={{
-              backgroundColor : `var(--${color}-a3)`,
-              color : `var(--${color}-11)`,
-            }}
+            className="size-16 shrink-0 rounded-full bg-[var(--accent-a3)]"
           >
-            <Icon size={30} aria-hidden />
+            <Icon size={30} aria-hidden className="text-[var(--accent-11)]" />
           </Flex>
 
           <Flex direction="column" align="center" gap="2">
@@ -149,7 +118,7 @@ export default function ErrorDisplay({
                         <DataList.Value>
                           <Flex align="center" gap="2">
                             <Code variant="ghost" size="2" className="ss02">{reference}</Code>
-                            <CopyButton value={reference} />
+                            <CopyButton value={reference} variant="ghost" color="gray" />
                           </Flex>
                         </DataList.Value>
                       </DataList.Item>

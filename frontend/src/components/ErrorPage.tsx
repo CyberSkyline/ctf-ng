@@ -4,6 +4,9 @@ import {
   COLOR_WARNING,
   SSO_CARD_REGISTRATION_PATH,
   SSO_LOGIN_PATH,
+  SUPPORT_EMAIL,
+  TOC_EMAIL,
+  TOC_PHONE,
 } from '@/constants';
 import { useAuth } from '@/hooks/users';
 import { Button, Link as RadixLink } from '@radix-ui/themes';
@@ -19,30 +22,25 @@ import {
 import { Link } from 'react-router';
 import ErrorDisplay from './ErrorDisplay';
 
-const SUPPORT_EMAIL = 'presidentscup@cisa.dhs.gov';
-const TOC_EMAIL = 'TOC@mail.cisa.dhs.gov';
-const TOC_PHONE = '202-771-CISA(2472)';
-
-/** How to reach a human. The only route open to someone without an account. */
 function TocContact() {
   return (
     <>
-      {`please email the CISA Technical Operations Center at `}
+      {`If you continue to experience difficulties accessing your account, please email the CISA Technical Operations Center at `}
       <RadixLink asChild>
         <Link to={`mailto:${TOC_EMAIL}`}>{TOC_EMAIL}</Link>
       </RadixLink>
       {` or call `}
       <b>{TOC_PHONE}</b>
+      .
     </>
   );
 }
 
-/** Retry sign-in, then fall back to the login page. */
 function SsoActions() {
   return (
     <>
       <Button asChild size="3">
-        <Link to={SSO_LOGIN_PATH} reloadDocument>Try signing in again</Link>
+        <Link to={SSO_LOGIN_PATH} reloadDocument>Try logging in again</Link>
       </Button>
       <Button asChild size="3" variant="soft" color="gray">
         <Link to="/login">Back to login</Link>
@@ -86,37 +84,34 @@ interface ErrorContent {
  */
 const ERRORS: Record<string, ErrorContent> = {
   sso_state_missing : {
-    title : 'Your sign-in session expired',
-    description : `We could not match this sign-in to a session we started. This usually happens
-      when a login is left open too long, or when cookies are blocked. Starting over should fix it.`,
+    title : 'Your login attempt expired',
+    description : `We could not identify your current single sign-on session. This usually happens
+      when the login page is left open too long, or when cookies are blocked. `,
     color : COLOR_WARNING,
     icon : TbLockExclamation,
     actions : <SsoActions />,
   },
   sso_state_mismatch : {
-    title : 'Your sign-in could not be verified',
-    description : `The response from your identity provider did not match the sign-in we started,
-      so we stopped it. Start a fresh sign-in from this device to continue.`,
+    title : 'Your single sign-on session could not be verified',
+    description : `The response from your identity provider did not match the attempt we started. `,
     color : COLOR_WARNING,
     icon : TbLockExclamation,
     actions : <SsoActions />,
   },
   sso_no_code : {
-    title : 'Your sign-in was not completed',
+    title : 'Your login attempt was not completed',
     description : `Your identity provider did not send back an authorization code, so there was
-      nothing for us to verify. This usually means the sign-in was cancelled or interrupted.`,
+      nothing for us to verify. `,
     color : COLOR_WARNING,
     icon : TbLockExclamation,
     actions : <SsoActions />,
   },
   sso_generic_error : {
-    title : 'Your identity provider rejected the sign-in',
+    title : 'Your identity provider rejected the login attempt',
     description : (
       <>
-        {`Your identity provider returned an error instead of signing you in. `}
-        {`If you continue to experience difficulties accessing your account, `}
+        {`Your identity provider returned an error instead of authenticating you in. `}
         <TocContact />
-        .
       </>
     ),
     icon : TbPlugConnectedX,
@@ -126,41 +121,45 @@ const ERRORS: Record<string, ErrorContent> = {
     title : 'Your PIV/CAC card is required to log in',
     description : (
       <>
-        {`This application requires you to use your PIV/CAC card to log in. Please use `}
+        {`Please go to `}
         <RadixLink asChild>
           <Link to={SSO_CARD_REGISTRATION_PATH} target="_blank" rel="noopener noreferrer">
             this link
           </Link>
         </RadixLink>
-        {` to update your PIV/CAC UPN information in CISA's Registration Portal. `}
-        {`Use your current password + MFA or Login.gov credentials to log in to the Registration Portal. `}
-        You will be able to use your PIV/CAC to login after updating that information in the CISA Registration Portal.
+        {` to update your PIV/CAC information in CISA's Registration Portal. 
+        When prompted, use your current password + MFA or Login.gov credentials to log in.
+        You will be able log in after updating that information in the CISA Registration Portal.`}
       </>
     ),
     icon : TbIdBadge2,
     actions : <SsoActions />,
   },
   sso_auth_failed : {
-    title : 'We could not sign you in',
-    description : `Your identity provider signed you in but did not share the details we need to
-      match you to an account. Trying again will often resolve it; if not, please contact support.`,
+    title : 'We could not log you in',
+    description : (
+      <>
+        {`Your identity provider authenticated you in but did not share the details we need to match you to an account. `}
+        <TocContact />
+      </>
+    ),
     icon : TbLockExclamation,
     actions : <SsoActions />,
   },
   sso_unexpected : {
-    title : 'Something went wrong while signing you in',
-    description : `An unexpected error interrupted your sign-in. The problem has been logged. Please
+    title : 'Something went wrong while logging you in',
+    description : `An unexpected error interrupted your login. The problem has been recorded. Please
       try again, and quote the reference below if you need to contact support.`,
     icon : TbServerBolt,
-    actions : <SsoActions />,
+    actions : <SupportActions />,
   },
   sso_registration_unavailable : {
     title : 'Account registration is unavailable',
     description : (
       <>
         {`Single sign-on registration has not been set up for this site, so there is nowhere to
-          send you. If you need an account, `}
-        <TocContact />
+          send you. If you need an account, please `}
+        <Link to={`mailto:${SUPPORT_EMAIL}`}>Email support</Link>
         .
       </>
     ),
