@@ -379,8 +379,8 @@ class TestEmailSendingSmartRouting:
                     assert ticket.id is not None
                     assert ticket.subject == "Test Issue"
 
-                    mock_logger.error.assert_called()
-                    error_call = mock_logger.error.call_args[0]
+                    mock_logger.exception.assert_called()
+                    error_call = mock_logger.exception.call_args[0]
                     assert "Unexpected error sending email" in error_call[0]
 
     def test_no_emails_sent_when_no_recipients_found(
