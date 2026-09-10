@@ -63,7 +63,7 @@ def _get_team_member_user_ids(team_id):
         members = TeamMember.query.filter_by(team_id = team_id).all()
         return [member.user_id for member in members]
     except Exception as e:
-        logger.error("Error getting team members for team %s: %s", team_id, e)
+        logger.exception("Error getting team members for team %s: %s", team_id, e)
         return []
 
 
@@ -76,7 +76,7 @@ def _get_event_participant_user_ids(event_id):
         members = TeamMember.query.filter_by(event_id = event_id).all()
         return [member.user_id for member in members]
     except Exception as e:
-        logger.error(
+        logger.exception(
             "Error getting event participants for event %s: %s",
             event_id, e
         )
@@ -95,7 +95,7 @@ def _get_admin_user_ids():
         admins = Role.get_users_with_role(RoleEnum.ADMIN)
         return [admin.id for admin in admins]
     except Exception as e:
-        logger.error("Error getting admin users: %s", e)
+        logger.exception("Error getting admin users: %s", e)
         return []
 
 

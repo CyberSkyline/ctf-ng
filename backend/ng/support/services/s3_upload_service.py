@@ -69,7 +69,7 @@ class SupportS3Service:
             return attachment
 
         except Exception as e:
-            current_app.logger.error(f"Direct upload failed: {e}")
+            current_app.logger.exception(f"Direct upload failed: {e}")
             return None
 
     def confirm_upload_and_create_attachment(
@@ -144,7 +144,7 @@ class SupportS3Service:
             )
             return presigned_url
         except Exception as e:
-            current_app.logger.error(f"Failed to generate presigned URL for {s3_key}: {e}")
+            current_app.logger.exception(f"Failed to generate presigned URL for {s3_key}: {e}")
             return None
 
     def _get_extension_from_content_type(self, content_type: str) -> str:

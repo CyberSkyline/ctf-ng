@@ -416,7 +416,7 @@ class ContainerInstance(db.Model):
                 db.session.rollback()
                 lock.release()
 
-                logger.error(str(err))
+                logger.exception(str(err))
                 raise BusinessLogicError("Challenge failed to start, please contact support") from err
             db.session.commit()
             lock.release()

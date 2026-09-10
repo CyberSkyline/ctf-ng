@@ -54,14 +54,14 @@ class TicketEmailService:
             user = Users.query.get(user_id)
             return user.email if user and user.email else None
         except SQLAlchemyError as e:
-            logger.error(
+            logger.exception(
                 "Database error getting user email for user %s: %s",
                 user_id,
                 e
             )
             return None
         except Exception as e:
-            logger.error("Error getting user email for user %s: %s", user_id, e)
+            logger.exception("Error getting user email for user %s: %s", user_id, e)
             return None
 
     @staticmethod
@@ -162,9 +162,9 @@ class TicketEmailService:
             )
 
         except SQLAlchemyError as e:
-            logger.error("Database error sending new ticket email: %s", e)
+            logger.exception("Database error sending new ticket email: %s", e)
         except Exception as e:
-            logger.error("Failed to send new ticket email: %s", e)
+            logger.exception("Failed to send new ticket email: %s", e)
 
     @staticmethod
     def send_ticket_reply_email(
@@ -209,9 +209,9 @@ class TicketEmailService:
             )
 
         except SQLAlchemyError as e:
-            logger.error("Database error sending ticket reply email: %s", e)
+            logger.exception("Database error sending ticket reply email: %s", e)
         except Exception as e:
-            logger.error("Failed to send ticket reply email: %s", e)
+            logger.exception("Failed to send ticket reply email: %s", e)
 
     @staticmethod
     def send_player_kicked_email(
@@ -277,6 +277,6 @@ class TicketEmailService:
             )
 
         except SQLAlchemyError as e:
-            logger.error("Database error sending player kicked email: %s", e)
+            logger.exception("Database error sending player kicked email: %s", e)
         except Exception as e:
-            logger.error("Failed to send player kicked email: %s", e)
+            logger.exception("Failed to send player kicked email: %s", e)

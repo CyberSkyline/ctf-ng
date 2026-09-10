@@ -56,11 +56,11 @@ class AWSEmailService:
                 "AWS credentials not found - email notifications disabled"
             )
         except ClientError as e:
-            logger.error("Failed to initialize AWS SES client: %s", e)
+            logger.exception("Failed to initialize AWS SES client: %s", e)
         except (BotoCoreError, EndpointConnectionError) as e:
-            logger.error("AWS connection error initializing SES: %s", e)
+            logger.exception("AWS connection error initializing SES: %s", e)
         except Exception as e:
-            logger.error("Unexpected error initializing AWS SES: %s", e)
+            logger.exception("Unexpected error initializing AWS SES: %s", e)
 
     def is_configured(self) -> bool:
         """
@@ -144,13 +144,13 @@ class AWSEmailService:
 
         except ClientError as e:
             error_code = e.response.get('Error', {}).get('Code', 'Unknown')
-            logger.error("AWS SES error sending email: %s - %s", error_code, e)
+            logger.exception("AWS SES error sending email: %s - %s", error_code, e)
             return False
         except (BotoCoreError, EndpointConnectionError) as e:
-            logger.error("AWS connection error sending email: %s", e)
+            logger.exception("AWS connection error sending email: %s", e)
             return False
         except Exception as e:
-            logger.error("Unexpected error sending email: %s", e)
+            logger.exception("Unexpected error sending email: %s", e)
             return False
 
 

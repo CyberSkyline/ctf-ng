@@ -90,6 +90,7 @@ def handle_exceptions(f):
                     },
                     "trace": _get_small_traceback()
                 },
+                exc_info=True,
             )
             return error_response(
                 "A resource with this name or value already exists.",
@@ -160,7 +161,7 @@ def register_error_handlers(app):
         db.session.rollback()
         db.session.remove()
         sentry_sdk.capture_exception(error)
-        logger.error("Database integrity error", extra={"context": _get_request_context()})
+        logger.error("Database integrity error", extra={"context": _get_request_context()}, exc_info=True)
         return error_response("A resource with this name or value already exists.", "database", 409)
 
     @app.errorhandler(SQLAlchemyError)

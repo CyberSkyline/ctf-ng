@@ -42,7 +42,7 @@ def download_attachment(attachment: TicketAttachment) -> Response:
         return redirect(presigned_url)
 
     except Exception as e:
-        logger.error(
+        logger.exception(
             f"Error generating presigned URL for attachment: {e}",
             extra={"attachment_id": attachment.id}
         )

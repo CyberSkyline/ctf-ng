@@ -56,7 +56,7 @@ class RedisNotificationManager:
             logger.info("Redis connection established for notifications")
 
         except Exception as e:
-            logger.error("Failed to initialize Redis for notifications: %s", e)
+            logger.exception("Failed to initialize Redis for notifications: %s", e)
             self.redis_client = None
 
     def publish_notification(self, user_ids, event_name, data):
@@ -90,7 +90,7 @@ class RedisNotificationManager:
             )
 
         except Exception as e:
-            logger.error("Failed to publish notification to Redis: %s", e)
+            logger.exception("Failed to publish notification to Redis: %s", e)
 
     def start_subscriber(self):
         """
@@ -125,12 +125,12 @@ class RedisNotificationManager:
                             data = json.loads(message['data'])
                             self._handle_notification_message(data)
                         except Exception as e:
-                            logger.error(
+                            logger.exception(
                                 "Error processing Redis message: %s", e
                             )
 
             except Exception as e:
-                logger.error("Redis subscriber error: %s", e)
+                logger.exception("Redis subscriber error: %s", e)
                 time.sleep(5)
 
         logger.info("Redis subscriber worker stopped")
@@ -157,7 +157,7 @@ class RedisNotificationManager:
                 try:
                     self.socketio.emit(event_name, data, to = sid)
                 except Exception as e:
-                    logger.error(
+                    logger.exception(
                         "Failed to send notification to SID %s: %s", sid, e
                     )
 

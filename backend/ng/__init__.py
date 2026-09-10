@@ -121,13 +121,13 @@ def load(app: Any) -> None:
             },
         )
     except (ImportError, AttributeError, TypeError) as e:
-        logger.error(
+        logger.exception(
             "Error with imports or configuration during plugin load",
             extra={"context": {"error": str(e), "stage": "failed_initialization"}},
         )
     except Exception as e:
         # Broad catch needed for unknown plugin initialization errors
-        logger.error(
+        logger.exception(
             "Unknown error loading plugin",
             extra={"context": {"error": str(e), "stage": "failed_initialization"}},
         )
