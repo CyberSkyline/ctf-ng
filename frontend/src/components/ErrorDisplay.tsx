@@ -69,6 +69,7 @@ export default function ErrorDisplay({
           <Flex
             align="center"
             justify="center"
+            data-accent-color={color}
             className="size-16 shrink-0 rounded-full bg-[var(--accent-a3)]"
           >
             <Icon size={30} aria-hidden className="text-[var(--accent-11)]" />
