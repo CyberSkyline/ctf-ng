@@ -14,7 +14,12 @@ export function useAnnouncements() {
   return useSWR<Announcement[]>('/admin/announcements');
 }
 
-export function addNewAnnouncement(data: {title: string, message: string}) {
+export function addNewAnnouncement(data: {
+  title: string,
+  message: string,
+  send_notification?: boolean,
+  expires_at?: Date
+}) {
   return apiMutation('/admin/announcements/announce', data, {
     method : 'POST',
   }).then(() => {
@@ -32,6 +37,19 @@ export function addNewEventAnnouncement(data: {
 }) {
   return apiMutation(`/admin/announcements/events/${data.event_id}/announce`, data, {
     method : 'POST',
+  }).then(() => {
+    mutate('/admin/announcements');
+  });
+}
+
+export function updateAnnouncement(id: number, data: {
+  title: string,
+  message: string,
+  type: string,
+  expires_at: Date | null
+}) {
+  return apiMutation(`/admin/announcements/${id}`, data, {
+    method : 'PUT',
   }).then(() => {
     mutate('/admin/announcements');
   });

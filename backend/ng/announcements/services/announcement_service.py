@@ -3,19 +3,17 @@ Service for handling announcement (system-wide and event-specific)
 """
 
 from enum import Enum
-from CTFd.models import db
+from CTFd.models import Users, db
 
-from ...core.utils.emitters import emit_event
-from ...notifications.sockets import get_connected_users
+from ...core.utils import utc_now
+from ...core.utils.emitters import emit_event, emit_to_users
 
 from ...team.models import TeamMember
 from ...notifications.models import (
     Notification,
     NotificationType,
 )
-from ...notifications.services.notification_service import (
-    NotificationService,
-)
+from ...notifications.services.notification_service import WebSocketEvent
 
 from ..models import Announcement, AnnouncementType
 
@@ -54,22 +52,33 @@ class AnnouncementService:
         )
 
         if send_notification:
-            participants = TeamMember.query.filter_by(event_id = event_id).all()
-            participant_user_ids = [member.user_id for member in participants]
+            user_ids = [
+                row.user_id for row in
+                TeamMember.query.with_entities(TeamMember.user_id)
+                .filter_by(event_id = event_id)
+            ]
 
-            for user_id in participant_user_ids:
-                notification = Notification.create_notification(
-                    notification_type = NotificationType.EVENT_ANNOUNCEMENT,
-                    title = title,
-                    message = message,
-                    recipient_id = user_id,
-                    sender_id = sender_id,
-                    event_id = event_id,
-                    commit = False,
-                )
-                NotificationService._emit_notification(notification)
-
+            now = utc_now()
+            # Avoids revalidating every foreign key once per participant
+            db.session.bulk_insert_mappings(
+                Notification,
+                [
+                    {
+                        "type": NotificationType.EVENT_ANNOUNCEMENT,
+                        "title": title,
+                        "message": message,
+                        "recipient_id": user_id,
+                        "sender_id": sender_id,
+                        "event_id": event_id,
+                        "announcement_id": announcement.id,
+                        "created_at": now,
+                    }
+                    for user_id in user_ids
+                ]
+            )
             db.session.commit()
+
+            emit_to_users(WebSocketEvent.NOTIFICATION, {}, user_ids)
 
         return announcement
 
@@ -82,14 +91,14 @@ class AnnouncementService:
         send_notification: bool = False,
     ) -> Announcement:
         """
-        Send system wide announcement to all connected users
+        Send system wide announcement to all users
 
         Args:
             title: Announcement title
             message: Announcement message
             sender_id: ID of announcement sender
             expires_at: Optional expiration datetime
-            send_notification: Whether to send notification to connected users
+            send_notification: Whether to notify every user that is not banned
 
         Returns:
             Created Announcement object
@@ -103,21 +112,35 @@ class AnnouncementService:
         )
 
         if send_notification:
-            connected_user_ids = get_connected_users()
+            user_ids = [
+                row.id for row in
+                Users.query.with_entities(Users.id).filter(Users.banned.isnot(True))
+            ]
 
-            for user_id in connected_user_ids:
-                notification = Notification.create_notification(
-                    notification_type = NotificationType.EVENT_ANNOUNCEMENT,
-                    title = title,
-                    message = message,
-                    recipient_id = user_id,
-                    sender_id = sender_id,
-                    commit = False,
-                )
-                NotificationService._emit_notification(notification)
+            now = utc_now()
+            # Avoids revalidating every foreign key once per user
+            db.session.bulk_insert_mappings(
+                Notification,
+                [
+                    {
+                        "type": NotificationType.EVENT_ANNOUNCEMENT,
+                        "title": title,
+                        "message": message,
+                        "recipient_id": user_id,
+                        "sender_id": sender_id,
+                        "announcement_id": announcement.id,
+                        "created_at": now,
+                    }
+                    for user_id in user_ids
+                ]
+            )
+            db.session.commit()
 
-            if connected_user_ids:
-                db.session.commit()
+            emit_event(
+                event_name = WebSocketEvent.NOTIFICATION,
+                data = {},
+                user_ids = None  # Broadcast
+            )
 
         emit_event(
             event_name = AnnouncementWebSocketEvent.SYSTEM_ANNOUNCEMENT,

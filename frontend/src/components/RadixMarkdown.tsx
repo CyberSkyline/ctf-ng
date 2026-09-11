@@ -35,7 +35,7 @@ const SANITIZE_SCHEMA = {
 /**
  * Mapping of html elements to their themed Radix UI counterparts to use when rendering markdown.
  */
-const Components: Components = {
+const COMPONENTS: Components = {
   p : ({ children }) => <Text as="p" color="gray" className="!mb-2 last:!mb-0">{children}</Text>,
   em : ({ children }) => <Em>{children}</Em>,
   strong : ({ children }) => <Strong>{children}</Strong>,
@@ -60,14 +60,27 @@ const Components: Components = {
   td : ({ children }) => <Table.Cell>{children}</Table.Cell>,
 };
 
+// Suppress gray color to allow elements to inherit from parent in cases where that makes more sense (i.e. announcement callouts)
+const INHERIT_COLOR_COMPONENTS: Components = {
+  ...COMPONENTS,
+  p : ({ children }) => <Text as="p" className="!mb-2 last:!mb-0">{children}</Text>,
+  li : ({ children }) => <Text asChild mb="1"><li>{children}</li></Text>,
+};
+
 /**
  * Renders the given string as markdown using Radix UI components.
+ * Defaults paragraph/list text to gray. Pass inheritColor to pick up a colored container's color instead.
  */
-export default function RadixMarkdown({ children }: {
+export default function RadixMarkdown({ children, inheritColor = false }: {
   children: string;
+  inheritColor?: boolean;
 }) {
   return (
-    <ReactMarkdown components={Components} remarkPlugins={[ remarkGfm ]} rehypePlugins={[ rehypeRaw, [ rehypeSanitize, SANITIZE_SCHEMA ] ]}>
+    <ReactMarkdown
+      components={inheritColor ? INHERIT_COLOR_COMPONENTS : COMPONENTS}
+      remarkPlugins={[ remarkGfm ]}
+      rehypePlugins={[ rehypeRaw, [ rehypeSanitize, SANITIZE_SCHEMA ] ]}
+    >
       {children}
     </ReactMarkdown>
   );
