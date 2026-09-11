@@ -51,7 +51,7 @@ rsync -a --delete conf/grafana/ "$EFS_PATH"/config/grafana/
 sed -i "/^CTFD_TAG=/d" .env
 echo "CTFD_TAG=$RELEASED_SHA" >> .env
 
-ECR_REGISTRY=$ECR_REGISTRY CTFD_ENVIRONMENT=$CTFD_ENVIRONMENT CTFD_TAG=$RELEASED_SHA \
+ECR_REGISTRY=$ECR_REGISTRY CTFD_ENVIRONMENT=$CTFD_ENVIRONMENT CTFD_TAG=$RELEASED_SHA EFS_PATH=$EFS_PATH \
   docker stack deploy --with-registry-auth -c docker-compose.prod.yaml ctf-ng
 
 echo "Deployed $RELEASED_SHA for $CTFD_ENVIRONMENT"
