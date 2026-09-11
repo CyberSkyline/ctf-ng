@@ -129,7 +129,7 @@ const ERRORS: Record<string, ErrorContent> = {
         </RadixLink>
         {` to update your PIV/CAC information in CISA's Registration Portal. 
         When prompted, use your current password + MFA or Login.gov credentials to log in.
-        You will be able log in after updating that information in the CISA Registration Portal.`}
+        You will be able to log in after updating that information in the CISA Registration Portal.`}
       </>
     ),
     icon : TbIdBadge2,
