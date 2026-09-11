@@ -46,7 +46,7 @@ class S3Service:
             logger.info(f"S3 Service configured for bucket: {self.bucket_name}")
 
         except Exception as e:
-            logger.error(f"S3 Service configuration failed: {e}")
+            logger.exception(f"S3 Service configuration failed: {e}")
             self._is_configured = False
 
     def is_configured(self) -> bool:
@@ -134,7 +134,7 @@ class S3Service:
             }
 
         except ClientError as e:
-            logger.error(f"Error generating presigned URL: {e}")
+            logger.exception(f"Error generating presigned URL: {e}")
             raise
 
     def generate_download_url(self, object_key: str, expires_in: int = 3600) -> str:
@@ -163,7 +163,7 @@ class S3Service:
             logger.info(f"Generated download URL for {object_key}")
             return url
         except ClientError as e:
-            logger.error(f"Error generating download URL: {e}")
+            logger.exception(f"Error generating download URL: {e}")
             raise
 
     def search_files(self, prefix: str = '', filename_pattern: str = '', limit: int = 10) -> list[dict[str, Any]]:
@@ -204,7 +204,7 @@ class S3Service:
             return formatted_files
 
         except Exception as e:
-            logger.error(f"Error searching files: {e}")
+            logger.exception(f"Error searching files: {e}")
             return []
 
     def upload_file_direct(self, file: FileStorage, object_key: str,
@@ -227,7 +227,7 @@ class S3Service:
             logger.info(f"Direct upload completed for {object_key}")
             return True
         except ClientError as e:
-            logger.error(f"Error uploading file to S3: {e}")
+            logger.exception(f"Error uploading file to S3: {e}")
             return False
 
     def list_objects(self, prefix: str = '') -> list[dict[str, Any]]:
@@ -254,7 +254,7 @@ class S3Service:
             return files
 
         except ClientError as e:
-            logger.error(f"Error listing objects: {e}")
+            logger.exception(f"Error listing objects: {e}")
             return []
 
     def object_exists(self, object_key: str) -> bool:

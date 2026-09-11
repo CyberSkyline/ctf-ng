@@ -96,7 +96,7 @@ def generate_upload_url(args):
         return success_response(uploaded_file)
 
     except Exception as e:
-        logger.error(f"Upload URL generation error: {e}")
+        logger.exception(f"Upload URL generation error: {e}")
         return error_response("Internal server error", "upload", 500)
 
 def get_public_file(args):
@@ -131,7 +131,7 @@ def get_public_file(args):
         })
 
     except Exception as e:
-        logger.error(f"Get public file error: {e}")
+        logger.exception(f"Get public file error: {e}")
         return error_response("File not found", "file", 404)
 
 def list_public_files(args):
@@ -175,7 +175,7 @@ def list_public_files(args):
         })
 
     except Exception as e:
-        logger.error(f"List public files error: {e}")
+        logger.exception(f"List public files error: {e}")
         return error_response("Internal server error", "list", 500)
 
 def search_public_files(args):
@@ -251,7 +251,7 @@ def search_public_files(args):
         })
 
     except Exception as e:
-        logger.error(f"Search public files error: {e}")
+        logger.exception(f"Search public files error: {e}")
         return error_response("Internal server error", "search", 500)
 
 def direct_upload_file(args):
@@ -325,11 +325,11 @@ def direct_upload_file(args):
                 uploaded_file["download_url"] = download_url
                 logger.info(f"Generated download URL for newly uploaded file: {object_key}")
             except Exception as e:
-                logger.error(f"Failed to generate download URL for {final_filename}: {e}")
+                logger.exception(f"Failed to generate download URL for {final_filename}: {e}")
                 uploaded_file["download_url"] = None
 
         return success_response(uploaded_file)
 
     except Exception as e:
-        logger.error(f"Upload error: {e}")
+        logger.exception(f"Upload error: {e}")
         return error_response("Upload failed", "upload", 500)
