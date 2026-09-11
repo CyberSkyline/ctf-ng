@@ -38,8 +38,14 @@ git checkout "$RELEASED_SHA"
 
 pnpm update-commit-env
 
-mkdir -p "$EFS_PATH"/CTFd/logs "$EFS_PATH"/CTFd/uploads "$EFS_PATH"/redis "$EFS_PATH"/grafana
+mkdir -p "$EFS_PATH"/CTFd/logs "$EFS_PATH"/CTFd/uploads "$EFS_PATH"/redis "$EFS_PATH"/grafana "$EFS_PATH"/config
 chown -R 999:999 "$EFS_PATH"/redis
+
+# Workers have no repo checkout, so this release's config is copied onto EFS
+# (read_only bind mounts in docker-compose.prod.yaml) instead of read from disk
+cp .env.prod "$EFS_PATH"/config/.env.prod
+rsync -a --delete conf/ctfd/ "$EFS_PATH"/config/ctfd/
+rsync -a --delete conf/grafana/ "$EFS_PATH"/config/grafana/
 
 # Persisted for `pnpm kick-stack` (a plain restart, no new release lookup)
 sed -i "/^CTFD_TAG=/d" .env
