@@ -1,6 +1,7 @@
 import { COLOR_POSITIVE, ROUTEPREFIX } from '@/constants';
 import type { Team } from '@/types';
 import { Button, TextField } from '@radix-ui/themes';
+import CopyButton from 'components/CopyButton';
 import Modal from 'components/Modal';
 import { TbShare } from 'react-icons/tb';
 
@@ -28,15 +29,7 @@ export default function AddMemberModal({ eventId, inviteCode }: { eventId: Team[
         readOnly
       >
         <TextField.Slot pr="3" side="right">
-          <Button
-            size="1"
-            onClick={() => {
-              // Clipboard only works in secure context (https)
-              navigator.clipboard.writeText(inviteURL);
-            }}
-          >
-            Copy
-          </Button>
+          <CopyButton value={inviteURL} label="Copy" />
         </TextField.Slot>
       </TextField.Root>
     </Modal>

@@ -10,6 +10,7 @@ from flask import redirect, request, session
 from requests_oauthlib import OAuth2Session
 
 from ...core.exceptions import AuthenticationError
+from ...core.utils.error_page import render_error_page
 from ..models.User import User as NG_User
 
 OKTA_CLIENT_ID = os.getenv("OKTA_CLIENT_ID")
@@ -46,11 +47,23 @@ def okta_login():
 
 def okta_register():
     if not SSO_REGISTRATION_URL:
-        return {
-            "error": "SSO account registration is not configured."
-        }, 404
+        return render_error_page(
+            "sso_registration_unavailable",
+            status=503,
+            log_message="SSO registration requested but SSO_REGISTRATION_URL is not set",
+        )
 
     return redirect(SSO_REGISTRATION_URL)
+
+def okta_register_card():
+    if not SSO_REGISTRATION_URL:
+        return render_error_page(
+            "sso_registration_unavailable",
+            status=503,
+            log_message="SSO registration requested but SSO_REGISTRATION_URL is not set",
+        )
+
+    return redirect(f"{SSO_REGISTRATION_URL.rstrip('/')}/piv")
 
 def okta_callback():
     email = None
@@ -59,39 +72,49 @@ def okta_callback():
     name = None
     ng_user = None
     ctfd_user = None
-    code = None
 
-    error_msg = None
+    okta_code = request.args.get("code")
+    okta_state_param = request.args.get("state")
+    okta_error = request.args.get("error")
+    okta_error_description = request.args.get("error_description")
+    okta_session_state = session.get("oauth_state")
 
-    if 'oauth_state' not in session:
+    error_msg = ""
+    error_code = ""
+
+    if okta_error:
+        # Generic Okta error
+        error_msg = f"Okta returned error: {okta_error}"
+        if okta_error_description:
+            error_msg += f" - {okta_error_description}"
+        error_code = "sso_generic_error"
+
+        # More specialized okta error messages
+        if okta_error == "access_denied" and okta_error_description == "The resource owner or authorization server denied the request":
+            error_msg = "PIV/CAC card verification required"
+            error_code = "sso_card_error"
+    elif not okta_session_state:
         error_msg = "No OAuth state found in session"
-
-    if 'error' in request.args:
-        error_msg = f"Okta returned error: {request.args.get('error')}"
-        if 'error_description' in request.args:
-            error_msg += f" - {request.args.get('error_description')}"
-
-    code = request.args.get('code')
-    if not code:
-        error_msg = "No authorization code found in callback URL"
-
-    # Validate state parameter matches session state if both exist
-    state_param = request.args.get('state')
-    session_state = session.get('oauth_state')
-    if state_param and session_state and state_param != session_state:
+        error_code = "sso_state_missing"
+    elif okta_state_param != okta_session_state:
         error_msg = "OAuth state parameter mismatch"
+        error_code = "sso_state_mismatch"
+    elif not okta_code:
+        error_msg = "No authorization code found in callback URL"
+        error_code = "sso_no_code"
 
     if (error_msg):
-        debug_info = {
-            "has_oauth_state": 'oauth_state' in session,
-            "request_args": dict(request.args)
-        }
-        print(f"OAuth Error: {error_msg} - Debug: {debug_info}")
-
-        return {
-            "error": "Authentication failed. Please try again.",
-            "debug": debug_info
-        }, 400
+        return render_error_page(
+            error_code,
+            status=400,
+            log_message=f"OAuth callback rejected: {error_msg}",
+            context={
+                "has_oauth_state": 'oauth_state' in session,
+                # The authorization code is a credential, so it is left out.
+                "request_args": {k: v for k, v in request.args.items() if k != "code"},
+            },
+            detail=error_msg,
+        )
 
     try:
         # Parse Okta data
@@ -103,7 +126,7 @@ def okta_callback():
 
         okta.fetch_token(
             TOKEN_URL,
-            code=code,
+            code=okta_code,
             client_secret=OKTA_CLIENT_SECRET,
             authorization_response=request.url,
             include_client_id=True
@@ -155,18 +178,13 @@ def okta_callback():
     except AuthenticationError as e:
         db.session.rollback()
 
-        import traceback
-        traceback.print_exc()
-
-        print(f"AuthenticationError during OAuth: {str(e)}")
-
-        return {
-            "error": "Authentication failed. Please try logging in again.",
-            "debug": {
-                "error_type": "AuthenticationError",
-                "message": str(e)
-            }
-        }, 400
+        return render_error_page(
+            "sso_auth_failed",
+            status=e.status_code,
+            log_message=f"AuthenticationError during OAuth: {str(e)}",
+            detail=str(e),
+            exc_info=True,
+        )
     except Exception as e:
         db.session.rollback()
 
@@ -182,20 +200,17 @@ def okta_callback():
         else:
             failure_stage = "session_setup_or_commit"
 
-        import traceback
-        traceback.print_exc()
-
-        print(f"Unexpected error during OAuth at stage '{failure_stage}': {str(e)}")
-        print(f"Debug info - Email: {email}, OAuth ID: {oauth_id}, Code: {code}")
-
-        return {
-            "error": "Something went wrong during login. Please try again.",
-            "debug": {
+        return render_error_page(
+            "sso_unexpected",
+            status=500,
+            log_message=f"Unexpected error during OAuth at stage '{failure_stage}': {str(e)}",
+            context={
                 "failure_stage": failure_stage,
                 "email": email,
                 "oauth_id": oauth_id,
-                "code": code
-            }
-        }, 500
+            },
+            detail=f"{type(e).__name__} at stage '{failure_stage}': {str(e)}",
+            exc_info=True,
+        )
     finally:
         db.session.close()
