@@ -39,7 +39,7 @@ git checkout "$RELEASED_SHA"
 pnpm update-commit-env
 
 mkdir -p "$EFS_PATH"/CTFd/logs "$EFS_PATH"/CTFd/uploads "$EFS_PATH"/redis "$EFS_PATH"/grafana "$EFS_PATH"/config
-chown -R 999:999 "$EFS_PATH"/redis
+sudo chown -R 999:999 "$EFS_PATH"/redis
 
 # Workers have no repo checkout, so this release's config is copied onto EFS
 # (read_only bind mounts in docker-compose.prod.yaml) instead of read from disk
