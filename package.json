@@ -33,7 +33,7 @@
     "update-commit-env": ".bin/update_commit_env.sh",
     "release": ".bin/release.sh $1",
     "swarm-deploy": ".bin/deploy.sh $1",
-    "kick-stack": "set -a && . ./.env && set +a && docker stack deploy -c docker-compose.prod.yaml ctf-ng",
+    "kick-stack": "bash -c '. ./.env && .bin/deploy.sh \"$CTFD_TAG\"'",
     "start": "ENV_FILE=.env.dev docker compose -f docker-compose.yaml up --build",
     "stop": "docker compose down",
     "restart": "docker exec -it ng-ctfd supervisorctl restart ctfd",
