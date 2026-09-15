@@ -107,7 +107,8 @@ def okta_callback():
         return render_error_page(
             error_code,
             status=400,
-            log_message=f"OAuth callback rejected: {error_msg}",
+            log_message="OAuth callback rejected: %s",
+            log_args=(error_msg,),
             context={
                 "has_oauth_state": 'oauth_state' in session,
                 # The authorization code is a credential, so it is left out.
@@ -136,11 +137,12 @@ def okta_callback():
         email = user_data.get("email")
         name = user_data.get("name", "N/A")
         oauth_id = user_data.get("sub")
+
         if not email:
-            raise AuthenticationError(f"No email found in user info response. OAuth ID: {oauth_id}")
+            raise AuthenticationError("No email found in user info response")
 
         if not oauth_id:
-            raise AuthenticationError(f"No oauth id in user info response. Email: {email}")
+            raise AuthenticationError("No oauth id in user info response")
 
         # Check for existing user
         ng_user = NG_User.query.filter_by(oauth_id=oauth_id).first()
@@ -181,7 +183,12 @@ def okta_callback():
         return render_error_page(
             "sso_auth_failed",
             status=e.status_code,
-            log_message=f"AuthenticationError during OAuth: {str(e)}",
+            log_message="AuthenticationError during OAuth: %s",
+            log_args=(str(e),),
+            context={
+                "email": email,
+                "oauth_id": oauth_id,
+            },
             detail=str(e),
             exc_info=True,
         )
@@ -203,7 +210,8 @@ def okta_callback():
         return render_error_page(
             "sso_unexpected",
             status=500,
-            log_message=f"Unexpected error during OAuth at stage '{failure_stage}': {str(e)}",
+            log_message="Unexpected error during OAuth at stage '%s': %s",
+            log_args=(failure_stage, str(e)),
             context={
                 "failure_stage": failure_stage,
                 "email": email,

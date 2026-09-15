@@ -24,6 +24,7 @@ from .core.routes.views import plugin_views
 from .core.utils.logger import get_logger
 from .core.utils.rate_limit import limiter
 from .core.utils.redis_notifications import initialize_redis_notifications
+from .core.utils.sentry import init_sentry, install_event_processors
 from .emails.models.EmailPreference import EmailPreference  # noqa: F401
 from .event.models.Demographic import Demographic  # noqa: F401
 from .event.models.Event import Event  # noqa: F401
@@ -49,6 +50,10 @@ logger = get_logger(__name__)
 
 def load(app: Any) -> None:
     try:
+        # Before anything else can fail: start Sentry and decide what reaches it.
+        init_sentry(debug=app.debug)
+        install_event_processors()
+
         delete_unwanted_ctfd_routes(app)
         remove_registered_helpers(app)
         remove_registered_errorhandlers(app)
