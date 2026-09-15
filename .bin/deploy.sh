@@ -38,14 +38,20 @@ git checkout "$RELEASED_SHA"
 
 pnpm update-commit-env
 
-mkdir -p "$EFS_PATH"/CTFd/logs "$EFS_PATH"/CTFd/uploads "$EFS_PATH"/redis "$EFS_PATH"/grafana
-chown -R 999:999 "$EFS_PATH"/redis
+mkdir -p "$EFS_PATH"/CTFd/logs "$EFS_PATH"/CTFd/uploads "$EFS_PATH"/redis "$EFS_PATH"/grafana "$EFS_PATH"/config
+sudo chown -R 999:999 "$EFS_PATH"/redis
+
+# Workers have no repo checkout, so this release's config is copied onto EFS
+# (read_only bind mounts in docker-compose.prod.yaml) instead of read from disk
+cp .env.prod "$EFS_PATH"/config/.env.prod
+rsync -a --delete conf/ctfd/ "$EFS_PATH"/config/ctfd/
+rsync -a --delete conf/grafana/ "$EFS_PATH"/config/grafana/
 
 # Persisted for `pnpm kick-stack` (a plain restart, no new release lookup)
 sed -i "/^CTFD_TAG=/d" .env
 echo "CTFD_TAG=$RELEASED_SHA" >> .env
 
-ECR_REGISTRY=$ECR_REGISTRY CTFD_ENVIRONMENT=$CTFD_ENVIRONMENT CTFD_TAG=$RELEASED_SHA \
+ECR_REGISTRY=$ECR_REGISTRY CTFD_ENVIRONMENT=$CTFD_ENVIRONMENT CTFD_TAG=$RELEASED_SHA EFS_PATH=$EFS_PATH \
   docker stack deploy --with-registry-auth -c docker-compose.prod.yaml ctf-ng
 
 echo "Deployed $RELEASED_SHA for $CTFD_ENVIRONMENT"

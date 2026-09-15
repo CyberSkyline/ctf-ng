@@ -26,11 +26,11 @@ services:
         source: ${EFS_PATH}/CTFd/uploads
         target: /var/uploads
       - type: bind
-        source: ./.env.prod
+        source: ${EFS_PATH}/config/.env.prod
         target: /opt/CTFd/.env.prod
         read_only: true
       - type: bind
-        source: ./conf/ctfd
+        source: ${EFS_PATH}/config/ctfd
         target: /opt/CTFd/conf/ctfd
         read_only: true
       - type: bind
@@ -105,7 +105,7 @@ services:
         source: ${EFS_PATH}/grafana
         target: /var/lib/grafana
       - type: bind
-        source: ./conf/grafana
+        source: ${EFS_PATH}/config/grafana
         target: /etc/grafana
         read_only: true
     env_file: ./conf/grafana/.env
