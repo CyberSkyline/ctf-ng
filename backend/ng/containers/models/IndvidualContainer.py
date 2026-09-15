@@ -5,6 +5,7 @@ import redis_lock
 from typing import TypedDict
 from ..constants import DOCKER_RUNNING, DOCKER_BRIDGE, DOCKER_MEM_REGEX
 from ..utils.get_client import get_client
+from ..utils.scheduler import get_client_ip_round_robin
 from ...core import BusinessLogicError
 from .ContainerInstance import ContainerInstance
 from ..utils.redis import get_redis_client
@@ -40,12 +41,15 @@ class IndvidualContainer(db.Model):
         redis_client = get_redis_client(3)
 
         db_exists = cls.query.filter_by(user=user_id).first()
-        DOCKER_HOST = get_app_config("DOCKER_HOST")
+        # DOCKER_HOST = get_app_config("DOCKER_HOST")
+        # TODO db_exists should pull client from hostip
+        DOCKER_HOST = get_client_ip_round_robin()
         client = get_client(DOCKER_HOST)
         container_name = cls.render_container_name(user_id)
 
         if db_exists:
             try:
+                client = get_client(db_exists.hostip)
                 ctr = client.get_running(db_exists.dockerid)
             except docker.errors.NotFound:
                 lock = redis_lock.Lock(redis_client, cls.render_lock_key(user_id), expire=LOCK_EXPIRE_SECONDS)
@@ -55,7 +59,7 @@ class IndvidualContainer(db.Model):
                     db.session.commit()
                     lock.release()
                 else:
-                     raise BusinessLogicError("Workspace is already being started/reset") from None
+                    raise BusinessLogicError("Workspace is already being started/reset") from None
 
             return db_exists
 
@@ -88,7 +92,7 @@ class IndvidualContainer(db.Model):
                     db.session.commit()
                 lock.release()
             else:
-                 raise BusinessLogicError("Workspace is already being started/reset") from None
+                raise BusinessLogicError("Workspace is already being started/reset") from None
 
             return indvidual_container
 

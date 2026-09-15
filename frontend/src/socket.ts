@@ -22,16 +22,16 @@ socket.on('system_announcement', () => {
 
 // Watch for image pull events and write them to the SWR cache as they occur.
 // Global listeners make sure that events aren't missed if users navigate away and come back during a pull.
-socket.on('pull-progress', ({ id, percent } : { id: string | number, percent: number }) => {
-  mutate([ 'pull-status', id ], { status : 'pulling', percent }, false);
+socket.on('pull-progress', ({ id, percent, host } : { id: string | number, percent: number, host: string }) => {
+  mutate([ 'pull-status', id, host ], { status : 'pulling', percent }, false);
 });
 
-socket.on('pull-success', ({ id } : { id: string | number }) => {
-  mutate([ 'pull-status', id ], { status : 'success' }, false);
+socket.on('pull-success', ({ id, host } : { id: string | number, host: string }) => {
+  mutate([ 'pull-status', id, host ], { status : 'success' }, false);
 });
 
-socket.on('pull-fail', ({ id, error } : { id: string | number, error: string }) => {
-  mutate([ 'pull-status', id ], { status : 'fail', error }, false);
+socket.on('pull-fail', ({ id, error, host } : { id: string | number, error: string, host: string }) => {
+  mutate([ 'pull-status', id, host ], { status : 'fail', error }, false);
 });
 
 export default socket;
