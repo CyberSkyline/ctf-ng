@@ -142,26 +142,41 @@ def okta_callback():
         if not oauth_id:
             raise AuthenticationError(f"No oauth id in user info response. Email: {email}")
 
-        # Check for existing user
+        # Check for existing user by oauth id
         ng_user = NG_User.query.filter_by(oauth_id=oauth_id).first()
 
-        if not ng_user:
-            ctfd_user = User(
-                name=name,
-                email=email,
-                password=OAUTH_PLACEHOLDER_HASH,
-                verified=True
-            )
-            db.session.add(ctfd_user)
-            db.session.flush()
+        if ng_user:
+            ctfd_user = ng_user.ctfd_user
+
+            if ctfd_user.email != email:
+                # Oauth id matched but email changed, update email
+                email_owner = User.query.filter(User.email == email, User.id != ctfd_user.id).first()
+
+                if email_owner:
+                    ng_user.oauth_id = None
+                    ctfd_user = email_owner
+                    ng_user = NG_User.find_or_create_by_ctfd_id(ctfd_user.id)
+                    ng_user.oauth_id = oauth_id
+                else:
+                    ctfd_user.email = email
+        else:
+            # No oauth id match, fallback to email
+            ctfd_user = User.query.filter_by(email=email).first()
+
+            if not ctfd_user:
+                ctfd_user = User(
+                    name=name,
+                    email=email,
+                    password=OAUTH_PLACEHOLDER_HASH,
+                    verified=True
+                )
+                db.session.add(ctfd_user)
+                db.session.flush()
 
             ng_user = NG_User.find_or_create_by_ctfd_id(ctfd_user.id)
             ng_user.oauth_id = oauth_id
-        else:
-            ctfd_user = User.query.filter_by(id=ng_user.id).first()
 
         # ctfd_user.last_login = datetime.datetime.now(datetime.UTC)
-        # ctfd_user.email = email
 
         # Clear session and set up new authenticated session
         session.clear()
