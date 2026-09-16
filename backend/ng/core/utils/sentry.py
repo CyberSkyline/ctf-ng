@@ -30,6 +30,7 @@ someone adds a field to its context. Identity travels as a user id instead,
 which is enough for Sentry to count how many people a failure reached.
 """
 
+import logging
 import os
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
@@ -193,6 +194,35 @@ def error_scope(status: int, **tags: object) -> Iterator[Scope]:
             scope.set_user({"id": user_id})
 
         yield scope
+
+
+def report_unexpected(
+    logger: logging.Logger,
+    message: str,
+    *args: object,
+    exc_info: bool | BaseException = True,
+    **context: object,
+) -> None:
+    """
+    Log and report a failure nothing anticipated - for an `except Exception`
+    that will not re-raise (the central handler already reports one that
+    does). Always reported as 500, whatever status the caller answers with.
+
+    Args:
+        logger: The module's own logger.
+        message: A %-style template, not an f-string.
+        args: The template's arguments.
+        exc_info: True (default) from inside the except block, the exception
+            itself if not, or False if there is none.
+        context: Extra fields for the log, scrubbed like any other context.
+    """
+    with error_scope(500):
+        logger.error(
+            message,
+            *args,
+            extra={"context": context} if context else None,
+            exc_info=exc_info,
+        )
 
 
 def _current_user_id() -> int | None:
