@@ -12,6 +12,7 @@ from flask import current_app as app
 from flask import request, session
 from flask_limiter.errors import RateLimitExceeded
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from werkzeug.exceptions import HTTPException
 
 from ..exceptions import APIException
 from ..utils import error_response
@@ -149,7 +150,8 @@ def register_error_handlers(app):
                 error.__class__.__name__,
                 error.message,
                 extra={"context": {"status_code": error.status_code, **_get_request_context()}},
-                exc_info=error.status_code >= 500,
+                # traceback on 5xx
+                exc_info=error if error.status_code >= 500 else None,
             )
         return error_response(error.message, error.error_field, error.status_code)
 
@@ -186,6 +188,29 @@ def register_error_handlers(app):
         db.session.remove()
         logger.info("Route not found", extra={"context": _get_request_context()})
         return error_response("Resource not found.", "not_found", 404)
+
+    @app.errorhandler(RateLimitExceeded)
+    def handle_rate_limit_error(error):
+        db.session.remove()
+        return error_response("Rate limit reached for this operation", "rate_limit", 429)
+
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(error):
+        db.session.remove()
+        # Werkzeug's own 4xx/5xx, not ours - reported as 500 (404 excluded above).
+        with error_scope(500, werkzeug_status=error.code):
+            logger.error(
+                "Unhandled HTTP exception: %s %s",
+                error.code,
+                error.name,
+                extra={"context": _get_request_context()},
+                exc_info=error,
+            )
+        return error_response(
+            error.description or error.name,
+            "http_exception",
+            error.code or 500,
+        )
 
     @app.errorhandler(Exception)
     def handle_generic_exception(error):
