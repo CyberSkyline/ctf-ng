@@ -25,18 +25,15 @@ if [[ -n "$(git status --porcelain)" ]]; then
 fi
 
 RELEASE=$(get_current_commit)
-APP_IMAGE="$ECR_REGISTRY/ctf-ng/app/$ENVIRONMENT:$RELEASE"
-NGINX_IMAGE="$ECR_REGISTRY/ctf-ng/nginx/$ENVIRONMENT:$RELEASE"
+IMAGE="$ECR_REGISTRY/ctf-ng/app/$ENVIRONMENT:$RELEASE"
 
 echo "Releasing $RELEASE for $ENVIRONMENT"
 
 # Build and push the ctfd image
-docker build -t "$APP_IMAGE" -f "$ROOT_DIR/dockerfiles/ctfd.Dockerfile" "$ROOT_DIR"
-docker push "$APP_IMAGE"
+docker build -t "$IMAGE" -f "$ROOT_DIR/dockerfiles/ctfd.Dockerfile" "$ROOT_DIR"
+docker push "$IMAGE"
 
-# Build the frontend, then build and push the nginx image with it baked in
-(cd "$ROOT_DIR/frontend" && pnpm vite build)
-docker build -t "$NGINX_IMAGE" -f "$ROOT_DIR/dockerfiles/nginx.Dockerfile" "$ROOT_DIR"
-docker push "$NGINX_IMAGE"
+# Build and upload the frontend
+with_aws_creds "$DIR/build_and_upload_frontend.sh"
 
 echo "Released $RELEASE for $ENVIRONMENT"
