@@ -142,26 +142,41 @@ def okta_callback():
         if not oauth_id:
             raise AuthenticationError(f"No oauth id in user info response. Email: {email}")
 
-        # Check for existing user
+        # Check for existing user by oauth id
         ng_user = NG_User.query.filter_by(oauth_id=oauth_id).first()
 
-        if not ng_user:
-            ctfd_user = User(
-                name=name,
-                email=email,
-                password=OAUTH_PLACEHOLDER_HASH,
-                verified=True
-            )
-            db.session.add(ctfd_user)
-            db.session.flush()
+        if ng_user and ng_user.ctfd_user.email != email:
+            # Oauth id matched, email did not
+            ctfd_user = ng_user.ctfd_user
+            email_owner = User.query.filter(User.email == email, User.id != ctfd_user.id).first()
+
+            if email_owner:
+                # Oauth takeover for pre-existing email
+                ng_user.oauth_id = None
+                ctfd_user = email_owner
+                ng_user = NG_User.find_or_create_by_ctfd_id(ctfd_user.id)
+                ng_user.oauth_id = oauth_id
+            else:
+                ctfd_user.email = email
+        elif ng_user:
+            # Oauth and email matched
+            ctfd_user = ng_user.ctfd_user
+        else:
+            # No oauth id match, fallback to email
+            ctfd_user = User.query.filter_by(email=email).first()
+
+            if not ctfd_user:
+                ctfd_user = User(
+                    name=name,
+                    email=email,
+                    password=OAUTH_PLACEHOLDER_HASH,
+                    verified=True
+                )
+                db.session.add(ctfd_user)
+                db.session.flush()
 
             ng_user = NG_User.find_or_create_by_ctfd_id(ctfd_user.id)
-            ng_user.oauth_id = oauth_id
-        else:
-            ctfd_user = User.query.filter_by(id=ng_user.id).first()
-
-        # ctfd_user.last_login = datetime.datetime.now(datetime.UTC)
-        # ctfd_user.email = email
+            ng_user.oauth_id = oauth_id  # update oauth id for email fallback pre-existing user or new user if one was just created
 
         # Clear session and set up new authenticated session
         session.clear()

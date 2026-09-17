@@ -515,6 +515,43 @@ def test_user_put_password_sso_rejected(admin_client, user_factory, db_session):
     assert verify_password("password", Users.query.filter_by(id=user_id).first().password)
 
 
+def test_user_put_duplicate_email_rejected(admin_client, user_factory, db_session):
+    """
+    Test that an admin cannot update a user's email to one already in use by
+    another account - this should surface as a clean 400/business-logic
+    error, not the generic 409 the DB's unique constraint would otherwise raise.
+    """
+    from CTFd.models import Users
+
+    user_a = user_factory(name="usera", email="usera@example.com")
+    user_b = user_factory(name="userb", email="userb@example.com")
+    db_session.commit()
+    user_a_id, user_b_id = user_a.id, user_b.id
+
+    response = admin_client.put(f"/ng/admin/users/{user_a_id}", json={"email": "userb@example.com"})
+
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data["success"] is False
+    assert "email" in data["errors"]
+
+    # the email must be left untouched
+    assert Users.query.filter_by(id=user_a_id).first().email == "usera@example.com"
+    assert Users.query.filter_by(id=user_b_id).first().email == "userb@example.com"
+
+
+def test_user_put_email_unchanged_is_not_treated_as_duplicate(admin_client, user, db_session):
+    """
+    Test that saving a user without changing their email (or changing other
+    fields alongside their own unchanged email) does not trip the duplicate
+    check against themselves.
+    """
+    response = admin_client.put(f"/ng/admin/users/{user.id}", json={"name": "New Name", "email": user.email})
+
+    assert response.status_code == 200
+    assert response.get_json()["success"] is True
+
+
 def test_get_user_stats(logged_in_client, user, event_factory, team_factory, challenge_factory, attempt_factory):
     """
     Test getting the current user's platform-wide statistics
