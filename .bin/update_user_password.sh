@@ -7,13 +7,8 @@ source $DIR/utils.sh
 
 USER_EMAIL="${1:-}"
 
-if [[ "$USER_EMAIL" == "--yes" ]]; then
-	ASSUME_YES=true
-	USER_EMAIL="${2:-}"
-fi
-
 if [[ -z "${USER_EMAIL:-}" ]]; then
-	echo "Usage: $0 [--yes] <user_email>"
+	echo "Usage: $0 <user_email>"
 	exit 1
 fi
 

@@ -32,15 +32,10 @@ while [[ $# -gt 0 ]]; do
 			CSV_PATH="$2"
 			shift 2
 			;;
-		--yes)
-
-			ASSUME_YES=true
-			shift
-			;;
 		-*)
 			echo "Unknown option: $1"
-			echo "Usage: $0 [--admin] [--name <display_name>] [--yes] <user_email>"
-			echo "       $0 [--admin] --csv <path_to_csv> [--yes]"
+			echo "Usage: $0 [--admin] [--name <display_name>] <user_email>"
+			echo "       $0 [--admin] --csv <path_to_csv>"
 			exit 1
 			;;
 		*)
