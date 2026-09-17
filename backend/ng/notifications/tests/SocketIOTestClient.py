@@ -414,8 +414,7 @@ class TestWebSocket:
         ]
 
         assert len(refetch_events) > 0, f"Expected refetch event, got: {received}"
-        assert "/ng/support/tickets" in refetch_events[0]['args'][0]['path'
-                                                                     ]
+        assert "/admin/support/tickets" in refetch_events[0]['args'][0]['path']
 
     def test_submit_answer_with_real_websockets(
         self,

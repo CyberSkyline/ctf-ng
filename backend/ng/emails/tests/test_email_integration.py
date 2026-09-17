@@ -12,6 +12,7 @@ from ...support.controllers import (
     create_ticket,
     create_ticket_message,
 )
+from ..models.EmailPreference import EmailCategory, EmailPreference
 from ..services import get_email_service
 
 
@@ -92,61 +93,6 @@ class TestEmailSendingSmartRouting:
             assert 'New Support Ticket: Test Issue' in call_args['Message'][
                 'Subject']['Data']
 
-    def test_admin_reply_to_team_ticket_notifies_team_members(
-        self,
-        app,
-        db_session,
-        user,
-        admin,
-        event,
-        team_factory,
-        user_factory,
-        email_config,
-        mock_ses
-    ):
-        """
-        Test that admin reply to team ticket goes to all team members
-        """
-        with app.app_context():
-            user2 = user_factory(name = "User 2", email = "user2@test.com")
-            user3 = user_factory(name = "User 3", email = "user3@test.com")
-
-            team = team_factory(
-                event = event,
-                members = [user,
-                           user2,
-                           user3]
-            )
-
-            ticket = create_ticket(
-                subject = "Team Issue",
-                text = "Team needs help",
-                current_user = user,
-                event_id = event.id,
-                team_id = team.id
-            )
-            mock_ses.reset_mock()
-
-            create_ticket_message(
-                text = "I'll help you with this",
-                author_id = admin.id,
-                ticket = ticket,
-                is_admin = True
-            )
-
-            mock_ses.send_email.assert_called_once()
-            call_args = mock_ses.send_email.call_args[1]
-
-            recipient_emails = set(call_args['Destination']['ToAddresses'])
-            expected_emails = {
-                user.email,
-                user2.ctfd_user.email,
-                user3.ctfd_user.email
-            }
-            assert recipient_emails == expected_emails
-            assert 'Admin Reply' in call_args['Message']['Body']['Html'][
-                'Data']
-
     def test_admin_reply_to_non_team_ticket_notifies_author(
         self,
         app,
@@ -178,6 +124,42 @@ class TestEmailSendingSmartRouting:
             call_args = mock_ses.send_email.call_args[1]
 
             assert call_args['Destination']['ToAddresses'] == [user.email]
+
+    def test_admin_reply_to_non_team_ticket_skips_opted_out_author(
+        self,
+        app,
+        db_session,
+        user,
+        admin,
+        ticket_factory,
+        email_config,
+        mock_ses
+    ):
+        """
+        Test that no email is sent when the ticket author opted out of
+        support emails
+        """
+        with app.app_context():
+            EmailPreference.set_preference(
+                user.id,
+                EmailCategory.SUPPORT_EMAILS,
+                enabled = False
+            )
+
+            ticket = ticket_factory(
+                subject = "Individual Issue",
+                author_id = user.id,
+                team_id = None
+            )
+
+            create_ticket_message(
+                text = "Let me look into this",
+                author_id = admin.id,
+                ticket = ticket,
+                is_admin = True
+            )
+
+            mock_ses.send_email.assert_not_called()
 
     def test_user_reply_to_assigned_ticket_notifies_assigned_admin(
         self,

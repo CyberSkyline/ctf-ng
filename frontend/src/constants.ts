@@ -19,6 +19,12 @@ export const ROUTEPREFIX: string = BASE_PATH;
 export const APIPREFIX: string = `${ROUTEPREFIX}/ng`;
 export const SSO_LOGIN_PATH: string = `/ng/authenticate/okta/login`;
 export const SSO_REGISTRATION_PATH: string = `/ng/authenticate/okta/register`;
+export const SSO_CARD_REGISTRATION_PATH: string = `/ng/authenticate/okta/register/card`;
+
+// Support contact
+export const SUPPORT_EMAIL: string = 'presidentscup@cisa.dhs.gov';
+export const TOC_EMAIL: string = 'TOC@mail.cisa.dhs.gov';
+export const TOC_PHONE: string = '202-771-CISA(2472)';
 
 // Semantic icons used throughout the UI, defined here for consistency
 export const EventIcon = TbCalendarEvent;
@@ -82,3 +88,5 @@ export const NOTIF_TYPE = {
 };
 
 export const OTHER_TAXONOMY = 'Tags';
+
+export const PC_YEAR = '8'; // PC8

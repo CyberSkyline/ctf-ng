@@ -24,6 +24,7 @@ from .core.routes.views import plugin_views
 from .core.utils.logger import get_logger
 from .core.utils.rate_limit import limiter
 from .core.utils.redis_notifications import initialize_redis_notifications
+from .emails.models.EmailPreference import EmailPreference  # noqa: F401
 from .event.models.Demographic import Demographic  # noqa: F401
 from .event.models.Event import Event  # noqa: F401
 from .feedback.models.Feedback import Feedback  # noqa: F401

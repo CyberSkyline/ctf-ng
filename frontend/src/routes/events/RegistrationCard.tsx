@@ -33,7 +33,8 @@ export default function RegistrationCard({ event }: {event: Event}) {
 
   if (isLoading) return null; // don't show anything while loading
   if (isUnregistered && !eligibility && !eligibilityError) return null; // if not eligible, don't show registration
-  if (mySponsorError) return null;
+  if (mySponsorError) return null; // Users must have a sponsor on their profile to register for events
+  if (event.locked) return null; // Don't allow registration if event is locked
 
   if (error) {
     return <ErrorCallout>{error.message}</ErrorCallout>;
@@ -87,7 +88,7 @@ export default function RegistrationCard({ event }: {event: Event}) {
                   You must select a sponsor on the
                   {' '}
                   <RadixLink asChild>
-                    <Link to="/profile">profile page</Link>
+                    <Link to="/profile?sponsor=1">profile page</Link>
                   </RadixLink>
                   {' '}
                   prior to registering for events.

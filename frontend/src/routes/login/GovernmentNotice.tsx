@@ -6,6 +6,7 @@ import {
   Link as RadixLink,
   Text,
 } from '@radix-ui/themes';
+import { PC_YEAR } from '@/constants';
 
 export default function GovernmentNotice({ onAccept }: {onAccept: () => void}) {
   return (
@@ -105,7 +106,7 @@ export default function GovernmentNotice({ onAccept }: {onAccept: () => void}) {
           <Text size="2">
             {`Users agree to abide by all rules set forth by the competition. These rules include,
               but are not limited to, the competition rules outlined on the `}
-            <RadixLink href="https://presidentscup.cisa.gov/pc7/#rules">{`President's Cup Website`}</RadixLink>
+            <RadixLink href={`https://presidentscup.cisa.gov/pc${PC_YEAR}/#rules`} target="_blank">{`President's Cup Website`}</RadixLink>
             .
           </Text>
           <Text size="2">

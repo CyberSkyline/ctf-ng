@@ -8,6 +8,7 @@ import pytest
 
 from ...notifications.models import Notification, NotificationType
 from ...notifications.services.notification_service import NotificationService
+from ..models.EmailPreference import EmailCategory, EmailPreference
 from ..services import email_sender as email_sender_module
 
 
@@ -145,3 +146,50 @@ class TestKickedPlayerEmailNotification:
             mock_ses.send_email.assert_called_once()
             call_args = mock_ses.send_email.call_args[1]
             assert call_args['Destination']['ToAddresses'] == [member.ctfd_user.email]
+
+    def test_kicked_player_with_team_emails_disabled_skips_email(
+        self,
+        app,
+        db_session,
+        user_factory,
+        admin,
+        event,
+        team_factory,
+        email_config,
+        mock_ses
+    ):
+        """
+        Test that no email is sent when the kicked player has opted out of
+        team emails. The DB notification is still created
+        """
+        with app.app_context():
+            user1 = user_factory(name="Captain", email="captain@test.com")
+            user2 = user_factory(name="Member", email="member@test.com")
+
+            team = team_factory(
+                event=event,
+                members=[user1, user2]
+            )
+
+            EmailPreference.set_preference(
+                user2.ctfd_user.id,
+                EmailCategory.TEAM_EMAILS,
+                enabled=False
+            )
+
+            NotificationService.notify_player_kicked_from_team(
+                kicked_user_id=user2.ctfd_user.id,
+                team_id=team.id,
+                team_name=team.name,
+                event_id=event.id,
+                event_name=event.name,
+                kicked_by_id=admin.id,
+            )
+
+            mock_ses.send_email.assert_not_called()
+
+            notification = Notification.query.filter_by(
+                recipient_id=user2.ctfd_user.id,
+                type=NotificationType.TEAM_MEMBER_KICKED
+            ).first()
+            assert notification is not None

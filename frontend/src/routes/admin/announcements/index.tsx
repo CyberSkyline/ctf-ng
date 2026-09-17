@@ -1,108 +1,73 @@
-import {
-  Box,
-  Button,
-  Flex,
-  Heading,
-} from '@radix-ui/themes';
-import { deleteAnnouncement, useAnnouncements } from '@/hooks/announcements';
+import { Flex } from '@radix-ui/themes';
+import { useAnnouncements } from '@/hooks/announcements';
+import AdminGrid from 'components/AdminGrid';
 import { ErrorCallout } from 'components/Callouts';
 import Entity from 'components/Entity';
-import { UserIcon, COLOR_NEGATIVE } from '@/constants';
+import AnnouncementTypeBadge from 'components/AnnouncementTypeBadge';
+import { UserIcon } from '@/constants';
 import type { ColDef, ICellRendererParams } from 'ag-grid-community';
 import type { Announcement } from '@/types';
-import { AgGridReact, type CustomCellRendererProps } from 'ag-grid-react';
-import { radixTheme } from '@/grid';
-import { useCallback, useMemo, useState } from 'react';
-import CreateAnnoucementModal from './CreateAnnouncementModal';
+import AnnouncementModal from './AnnouncementModal';
+import AnnouncementSidebar from './AnnouncementSidebar';
 
-function ActionCell({ announcementId, deleteAction }: {announcementId: number, deleteAction: (id: number) => void}) {
-  return (
-    <Button
-      size="1"
-      color={COLOR_NEGATIVE}
-      onClick={() => deleteAction(announcementId)}
-    >
-      Delete
-    </Button>
-  );
-}
+const colDefs: ColDef<Announcement>[] = [
+  {
+    field : 'id',
+    headerName : 'ID',
+  }, {
+    field : 'title',
+    headerName : 'Title',
+    filter : true,
+  }, {
+    field : 'message',
+    headerName : 'Message',
+  }, {
+    field : 'sender_name',
+    headerName : 'Sender',
+    filter : true,
+    cellRenderer : Entity,
+    cellRendererParams : (params: ICellRendererParams<Announcement>) => ({
+      icon : UserIcon,
+      label : params.data?.sender_name ?? `UNKNOWN (${params.data?.sender_id})`,
+      to : `/admin/users?id=${params.data?.sender_id}`,
+    }),
+  }, {
+    field : 'created_at',
+    headerName : 'Created Date',
+    cellDataType : 'dateString',
+  }, {
+    field : 'expires_at',
+    headerName : 'Expiration Date',
+    cellDataType : 'dateString',
+  }, {
+    field : 'type',
+    headerName : 'Type',
+    cellRenderer : (params: ICellRendererParams<Announcement>) => <AnnouncementTypeBadge type={params.value} />,
+  },
+];
 
 export default function AdminAnnouncements() {
-  const [ deleteError, setDeleteError ] = useState<string | null>(null);
   const { data, error, isLoading } = useAnnouncements();
-  const rowData = data ?? [];
-
-  const deleteAction = useCallback((id : number) => {
-    setDeleteError(null);
-    deleteAnnouncement(id).catch((err) => {
-      setDeleteError(err.message);
-    });
-  }, [ setDeleteError ]);
-
-  const colDefs: ColDef<Announcement>[] = useMemo(() => ([
-    {
-      field : 'id',
-      headerName : 'ID',
-    }, {
-      field : 'title',
-      headerName : 'Title',
-    }, {
-      field : 'message',
-      headerName : 'Message',
-    }, {
-      field : 'sender_name',
-      headerName : 'Sender',
-      cellRenderer : Entity,
-      cellRendererParams : (params: ICellRendererParams<Announcement>) => ({
-        icon : UserIcon,
-        label : params.data?.sender_name ?? `UNKNOWN (${params.data?.sender_id})`,
-        to : `/admin/users?id=${params.data?.sender_id}`,
-      }),
-    }, {
-      field : 'created_at',
-      headerName : 'Created Date',
-      cellDataType : 'dateString',
-    }, {
-      field : 'expires_at',
-      headerName : 'Expiration Date',
-      cellDataType : 'dateString',
-    }, {
-      field : 'type',
-      headerName : 'type',
-    }, {
-      headerName : 'Actions',
-      cellStyle : {
-        display : 'flex ',
-        alignItems : 'center ',
-      },
-      cellRenderer : ActionCell,
-      cellRendererParams : (params: CustomCellRendererProps<Announcement>) => ({
-        announcementId : params.data?.id,
-        deleteAction,
-      }),
-    },
-  ]), [ deleteAction ]);
 
   if (error) {
     return <ErrorCallout>{error.message}</ErrorCallout>;
   }
 
   return (
-    <Flex gap="3" direction="column">
+    <>
       <title>Admin Announcements</title>
-      <Heading size="7">Announcements</Heading>
-      {deleteError && <ErrorCallout>{deleteError}</ErrorCallout>}
-      <Box maxWidth="200px">
-        <CreateAnnoucementModal />
-      </Box>
-      <AgGridReact
-        theme={radixTheme}
-        rowData={rowData}
+      <AdminGrid
+        rowData={data ?? []}
         columnDefs={colDefs}
-        domLayout="autoHeight"
         loading={isLoading}
-        defaultColDef={{ flex : 1 }}
+        getRowId={(params) => params.data.id.toString()}
+        sidebarComponent={AnnouncementSidebar}
+        toolbar={(
+          <Flex direction="row" justify="start">
+            <AnnouncementModal />
+          </Flex>
+        )}
       />
-    </Flex>
+    </>
   );
 }

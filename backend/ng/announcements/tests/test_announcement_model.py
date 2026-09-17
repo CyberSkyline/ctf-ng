@@ -12,6 +12,7 @@ from ..models.Announcement import (
         AnnouncementType,
         )
 from ...core.exceptions import ValidationError
+from ...notifications.models import Notification
 
 
 class TestAnnouncementRepr:
@@ -324,20 +325,30 @@ class TestAnnouncement:
         assert announcements[0].id == new_announcement.id
         assert announcements[1].id == old_announcement.id
 
-    def test_delete_expired(self, db_session, announcement_factory):
+    def test_delete_expired(
+            self,
+            db_session,
+            announcement_factory,
+            notification_factory,
+            user
+            ):
         """
-        Test deleting expired announcements
+        Test deleting expired announcements and their notifications
         """
         active_announcement = announcement_factory(
                 expires_at = None,
                 title = "Active"
                 )
-        announcement_factory(
+        expired_announcement = announcement_factory(
                 expires_at = datetime(1969,
                                       1,
                                       1,
                                       tzinfo = UTC),
                 title = "Expired"
+                )
+        notification_factory(
+                recipient_id = user.id,
+                announcement_id = expired_announcement.id
                 )
 
         count = Announcement.delete_expired()
@@ -346,6 +357,7 @@ class TestAnnouncement:
         remaining_announcements = Announcement.get_active_announcements()
         assert len(remaining_announcements) == 1
         assert remaining_announcements[0].id == active_announcement.id
+        assert Notification.query.count() == 0
 
     def test_serialize_basic(self, announcement_factory, admin):
         """
@@ -543,3 +555,29 @@ class TestAnnouncement:
         announcement = announcement_factory(event_id = None)
 
         assert announcement.event is None
+
+    def test_delete_removes_linked_notifications(
+            self,
+            db_session,
+            announcement_factory,
+            notification_factory,
+            user
+            ):
+        """
+        Test deleting an announcement deletes only its own notifications
+        """
+        announcement = announcement_factory()
+        notification_factory(
+                recipient_id = user.id,
+                announcement_id = announcement.id
+                )
+        notification_factory(
+                recipient_id = user.id,
+                announcement_id = announcement.id
+                )
+        unlinked = notification_factory(recipient_id = user.id)
+
+        announcement.delete()
+
+        remaining = Notification.query.all()
+        assert [n.id for n in remaining] == [unlinked.id]

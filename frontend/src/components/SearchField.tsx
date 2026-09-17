@@ -83,6 +83,10 @@ interface BaseProps<T> extends Omit<TextField.RootProps, 'value' | 'onChange'> {
    * Used to scope results (e.g. to a specific parent record) without adding dedicated UI for it.
    */
   staticFilter?: Record<string, unknown>;
+  /**
+   * Open the results list on focus even with an empty query, instead of waiting for the user to type.
+   */
+  openOnFocus?: boolean;
 }
 
 interface SingleSelectProps<
@@ -265,6 +269,7 @@ function SearchField<T extends Record<string, unknown>>(
     hook,
     disabledValues = [ ],
     staticFilter,
+    openOnFocus = false,
     ...textFieldProps
   } = props;
 
@@ -547,6 +552,9 @@ function SearchField<T extends Record<string, unknown>>(
             // try to load results on initial selection
             if (!isValidating) {
               setQuery(e.currentTarget.value);
+            }
+            if (openOnFocus) {
+              setResultsOpen(true);
             }
           }}
           onBlur={() => { setResultsOpen(false); }}

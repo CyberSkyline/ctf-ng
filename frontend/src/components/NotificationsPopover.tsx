@@ -15,6 +15,7 @@ import {
   Text,
 } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
+import RadixMarkdown from 'components/RadixMarkdown';
 import {
   includes,
   isEmpty,
@@ -96,7 +97,7 @@ export default function NotificationsPopover({ triggerClassName, contentClassNam
         <Flex direction="column">
           <Text weight={notif.read_at ? 'regular' : 'bold'}>{notif.title}</Text>
           <Text size="1">{formatDate(notif.created_at, dateFormat)}</Text>
-          <Text size="2" wrap="pretty" className="pt-2">{notif.message}</Text>
+          <div className="pt-2 text-sm"><RadixMarkdown>{notif.message}</RadixMarkdown></div>
         </Flex>
       </Card>
     );

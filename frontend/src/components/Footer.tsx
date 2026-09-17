@@ -1,12 +1,28 @@
-// import { NavLink } from 'react-router';
+import { NavLink } from 'react-router';
+import { Flex, Theme } from '@radix-ui/themes';
 
 export default function FooterBar() {
+  const itemClass = `
+    text-sm
+    dark:hover:text-(--gray-12)
+    dark:text-(--gray-a11)
+  `;
+
   return (
-    <footer className="w-screen h-[var(--FooterBarHeight)] fixed bottom-0 flex shadow-inner p-1 justify-center gap-4 bg-black text-white text-sm">
-      {/* <NavLink to="https://presidentscup.cisa.gov">
-        {'President\'s Cup'}
-      </NavLink>
-      <NavLink to="https://cyberskyline.com/">Powered by Cyber Skyline</NavLink> */}
-    </footer>
+    <Theme appearance="dark">
+      <footer className="w-screen h-[var(--FooterBarHeight)] fixed bottom-0 shadow-inner bg-black">
+        <Flex gap="4" justify="center" align="center" height="100%">
+          <NavLink
+            className={itemClass}
+            to="/faq"
+          >
+            FAQs
+          </NavLink>
+          <NavLink className={itemClass} to="https://presidentscup.cisa.gov">
+            {'President\'s Cup'}
+          </NavLink>
+        </Flex>
+      </footer>
+    </Theme>
   );
 }

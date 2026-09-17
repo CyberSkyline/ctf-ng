@@ -50,6 +50,17 @@ export interface User {
   affiliation: Sponsor | null;
 }
 
+export interface EmailPreferences {
+  support_emails: boolean,
+  team_emails: boolean,
+}
+
+export interface UserStatistics {
+  total_correct_submissions: number;
+  events_participated: number;
+  practice_challenges_completed: number;
+}
+
 export interface AdminUser extends User {
   banned: boolean;
   is_sso: boolean;
@@ -308,6 +319,7 @@ export interface Notification {
   team_id?: number;
   event_id?: number;
   challenge_id?: number;
+  announcement_id?: number;
   recipient_name?: string;
   sender_name?: string;
   ticket_subject?: string;
@@ -324,6 +336,7 @@ export interface Announcement {
   sender_id: number;
   sender_name: string;
   type: string;
+  event_id?: number;
 }
 
 export interface Workspace {
