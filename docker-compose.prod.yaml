@@ -7,6 +7,9 @@ services:
     user: root
     deploy:
       replicas: 5
+      placement:
+        constraints:
+          - node.role == manager
       restart_policy:
         condition: any
         delay: 5s
@@ -20,10 +23,10 @@ services:
       - THREADS=100
     volumes:
       - type: bind
-        source: ${EFS_PATH}/CTFd/logs
+        source: ./.data/CTFd/logs
         target: /var/log/CTFd
       - type: bind
-        source: ${EFS_PATH}/CTFd/uploads
+        source: ./.data/CTFd/uploads
         target: /var/uploads
       - type: bind
         source: ./.env.prod
@@ -80,14 +83,16 @@ services:
 
   cache:
     image: redis:7-alpine
-    user: "999:999"
     deploy:
       replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
       restart_policy:
         condition: any
     volumes:
       - type: bind
-        source: ${EFS_PATH}/redis
+        source: ./.data/redis
         target: /data
     networks:
       - ctf-network
@@ -97,12 +102,16 @@ services:
     image: grafana/grafana:12.3.1
     deploy:
       replicas: 1
+      placement:
+        # pin grafana to the manager node to ensure it always works from the same .data
+        constraints:
+          - node.role == manager
       restart_policy:
         condition: any
     user: "0"
     volumes:
       - type: bind
-        source: ${EFS_PATH}/grafana
+        source: ./.data/grafana
         target: /var/lib/grafana
       - type: bind
         source: ./conf/grafana

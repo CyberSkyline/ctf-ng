@@ -17,11 +17,6 @@ if [[ -z "${CTFD_ENVIRONMENT:-}" || "$CTFD_ENVIRONMENT" == "-" ]]; then
   exit 1
 fi
 
-if [[ -z "${EFS_PATH:-}" || "$EFS_PATH" == "-" ]]; then
-  echo "Error: EFS_PATH must be set in your .env"
-  exit 1
-fi
-
 cd "$ROOT_DIR"
 
 RELEASED_SHA="${1:-}"
@@ -38,14 +33,14 @@ git checkout "$RELEASED_SHA"
 
 pnpm update-commit-env
 
-mkdir -p "$EFS_PATH"/CTFd/logs "$EFS_PATH"/CTFd/uploads "$EFS_PATH"/redis "$EFS_PATH"/grafana
-chown -R 999:999 "$EFS_PATH"/redis
+docker pull "$ECR_REGISTRY/ctf-ng/app/$CTFD_ENVIRONMENT:$RELEASED_SHA"
+docker pull "$ECR_REGISTRY/ctf-ng/nginx/$CTFD_ENVIRONMENT:$RELEASED_SHA"
 
 # Persisted for `pnpm kick-stack` (a plain restart, no new release lookup)
 sed -i "/^CTFD_TAG=/d" .env
 echo "CTFD_TAG=$RELEASED_SHA" >> .env
 
 ECR_REGISTRY=$ECR_REGISTRY CTFD_ENVIRONMENT=$CTFD_ENVIRONMENT CTFD_TAG=$RELEASED_SHA \
-  docker stack deploy --with-registry-auth -c docker-compose.prod.yaml ctf-ng
+  docker stack deploy -c docker-compose.prod.yaml ctf-ng
 
 echo "Deployed $RELEASED_SHA for $CTFD_ENVIRONMENT"
