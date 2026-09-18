@@ -27,6 +27,7 @@ from ...utils.sentry import (
     error_scope,
     init_sentry,
     install_event_processors,
+    report_unexpected,
 )
 
 
@@ -188,6 +189,50 @@ class TestSentryErrorFilter:
 
         assert statuses(sentry) == [500]
 
+    def test_report_unexpected_opens_an_issue_with_a_traceback(self, sentry):
+        """The entry point a swallowed `except Exception` is meant to call."""
+        logger = get_logger("service")
+
+        try:
+            raise RuntimeError("S3 said no")
+        except RuntimeError as e:
+            report_unexpected(logger, "Upload failed: %s", e)
+
+        assert statuses(sentry) == [500]
+        assert sentry[0]["exception"]["values"][0]["type"] == "RuntimeError"
+
+    def test_report_unexpected_reports_500_even_if_the_response_is_a_4xx(self, sentry):
+        """
+        An `except Exception` with nothing more specific to say does not know
+        whose fault this is, so it is never a clean 4xx just because that is
+        what the caller goes on to answer with.
+        """
+        logger = get_logger("service")
+
+        try:
+            raise RuntimeError("S3 said no")
+        except RuntimeError as e:
+            report_unexpected(logger, "Upload failed: %s", e)
+            # the caller then answers the request with e.g. a 400 ValidationError
+
+        assert statuses(sentry) == [500]
+
+    def test_report_unexpected_without_an_exception_still_opens_an_issue(self, sentry):
+        """An `if not result: ...` failure, with nothing to attach a trace to."""
+        logger = get_logger("service")
+
+        report_unexpected(logger, "S3 not configured", exc_info=False)
+
+        assert statuses(sentry) == [500]
+        assert "exception" not in sentry[0]
+
+    def test_report_unexpected_context_is_scrubbed(self, sentry):
+        logger = get_logger("service")
+
+        report_unexpected(logger, "Upload failed", exc_info=False, email="person@agency.gov")
+
+        assert sentry[0]["extra"]["context"]["email"] == REDACTED
+
     def test_a_4xx_error_page_is_logged_without_opening_an_issue(self, app, sentry_transport):
         """
         WARNING is deliberate: high enough to outlive production's LOG_LEVEL,
@@ -201,6 +246,38 @@ class TestSentryErrorFilter:
         assert [log["body"] for log in sentry_transport.logs] == [
             "Rendering error page: sso_state_mismatch"
         ]
+
+    def test_an_unrouted_http_exception_opens_an_issue_with_a_traceback(self, app, sentry):
+        """
+        Werkzeug answers a method it does not recognize for the route on its
+        own, before any of our exception types get a say - nothing anticipated
+        it, so unlike a deliberate 4xx it is reported, and with a stack trace.
+
+        Driven through `handle_user_exception`, the same entry point Flask
+        itself calls from `full_dispatch_request`, rather than a real request
+        to a real route: the app fixture is session-scoped and past the point
+        new routes can be registered.
+        """
+        from werkzeug.exceptions import MethodNotAllowed
+
+        with app.test_request_context("/ng/teams/999", method="PATCH"):
+            response = app.handle_user_exception(MethodNotAllowed(["GET"]))
+
+        assert response[1] == 405
+        assert statuses(sentry) == [500]
+        assert sentry[0]["tags"]["werkzeug_status"] == 405
+        assert sentry[0]["exception"]["values"][0]["type"] == "MethodNotAllowed"
+
+    def test_a_rate_limited_request_does_not_open_an_issue(self, app, sentry):
+        """Rate limiting working as intended is not a failure to report."""
+        from unittest.mock import Mock
+
+        from flask_limiter.errors import RateLimitExceeded
+
+        with app.test_request_context("/ng/teams"):
+            response = app.handle_user_exception(RateLimitExceeded(Mock(error_message=None)))
+
+        assert response[1] == 429
 
     def test_a_dropped_issue_is_still_logged_to_sentry(self, app, sentry_transport):
         """The filter removes issues, not the log stream they came from."""
