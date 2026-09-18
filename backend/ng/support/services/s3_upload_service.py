@@ -3,10 +3,13 @@ Support-specific file operations using shared core S3 service
 Private ticket attachments with proxy download
 """
 import uuid
-from flask import current_app
 from ... import config
 from ...core.exceptions import ValidationError
+from ...core.utils.logger import get_logger
+from ...core.utils.sentry import report_unexpected
 from ..models import TicketAttachment
+
+logger = get_logger(__name__)
 
 
 class SupportS3Service:
@@ -34,7 +37,9 @@ class SupportS3Service:
         s3_service = self._get_s3_service()
 
         if not s3_service or not s3_service.is_configured():
-            current_app.logger.error("S3 not configured for ticket attachment upload")
+            # No exception to attach a traceback to - just the fact that a
+            # deploy is missing configuration it needs.
+            report_unexpected(logger, "S3 not configured for ticket attachment upload", exc_info=False)
             return None
 
         try:
@@ -52,7 +57,9 @@ class SupportS3Service:
             )
 
             if response.status_code != 200:
-                current_app.logger.error("S3 upload failed: %s - %s", response.status_code, response.text)
+                report_unexpected(
+                    logger, "S3 upload failed: %s - %s", response.status_code, response.text, exc_info=False
+                )
                 return None
 
             attachment = TicketAttachment.create_attachment(
@@ -65,11 +72,11 @@ class SupportS3Service:
                 uploaded_by=uploaded_by,
             )
 
-            current_app.logger.info("Direct upload successful for ticket %s, attachment %s", ticket_id, attachment.id)
+            logger.info("Direct upload successful for ticket %s, attachment %s", ticket_id, attachment.id)
             return attachment
 
         except Exception as e:
-            current_app.logger.error("Direct upload failed: %s", e)
+            report_unexpected(logger, "Direct upload failed: %s", e)
             return None
 
     def confirm_upload_and_create_attachment(
@@ -127,14 +134,14 @@ class SupportS3Service:
             uploaded_by=uploaded_by,
         )
 
-        current_app.logger.info("Confirmed upload and created attachment %s for ticket %s", attachment.id, ticket_id)
+        logger.info("Confirmed upload and created attachment %s for ticket %s", attachment.id, ticket_id)
         return attachment
 
     def download_ticket_attachment(self, s3_key: str) -> str | None:
         """Generate presigned download URL"""
         s3_service = self._get_s3_service()
         if not s3_service or not s3_service.is_configured():
-            current_app.logger.error("S3 service not configured")
+            report_unexpected(logger, "S3 service not configured", exc_info=False)
             return None
 
         try:
@@ -144,7 +151,7 @@ class SupportS3Service:
             )
             return presigned_url
         except Exception as e:
-            current_app.logger.error("Failed to generate presigned URL for %s: %s", s3_key, e)
+            report_unexpected(logger, "Failed to generate presigned URL for %s: %s", s3_key, e)
             return None
 
     def _get_extension_from_content_type(self, content_type: str) -> str:
