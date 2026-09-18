@@ -5,7 +5,7 @@ Download attachment from S3 via presigned URL redirect
 from flask import redirect, Response
 
 from ....core.utils.logger import get_logger
-from ....core.exceptions import NotFoundError, BusinessLogicError
+from ....core.exceptions import APIException
 from ...models import TicketAttachment
 from ...services import get_support_s3_service
 
@@ -13,41 +13,39 @@ logger = get_logger(__name__)
 
 
 def download_attachment(attachment: TicketAttachment) -> Response:
-    """Redirect to presigned S3 URL for attachment download"""
-    try:
-        s3_service = get_support_s3_service()
+    """
+    Redirect to presigned S3 URL for attachment download.
 
-        logger.info(
-            "Generating presigned URL for attachment download",
-            extra={
-                "bucket": attachment.file_upload.bucket_name,
-                "key": attachment.file_upload.s3_key,
-                "attachment_id": attachment.id
-            }
-        )
+    No try/except here: `download_ticket_attachment` catches everything
+    itself and reports anything unexpected before returning `None` - there is
+    nothing left for this function to catch, so nothing to report a second
+    time for the same failure.
+    """
+    s3_service = get_support_s3_service()
 
-        # Get presigned URL from service
-        presigned_url = s3_service.download_ticket_attachment(
-            attachment.file_upload.s3_key
-        )
+    logger.info(
+        "Generating presigned URL for attachment download",
+        extra={
+            "bucket": attachment.file_upload.bucket_name,
+            "key": attachment.file_upload.s3_key,
+            "attachment_id": attachment.id
+        }
+    )
 
-        if not presigned_url:
-            logger.error(
-                "Failed to generate presigned URL",
-                extra={"attachment_id": attachment.id}
-            )
-            raise BusinessLogicError("Unable to generate download link")
+    presigned_url = s3_service.download_ticket_attachment(
+        attachment.file_upload.s3_key
+    )
 
-        # Redirect to presigned URL
-        return redirect(presigned_url)
-
-    except Exception as e:
-        logger.exception(
-            "Error generating presigned URL for attachment: %s", e,
+    if not presigned_url:
+        # Plain APIException, not BusinessLogicError: a presigned URL failing
+        # is not the caller's fault, same reasoning as the S3 upload failures
+        # in upload_attachment.py. Defaults to 500, reported and traced by
+        # the central handler automatically.
+        logger.error(
+            "Failed to generate presigned URL",
             extra={"attachment_id": attachment.id}
         )
+        raise APIException("Unable to generate download link")
 
-        if "NoSuchKey" in str(e) or "not found" in str(e).lower():
-            raise NotFoundError("File not found in storage") from None
-        else:
-            raise BusinessLogicError("Unable to retrieve file from storage") from e
+    # Redirect to presigned URL
+    return redirect(presigned_url)
