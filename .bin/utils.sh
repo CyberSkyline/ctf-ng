@@ -6,6 +6,11 @@ SCRIPT_DIR=$(dirname $BASH_SOURCE)
 ENV_PATH=$(realpath "$SCRIPT_DIR/../.env")
 
 prompt_user() {
+  # Scripts can set ASSUME_YES=true (e.g. after parsing a --yes flag) to skip this prompt.
+  if [[ "${ASSUME_YES:-false}" == "true" ]]; then
+    return 0
+  fi
+
   local message="\033[1;33m$1\033[0m"
   echo -ne "$message"
   read -p " (y/n): " response
@@ -52,6 +57,13 @@ check_ctfd_running() {
     exit 1
   fi
   echo "$container_name"
+}
+with_aws_creds() {
+  if [[ -n "${AWS_ACCESS_KEY_ID:-}" && "$AWS_ACCESS_KEY_ID" != "-" ]]; then
+    AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN= "$@"
+  else
+    "$@"
+  fi
 }
 
 get_current_commit() {

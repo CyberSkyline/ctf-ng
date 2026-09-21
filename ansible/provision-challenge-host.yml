@@ -1,0 +1,105 @@
+- name: Install Docker
+  hosts: challenge
+  become: true
+  remote_user: ubuntu
+  tasks:
+    - name: Install Docker prerequisite packages
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - lsb-release
+          - gnupg
+        state: present
+        update_cache: true
+
+    - name: Get dpkg architecture
+      ansible.builtin.command: dpkg --print-architecture
+      register: dpkg_arch
+      changed_when: false
+
+    - name: Add Docker's GPG key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+
+    - name: Add Docker apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch={{ dpkg_arch.stdout }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+
+    - name: Install Docker Engine
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+        update_cache: true
+
+    - name: Add remote user to docker group
+      ansible.builtin.user:
+        name: "{{ ansible_user_id }}"
+        groups: docker
+        append: true
+
+- name: Sysctl config
+  hosts: challenge
+  become: true
+  remote_user: ubuntu
+  tasks:
+    - ansible.posix.sysctl:
+        name: kernel.pty.max
+        value: '8192'
+        state: present
+    - ansible.posix.sysctl:
+        name: fs.aio-max-nr
+        value: '1048576'
+        state: present
+    - ansible.posix.sysctl:
+        name: fs.inotify.max_user_instances
+        value: '256'
+        state: present
+
+- name: Import iptables rules
+  import_playbook: iptables.yml
+
+- name: Install exec-service
+  hosts: challenge
+  become: true
+  remote_user: ubuntu
+  tasks:
+    - name: Copy exec-service to /opt/service
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../services/exec-service/"
+        dest: /opt/service/
+        mode: preserve
+
+    - name: Install ExecApp systemd unit
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../services/exec-service/ExecApp.service"
+        dest: /usr/lib/systemd/system/ExecApp.service
+
+    - name: Install nvm
+      ansible.builtin.shell: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+      args:
+        creates: /root/.nvm/nvm.sh
+
+    - name: Install node 24 and exec-service dependencies
+      ansible.builtin.shell: |
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        nvm install 24
+        cd /opt/service && pnpm install
+      args:
+        executable: /bin/bash
+
+    - name: Enable and start ExecApp
+      ansible.builtin.systemd:
+        name: ExecApp
+        enabled: true
+        state: started
+        daemon_reload: true

@@ -10,9 +10,6 @@ services:
       SECRET_KEY: "test_secret_key_12345"
       WORKER_CLASS: geventwebsocket.gunicorn.workers.GeventWebSocketWorker
       THREADS: 100
-      PRESET_ADMIN_NAME: "admin"
-      PRESET_ADMIN_EMAIL: "admin@example.com"
-      PRESET_ADMIN_PASSWORD: "ctfng_password"
     ports:
       - "8001:8000"
     depends_on:
