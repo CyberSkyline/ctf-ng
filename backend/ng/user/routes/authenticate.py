@@ -11,23 +11,23 @@ oauth_namespace = Namespace("authenticate", description="Okta OAuth routes")
 @oauth_namespace.route("/okta/login")
 class OktaLogin(Resource):
     @public_endpoint()
-    def get(self):
+    def get(self, **kwargs):
         return okta_login()
 
 @oauth_namespace.route("/okta/register")
 class OktaRegister(Resource):
     @public_endpoint()
-    def get(self):
+    def get(self, **kwargs):
         return okta_register()
 
 @oauth_namespace.route("/okta/register/card")
 class OktaRegisterCard(Resource):
     @public_endpoint()
-    def get(self):
+    def get(self, **kwargs):
         return okta_register_card()
 
 @oauth_namespace.route("/okta/callback")
 class OktaCallback(Resource):
     @public_endpoint()
-    def get(self):
+    def get(self, **kwargs):
         return okta_callback()
