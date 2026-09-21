@@ -90,7 +90,7 @@ def okta_callback():
         error_code = "sso_generic_error"
 
         # More specialized okta error messages
-        if okta_error == "access_denied" and okta_error_description == "The resource owner or authorization server denied the request":
+        if okta_error == "access_denied" and okta_error_description and "the resource owner or authorization server denied the request" in okta_error_description.lower():
             error_msg = "PIV/CAC card verification required"
             error_code = "sso_card_error"
     elif not okta_session_state:
