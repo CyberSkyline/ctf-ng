@@ -3,16 +3,18 @@ Tests for error handler logging behavior
 """
 
 import logging
+
 import pytest
 
 from ...exceptions import (
+    APIException,
+    BusinessLogicError,
     NotFoundError,
     ValidationError,
-    BusinessLogicError,
 )
 from ...middleware.error_handler import (
-    handle_exceptions,
     _get_request_context,
+    handle_exceptions,
 )
 from ...utils.logger import PLUGIN_LOGGER_NAME
 
@@ -187,7 +189,7 @@ class TestErrorHandlerLogging:
         assert len(info_logs) >= 1
 
         log_record = info_logs[-1]
-        assert log_record.exc_info is None
+        assert not log_record.exc_info
 
     def test_5xx_includes_stack_trace(self, app, caplog, enable_logging):
         """
@@ -207,6 +209,24 @@ class TestErrorHandlerLogging:
         log_record = error_logs[-1]
         assert log_record.exc_info is not None
 
+    def test_5xx_api_exception_logs_carry_a_traceback(self, app, caplog, enable_logging):
+        """
+        The base class defaults to 500, and its message is generic, so the
+        traceback is the only thing that says where the failure came from.
+        """
+        @handle_exceptions
+        def raise_bare_api_exception():
+            raise APIException("Something went wrong on our side")
+
+        with app.test_request_context("/ng/teams", method = "GET"):
+            with caplog.at_level(logging.DEBUG, logger = PLUGIN_LOGGER_NAME):
+                _, status = raise_bare_api_exception()
+
+        assert status == 500
+
+        error_logs = [r for r in caplog.records if r.levelno == logging.ERROR]
+        assert len(error_logs) == 1
+        assert error_logs[0].exc_info is not None
 
 class TestRequestContextHelper:
     """

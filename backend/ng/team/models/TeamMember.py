@@ -5,11 +5,11 @@ Defines the TeamMember model, link between users, teams, and events.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, TypedDict, NotRequired
+from typing import Any, NotRequired, TypedDict
 
 from CTFd.models import db
 
-from ...core.exceptions import ValidationError
+from ...core.exceptions import ConflictError, ValidationError
 from ...core.utils import utc_now
 from ...core.utils.validator import BaseValidator
 from .enums import TeamRole
@@ -91,8 +91,8 @@ class TeamMember(db.Model):
         """
         Validate Team Memeber Data
         """
-        from ...team.models.Team import Team
         from ...event.models.Event import Event
+        from ...team.models.Team import Team
 
         validator = BaseValidator()
         validator.validate_positive_integer(data, "user_id", required=True, friendly_name="User ID")
@@ -102,7 +102,7 @@ class TeamMember(db.Model):
 
         existing_member = cls.find_by_user_and_event(data["user_id"], data["event_id"])
         if existing_member:
-            raise ValidationError(f"User {data['user_id']} is already a member of the event {data['event_id']}.")
+            raise ConflictError(f"User {data['user_id']} is already a member of the event {data['event_id']}.")
 
         team = Team.find_by_id(data["team_id"])
         if team:

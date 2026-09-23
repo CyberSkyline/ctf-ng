@@ -29,6 +29,20 @@ def test_admin_endpoint_decorator(middleware_client):
 
     assert response.status_code == 200
 
+def test_admin_endpoint_decorator_rejects_non_admins(middleware_client):
+    """
+    A non-admin hitting an admin-only endpoint is a routine rejection, raised
+    as `PermissionError` rather than `abort(403)` - it should look the same as
+    any other handled 4xx, not Werkzeug's generic error shape.
+    """
+    with middleware_client.session_transaction() as sess:
+        sess["id"] = 2  # tempuser2, not assigned the admin role
+
+    response = middleware_client.get("/admin_decorator_test", query_string={"team_id": 1, "user_id": 2})
+
+    assert response.status_code == 403
+    assert response.get_json()["errors"]["permission"]
+
 def test_loading(middleware_client):
     """
     Test the loading of resources using the middleware decorators.

@@ -5,7 +5,7 @@ Handles server-side upload to S3 using presigned URLs behind the scenes
 
 import uuid
 import requests
-from flask import current_app, request
+from flask import request
 from flask_restx import Resource
 from werkzeug.datastructures import FileStorage
 
@@ -14,12 +14,15 @@ from ....core.utils.file_helpers import (
     get_file_size,
     validate_image_content
 )
-from ....core.exceptions import ValidationError
+from ....core.exceptions import APIException, ValidationError
 from ....core.utils import success_response
+from ....core.utils.logger import get_logger
 
 from ...models import Ticket, TicketAttachment
 from ...services.s3_upload_service import SupportS3Service
 from ...services import get_s3_upload_service
+
+logger = get_logger(__name__)
 
 
 class UploadAttachment(Resource):
@@ -83,7 +86,7 @@ class UploadAttachment(Resource):
             }, status_code=201)
 
         except Exception as e:
-            current_app.logger.error(f"Direct upload failed: {e}")
+            logger.exception("Direct upload failed: %s", e)
             return {"error": "Upload failed"}, 500
 
 
@@ -156,8 +159,7 @@ def upload_attachment(file: FileStorage, ticket: Ticket, uploaded_by: int) -> Ti
         )
 
         if upload_response.status_code not in [200, 204]:
-            current_app.logger.error(f"S3 upload failed: HTTP {upload_response.status_code}")
-            raise ValidationError("Failed to upload file to S3", errors={})
+            raise APIException(f"S3 upload failed: HTTP {upload_response.status_code}")
 
         core_s3_service = s3_service._get_s3_service()
 
@@ -174,8 +176,8 @@ def upload_attachment(file: FileStorage, ticket: Ticket, uploaded_by: int) -> Ti
         return attachment
 
     except requests.RequestException as e:
-        current_app.logger.error(f"S3 upload request error: {e}")
-        raise ValidationError("Failed to upload file to S3", errors={}) from e
+        raise APIException("Failed to upload file to S3") from e
+    except APIException:
+        raise
     except Exception as e:
-        current_app.logger.error(f"Ticket attachment upload error: {e}")
-        raise ValidationError("Upload failed", errors={}) from e
+        raise APIException("Upload failed") from e
