@@ -9,6 +9,7 @@ import {
   Switch,
   TextField,
 } from '@radix-ui/themes';
+import { WarningCallout } from 'components/Callouts';
 import FormField from 'components/FormField';
 import Modal from 'components/Modal';
 import { Controller } from 'react-hook-form';
@@ -78,6 +79,15 @@ export default function AdminUpdateUserModal({ user }: {user: AdminUser}) {
               />
             )}
           </FormField>
+          {user.is_sso && (
+            <WarningCallout>
+              This account is linked to Okta for SSO. Changing the email here
+              does not change what they sign in with. If the user is not having
+              difficulties accessing their account and is just looking to update
+              their email, they should do that via Okta and our platform will
+              update their account automatically at their next login.
+            </WarningCallout>
+          )}
 
           <Flex direction="row" gap="2" className="*:grow *:basis-0">
             <FormField label="Password" error={errors.password}>
