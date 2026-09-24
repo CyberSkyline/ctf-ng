@@ -1,13 +1,11 @@
 import { COLOR_POSITIVE } from '@/constants';
-import { pullVNCImage, useImagePullStatus } from '@/hooks/container';
+import { pullVNCImage } from '@/hooks/container';
 import { Button, Flex, Text } from '@radix-ui/themes';
 import ImagePullStatus from 'components/ImagePullStatus';
 import Modal from 'components/Modal';
 import { TbDownload } from 'react-icons/tb';
 
 export default function AdminPullVncModal() {
-  const { data : pull } = useImagePullStatus('VNC');
-
   return (
     <Flex direction="row-reverse" gap="2" align="center">
       <Modal
@@ -17,7 +15,7 @@ export default function AdminPullVncModal() {
         submitColor={COLOR_POSITIVE}
         onSubmit={pullVNCImage}
         trigger={(
-          <Button color={COLOR_POSITIVE} loading={pull?.status === 'pulling'}>
+          <Button color={COLOR_POSITIVE}>
             <TbDownload />
             Pull VNC Image
           </Button>

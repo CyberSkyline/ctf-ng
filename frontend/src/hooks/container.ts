@@ -35,6 +35,10 @@ export function useDeploymentServices(challengeId: number | null, teamId: number
   );
 }
 
+export function useDockerHosts() {
+  return useSWR<string[], Error>('/admin/container/hosts');
+}
+
 export function useDeploymentVariables(challengeId: number | null, teamId: number | null) {
   return useSWR<Record<string, string>, Error>(
     challengeId && teamId ? `/admin/container/challenge/${challengeId}/team/${teamId}/variables` : null,
@@ -54,7 +58,7 @@ export function useContainerLogs(containerId: number) {
 }
 
 export function useProvisionerStats() {
-  return useSWR<{ containers_running: number; os: string; cpus: number, memory: number }, Error>(
+  return useSWR<[ { containers_running: number; os: string; cpus: number, memory: number, ip : string } ], Error>(
     '/admin/container/stats',
     { refreshInterval : 30000 }, // Refresh metrics every 30 sec while they are on the page
   );
@@ -116,8 +120,8 @@ export function pullVNCImage() {
  * data is undefined if no pull was requested.
  * @param id blueprint ID, or "VNC" for the VNC image.
  */
-export function useImagePullStatus(id: string | number) {
+export function useImagePullStatus(id: string | number, host: string) {
   return useSWR<
     { status: 'pulling', percent: number } | { status: 'success' } | { status: 'fail', error: string }
-  >([ 'pull-status', id ], null);
+  >([ 'pull-status', id, host ], null);
 }
