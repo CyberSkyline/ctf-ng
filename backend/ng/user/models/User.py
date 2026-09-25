@@ -331,6 +331,14 @@ class User(db.Model):
         if "password" in kwargs and self.oauth_id is not None:
             raise BusinessLogicError("Cannot set a password for an SSO user", "password")
 
+        # catch duplicate emails
+        if "email" in kwargs and kwargs["email"] != self.ctfd_user.email:
+            email_taken = CTFdUsers.query.filter(
+                CTFdUsers.email == kwargs["email"], CTFdUsers.id != self.id
+            ).first()
+            if email_taken:
+                raise BusinessLogicError("That email is already in use by another account", "email")
+
         for key, value in kwargs.items():
             if hasattr(self.ctfd_user, key):
                 setattr(self.ctfd_user, key, value)
