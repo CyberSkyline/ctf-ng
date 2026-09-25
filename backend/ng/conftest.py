@@ -894,6 +894,9 @@ def ticket_message_factory(db_session):
         db_session.commit()
         return message
 
+    return _factory
+
+
 @pytest.fixture
 def challenge_factory(db_session, event_factory):
     """A factory function to create Challenge objects for tests, with 2 questions."""
