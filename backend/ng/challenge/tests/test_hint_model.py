@@ -2,6 +2,8 @@
 Test cases for the Hint model to verify validation and database operations.
 """
 
+from unittest.mock import patch
+
 import pytest
 
 from ...core.exceptions import ValidationError
@@ -221,19 +223,13 @@ class Test_Create_Hint:
 
     def test_create_hint_with_commit_false_should_not_commit(self, db_session, valid_hint_data):
         """Test that creating a hint with commit=False doesn't commit to database."""
-        hint = Hint.create_hint(commit=False, **valid_hint_data)
+        with patch.object(db_session, "commit") as mock_commit:
+            hint = Hint.create_hint(commit=False, **valid_hint_data)
+            mock_commit.assert_not_called()
 
-        # Flush session to clear it
-        db_session.flush()
-        db_session.expunge_all()
-
-        # Hint should exist in session but not committed
+        # Flushed into the session, so it has an id without being committed
         assert hint.id is not None
-
-        # After rollback, hint should not exist
-        db_session.rollback()
-        retrieved_hint = Hint.query.get(hint.id)
-        assert retrieved_hint is None
+        assert hint in db_session
 
     def test_hint_challenge_relationship_should_work(self, db_session, valid_hint_data, challenge):
         """Test that the relationship between Hint and Challenge works."""
