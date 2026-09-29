@@ -8,6 +8,14 @@ from celery import Celery
 
 redis_url = os.getenv("REDIS_URL")
 
+# Sentry is deliberately not started here. The worker runs this module directly
+# (`celery -A CTFd.plugins.ng.containers.tasks worker`), so it never reaches
+# create_app, and so never the plugin's load() where init_sentry runs. A task
+# that fails is reported to the user as a pull-fail notification and nowhere
+# else. To close the gap, call init_sentry and install_event_processors from
+# ng.core.utils.sentry here: the SDK's celery integration reports task failures
+# with mechanism.handled == False, which is one of the two cases the issue
+# filter keeps.
 app = Celery(broker=f"{redis_url}/1", result_backend=f"{redis_url}/1")
 
 # Redis client defaults from

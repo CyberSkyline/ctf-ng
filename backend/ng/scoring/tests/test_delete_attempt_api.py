@@ -75,15 +75,20 @@ class TestDeleteAttemptEndpoint:
             submission="wrong answer",
         )
         db_session.commit()
+        # Captured before the request: a rejected request now goes through
+        # the same db.session.remove() as any other, which detaches this
+        # object from its session - id is read once, up front, as a plain
+        # value, and reused instead of touching the attribute again after.
+        attempt_id = attempt.id
 
         response = logged_in_client.delete(
-            f"/ng/admin/scoring/attempts/{attempt.id}",
+            f"/ng/admin/scoring/attempts/{attempt_id}",
             json={}
         )
 
         assert response.status_code == 403
 
-        still_exists = Attempt.query.get(attempt.id)
+        still_exists = Attempt.query.get(attempt_id)
         assert still_exists is not None
 
     def test_delete_nonexistent_attempt(

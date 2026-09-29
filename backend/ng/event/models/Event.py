@@ -13,7 +13,7 @@ from sqlalchemy.orm import Mapped, joinedload
 
 from ... import config
 from ...certificate.controllers import list_certificate_templates
-from ...core import BusinessLogicError
+from ...core import BusinessLogicError, ConflictError
 from ...core.utils.validator import BaseValidator
 from ...event.models.Demographic import Demographic
 
@@ -256,6 +256,9 @@ class Event(db.Model):
         Returns:
             Event: The created event instance
         """
+        # Perform explicit duplicate check
+        if cls.find_by_name(name) is not None:
+            raise ConflictError(f"An event named '{name}' already exists.")
 
         event = cls(
             name=name,
