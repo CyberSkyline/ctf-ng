@@ -1,14 +1,25 @@
 import { radixTheme } from '@/grid';
 import { useChallengeFeedback } from '@/hooks/feedback';
 import type { Challenge, Feedback } from '@/types';
-import { Flex, Spinner } from '@radix-ui/themes';
+import {
+  Button,
+  Flex,
+  Spinner,
+  Text,
+  Tooltip,
+} from '@radix-ui/themes';
 import type { ColDef } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import { ErrorCallout } from 'components/Callouts';
 import Statistic from 'components/Statistic';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
+import { TbInfoCircle } from 'react-icons/tb';
 
 const colDefs = [
+  {
+    field : 'user_id',
+    headerName : 'User ID',
+  },
   {
     field : 'user_name',
     headerName : 'User',
@@ -17,42 +28,41 @@ const colDefs = [
     width : 200,
   },
   {
+    field : 'feedback_data.thoughts',
+    headerName : 'Thoughts',
+    sortable : false,
+    filter : true,
+    minWidth : 400,
+    autoHeight : true,
+    wrapText : true,
+    cellStyle : { lineHeight : '20px', paddingTop : '8px', paddingBottom : '8px' },
+  },
+
+  // Historical fields hidden and only used for csv download
+  {
     field : 'feedback_data.difficulty',
     headerName : 'Difficulty',
-    sortable : true,
-    filter : true,
-    width : 90,
+    hide : true,
   },
   {
     field : 'feedback_data.quality',
     headerName : 'Quality',
-    sortable : true,
-    filter : true,
-    width : 90,
+    hide : true,
   },
   {
     field : 'feedback_data.what_liked',
     headerName : 'What Liked',
-    sortable : false,
-    filter : true,
-    minWidth : 400,
-    autoHeight : true,
-    wrapText : true,
-    cellStyle : { lineHeight : '20px', paddingTop : '8px', paddingBottom : '8px' },
+    hide : true,
   },
   {
     field : 'feedback_data.how_to_improve',
     headerName : 'How to Improve',
-    sortable : false,
-    filter : true,
-    minWidth : 400,
-    autoHeight : true,
-    wrapText : true,
-    cellStyle : { lineHeight : '20px', paddingTop : '8px', paddingBottom : '8px' },
+    hide : true,
   },
 ] as ColDef<Feedback>[];
 
 export default function ChallengeFeedbackTab({ challenge }: {challenge: Challenge}) {
+  const gridRef = useRef<AgGridReact>(null);
   const { data : feedback, isLoading, error } = useChallengeFeedback(challenge.event_id, challenge.id);
 
   const averages = useMemo(() => {
@@ -86,23 +96,54 @@ export default function ChallengeFeedbackTab({ challenge }: {challenge: Challeng
     };
   }, [ feedback ]);
 
+  const exportCsv = () => {
+    if (!gridRef.current) return;
+
+    const columnKeys = gridRef.current.api
+      .getColumns()
+      ?.map((column) => column.getColId());
+
+    gridRef.current.api.exportDataAsCsv({
+      fileName : `${new Date().toISOString().slice(0, 10)} - ${challenge.name} Feedback.csv`,
+      columnKeys,
+    });
+  };
+
   if (error) {
     return <ErrorCallout>{error.message}</ErrorCallout>;
   }
 
   return (
     <>
-      <Flex direction="row" mb="3" gap="3">
-        <Statistic label="Average Difficulty" value={averages.averageDifficulty.toFixed(1)} />
-        <Statistic label="Average Quality" value={averages.averageQuality.toFixed(1)} />
+      <Flex mb="3" justify="between">
+        <Flex gap="3">
+          <Statistic label="Average Difficulty" value={averages.averageDifficulty.toFixed(1)} />
+          <Statistic label="Average Quality" value={averages.averageQuality.toFixed(1)} />
+        </Flex>
+        <Flex align="end">
+          <Flex align="center" gap="1">
+            <Tooltip content="This csv will include any historical data that is not present in the table.">
+              <button type="button">
+                <Text color="gray">
+                  <TbInfoCircle aria-label="More info" />
+                </Text>
+              </button>
+            </Tooltip>
+            <Button
+              onClick={exportCsv}
+            >
+              Download CSV
+            </Button>
+          </Flex>
+        </Flex>
       </Flex>
       <AgGridReact
+        ref={gridRef}
         columnDefs={colDefs}
         rowData={feedback || []}
         theme={radixTheme}
         loading={isLoading}
         loadingOverlayComponent={Spinner}
-
       />
     </>
   );
