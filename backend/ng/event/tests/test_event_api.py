@@ -403,7 +403,7 @@ class Test_Event_Registration:
         assert data["data"] == team.serialize()
 
         team_member = TeamMember.query.filter_by(
-            user_id = user.id,
+            user_id = user2.id,
             team_id = team.id
         ).first()
         assert team_member is not None
