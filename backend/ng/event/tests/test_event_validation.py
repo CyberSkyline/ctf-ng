@@ -1,5 +1,5 @@
 """
-Hypothetical Validation tests for event creation
+Validation tests for event creation and registration eligibility
 """
 
 from datetime import timedelta
@@ -7,7 +7,7 @@ from datetime import timedelta
 import pytest
 
 from ... import config
-from ...core.exceptions import ValidationError
+from ...core.exceptions import BusinessLogicError, ValidationError
 from ...core.utils import utc_now
 from ..models.Event import Event
 
@@ -312,212 +312,41 @@ class TestEventAdvancedDatetimeValidation:
         )
         assert result is not None
 
-    def test_registration_period_logic(self):
-        """Test event registration period business logic."""
 
-        def validate_registration_period(event_data, current_time):
-            """Mock registration period validation logic."""
-            errors = []
+class TestEventRegistrationEligibility:
+    """Test the registration window rules enforced by Event.check_eligibility."""
 
-            start_time = event_data.get("start_time")
-            end_time = event_data.get("end_time")
-            locked = event_data.get("locked", False)
-
-            if locked:
-                errors.append("Event is locked for registration")
-
-            if start_time and current_time > start_time:
-                errors.append("Event has already started")
-
-            if end_time and current_time > end_time:
-                errors.append("Event has already ended")
-
-            return len(errors) == 0, errors
-
+    @pytest.mark.parametrize("event_kwargs,expected_error", [
+        ({"registration_open": False}, "Event registration is closed."),
+        (
+            {"registration_start_date": timedelta(days=1), "registration_end_date": timedelta(days=2)},
+            "Event registration has not started yet.",
+        ),
+        (
+            {"registration_start_date": timedelta(days=-2), "registration_end_date": timedelta(days=-1)},
+            "Event registration has ended.",
+        ),
+    ])
+    def test_registration_blocked_outside_window(self, event_factory, user_factory, event_kwargs, expected_error):
+        """Registration is rejected when closed, not yet open, or already over."""
         now = utc_now()
-        past_time = now - timedelta(hours=1)
-        future_time = now + timedelta(hours=1)
+        event = event_factory(**{
+            key: now + value if isinstance(value, timedelta) else value
+            for key, value in event_kwargs.items()
+        })
+        user = user_factory()
 
-        # Valid registration (future event, not locked)
-        event_data = {
-            "start_time": future_time,
-            "end_time": future_time + timedelta(hours=2),
-            "locked": False,
-        }
-        can_register, errors = validate_registration_period(event_data, now)
-        assert can_register, f"Should allow registration: {errors}"
+        with pytest.raises(BusinessLogicError, match=expected_error):
+            event.check_eligibility(user)
 
-        # Invalid: event already started
-        event_data["start_time"] = past_time
-        event_data["end_time"] = future_time
-        can_register, errors = validate_registration_period(event_data, now)
-        assert not can_register
-        assert "already started" in " ".join(errors)
-
-        # Invalid: event locked
-        event_data["start_time"] = future_time
-        event_data["locked"] = True
-        can_register, errors = validate_registration_period(event_data, now)
-        assert not can_register
-        assert "locked" in " ".join(errors)
-
-
-class TestEventBusinessRuleValidation:
-    """Test event business rule validation scenarios."""
-
-    def test_event_capacity_logic(self):
-        """Test event capacity and team size relationship logic."""
-
-        def calculate_event_capacity(max_team_size, expected_teams):
-            """Calculate total event capacity."""
-            return max_team_size * expected_teams
-
-        def validate_event_capacity(event_data, system_limits):
-            """Validate event doesn't exceed system capacity."""
-            max_team_size = event_data.get("max_team_size", 1)
-            estimated_teams = event_data.get("estimated_teams", 100)  # Default estimate
-
-            total_capacity = calculate_event_capacity(max_team_size, estimated_teams)
-            max_system_capacity = system_limits.get("max_participants", 10000)
-
-            if total_capacity > max_system_capacity:
-                return (
-                    False,
-                    f"Event capacity {total_capacity} exceeds system limit {max_system_capacity}",
-                )
-
-            return True, "Capacity within limits"
-
-        # Test normal capacity
-        event_data = {"max_team_size": 4, "estimated_teams": 50}
-        system_limits = {"max_participants": 10000}
-
-        is_valid, message = validate_event_capacity(event_data, system_limits)
-        assert is_valid, f"Normal capacity should be valid: {message}"
-
-        # Test excessive capacity
-        event_data["estimated_teams"] = 5000  # 4 * 5000 = 20000 > 10000
-        is_valid, message = validate_event_capacity(event_data, system_limits)
-        assert not is_valid
-        assert "exceeds system limit" in message
-
-    def test_event_scheduling_conflicts(self):
-        """Test event scheduling conflict detection."""
-
-        def check_scheduling_conflicts(new_event, existing_events):
-            """Check if new event conflicts with existing events."""
-            conflicts = []
-
-            new_start = new_event.get("start_time")
-            new_end = new_event.get("end_time")
-
-            if not new_start or not new_end:
-                return [], "No time constraints to check"
-
-            for event in existing_events:
-                existing_start = event.get("start_time")
-                existing_end = event.get("end_time")
-
-                if not existing_start or not existing_end:
-                    continue
-
-                # Check for overlap
-                if new_start < existing_end and new_end > existing_start:
-                    conflicts.append(
-                        {
-                            "event_id": event.get("id"),
-                            "event_name": event.get("name"),
-                            "overlap_type": "time_overlap",
-                        }
-                    )
-
-            return conflicts, "Conflict check completed"
-
+    def test_registration_allowed_inside_window(self, event_factory, user_factory):
+        """Registration is allowed while it is open and inside its window."""
         now = utc_now()
+        event = event_factory(
+            registration_open=True,
+            registration_start_date=now - timedelta(days=1),
+            registration_end_date=now + timedelta(days=1),
+        )
+        user = user_factory()
 
-        # Existing events
-        existing_events = [
-            {
-                "id": 1,
-                "name": "Existing Event 1",
-                "start_time": now + timedelta(hours=2),
-                "end_time": now + timedelta(hours=6),
-            },
-            {
-                "id": 2,
-                "name": "Existing Event 2",
-                "start_time": now + timedelta(hours=10),
-                "end_time": now + timedelta(hours=14),
-            },
-        ]
-
-        # No conflict
-        new_event = {
-            "name": "New Event",
-            "start_time": now + timedelta(hours=7),
-            "end_time": now + timedelta(hours=9),
-        }
-
-        conflicts, _ = check_scheduling_conflicts(new_event, existing_events)
-        assert len(conflicts) == 0, "Should have no conflicts"
-
-        # Overlapping conflict
-        new_event["start_time"] = now + timedelta(hours=4)  # Overlaps with event 1
-        new_event["end_time"] = now + timedelta(hours=8)
-
-        conflicts, _ = check_scheduling_conflicts(new_event, existing_events)
-        assert len(conflicts) == 1, "Should have one conflict"
-        assert conflicts[0]["event_id"] == 1
-
-    def test_event_name_uniqueness_logic(self):
-        """Test event name uniqueness validation logic."""
-
-        def check_name_uniqueness(new_name, existing_events, case_sensitive=True):
-            """Check if event name is unique."""
-            if not case_sensitive:
-                new_name = new_name.lower()
-                existing_names = [e["name"].lower() for e in existing_events]
-            else:
-                existing_names = [e["name"] for e in existing_events]
-
-            if new_name in existing_names:
-                return False, "Event name already exists"
-
-            # Check for similar names (basic similarity)
-            import re
-
-            normalized_new = re.sub(r"[^a-zA-Z0-9]", "", new_name.lower())
-
-            for existing_name in existing_names:
-                if not case_sensitive:
-                    existing_name = existing_name.lower()
-                normalized_existing = re.sub(r"[^a-zA-Z0-9]", "", existing_name.lower())
-
-                if normalized_new == normalized_existing and new_name != existing_name:
-                    return False, f"Event name too similar to existing: {existing_name}"
-
-            return True, "Name is unique"
-
-        existing_events = [
-            {"name": "CTF Championship 2024"},
-            {"name": "Summer Hacking Contest"},
-            {"name": "beginner-ctf"},
-        ]
-
-        # Unique name
-        is_unique, message = check_name_uniqueness("Winter Challenge", existing_events)
-        assert is_unique, f"Unique name should be valid: {message}"
-
-        # Exact duplicate
-        is_unique, message = check_name_uniqueness("CTF Championship 2024", existing_events)
-        assert not is_unique
-        assert "already exists" in message
-
-        # Case insensitive check
-        is_unique, message = check_name_uniqueness("ctf championship 2024", existing_events, case_sensitive=False)
-        assert not is_unique
-
-        # Similar name
-        is_unique, message = check_name_uniqueness("CTFChampionship2024", existing_events, case_sensitive=False)
-        assert not is_unique
-        assert "too similar" in message
+        assert event.check_eligibility(user) is True
