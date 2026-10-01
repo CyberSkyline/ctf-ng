@@ -5,6 +5,7 @@ import {
   Container,
   Flex,
   RadioCards,
+  SegmentedControl,
   Strong,
   Text,
   TextArea,
@@ -18,41 +19,48 @@ import { useParams } from 'react-router';
 
 type EventFeedbackFormData = Partial<{
   role: string,
-  education: string,
   cyber_experience: string,
   participation_reason: string,
   participation_again: string,
+  difficulty_rating: string,
+  relevancy_rating: string,
+  engagement_rating: string,
+  thoughts: string,
   additional_feedback: string,
+  additional_topics: string,
 }>
 
 const ROLES = [
-  'Cyber Defense Incident Responder',
-  'Cyber Defense Forensics Analyst',
-  'Network Operations Specialist',
-  'Cyber Defense Analyst',
-  'Exploitation Analyst',
-  'Cyber Operator',
-  'Research and Development Specialist',
-  'Vulnerability Assessment Analyst',
-  'Data Analyst',
-  'Threat/Warning Analyst',
+  'Incident Response',
+  'Digital Forensics',
+  'Network Operations',
+  'Defensive Cybersecurity',
+  'Exploitation Analysis',
+  'Cyberspace Operations',
+  'Secure Software Development',
+  'Vulnerability Analysis',
+  'Data Analysis',
+  'Threat Analysis',
 ];
 
-const EDUCATION_LEVELS = [
-  'High School Diploma/GED',
-  'Associate Degree',
-  'Other (Some College)',
-  'Bachelor\'s Degree',
-  'Master\'s Degree',
-  'PhD',
+const EXPERIENCE_LEVELS = [
+  '1-5 years',
+  '5-10 years',
+  '10-15 years',
+  '15+ years',
+  'I have no experience in this role',
 ];
 
 const PARTICIPATION_REASONS: Record<string, string> = {
-  'Promotional messages about the President\'s Cup' : 'Emails, social media, presentation, etc.',
-  'Word-of-Mouth' : 'A supervisor, colleague or friend encouraged me to register.',
-  'Returning Participant' : 'Enjoyed the event and wanted to participate in it again.',
-  'Professional Development' : 'A chance to grow my cybersecurity skills.',
+  'Promotional messages about the President\'s Cup' : 'Emails, social media, presentation, etc',
+  'Word-of-Mouth' : 'A supervisor, colleague or friend encouraged me to register',
+  'Returning Participant' : 'Enjoyed the event and wanted to participate in it again',
 };
+
+const scale = Array(10).fill(null).map((_, i) => (
+  // eslint-disable-next-line react/no-array-index-key
+  <SegmentedControl.Item key={String(i)} value={String(i + 1)}>{i + 1}</SegmentedControl.Item>
+));
 
 const CHAR_LIMIT = 500;
 
@@ -109,7 +117,8 @@ export default function FeedbackTab() {
       >
         <Flex direction="column" gap="3">
           <FormField
-            label="What NICE work role best aligns with your position?"
+            label={`Which of the following NICE Work Roles best aligns with your current position? 
+              (If you're unsure, choose the closest match or select "Other")`}
             error={errors.role}
           >
             {(injected) => (
@@ -140,7 +149,6 @@ export default function FeedbackTab() {
                       className="!min-h-min"
                       rows={1}
                     />
-
                   </RadioCards.Root>
                 )}
               />
@@ -148,12 +156,12 @@ export default function FeedbackTab() {
           </FormField>
 
           <FormField
-            label="Please indicate your highest level of education."
-            error={errors.education}
+            label="How many years of experience do you have in the NICE Work Role you selected above?"
+            error={errors.cyber_experience}
           >
             {(injected) => (
               <Controller
-                name="education"
+                name="cyber_experience"
                 control={control}
                 render={({ field }) => (
                   <RadioCards.Root
@@ -163,7 +171,7 @@ export default function FeedbackTab() {
                     gap="1"
                     {...injected}
                   >
-                    {EDUCATION_LEVELS.map((level) => (
+                    {EXPERIENCE_LEVELS.map((level) => (
                       <RadioCards.Item key={level} value={level}>
                         {level}
                       </RadioCards.Item>
@@ -175,48 +183,7 @@ export default function FeedbackTab() {
           </FormField>
 
           <FormField
-            label="How many years of cybersecurity experience do you have?"
-            error={errors.cyber_experience}
-          >
-            {(injected) => (
-              <Controller
-                name="cyber_experience"
-                control={control}
-                render={({ field }) => (
-                  <RadioCards.Root
-                    value={field.value || null}
-                    onValueChange={field.onChange}
-                    columns="5"
-                    gap="1"
-                    {...injected}
-                  >
-                    <RadioCards.Item value="1-5">
-                      1-5
-                    </RadioCards.Item>
-
-                    <RadioCards.Item value="5-10">
-                      5-10
-                    </RadioCards.Item>
-
-                    <RadioCards.Item value="10-15">
-                      10-15
-                    </RadioCards.Item>
-
-                    <RadioCards.Item value="15+">
-                      15+
-                    </RadioCards.Item>
-
-                    <RadioCards.Item value="N/A">
-                      N/A
-                    </RadioCards.Item>
-                  </RadioCards.Root>
-                )}
-              />
-            )}
-          </FormField>
-
-          <FormField
-            label="What made you decide to participate?"
+            label={`What motivated you to participate in the President's Cup?`}
             error={errors.participation_reason}
           >
             {(injected) => (
@@ -278,7 +245,7 @@ export default function FeedbackTab() {
                       No
                     </RadioCards.Item>
                     <RadioCards.Item value="Unsure">
-                      Unsure
+                      {`I'm unsure at this time`}
                     </RadioCards.Item>
                   </RadioCards.Root>
                 )}
@@ -287,7 +254,97 @@ export default function FeedbackTab() {
           </FormField>
 
           <FormField
-            label="How can we improve the next President’s Cup? Please provide any other feedback you would like to share."
+            label="On a scale of 1 to 10, how would you rate the overall difficulty of the challenges in this event?"
+            error={errors.difficulty_rating}
+          >
+            {(injected) => (
+              <Controller
+                name="difficulty_rating"
+                control={control}
+                render={({ field }) => (
+                  <SegmentedControl.Root
+                    value={String(field.value)}
+                    onValueChange={(v) => { field.onChange(Number(v)); }}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                    {...injected}
+                  >
+                    {scale}
+                  </SegmentedControl.Root>
+                )}
+              />
+            )}
+          </FormField>
+
+          <FormField
+            label="On a scale of 1 to 10, how relevant were the challenges to CISA's intended NICE Work Roles?"
+            error={errors.relevancy_rating}
+          >
+            {(injected) => (
+              <Controller
+                name="relevancy_rating"
+                control={control}
+                render={({ field }) => (
+                  <SegmentedControl.Root
+                    value={String(field.value)}
+                    onValueChange={(v) => { field.onChange(Number(v)); }}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                    {...injected}
+                  >
+                    {scale}
+                  </SegmentedControl.Root>
+                )}
+              />
+            )}
+          </FormField>
+
+          <FormField
+            label="On a scale of 1 to 10, how engaging did you find the challenges throughout the event?"
+            error={errors.engagement_rating}
+          >
+            {(injected) => (
+              <Controller
+                name="engagement_rating"
+                control={control}
+                render={({ field }) => (
+                  <SegmentedControl.Root
+                    value={String(field.value)}
+                    onValueChange={(v) => { field.onChange(Number(v)); }}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                    {...injected}
+                  >
+                    {scale}
+                  </SegmentedControl.Root>
+                )}
+              />
+            )}
+          </FormField>
+
+          <FormField
+            label={`Please share your thoughts on the challenges in this event. What aspects did you find most difficult, 
+              most relevant to your role, or most engaging? Feel free to mention specific challenges or areas that stood out to you.`}
+            rightComponent={(
+              <Text size="2" color="gray" className="[label[data-invalid=true]+&]:!text-(--red-11)">
+                {CHAR_LIMIT - (watch('thoughts') || '').length}
+              </Text>
+            )}
+            error={errors.thoughts}
+          >
+            {(injected) => (
+              <TextArea
+                rows={3}
+                {...register('thoughts', { maxLength : { value : CHAR_LIMIT, message : `Feedback cannot exceed ${CHAR_LIMIT} characters.` } })}
+                placeholder="Please specify..."
+                {...injected}
+              />
+            )}
+          </FormField>
+
+          <FormField
+            label={`How can we improve the next President's Cup? Please provide any feedback on event structure, challenge difficulty, 
+              communication, or other aspects.`}
             rightComponent={(
               <Text size="2" color="gray" className="[label[data-invalid=true]+&]:!text-(--red-11)">
                 {CHAR_LIMIT - (watch('additional_feedback') || '').length}
@@ -299,6 +356,25 @@ export default function FeedbackTab() {
               <TextArea
                 rows={3}
                 {...register('additional_feedback', { maxLength : { value : CHAR_LIMIT, message : `Feedback cannot exceed ${CHAR_LIMIT} characters.` } })}
+                placeholder="Please specify..."
+                {...injected}
+              />
+            )}
+          </FormField>
+
+          <FormField
+            label={`What additional cybersecurity topics or skills would you like to see covered in future President's Cup challenges?`}
+            rightComponent={(
+              <Text size="2" color="gray" className="[label[data-invalid=true]+&]:!text-(--red-11)">
+                {CHAR_LIMIT - (watch('additional_topics') || '').length}
+              </Text>
+            )}
+            error={errors.additional_topics}
+          >
+            {(injected) => (
+              <TextArea
+                rows={3}
+                {...register('additional_topics', { maxLength : { value : CHAR_LIMIT, message : `Feedback cannot exceed ${CHAR_LIMIT} characters.` } })}
                 placeholder="Please specify..."
                 {...injected}
               />
