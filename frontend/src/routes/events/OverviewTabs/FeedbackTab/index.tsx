@@ -27,6 +27,7 @@ type EventFeedbackFormData = Partial<{
   engagement_rating: string,
   thoughts: string,
   additional_feedback: string,
+  additional_topics: string,
 }>
 
 const ROLES = [
@@ -355,6 +356,25 @@ export default function FeedbackTab() {
               <TextArea
                 rows={3}
                 {...register('additional_feedback', { maxLength : { value : CHAR_LIMIT, message : `Feedback cannot exceed ${CHAR_LIMIT} characters.` } })}
+                placeholder="Please specify..."
+                {...injected}
+              />
+            )}
+          </FormField>
+
+          <FormField
+            label={`What additional cybersecurity topics or skills would you like to see covered in future President's Cup challenges?`}
+            rightComponent={(
+              <Text size="2" color="gray" className="[label[data-invalid=true]+&]:!text-(--red-11)">
+                {CHAR_LIMIT - (watch('additional_topics') || '').length}
+              </Text>
+            )}
+            error={errors.additional_topics}
+          >
+            {(injected) => (
+              <TextArea
+                rows={3}
+                {...register('additional_topics', { maxLength : { value : CHAR_LIMIT, message : `Feedback cannot exceed ${CHAR_LIMIT} characters.` } })}
                 placeholder="Please specify..."
                 {...injected}
               />

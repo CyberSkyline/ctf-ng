@@ -84,6 +84,16 @@ const colDefs = [
     wrapText : true,
     cellStyle : { lineHeight : '20px', paddingTop : '8px', paddingBottom : '8px' },
   },
+  {
+    field : 'feedback_data.additional_topics',
+    headerName : 'Additional Topics',
+    sortable : false,
+    filter : true,
+    minWidth : 400,
+    autoHeight : true,
+    wrapText : true,
+    cellStyle : { lineHeight : '20px', paddingTop : '8px', paddingBottom : '8px' },
+  },
 
   // Historical questions. Keeping hidden for export functionality.
   {
