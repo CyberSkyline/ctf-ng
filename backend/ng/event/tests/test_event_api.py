@@ -1707,6 +1707,19 @@ class Test_Event_Admin_Create:
         assert data["success"] is False
         assert "errors" in data
 
+    def test_admin_create_event_with_duplicate_name(self, admin_client, event_factory):
+        event_factory(name = "Duplicate Name Event")
+
+        response = admin_client.post(
+            self.post_endpoint(),
+            json = {"name": "Duplicate Name Event"}
+        )
+
+        assert response.status_code == 409
+        data = response.get_json()
+        assert data["success"] is False
+        assert "database_conflict" in data["errors"]
+
     def test_admin_create_event_with_domain_restrictions(self, admin_client):
         new_event_data = {
             "name": "Domain Restricted Event",
