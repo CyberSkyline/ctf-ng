@@ -437,6 +437,10 @@ x-challenge:
               points: 50
               answer: flag
               max_attempts: 3
+        services:
+          app:
+            image: nginx:latest
+            hostname: app-server
         """
         # Act & Assert
         with pytest.raises(ValidationError, match="Question Name cannot be longer"):
