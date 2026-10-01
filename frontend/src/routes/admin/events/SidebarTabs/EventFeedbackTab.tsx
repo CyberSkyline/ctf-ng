@@ -99,13 +99,9 @@ export default function EventFeedbackTab({ event }: {event: Event}) {
   const exportCsv = () => {
     if (!gridRef.current) return;
 
-    const columnKeys = gridRef.current.api
-      .getColumns()
-      ?.map((column) => column.getColId());
-
     gridRef.current.api.exportDataAsCsv({
       fileName : `${new Date().toISOString().slice(0, 10)} - ${event.name} Feedback.csv`,
-      columnKeys,
+      allColumns : true,
     });
   };
 
