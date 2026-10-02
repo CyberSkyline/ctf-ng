@@ -26,9 +26,10 @@
 
     - name: Show result
       ansible.builtin.debug:
-        msg: "{{ create_user_result.stdout_lines + create_user_result.stderr_lines }}"
+        msg: "{{ create_user_result.stdout_lines | reject('search', 'Loaded module, <module') | list
+          + (create_user_result.stderr_lines if create_user_result.rc != 0 else []) }}"
 
     - name: Fail if the script reported an error
       ansible.builtin.fail:
-        msg: See the output above.
+        msg: "{{ 'User already exists' if 'Skipped' in create_user_result.stdout else 'Script failed, see the output above' }}"
       when: create_user_result.rc != 0 or 'Skipped' in create_user_result.stdout

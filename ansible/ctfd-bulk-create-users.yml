@@ -38,9 +38,10 @@
 
     - name: Show result
       ansible.builtin.debug:
-        msg: "{{ (bulk_create_result.stdout_lines + bulk_create_result.stderr_lines) | map('regex_replace', '^(Skipped row with missing email or password):.*$', '\\1') | list }}"
+        msg: "{{ bulk_create_result.stdout_lines | reject('search', 'Loaded module, <module') | map('regex_replace', '^(Skipped row with missing email or password):.*$', '\\1') | list
+          + (bulk_create_result.stderr_lines if bulk_create_result.rc != 0 else []) }}"
 
     - name: Fail if the script reported an error
       ansible.builtin.fail:
-        msg: See the output above.
+        msg: Script failed, see the output above
       when: bulk_create_result.rc != 0
