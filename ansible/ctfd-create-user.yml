@@ -1,18 +1,34 @@
 - name: Create CTFd user
+
+  # Survey vars: ctfd_user_email (String), ctfd_user_password (Secret),
+  # ctfd_user_name (String, optional), ctfd_user_admin (Boolean, optional)
+
   hosts: manager
-  # Semaphore survey variables:
-  #   ctfd_user_email    - email for the new user                (String, required)
-  #   ctfd_user_password - password for the new user             (Secret, required)
-  #   ctfd_user_admin    - grant admin role                       (Boolean(enum), optional)
-  #   ctfd_user_name     - display name                           (String, optional)
   tasks:
-    - name: Run create_user.sh
-      ansible.builtin.command:
-        cmd: >-
-          ./.bin/create_user.sh --yes
-          {{ '--admin' if ctfd_user_admin | default(false) | bool else '' }}
-          --name {{ ctfd_user_name | default('new user') | quote }}
-          {{ ctfd_user_email }}
-        chdir: "{{ ctfd_repo_path }}"
-        stdin: "{{ ctfd_user_password }}"
+    - ansible.builtin.include_tasks: tasks/find-ctfd-container.yml
+
+    - name: Run create_user.py in {{ ctfd_container }}
+      ansible.builtin.shell: |
+        docker exec -i -e SCRIPT=true -e PYTHONPATH=/opt/CTFd/ {{ ctfd_container | quote }} /bin/bash -c '
+          if [ -f /opt/CTFd/conf/ctfd/init_secrets.py ]; then
+            eval "$(python3 /opt/CTFd/conf/ctfd/init_secrets.py)"
+          fi
+          exec python3 -c "import json, runpy, sys; sys.argv = sys.argv[1:] + json.load(sys.stdin); runpy.run_path(sys.argv[0], run_name=__name__)" \
+            /opt/CTFd/CTFd/plugins/ng/scripts/create_user.py'
+      args:
+        stdin: >-
+          {{ ([ctfd_user_email, ctfd_user_password, '--name', ctfd_user_name | default('new user', true)]
+              + (['--admin'] if ctfd_user_admin | default(false) | bool else [])) | to_json }}
+      delegate_to: "{{ ctfd_node_host }}"
+      register: create_user_result
+      failed_when: false
       no_log: true
+
+    - name: Show result
+      ansible.builtin.debug:
+        msg: "{{ create_user_result.stdout_lines + create_user_result.stderr_lines }}"
+
+    - name: Fail if the script reported an error
+      ansible.builtin.fail:
+        msg: See the output above.
+      when: create_user_result.rc != 0 or 'Skipped' in create_user_result.stdout
