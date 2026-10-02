@@ -64,9 +64,6 @@
         value: '256'
         state: present
 
-- name: Import iptables rules
-  import_playbook: iptables.yml
-
 - name: Install exec-service
   hosts: challenge
   become: true
