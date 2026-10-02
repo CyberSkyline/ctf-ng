@@ -18,6 +18,7 @@ export default function FAQPage() {
         <Accordion.Root
           type="multiple"
         >
+
           <Accordion.Item value="0">
             <Accordion.Header>
               <Accordion.Trigger>
@@ -50,6 +51,23 @@ export default function FAQPage() {
           <Accordion.Item value="1">
             <Accordion.Header>
               <Accordion.Trigger>
+                What if my personal information changes?
+              </Accordion.Trigger>
+            </Accordion.Header>
+            <Accordion.Content>
+              <Text as="p">
+                If your personal information changes, you will need to go to
+                {' '}
+                <RadixLink href="https://access.cisa.gov/" target="_blank">CISA Access Portal</RadixLink>
+                {' '}
+                to update it.
+              </Text>
+            </Accordion.Content>
+          </Accordion.Item>
+
+          <Accordion.Item value="2">
+            <Accordion.Header>
+              <Accordion.Trigger>
                 How do I register for an event?
               </Accordion.Trigger>
             </Accordion.Header>
@@ -77,7 +95,7 @@ export default function FAQPage() {
             </Accordion.Content>
           </Accordion.Item>
 
-          <Accordion.Item value="2">
+          <Accordion.Item value="3">
             <Accordion.Header>
               <Accordion.Trigger>
                 How do I join a team?
@@ -99,7 +117,7 @@ export default function FAQPage() {
             </Accordion.Content>
           </Accordion.Item>
 
-          <Accordion.Item value="3">
+          <Accordion.Item value="4">
             <Accordion.Header>
               <Accordion.Trigger>
                 How do I reset my Kali workspace?
@@ -122,7 +140,7 @@ export default function FAQPage() {
             </Accordion.Content>
           </Accordion.Item>
 
-          <Accordion.Item value="4">
+          <Accordion.Item value="5">
             <Accordion.Header>
               <Accordion.Trigger>
                 How do I get my certificate of completion?
