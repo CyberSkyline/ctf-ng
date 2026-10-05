@@ -10,7 +10,7 @@
     - name: Run create_user.py --csv in {{ ctfd_container }}
       ansible.builtin.shell: |
         set -euo pipefail
-        python3 -c '
+        csv=$(python3 -c '
         import sys
         text = sys.stdin.read().replace("\r", "").strip()
         if "\n" not in text:
@@ -20,8 +20,11 @@
             lines[0] = lines[0].lower()
         else:
             lines.insert(0, "email,password,name")
+        if len(lines) < 2:
+            sys.exit("No user rows found. Line breaks are dropped when pasting into a single-line field, so separate rows with ; instead.")
         print("\n".join(lines))
-        ' | docker exec -i -e CTFD_ADMIN_FLAG -e SCRIPT=true -e PYTHONPATH=/opt/CTFd/ {{ ctfd_container | quote }} /bin/bash -c '
+        ')
+        printf "%s\n" "$csv" | docker exec -i -e CTFD_ADMIN_FLAG -e SCRIPT=true -e PYTHONPATH=/opt/CTFd/ {{ ctfd_container | quote }} /bin/bash -c '
           if [ -f /opt/CTFd/conf/ctfd/init_secrets.py ]; then
             eval "$(python3 /opt/CTFd/conf/ctfd/init_secrets.py)"
           fi
