@@ -81,7 +81,7 @@ COPY ./conf/ctfd/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY ./conf/ctfd/config.ini /opt/CTFd/CTFd/config.ini
 COPY ./conf/ctfd/entrypoint.sh /opt/CTFd/entrypoint.sh
 COPY ./conf/ctfd/serve_debug.py /opt/CTFd/serve_debug.py
-COPY ./conf/ctfd/init_patch /opt/CTFd/init_patch
+COPY ./conf/ctfd/init_patch /opt/CTFd/CTFd/__init__.py
 
 RUN chown -R 1001:1001 /var/log/CTFd /var/uploads /opt/CTFd
 RUN chmod +x /opt/CTFd/docker-entrypoint.sh /opt/CTFd/entrypoint.sh

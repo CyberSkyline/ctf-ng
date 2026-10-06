@@ -52,8 +52,6 @@ start_prod() {
   pkill -f 'celery.*worker' || true
   celery -A CTFd.plugins.ng.containers.tasks worker --loglevel=INFO &
 
-  mv init_patch CTFd/__init__.py
-
   # Start CTFd
   echo "Starting CTFd"
   exec gunicorn 'CTFd:create_app()' \
