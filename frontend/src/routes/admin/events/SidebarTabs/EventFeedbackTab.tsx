@@ -12,7 +12,9 @@ import type { ColDef } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import Statistic from 'components/Statistic';
 import { useMemo, useRef } from 'react';
-import { TbInfoCircle } from 'react-icons/tb';
+import { TbDownload, TbInfoCircle } from 'react-icons/tb';
+import Entity from 'components/Entity';
+import { COLOR_POSITIVE, UserIcon } from '@/constants';
 
 const colDefs = [
   {
@@ -26,6 +28,12 @@ const colDefs = [
     sortable : true,
     filter : true,
     width : 200,
+    cellRenderer : Entity,
+    cellRendererParams : (params: { data: {user_name?: string, user_id: number} }) => ({
+      icon : UserIcon,
+      label : params.data.user_name,
+      to : `/admin/users?id=${params.data.user_id}`,
+    }),
   },
   {
     field : 'feedback_data.role',
@@ -110,9 +118,23 @@ export default function EventFeedbackTab({ event }: {event: Event}) {
   const exportCsv = () => {
     if (!gridRef.current) return;
 
+    const columnKeys = gridRef.current.api
+      .getColumns()
+      ?.filter((column) => {
+        const colDef = column.getColDef();
+
+        return (
+          colDef.field !== 'user_id'
+          && colDef.colId !== 'user_id'
+          && colDef.field !== 'user_name'
+          && colDef.colId !== 'user_name'
+        );
+      })
+      .map((column) => column.getColId());
+
     gridRef.current.api.exportDataAsCsv({
       fileName : `${new Date().toISOString().slice(0, 10)} - ${event.name} Feedback.csv`,
-      allColumns : true,
+      columnKeys,
     });
   };
 
@@ -162,7 +184,10 @@ export default function EventFeedbackTab({ event }: {event: Event}) {
           </Tooltip>
           <Button
             onClick={exportCsv}
+            variant="soft"
+            color={COLOR_POSITIVE}
           >
+            <TbDownload />
             Download CSV
           </Button>
         </Flex>
