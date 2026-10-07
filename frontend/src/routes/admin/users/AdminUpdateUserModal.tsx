@@ -6,6 +6,7 @@ import {
   Box,
   Button,
   Flex,
+  Link as RadixLink,
   Switch,
   TextField,
 } from '@radix-ui/themes';
@@ -84,7 +85,11 @@ export default function AdminUpdateUserModal({ user }: {user: AdminUser}) {
               This account is linked to Okta for SSO. Changing the email here
               does not change what they sign in with. If the user is not having
               difficulties accessing their account and is just looking to update
-              their email, they should do that via Okta and our platform will
+              their email, they should do that via the
+              {' '}
+              <RadixLink href="https://access.cisa.gov/" target="_blank">CISA Access Portal</RadixLink>
+              {' '}
+              and our platform will
               update their account automatically at their next login.
             </WarningCallout>
           )}
