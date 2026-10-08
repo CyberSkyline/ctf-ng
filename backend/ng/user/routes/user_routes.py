@@ -1,12 +1,12 @@
 """
 My User API routes
 """
-from CTFd.models import Users
+from CTFd.models import Users, db
 from CTFd.utils.crypto import verify_password
 from CTFd.utils.security.csrf import generate_nonce
 from CTFd.utils.security.signing import hmac
 from flask_restx import Namespace, Resource
-from flask import session
+from flask import current_app, session
 
 from ...core.utils import (
     error_response,
@@ -213,9 +213,25 @@ class UserLogin(Resource):
                 return error_response("Invalid username or password", "authentication", 401)
 
             if verify_password(password, user.password):
+                password_hash = user.password
+
+                # Expo passwords are single-use: clear it so the next login needs a new
+                # temporary password from an admin or an Okta account with the same email.
+                # Dev environments have no SSO, so they keep their passwords.
+                if not current_app.debug:
+                    # A query-level update skips the hashing validator on Users.password, and
+                    # matching on the old hash means only one concurrent login can consume it.
+                    consumed = Users.query.filter_by(id=user.id, password=password_hash).update(
+                        {"password": None}, synchronize_session=False
+                    )
+                    db.session.commit()
+                    if consumed != 1:
+                        return error_response("Invalid username or password", "authentication", 401)
+                    password_hash = None
+
                 session['id'] = user.id
                 session['nonce'] = generate_nonce()
-                session['hash'] = hmac(user.password)
+                session['hash'] = hmac(password_hash)
                 session['permanent'] = True
 
                 return success_response()

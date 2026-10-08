@@ -1,6 +1,8 @@
 """
 Tests for user admin routes & user related user routes
 """
+import pytest
+from CTFd.utils.security.csrf import generate_nonce
 
 
 def test_get_user_profile(logged_in_client, user):
@@ -319,6 +321,71 @@ def test_login_with_email(logged_in_client, user):
     data = response.get_json()
     assert data["success"] is True
     assert "session" in logged_in_client.cookie_jar._cookies['localhost.local']['/']
+
+
+def _anonymous_client(app):
+    """A logged-out client with a CSRF nonce, as the login page would have"""
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["nonce"] = generate_nonce()
+    return client
+
+
+@pytest.fixture
+def prod_mode(app):
+    """Run the app as it does in production, where expo passwords are single-use"""
+    debug = app.debug
+    app.debug = False
+    yield
+    app.debug = debug
+
+
+def test_expo_password_is_single_use(app, prod_mode, user, db_session):
+    """
+    Test that an expo password is cleared after a successful login, without logging the user out
+    """
+    public_client = _anonymous_client(app)
+    credentials = {"username": "testuser", "password": "password"}
+
+    response = public_client.post("/ng/users/login", json=credentials)
+    assert response.status_code == 200
+
+    db_session.refresh(user)
+    assert user.password is None
+
+    # The session created by the consuming login stays valid
+    response = public_client.get("/ng/users/me")
+    assert response.status_code == 200
+
+    response = public_client.post("/ng/users/login", json=credentials)
+    assert response.status_code == 401
+
+
+def test_expo_password_can_be_reissued(app, prod_mode, user, admin_client, db_session):
+    """
+    Test that an admin can set a new temporary password after the old one was used
+    """
+    response = _anonymous_client(app).post("/ng/users/login", json={"username": "testuser", "password": "password"})
+    assert response.status_code == 200
+
+    response = admin_client.put(f"/ng/admin/users/{user.id}", json={"password": "new-temp-password"})
+    assert response.status_code == 200
+
+    response = _anonymous_client(app).post(
+        "/ng/users/login", json={"username": "testuser", "password": "new-temp-password"}
+    )
+    assert response.status_code == 200
+
+def test_expo_password_is_reusable_in_debug_mode(app, user, db_session):
+    """
+    Test that dev environments, which have no SSO, keep expo passwords after logging in
+    """
+    assert app.debug
+    credentials = {"username": "testuser", "password": "password"}
+
+    for _ in range(2):
+        response = _anonymous_client(app).post("/ng/users/login", json=credentials)
+        assert response.status_code == 200
 
 
 def test_user_get_sponsor(client_factory, user_factory, sponsor_factory):
