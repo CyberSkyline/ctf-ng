@@ -35,7 +35,7 @@ services:
     command: -c "/usr/bin/supervisord -c /etc/supervisor/supervisord.conf && supervisorctl tail -f ctfd"
 
   nginx:
-    image: nginx:1.29.3
+    image: nginx:1.31.6
     container_name: ng-nginx
     restart: always
     volumes:
