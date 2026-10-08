@@ -9,6 +9,7 @@ from datetime import datetime, timezone, UTC
 from ...core.exceptions import (
     ValidationError,
     BusinessLogicError,
+    ConflictError,
 )
 
 from ...challenge.models.Challenge import Challenge
@@ -151,7 +152,7 @@ class TestCreateRedemption:
         )
 
         # Second redemption should fail
-        with pytest.raises(BusinessLogicError) as exc_info:
+        with pytest.raises(ConflictError) as exc_info:
             HintRedemption.create_redemption(
                 hint_id=hint.id,
                 user_id=user.id,
@@ -519,7 +520,7 @@ class TestValidateRedemptionAllowed:
         )
 
         # Try to validate another redemption
-        with pytest.raises(BusinessLogicError) as exc_info:
+        with pytest.raises(ConflictError) as exc_info:
             HintRedemption.validate_redemption_allowed(
                 user_id=user.id,
                 team_id=team_with_member.id,
