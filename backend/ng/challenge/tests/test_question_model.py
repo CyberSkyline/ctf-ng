@@ -2,8 +2,7 @@
 Test cases for the Question model to verify validation and database operations.
 """
 
-import base64
-import os
+from unittest.mock import patch
 
 import pytest
 
@@ -271,19 +270,13 @@ class Test_Create_Question:
 
     def test_create_question_with_commit_false_should_not_commit(self, db_session, valid_question_data):
         """Test that creating a question with commit=False doesn't commit to database."""
-        question = Question.create_question(commit=False, **valid_question_data)
+        with patch.object(db_session, "commit") as mock_commit:
+            question = Question.create_question(commit=False, **valid_question_data)
+            mock_commit.assert_not_called()
 
-        # Flush session to clear it
-        db_session.flush()
-        db_session.expunge_all()
-
-        # Question should exist in session but not committed
+        # Flushed into the session, so it has an id without being committed
         assert question.id is not None
-
-        # After rollback, question should not exist
-        db_session.rollback()
-        retrieved_question = Question.query.get(question.id)
-        assert retrieved_question is None
+        assert question in db_session
 
     def test_question_challenge_relationship_should_work(self, db_session, valid_question_data, challenge):
         """Test that the relationship between Question and Challenge works."""
@@ -328,20 +321,18 @@ class Test_Create_Question:
 
 
 class Test_Check_Answer:
-    def test_check_answer_with_correct_answer(self, db_session, admin_client, event, team_factory,user):
-        team = team_factory(event=event, members=[user]) # noqa F841
+    def test_check_answer_with_correct_answer(self, db_session, challenge, team_factory, user):
+        team = team_factory(event=challenge.event, members=[user])
+        question = Question.create_question(
+            challenge_id=challenge.id, index=0, name="Q1", body="What is the flag?", answer="CTF{test_flag}", points=100, max_attempts=3
+        )
 
-        with open(os.path.join(os.path.dirname(__file__), "./yamls/default.yaml"), "rb") as f:
-            yaml = base64.urlsafe_b64encode(f.read())
+        assert question.check_answer(team, "CTF{test_flag}") is True
 
-        admin_client.post("/ng/admin/challenge/import", json={"yaml": yaml.decode("utf-8")})
+    def test_check_answer_with_incorrect_answer(self, db_session, challenge, team_factory, user):
+        team = team_factory(event=challenge.event, members=[user])
+        question = Question.create_question(
+            challenge_id=challenge.id, index=0, name="Q1", body="What is the flag?", answer="CTF{test_flag}", points=100, max_attempts=3
+        )
 
-        # challenge = Challenge.query.filter_by(name="Basic Challenge").first()
-        # question = Question.query.filter_by(name="Q1").first()
-
-        # question.check_answer(team, "CTF{test_flag}")
-
-        # print(challenge)
-        # print(question)
-        # print(team)
-        # raise Exception("test")
+        assert question.check_answer(team, "CTF{wrong_flag}") is False

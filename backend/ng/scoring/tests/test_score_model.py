@@ -5,10 +5,11 @@ Tests for the Score model
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
+import fakeredis
 import pytest
-from CTFd.cache import cache
 
 from ...core.utils import utc_now
+from ...core.utils.redis_cache import RedisCache
 from ..models import Score, ScoreEvent
 
 
@@ -20,6 +21,20 @@ def clear_score_cache():
     _cache.clear()
     yield
     _cache.clear()
+
+
+@pytest.fixture
+def fake_redis(monkeypatch):
+    """Route RedisCache through an in-memory Redis so caching works without a server."""
+    client = fakeredis.FakeRedis(decode_responses=True)
+    monkeypatch.setattr(RedisCache, "_initialize_client", classmethod(lambda cls: True))
+    monkeypatch.setattr(RedisCache, "_client", client)
+    return client
+
+
+def leaderboard_cache_key(event_id):
+    """Same key format the get_leaderboard controller uses when the caller doesn't supply one."""
+    return f"leaderboard:{event_id}:all"
 
 
 class TestScoreRepr:
@@ -233,21 +248,20 @@ class TestScoreRecalculate:
         assert score.points == 100
 
 
+@pytest.mark.usefixtures("fake_redis")
 class TestGetLeaderboard:
     """Test the get_leaderboard class method"""
 
     @pytest.mark.cache
     def test_get_leaderboard_empty(self, db_session, event):
         """Test leaderboard for event with no scores"""
-        leaderboard = Score.get_leaderboard(event.id)
+        leaderboard = Score.get_leaderboard(event.id, cache_key=leaderboard_cache_key(event.id))
 
         assert leaderboard == []
 
     @pytest.mark.cache
     def test_get_leaderboard_ordering(self, db_session, event_factory, team_factory, user_factory):
         """Test leaderboard returns teams in descending score order"""
-        cache.clear()
-
         # Create a fresh event and teams to avoid cache issues
         fresh_event = event_factory()
 
@@ -268,7 +282,7 @@ class TestGetLeaderboard:
         assert len(db_scores) == 3, f"Expected 3 scores in DB, found {len(db_scores)}"
 
         # Get leaderboard
-        leaderboard = Score.get_leaderboard(fresh_event.id)
+        leaderboard = Score.get_leaderboard(fresh_event.id, cache_key=leaderboard_cache_key(fresh_event.id))
 
         assert len(leaderboard) == 3, f"Expected 3 in leaderboard, got {len(leaderboard)}"
 
@@ -281,8 +295,6 @@ class TestGetLeaderboard:
     def test_get_leaderboard_caching(self, db_session, event_factory, team_factory, user_factory):
         """Test that leaderboard is cached"""
 
-        cache.clear()
-
         fresh_event = event_factory()
 
         # Create initial team and update its score
@@ -294,7 +306,7 @@ class TestGetLeaderboard:
         db_session.commit()
 
         # Get leaderboard - should cache
-        leaderboard1 = Score.get_leaderboard(fresh_event.id)
+        leaderboard1 = Score.get_leaderboard(fresh_event.id, cache_key=leaderboard_cache_key(fresh_event.id))
         assert len(leaderboard1) == 1
 
         # Add another team and update its score
@@ -306,23 +318,18 @@ class TestGetLeaderboard:
         db_session.commit()
 
         # Get leaderboard again - should return cached version
-        leaderboard2 = Score.get_leaderboard(fresh_event.id)
+        leaderboard2 = Score.get_leaderboard(fresh_event.id, cache_key=leaderboard_cache_key(fresh_event.id))
         assert len(leaderboard2) == 1  # Still cached
 
-        # Clear both CTFd cache and memoize cache and get again
-        cache.clear()
-        from ...core.utils.cache import _cache as memoize_cache
+        # Invalidate the event's leaderboard cache and get again
+        Score.clear_leaderboard_cache(event_id=fresh_event.id)
 
-        memoize_cache.clear()
-
-        leaderboard3 = Score.get_leaderboard(fresh_event.id)
+        leaderboard3 = Score.get_leaderboard(fresh_event.id, cache_key=leaderboard_cache_key(fresh_event.id))
         assert len(leaderboard3) == 2  # Now shows both teams
 
     @pytest.mark.cache
     def test_get_leaderboard_with_tied_scores(self, db_session, event_factory, team_factory, user_factory):
         """Test leaderboard handles tied scores correctly"""
-        cache.clear()
-
         fresh_event = event_factory()
 
         # Create teams and update their scores
@@ -349,7 +356,7 @@ class TestGetLeaderboard:
 
         db_session.commit()
 
-        leaderboard = Score.get_leaderboard(fresh_event.id)
+        leaderboard = Score.get_leaderboard(fresh_event.id, cache_key=leaderboard_cache_key(fresh_event.id))
 
         # Check we have 3 teams
         assert len(leaderboard) == 3
@@ -380,13 +387,8 @@ class TestGetTeamRank:
         rank = Score.get_team_rank(999999)
         assert rank is None
 
-    @pytest.mark.cache
-    def test_get_team_rank_uses_cache(self, db_session, event, score):
-        """Test that get_team_rank uses cached leaderboard"""
-        # Populate cache
-        Score.get_leaderboard(event.id)
-
-        # Get rank without mocking to ensure it works
+    def test_get_team_rank_single_team(self, db_session, event, score):
+        """A team that is alone in its event is ranked first"""
         rank = Score.get_team_rank(score.team_id)
         assert rank == 1  # Only team, so rank 1
 
