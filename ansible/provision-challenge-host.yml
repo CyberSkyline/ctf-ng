@@ -49,7 +49,7 @@
 - name: Sysctl config
   hosts: challenge
   become: true
-  remote_user: ubuntu
+  remote_user: ansible
   tasks:
     - ansible.posix.sysctl:
         name: kernel.pty.max
@@ -67,7 +67,7 @@
 - name: Install exec-service
   hosts: challenge
   become: true
-  remote_user: ubuntu
+  remote_user: ansible
   tasks:
     - name: Copy exec-service to /opt/service
       ansible.builtin.copy:
