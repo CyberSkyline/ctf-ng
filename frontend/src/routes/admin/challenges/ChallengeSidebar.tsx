@@ -13,10 +13,14 @@ import ChallengeAttemptsTab from './SidebarTabs/ChallengeAttemptsTab';
 import ChallengeBlueprintTab from './SidebarTabs/ChallengeBlueprintTab';
 import ChallengeDetailsTab from './SidebarTabs/ChallengeDetailsTab';
 import ChallengeFeedbackTab from './SidebarTabs/ChallengeFeedbackTab';
+import ChallengeDeleteModal from './ChallengeDeleteModal';
 
 export default function ChallengeSidebar({ entity }: {entity: Challenge}) {
   const [ searchParams, setSearchParams ] = useSearchParams();
   const headerId = useId();
+
+  // use the vite variable
+  const isDev = import.meta.env.DEV;
 
   return (
     <AdminSidebar labelId={headerId}>
@@ -38,6 +42,10 @@ export default function ChallengeSidebar({ entity }: {entity: Challenge}) {
         />
         <ChallengeUpdateModal challengeId={entity.id} />
         <ChallengeDownloadButton challenge={entity} />
+
+        {isDev && (
+          <ChallengeDeleteModal challengeId={entity.id} eventId={entity.event_id} />
+        )}
       </AdminSidebarHeader>
 
       <Tabs.Root
