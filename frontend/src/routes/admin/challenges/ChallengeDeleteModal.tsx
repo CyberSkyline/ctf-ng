@@ -20,16 +20,14 @@ export default function ChallengeDeleteModal({ challengeId, eventId }: { challen
       )}
       submitVerb="Delete"
       submitColor={COLOR_NEGATIVE}
-      onSubmit={async () => {
-        return deleteChallenge(challengeId, eventId);
-      }}
+      onSubmit={async () => deleteChallenge(challengeId, eventId)}
     >
       <WarningCallout>This is only available in DEV mode.</WarningCallout>
       Are you sure you want to delete this challenge? This action cannot be undone.
       The following items related to the challenge will be deleted:
       <ul className="list-disc list-inside">
         <li>Challenge</li>
-        <li>{`Association with an event (not the event itself)`}</li>
+        <li>Association with an event (not the event itself)</li>
         <li>Deployments</li>
         <li>Announcements</li>
         <li>Notifications</li>
