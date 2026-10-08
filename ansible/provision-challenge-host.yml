@@ -90,7 +90,7 @@
         export NVM_DIR="$HOME/.nvm"
         [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
         nvm install 24
-        cd /opt/service && pnpm install
+        cd /opt/service && corepack enable && pnpm install
       args:
         executable: /bin/bash
 
