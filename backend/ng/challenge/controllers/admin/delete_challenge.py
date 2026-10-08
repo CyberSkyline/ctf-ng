@@ -22,7 +22,7 @@ def delete_challenge(challenge: Challenge):
     event = db.session.get(Event, challenge.event_id)
     if not event:
         raise BusinessLogicError(f"Event with ID {challenge.event_id} does not exist.")
-    
+
     # Delete Deployment for each team in the event associated with the challenge
     # call the regular delete instead on blueprint
     for blueprint in challenge.blueprints:
@@ -49,7 +49,7 @@ def delete_challenge(challenge: Challenge):
     '''
     The notification model has a challenge_id field but the notif is not actually linked to the challenge in any way.
     I've included it as a condition here in case we properly utilize it in the future
-    '''    
+    '''
     notifications = db.session.scalars(
         db.select(Notification).where(
             db.or_(
