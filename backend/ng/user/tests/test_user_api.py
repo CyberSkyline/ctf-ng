@@ -363,18 +363,40 @@ def test_expo_password_is_single_use(app, prod_mode, user, db_session):
 
 def test_expo_password_can_be_reissued(app, prod_mode, user, admin_client, db_session):
     """
-    Test that an admin can set a new temporary password after the old one was used
+    Test that an admin can set a new temporary password after the old one was used, which ends
+    any session started with the old one
     """
-    response = _anonymous_client(app).post("/ng/users/login", json={"username": "testuser", "password": "password"})
+    logged_in = _anonymous_client(app)
+    response = logged_in.post("/ng/users/login", json={"username": "testuser", "password": "password"})
     assert response.status_code == 200
 
     response = admin_client.put(f"/ng/admin/users/{user.id}", json={"password": "new-temp-password"})
     assert response.status_code == 200
 
+    # CTFd ends sessions from before the password change with a 401 for JSON requests
+    response = logged_in.get("/ng/users/me", content_type="application/json")
+    assert response.status_code == 401
+
     response = _anonymous_client(app).post(
         "/ng/users/login", json={"username": "testuser", "password": "new-temp-password"}
     )
     assert response.status_code == 200
+
+def test_stale_session_non_json_request_gets_401(app, prod_mode, user, admin_client, db_session):
+    """
+    Test that a non-JSON request from a session started before a password change gets a 401.
+    CTFd redirects these to its login page, which the plugin removes.
+    """
+    logged_in = _anonymous_client(app)
+    response = logged_in.post("/ng/users/login", json={"username": "testuser", "password": "password"})
+    assert response.status_code == 200
+
+    response = admin_client.put(f"/ng/admin/users/{user.id}", json={"password": "new-temp-password"})
+    assert response.status_code == 200
+
+    response = logged_in.get("/ng/users/me")
+    assert response.status_code == 401
+
 
 def test_expo_password_is_reusable_in_debug_mode(app, user, db_session):
     """

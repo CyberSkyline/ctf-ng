@@ -12,6 +12,7 @@ from flask import current_app as app
 from flask import request, session
 from flask_limiter.errors import RateLimitExceeded
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from werkzeug.exceptions import HTTPException
 
 from ..exceptions import APIException
 from ..utils import error_response
@@ -111,6 +112,11 @@ def handle_exceptions(f):
         except RateLimitExceeded:
             db.session.remove()
             return error_response("Rate limit reached for this operation", "rate_limit", 429)
+
+        except HTTPException:
+            # Deliberate aborts, e.g. CTFd ending a session whose password has changed
+            db.session.remove()
+            raise
 
         except Exception as e:
             db.session.remove()
