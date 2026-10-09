@@ -2,6 +2,7 @@
 Ctf-ng Pytest Fixtures
 """
 
+import os
 from datetime import datetime, timezone, timedelta, UTC
 from collections.abc import Callable
 from unittest.mock import Mock
@@ -37,6 +38,9 @@ from .team.models.Team import Team
 from .user.models.User import User as NgUser
 from .sponsors.models.Sponsor import Sponsor
 from .core.utils import utc_now
+
+# The plugin refuses to load without ENVIRONMENT; CI and bare pytest runs have no .env file
+os.environ.setdefault("ENVIRONMENT", "development")
 
 DEFAULT_ADMIN_EMAIL = "admin@examplectf.com"
 DEFAULT_ADMIN_PASSWORD = "ctfng_password"
