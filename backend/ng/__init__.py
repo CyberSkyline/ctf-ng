@@ -21,6 +21,7 @@ from .core.routes import (
     remove_registered_helpers,
 )
 from .core.routes.views import plugin_views
+from .core.utils.environment import get_environment
 from .core.utils.logger import get_logger
 from .core.utils.rate_limit import limiter
 from .core.utils.redis_notifications import initialize_redis_notifications
@@ -48,6 +49,9 @@ logger = get_logger(__name__)
 
 
 def load(app: Any) -> None:
+    app.config["ENVIRONMENT"] = get_environment()
+    app.jinja_env.globals["ENVIRONMENT"] = app.config["ENVIRONMENT"]
+
     try:
         delete_unwanted_ctfd_routes(app)
         remove_registered_helpers(app)
