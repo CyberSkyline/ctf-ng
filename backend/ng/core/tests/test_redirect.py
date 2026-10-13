@@ -22,6 +22,8 @@ def route_prefix(app, monkeypatch):
     "/ctf/",
     "/ctf/events/5/challenge/12",
     "/ctf/support?tab=open#latest",
+    "/ctf/events/my%20event",
+    "/ctf/search?q=a%2F%2Fb%5Cc",
 ])
 def test_accepts_app_pages(route_prefix, target):
     """
@@ -50,6 +52,18 @@ def test_accepts_app_pages(route_prefix, target):
     "/ctf/%2e%2e/other",
     "/ctf/ng",
     "/ctf/ng/users/logout",
+    "/ctf/%6E%67/users/me",
+    "/ctf/%6e%67",
+    "/ctf%2Fng/users/me",
+    "/%2fevil.example.com",
+    "/%2F%2Fevil.example.com",
+    "/%5Cevil.example.com",
+    "/ctf/%5C..%5Cother",
+    "/ctf/%0d%0aSet-Cookie:%20x=1",
+    "/ctf//ng/users/me",
+    "/ctf///ng/users/me",
+    "/ctf/%2Fng/users/me",
+    "/ctf/events//5",
 ])
 def test_rejects_unsafe_targets(route_prefix, target):
     """
@@ -70,3 +84,5 @@ def test_without_route_prefix(route_prefix):
 
     assert safe_redirect_target("/events/5") == "/events/5"
     assert safe_redirect_target("/ng/users/me") is None
+    assert safe_redirect_target("/%6E%67/users/me") is None
+    assert safe_redirect_target("/%2Fevil.example.com") is None

@@ -340,7 +340,7 @@ def test_login_returns_safe_redirect_target(logged_in_client, user, app, monkeyp
     assert response.get_json()["data"]["redirect"] == "/ctf/events/5?tab=hints"
 
 
-@pytest.mark.parametrize("redirect", [None, "https://evil.example.com/", "/\\evil.example.com", "/ctf/ng/users/me"])
+@pytest.mark.parametrize("redirect", [None, "https://evil.example.com/", "/\\evil.example.com", "/ctf/ng/users/me", "/ctf/%6E%67/users/me", "/ctf//ng/users/me"])
 def test_login_drops_unsafe_redirect_target(logged_in_client, user, app, monkeypatch, redirect):
     """
     Test that a login with a missing or unsafe redirect target still succeeds,
