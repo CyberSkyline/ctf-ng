@@ -4,7 +4,9 @@ Tests for the Okta authentication routes
 
 import json
 import re
+from urllib.parse import quote
 
+import pytest
 from CTFd.models import Users
 
 from ..controllers import authenticate
@@ -400,3 +402,96 @@ def test_callback_overwrites_stale_oauth_id_on_email_fallback(public_client, mon
     assert response.status_code == 302
     assert_logged_in_as(public_client, user_id)
     assert NgUser.query.get(user_id).oauth_id == "okta|new-id"
+
+
+@pytest.fixture
+def site(app, monkeypatch):
+    """Serve the app under a route prefix, so redirect targets are checked against it."""
+    monkeypatch.setattr(authenticate, "SERVER_DOMAIN", "https://ctf.example.com")
+    monkeypatch.setattr(authenticate, "ROUTE_PREFIX", "/ctf")
+    monkeypatch.setitem(app.config, "ROUTE_PREFIX", "/ctf")
+    # oauthlib refuses to build a non-https authorization URL, which it would be with no Okta configured
+    monkeypatch.setattr(authenticate, "AUTHORIZATION_BASE_URL", "https://okta.example.com/oauth2/v1/authorize")
+
+
+def start_okta_login(client, redirect=None):
+    """Start an SSO login, optionally carrying a post-login redirect target."""
+    query = f"?redirect={quote(redirect, safe='')}" if redirect is not None else ""
+    response = client.get(f"/ng/authenticate/okta/login{query}")
+    assert response.status_code == 302
+    return response
+
+
+def test_sso_login_remembers_redirect_target(site, public_client):
+    """
+    Test that starting an SSO login with a redirect target stores it for the
+    callback
+    """
+    start_okta_login(public_client, "/ctf/events/5")
+
+    with public_client.session_transaction() as sess:
+        assert sess[authenticate.POST_LOGIN_REDIRECT_KEY] == "/ctf/events/5"
+
+
+def test_sso_login_ignores_unsafe_redirect_target(site, public_client):
+    """
+    Test that an off-site redirect target is not stored
+    """
+    start_okta_login(public_client, "https://evil.example.com/")
+
+    with public_client.session_transaction() as sess:
+        assert authenticate.POST_LOGIN_REDIRECT_KEY not in sess
+
+
+def test_sso_login_without_target_clears_a_stale_one(site, public_client):
+    """
+    Test that a login started without a target drops one left over from an
+    abandoned attempt, so it can't take over this login
+    """
+    start_okta_login(public_client, "/ctf/events/5")
+    with public_client.session_transaction() as sess:
+        assert authenticate.POST_LOGIN_REDIRECT_KEY in sess
+
+    start_okta_login(public_client)
+
+    with public_client.session_transaction() as sess:
+        assert authenticate.POST_LOGIN_REDIRECT_KEY not in sess
+
+
+def test_callback_redirects_to_remembered_target(site, public_client, monkeypatch, db_session):
+    """
+    Test that a successful login returns the user to the page they were on,
+    and that the target is not carried into the logged-in session
+    """
+    start_okta_login(public_client, "/ctf/events/5/challenge/12?tab=hints")
+
+    response = do_okta_callback(public_client, monkeypatch, email="target@example.com", oauth_id="okta|target")
+
+    assert response.status_code == 302
+    assert response.headers["Location"] == "https://ctf.example.com/ctf/events/5/challenge/12?tab=hints"
+    with public_client.session_transaction() as sess:
+        assert authenticate.POST_LOGIN_REDIRECT_KEY not in sess
+
+
+def test_callback_without_target_redirects_to_app_root(site, public_client, monkeypatch, db_session):
+    """
+    Test that a successful login without a remembered target lands on the app
+    root
+    """
+    start_okta_login(public_client)
+
+    response = do_okta_callback(public_client, monkeypatch, email="root@example.com", oauth_id="okta|root")
+
+    assert response.headers["Location"] == "https://ctf.example.com/ctf"
+
+
+def test_callback_revalidates_stored_target(site, public_client, monkeypatch, db_session):
+    """
+    Test that an unsafe target already in the session is not followed
+    """
+    with public_client.session_transaction() as sess:
+        sess[authenticate.POST_LOGIN_REDIRECT_KEY] = "https://evil.example.com/"
+
+    response = do_okta_callback(public_client, monkeypatch, email="stored@example.com", oauth_id="okta|stored")
+
+    assert response.headers["Location"] == "https://ctf.example.com/ctf"

@@ -323,6 +323,39 @@ def test_login_with_email(logged_in_client, user):
     assert "session" in logged_in_client.cookie_jar._cookies['localhost.local']['/']
 
 
+
+def test_login_returns_safe_redirect_target(logged_in_client, user, app, monkeypatch):
+    """
+    Test that a login with a redirect target to an app page returns it for the
+    client to go to
+    """
+    monkeypatch.setitem(app.config, "ROUTE_PREFIX", "/ctf")
+
+    response = logged_in_client.post(
+        "/ng/users/login",
+        json={"username": "testuser", "password": "password", "redirect": "/ctf/events/5?tab=hints"}
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["data"]["redirect"] == "/ctf/events/5?tab=hints"
+
+
+@pytest.mark.parametrize("redirect", [None, "https://evil.example.com/", "/\\evil.example.com", "/ctf/ng/users/me"])
+def test_login_drops_unsafe_redirect_target(logged_in_client, user, app, monkeypatch, redirect):
+    """
+    Test that a login with a missing or unsafe redirect target still succeeds,
+    but returns no target
+    """
+    monkeypatch.setitem(app.config, "ROUTE_PREFIX", "/ctf")
+
+    response = logged_in_client.post(
+        "/ng/users/login",
+        json={"username": "testuser", "password": "password", "redirect": redirect}
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["data"]["redirect"] is None
+
 def _anonymous_client(app):
     """A logged-out client with a CSRF nonce, as the login page would have"""
     client = app.test_client()
