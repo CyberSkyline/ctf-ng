@@ -9,35 +9,39 @@ import { SWRConfig } from 'swr';
 
 import { ROUTEPREFIX } from '@/constants';
 import { apiFetcher } from '@/fetchers';
+import { resumePostLoginRedirect } from '@/postLoginRedirect';
 import Favicon from 'components/Favicon';
 import Routes from './Routes';
 import './grid';
 import './index.css';
 import './socket';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <BrowserRouter basename={ROUTEPREFIX}>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="dark"
-        enableSystem
-      >
-        <Theme
-          panelBackground="solid" // disable blur effect on surfaces for performance
-          grayColor="sage"
-          accentColor="teal"
+// SSO login always returns to the app root, so pick up where the user was before logging in.
+if (!resumePostLoginRedirect()) {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <BrowserRouter basename={ROUTEPREFIX}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
         >
-          <SWRConfig
-            value={{ fetcher : apiFetcher }}
+          <Theme
+            panelBackground="solid" // disable blur effect on surfaces for performance
+            grayColor="sage"
+            accentColor="teal"
           >
-            <Favicon />
-            <NavBar />
-            <Routes />
-            <FooterBar />
-          </SWRConfig>
-        </Theme>
-      </ThemeProvider>
-    </BrowserRouter>
-  </StrictMode>,
-);
+            <SWRConfig
+              value={{ fetcher : apiFetcher }}
+            >
+              <Favicon />
+              <NavBar />
+              <Routes />
+              <FooterBar />
+            </SWRConfig>
+          </Theme>
+        </ThemeProvider>
+      </BrowserRouter>
+    </StrictMode>,
+  );
+}

@@ -1,5 +1,6 @@
 import { ROUTEPREFIX } from '@/constants';
 import { apiMutation } from '@/fetchers';
+import { clearPostLoginRedirect, safeRedirectPath } from '@/postLoginRedirect';
 import { Button, TextField } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
 import FormField from 'components/FormField';
@@ -26,7 +27,8 @@ export default function ExpoLoginForm() {
     }, {
       method : 'POST',
     }).then(() => {
-      window.location.href = searchParams.get('redirect') || `${ROUTEPREFIX}/`;
+      clearPostLoginRedirect();
+      window.location.href = safeRedirectPath(searchParams.get('redirect')) || `${ROUTEPREFIX}/`;
     }).catch((e) => {
       setLoginError(e.message || 'Login failed. Please try again.');
     });

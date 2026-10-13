@@ -9,12 +9,14 @@ import {
   Text,
 } from '@radix-ui/themes';
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
+import { savePostLoginRedirect } from '@/postLoginRedirect';
 import ExpoLoginForm from './ExpoLoginForm';
 import GovernmentNotice from './GovernmentNotice';
 
 export default function Login() {
   const [ hasAcceptedNotice, setHasAcceptedNotice ] = useState<boolean>(false);
+  const [ searchParams ] = useSearchParams();
 
   return (
     <Flex
@@ -35,7 +37,12 @@ export default function Login() {
             </Text>
 
             <Button asChild size="4" className="!w-full">
-              <Link to={SSO_LOGIN_PATH} reloadDocument>
+              <Link
+                to={SSO_LOGIN_PATH}
+                reloadDocument
+                // the SSO round trip drops the redirect param, so remember it until we're back
+                onClick={() => savePostLoginRedirect(searchParams.get('redirect'))}
+              >
                 Log in with SSO
               </Link>
             </Button>
