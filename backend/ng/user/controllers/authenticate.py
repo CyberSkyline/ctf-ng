@@ -11,6 +11,7 @@ from requests_oauthlib import OAuth2Session
 
 from ...core.exceptions import AuthenticationError
 from ...core.utils.error_page import render_error_page
+from ...core.utils.redirect import safe_redirect_target
 from ..models.User import User as NG_User
 
 OKTA_CLIENT_ID = os.getenv("OKTA_CLIENT_ID")
@@ -29,6 +30,9 @@ SCOPE = ["openid", "profile", "email"]
 # bcrypt-like placeholder hash
 OAUTH_PLACEHOLDER_HASH = "$2b$12$OAuthPlaceholderHashForCTFd0000"
 
+# Session key holding where to send the user once the SSO round trip completes
+POST_LOGIN_REDIRECT_KEY = "post_login_redirect"
+
 
 def okta_login():
     okta = OAuth2Session(
@@ -42,6 +46,14 @@ def okta_login():
         prompt="login consent"
     )
     session["oauth_state"] = state
+
+    # The callback always comes back here, so remember where the user was headed until then.
+    # Starting a login without a target drops any target left over from an abandoned attempt.
+    target = safe_redirect_target(request.args.get("redirect"))
+    if target:
+        session[POST_LOGIN_REDIRECT_KEY] = target
+    else:
+        session.pop(POST_LOGIN_REDIRECT_KEY, None)
 
     return redirect(authorization_url)
 
@@ -178,6 +190,9 @@ def okta_callback():
             ng_user = NG_User.find_or_create_by_ctfd_id(ctfd_user.id)
             ng_user.oauth_id = oauth_id  # update oauth id for email fallback pre-existing user or new user if one was just created
 
+        # Read before the session is cleared. Validated again in case the stored value predates the checks.
+        target = safe_redirect_target(session.get(POST_LOGIN_REDIRECT_KEY))
+
         # Clear session and set up new authenticated session
         session.clear()
         session['id'] = ctfd_user.id
@@ -189,7 +204,7 @@ def okta_callback():
 
         db.session.commit()
 
-        return redirect(f"{SERVER_DOMAIN}{ROUTE_PREFIX}")
+        return redirect(f"{SERVER_DOMAIN}{target or ROUTE_PREFIX}")
     except AuthenticationError as e:
         db.session.rollback()
 

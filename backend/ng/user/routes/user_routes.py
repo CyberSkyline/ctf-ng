@@ -13,6 +13,7 @@ from ...core.utils import (
     success_response,
 )
 from ...core.utils.rate_limit import limiter
+from ...core.utils.redirect import safe_redirect_target
 from ...core.middleware import (
     user_endpoint,
     public_endpoint,
@@ -180,7 +181,7 @@ class UserLogin(Resource):
     @public_endpoint(json_required=True)
     @limiter.limit("5 per minute; 20 per hour")
     @users_user_namespace.doc(
-        description="User login endpoint",
+        description="User login endpoint. An optional `redirect` path is checked and, if safe, returned for the client to go to next.",
         responses={
             200: "Login successful",
             401: "Unauthorized - Invalid credentials",
@@ -234,7 +235,7 @@ class UserLogin(Resource):
                 session['hash'] = hmac(password_hash)
                 session['permanent'] = True
 
-                return success_response()
+                return success_response({"redirect": safe_redirect_target(json_data.get("redirect"))})
             else:
                 return error_response("Invalid username or password", "authentication", 401)
 

@@ -23,10 +23,12 @@ export default function ExpoLoginForm() {
     apiMutation('/users/login', {
       username : data.username,
       password : data.password,
+      redirect : searchParams.get('redirect'),
     }, {
       method : 'POST',
-    }).then(() => {
-      window.location.href = searchParams.get('redirect') || `${ROUTEPREFIX}/`;
+    }).then((result) => {
+      // the server only returns the target if it's safe to go to
+      window.location.href = (result as { redirect: string | null }).redirect || `${ROUTEPREFIX}/`;
     }).catch((e) => {
       setLoginError(e.message || 'Login failed. Please try again.');
     });
