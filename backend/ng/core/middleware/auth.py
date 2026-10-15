@@ -6,10 +6,10 @@ Resource loading and permissions are handled by separate decorators.
 from functools import wraps
 
 from ..utils.current_user import get_current_user
-from flask import request, abort
+from flask import request
 
 from ...user.models.User import User
-from ..exceptions import ValidationError, AuthenticationError
+from ..exceptions import PermissionError, ValidationError, AuthenticationError
 from ...permissions.models.enums import RoleEnum
 from ...permissions.controllers.get_user_roles import get_user_roles
 from .error_handler import handle_exceptions
@@ -99,7 +99,7 @@ def admins_only(f):
         if RoleEnum.ADMIN in get_user_roles():
             return f(*args, **kwargs)
         else:
-            abort(403)
+            raise PermissionError()
 
     return admins_only_wrapper
 

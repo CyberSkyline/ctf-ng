@@ -5,10 +5,11 @@ Defines the Demographic model for tracking user event registrations.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TypedDict, NotRequired
+from typing import NotRequired, TypedDict
 
 from CTFd.models import db
 
+from ...core.exceptions import ConflictError
 from ...core.utils import utc_now
 
 
@@ -82,6 +83,10 @@ class Demographic(db.Model):
         """
         if reg_timestamp is None:
             reg_timestamp = utc_now()
+
+        # Perform dup check
+        if cls.find_by_user_and_event(user_id, event_id) is not None:
+            raise ConflictError(f"User {user_id} is already registered for event {event_id}.")
 
         demographic = cls(
             user_id=user_id,

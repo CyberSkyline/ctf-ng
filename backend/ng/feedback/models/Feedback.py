@@ -11,7 +11,7 @@ from sqlalchemy import JSON
 from sqlalchemy.orm import joinedload
 
 from ... import config
-from ...core.exceptions import ValidationError
+from ...core.exceptions import ConflictError, ValidationError
 from ...core.utils import utc_now
 from ...core.utils.validator import BaseValidator
 
@@ -160,6 +160,14 @@ class Feedback(db.Model):
                 "feedback_data": feedback_data,
             }
         )
+
+        # Perform an explicit dup check
+        if validated_data.get("challenge_id") is not None and cls.query.filter_by(
+            user_id = validated_data["user_id"],
+            event_id = validated_data["event_id"],
+            challenge_id = validated_data["challenge_id"],
+        ).first():
+            raise ConflictError("Feedback for this challenge has already been submitted.")
 
         feedback = cls(
             user_id = validated_data["user_id"],

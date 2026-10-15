@@ -47,10 +47,9 @@ def emit_event(event_name, data, user_ids = None):
             logger.debug("No target users found for event '%s'", event_name)
 
     except Exception as e:
-        logger.error(
+        logger.exception(
             "Failed to emit WebSocket event '%s': %s",
-            event_name, e,
-            exc_info = True
+            event_name, e
         )
 
 

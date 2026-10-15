@@ -11,6 +11,7 @@ import pytest
 from ...challenge.models.Hint import Hint
 from ...core.exceptions import (
     BusinessLogicError,
+    ConflictError,
     NotFoundError,
     ValidationError,
 )
@@ -184,7 +185,7 @@ class TestRedeemHint:
             challenge_id=challenge.id,
         )
 
-        with pytest.raises(BusinessLogicError) as exc_info:
+        with pytest.raises(ConflictError) as exc_info:
             redeem_hint(
                 event=event,
                 challenge=challenge,

@@ -407,7 +407,7 @@ class TestUserScoringEndpoints:
 
         )
 
-        assert response.status_code == 400
+        assert response.status_code == 409
         data = response.get_json()
         assert data["success"] is False
 

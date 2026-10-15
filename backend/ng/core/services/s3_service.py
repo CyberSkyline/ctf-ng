@@ -43,10 +43,10 @@ class S3Service:
             # Test connection
             self.s3_client.list_buckets()
             self._is_configured = True
-            logger.info(f"S3 Service configured for bucket: {self.bucket_name}")
+            logger.info("S3 Service configured for bucket: %s", self.bucket_name)
 
         except Exception as e:
-            logger.error(f"S3 Service configuration failed: {e}")
+            logger.error("S3 Service configuration failed: %s", e)
             self._is_configured = False
 
     def is_configured(self) -> bool:
@@ -70,7 +70,7 @@ class S3Service:
         cached_data = RedisCache.get(cache_key)
 
         if cached_data and isinstance(cached_data, dict):
-            logger.debug(f"Using cached {operation} URL for {object_key}")
+            logger.debug("Using cached %s URL for %s", operation, object_key)
             return cached_data.get('url')
 
     def _cache_url(self, operation: str, object_key: str, url: str, expires_in: int, content_type: str = None):
@@ -89,7 +89,7 @@ class S3Service:
         success = RedisCache.set(cache_key, cache_data, ttl=cache_ttl)
 
         if success:
-            logger.debug(f"Cached {operation} URL for {object_key} (TTL: {cache_ttl}s)")
+            logger.debug("Cached %s URL for %s (TTL: %ss)", operation, object_key, cache_ttl)
 
     def generate_upload_url(self, folder: str, filename: str,
                           content_type: str = 'application/octet-stream') -> dict[str, Any]:
@@ -101,7 +101,7 @@ class S3Service:
 
         cached_url = self._get_cached_url('upload', object_key, config.S3_UPLOAD_URL_EXPIRATION, content_type)
         if cached_url:
-            logger.info(f"Using cached upload URL for {object_key}")
+            logger.info("Using cached upload URL for %s", object_key)
             return {
                 'presigned_url': cached_url,
                 'filename': filename,
@@ -124,7 +124,7 @@ class S3Service:
             # Cache the URL
             self._cache_url('upload', object_key, presigned_url, config.S3_UPLOAD_URL_EXPIRATION, content_type)
 
-            logger.info(f"Generated upload URL for {object_key}")
+            logger.info("Generated upload URL for %s", object_key)
 
             return {
                 'presigned_url': presigned_url,
@@ -134,7 +134,7 @@ class S3Service:
             }
 
         except ClientError as e:
-            logger.error(f"Error generating presigned URL: {e}")
+            logger.error("Error generating presigned URL: %s", e)
             raise
 
     def generate_download_url(self, object_key: str, expires_in: int = 3600) -> str:
@@ -144,7 +144,7 @@ class S3Service:
 
         cached_url = self._get_cached_url('download', object_key, expires_in)
         if cached_url:
-            logger.info(f"Using cached download URL for {object_key}")
+            logger.info("Using cached download URL for %s", object_key)
             return cached_url
 
         try:
@@ -160,10 +160,10 @@ class S3Service:
             # Cache the URL
             self._cache_url('download', object_key, url, expires_in)
 
-            logger.info(f"Generated download URL for {object_key}")
+            logger.info("Generated download URL for %s", object_key)
             return url
         except ClientError as e:
-            logger.error(f"Error generating download URL: {e}")
+            logger.error("Error generating download URL: %s", e)
             raise
 
     def search_files(self, prefix: str = '', filename_pattern: str = '', limit: int = 10) -> list[dict[str, Any]]:
@@ -204,7 +204,7 @@ class S3Service:
             return formatted_files
 
         except Exception as e:
-            logger.error(f"Error searching files: {e}")
+            logger.error("Error searching files: %s", e)
             return []
 
     def upload_file_direct(self, file: FileStorage, object_key: str,
@@ -224,10 +224,10 @@ class S3Service:
                 Body=file.stream,
                 ContentType=content_type
             )
-            logger.info(f"Direct upload completed for {object_key}")
+            logger.info("Direct upload completed for %s", object_key)
             return True
         except ClientError as e:
-            logger.error(f"Error uploading file to S3: {e}")
+            logger.error("Error uploading file to S3: %s", e)
             return False
 
     def list_objects(self, prefix: str = '') -> list[dict[str, Any]]:
@@ -250,11 +250,11 @@ class S3Service:
                     'last_modified': obj['LastModified'].isoformat()
                 })
 
-            logger.info(f"Listed {len(files)} objects with prefix '{prefix}'")
+            logger.info("Listed %s objects with prefix '%s'", len(files), prefix)
             return files
 
         except ClientError as e:
-            logger.error(f"Error listing objects: {e}")
+            logger.error("Error listing objects: %s", e)
             return []
 
     def object_exists(self, object_key: str) -> bool:
