@@ -22,7 +22,7 @@ export default function ChallengeDeleteModal({ challengeId, eventId }: { challen
       submitColor={COLOR_NEGATIVE}
       onSubmit={async () => deleteChallenge(challengeId, eventId)}
     >
-      <WarningCallout>This is only available in DEV mode.</WarningCallout>
+      <WarningCallout>This is only available in DEV and STAGING.</WarningCallout>
       Are you sure you want to delete this challenge? This action cannot be undone.
       The following items related to the challenge will be deleted:
       <ul className="list-disc list-inside">

@@ -19,8 +19,7 @@ export default function ChallengeSidebar({ entity }: {entity: Challenge}) {
   const [ searchParams, setSearchParams ] = useSearchParams();
   const headerId = useId();
 
-  // use the vite variable
-  const isDev = import.meta.env.DEV;
+  const isDev = window.init.environment !== 'production';
 
   return (
     <AdminSidebar labelId={headerId}>

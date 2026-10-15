@@ -7,16 +7,17 @@ from ....support.models.Ticket import Ticket
 from ....scoring.models.Attempt import Attempt
 from ....feedback.models.Feedback import Feedback
 from ....core import BusinessLogicError
-from flask import current_app as app
+from ....core.utils.environment import get_environment
 
 def delete_challenge(challenge: Challenge):
     """
-    Delete a specific challenge and all its linked objects. DEV mode only
+    Delete a specific challenge and all its linked objects. DEV / STAGING only
     """
+    environment = get_environment()
 
-    # Only allow deletion of challenges in DEV mode
-    if not app.debug:
-        raise BusinessLogicError("Challenge deletion is only allowed in DEV mode.")
+    # Only allow deletion of challenges in 'development' and 'staging', NOT production due to the wide destruction needed
+    if environment == 'production':
+        raise BusinessLogicError("Challenge deletion is not allowed in production.")
 
     # Delete Challenge on Event
     event = db.session.get(Event, challenge.event_id)
