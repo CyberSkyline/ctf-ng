@@ -10,31 +10,23 @@ class TestCoreIntegration:
         """Test the Swagger API documentation endpoint."""
         response = admin_client.get("/ng/docs")
 
-        if response.status_code == 200:
-            # Should return HTML for Swagger UI
-            content = response.get_data(as_text=True)
-            assert "swagger" in content.lower() or "api" in content.lower()
-
-        assert response.status_code != 404, "API docs endpoint not found"
+        assert response.status_code == 200
+        # Should return HTML for Swagger UI
+        assert "swagger" in response.get_data(as_text=True).lower()
 
     def test_swagger_json_endpoint(self, admin_client):
         """Test the Swagger JSON specification endpoint."""
         response = admin_client.get("/ng/swagger.json")
 
-        if response.status_code == 200:
-            data = response.get_json()
-            assert "swagger" in data or "openapi" in data or "info" in data
-
-        assert response.status_code != 404, "Swagger JSON endpoint not found"
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "swagger" in data
+        assert "paths" in data
 
     def test_frontend_routes(self, client):
         """Test frontend application routes."""
         # Test the root route (frontend app)
         response = client.get("/")
 
-        if response.status_code == 200:
-            content = response.get_data(as_text=True)
-            assert "html" in content.lower()
-
-        assert response.status_code != 404, "Frontend hello route not found"
-
+        assert response.status_code == 200
+        assert "<html" in response.get_data(as_text=True).lower()

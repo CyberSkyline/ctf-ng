@@ -13,8 +13,8 @@ class TestLintChallenge:
     testing YAML parsing, validation, and error formatting.
     """
 
-    @pytest.mark.parametrize("valid_yaml,expected_warnings", [
-        # Test minimal valid YAML with no warnings
+    @pytest.mark.parametrize("valid_yaml", [
+        # Test minimal valid YAML
         ("""
         x-challenge:
           name: Minimal Challenge
@@ -30,9 +30,9 @@ class TestLintChallenge:
           web:
             image: nginx:latest
             hostname: web-server
-        """, None),
+        """),
 
-        # Test valid YAML with services but no warnings
+        # Test valid YAML with services
         ("""
         services:
           web:
@@ -50,21 +50,15 @@ class TestLintChallenge:
               points: 10
               answer: "4"
               max_attempts: 3
-        """, None),
+        """),
     ])
-    def test_lint_challenge_valid_yaml_no_warnings(self, valid_yaml, expected_warnings):
-        """Test linting valid YAML that produces no warnings"""
+    def test_lint_challenge_valid_yaml_has_no_errors(self, valid_yaml):
+        """Test linting valid YAML produces no errors (warnings are allowed)"""
         # Act
         result = lint_challenge(valid_yaml)
 
-        # Assert - the function might return warnings even for valid YAML
-        if result is None:
-            assert expected_warnings is None
-        else:
-            # Valid YAML should not produce errors, only warnings at most
-            assert "errors" not in result
-            if "warnings" in result:
-                assert len(result["warnings"]) > 0
+        # Assert
+        assert "errors" not in (result or {})
 
     @pytest.mark.parametrize("yaml_with_warnings,expected_warning_count", [
         # Test YAML with ignored fields that should produce warnings
@@ -464,20 +458,6 @@ class TestLintChallenge:
               answer: "4"
               max_attempts: 3
         """, "Required field"),
-
-        # Test invalid field types - this actually gets accepted by the parser
-        ("""
-        x-challenge:
-          name: 123  # Should be string
-          description: Valid description
-          summary: Should fail due to invalid name type
-          questions:
-            - name: sample_question
-              body: What is 2 + 2?
-              points: 10
-              answer: "4"
-              max_attempts: 3
-        """, ""),
     ])
     def test_lint_challenge_invalid_yaml(self, invalid_yaml, expected_error_pattern):
         """Test linting invalid YAML that produces errors"""
@@ -486,18 +466,11 @@ class TestLintChallenge:
 
         # Assert
         assert result is not None
-        # Some "invalid" YAML might still be accepted and produce warnings instead of errors
-        if "errors" in result:
-            assert len(result["errors"]) > 0
-            # Verify error structure
-            for error in result["errors"]:
-                assert "message" in error
-                assert isinstance(error["message"], str)
-                if expected_error_pattern:
-                    assert expected_error_pattern.lower() in error["message"].lower()
-        elif "warnings" in result:
-            # Some cases might be accepted but produce warnings
-            assert len(result["warnings"]) > 0
+        assert len(result["errors"]) > 0
+        for error in result["errors"]:
+            assert isinstance(error["message"], str)
+            if expected_error_pattern:
+                assert expected_error_pattern.lower() in error["message"].lower()
 
     def test_lint_challenge_complex_validation_errors(self):
         """Test handling of complex validation errors from parser"""

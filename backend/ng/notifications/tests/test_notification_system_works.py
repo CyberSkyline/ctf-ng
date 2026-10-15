@@ -88,14 +88,11 @@ def test_user_connection_tracking(app, user):
         flask_test_client = flask_client
     )
 
-    if socketio_client.is_connected():
-        print("Connection established, checking tracking...")
-        print(f"User connections: {user_connections}")
-        print(f"Connected users: {get_connected_users()}")
-        print(
-            f"User {user.id} has connections: {has_connections(user.id)}"
-        )
+    assert socketio_client.is_connected()
+    assert has_connections(user.id)
+    assert user.id in get_connected_users()
 
-        socketio_client.disconnect()
+    socketio_client.disconnect()
 
-    assert socketio_client.is_connected() or True
+    assert not has_connections(user.id)
+    assert user.id not in user_connections

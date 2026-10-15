@@ -403,7 +403,7 @@ class Test_Event_Registration:
         assert data["data"] == team.serialize()
 
         team_member = TeamMember.query.filter_by(
-            user_id = user.id,
+            user_id = user2.id,
             team_id = team.id
         ).first()
         assert team_member is not None
@@ -1706,6 +1706,19 @@ class Test_Event_Admin_Create:
         data = response.get_json()
         assert data["success"] is False
         assert "errors" in data
+
+    def test_admin_create_event_with_duplicate_name(self, admin_client, event_factory):
+        event_factory(name = "Duplicate Name Event")
+
+        response = admin_client.post(
+            self.post_endpoint(),
+            json = {"name": "Duplicate Name Event"}
+        )
+
+        assert response.status_code == 409
+        data = response.get_json()
+        assert data["success"] is False
+        assert "database_conflict" in data["errors"]
 
     def test_admin_create_event_with_domain_restrictions(self, admin_client):
         new_event_data = {

@@ -16,12 +16,9 @@ find-TODO:
 test-email-send:
 	$(PYTHON_EXEC) emails/_test_email_send.py
 
-test-aws-upload:
-	$(PYTHON_EXEC) support/services/_test_awsS3_webp_upload.py
-
 # All tests
 test-all:
-	$(PYTHON_EXEC) -m pytest -m "not middleware and not cache" --ignore-glob="**/*e2e*" -v
+	$(PYTHON_EXEC) -m pytest -m "not middleware" --ignore-glob="**/*e2e*" -v
 
 test-validation:
 	$(PYTHON_EXEC) -m pytest -v $(shell find . -name "test_*_validation.py")
@@ -103,4 +100,4 @@ test-utils:
 	$(PYTHON_EXEC) -m pytest ./core/tests/system/ -v
 
 
-.PHONY: check fix format test-all test-routes test-models test-validation test-controllers test-api test-team test-event test-admin test-user test-support test-utils test-fast test-middleware test-event-registration test-scoring find-TODO test-img-upload test-email-send test-fileuploads test-s3 test-s3-fileuploads test-s3-support test-s3-all
+.PHONY: find-TODO test-email-send test-all test-validation test-models test-controllers test-routes test-api test-team test-event test-admin test-user test-support test-scoring test-challenge test-permissions test-notifications test-announcements test-emails test-sponsors test-fileuploads test-s3 test-s3-fileuploads test-s3-support test-s3-all test-leaderboard test-leaderboard-cache test-middleware test-utils

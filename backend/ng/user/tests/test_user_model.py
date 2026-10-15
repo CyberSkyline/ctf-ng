@@ -405,10 +405,8 @@ class TestUser:
         original_name = ng_user.ctfd_user.name
 
         with patch.object(db_session, 'commit', side_effect = Exception("DB Error")):
-            try:
+            with pytest.raises(Exception, match = "DB Error"):
                 ng_user.update(name = "Should Not Persist")
-            except Exception:
-                pass
 
         db_session.refresh(ng_user.ctfd_user)
         assert ng_user.ctfd_user.name == original_name

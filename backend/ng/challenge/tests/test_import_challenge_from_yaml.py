@@ -5,6 +5,7 @@ import pytest
 from ..controllers.admin import import_challenge_from_yaml
 from ...core.exceptions import ValidationError
 from ..models import Challenge
+from ..models.Question import MAX_QUESTION_NAME_LENGTH
 from ...event.models.Event import Event
 
 
@@ -420,27 +421,31 @@ x-challenge:
 
     def test_import_challenge_database_rollback_on_error(self, test_event):
         """Test that database operations are rolled back when errors occur"""
-        # Get initial challenge count
-        initial_count = Challenge.query.filter_by(event_id=test_event.id).count()
+        # The import's rollback also discards the test's own transaction, so read the id up front
+        event_id = test_event.id
+        initial_count = Challenge.query.filter_by(event_id=event_id).count()
 
-        # Invalid YAML that will cause an error after some processing
-        yaml_content = """
-        version: "3"
-        challenge:
+        # Valid YAML whose question fails model validation, after the challenge row is already created
+        yaml_content = f"""
+        x-challenge:
           name: Will Fail Challenge
           description: This will fail
+          summary: Rollback test
           questions:
-            - name: bad_question
-              body: This question references a missing variable
+            - name: {"q" * (MAX_QUESTION_NAME_LENGTH + 1)}
+              body: This question name is too long
               points: 50
-              answer:
-                template:
-                  variable: missing_variable
+              answer: flag
+              max_attempts: 3
+        services:
+          app:
+            image: nginx:latest
+            hostname: app-server
         """
         # Act & Assert
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError, match="Question Name cannot be longer"):
             import_challenge_from_yaml(test_event, yaml_content)
 
         # Verify no challenge was created (rollback worked)
-        final_count = Challenge.query.filter_by(event_id=test_event.id).count()
+        final_count = Challenge.query.filter_by(event_id=event_id).count()
         assert final_count == initial_count

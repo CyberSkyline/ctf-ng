@@ -188,7 +188,7 @@ def test_cant_kick_captain(admin_client, team_with_members):
     assert not data['success']
     assert 'Cannot kick the team captain' in data['errors']['validation']
 
-def team_kick_deletes_team_when_last_member(admin_client, team_with_member):
+def test_team_kick_deletes_team_when_last_member(admin_client, team_with_member):
     """Test that kicking the last member disbands the team."""
     team = team_with_member
     user_id = team.members[0].user_id
