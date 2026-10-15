@@ -1,0 +1,49 @@
+# Inventory: ctfd_service in [manager:vars], and every swarm node in [app] with ansible_host set
+- name: Find a running CTFd task
+  ansible.builtin.shell: |
+    set -euo pipefail
+    self=$(docker info --format {% raw %}'{{.Swarm.NodeID}}'{% endraw %})
+    docker service ps --quiet --filter desired-state=running {{ ctfd_service | quote }} \
+      | xargs -r docker inspect --format {% raw %}'{{.Status.State}} {{.NodeID}} {{.Status.ContainerStatus.ContainerID}}'{% endraw %} \
+      | awk -v self="$self" '$1 == "running" { print ($2 == self ? 0 : 1), $2, $3 }' \
+      | sort -n | head -n 1 | cut -d' ' -f2-
+  args:
+    executable: /bin/bash
+  register: ctfd_task_lookup
+  changed_when: false
+
+- name: Fail if no replica is running
+  ansible.builtin.fail:
+    msg: No running task found for swarm service '{{ ctfd_service }}'. Check `docker service ps {{ ctfd_service }}`.
+  when: ctfd_task_lookup.stdout | trim == ''
+
+- name: Look up the node running it
+  ansible.builtin.shell: |
+    set -euo pipefail
+    if [ "$(docker info --format {% raw %}'{{.Swarm.NodeID}}'{% endraw %})" = {{ ctfd_task_node_id | quote }} ]; then
+      echo self
+    else
+      docker node inspect --format {% raw %}'{{.Status.Addr}}'{% endraw %} {{ ctfd_task_node_id | quote }}
+    fi
+  args:
+    executable: /bin/bash
+  vars:
+    ctfd_task_node_id: "{{ ctfd_task_lookup.stdout.split()[0] }}"
+  register: ctfd_node_lookup
+  changed_when: false
+
+- name: Match the node to an inventory host
+  ansible.builtin.set_fact:
+    ctfd_container: "{{ ctfd_task_lookup.stdout.split()[1] }}"
+    ctfd_node_host: >-
+      {{ inventory_hostname if ctfd_node_lookup.stdout == 'self' else
+         groups['app'] | map('extract', hostvars) | selectattr('ansible_host', 'defined')
+         | selectattr('ansible_host', '==', ctfd_node_lookup.stdout | trim)
+         | map(attribute='inventory_hostname') | first | default('') }}
+
+- name: Fail if the node isn't in the inventory
+  ansible.builtin.fail:
+    msg: >-
+      CTFd replica is on swarm node {{ ctfd_node_lookup.stdout }}, which doesn't match the
+      ansible_host of any host in the `app` group. Add it there with ansible_host={{ ctfd_node_lookup.stdout }}.
+  when: ctfd_node_host == ''
