@@ -9,7 +9,7 @@ from typing import Any
 
 from CTFd.models import db
 from sqlalchemy import JSON, CheckConstraint, func
-from sqlalchemy.orm import Mapped, joinedload
+from sqlalchemy.orm import Mapped, joinedload, selectinload
 
 from ... import config
 from ...certificate.controllers import list_certificate_templates
@@ -311,7 +311,17 @@ class Event(db.Model):
     def get_all_challenges(self):
         from ...challenge.models.Challenge import Challenge
 
-        return Challenge.query.filter_by(event_id=self.id).options(joinedload(Challenge.event)).all()
+        return (
+            Challenge
+            .query
+            .filter_by(event_id=self.id)
+            .options(
+                joinedload(Challenge.event),
+                selectinload(Challenge.questions),
+                selectinload(Challenge.tags),
+            )
+            .all()
+        )
 
     @classmethod
     def find_by_id(cls, event_id: int):
