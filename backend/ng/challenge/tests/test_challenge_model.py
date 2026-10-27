@@ -345,3 +345,68 @@ class TestChallengeEdgeCases:
         # None values should be handled gracefully by the validator
         validated_data = Challenge.validate(data)
         assert validated_data["name"] == "Test Challenge"
+
+
+@pytest.mark.db
+class TestChallengeRenderQueries:
+    """Test the queries Challenge.render() issues for questions and their answer variables."""
+
+    @staticmethod
+    def count_select_queries(table_name, fn):
+        from sqlalchemy import event as sa_event
+        from sqlalchemy.engine import Engine
+
+        statements = []
+
+        def record(conn, cursor, statement, parameters, context, executemany):
+            if statement.lstrip().upper().startswith("SELECT") and f"FROM {table_name}" in " ".join(statement.split()):
+                statements.append(statement)
+
+        sa_event.listen(Engine, "before_cursor_execute", record)
+        try:
+            result = fn()
+        finally:
+            sa_event.remove(Engine, "before_cursor_execute", record)
+        return result, len(statements)
+
+    @pytest.fixture
+    def templated_challenge(self, event, challenge_factory, variable_factory, question_factory):
+        challenge = challenge_factory(event=event, name="Templated Render Challenge")
+        for i in range(3):
+            variable = variable_factory(challenge=challenge, name=f"render_variable_{i}")
+            question_factory(challenge=challenge, answer_variable=variable)
+        return challenge
+
+    def test_render_loads_questions_once_and_skips_answer_variables(self, db_session, templated_challenge, team_with_member):
+        challenge_id = templated_challenge.id
+        db_session.expire_all()
+        challenge = Challenge.find_by_id(challenge_id)
+
+        rendered, question_queries = self.count_select_queries(
+            "ng_challenge_questions", lambda: challenge.render(team_with_member)
+        )
+        _, variable_queries = self.count_select_queries(
+            "ng_challenge_variables",
+            lambda: [question.serialize() for question in rendered["questions"]],
+        )
+
+        assert question_queries == 1
+        assert variable_queries == 0
+        assert len(rendered["questions"]) == len(challenge.questions)
+
+    def test_render_with_answer_variables_avoids_query_per_question(self, db_session, templated_challenge, team_with_member):
+        challenge_id = templated_challenge.id
+        db_session.expire_all()
+        challenge = Challenge.find_by_id(challenge_id)
+
+        def render_and_serialize_for_admin():
+            rendered = challenge.render(team_with_member, load_answer_variables=True)
+            return [question.serialize(include_admin_fields=True) for question in rendered["questions"]]
+
+        serialized, variable_queries = self.count_select_queries(
+            "ng_challenge_variables", render_and_serialize_for_admin
+        )
+
+        assert variable_queries == 1
+        answers = {q["answer"] for q in serialized if q["answer"].startswith("render_variable_")}
+        assert answers == {f"render_variable_{i}" for i in range(3)}
