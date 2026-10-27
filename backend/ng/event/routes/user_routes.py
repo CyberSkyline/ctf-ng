@@ -511,7 +511,7 @@ class EventChallengeRender(Resource):
     )
     def get(self, event_id: int, challenge_id: int, event: Event, challenge: Challenge, team: Team, permissions, **kwargs):
 
-        return success_response(challenge.render(team))
+        return success_response(challenge.render(team, load_answer_variables=PermissionEnum.CAN_ACCESS_ADMIN_PANEL.name in permissions))
 
 
 @events_user_namespace.route("/<int:event_id>/me/challenges")
