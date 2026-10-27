@@ -171,21 +171,27 @@ class Challenge(db.Model):
             .all()
         )
 
-    def render(self, team):
+    def render(self, team, load_answer_variables=False):
         """
         Render the challenge for a specific team.
         :param team: The team to render the challenge for.
+        :param load_answer_variables: Preload the questions' answer variables, which are only serialized for admins.
         :return: A dictionary representation of the challenge for the team.
         """
         from ...scoring.models import Attempt
         from .Hint import Hint
-        from .Question import Question
 
         hints = Hint.query.filter_by(challenge_id=self.id).options(joinedload(Hint.challenge)).all()
 
+        if load_answer_variables:
+            # Loading the challenge's variables lets each question's answer_variable resolve from the identity map
+            # instead of a query per question
+            _ = self.variables
+
         data = {
             "challenge": self.serialize(),
-            "questions": Question.query.filter_by(challenge_id=self.id).all(),
+            # serialize() has already loaded self.questions
+            "questions": self.questions,
             "hints": [hint.serialize(team=team) for hint in hints] if self.event.hints_enabled else [],
             "attempts": Attempt.query
                 .filter_by(
