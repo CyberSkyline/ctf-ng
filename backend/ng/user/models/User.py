@@ -163,8 +163,19 @@ class User(db.Model):
             list: List of teams the user is a member of
         """
 
-        # Get all team members for this user
-        return [tm.team for tm in self.team_members]
+        from ...team.models.Team import Team
+        from ...team.models.TeamMember import TeamMember
+
+        # Get all team members for this user, eager loading what Team.serialize reads (member_count, event_name)
+        team_members = (TeamMember.query
+            .filter_by(user_id=self.id)
+            .options(
+                joinedload(TeamMember.team).selectinload(Team.members),
+                joinedload(TeamMember.team).joinedload(Team.event),
+            )
+            .all()
+        )
+        return [tm.team for tm in team_members]
 
     @classmethod
     def find_by_id(cls, user_id: int):
