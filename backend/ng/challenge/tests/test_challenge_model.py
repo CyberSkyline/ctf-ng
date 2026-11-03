@@ -377,7 +377,7 @@ class TestChallengeRenderQueries:
             question_factory(challenge=challenge, answer_variable=variable)
         return challenge
 
-    def test_render_loads_questions_once_and_skips_answer_variables(self, db_session, templated_challenge, team_with_member):
+    def test_render_loads_questions_once(self, db_session, templated_challenge, team_with_member):
         challenge_id = templated_challenge.id
         db_session.expire_all()
         challenge = Challenge.find_by_id(challenge_id)
@@ -385,22 +385,17 @@ class TestChallengeRenderQueries:
         rendered, question_queries = self.count_select_queries(
             "ng_challenge_questions", lambda: challenge.render(team_with_member)
         )
-        _, variable_queries = self.count_select_queries(
-            "ng_challenge_variables",
-            lambda: [question.serialize() for question in rendered["questions"]],
-        )
 
         assert question_queries == 1
-        assert variable_queries == 0
         assert len(rendered["questions"]) == len(challenge.questions)
 
-    def test_render_with_answer_variables_avoids_query_per_question(self, db_session, templated_challenge, team_with_member):
+    def test_render_batches_answer_variables_for_admin_serialization(self, db_session, templated_challenge, team_with_member):
         challenge_id = templated_challenge.id
         db_session.expire_all()
         challenge = Challenge.find_by_id(challenge_id)
 
         def render_and_serialize_for_admin():
-            rendered = challenge.render(team_with_member, load_answer_variables=True)
+            rendered = challenge.render(team_with_member)
             return [question.serialize(include_admin_fields=True) for question in rendered["questions"]]
 
         serialized, variable_queries = self.count_select_queries(
