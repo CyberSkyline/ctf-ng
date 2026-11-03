@@ -38,8 +38,7 @@ from ...event.models.Demographic import Demographic
 from ...event.models.Event import Event
 from ...certificate.services.certificate_service import CertificateService
 from ...notifications.services.notification_service import NotificationService
-from ...permissions.controllers.get_user_roles import get_user_roles
-from ...permissions.models.enums import PermissionEnum, RoleEnum
+from ...permissions.models.enums import PermissionEnum
 from ...team.controllers.remove_member import remove_member
 from ...team.models.Team import Team
 from ...user.models.User import User
@@ -512,8 +511,7 @@ class EventChallengeRender(Resource):
     )
     def get(self, event_id: int, challenge_id: int, event: Event, challenge: Challenge, team: Team, permissions, **kwargs):
 
-        # match the check success_response uses to decide whether answers are serialized
-        return success_response(challenge.render(team, load_answer_variables=RoleEnum.ADMIN in get_user_roles()))
+        return success_response(challenge.render(team))
 
 
 @events_user_namespace.route("/<int:event_id>/me/challenges")
