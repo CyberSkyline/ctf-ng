@@ -25,7 +25,7 @@ def get_challenge_progress(event_id: int, team_id: int) -> list[dict[str, Any]]:
     attempts_by_challenge: dict[int, list[Attempt]] = defaultdict(list)
     for attempt in Attempt.query.filter(
         Attempt.team_id == team_id,
-        Attempt.challenge_id.in_([c.id for c in challenges]),
+        Attempt.event_id == event_id,
     ):
         attempts_by_challenge[attempt.challenge_id].append(attempt)
 
