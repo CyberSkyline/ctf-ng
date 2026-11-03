@@ -163,10 +163,20 @@ class User(db.Model):
             list: List of teams the user is a member of
         """
 
+        # Get all team members for this user
+        return [tm.team for tm in self.team_members]
+
+    def get_teams_for_serialization(self):
+        """Get all teams the user is a member of, eager loading what Team.serialize reads.
+
+        Returns:
+            list: List of teams the user is a member of, with members and event loaded
+        """
+
         from ...team.models.Team import Team
         from ...team.models.TeamMember import TeamMember
 
-        # Get all team members for this user, eager loading what Team.serialize reads (member_count, event_name)
+        # Eager load member_count and event_name so serializing the teams doesn't query per team
         team_members = (TeamMember.query
             .filter_by(user_id=self.id)
             .options(

@@ -175,7 +175,7 @@ class UserTeamsAdminResource(Resource):
     )
     def get(self, user_id, target_user, **kwargs):
         """Get teams for a specific user"""
-        teams = target_user.get_teams()
+        teams = target_user.get_teams_for_serialization()
         return success_response(teams)
 
 @users_admin_namespace.route("/<int:user_id>/container")
