@@ -1,8 +1,4 @@
-from sqlalchemy.orm import lazyload
-
-from ..models.UserRole import UserRole
 from ..models.Permission import Permission
-from ..models.RolePermission import RolePermission
 from ..models.enums import PermissionCheck
 
 def get_user_permissions(user):
@@ -16,17 +12,7 @@ def get_user_permissions(user):
     """
     trace = PermissionCheck()
 
-    # load every permission across the user's roles in one query, rather than one query per permission
-    permissions = (Permission.query
-        .join(RolePermission, RolePermission.permission_id == Permission.id)
-        .join(UserRole, UserRole.role_id == RolePermission.role_id)
-        .filter(UserRole.user_id == user.id)
-        .options(lazyload(Permission.roles))
-        .distinct()
-        .all()
-    )
-
-    for permission in permissions:
+    for permission in Permission.get_permissions_for_user(user.id):
         trace.add_grant(permission)
 
     return trace

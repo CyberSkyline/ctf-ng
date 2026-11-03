@@ -291,11 +291,9 @@ class User(db.Model):
         Returns:
             list[str]: List of permission names assigned to the user
         """
-        permissions = set()
-        for role in self.roles:
-            for permission in role.permissions:
-                permissions.add(permission.name)
-        return list(permissions)
+        from ...permissions.models.Permission import Permission
+
+        return [permission.name for permission in Permission.get_permissions_for_user(self.id)]
 
     @classmethod
     def delete_all(cls) -> None:

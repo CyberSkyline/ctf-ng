@@ -40,18 +40,6 @@ class Role(db.Model):
         return role
 
     @classmethod
-    def get_permissions(cls, role_id: int):
-        """Retrieve permissions for a specific role.
-
-        Args:
-            role_id (int): ID of the role
-
-        Returns:
-            list: List of RolePermission instances for the role
-        """
-        return cls.query.get(role_id).permissions
-
-    @classmethod
     def find_by_id(cls, role_id: int):
         """Find a role by its ID.
 

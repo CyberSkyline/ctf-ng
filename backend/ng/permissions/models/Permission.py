@@ -58,6 +58,31 @@ class Permission(db.Model):
 
         return cls.query.filter_by(name=name.value).first()
 
+    @classmethod
+    def get_permissions_for_user(cls, user_id: int):
+        """Retrieve every permission granted across a user's roles, in one query.
+
+        Args:
+            user_id (int): ID of the user
+
+        Returns:
+            list[Permission]: Distinct permissions granted to the user
+        """
+        # LAZY-IMPORT
+        from sqlalchemy.orm import lazyload
+
+        from .RolePermission import RolePermission
+        from .UserRole import UserRole
+
+        return (cls.query
+            .join(RolePermission, RolePermission.permission_id == cls.id)
+            .join(UserRole, UserRole.role_id == RolePermission.role_id)
+            .filter(UserRole.user_id == user_id)
+            .options(lazyload(cls.roles))
+            .distinct()
+            .all()
+        )
+
     def serialize(self):
         """Serialize a Permission instance to a dictionary.
 
