@@ -180,8 +180,7 @@ class User(db.Model):
         team_members = (TeamMember.query
             .filter_by(user_id=self.id)
             .options(
-                joinedload(TeamMember.team).selectinload(Team.members),
-                joinedload(TeamMember.team).joinedload(Team.event),
+                joinedload(TeamMember.team).options(selectinload(Team.members), joinedload(Team.event)),
             )
             .all()
         )
