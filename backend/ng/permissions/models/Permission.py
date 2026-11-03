@@ -7,7 +7,7 @@ class Permission(db.Model):
     name = db.Column(db.String(255), nullable=False, unique=True)
     description = db.Column(db.String(255), nullable=True)
 
-    roles = db.relationship("RolePermission", backref="permission", lazy="joined")
+    roles = db.relationship("RolePermission", backref="permission")
 
     def __repr__(self):
         return f"<Permission {self.name}>"
@@ -69,8 +69,6 @@ class Permission(db.Model):
             list[Permission]: Distinct permissions granted to the user
         """
         # LAZY-IMPORT
-        from sqlalchemy.orm import lazyload
-
         from .RolePermission import RolePermission
         from .UserRole import UserRole
 
@@ -78,7 +76,6 @@ class Permission(db.Model):
             .join(RolePermission, RolePermission.permission_id == cls.id)
             .join(UserRole, UserRole.role_id == RolePermission.role_id)
             .filter(UserRole.user_id == user_id)
-            .options(lazyload(cls.roles))
             .distinct()
             .all()
         )
