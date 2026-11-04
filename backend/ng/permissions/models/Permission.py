@@ -7,7 +7,7 @@ class Permission(db.Model):
     name = db.Column(db.String(255), nullable=False, unique=True)
     description = db.Column(db.String(255), nullable=True)
 
-    roles = db.relationship("RolePermission", backref="permission", lazy="joined")
+    roles = db.relationship("RolePermission", backref="permission")
 
     def __repr__(self):
         return f"<Permission {self.name}>"
@@ -57,6 +57,28 @@ class Permission(db.Model):
         """
 
         return cls.query.filter_by(name=name.value).first()
+
+    @classmethod
+    def get_permissions_for_user(cls, user_id: int):
+        """Retrieve every permission granted across a user's roles, in one query.
+
+        Args:
+            user_id (int): ID of the user
+
+        Returns:
+            list[Permission]: Distinct permissions granted to the user
+        """
+        # LAZY-IMPORT
+        from .RolePermission import RolePermission
+        from .UserRole import UserRole
+
+        return (cls.query
+            .join(RolePermission, RolePermission.permission_id == cls.id)
+            .join(UserRole, UserRole.role_id == RolePermission.role_id)
+            .filter(UserRole.user_id == user_id)
+            .distinct()
+            .all()
+        )
 
     def serialize(self):
         """Serialize a Permission instance to a dictionary.

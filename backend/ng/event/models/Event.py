@@ -311,7 +311,7 @@ class Event(db.Model):
     def get_all_challenges(self):
         from ...challenge.models.Challenge import Challenge
 
-        return Challenge.query.filter_by(event_id=self.id).options(joinedload(Challenge.event)).all()
+        return Challenge.get_challenges_for_event(self.id)
 
     @classmethod
     def find_by_id(cls, event_id: int):

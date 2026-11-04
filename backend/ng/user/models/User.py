@@ -166,6 +166,26 @@ class User(db.Model):
         # Get all team members for this user
         return [tm.team for tm in self.team_members]
 
+    def get_teams_for_serialization(self):
+        """Get all teams the user is a member of, eager loading what Team.serialize reads.
+
+        Returns:
+            list: List of teams the user is a member of, with members and event loaded
+        """
+
+        from ...team.models.Team import Team
+        from ...team.models.TeamMember import TeamMember
+
+        # Eager load member_count and event_name so serializing the teams doesn't query per team
+        team_members = (TeamMember.query
+            .filter_by(user_id=self.id)
+            .options(
+                joinedload(TeamMember.team).options(selectinload(Team.members), joinedload(Team.event)),
+            )
+            .all()
+        )
+        return [tm.team for tm in team_members]
+
     @classmethod
     def find_by_id(cls, user_id: int):
         """Find a user by ID.
@@ -271,11 +291,9 @@ class User(db.Model):
         Returns:
             list[str]: List of permission names assigned to the user
         """
-        permissions = set()
-        for role in self.roles:
-            for permission in role.permissions:
-                permissions.add(permission.name)
-        return list(permissions)
+        from ...permissions.models.Permission import Permission
+
+        return [permission.name for permission in Permission.get_permissions_for_user(self.id)]
 
     @classmethod
     def delete_all(cls) -> None:

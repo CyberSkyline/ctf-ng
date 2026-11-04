@@ -1856,6 +1856,39 @@ class Test_Event_Challenge_Render:
         assert isinstance(render_data["hints"], list)
         assert isinstance(render_data["attempts"], list)
 
+    def test_render_challenge_does_not_leak_answer_variable_to_player(
+        self, started_player_client, challenge_factory, variable_factory, question_factory
+    ):
+        """
+        A regular player must never receive a question's answer, or any detail of the variable it is generated from
+        """
+        challenge = challenge_factory(event_id=1, name="Templated Challenge")
+        variable = variable_factory(
+            challenge = challenge,
+            name = "leak_check_variable_name",
+            default = "leak_check_variable_default",
+            template = "'leak_check_variable_template'",
+        )
+        question = question_factory(challenge = challenge, answer_variable = variable)
+        assert question.answer_variable is not None
+
+        response = started_player_client.get(self.get_endpoint(challenge.event_id, challenge.id))
+
+        assert response.status_code == 200
+        questions = response.get_json()["data"]["questions"]
+        templated_question = next(q for q in questions if q["id"] == question.id)
+        for serialized_question in questions:
+            assert "answer" not in serialized_question
+            assert "answer_variable" not in serialized_question
+            assert "answer_variable_id" not in serialized_question
+        assert templated_question["name"] == question.name
+
+        # Check the raw body too, so the variable can't leak through any other part of the response
+        body = response.get_data(as_text = True)
+        assert variable.name not in body
+        assert variable.default not in body
+        assert "leak_check_variable_template" not in body
+
     def test_challenge_from_another_event_not_found(self, started_player_client, challenge_factory, event_factory):
         challenge = challenge_factory(event=event_factory(), name="Other Event Challenge")
 
