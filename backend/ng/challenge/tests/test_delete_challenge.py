@@ -16,8 +16,6 @@ from ..models import ChallengeVariable
 from ..models import Question
 from ..models import ChallengeYaml
 
-@pytest.mark.db
-
 @pytest.fixture(autouse=True)
 def default_environment(request, set_environment):
     """Automatically run all tests in this file in development environment mode, except for the excluded tests"""
@@ -32,6 +30,7 @@ def default_environment(request, set_environment):
         with set_environment("development"):
             yield
 
+@pytest.mark.db
 def test_delete_challenge_production(challenge, set_environment):
     """Test that deleting a challenge in production raises an error."""
     with set_environment("production"):
