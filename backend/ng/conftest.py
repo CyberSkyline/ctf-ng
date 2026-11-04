@@ -8,6 +8,7 @@ from collections.abc import Callable
 from unittest.mock import Mock
 
 import pytest
+from unittest.mock import patch
 import boto3
 from moto import mock_aws
 from CTFd.cache import cache
@@ -215,6 +216,12 @@ def middleware_client():
 
     # Teardown happens automatically after yield
 
+@pytest.fixture(scope="function")
+def set_environment():
+    """A fixture to temporarily set the ENVIRONMENT variable for a test or file."""
+    def _set_environment(environment="development"):
+        return patch.dict(os.environ, {"ENVIRONMENT": environment})
+    return _set_environment
 
 @pytest.fixture(scope="function")
 def client(app, db_session):
