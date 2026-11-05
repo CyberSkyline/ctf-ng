@@ -8,7 +8,7 @@ from ...core.middleware.loaders import load_challenge, load_event
 from ...core.middleware.loaders._util import LoaderType
 from ...core.utils.api import success_response
 from ...event.models import Event
-from ..controllers.admin import import_challenge_from_yaml, lint_challenge, update_challenge_from_yaml
+from ..controllers.admin import import_challenge_from_yaml, lint_challenge, update_challenge_from_yaml, delete_challenge
 from ..models import Challenge, ContainerBlueprint
 
 challenge_admin_namespace = Namespace("/admin/challenges", description="challenge management")
@@ -106,6 +106,15 @@ class ChallengeDetail(Resource):
         payload = base64.urlsafe_b64decode(json_data["yaml"]).decode("utf-8")
         updated_challenge = update_challenge_from_yaml(challenge, payload)
         return success_response(updated_challenge)
+
+    @admin_endpoint()
+    @load_challenge(source = LoaderType.PARAM)
+    def delete(self, challenge: Challenge, **kwargs):
+        """
+        Delete a specific challenge and it's linked objects
+        """
+        delete_challenge(challenge = challenge)
+        return success_response()
 
 @challenge_admin_namespace.route("/<int:challenge_id>/yaml")
 class ChallengeYAML(Resource):

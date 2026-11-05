@@ -174,3 +174,15 @@ export function updateChallenge(challengeId: number, yaml: string) {
     mutate(`/admin/challenges/${challengeId}/blueprints`);
   });
 }
+
+// DEV MODE ONLY
+export function deleteChallenge(challengeId: number, eventId: number) {
+  return apiMutation(`/admin/challenges/${challengeId}`, undefined, {
+    method : 'DELETE',
+  }).then(() => {
+    // refresh the challenges list and event's challenges list when a challenge is deleted
+    mutate('/admin/challenges');
+    mutate(`/admin/events/${eventId}`);
+    mutate(`/admin/events/${eventId}/challenges`);
+  });
+}
