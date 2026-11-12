@@ -6,7 +6,6 @@ import re
 import sys
 from datetime import UTC, datetime
 
-import docker
 from CTFd import create_app
 from CTFd.models import db
 
@@ -36,20 +35,21 @@ def human_size(num):
     return f"{num:.1f}TB"
 
 
-# Anything already gone is skipped, so the script is safe to rerun
-def ignore_missing(fn, *args, **kwargs):
-    try:
-        fn(*args, **kwargs)
-    except docker.errors.NotFound:
-        pass
-
-
 app = create_app()
 
 with app.app_context():
     from CTFd.plugins.ng.containers.models.ContainerInstance import ContainerInstance
     from CTFd.plugins.ng.containers.utils.get_client import get_client
     from CTFd.plugins.ng.event.models.Event import Event
+    # Imported after CTFd so gevent has already patched ssl, otherwise TLS connections fail
+    from docker.errors import NotFound
+
+    # Anything already gone is skipped, so the script is safe to rerun
+    def ignore_missing(fn, *args, **kwargs):
+        try:
+            fn(*args, **kwargs)
+        except NotFound:
+            pass
 
     hosts = [host.strip() for host in (os.getenv("DOCKER_HOST") or "").split(",") if host.strip()]
     if not hosts:
@@ -155,7 +155,7 @@ with app.app_context():
     for host, name in networks:
         try:
             attached = apis[host].inspect_network(name).get("Containers") or {}
-        except docker.errors.NotFound:
+        except NotFound:
             continue
         for container_id in attached:
             if container_id != f"lb-{name}":
