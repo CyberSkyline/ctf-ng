@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 
 import argparse
+import contextlib
+import io
+import logging
 import os
 import re
 import sys
+import warnings
 from datetime import UTC, datetime
 
 from CTFd import create_app
@@ -35,7 +39,10 @@ def human_size(num):
     return f"{num:.1f}TB"
 
 
-app = create_app()
+warnings.filterwarnings("ignore")
+logging.disable(logging.WARNING)
+with contextlib.redirect_stdout(io.StringIO()):
+    app = create_app()
 
 with app.app_context():
     from CTFd.plugins.ng.containers.models.ContainerInstance import ContainerInstance
