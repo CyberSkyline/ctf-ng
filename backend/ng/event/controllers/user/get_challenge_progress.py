@@ -2,6 +2,7 @@
 Get challenge progress for a team in an event
 """
 
+from collections import defaultdict
 from typing import Any
 
 from ....scoring.models import Attempt
@@ -12,14 +13,20 @@ def get_challenge_progress(event_id: int, team_id: int) -> list[dict[str, Any]]:
     """
     Get challenge progress for a team in an event
     """
-    challenges = Challenge.query.filter_by(event_id = event_id).all()
+    challenges = Challenge.get_challenges_for_event(event_id)
+
+    # load all of the team's attempts up front rather than querying once per challenge
+    attempts_by_challenge: dict[int, list[Attempt]] = defaultdict(list)
+    for attempt in Attempt.query.filter(
+        Attempt.team_id == team_id,
+        Attempt.event_id == event_id,
+    ):
+        attempts_by_challenge[attempt.challenge_id].append(attempt)
+
     results = []
 
     for challenge in challenges:
-        attempts = Attempt.find_filtered_attempts(
-            team_id = team_id,
-            challenge_id = challenge.id
-        )
+        attempts = attempts_by_challenge[challenge.id]
 
         correct_attempts = [a for a in attempts if a.is_correct]
         unique_questions_solved = len({a.question_id for a in correct_attempts})

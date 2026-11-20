@@ -159,17 +159,23 @@ class Challenge(db.Model):
         return cls.query.filter_by(id=challenge_id).first()
 
     @classmethod
-    def get_all_challenges(cls) -> list[Challenge]:
+    def serialize_load_options(cls):
+        """
+        Eager load options for the relationships serialize() reads, so serializing many challenges doesn't query per challenge.
+        """
         return (
-            cls
-            .query
-            .options(
-                joinedload(cls.event),
-                selectinload(cls.questions),
-                selectinload(cls.tags),
-            )
-            .all()
+            joinedload(cls.event),
+            selectinload(cls.questions),
+            selectinload(cls.tags),
         )
+
+    @classmethod
+    def get_all_challenges(cls) -> list[Challenge]:
+        return cls.query.options(*cls.serialize_load_options()).all()
+
+    @classmethod
+    def get_challenges_for_event(cls, event_id: int) -> list[Challenge]:
+        return cls.query.filter_by(event_id=event_id).options(*cls.serialize_load_options()).all()
 
     def render(self, team):
         """
@@ -179,13 +185,13 @@ class Challenge(db.Model):
         """
         from ...scoring.models import Attempt
         from .Hint import Hint
-        from .Question import Question
 
         hints = Hint.query.filter_by(challenge_id=self.id).options(joinedload(Hint.challenge)).all()
 
         data = {
             "challenge": self.serialize(),
-            "questions": Question.query.filter_by(challenge_id=self.id).all(),
+            # serialize() has already loaded self.questions
+            "questions": self.questions,
             "hints": [hint.serialize(team=team) for hint in hints] if self.event.hints_enabled else [],
             "attempts": Attempt.query
                 .filter_by(
