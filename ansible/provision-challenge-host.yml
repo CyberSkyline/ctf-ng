@@ -1,7 +1,7 @@
 - name: Install Docker
   hosts: challenge
   become: true
-  remote_user: ubuntu
+  remote_user: ansible 
   tasks:
     - name: Install Docker prerequisite packages
       ansible.builtin.apt:
@@ -49,7 +49,7 @@
 - name: Sysctl config
   hosts: challenge
   become: true
-  remote_user: ubuntu
+  remote_user: ansible
   tasks:
     - ansible.posix.sysctl:
         name: kernel.pty.max
@@ -64,13 +64,10 @@
         value: '256'
         state: present
 
-- name: Import iptables rules
-  import_playbook: iptables.yml
-
 - name: Install exec-service
   hosts: challenge
   become: true
-  remote_user: ubuntu
+  remote_user: ansible
   tasks:
     - name: Copy exec-service to /opt/service
       ansible.builtin.copy:
@@ -93,7 +90,7 @@
         export NVM_DIR="$HOME/.nvm"
         [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
         nvm install 24
-        cd /opt/service && pnpm install
+        cd /opt/service && corepack enable && pnpm install
       args:
         executable: /bin/bash
 
