@@ -8,7 +8,7 @@ from unittest.mock import patch, MagicMock
 
 from ...challenge.models.Hint import Hint
 from ...challenge.models.Challenge import Challenge
-from ...core.exceptions import BusinessLogicError
+from ...core.exceptions import BusinessLogicError, ConflictError
 from ..models import HintRedemption, Score
 from ..controllers.user_actions.redeem_hint import redeem_hint
 
@@ -200,7 +200,7 @@ class TestHintRedemptionFlow:
         )
         assert first_result["is_redeemed"] is True
 
-        with pytest.raises(BusinessLogicError) as exc:
+        with pytest.raises(ConflictError) as exc:
             redeem_hint(
                 event = event,
                 challenge = challenge,

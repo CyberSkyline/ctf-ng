@@ -2,7 +2,7 @@ import pytest
 # from unittest.mock import patch
 # from sqlalchemy.exc import IntegrityError
 
-from ...core.exceptions import ValidationError, BusinessLogicError
+from ...core.exceptions import ValidationError, BusinessLogicError, ConflictError
 from datetime import datetime, timedelta
 from ..models.Team import Team
 from ..models.TeamMember import TeamMember
@@ -63,7 +63,7 @@ class Test_Create_Team_With_Captain:
             captain_id=user.id,
         )
 
-        with pytest.raises(ValidationError):
+        with pytest.raises(ConflictError):
             team2 = Team.create_team_with_captain(
                 name="Test Team with Existing Captain",
                 event_id=event.id,
