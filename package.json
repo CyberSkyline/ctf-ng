@@ -28,7 +28,7 @@
     "populate-data": ".bin/populate_data.sh",
     "populate-load-test": ".bin/populate_load_test.sh",
     "lint": "pnpm -r lint",
-    "test": "pnpm -r test",
+    "test": ".bin/run_tests.sh",
     "build": "cd ./frontend && vite build",
     "update-commit-env": ".bin/update_commit_env.sh",
     "release": ".bin/release.sh $1",
