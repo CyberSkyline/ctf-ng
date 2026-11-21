@@ -14,7 +14,7 @@ export default function Landing() {
     <Flex className="absolute inset-0 overflow-hidden bg-dots-1" align="center" justify="center" direction="column" gap="3" p="3">
       <title>Home</title>
       <Heading size="8">Welcome to President&apos;s Cup</Heading>
-      <Card size="3" className="max-w-172" role="main">
+      <Card size="3" className="max-w-172">
         <Flex direction="row" gap="8">
           <Flex direction="column" gap="2" flexGrow="1" flexBasis="0">
             <Text color="gray">

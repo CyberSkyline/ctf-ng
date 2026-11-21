@@ -89,6 +89,8 @@ export default function CreateTicket() {
 
   const create = async (data: CreateInputs) => {
     setLoading(true);
+    // Clear the previous error so a repeated failure remounts the alert and is announced again.
+    setError(null);
 
     createTicket({
       subject : data.subject,
@@ -176,7 +178,7 @@ export default function CreateTicket() {
                 </RequireEventPermission>
               )}
 
-            {error && <ErrorCallout>{error}</ErrorCallout>}
+            {error && <ErrorCallout announce>{error}</ErrorCallout>}
 
             <Button
               type="submit"

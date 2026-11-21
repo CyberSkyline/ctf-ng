@@ -92,7 +92,11 @@ export default function Challenge() {
               justify="center"
             >
               {workspaceError
-                ? (<ErrorCallout>Unable to connect to your workspace. Please try reloading the page, or contact support if the issue persists.</ErrorCallout>)
+                ? (
+                  <ErrorCallout announce>
+                    Unable to connect to your workspace. Please try reloading the page, or contact support if the issue persists.
+                  </ErrorCallout>
+                )
                 : (
                   <>
                     <Heading>Connecting to workspace...</Heading>

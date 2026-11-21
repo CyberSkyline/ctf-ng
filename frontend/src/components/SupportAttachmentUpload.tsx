@@ -33,7 +33,7 @@ export default function SupportAttachmentUpload({ fileUploadPath, ticketMutation
 
   return (
     <>
-      {uploadError && <ErrorCallout>{uploadError}</ErrorCallout>}
+      {uploadError && <ErrorCallout announce>{uploadError}</ErrorCallout>}
       <Dropzone
         accept={{
           'image/png' : [ '.png' ],

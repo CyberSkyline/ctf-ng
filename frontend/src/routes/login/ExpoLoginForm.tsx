@@ -19,6 +19,8 @@ export default function ExpoLoginForm() {
 
   function handleExpoLogin(data: LoginFormInputs) {
     // Handle Expo login logic here
+    // Clear the previous error so a repeated failure remounts the alert and is announced again.
+    setLoginError(null);
 
     apiMutation('/users/login', {
       username : data.username,
@@ -37,7 +39,7 @@ export default function ExpoLoginForm() {
   return (
     <form onSubmit={handleSubmit(handleExpoLogin)} className="flex flex-col gap-3 w-full">
       {loginError && (
-        <ErrorCallout>
+        <ErrorCallout announce>
           {loginError}
         </ErrorCallout>
       )}

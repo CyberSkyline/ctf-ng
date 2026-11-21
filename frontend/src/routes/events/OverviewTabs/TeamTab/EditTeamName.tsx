@@ -98,7 +98,7 @@ export default function EditTeamName(
                 Please enter a team name.
               </Form.Message>
               {error && (
-                <ErrorCallout className="mt-2">
+                <ErrorCallout className="mt-2" announce>
                   {error}
                 </ErrorCallout>
               )}

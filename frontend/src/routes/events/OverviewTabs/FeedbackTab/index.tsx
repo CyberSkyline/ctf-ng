@@ -102,7 +102,7 @@ export default function FeedbackTab() {
   return (
     <Container size="4">
       {currentFeedbackError && (<ErrorCallout className="mb-3">{currentFeedbackError.message}</ErrorCallout>)}
-      {error && (<ErrorCallout className="mb-3">{error}</ErrorCallout>)}
+      {error && (<ErrorCallout className="mb-3" announce>{error}</ErrorCallout>)}
 
       {currentFeedback && (
         <SuccessCallout className="mb-3">

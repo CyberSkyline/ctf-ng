@@ -9,16 +9,23 @@ export default function FormField({
   rightComponent,
   error,
 }: {
-  children: (injected: { id: string; 'aria-describedby'?: string; 'aria-invalid': 'true' | 'false' }) => React.ReactNode,
+  children: (injected: {
+    id: string;
+    'aria-describedby'?: string;
+    'aria-errormessage'?: string;
+    'aria-invalid': 'true' | 'false';
+  }) => React.ReactNode,
   label: string | null,
   rightComponent?: ReactNode,
   error?: FieldError,
 }) {
   const id = useId(); // Unique ID for accessibility linking
+  const errorId = `${id}-error`;
 
   const injected = {
     id,
-    'aria-errormessage' : error ? `${id}-error` : undefined,
+    'aria-describedby' : error ? errorId : undefined,
+    'aria-errormessage' : error ? errorId : undefined,
     'aria-invalid' : (error ? 'true' : 'false') as 'true' | 'false',
   };
 
@@ -29,7 +36,14 @@ export default function FormField({
         {rightComponent}
       </Flex>
       {children(injected)}
-      {error && <Text as="span" color={COLOR_NEGATIVE} id={`${id}-error`} aria-live="polite" aria-atomic>{error.message || 'Invalid input'}</Text>}
+      {/*
+        Always mounted and never display:none, so it stays in the accessibility tree and the live region exists
+        before the error text arrives (WCAG 3.3.1). While empty it is sr-only, which takes it out of the flex
+        flow so it adds no gap.
+      */}
+      <Text as="span" color={COLOR_NEGATIVE} id={errorId} aria-live="polite" aria-atomic className="empty:sr-only">
+        {error ? (error.message || 'Invalid input') : null}
+      </Text>
     </Flex>
   );
 }

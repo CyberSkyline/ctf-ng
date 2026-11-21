@@ -25,6 +25,26 @@
   color-scheme: light;
 }
 
+/*
+ * WCAG 1.4.3: Radix's step-9 fills for teal, orange and red fail 4.5:1 with
+ * white text (3.07, 2.97 and 3.91:1). Darken the solid fills and their hover
+ * shade in both themes. Same selectors as Radix (including its display-p3
+ * overrides), declared later so these win.
+ */
+:root, .light, .light-theme, .dark, .dark-theme {
+  --teal-9: #008573; /* 4.56:1 with white */
+  --teal-10: #007563;
+  --orange-9: #c2410c; /* 5.18:1 with white */
+  --orange-10: #a8380a;
+  --red-9: #ce2c31; /* 5.21:1 with white */
+  --red-10: #b5262b;
+}
+
+/* WCAG 1.4.3: teal-11 text on the light soft-badge fill measures ~4.3:1. */
+.light .rt-Badge:where(.rt-variant-soft)[data-accent-color="teal"] {
+  color: #007a69;
+}
+
 .radix-themes {
   --default-font-family: Inter, sans-serif;
   --em-font-family: Inter, sans-serif;

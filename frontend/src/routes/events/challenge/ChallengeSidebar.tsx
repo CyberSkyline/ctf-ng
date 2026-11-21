@@ -104,7 +104,7 @@ export default function ChallengeSidebar() {
 
             {challenge && event && (
               <>
-                {provisioningError && <ErrorCallout className="mt-3">{provisioningError.message}</ErrorCallout>}
+                {provisioningError && <ErrorCallout className="mt-3" announce>{provisioningError.message}</ErrorCallout>}
                 <Flex direction="row" gap="2" mt="3" align="center" justify="between">
                   <ConnectModal
                     eventId={event.id}

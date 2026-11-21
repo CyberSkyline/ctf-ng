@@ -1,6 +1,11 @@
 import { useTheme } from 'next-themes';
 import { NavigationMenu } from 'radix-ui';
-import { TbMoon, TbSun, TbSunMoon } from 'react-icons/tb';
+import {
+  TbCheck,
+  TbMoon,
+  TbSun,
+  TbSunMoon,
+} from 'react-icons/tb';
 import { twMerge } from 'tailwind-merge';
 
 export default function ThemeToggle({ triggerClassName, contentClassName, contentItemClassName }
@@ -32,27 +37,34 @@ export default function ThemeToggle({ triggerClassName, contentClassName, conten
         className={twMerge(triggerClassName, 'h-full')}
         onPointerMove={(event) => event.preventDefault()}
         onPointerLeave={(event) => event.preventDefault()}
+        aria-label="Theme Selector"
       >
-        <ActiveIcon aria-label="Theme Selector" />
+        <ActiveIcon aria-hidden="true" />
       </NavigationMenu.Trigger>
       <NavigationMenu.Content
         onPointerEnter={(event) => event.preventDefault()}
         onPointerLeave={(event) => event.preventDefault()}
         className={twMerge(contentClassName, 'flex flex-col gap-2')}
       >
-        {Object.entries(themes).map(([ key, { name, icon : Icon } ]) => (
-          <NavigationMenu.Item
-            asChild
-            key={key}
-            onClick={() => setTheme(key)}
-            className={twMerge(contentItemClassName, theme === key && '!bg-(--accent-9) !text-(--accent-contrast)')}
-          >
-            <button type="button">
-              <Icon />
-              {name}
-            </button>
-          </NavigationMenu.Item>
-        ))}
+        {/* The selection is conveyed by aria-pressed, a check and weight, not by color alone (WCAG 1.4.1). */}
+        {Object.entries(themes).map(([ key, { name, icon : Icon } ]) => {
+          const selected = theme === key;
+
+          return (
+            <NavigationMenu.Item
+              asChild
+              key={key}
+              onClick={() => setTheme(key)}
+              className={twMerge(contentItemClassName, selected && 'font-semibold !text-(--gray-12)')}
+            >
+              <button type="button" aria-pressed={selected}>
+                <Icon aria-hidden="true" />
+                {name}
+                <TbCheck aria-hidden="true" className={twMerge('ml-auto pl-2 box-content text-(--accent-11)', !selected && 'invisible')} />
+              </button>
+            </NavigationMenu.Item>
+          );
+        })}
       </NavigationMenu.Content>
     </NavigationMenu.Item>
   );

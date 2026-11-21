@@ -10,11 +10,11 @@ import {
 } from '@radix-ui/themes';
 import { ModuleRegistry, TooltipModule } from 'ag-grid-community';
 import { AgGridReact, type CustomCellRendererProps } from 'ag-grid-react';
+import AdminOverride from 'components/AdminOverride';
 import { ErrorCallout, WarningCallout } from 'components/Callouts';
 import { keyBy, map } from 'lodash';
 import { TbInfoCircle } from 'react-icons/tb';
 import { useParams } from 'react-router';
-import AdminOverride from 'components/AdminOverride';
 import TeamPerformance from './TeamPerformance';
 
 function SponsorCell({ sponsors, lookup }: {sponsors: Sponsor[], lookup: Record<string, UploadedFile>}) {
@@ -26,11 +26,13 @@ function SponsorCell({ sponsors, lookup }: {sponsors: Sponsor[], lookup: Record<
           url = lookup[logo]?.download_url;
         }
 
+        const label = name || 'Sponsor';
+
         return (
           <Tooltip content={name} key={id}>
             {url
-              ? <img src={url} alt="" className="h-9 w-9 object-cover" />
-              : <TbInfoCircle key={id} className="h-9 w-9 object-cover" />}
+              ? <img src={url} alt={label} className="h-9 w-9 object-cover" />
+              : <TbInfoCircle key={id} className="h-9 w-9 object-cover" role="img" aria-label={label} />}
           </Tooltip>
         );
       })}

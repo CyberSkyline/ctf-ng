@@ -110,9 +110,14 @@ function Routes() {
   const error = location.pathname === errorPathname ? window.init.error : null;
 
   return (
-    <div className="p-3 min-h-[calc(100vh-var(--NavBarHeight)-var(--FooterBarHeight))] relative mb-[var(--FooterBarHeight)]">
+    // The main landmark and skip-link target for every route (WCAG 2.4.1). tabIndex lets the skip link focus it.
+    <main
+      id="main"
+      tabIndex={-1}
+      className="p-3 min-h-[calc(100vh-var(--NavBarHeight)-var(--FooterBarHeight))] relative mb-[var(--FooterBarHeight)] outline-none"
+    >
       {error ? <ErrorPage error={error} /> : routes}
-    </div>
+    </main>
   );
 }
 

@@ -109,10 +109,11 @@ export default function NotificationsPopover({ triggerClassName, contentClassNam
         className={twMerge(triggerClassName, 'h-full')}
         onPointerMove={(event) => event.preventDefault()}
         onPointerLeave={(event) => event.preventDefault()}
+        aria-label={unreadCount && unreadCount.count > 0 ? `Notifications, ${unreadCount.count} unread` : 'Notifications'}
       >
-        <TbBell aria-label="Notifications" />
+        <TbBell aria-hidden="true" />
         {unreadCount && unreadCount.count > 0
-          && <TbCircleDotFilled color={COLOR_NEGATIVE} className="absolute -mt-6 ml-2 pulsate" aria-label="Unread" />}
+          && <TbCircleDotFilled color={COLOR_NEGATIVE} className="absolute -mt-6 ml-2 pulsate" aria-hidden="true" />}
       </NavigationMenu.Trigger>
       <NavigationMenu.Content
         className={twMerge(contentClassName, 'max-h-86 overflow-y-auto overflow-x-hidden')}
@@ -138,7 +139,7 @@ export default function NotificationsPopover({ triggerClassName, contentClassNam
                 Mark All as Read
               </Button>
             </Flex>
-            {readError && <ErrorCallout className="mb-3">{readError}</ErrorCallout>}
+            {readError && <ErrorCallout className="mb-3" announce>{readError}</ErrorCallout>}
             {map(data, (notif) => getCard(notif))}
           </Flex>
         )}
