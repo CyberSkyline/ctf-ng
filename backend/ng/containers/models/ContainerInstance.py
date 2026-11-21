@@ -346,33 +346,35 @@ class ContainerInstance(db.Model):
         lock = redis_lock.Lock(redis_client, cls.render_lock_key(team_id, challenge_id), expire=LOCK_EXPIRE_SECONDS)
 
         if lock.acquire(blocking=False):
-            instances = cls.get_instance_group(challenge_id, team_id)
+            try:
+                instances = cls.get_instance_group(challenge_id, team_id)
 
-            DOCKER_HOST = get_app_config("DOCKER_HOST")
-            client = get_client(DOCKER_HOST)
-            for instance in instances:
-                instance.remove()
+                DOCKER_HOST = get_app_config("DOCKER_HOST")
+                client = get_client(DOCKER_HOST)
+                for instance in instances:
+                    instance.remove()
 
-            blueprints = ContainerBlueprint.get_for_challenge(challenge_id)
-            indv_ctrs = []
-            for blueprint in blueprints:
-                for net in blueprint.networks:
-                    net_obj = client.get_network_by_name(cls.render_network_name(team_id, net, challenge_id))
-                    if net_obj:
-                        try:
-                            # In the case of a team game there might be vnc containers
-                            # That are not the requesting user's
-                            connected_ctrs = client.api.inspect_network(net_obj.id)['Containers']
-                            for connected_ctr in connected_ctrs:
-                                # Internal swarm overlay container
-                                # We cannot disconnect ths
-                                if not connected_ctr == f"lb-{net_obj.name}":
-                                    indv_ctrs.append(connected_ctr)
-                                    net_obj.disconnect(connected_ctr)
-                            net_obj.remove()
-                        except Exception:
-                            pass
-            lock.release()
+                blueprints = ContainerBlueprint.get_for_challenge(challenge_id)
+                indv_ctrs = []
+                for blueprint in blueprints:
+                    for net in blueprint.networks:
+                        net_obj = client.get_network_by_name(cls.render_network_name(team_id, net, challenge_id))
+                        if net_obj:
+                            try:
+                                # In the case of a team game there might be vnc containers
+                                # That are not the requesting user's
+                                connected_ctrs = client.api.inspect_network(net_obj.id)['Containers']
+                                for connected_ctr in connected_ctrs:
+                                    # Internal swarm overlay container
+                                    # We cannot disconnect ths
+                                    if not connected_ctr == f"lb-{net_obj.name}":
+                                        indv_ctrs.append(connected_ctr)
+                                        net_obj.disconnect(connected_ctr)
+                                net_obj.remove()
+                            except Exception:
+                                pass
+            finally:
+                lock.release()
             return indv_ctrs
         else:
             raise BusinessLogicError("Challenge is already being started/reset")
@@ -386,40 +388,41 @@ class ContainerInstance(db.Model):
         lock = redis_lock.Lock(redis_client, cls.render_lock_key(team_id, challenge_id), expire=LOCK_EXPIRE_SECONDS)
 
         if lock.acquire(blocking=False):
-            blueprints = ContainerBlueprint.query.filter_by(challenge_id=challenge_id).all()
-            team = Team.query.filter_by(id=team_id).first()
-
-            ctrs = []
-            networks = []
             try:
-                for blueprint in blueprints:
-                    ## Networks should get appened first to ensure they get properly
-                    ## cleaned up
-                    if blueprint.networks:
-                        networks.extend(blueprint.networks)
-                    ctrs.append(cls.create_container_instance(blueprint.id, team, commit=False))
+                blueprints = ContainerBlueprint.query.filter_by(challenge_id=challenge_id).all()
+                team = Team.query.filter_by(id=team_id).first()
 
-            except Exception as err:
-                DOCKER_HOST = get_app_config("DOCKER_HOST")
-                client = get_client(DOCKER_HOST)
-                for ctr in ctrs:
-                    ctr.remove()
-                for net in set(networks):
-                    net_obj = client.get_network_by_name(cls.render_network_name(team_id, net, challenge_id))
-                    if net_obj:
-                        ## There is a potential race condition where the daemon has deleted the network
-                        ## But the network is not fully removed from NETDB
-                        try:
-                            net_obj.remove()
-                        except Exception:
-                            pass
-                db.session.rollback()
+                ctrs = []
+                networks = []
+                try:
+                    for blueprint in blueprints:
+                        ## Networks should get appened first to ensure they get properly
+                        ## cleaned up
+                        if blueprint.networks:
+                            networks.extend(blueprint.networks)
+                        ctrs.append(cls.create_container_instance(blueprint.id, team, commit=False))
+
+                except Exception as err:
+                    DOCKER_HOST = get_app_config("DOCKER_HOST")
+                    client = get_client(DOCKER_HOST)
+                    for ctr in ctrs:
+                        ctr.remove()
+                    for net in set(networks):
+                        net_obj = client.get_network_by_name(cls.render_network_name(team_id, net, challenge_id))
+                        if net_obj:
+                            ## There is a potential race condition where the daemon has deleted the network
+                            ## But the network is not fully removed from NETDB
+                            try:
+                                net_obj.remove()
+                            except Exception:
+                                pass
+                    db.session.rollback()
+
+                    logger.error(str(err))
+                    raise BusinessLogicError("Challenge failed to start, please contact support") from err
+                db.session.commit()
+            finally:
                 lock.release()
-
-                logger.error(str(err))
-                raise BusinessLogicError("Challenge failed to start, please contact support") from err
-            db.session.commit()
-            lock.release()
             return networks
         else:
             raise BusinessLogicError("Challenge is already being started/reset")
