@@ -1,4 +1,5 @@
 import base64
+import logging
 import re
 
 import boto3
@@ -8,6 +9,7 @@ from ..tasks import pull_image_celery
 
 from ..constants import DOCKER_RUNNING
 
+logger = logging.getLogger(__name__)
 
 class Client(docker.DockerClient):
     def get_running(self, ctr):
@@ -63,10 +65,14 @@ class Client(docker.DockerClient):
             try:
                 # First try to get ECR credentials
                 auth = self.get_ecr_credentials()
-                print("Using ECR authentication")
-            except Exception:
+                logger.info("Using ECR authentication")
+            except Exception as err:
                 # Fall back to regular registry auth if ECR auth fails
-                print("Using standard registry authentication")
+                logger.warning(
+                    "ECR authentication failed, falling back to standard registry authentication: %s: %s",
+                    type(err).__name__,
+                    err,
+                )
                 auth = {
                     "username": get_app_config("CONTAINER_REGISTRY_USER"),
                     "password": get_app_config("CONTAINER_REGISTRY_PASSWORD"),
