@@ -88,7 +88,7 @@ class RedisCache:
             return True
 
         except Exception as e:
-            logger.warning(f"Failed to initialize Redis client: {e}")
+            logger.warning("Failed to initialize Redis client: %s", e)
             cls._client = None
             cls._connection_pool = None
             return False
@@ -111,7 +111,7 @@ class RedisCache:
 
             except (redis.ConnectionError, redis.TimeoutError, OSError) as e:
                 last_exception = e
-                logger.warning(f"Redis connection error (attempt {attempt + 1}/{max_retries + 1}): {e}")
+                logger.warning("Redis connection error (attempt %s/%s): %s", attempt + 1, max_retries + 1, e)
 
                 # Reset client to force reconnection on next attempt
                 cls._client = None
@@ -121,10 +121,10 @@ class RedisCache:
                     time.sleep(retry_delay * (2 ** attempt))  # Exponential backoff
 
             except Exception as e:
-                logger.warning(f"Redis operation error: {e}")
+                logger.warning("Redis operation error: %s", e)
                 return None
 
-        logger.error(f"Redis operation failed after {max_retries + 1} attempts. Last error: {last_exception}")
+        logger.error("Redis operation failed after %s attempts. Last error: %s", max_retries + 1, last_exception)
         return None
 
     @classmethod

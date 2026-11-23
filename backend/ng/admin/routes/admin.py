@@ -142,7 +142,7 @@ class AdminImpersonate(Resource):
             # Should never be able to get here but just in case
             return error_response("You are already impersonating another user.", "impersonation", 403)
 
-        logger.info(f"Admin {current_user.id} is impersonating user {user_id}")
+        logger.info("Admin %s is impersonating user %s", current_user.id, user_id)
 
         session["admin_id"] = current_user.id
         session["impersonated"] = True
@@ -168,7 +168,7 @@ class AdminStopImpersonating(Resource):
         if not session.get("impersonated"):
             return error_response("You are not currently impersonating any user.", "impersonation", 403)
 
-        logger.info(f"Admin {session['admin_id']} stopped impersonating user {session['id']}")
+        logger.info("Admin %s stopped impersonating user %s", session["admin_id"], session["id"])
 
         impersonated_id = session["id"]
         admin = User.find_by_id(session["admin_id"])

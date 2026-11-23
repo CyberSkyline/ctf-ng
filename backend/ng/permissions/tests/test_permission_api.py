@@ -17,10 +17,13 @@ def test_get_role_permissions(admin_client, role_with_permissions):
 
 def test_role_endpoints_not_authenticated(logged_in_client, role_with_permissions):
     """Check that role endpoints are not accessible without authentication as an admin."""
-    role = role_with_permissions
-    response = logged_in_client.get(f"/ng/admin/permissions/{role.id}/details")
+    # Captured before any request: a rejected request now goes through the
+    # same db.session.remove() as any other, which detaches this fixture's
+    # object from its session - id is read once, up front, as a plain value.
+    role_id = role_with_permissions.id
+    response = logged_in_client.get(f"/ng/admin/permissions/{role_id}/details")
     assert response.status_code == 403
-    response = logged_in_client.put(f"/ng/admin/permissions/{role.id}/details", json={
+    response = logged_in_client.put(f"/ng/admin/permissions/{role_id}/details", json={
         "permissions": ["can_edit_team", "can_edit_user"]
     })
     assert response.status_code == 403
@@ -60,9 +63,10 @@ def test_get_user_roles(admin_client, user_with_roles):
 
 def test_user_endpoints_not_authenticated(logged_in_client, user_with_roles):
     """Check that user endpoints are not accessible without authentication as an admin."""
-    response = logged_in_client.get(f"/ng/admin/permissions/{user_with_roles.id}/roles")
+    user_id = user_with_roles.id
+    response = logged_in_client.get(f"/ng/admin/permissions/{user_id}/roles")
     assert response.status_code == 403
-    response = logged_in_client.put(f"/ng/admin/permissions/{user_with_roles.id}/roles", json={
+    response = logged_in_client.put(f"/ng/admin/permissions/{user_id}/roles", json={
         "roles": ["Test Role"]
     })
     assert response.status_code == 403
