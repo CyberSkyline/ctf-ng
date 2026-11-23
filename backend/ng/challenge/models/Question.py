@@ -44,9 +44,7 @@ class Question(db.Model):
     challenge_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey("ng_challenges.id"), nullable=False, index=True)
 
     challenge: Mapped[Challenge] = db.relationship("Challenge", back_populates="questions")
-    # selectin batches the answer variables of every loaded question into one query, so admin serialization of
-    # a challenge's questions doesn't issue a query per question
-    answer_variable: Mapped[ChallengeVariable | None] = db.relationship("ChallengeVariable", back_populates="question", lazy="selectin")
+    answer_variable: Mapped[ChallengeVariable | None] = db.relationship("ChallengeVariable", back_populates="question")
 
     def __repr__(self):
         return f"<NgChallengeQuestion {self.id}, name={self.name}, points={self.points}>"
@@ -67,6 +65,10 @@ class Question(db.Model):
             "challenge_id": self.challenge_id,
         }
         if include_admin_fields:
+            if self.answer_variable_id is not None:
+                # Load all of the challenge's variables in one query (a no-op once loaded), so answer_variable resolves
+                # from the identity map instead of a query per question. Only admins pay for it.
+                _ = self.challenge.variables
             data["answer"] = self.answer_variable.name if self.answer_variable else f'"{self.answer}"'
 
         return data

@@ -5,6 +5,8 @@ Get challenge progress for a team in an event
 from collections import defaultdict
 from typing import Any
 
+from sqlalchemy.orm import selectinload
+
 from ....scoring.models import Attempt
 from ....challenge.models import Challenge
 
@@ -13,7 +15,8 @@ def get_challenge_progress(event_id: int, team_id: int) -> list[dict[str, Any]]:
     """
     Get challenge progress for a team in an event
     """
-    challenges = Challenge.get_challenges_for_event(event_id)
+    # only questions are read here, so skip the event and tags that the shared serialize load options bring in
+    challenges = Challenge.query.filter_by(event_id=event_id).options(selectinload(Challenge.questions)).all()
 
     # load all of the team's attempts up front rather than querying once per challenge
     attempts_by_challenge: dict[int, list[Attempt]] = defaultdict(list)
