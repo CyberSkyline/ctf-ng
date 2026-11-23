@@ -6,12 +6,14 @@ import {
   Flex,
   RadioCards,
   SegmentedControl,
+  Spinner,
   Strong,
   Text,
   TextArea,
 } from '@radix-ui/themes';
 import { ErrorCallout, InfoCallout, SuccessCallout } from 'components/Callouts';
 import FormField from 'components/FormField';
+import { announce } from 'components/LiveAnnouncer';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { TbCheck, TbSend } from 'react-icons/tb';
@@ -64,6 +66,20 @@ const scale = Array(10).fill(null).map((_, i) => (
 
 const CHAR_LIMIT = 500;
 
+/**
+ * Shows what the ends of a 1-10 scale mean. Linked to the scale as its description, so screen reader users
+ * hear it too (WCAG 1.3.1, 3.3.2).
+ */
+function ScaleEndpoints({ id, low, high }: { id: string, low: string, high: string }) {
+  return (
+    <Flex id={id} direction="row" justify="between" mt="1">
+      <Text size="1" color="gray">{`1 = ${low}`}</Text>
+      <span className="sr-only">, </span>
+      <Text size="1" color="gray">{`10 = ${high}`}</Text>
+    </Flex>
+  );
+}
+
 export default function FeedbackTab() {
   const { idEvent } = useParams<{idEvent: string}>();
   const eventId = Number(idEvent);
@@ -80,17 +96,24 @@ export default function FeedbackTab() {
   const [ error, setError ] = useState<string | null>(null);
 
   const submitFeedback = async (data: EventFeedbackFormData) => {
+    // The button stays focusable while busy (see below), so guard against double submits here.
+    if (buttonState !== null) return;
+
     setButtonState('loading');
     setError(null);
     try {
       await submitEventFeedback(eventId, data);
       setButtonState('success');
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
+      // "Saved" only appears on the button, so announce it (WCAG 4.1.3).
+      announce('Feedback saved');
+      // Show "Saved" briefly, then return to the normal button.
       setTimeout(() => {
         setButtonState(null);
       }, 2000);
+    } catch (err) {
+      setError((err as Error).message);
+      // Re-enable right away so the button doesn't keep saying "Submitting…" after a failure.
+      setButtonState(null);
     }
   };
 
@@ -121,7 +144,7 @@ export default function FeedbackTab() {
               (If you're unsure, choose the closest match or select "Other")`}
             error={errors.role}
           >
-            {(injected) => (
+            {(injected, { labelId }) => (
               <Controller
                 name="role"
                 control={control}
@@ -134,6 +157,7 @@ export default function FeedbackTab() {
                     columns="3"
                     gap="1"
                     {...injected}
+                    aria-labelledby={labelId}
                   >
                     {ROLES.map((role) => (
                       <RadioCards.Item key={role} value={role}>
@@ -146,6 +170,7 @@ export default function FeedbackTab() {
                       onChange={field.onChange}
                       onBlur={field.onBlur}
                       placeholder="Other..."
+                      aria-label="Other NICE Work Role"
                       className="!min-h-min"
                       rows={1}
                     />
@@ -159,7 +184,7 @@ export default function FeedbackTab() {
             label="How many years of experience do you have in the NICE Work Role you selected above?"
             error={errors.cyber_experience}
           >
-            {(injected) => (
+            {(injected, { labelId }) => (
               <Controller
                 name="cyber_experience"
                 control={control}
@@ -170,6 +195,7 @@ export default function FeedbackTab() {
                     columns="3"
                     gap="1"
                     {...injected}
+                    aria-labelledby={labelId}
                   >
                     {EXPERIENCE_LEVELS.map((level) => (
                       <RadioCards.Item key={level} value={level}>
@@ -186,7 +212,7 @@ export default function FeedbackTab() {
             label={`What motivated you to participate in the President's Cup?`}
             error={errors.participation_reason}
           >
-            {(injected) => (
+            {(injected, { labelId }) => (
               <Controller
                 name="participation_reason"
                 control={control}
@@ -200,6 +226,7 @@ export default function FeedbackTab() {
                     gap="1"
                     className="[&_button]:!flex-col"
                     {...injected}
+                    aria-labelledby={labelId}
                   >
                     {Object.entries(PARTICIPATION_REASONS).map(([ key, description ]) => (
                       <RadioCards.Item key={key} value={key}>
@@ -213,6 +240,7 @@ export default function FeedbackTab() {
                       onChange={field.onChange}
                       onBlur={field.onBlur}
                       placeholder="Other..."
+                      aria-label="Other reason for participating"
                       className="!min-h-min"
                       rows={3}
                     />
@@ -226,7 +254,7 @@ export default function FeedbackTab() {
             label="Will you participate again next year if your schedule permits?"
             error={errors.participation_again}
           >
-            {(injected) => (
+            {(injected, { labelId }) => (
               <Controller
                 name="participation_again"
                 control={control}
@@ -237,6 +265,7 @@ export default function FeedbackTab() {
                     columns="3"
                     gap="1"
                     {...injected}
+                    aria-labelledby={labelId}
                   >
                     <RadioCards.Item value="Yes">
                       Yes
@@ -257,20 +286,25 @@ export default function FeedbackTab() {
             label="On a scale of 1 to 10, how would you rate the overall difficulty of the challenges in this event?"
             error={errors.difficulty_rating}
           >
-            {(injected) => (
+            {(injected, { labelId }) => (
               <Controller
                 name="difficulty_rating"
                 control={control}
                 render={({ field }) => (
-                  <SegmentedControl.Root
-                    value={String(field.value)}
-                    onValueChange={(v) => { field.onChange(Number(v)); }}
-                    onBlur={field.onBlur}
-                    ref={field.ref}
-                    {...injected}
-                  >
-                    {scale}
-                  </SegmentedControl.Root>
+                  <>
+                    <SegmentedControl.Root
+                      value={String(field.value)}
+                      onValueChange={(v) => { field.onChange(Number(v)); }}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                      {...injected}
+                      aria-labelledby={labelId}
+                      aria-describedby={[ `${labelId}-ends`, injected['aria-describedby'] ].filter(Boolean).join(' ')}
+                    >
+                      {scale}
+                    </SegmentedControl.Root>
+                    <ScaleEndpoints id={`${labelId}-ends`} low="very easy" high="very hard" />
+                  </>
                 )}
               />
             )}
@@ -280,20 +314,25 @@ export default function FeedbackTab() {
             label="On a scale of 1 to 10, how relevant were the challenges to CISA's intended NICE Work Roles?"
             error={errors.relevancy_rating}
           >
-            {(injected) => (
+            {(injected, { labelId }) => (
               <Controller
                 name="relevancy_rating"
                 control={control}
                 render={({ field }) => (
-                  <SegmentedControl.Root
-                    value={String(field.value)}
-                    onValueChange={(v) => { field.onChange(Number(v)); }}
-                    onBlur={field.onBlur}
-                    ref={field.ref}
-                    {...injected}
-                  >
-                    {scale}
-                  </SegmentedControl.Root>
+                  <>
+                    <SegmentedControl.Root
+                      value={String(field.value)}
+                      onValueChange={(v) => { field.onChange(Number(v)); }}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                      {...injected}
+                      aria-labelledby={labelId}
+                      aria-describedby={[ `${labelId}-ends`, injected['aria-describedby'] ].filter(Boolean).join(' ')}
+                    >
+                      {scale}
+                    </SegmentedControl.Root>
+                    <ScaleEndpoints id={`${labelId}-ends`} low="not relevant" high="highly relevant" />
+                  </>
                 )}
               />
             )}
@@ -303,20 +342,25 @@ export default function FeedbackTab() {
             label="On a scale of 1 to 10, how engaging did you find the challenges throughout the event?"
             error={errors.engagement_rating}
           >
-            {(injected) => (
+            {(injected, { labelId }) => (
               <Controller
                 name="engagement_rating"
                 control={control}
                 render={({ field }) => (
-                  <SegmentedControl.Root
-                    value={String(field.value)}
-                    onValueChange={(v) => { field.onChange(Number(v)); }}
-                    onBlur={field.onBlur}
-                    ref={field.ref}
-                    {...injected}
-                  >
-                    {scale}
-                  </SegmentedControl.Root>
+                  <>
+                    <SegmentedControl.Root
+                      value={String(field.value)}
+                      onValueChange={(v) => { field.onChange(Number(v)); }}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                      {...injected}
+                      aria-labelledby={labelId}
+                      aria-describedby={[ `${labelId}-ends`, injected['aria-describedby'] ].filter(Boolean).join(' ')}
+                    >
+                      {scale}
+                    </SegmentedControl.Root>
+                    <ScaleEndpoints id={`${labelId}-ends`} low="not engaging" high="very engaging" />
+                  </>
                 )}
               />
             )}
@@ -388,22 +432,27 @@ export default function FeedbackTab() {
           </InfoCallout>
 
           <Flex direction="row-reverse">
+            {/*
+              aria-disabled instead of disabled/loading: a disabled button drops keyboard focus to <body> mid-submit
+              (WCAG 2.4.3). submitFeedback ignores clicks while busy.
+            */}
             <Button
               type="submit"
               color={COLOR_POSITIVE}
-              loading={buttonState === 'loading'}
-              disabled={buttonState !== null}
-              className="!w-48"
+              aria-disabled={buttonState !== null}
+              className="!w-48 aria-disabled:opacity-80 aria-disabled:cursor-default"
             >
               {buttonState === 'success' ? (
                 <>
-                  <TbCheck />
+                  <TbCheck aria-hidden="true" />
                   Saved
                 </>
               ) : (
                 <>
-                  <TbSend />
-                  Submit Feedback
+                  <Spinner loading={buttonState === 'loading'}>
+                    <TbSend aria-hidden="true" />
+                  </Spinner>
+                  {buttonState === 'loading' ? 'Submitting…' : 'Submit Feedback'}
                 </>
               )}
             </Button>

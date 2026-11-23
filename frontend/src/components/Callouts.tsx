@@ -6,7 +6,8 @@ import {
   type AccentColor,
 } from '@/constants';
 import { Callout } from '@radix-ui/themes';
-import type { ReactNode } from 'react';
+import { announce as announceMessage } from 'components/LiveAnnouncer';
+import { useEffect, useRef, type ReactNode } from 'react';
 import type { IconType } from 'react-icons';
 import {
   TbAlertTriangle,
@@ -36,12 +37,29 @@ function BaseCallout({
   iconLabel,
   liveRole,
 }: CalloutProps & { color: AccentColor, icon: IconType, iconLabel: string, liveRole: 'alert' | 'status' }) {
+  // role="alert" is announced reliably when the callout is inserted, so errors carry it directly.
+  // role="status" is not (the region is created together with its text), so polite callouts write their text
+  // into the app-wide LiveAnnouncer instead, on mount and whenever the text changes.
+  const politeAnnounce = announce && liveRole === 'status';
+  const textRef = useRef<HTMLParagraphElement>(null);
+  const lastAnnounced = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!politeAnnounce) return;
+
+    const text = textRef.current?.textContent?.trim();
+    if (text && text !== lastAnnounced.current) {
+      announceMessage(`${iconLabel}: ${text}`);
+      lastAnnounced.current = text;
+    }
+  });
+
   return (
-    <Callout.Root variant="surface" color={color} className={className} role={announce ? liveRole : undefined}>
+    <Callout.Root variant="surface" color={color} className={className} role={announce && liveRole === 'alert' ? 'alert' : undefined}>
       <Callout.Icon>
         <Icon aria-label={iconLabel} />
       </Callout.Icon>
-      <Callout.Text className="whitespace-pre-wrap">
+      <Callout.Text className="whitespace-pre-wrap" ref={textRef}>
         {children}
       </Callout.Text>
     </Callout.Root>

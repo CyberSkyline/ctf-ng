@@ -39,6 +39,8 @@ export default function FormSearchField<
             <SearchField
               {...rest}
               {...injected}
+              // Keep the caller's description alongside the error link FormField injects (which would replace it).
+              aria-describedby={[ rest['aria-describedby'], injected['aria-describedby'] ].filter(Boolean).join(' ') || undefined}
               datasource={datasource}
               value={field.value}
               onChange={field.onChange}

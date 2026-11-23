@@ -133,6 +133,7 @@ export default function Detail() {
               initialValue={newText}
               onChange={setNewText}
               version={version}
+              aria-label="Reply"
             />
             <Button
               onClick={sendNewMessage}

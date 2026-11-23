@@ -8,8 +8,14 @@ import {
 } from 'react-icons/tb';
 import { twMerge } from 'tailwind-merge';
 
-export default function ThemeToggle({ triggerClassName, contentClassName, contentItemClassName }
-  : {triggerClassName: string, contentClassName: string, contentItemClassName: string}) {
+export default function ThemeToggle({
+  itemClassName, triggerClassName, contentClassName, contentItemClassName,
+}: {
+  itemClassName?: string,
+  triggerClassName: string,
+  contentClassName: string,
+  contentItemClassName: string,
+}) {
   const { theme, resolvedTheme, setTheme } = useTheme();
 
   const themes = {
@@ -32,7 +38,7 @@ export default function ThemeToggle({ triggerClassName, contentClassName, conten
   const ActiveIcon = themes[resolvedTheme as keyof typeof themes].icon;
 
   return (
-    <NavigationMenu.Item value="theme" className="relative">
+    <NavigationMenu.Item value="theme" className={twMerge('relative', itemClassName)}>
       <NavigationMenu.Trigger
         className={twMerge(triggerClassName, 'h-full')}
         onPointerMove={(event) => event.preventDefault()}

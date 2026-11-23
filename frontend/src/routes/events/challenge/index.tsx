@@ -8,6 +8,7 @@ import {
   Spinner,
 } from '@radix-ui/themes';
 import { ErrorCallout } from 'components/Callouts';
+import { announce } from 'components/LiveAnnouncer';
 import { useEffect, useState } from 'react';
 import { Group, Panel, Separator } from 'react-resizable-panels';
 import { twMerge } from 'tailwind-merge';
@@ -25,6 +26,9 @@ export default function Challenge() {
   useEffect(() => {
     let timer = null;
     let attempts = 0;
+    // Probe sockets can still open after cleanup (route change, StrictMode's double effect) or several retries can
+    // open close together; act on the first success of the current effect only, so "connected" is announced once.
+    let settled = false;
 
     const checkWorkspace = () => {
       if (attempts >= 6) {
@@ -39,16 +43,23 @@ export default function Challenge() {
 
       // If the socket opens, the workspace is up - close our socket and start NoVNC.
       socket.onopen = () => {
-        setWorkspaceUp(true);
-        clearInterval(timer!);
         socket.close();
+        if (settled) return;
+        settled = true;
+        setWorkspaceUp(true);
+        // The spinner is replaced silently, so tell screen reader users the workspace is ready (WCAG 4.1.3).
+        announce('Workspace connected');
+        clearInterval(timer!);
       };
     };
 
     timer = setInterval(checkWorkspace, 5000);
     checkWorkspace();
 
-    return () => clearInterval(timer);
+    return () => {
+      settled = true;
+      clearInterval(timer);
+    };
   }, []);
 
   return (
