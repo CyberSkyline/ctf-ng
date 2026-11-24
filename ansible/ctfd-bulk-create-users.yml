@@ -1,0 +1,50 @@
+- name: Bulk create CTFd users from CSV
+
+  # Survey vars: ctfd_users_csv (Secret, email,password,name rows; use ';' between rows
+  # if line breaks get dropped), ctfd_user_admin (Boolean, optional, applies to all rows)
+
+  hosts: manager
+  tasks:
+    - ansible.builtin.include_tasks: tasks/find-ctfd-container.yml
+
+    - name: Run create_user.py --csv in {{ ctfd_container }}
+      ansible.builtin.shell: |
+        set -euo pipefail
+        csv=$(python3 -c '
+        import sys
+        text = sys.stdin.read().replace("\r", "").strip()
+        if "\n" not in text:
+            text = text.replace(";", "\n")
+        lines = [line.strip() for line in text.split("\n") if line.strip()]
+        if lines and lines[0].lstrip("\"").lower().startswith("email"):
+            lines[0] = lines[0].lower()
+        else:
+            lines.insert(0, "email,password,name")
+        if len(lines) < 2:
+            sys.exit("No user rows found. Line breaks are dropped when pasting into a single-line field, so separate rows with ; instead.")
+        print("\n".join(lines))
+        ')
+        printf "%s\n" "$csv" | docker exec -i -e CTFD_ADMIN_FLAG -e SCRIPT=true -e PYTHONPATH=/opt/CTFd/ {{ ctfd_container | quote }} /bin/bash -c '
+          if [ -f /opt/CTFd/conf/ctfd/init_secrets.py ]; then
+            eval "$(python3 /opt/CTFd/conf/ctfd/init_secrets.py)"
+          fi
+          exec /opt/CTFd/CTFd/plugins/ng/scripts/create_user.py --csv /dev/stdin $CTFD_ADMIN_FLAG'
+      args:
+        executable: /bin/bash
+        stdin: "{{ ctfd_users_csv }}"
+      environment:
+        CTFD_ADMIN_FLAG: "{{ '--admin' if ctfd_user_admin | default(false) | bool else '' }}"
+      delegate_to: "{{ ctfd_node_host }}"
+      register: bulk_create_result
+      failed_when: false
+      no_log: true
+
+    - name: Show result
+      ansible.builtin.debug:
+        msg: "{{ bulk_create_result.stdout_lines | reject('search', 'Loaded module, <module') | map('regex_replace', '^(Skipped row with missing email or password):.*$', '\\1') | list
+          + (bulk_create_result.stderr_lines if bulk_create_result.rc != 0 else []) }}"
+
+    - name: Fail if the script reported an error
+      ansible.builtin.fail:
+        msg: Script failed, see the output above
+      when: bulk_create_result.rc != 0

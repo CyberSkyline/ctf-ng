@@ -160,7 +160,7 @@ class ContainerInstance(db.Model):
         mem_limit = blueprint_obj.mem_limit or "128m"
         cpus = 0.1
         if blueprint_obj.cpus:
-            if float(blueprint_obj.cpus) > 0.5:
+            if float(blueprint_obj.cpus) > 1.5:
                 raise BusinessLogicError("Please set cpus to a value under 0.5")
 
             cpus = float(blueprint_obj.cpus)

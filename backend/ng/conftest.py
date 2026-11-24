@@ -2,11 +2,13 @@
 Ctf-ng Pytest Fixtures
 """
 
+import os
 from datetime import datetime, timezone, timedelta, UTC
 from collections.abc import Callable
 from unittest.mock import Mock
 
 import pytest
+from unittest.mock import patch
 import boto3
 from moto import mock_aws
 from CTFd.cache import cache
@@ -37,6 +39,9 @@ from .team.models.Team import Team
 from .user.models.User import User as NgUser
 from .sponsors.models.Sponsor import Sponsor
 from .core.utils import utc_now
+
+# The plugin refuses to load without ENVIRONMENT; CI and bare pytest runs have no .env file
+os.environ.setdefault("ENVIRONMENT", "development")
 
 DEFAULT_ADMIN_EMAIL = "admin@examplectf.com"
 DEFAULT_ADMIN_PASSWORD = "ctfng_password"
@@ -211,6 +216,12 @@ def middleware_client():
 
     # Teardown happens automatically after yield
 
+@pytest.fixture(scope="function")
+def set_environment():
+    """A fixture to temporarily set the ENVIRONMENT variable for a test or file."""
+    def _set_environment(environment="development"):
+        return patch.dict(os.environ, {"ENVIRONMENT": environment})
+    return _set_environment
 
 @pytest.fixture(scope="function")
 def client(app, db_session):

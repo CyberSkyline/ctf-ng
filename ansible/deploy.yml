@@ -1,0 +1,13 @@
+- name: Deploy ctf-ng
+
+  # Optional survey var for rollback_sha (release commit hash)
+  # for quick and easy rollback/version pinning. leave blank to deploy latest
+
+  hosts: manager
+  tasks:
+    - name: Deploy the stack
+      ansible.builtin.command:
+        cmd: ".bin/deploy.sh {{ rollback_sha | default('', true) }}"
+        chdir: "{{ ctfd_repo_path }}"
+      environment:
+        AWS_DEFAULT_REGION: "{{ aws_region }}"

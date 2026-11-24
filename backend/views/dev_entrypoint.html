@@ -9,6 +9,7 @@
       csrfToken: '{{ Session.nonce }}',
       userId: '{{ user_id }}' || null,
       impersonated: {{ (session.impersonated or false) | tojson }},
+      environment: {{ ENVIRONMENT | tojson }},
       error: {{ (error or none) | tojson }}
     };
   </script>

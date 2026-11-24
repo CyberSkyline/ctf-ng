@@ -40,6 +40,22 @@ export default function AdminFaqs() {
             </Text>
           </Accordion.Content>
         </Accordion.Item>
+        <Accordion.Item value="a1">
+          <Accordion.Header>
+            <Accordion.Trigger>
+              Updating User Information
+            </Accordion.Trigger>
+          </Accordion.Header>
+          <Accordion.Content>
+            <Text as="p">
+              Do not update user email addresses. Direct them to change it in the
+              {' '}
+              <RadixLink href="https://access.cisa.gov/" target="_blank">CISA Access Portal</RadixLink>
+              . This prevents a desync between the Okta server and our login logic.
+              If a user has an expo account, you can update it in the admin panel.
+            </Text>
+          </Accordion.Content>
+        </Accordion.Item>
       </Accordion.Root>
     </>
   );

@@ -9,12 +9,17 @@ import {
   Text,
 } from '@radix-ui/themes';
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import ExpoLoginForm from './ExpoLoginForm';
 import GovernmentNotice from './GovernmentNotice';
 
 export default function Login() {
   const [ hasAcceptedNotice, setHasAcceptedNotice ] = useState<boolean>(false);
+  const [ searchParams ] = useSearchParams();
+
+  // SSO leaves the app, so hand the target to the backend, which sends the user there after the callback
+  const redirect = searchParams.get('redirect');
+  const ssoLoginPath = redirect ? `${SSO_LOGIN_PATH}?redirect=${encodeURIComponent(redirect)}` : SSO_LOGIN_PATH;
 
   return (
     <Flex
@@ -35,7 +40,7 @@ export default function Login() {
             </Text>
 
             <Button asChild size="4" className="!w-full">
-              <Link to={SSO_LOGIN_PATH} reloadDocument>
+              <Link to={ssoLoginPath} reloadDocument>
                 Log in with SSO
               </Link>
             </Button>

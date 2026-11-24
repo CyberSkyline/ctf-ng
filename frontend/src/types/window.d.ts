@@ -16,5 +16,6 @@ interface Window {
     userId: string | null;
     impersonated: boolean;
     error: InitError | null;
+    environment: 'development' | 'staging' | 'production';
   };
 }

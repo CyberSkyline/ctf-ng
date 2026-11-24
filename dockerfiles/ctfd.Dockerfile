@@ -70,7 +70,7 @@ COPY --from=builder /opt/venv /opt/venv
 COPY --chown=1001:1001 ./external/CTFd /opt/CTFd
 
 # Copy plugin and templates
-ADD --chown=1001:1001 ./backend/ng/ /opt/CTFd/CTFd/plugins/ng
+COPY --chown=1001:1001 ./backend/ng/ /opt/CTFd/CTFd/plugins/ng
 COPY --chown=1001:1001 ./backend/views/* /opt/CTFd/CTFd/themes/core/templates/
 
 # CTFd's .flaskenv is only for development mode. We are removing it and using our own env variables

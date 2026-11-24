@@ -1,0 +1,57 @@
+#!/bin/bash
+
+set -euo pipefail
+
+DIR=$(dirname $BASH_SOURCE)
+ROOT_DIR="$(realpath "$(dirname "$0")/..")"
+source $DIR/utils.sh
+load_env
+
+if [[ -z "${ECR_REGISTRY:-}" || "$ECR_REGISTRY" == "-" ]]; then
+  echo "Error: ECR_REGISTRY must be set in your .env"
+  exit 1
+fi
+
+if [[ -z "${CTFD_ENVIRONMENT:-}" || "$CTFD_ENVIRONMENT" == "-" ]]; then
+  echo "Error: CTFD_ENVIRONMENT must be set in your .env"
+  exit 1
+fi
+
+if [[ -z "${EFS_PATH:-}" || "$EFS_PATH" == "-" ]]; then
+  echo "Error: EFS_PATH must be set in your .env"
+  exit 1
+fi
+
+cd "$ROOT_DIR"
+
+RELEASED_SHA="${1:-}"
+if [[ -z "$RELEASED_SHA" ]]; then
+  RELEASED_SHA=$(aws ecr describe-images --repository-name "ctf-ng/app/$CTFD_ENVIRONMENT" \
+    --query "sort_by(imageDetails,&imagePushedAt)[-1].imageTags[0]" --output text)
+fi
+
+echo "Deploying $RELEASED_SHA for $CTFD_ENVIRONMENT"
+aws ecr get-login-password | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+
+git fetch origin
+git checkout "$RELEASED_SHA"
+
+pnpm update-commit-env
+
+mkdir -p "$EFS_PATH"/CTFd/logs "$EFS_PATH"/CTFd/uploads "$EFS_PATH"/redis "$EFS_PATH"/grafana "$EFS_PATH"/config
+sudo chown -R 999:999 "$EFS_PATH"/redis
+
+# Workers have no repo checkout, so this release's config is copied onto EFS
+# (read_only bind mounts in docker-compose.prod.yaml) instead of read from disk
+cp .env.prod "$EFS_PATH"/config/.env.prod
+rsync -a --delete conf/ctfd/ "$EFS_PATH"/config/ctfd/
+rsync -a --delete conf/grafana/ "$EFS_PATH"/config/grafana/
+
+# Persisted for `pnpm kick-stack` (a plain restart, no new release lookup)
+sed -i "/^CTFD_TAG=/d" .env
+echo "CTFD_TAG=$RELEASED_SHA" >> .env
+
+ECR_REGISTRY=$ECR_REGISTRY CTFD_ENVIRONMENT=$CTFD_ENVIRONMENT CTFD_TAG=$RELEASED_SHA EFS_PATH=$EFS_PATH \
+  docker stack deploy --with-registry-auth -c docker-compose.prod.yaml ctf-ng
+
+echo "Deployed $RELEASED_SHA for $CTFD_ENVIRONMENT"
