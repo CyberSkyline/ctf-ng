@@ -65,6 +65,10 @@ class Question(db.Model):
             "challenge_id": self.challenge_id,
         }
         if include_admin_fields:
+            if self.answer_variable_id is not None:
+                # Load all of the challenge's variables in one query (a no-op once loaded), so answer_variable resolves
+                # from the identity map instead of a query per question. Only admins pay for it.
+                _ = self.challenge.variables
             data["answer"] = self.answer_variable.name if self.answer_variable else f'"{self.answer}"'
 
         return data
