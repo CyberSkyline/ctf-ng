@@ -34,7 +34,7 @@ services:
         target: /opt/CTFd/conf/ctfd
         read_only: true
       - type: bind
-        source: /var/lib/certs/ssl/
+        source: ${EFS_PATH}/ssl/
         target: /var/lib/certs/ssl/
     networks:
       ctf-network:
