@@ -63,7 +63,7 @@ services:
         tmpfs:
           size: 1048576 #1MB
       - type: bind
-        source: /mnt/prescup-web
+        source: /mnt/efs/prescup-web
         target: /usr/share/nginx/html
         read_only: true
     ports:
