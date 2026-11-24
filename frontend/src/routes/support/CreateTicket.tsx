@@ -89,6 +89,8 @@ export default function CreateTicket() {
 
   const create = async (data: CreateInputs) => {
     setLoading(true);
+    // Clear the previous error so a repeated failure remounts the alert and is announced again.
+    setError(null);
 
     createTicket({
       subject : data.subject,
@@ -134,7 +136,7 @@ export default function CreateTicket() {
               )}
             </FormField>
             <FormField label="Message" error={errors?.text}>
-              {() => (
+              {(injected, { labelId }) => (
                 <Controller
                   name="text"
                   control={control}
@@ -143,6 +145,10 @@ export default function CreateTicket() {
                     <RichTextEditor
                       initialValue={field.value}
                       onChange={field.onChange}
+                      id={injected.id}
+                      aria-labelledby={labelId}
+                      aria-describedby={injected['aria-describedby']}
+                      aria-invalid={injected['aria-invalid']}
                     />
                   )}
                 />
@@ -176,7 +182,7 @@ export default function CreateTicket() {
                 </RequireEventPermission>
               )}
 
-            {error && <ErrorCallout>{error}</ErrorCallout>}
+            {error && <ErrorCallout announce>{error}</ErrorCallout>}
 
             <Button
               type="submit"

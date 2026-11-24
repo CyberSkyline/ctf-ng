@@ -102,7 +102,7 @@ export default function Modal<T extends FieldValues>({
           )}
         </Box>
         {error && (
-          <ErrorCallout>
+          <ErrorCallout announce>
             {error}
           </ErrorCallout>
         )}

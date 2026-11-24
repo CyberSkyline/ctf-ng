@@ -4,7 +4,7 @@ import {
   Heading,
   Text,
 } from '@radix-ui/themes';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 export default function Timer(
@@ -20,6 +20,7 @@ export default function Timer(
 ) {
   const [ timerString, setTimerString ] = useState('');
   const [ hidden, setHidden ] = useState(false);
+  const descriptionId = useId();
 
   useEffect(() => {
     let interval: number | undefined;
@@ -61,9 +62,23 @@ export default function Timer(
     return () => clearInterval(interval);
   }, [ target, hidden, onEnd ]);
 
+  // The visible digits are one box per character, which screen readers would spell out, so the button gets a
+  // stable name and pressed state, and the current time is its description (WCAG 1.3.1, 4.1.2). The description
+  // isn't a live region, so the per-second updates stay silent until the user focuses the button. (A role on the
+  // span would be ignored anyway: a button's children are presentational.)
   return (
-    <button type="button" onClick={() => setHidden(!hidden)} aria-label="Toggle timer display" className="block group">
-      <Flex direction="row" gap="1" align="center">
+    <button
+      type="button"
+      onClick={() => setHidden(!hidden)}
+      aria-label="Hide time remaining"
+      aria-pressed={hidden}
+      aria-describedby={descriptionId}
+      className="block group"
+    >
+      <span id={descriptionId} className="sr-only">
+        {hidden ? 'Time remaining is hidden' : timerString}
+      </span>
+      <Flex direction="row" gap="1" align="center" aria-hidden="true">
         { timerString.split('').map((part, index) => (
           <Box
             // eslint-disable-next-line react/no-array-index-key

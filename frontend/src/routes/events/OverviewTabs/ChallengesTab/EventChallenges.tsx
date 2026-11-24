@@ -189,8 +189,9 @@ export default function EventChallenges({ eventId }: {eventId: number}) {
                   size="1"
                   className="m-0! p-1!"
                   onClick={() => setSelectedTags(new Set())}
+                  aria-label="Clear filters"
                 >
-                  <TbFilterOff />
+                  <TbFilterOff aria-hidden="true" />
                 </Button>
               </Tooltip>
             </Flex>

@@ -9,6 +9,7 @@ import { useEventStatus } from '@/hooks/events';
 import { useEventPermission } from '@/hooks/permissions';
 import { useRegistration } from '@/hooks/users';
 import { Badge, Skeleton } from '@radix-ui/themes';
+import { useEffect, useRef, useState } from 'react';
 import type { Responsive } from '@radix-ui/themes/props';
 import type { IconType } from 'react-icons';
 import {
@@ -74,7 +75,19 @@ const EVENT_STATES: {
   },
 };
 
-export default function EventBadge({ eventId, size, className }: { eventId: number; size?: Responsive<'1' | '2' | '3'>; className?: string }) {
+export default function EventBadge({
+  eventId, size, className, announce = false,
+}: {
+  eventId: number;
+  size?: Responsive<'1' | '2' | '3'>;
+  className?: string;
+  /**
+   * Announce status changes that happen while the page is open (registering, the captain starting the timer,
+   * team changes) via a hidden live region (WCAG 4.1.3). The first status shown is never announced, so page
+   * loads stay quiet. Use on the event page header only, not on cards in a list.
+   */
+  announce?: boolean;
+}) {
   const {
     isRegistered, isStarted, isFinished, team, isLoading,
   } = useRegistration(eventId);
@@ -83,59 +96,84 @@ export default function EventBadge({ eventId, size, className }: { eventId: numb
   } = useEventStatus(eventId);
   const { granted, isLoading : permissionLoading } = useEventPermission('CAN_START_TEAM_TIMER', isRegistered ? eventId : null);
 
-  let state;
+  const loading = isLoading || statusLoading || permissionLoading;
+  let state: string | undefined;
 
-  if (isLoading || statusLoading || permissionLoading) {
-    return <Skeleton><Badge size={size} className={className}>Loading...</Badge></Skeleton>;
-  }
-
-  if (event?.practice) {
-    // don't display status badges for practice events
-    return null;
-  }
-
-  if (isOngoing) {
-    state = 'live';
-  }
-
-  if (isRegistrationOpen) {
-    state = 'registration_open';
-  }
-
-  if (isRegistered) {
-    state = 'registered';
-
-    if (isOngoing && !isStarted) {
-      state = granted ? 'ready' : 'waiting';
+  // practice events don't display status badges
+  if (!loading && !event?.practice) {
+    if (isOngoing) {
+      state = 'live';
     }
 
-    if (team!.member_count === 1 && event!.max_team_size > 1) {
-      state = 'invalid';
+    if (isRegistrationOpen) {
+      state = 'registration_open';
     }
 
-    if (isOngoing && isStarted) {
-      state = 'playing';
+    if (isRegistered) {
+      state = 'registered';
+
+      if (isOngoing && !isStarted) {
+        state = granted ? 'ready' : 'waiting';
+      }
+
+      if (team!.member_count === 1 && event!.max_team_size > 1) {
+        state = 'invalid';
+      }
+
+      if (isOngoing && isStarted) {
+        state = 'playing';
+      }
+
+      if (isFinished) {
+        state = 'participated';
+      }
     }
 
-    if (isFinished) {
-      state = 'participated';
+    if (isConcluded) {
+      state = 'ended';
     }
   }
 
-  if (isConcluded) {
-    state = 'ended';
-  }
+  const label = state ? EVENT_STATES[state].label : null;
 
-  if (!state) {
-    return null;
-  }
+  // Announce only changes after the first resolved status for this event.
+  const [ announcement, setAnnouncement ] = useState('');
+  const lastSeen = useRef<{ eventId: number, label: string | null } | null>(null);
 
-  const { color, label, icon : Icon } = EVENT_STATES[state];
+  useEffect(() => {
+    if (!announce || loading) return;
+
+    const previous = lastSeen.current;
+    if (previous && previous.eventId !== eventId) {
+      // Moved to another event: drop the old event's text, so a later change on this event to the same
+      // wording still changes the region's content and is announced.
+      setAnnouncement('');
+    } else if (previous && previous.label !== label && label) {
+      setAnnouncement(`Event status: ${label}`);
+    }
+    lastSeen.current = { eventId, label };
+  }, [ announce, loading, eventId, label ]);
+
+  let badge = null;
+
+  if (loading) {
+    badge = <Skeleton><Badge size={size} className={className}>Loading...</Badge></Skeleton>;
+  } else if (state) {
+    const { color, icon : Icon } = EVENT_STATES[state];
+
+    badge = (
+      <Badge color={color} variant="soft" size={size} className={className}>
+        {Icon && <Icon className="inline" />}
+        {label}
+      </Badge>
+    );
+  }
 
   return (
-    <Badge color={color} variant="soft" size={size} className={className} role="status">
-      {Icon && <Icon className="inline" />}
-      {label}
-    </Badge>
+    <>
+      {/* Mounted before any change so screen readers pick up updates to its text. */}
+      {announce && <span className="sr-only" role="status">{announcement}</span>}
+      {badge}
+    </>
   );
 }

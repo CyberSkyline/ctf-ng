@@ -1,6 +1,8 @@
 import { Theme } from '@radix-ui/themes';
 import FooterBar from 'components/Footer';
 import NavBar from 'components/NavBar';
+import LiveAnnouncer from 'components/LiveAnnouncer';
+import SkipLink from 'components/SkipLink';
 import { ThemeProvider } from 'next-themes';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -32,6 +34,8 @@ createRoot(document.getElementById('root')!).render(
             value={{ fetcher : apiFetcher }}
           >
             <Favicon />
+            <SkipLink />
+            <LiveAnnouncer />
             <NavBar />
             <Routes />
             <FooterBar />

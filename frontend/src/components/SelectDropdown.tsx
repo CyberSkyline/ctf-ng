@@ -62,11 +62,12 @@ export default function FormDropdown<T extends FieldValues>({
               onValueChange={field.onChange}
               disabled={disabled}
               name={field.name}
-              {...injected}
             >
+              {/* Select.Root renders no element, so the label id and error links must go on the trigger. */}
               <Select.Trigger
                 placeholder={placeholder}
                 ref={field.ref}
+                {...injected}
               />
               <Select.Content position="popper">
                 {getOptions()}

@@ -1,5 +1,6 @@
 import { io } from 'socket.io-client';
 import { mutate } from 'swr';
+import { announce } from 'components/LiveAnnouncer';
 
 const socket = io({ transports : [ 'websocket' ], upgrade : false });
 
@@ -9,15 +10,26 @@ socket.on('refetch', (msg: {path: string}) => {
   mutate(msg.path);
 });
 
+// A system announcement also sends a generic notification just before it. Hold the "New notification"
+// message briefly so the pair is announced once, as the more specific announcement.
+const NOTIFICATION_ANNOUNCE_DELAY_MS = 750;
+let pendingNotificationAnnouncement: ReturnType<typeof setTimeout> | undefined;
+
 // Update notification hooks when a notification is received.
 socket.on('notification', () => {
   mutate('/notifications/me');
   mutate('/notifications/me/unread-count');
+
+  clearTimeout(pendingNotificationAnnouncement);
+  pendingNotificationAnnouncement = setTimeout(() => announce('New notification'), NOTIFICATION_ANNOUNCE_DELAY_MS);
 });
 
 // Update announcements hook when an announcement is received.
-socket.on('system_announcement', () => {
+socket.on('system_announcement', ({ title }: { title?: string } = {}) => {
   mutate('/announcements');
+
+  clearTimeout(pendingNotificationAnnouncement);
+  announce(title ? `New announcement: ${title}` : 'New announcement');
 });
 
 // Watch for image pull events and write them to the SWR cache as they occur.

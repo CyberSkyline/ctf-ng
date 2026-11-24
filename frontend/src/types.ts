@@ -322,6 +322,7 @@ export interface Notification {
   announcement_id?: number;
   recipient_name?: string;
   sender_name?: string;
+  link?: string | null;
   ticket_subject?: string;
   team_name?: string;
   event_name?: string;

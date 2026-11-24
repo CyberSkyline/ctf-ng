@@ -35,7 +35,7 @@ export default function EventHeader({
     <Flex direction="row" gap="6" align="start">
       <EventGraphic event={event} className="w-48 shrink-0 !rounded-lg shadow-xl" />
       <Flex direction="column" flexGrow="1" align="start" gap="2">
-        <EventBadge eventId={id} size="3" />
+        <EventBadge eventId={id} size="3" announce />
         <Box>
           <Heading size="8">
             {name}

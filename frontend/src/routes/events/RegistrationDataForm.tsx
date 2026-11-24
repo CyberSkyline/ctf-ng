@@ -93,7 +93,7 @@ export default function RegistrationDataForm({
 
       {selectedOption === 'create-team' && (
         <>
-          <WarningCallout>{getDescription()}</WarningCallout>
+          <WarningCallout announce>{getDescription()}</WarningCallout>
           <FormField label={isTeamGame ? 'Team Name' : 'Leaderboard Name'} error={errors?.leaderboardName}>
             {(injected) => (
               <TextField.Root
@@ -116,12 +116,12 @@ export default function RegistrationDataForm({
       {(selectedOption === 'join-team') && (
         <>
           {!joinWithCode && (
-            <InfoCallout>
+            <InfoCallout announce>
               Open an invite link provided by your team captain or enter the invite code below to join the team.
             </InfoCallout>
           )}
           {error
-            && <ErrorCallout>{error.message}</ErrorCallout>}
+            && <ErrorCallout announce>{error.message}</ErrorCallout>}
           <FormField label="Invite Code" error={errors?.joinCode}>
             {(injected) => (
               <TextField.Root

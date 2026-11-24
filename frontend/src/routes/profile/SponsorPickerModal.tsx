@@ -2,11 +2,17 @@ import { useFileList } from '@/hooks/fileuploads';
 import { useSponsors } from '@/hooks/sponsors';
 import { setMySponsor } from '@/hooks/users';
 import type { Sponsor } from '@/types';
-import { ErrorCallout } from 'components/Callouts';
+import { Strong } from '@radix-ui/themes';
+import { ErrorCallout, InfoCallout } from 'components/Callouts';
 import FormSearchField from 'components/FormSearchField';
 import Modal from 'components/Modal';
 import { isNil, keyBy } from 'lodash';
-import { useCallback, useEffect, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  type ReactNode,
+} from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 import { TbInfoCircle } from 'react-icons/tb';
 import { useSearchParams } from 'react-router';
@@ -34,10 +40,21 @@ function SponsorPickerForm({
       : <TbInfoCircle className="h-4 w-4" />;
   }, [ logoLookup ]);
 
+  const guidanceId = useId();
+
   return (
     <>
       {sponsorsError && <ErrorCallout className="mb-3">{sponsorsError.message}</ErrorCallout>}
+      <div id={guidanceId}>
+        <InfoCallout className="mb-3">
+          <Strong>Not a government employee?</Strong>
+          {' Select "Other Department/Agency". You won\'t be able to compete in President\'s Cup events, '
+            + 'but you can still use the Practice Area.'}
+        </InfoCallout>
+      </div>
       <FormSearchField
+        // Read with the field, since focus can skip past the guidance above it.
+        aria-describedby={guidanceId}
         control={control}
         name="sponsorId"
         label="New Sponsor"
@@ -73,7 +90,7 @@ export default function SponsorPickerModal({
   return (
     <Modal<SponsorPickerFields>
       title="Change Sponsor"
-      description="Your sponsor is the organization you represent in events."
+      description="Your sponsor is the government agency you represent in events."
       submitVerb="Save"
       defaultValues={{ sponsorId : null }}
       onSubmit={async ({ sponsorId }) => {

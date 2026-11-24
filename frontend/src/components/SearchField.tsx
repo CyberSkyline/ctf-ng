@@ -33,6 +33,7 @@ import {
   TbX,
 } from 'react-icons/tb';
 import { twMerge } from 'tailwind-merge';
+import { announce } from 'components/LiveAnnouncer';
 import { Popover as PopoverPrimitive } from 'radix-ui';
 import useSWRInfinite from 'swr/infinite';
 
@@ -227,13 +228,14 @@ function SelectionBadge<T extends Record<string, unknown>>({
 }) {
   const { data : hookData, isLoading } = hook?.(data ? null : value) ?? { isLoading : false };
   const item = data ?? hookData;
+  const label = (isLoading && 'Unknown') || (item && getLabel(item)) || String(value);
 
   return (
     <Badge size="2" key={value} className="-order-1">
       {item && getIcon?.(item)}
       <Skeleton loading={isLoading}>
         <Text size="1">
-          {(isLoading && 'Unknown') || (item && getLabel(item)) || value}
+          {label}
         </Text>
       </Skeleton>
       <IconButton
@@ -243,9 +245,9 @@ function SelectionBadge<T extends Record<string, unknown>>({
         size="1"
         className="!-my-1 !-ml-1 !-mx-1.5 !p-1 !align-middle"
         onClick={onRemove}
-        aria-label="Remove"
+        aria-label={`Remove ${label}`}
       >
-        <TbX />
+        <TbX aria-hidden="true" />
       </IconButton>
     </Badge>
   );
@@ -301,6 +303,10 @@ function SearchField<T extends Record<string, unknown>>(
    * this tracks their "fake focus" within the results list
    */
   const [ selectedIndex, setSelectedIndex ] = useState(-1);
+
+  // Set when a selection clears the query, so the result count for the emptied query doesn't replace the
+  // "… selected" announcement.
+  const skipNextCountAnnouncement = useRef(false);
 
   // hook to get search results for the given query.
   const {
@@ -371,8 +377,12 @@ function SearchField<T extends Record<string, unknown>>(
       setResultsOpen(false);
     }
 
+    // The input empties and a badge appears without any other cue, so confirm the choice (WCAG 4.1.3).
+    announce(`${getLabel(item)} selected`);
+
     if (query !== '') {
       // reset the query - assume the user is either done or will start typing another query.
+      skipNextCountAnnouncement.current = true;
       setQuery('');
     }
   };
@@ -433,8 +443,9 @@ function SearchField<T extends Record<string, unknown>>(
       // Backspace on empty query removes the last selected item
       e.preventDefault();
       handleRemove(displayValues[displayValues.length - 1]);
-    } else if (e.key === 'Escape') {
-      // Close the results list
+    } else if (e.key === 'Escape' && resultsOpen) {
+      // Close the results list. Only claim Escape while the list is open, so that with it closed the key
+      // still reaches an enclosing dialog and closes it.
       e.preventDefault();
       setResultsOpen(false);
     }
@@ -539,8 +550,50 @@ function SearchField<T extends Record<string, unknown>>(
     }
   }, [ resultsOpen, setSize ]);
 
+  /*
+   * ARIA combobox pattern (WCAG 4.1.2): focus stays in the input and aria-activedescendant points at the
+   * highlighted option, so screen readers follow the same "fake focus" that selectedIndex drives visually.
+   */
+  const listboxId = useId();
+  const optionId = (index: number) => `${listboxId}-option-${index}`;
+  const createOptionId = `${listboxId}-create`;
+  const showCreateOption = Boolean(createFreeformItem) && query.trim() !== '';
+  const isOpen = resultsOpen && (data.length > 0 || !isValidating);
+
+  let activeDescendant: string | undefined;
+  if (isOpen) {
+    if (selectedIndex >= 0 && selectedIndex < data.length) {
+      activeDescendant = optionId(selectedIndex);
+    } else if (selectedIndex === -1 && showCreateOption) {
+      activeDescendant = createOptionId;
+    }
+  }
+
+  // Announce the result count once results settle after the list opens or the query changes
+  // (not on every page loaded while scrolling).
+  const pendingCountAnnouncement = useRef(false);
+  useEffect(() => {
+    if (skipNextCountAnnouncement.current && debouncedQuery === '') {
+      // The query was cleared by a selection: keep "… selected" as the last thing announced.
+      skipNextCountAnnouncement.current = false;
+      pendingCountAnnouncement.current = false;
+      return;
+    }
+    pendingCountAnnouncement.current = resultsOpen;
+  }, [ resultsOpen, debouncedQuery ]);
+  useEffect(() => {
+    if (!pendingCountAnnouncement.current || !resultsOpen || isValidating) return;
+    pendingCountAnnouncement.current = false;
+
+    if (data.length === 0) {
+      announce(showCreateOption ? `No results. Press Enter to create "${query.trim()}".` : 'No results');
+    } else {
+      announce(`${data.length}${isReachingEnd ? '' : ' or more'} result${data.length === 1 ? '' : 's'}`);
+    }
+  }, [ resultsOpen, isValidating, data.length, isReachingEnd, showCreateOption, query ]);
+
   return (
-    <Popover.Root open={resultsOpen && (data.length > 0 || !isValidating)}>
+    <Popover.Root open={isOpen}>
       <PopoverPrimitive.Anchor>
         <TextField.Root
           {...textFieldProps}
@@ -561,6 +614,13 @@ function SearchField<T extends Record<string, unknown>>(
           ref={inputRef}
           onKeyDown={handleKeystroke}
           autoComplete="off"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-haspopup="listbox"
+          aria-expanded={isOpen}
+          // the listbox is unmounted while closed, so only reference it while it exists
+          aria-controls={isOpen ? listboxId : undefined}
+          aria-activedescendant={activeDescendant}
           className={twMerge(
             'gap-1 flex-wrap! items-center! p-1! h-auto! bg-clip-border! cursor-text! '
             + '[&>input]:min-w-16! [&>input]:w-0! [&>input]:grow! [&>input]:h-6! pr-7! relative',
@@ -592,6 +652,10 @@ function SearchField<T extends Record<string, unknown>>(
                 }
               }}
               aria-label={resultsOpen ? 'Close results' : 'Open results'}
+              aria-expanded={isOpen}
+              aria-controls={isOpen ? listboxId : undefined}
+              // The input already opens the list with the arrow keys, so the chevron stays out of the tab order.
+              tabIndex={-1}
             >
               <TbChevronDown className={twMerge('transition-transform', resultsOpen && 'rotate-180')} />
             </IconButton>
@@ -604,6 +668,11 @@ function SearchField<T extends Record<string, unknown>>(
         onOpenAutoFocus={(e) => e.preventDefault()}
         className="min-h-0! p-0! max-h-68! overscroll-contain"
         ref={popoverContentRef}
+        // Replaces the popover's default dialog role: the content is the list of options.
+        id={listboxId}
+        role="listbox"
+        aria-label="Search results"
+        aria-multiselectable={multiple || undefined}
         // load next page when scrolling approaches the end of the list.
         onScroll={(e) => {
           const target = e.currentTarget;
@@ -619,33 +688,44 @@ function SearchField<T extends Record<string, unknown>>(
           {createFreeformItem && query.trim() !== '' && (
             <>
               <Button
+                id={createOptionId}
+                role="option"
+                aria-selected={selectedIndex === -1}
+                tabIndex={-1}
                 variant="ghost"
                 color="gray"
                 className={twMerge(
                   'm-0! justify-start! text-left!',
                   selectedIndex === -1 && 'bg-(--accent-a3)!', // fake focus highlight based on selectedIndex
                 )}
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  // create and select new item when the button is clicked.
+                // keep focus in the text field; selection happens on click so screen reader activation works too.
+                onPointerDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  // create and select new item when the option is clicked.
                   const newItem = createFreeformItem(query.trim());
                   handleSelect(newItem);
                 }}
                 ref={selectedIndex === -1 ? selectedButtonRef : null}
               >
-                <TbPlus className="shrink-0" />
+                <TbPlus className="shrink-0" aria-hidden="true" />
                 <Strong>
                   Create
                   {` "${query.trim()}"`}
                 </Strong>
               </Button>
-              <Separator size="4" className="last:hidden!" />
+              <Separator size="4" className="last:hidden!" decorative />
             </>
           )}
           {/* Show the results list. Keyed by both value and index, since values can be duplicated in some cases (i.e. cluster search) */}
           {data.map((result, index) => (
             <Fragment key={getValue(result) + String(index)}>
               <Button
+                id={optionId(index)}
+                role="option"
+                // aria-selected marks chosen values, which also render disabled.
+                aria-selected={(displayValues as (string | number)[]).includes(getValue(result))}
+                aria-disabled={isValueDisabled(getValue(result)) || undefined}
+                tabIndex={-1}
                 disabled={isValueDisabled(getValue(result))}
                 variant="ghost"
                 color="gray"
@@ -654,10 +734,9 @@ function SearchField<T extends Record<string, unknown>>(
                   index === selectedIndex && 'bg-(--accent-a3)!', // fake focus highlight based on selectedIndex
                   sublabelSide === 'bottom' && 'flex-col!',
                 )}
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  handleSelect(result);
-                }}
+                // keep focus in the text field; selection happens on click so screen reader activation works too.
+                onPointerDown={(e) => e.preventDefault()}
+                onClick={() => handleSelect(result)}
                 ref={index === selectedIndex ? selectedButtonRef : null}
               >
                 <Flex direction="row" align="center" gap="1">
@@ -672,11 +751,11 @@ function SearchField<T extends Record<string, unknown>>(
                   </Text>
                 )}
               </Button>
-              <Separator size="4" className="last:hidden!" />
+              <Separator size="4" className="last:hidden!" decorative />
             </Fragment>
           ))}
           {data.length === 0 && !isValidating && !(createFreeformItem && query.trim() !== '') && (
-            <Flex justify="center" align="center" p="2" className="h-10">
+            <Flex justify="center" align="center" p="2" className="h-10" role="presentation">
               <Text color="gray">
                 {createFreeformItem ? 'No results, start typing to create one' : 'No results'}
               </Text>

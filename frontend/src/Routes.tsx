@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useRoutes } from 'react-router';
 
 import ErrorPage from 'components/ErrorPage';
@@ -109,10 +109,25 @@ function Routes() {
   const [ errorPathname ] = useState(location.pathname);
   const error = location.pathname === errorPathname ? window.init.error : null;
 
+  // On client-side navigation, focus would stay on the clicked link or fall to <body>, so screen reader users
+  // aren't told the page changed (WCAG 2.4.3). Move focus to the main landmark when the path changes.
+  // Skipped on first load, and query-only changes (e.g. ?tab=) keep focus where it is.
+  const previousPathname = useRef(location.pathname);
+  useEffect(() => {
+    if (previousPathname.current === location.pathname) return;
+    previousPathname.current = location.pathname;
+    document.getElementById('main')?.focus({ preventScroll : true });
+  }, [ location.pathname ]);
+
   return (
-    <div className="p-3 min-h-[calc(100vh-var(--NavBarHeight)-var(--FooterBarHeight))] relative mb-[var(--FooterBarHeight)]">
+    // The main landmark and skip-link target for every route (WCAG 2.4.1). tabIndex lets the skip link focus it.
+    <main
+      id="main"
+      tabIndex={-1}
+      className="p-3 min-h-[calc(100vh-var(--NavBarHeight)-var(--FooterBarHeight))] relative mb-[var(--FooterBarHeight)] outline-none"
+    >
       {error ? <ErrorPage error={error} /> : routes}
-    </div>
+    </main>
   );
 }
 

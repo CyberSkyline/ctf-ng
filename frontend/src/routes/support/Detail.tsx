@@ -81,12 +81,14 @@ export default function Detail() {
     setReplyLoading(true);
 
     // add a new message to the ticket
+    // Clear the editor only once the message is saved, so a failed send keeps the user's text (WCAG 3.3.1).
     addNewTicketMessage(ticket.id, newText)
-      .catch((err) => setReplyError(err.message))
       .then(() => {
         setNewText('');
         setVersion((prev) => prev + 1); // This forces reMount of RichTextEditor
-      }).finally(() => setReplyLoading(false));
+      })
+      .catch((err) => setReplyError(err.message))
+      .finally(() => setReplyLoading(false));
   };
 
   return (
@@ -117,7 +119,7 @@ export default function Detail() {
               Mark Ticket as Resolved
             </Button>
             {resolveError && (
-              <ErrorCallout>
+              <ErrorCallout announce>
                 {resolveError}
               </ErrorCallout>
             )}
@@ -131,6 +133,7 @@ export default function Detail() {
               initialValue={newText}
               onChange={setNewText}
               version={version}
+              aria-label="Reply"
             />
             <Button
               onClick={sendNewMessage}
@@ -140,7 +143,7 @@ export default function Detail() {
               Reply
             </Button>
             {replyError && (
-              <ErrorCallout>
+              <ErrorCallout announce>
                 {replyError}
               </ErrorCallout>
             )}

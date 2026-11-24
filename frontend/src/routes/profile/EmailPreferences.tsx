@@ -54,7 +54,7 @@ export default function EmailPreferences() {
         <Text color="gray" trim="end">Choose which email notifications you will receive.</Text>
       </Box>
       {error && <ErrorCallout>{error.message}</ErrorCallout>}
-      {saveError && <ErrorCallout>{saveError}</ErrorCallout>}
+      {saveError && <ErrorCallout announce>{saveError}</ErrorCallout>}
       <Skeleton loading={isLoading}>
         <form
           onSubmit={handleSubmit(saveEmailPrefs)}

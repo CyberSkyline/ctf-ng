@@ -44,11 +44,13 @@ For questions about access or eligibility, please [contact the President's Cup t
             </RadixMarkdown>
           </Flex>
           <Flex justify="between" className="border-t border-[var(--gray-7)]" pt="4">
-            <Button disabled={!practiceEvent}>
-              {practiceEvent
-                ? <Link to={`/events/${practiceEvent.id}`}>{practiceBtnText}</Link>
-                : practiceBtnText}
-            </Button>
+            {practiceEvent ? (
+              <Button asChild>
+                <Link to={`/events/${practiceEvent.id}`}>{practiceBtnText}</Link>
+              </Button>
+            ) : (
+              <Button disabled>{practiceBtnText}</Button>
+            )}
           </Flex>
         </Flex>
       </Card>

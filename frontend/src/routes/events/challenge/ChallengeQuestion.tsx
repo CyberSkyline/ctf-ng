@@ -5,6 +5,7 @@ import {
   Text,
   TextField,
 } from '@radix-ui/themes';
+import { ErrorCallout } from 'components/Callouts';
 import RadixMarkdown from 'components/RadixMarkdown';
 import { Form } from 'radix-ui';
 import { TbFlag2 } from 'react-icons/tb';
@@ -38,18 +39,28 @@ export default function ChallengeQuestion({
 
   const { denied } = useEventPermission('CAN_PLAY_CHALLENGES', eventId);
   const [ loading, setLoading ] = useState(false);
+  const [ submitError, setSubmitError ] = useState<string | null>(null);
 
   const handleSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
+    setSubmitError(null);
     const target = event.currentTarget;
     const { flag } = Object.fromEntries(new FormData(event.currentTarget));
 
     return submitFlag(eventId, challengeId, id, flag as string)
+      .then(() => {
+        // clear the form after a submission is recorded; keep it on failure so the user can retry
+        target.reset();
+      })
+      .catch((err: Error) => {
+        // fetch rejects with a TypeError ("Failed to fetch") when the request never reaches the server;
+        // API errors (e.g. rate limiting) carry a readable message from the backend.
+        const networkFailure = err instanceof TypeError || !err.message;
+        setSubmitError(networkFailure ? 'Couldn\'t submit your answer. Check your connection and try again.' : err.message);
+      })
       .finally(() => {
         setLoading(false);
-        // clear the form after submission
-        target.reset();
       });
   }, [ eventId, challengeId, id ]);
 
@@ -82,7 +93,7 @@ export default function ChallengeQuestion({
         {body}
       </RadixMarkdown>
 
-      <Flex direction="row" gap="2" align="center" justify="between">
+      <Flex direction="row" gap="2" align="center" justify="between" role="status">
         <Text size="2" color={color || 'gray'}>
           {startCase(status)}
         </Text>
@@ -96,6 +107,7 @@ export default function ChallengeQuestion({
       <Form.Root onSubmitCapture={handleSubmit}>
         <Flex direction="row" gap="2" align="start">
           <Form.Field name="flag" className="grow">
+            <Form.Label className="sr-only">{`Answer for ${name}`}</Form.Label>
             <Form.Control asChild>
               <TextField.Root
                 className={twMerge(
@@ -132,6 +144,11 @@ export default function ChallengeQuestion({
         </Flex>
       </Form.Root>
 
+      {submitError && (
+        <ErrorCallout className="mt-2" announce>
+          {submitError}
+        </ErrorCallout>
+      )}
     </Flex>
   );
 }
