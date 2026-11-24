@@ -159,17 +159,20 @@ class Challenge(db.Model):
         return cls.query.filter_by(id=challenge_id).first()
 
     @classmethod
-    def get_all_challenges(cls) -> list[Challenge]:
-        return (
-            cls
-            .query
-            .options(
-                joinedload(cls.event),
-                selectinload(cls.questions),
-                selectinload(cls.tags),
-            )
-            .all()
+    def get_all_challenges(cls, event_id: int | None = None) -> list[Challenge]:
+        """
+        Get all challenges, optionally only those for one event, eager loading what serialize() reads so serializing many challenges doesn't query per challenge.
+        :param event_id: If given, only return challenges for this event.
+        :return: The matching challenges.
+        """
+        query = cls.query.options(
+            joinedload(cls.event),
+            selectinload(cls.questions),
+            selectinload(cls.tags),
         )
+        if event_id is not None:
+            query = query.filter_by(event_id=event_id)
+        return query.all()
 
     def render(self, team):
         """
@@ -179,13 +182,13 @@ class Challenge(db.Model):
         """
         from ...scoring.models import Attempt
         from .Hint import Hint
-        from .Question import Question
 
         hints = Hint.query.filter_by(challenge_id=self.id).options(joinedload(Hint.challenge)).all()
 
         data = {
             "challenge": self.serialize(),
-            "questions": Question.query.filter_by(challenge_id=self.id).all(),
+            # serialize() has already loaded self.questions
+            "questions": self.questions,
             "hints": [hint.serialize(team=team) for hint in hints] if self.event.hints_enabled else [],
             "attempts": Attempt.query
                 .filter_by(
