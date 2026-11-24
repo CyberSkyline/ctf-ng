@@ -159,23 +159,20 @@ class Challenge(db.Model):
         return cls.query.filter_by(id=challenge_id).first()
 
     @classmethod
-    def serialize_load_options(cls):
+    def get_all_challenges(cls, event_id: int | None = None) -> list[Challenge]:
         """
-        Eager load options for the relationships serialize() reads, so serializing many challenges doesn't query per challenge.
+        Get all challenges, optionally only those for one event, eager loading what serialize() reads so serializing many challenges doesn't query per challenge.
+        :param event_id: If given, only return challenges for this event.
+        :return: The matching challenges.
         """
-        return (
+        query = cls.query.options(
             joinedload(cls.event),
             selectinload(cls.questions),
             selectinload(cls.tags),
         )
-
-    @classmethod
-    def get_all_challenges(cls) -> list[Challenge]:
-        return cls.query.options(*cls.serialize_load_options()).all()
-
-    @classmethod
-    def get_challenges_for_event(cls, event_id: int) -> list[Challenge]:
-        return cls.query.filter_by(event_id=event_id).options(*cls.serialize_load_options()).all()
+        if event_id is not None:
+            query = query.filter_by(event_id=event_id)
+        return query.all()
 
     def render(self, team):
         """

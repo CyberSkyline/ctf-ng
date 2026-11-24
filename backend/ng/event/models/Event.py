@@ -311,7 +311,7 @@ class Event(db.Model):
     def get_all_challenges(self):
         from ...challenge.models.Challenge import Challenge
 
-        return Challenge.get_challenges_for_event(self.id)
+        return Challenge.get_all_challenges(event_id=self.id)
 
     @classmethod
     def find_by_id(cls, event_id: int):

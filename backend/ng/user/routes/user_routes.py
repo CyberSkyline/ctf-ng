@@ -72,7 +72,7 @@ class UserTeams(Resource):
     )
     def get(self, current_user, **kwargs):
         """Get my teams"""
-        teams = current_user.get_teams_for_serialization()
+        teams = current_user.get_teams()
         return success_response(teams)
 
 @users_user_namespace.route("/me/sponsor")

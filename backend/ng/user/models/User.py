@@ -157,16 +157,6 @@ class User(db.Model):
         return events
 
     def get_teams(self):
-        """Get all teams the user is a member of.
-
-        Returns:
-            list: List of teams the user is a member of
-        """
-
-        # Get all team members for this user
-        return [tm.team for tm in self.team_members]
-
-    def get_teams_for_serialization(self):
         """Get all teams the user is a member of, eager loading what Team.serialize reads.
 
         Returns:
