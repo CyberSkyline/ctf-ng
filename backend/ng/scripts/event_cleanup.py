@@ -81,6 +81,11 @@ with app.app_context():
         sys.exit(1)
 
     event = events[0]
+    event_active = event.end_time and event.end_time > datetime.now(UTC).replace(tzinfo=None)
+    if (args.stop or args.prune) and event_active and not args.allow_active:
+        print(f"Error: event {event.id} ({event.name}) has not ended yet (ends {event.end_time}). Use --allow-active to clean up anyway.")
+        sys.exit(1)
+
     team_ids = {team.id for team in event.teams}
     challenge_ids = {challenge.id for challenge in event.challenges}
     rows = ContainerInstance.query.filter(ContainerInstance.team_id.in_(team_ids)).all()
@@ -138,10 +143,6 @@ with app.app_context():
     # No flags just lists
     if not args.stop and not args.prune:
         sys.exit(0)
-
-    if event.end_time and event.end_time > datetime.now(UTC).replace(tzinfo=None) and not args.allow_active:
-        print(f"Error: event has not ended yet (ends {event.end_time}). Use --allow-active to clean up anyway.")
-        sys.exit(1)
 
     if not args.prune:
         for container in running:
