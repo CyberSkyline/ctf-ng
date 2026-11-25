@@ -1,28 +1,38 @@
 - name: Clean up event containers
-  hosts: manager
-  # Semaphore survey variables:
-  # Leave stop and prune unset to just list the event's containers
-  #   ctfd_event_id             - ID of the event                                  (String, required if no name)
-  #   ctfd_event_name           - name of the event                                (String, required if no ID)
-  #   ctfd_cleanup_stop         - stop the containers                              (Boolean(enum), optional)
-  #   ctfd_cleanup_prune        - remove containers, networks and DB rows          (Boolean(enum), optional)
-  #   ctfd_cleanup_allow_active - allow stop/prune before the event ends           (Boolean(enum), optional)
-  tasks:
-    - name: Run event_cleanup.sh
-      ansible.builtin.command:
-        argv: >-
-          {{
-            ['./.bin/event_cleanup.sh']
-            + (['--event-id', ctfd_event_id | string] if ctfd_event_id | default('', true) else [])
-            + (['--name', ctfd_event_name] if ctfd_event_name | default('', true) else [])
-            + (['--stop'] if ctfd_cleanup_stop | default(false) | bool else [])
-            + (['--prune'] if ctfd_cleanup_prune | default(false) | bool else [])
-            + (['--allow-active'] if ctfd_cleanup_allow_active | default(false) | bool else [])
-          }}
-        chdir: "{{ ctfd_repo_path }}"
-      register: cleanup
 
-    # Command output is only shown on failure, so print it here as well
-    - name: Show output
+  # Survey vars: ctfd_event_id (String) or ctfd_event_name (String),
+  # ctfd_cleanup_stop (Boolean, optional), ctfd_cleanup_prune (Boolean, optional),
+  # ctfd_cleanup_allow_active (Boolean, optional)
+  # Leave stop and prune unset to just list the event's containers
+
+  hosts: manager
+  tasks:
+    - ansible.builtin.include_tasks: tasks/find-ctfd-container.yml
+
+    - name: Run event_cleanup.py in {{ ctfd_container }}
+      ansible.builtin.shell: |
+        docker exec -i -e SCRIPT=true -e PYTHONPATH=/opt/CTFd/ {{ ctfd_container | quote }} /bin/bash -c '
+          if [ -f /opt/CTFd/conf/ctfd/init_secrets.py ]; then
+            eval "$(python3 /opt/CTFd/conf/ctfd/init_secrets.py)"
+          fi
+          exec python3 -c "import json, runpy, sys; sys.argv = sys.argv[1:] + json.load(sys.stdin); runpy.run_path(sys.argv[0], run_name=__name__)" \
+            /opt/CTFd/CTFd/plugins/ng/scripts/event_cleanup.py'
+      args:
+        stdin: >-
+          {{ ((['--event-id', ctfd_event_id | string] if ctfd_event_id | default('', true) else [])
+              + (['--name', ctfd_event_name] if ctfd_event_name | default('', true) else [])
+              + (['--stop'] if ctfd_cleanup_stop | default(false) | bool else [])
+              + (['--prune'] if ctfd_cleanup_prune | default(false) | bool else [])
+              + (['--allow-active'] if ctfd_cleanup_allow_active | default(false) | bool else [])) | to_json }}
+      delegate_to: "{{ ctfd_node_host }}"
+      register: cleanup_result
+      failed_when: false
+
+    - name: Show result
       ansible.builtin.debug:
-        var: cleanup.stdout_lines
+        msg: "{{ cleanup_result.stdout_lines + (cleanup_result.stderr_lines if cleanup_result.rc != 0 else []) }}"
+
+    - name: Fail if the script reported an error
+      ansible.builtin.fail:
+        msg: Script failed, see the output above
+      when: cleanup_result.rc != 0
