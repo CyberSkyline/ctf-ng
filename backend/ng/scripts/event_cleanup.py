@@ -21,7 +21,7 @@ event_arg = parser.add_mutually_exclusive_group(required=True)
 event_arg.add_argument("--event-id", type=int, help="ID of the event")
 event_arg.add_argument("--name", help="Name of the event (case-insensitive, partial match allowed)")
 parser.add_argument("--stop", action="store_true", help="Stop the event's containers")
-parser.add_argument("--prune", action="store_true", help="Remove the event's containers, networks and DB rows (overrides --stop)")
+parser.add_argument("--prune", action="store_true", help="Remove the event's containers and networks (overrides --stop)")
 parser.add_argument("--allow-active", action="store_true", help="Allow stop or prune before the event has ended")
 args = parser.parse_args()
 
@@ -96,12 +96,12 @@ with app.app_context():
             print(f"Warning: {row.hostip} has containers for this event but is not in DOCKER_HOST, including it anyway.")
             hosts.append(row.hostip)
 
-    apis = {host: get_client(host).api for host in hosts}
+    clients = {host: get_client(host).api for host in hosts}
     containers = []
     networks = []
 
-    for host, api in apis.items():
-        for container in api.containers(all=True, size=True):
+    for host, client in clients.items():
+        for container in client.containers(all=True, size=True):
             name = container["Names"][0].lstrip("/")
             if belongs_to_event(CONTAINER_NAME.match(name)):
                 containers.append({
@@ -113,7 +113,7 @@ with app.app_context():
                 })
 
         # Swarm networks show up on every host they're used on
-        for network in api.networks():
+        for network in client.networks():
             if belongs_to_event(NETWORK_NAME.match(network["Name"])):
                 networks.append((host, network["Name"]))
 
@@ -145,15 +145,12 @@ with app.app_context():
 
     if not args.prune:
         for container in running:
-            ignore_missing(apis[container["host"]].stop, container["id"], timeout=5)
+            ignore_missing(clients[container["host"]].stop, container["id"], timeout=5)
         print(f"\nDone: stopped {len(running)} containers.")
         sys.exit(0)
 
     for container in containers:
-        ignore_missing(apis[container["host"]].remove_container, container["id"], force=True)
-
-    ContainerInstance.query.filter(ContainerInstance.id.in_([row.id for row in rows])).delete(synchronize_session=False)
-    db.session.commit()
+        ignore_missing(clients[container["host"]].remove_container, container["id"], force=True)
 
     # Removing a container also frees its disk space
     # Workspaces can still be attached to challenge networks, so they're disconnected (not removed)
@@ -161,15 +158,15 @@ with app.app_context():
     disconnected = 0
     for host, name in networks:
         try:
-            attached = apis[host].inspect_network(name).get("Containers") or {}
+            attached = clients[host].inspect_network(name).get("Containers") or {}
         except NotFound:
             continue
         for container_id in attached:
             if container_id != f"lb-{name}":
-                apis[host].disconnect_container_from_network(container_id, name, force=True)
+                clients[host].disconnect_container_from_network(container_id, name, force=True)
                 disconnected += 1
-        ignore_missing(apis[host].remove_network, name)
+        ignore_missing(clients[host].remove_network, name)
 
-    print(f"\nDone: removed {len(containers)} containers ({total_size}), {len(network_names)} networks and {len(rows)} DB rows.")
+    print(f"\nDone: removed {len(containers)} containers ({total_size}) and {len(network_names)} networks.")
     if disconnected:
         print(f"Disconnected {disconnected} workspaces from the event's networks.")
